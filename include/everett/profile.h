@@ -264,7 +264,7 @@ namespace everett {
   enum class profile_bit_order : std::uint8_t { msb_first };
 
   struct profile_metadata {
-    std::uint32_t version = 1;
+    std::uint32_t version = 2;
     profile_unit key_unit = profile_unit::byte;
     profile_unit value_unit = profile_unit::byte;
     profile_unit count_unit = profile_unit::byte;
@@ -296,8 +296,6 @@ namespace everett {
   };
 
   struct profile_encoded_record {
-    std::uint64_t previous_units = 0;
-    std::uint64_t backspace = 0;
     std::uint64_t retained = 0;
     std::uint64_t key_units = 0;
     std::uint64_t value_units = 0;
@@ -612,6 +610,7 @@ namespace everett {
   }
 
   template <class P, stream_role Role = stream_role::native> struct profile_cursor;
+  template <class P, stream_role Role = stream_role::native> struct profile_encoded_cursor;
   template <class P> struct profile_borrowed_writer;
   template <class P> struct profile_native_writer;
   namespace profile_detail { template <class P> struct native_output; }
@@ -677,23 +676,27 @@ namespace everett {
     profile_metadata const & metadata() const noexcept { return metadata_; }
     elias_fano_view group_offsets() const noexcept { return offsets_; }
     profile_cursor<P, Role> cursor() const;
+    profile_encoded_cursor<P, Role> encoded_cursor() const;
 
-    // One predecessor-length checkpoint is stored at each group start. This
-    // permits true backspace counts without a full-key-length field per record.
+    // Physical block starts encode retained positions directly. Other records
+    // backspace from the preceding length, so only this block's controls need
+    // replaying; no inherited key bytes are reconstructed or read.
     profile_encoded_record encoded_at(std::uint64_t ordinal) const {
       if (ordinal >= size()) error_detail::raise<std::out_of_range>("profile record ordinal");
-      auto [at, previous] = locate(ordinal, nullptr);
-      return parse(at, previous);
+      return locate(ordinal, nullptr);
     }
 
-    // A block checkpoint is the actual physical predecessor length. At EOF
-    // the terminal metadata supplies it, including an exactly full final block.
+    // Compatibility length lookup: replay the predecessor's physical block.
+    // A boundary can touch the preceding block, but never its literal bytes.
+    // At EOF terminal metadata supplies the length without replay.
     std::uint64_t predecessor_units(std::uint64_t ordinal,
                                     profile_comparison_work * work = nullptr) const {
       if (ordinal > size()) error_detail::raise<std::out_of_range>("profile predecessor ordinal");
       if (!ordinal) return 0;
       if (ordinal == size()) return metadata_.terminal_key_units;
-      return locate(ordinal, work).second;
+      auto record = locate(ordinal - 1, work);
+      if (work) ++work->skipped_headers;
+      return record.key_units;
     }
 
     // Only headers preceding the selected lane are parsed. The first candidate
@@ -708,9 +711,7 @@ namespace everett {
         if (predecessor) *predecessor = predecessor_units(first, work);
         return;
       }
-      auto [at, previous] = locate(first, work);
-      if (predecessor) *predecessor = previous;
-      auto record = parse(at, previous);
+      auto record = locate(first, work, predecessor);
       for (auto i = first; i != last; ++i) {
         auto compared = context.advance(record);
         if (work) { ++work->visited_headers; work->compared_bits += compared; }
@@ -749,7 +750,6 @@ namespace everett {
       std::uint64_t context = 0;
       auto record = encoded_at(0);
       for (std::uint64_t i = 0; i != size(); ++i) {
-        if (record.previous_units != context) error_detail::raise<std::invalid_argument>("profile predecessor length mismatch");
         decode_into(record, std::numeric_limits<std::uint64_t>::max(), scratch, context);
         if (!callback(profile_item<P>{i, {scratch.view(), context}, record.value})) return;
         if (i + 1 != size()) record = next_record(record, i + 1);
@@ -761,7 +761,7 @@ namespace everett {
 
     // Ordinary FC can traverse the entire prefix chain. LPFC bounds backward
     // encoded distance by the full key length, not by prefix_limit; locating a
-    // record also scans at most K-1 headers before it. Values are copied in full.
+    // record also scans at most W-1 headers before it. Values are copied in full.
     profile_decoded_record<P> reconstruct_at(std::uint64_t ordinal,
         std::uint64_t prefix_limit = std::numeric_limits<std::uint64_t>::max()) const {
       auto record = encoded_at(ordinal);
@@ -780,9 +780,9 @@ namespace everett {
         }
         if (!need) break;
         if (!ordinal) error_detail::raise<std::invalid_argument>("nonliteral first profile key");
-        auto expected = record.previous_units;
+        auto retained = record.retained;
         record = encoded_at(--ordinal);
-        if (record.key_units != expected) error_detail::raise<std::invalid_argument>("profile predecessor length mismatch");
+        if (record.key_units < retained) error_detail::raise<std::invalid_argument>("profile predecessor prefix is too short");
       }
       return result;
     }
@@ -793,7 +793,7 @@ namespace everett {
                  profile_metadata metadata, shape_only)
       : bytes_(bytes), offsets_(offsets), metadata_(metadata) {
       auto expected = profile_detail::initial_metadata<P, Role>();
-      if (metadata.version != 1 || metadata.key_unit != P::unit || metadata.value_unit != P::unit ||
+      if (metadata.version != 2 || metadata.key_unit != P::unit || metadata.value_unit != P::unit ||
           metadata.count_unit != P::unit || metadata.offset_unit != P::unit ||
           metadata.backspace_code != P::backspace_code || metadata.backspace_parameter != P::backspace_parameter ||
           metadata.count_code != expected.count_code || metadata.bit_order != profile_bit_order::msb_first ||
@@ -820,33 +820,50 @@ namespace everett {
     }
 
     friend struct profile_cursor<P, Role>;
+    friend struct profile_encoded_cursor<P, Role>;
     std::span<std::byte const> bytes_;
     elias_fano_view offsets_;
     profile_metadata metadata_;
     bit_view data_;
 
-    std::pair<std::uint64_t, std::uint64_t> locate(std::uint64_t ordinal,
-                                                 profile_comparison_work * work) const {
+    profile_encoded_record locate(std::uint64_t ordinal, profile_comparison_work * work,
+                                   std::uint64_t * predecessor = nullptr) const {
       auto group = ordinal / P::codec_block_size;
       auto at = block_offset(group);
-      auto previous = profile_detail::read_count<P>(data_, at);
-      if (!group && previous) error_detail::raise<std::invalid_argument>("first profile predecessor is not empty");
+      auto record = parse_absolute(at);
+      if (!group && record.retained) error_detail::raise<std::invalid_argument>("first profile key is not literal");
+      std::uint64_t previous = 0;
       for (auto i = group * P::codec_block_size; i < ordinal; ++i) {
-        auto record = parse(at, previous);
         previous = record.key_units;
-        at = record.next_offset;
+        record = parse_relative(record.next_offset, previous);
         if (work) ++work->skipped_headers;
       }
-      return {at, previous};
+      if (predecessor) {
+        if (ordinal && ordinal % P::codec_block_size == 0)
+          previous = predecessor_units(ordinal, work);
+        if (record.retained > previous)
+          error_detail::raise<std::invalid_argument>("profile retained prefix exceeds predecessor");
+        *predecessor = previous;
+      }
+      return record;
     }
 
-    profile_encoded_record parse(std::uint64_t at, std::uint64_t previous) const {
+    profile_encoded_record parse_absolute(std::uint64_t at) const {
+      auto retained = profile_detail::read_count<P>(data_, at);
+      return parse_payload(at, retained);
+    }
+
+    profile_encoded_record parse_relative(std::uint64_t at, std::uint64_t previous) const {
       auto backspace = profile_detail::read_backspace<P>(data_, at);
+      if (backspace > previous) error_detail::raise<std::invalid_argument>("profile backspace exceeds predecessor");
+      return parse_payload(at, previous - backspace);
+    }
+
+    profile_encoded_record parse_payload(std::uint64_t at, std::uint64_t retained) const {
       auto suffix = profile_detail::read_count<P>(data_, at);
       auto value = metadata_.common_value_width ? *metadata_.common_value_width : profile_detail::read_count<P>(data_, at);
-      if (backspace > previous) error_detail::raise<std::invalid_argument>("profile backspace exceeds predecessor");
-      auto retained = previous - backspace;
       auto key_units = profile_detail::add(retained, suffix);
+      (void)profile_detail::multiply(key_units, P::bits_per_unit);
       if (at > metadata_.extent || suffix > metadata_.extent - at || value > metadata_.extent - at - suffix)
         error_detail::raise<std::invalid_argument>("truncated profile payload");
       auto suffix_bits = profile_detail::multiply(suffix, P::bits_per_unit);
@@ -854,7 +871,7 @@ namespace everett {
       auto key_data = data_.subview(profile_detail::multiply(at, P::bits_per_unit), suffix_bits);
       at += suffix;
       auto value_data = data_.subview(profile_detail::multiply(at, P::bits_per_unit), value_bits);
-      return {previous, backspace, retained, key_units, value, key_data, value_data, at + value};
+      return {retained, key_units, value, key_data, value_data, at + value};
     }
 
     profile_encoded_record next_record(profile_encoded_record const & previous, std::uint64_t ordinal) const {
@@ -862,10 +879,12 @@ namespace everett {
       if (ordinal % P::codec_block_size == 0) {
         if (block_offset(ordinal / P::codec_block_size) != at)
           error_detail::raise<std::invalid_argument>("profile group offset mismatch");
-        if (profile_detail::read_count<P>(data_, at) != previous.key_units)
-          error_detail::raise<std::invalid_argument>("profile group predecessor mismatch");
+        auto next = parse_absolute(at);
+        if (next.retained > previous.key_units)
+          error_detail::raise<std::invalid_argument>("profile retained prefix exceeds predecessor");
+        return next;
       }
-      return parse(at, previous.key_units);
+      return parse_relative(at, previous.key_units);
     }
 
     static void decode_into(profile_encoded_record const & record, std::uint64_t limit,
@@ -880,6 +899,50 @@ namespace everett {
       context = record.key_units;
     }
   };
+
+  // Sequential framing without reconstructed keys or payload copies. The
+  // caller retains the view's sections. A copied frame's suffix/value views
+  // remain valid while those sections live; the peek reference expires on
+  // advance or destruction. Parsing checks lengths and block offsets, but
+  // sorted order and maximal retention require semantic admission or a caller
+  // that compares against the physical predecessor.
+  template <class P, stream_role Role> struct profile_encoded_cursor {
+    using policy_type = P;
+    static constexpr stream_role role = Role;
+
+    explicit profile_encoded_cursor(profile_view<P, Role> view) : view_(view) {
+      if (!done()) record_ = view_.encoded_at(0);
+    }
+
+    bool done() const noexcept { return ordinal_ == view_.size(); }
+    std::uint64_t ordinal() const noexcept { return ordinal_; }
+    profile_encoded_record const & peek() const & {
+      if (done()) error_detail::raise<std::out_of_range>("encoded profile cursor at end");
+      return record_;
+    }
+    profile_encoded_record const & peek() const && = delete;
+
+    void advance() {
+      if (done()) error_detail::raise<std::out_of_range>("encoded profile cursor at end");
+      if (ordinal_ + 1 == view_.size()) {
+        if (record_.next_offset != view_.metadata_.extent)
+          error_detail::raise<std::invalid_argument>("trailing profile data");
+        if (record_.key_units != view_.metadata_.terminal_key_units)
+          error_detail::raise<std::invalid_argument>("profile terminal length mismatch");
+      } else record_ = view_.next_record(record_, ordinal_ + 1);
+      ++ordinal_;
+    }
+
+  private:
+    profile_view<P, Role> view_;
+    profile_encoded_record record_;
+    std::uint64_t ordinal_ = 0;
+  };
+
+  template <class P, stream_role Role>
+  profile_encoded_cursor<P, Role> profile_view<P, Role>::encoded_cursor() const {
+    return profile_encoded_cursor<P, Role>(*this);
+  }
 
   // Resumable sequential traversal. Each encoded record is parsed once and
   // its value remains a view of the original payload. Only the current key is
@@ -1003,10 +1066,8 @@ namespace everett {
         auto comparison = compare_common_bits(previous, key);
         if (i && comparison.order > 0) error_detail::raise<std::invalid_argument>("profile keys must be sorted");
         auto position = (data.bit_size >> P::unit_shift);
-        if (i % P::codec_block_size == 0) {
+        if (i % P::codec_block_size == 0)
           offsets.push_back(position - profile_detail::multiply(i, common.value_or(0)));
-          profile_detail::write_count<P>(data, previous_units);
-        }
         auto key_units = (key.size() >> P::unit_shift);
         auto retained = (comparison.common_bits >> P::unit_shift);
         if (!prefix_ceilings.empty()) retained = std::min(retained, prefix_ceilings[i]);
@@ -1014,7 +1075,8 @@ namespace everett {
         if (retained && restart_factor && key_units <= std::numeric_limits<std::uint64_t>::max() / restart_factor &&
             start - anchor_offset > restart_factor * key_units) retained = 0;
         if (!retained) anchor_offset = start;
-        profile_detail::write_backspace<P>(data, previous_units - retained);
+        if (i % P::codec_block_size == 0) profile_detail::write_count<P>(data, retained);
+        else profile_detail::write_backspace<P>(data, previous_units - retained);
         profile_detail::write_count<P>(data, key_units - retained);
         if (!common) profile_detail::write_count<P>(data, (value.size() >> P::unit_shift));
         profile_detail::append(data, key.subview(profile_detail::multiply(retained, P::bits_per_unit),
@@ -1056,7 +1118,7 @@ namespace everett {
   // prefix ceiling before appending that key. There is no all-keys staging:
   // retained state is the previous key, encoded bytes and one offset per group.
   // With the same ceilings this produces exactly the batch borrowed encoding
-  // (restart_factor == 0), including checkpoints, tail padding and EF metadata.
+  // (restart_factor == 0), including block controls, tail padding and EF metadata.
   template <class P> struct profile_borrowed_writer {
     using policy_type = P;
     static constexpr stream_role role = stream_role::borrowed;
@@ -1084,9 +1146,8 @@ namespace everett {
       try {
         if (count_ % P::codec_block_size == 0) {
           offsets_.push_back((data_.bit_size >> P::unit_shift));
-          profile_detail::write_count<P>(data_, previous_units);
-        }
-        profile_detail::write_backspace<P>(data_, previous_units - retained);
+          profile_detail::write_count<P>(data_, retained);
+        } else profile_detail::write_backspace<P>(data_, previous_units - retained);
         profile_detail::write_count<P>(data_, key_units - retained);
         auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
         profile_detail::append(data_, key.subview(retained_bits, key.size() - retained_bits));

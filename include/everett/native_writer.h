@@ -73,9 +73,8 @@ namespace everett {
           if (count_ % P::codec_block_size == 0) {
             auto stride = multiply(count_, common_.value_or(0));
             offsets_.push_back((data_.bit_size >> P::unit_shift) - stride);
-            write_count<P>(data_, previous_units_);
-          }
-          write_backspace<P>(data_, previous_units_ - retained);
+            write_count<P>(data_, retained);
+          } else write_backspace<P>(data_, previous_units_ - retained);
           write_count<P>(data_, literal_units);
           if (!common_) write_count<P>(data_, value_units);
           profile_detail::append(data_, literal);
