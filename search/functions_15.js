@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['_7eregion_0',['~region',['../structeverett_1_1mapped__file__detail_1_1region.html#ac908d363ec1117a67f554513dfd19db0',1,'everett::mapped_file_detail::region']]]
+  ['zero_0',['zero',['../structeverett_1_1wrapping__fingerprint__algebra.html#ab0e3c622b39af2706e65f813afe56106',1,'everett::wrapping_fingerprint_algebra']]]
 ];

@@ -91,13 +91,13 @@ Retained changes</h1>
 </ul>
 <p>The selection precondition is <code>ordinal &lt; popcount(word)</code>. Every cumulative byte population is at most 64; the marked subtraction has no cross-byte borrow. Each packing tile consumes exactly eight or four input words and stores one output word. No extra alignment or padding is required.</p>
 <p>The existing sparse lookup and scalar dense scan remain. Their first-word mask, 65-word navigation bound, 4096-bit span check, and guarded tail behavior are unchanged. A <code>select15</code>-only consumer now instantiates the shared 64-width packer dispatch; typed consumers already included it. Compile-time cost was not measured.</p>
-<h1><a class="anchor" id="method"></a>
+<h1><a class="anchor" id="method-1"></a>
 Method</h1>
 <p>Apple M2 Max, AppleClang 21, C++20, <code>-O3 -DNDEBUG</code>, strict warnings, <code>QOS_CLASS_USER_INITIATED</code>, without core pinning. Every local build and timing run held both the host <code>cpu-heavy</code> lease and a lease for its build directory.</p>
 <p>Each query variant reads the same low/high arrays and matching sample metadata. Inputs are deterministic monotone residuals; every timed query is checked against the original residual array. Current, baseline, fixed-size, and prototype builders produce equal complete encoded checksums. Queries and construction variants rotate order over five trials. Each query trial performs 524,288 lookups through 65,536 shared positions (512 KiB). The high array is tested at both 0 and 8 modulo 64 using identical query positions. Results are resident-memory timings, with allocation, construction, and correctness checks outside query timing.</p>
 <p>The hot case has 4,096 entries and 5,376 encoded array bytes; the larger case has 2,097,152 entries and 2,752,512 encoded array bytes. Both have low width 8. These are equal logical inputs and equal encoded layouts, not a claim that the larger index exceeds every cache. The harness also retains source/oracle arrays, metadata copies, and owned build outputs; these are excluded from encoded byte totals, as are C++ object fields and allocator overhead.</p>
 <p>Build measurements retain complete owners beyond the timed call, replace the previous owner, and checksum every output array afterward. They include allocation and destruction of the previous result. Packing and validation rows measure those operations separately; validation variants run in fixed order. Their inputs remain resident. No storage I/O or end-to-end store latency is timed.</p>
-<h1><a class="anchor" id="native-m2-results-1"></a>
+<h1><a class="anchor" id="native-m2-results-2"></a>
 Native M2 results</h1>
 <p>Medians in nanoseconds; the query rows below use high-array alignment 0 modulo 64. Every CSV also includes minimum/maximum, both alignments, and checksums.</p>
 <table class="markdownTable">

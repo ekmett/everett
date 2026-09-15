@@ -101,8 +101,10 @@ Blobs, worlds, and ownership</h2>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>sample_cursor</code>, <code>index_builder</code>, <code>index_pipeline</code>   </td><td class="markdownTableBodyNone">Sampling an existing pair and building new index links incrementally.    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>mapped_file</code>, <code>file</code>, <code>multiverse</code>   </td><td class="markdownTableBodyNone">Retained read-only mappings and policy-checked object access.    </td></tr>
+<td class="markdownTableBodyNone"><code>query_root</code>, <code>query_root_builder</code>, <code>query_cursor</code>   </td><td class="markdownTableBodyNone">Preparing a bounded search head and visiting matching native entries through an exact index chain.    </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>mapped_file</code>, <code>file</code>, <code>multiverse</code>   </td><td class="markdownTableBodyNone">Retained read-only mappings and policy-checked object access.    </td></tr>
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>reference_world</code>, <code>partition_round</code>, <code>pin_set</code>   </td><td class="markdownTableBodyNone">Executable snapshot, update, fingerprint, and ownership semantics.   </td></tr>
 </table>
 <p>Immutability makes sharing straightforward. Two readers can retain the same native allocation while using different indexes. A saved world can retain old inputs after a newer world has compacted them. Reclamation follows ownership: an object stays alive while something still needs it.</p>
@@ -295,6 +297,49 @@ Build a chain while retaining native allocations</h2>
 <div class="ttc" id="astructeverett_1_1index__pipeline_html"><div class="ttname"><a href="structeverett_1_1index__pipeline.html">everett::index_pipeline</a></div><div class="ttdef"><b>Definition</b> index_pipeline.h:35</div></div>
 <div class="ttc" id="astructeverett_1_1index__pipeline_html_a3c7feb3744dab8b21bd82bf67ed63df8"><div class="ttname"><a href="structeverett_1_1index__pipeline.html#a3c7feb3744dab8b21bd82bf67ed63df8">everett::index_pipeline::step</a></div><div class="ttdeci">std::uint64_t step(std::uint64_t quanta)</div><div class="ttdef"><b>Definition</b> index_pipeline.h:66</div></div>
 </div><!-- fragment --><p>The borrowed indexes are new; the native allocation at the head is the same one supplied for the final stage. Intermediate sampled catalogs are passed through the pipeline as bounded queues. Finalized pairs own their exact downstream relationships, allowing older and newer chains to coexist.</p>
+<h2><a class="anchor" id="query-the-whole-chain"></a>
+Query the whole chain</h2>
+<p>A query starts from a prepared root. If the head already fits in one group, preparation retains it as-is. Otherwise, I add empty-native routing catalogs above it until the new head fits. Those catalogs contain successively sparser samples and retain the existing chain. Preparation scans the original head; we do that once and reuse the root for subsequent queries.</p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="query_8h.html">everett/query.h</a>&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;initializer_list&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;string_view&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;utility&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keywordtype">int</span> main() {</div>
+<div class="line">  <span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a>;</div>
+<div class="line">  <span class="keyword">using </span>policy = <a class="code hl_struct" href="structeverett_1_1storage__policy.html">storage_policy&lt;profile_unit::byte, variable_values, 3&gt;</a>;</div>
+<div class="line">  <span class="keyword">using </span><a class="code hl_struct" href="structeverett_1_1blob.html">blob</a> = <a class="code hl_struct" href="structeverett_1_1profile__blob.html">profile_blob&lt;policy&gt;</a>;</div>
+<div class="line">  <span class="keyword">using </span>pair = std::shared_ptr&lt;blob const&gt;;</div>
+<div class="line">  <span class="keyword">auto</span> make = [](std::initializer_list&lt;std::pair&lt;std::string_view, std::string_view&gt;&gt; rows) {</div>
+<div class="line">    std::vector&lt;profile_record&gt; records;</div>
+<div class="line">    <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span> &amp; [key, value] : rows)</div>
+<div class="line">      records.push_back({bit_string::from_bytes(key), bit_string::from_bytes(value)});</div>
+<div class="line">    <span class="keywordflow">return</span> std::make_shared&lt;blob const&gt;(blob::build(records));</div>
+<div class="line">  };</div>
+<div class="line">  <span class="keyword">auto</span> base = make({{<span class="stringliteral">&quot;alpha&quot;</span>, <span class="stringliteral">&quot;a&quot;</span>}, {<span class="stringliteral">&quot;beta&quot;</span>, <span class="stringliteral">&quot;lower&quot;</span>}, {<span class="stringliteral">&quot;gamma&quot;</span>, <span class="stringliteral">&quot;g&quot;</span>}, {<span class="stringliteral">&quot;omega&quot;</span>, <span class="stringliteral">&quot;o&quot;</span>}});</div>
+<div class="line">  <span class="keyword">auto</span> upper = make({{<span class="stringliteral">&quot;beta&quot;</span>, <span class="stringliteral">&quot;upper&quot;</span>}, {<span class="stringliteral">&quot;delta&quot;</span>, <span class="stringliteral">&quot;d&quot;</span>}, {<span class="stringliteral">&quot;theta&quot;</span>, <span class="stringliteral">&quot;t&quot;</span>}});</div>
+<div class="line">  <a class="code hl_struct" href="structeverett_1_1index__pipeline.html">index_pipeline&lt;policy&gt;</a> indexes(base, std::vector&lt;pair&gt;{upper});</div>
+<div class="line">  <span class="keywordflow">while</span> (!indexes.done()) indexes.<a class="code hl_function" href="structeverett_1_1index__pipeline.html#a3c7feb3744dab8b21bd82bf67ed63df8">step</a>(64);</div>
+<div class="line"> </div>
+<div class="line">  <a class="code hl_struct" href="structeverett_1_1query__root__builder.html">query_root_builder&lt;policy&gt;</a> prepare(indexes.finish());</div>
+<div class="line">  <span class="keywordflow">while</span> (!prepare.done()) prepare.step(64);</div>
+<div class="line">  <span class="keyword">auto</span> root = prepare.finish();</div>
+<div class="line">  <span class="keyword">auto</span> key = bit_string::from_bytes(<span class="stringliteral">&quot;beta&quot;</span>);</div>
+<div class="line">  <span class="keyword">auto</span> query = root.cursor(key.view());</div>
+<div class="line">  std::vector&lt;bit_string&gt; values;</div>
+<div class="line">  <span class="keywordflow">while</span> (!query.done()) {</div>
+<div class="line">    query.step(1);</div>
+<div class="line">    <span class="keywordflow">if</span> (query.has_match()) values.push_back(query.take_match().value);</div>
+<div class="line">  }</div>
+<div class="line">  <span class="keywordflow">return</span> values.size() == 2 &amp;&amp; values[0] == bit_string::from_bytes(<span class="stringliteral">&quot;upper&quot;</span>) &amp;&amp;</div>
+<div class="line">    values[1] == bit_string::from_bytes(<span class="stringliteral">&quot;lower&quot;</span>) ? 0 : 1;</div>
+<div class="line">}</div>
+<div class="ttc" id="aquery_8h_html"><div class="ttname"><a href="query_8h.html">query.h</a></div><div class="ttdoc">Prepares immutable catalog chains and enumerates every matching native segment.</div></div>
+<div class="ttc" id="astructeverett_1_1query__root__builder_html"><div class="ttname"><a href="structeverett_1_1query__root__builder.html">everett::query_root_builder</a></div><div class="ttdef"><b>Definition</b> query.h:65</div></div>
+</div><!-- fragment --><p><code>query_root&lt;policy&gt;::build(head)</code> is the eager preparation convenience. A cursor owns its query key and pins the unvisited chain, so it can outlive the original handles. <code>step(budget)</code> visits at most that many catalogs and stops when a match is ready. <code>take_match()</code> returns an owned value, native ordinal and exact source pair; a pending match pauses further traversal until it is taken.</p>
+<p>Matches arrive from head toward target. That order describes the index chain; the caller supplies any replacement or arrow-composition semantics. A native match does not suppress routing to later matches. Query steps bound catalog visits, not reconstructed bytes or value-copy cost. The <a class="el" href="md_docs_2query.html">query contract</a> describes preparation, trust and work bounds.</p>
 <h2><a class="anchor" id="fork-a-world-and-apply-disjoint-updates"></a>
 Fork a world and apply disjoint updates</h2>
 <p>Use <code>reference_world</code> to exercise the update semantics with byte-string keys and unsigned 64-bit values. Each batch is prepared against the same base. Partition ownership determines which keys it may change; different workers may read that base while preparing their assigned writes.</p>
@@ -345,7 +390,7 @@ Mapped Objects</h1>
 Performance</h1>
 <p>The compact representation also gives us useful units of parallel work. Packed rank classes can be summed together, byte prefixes can be compared sixteen bytes at a time, and bit streams can be copied or framed in word-sized chunks. The implementations keep loads within the supplied spans, including the last partial byte. Compiler targets select the available instructions; the package does not add runtime dispatch or impose ISA flags on consumers.</p>
 <p>I measure dependent queries as well as independent throughput. The next step through a fractional index depends on the previous answer, and the fastest bulk kernel need not have the lowest latency for that chain. In particular, groups of three keep a scalar packed sum, while seven and thirty-one use NEON on little-endian AArch64. The dense select scan also stays scalar: its SIMD candidate was slower in the measured cases.</p>
-<p>The <a class="el" href="blob-and-pipeline-performance.html">blob and pipeline comparison</a> measures complete in-memory builds, three-link index construction and searches within a known window. It checks the resulting bytes and answers against the same inputs and an independent catalog oracle. The component reports cover <a class="el" href="md_bench_2key__bits.html">key and bit operations</a>, <a class="el" href="eliasfano-selection-and-construction.html">Elias–Fano</a>, <a class="el" href="packed-group-and-bitmap-rank-reductions.html">grouped and bitmap rank</a>, and <a class="el" href="md_bench_2rank__compare.html">rank15</a>, with source, raw trials and reproduction commands. Disk faults and a complete multi-catalog search are separate costs.</p>
+<p>The <a class="el" href="blob-and-pipeline-performance.html">blob and pipeline comparison</a> measures complete in-memory builds, three-link index construction and searches within a known window. It checks the resulting bytes and answers against the same inputs and an independent catalog oracle. The component reports cover <a class="el" href="md_bench_2key__bits.html">key and bit operations</a>, <a class="el" href="eliasfano-selection-and-construction.html">Elias–Fano</a>, <a class="el" href="packed-group-and-bitmap-rank-reductions.html">grouped and bitmap rank</a>, and <a class="el" href="md_bench_2rank__compare.html">rank15</a>, with source, raw trials and reproduction commands. The <a class="el" href="md_bench_2query__chain.html">complete-query measurements</a> include root preparation and traversal through every catalog, with owned results. These are resident-memory measurements; disk faults remain a separate cost.</p>
 <h1><a class="anchor" id="proofs"></a>
 Proofs</h1>
 <p>The <a class="el" href="everett-an-abstract-proof-core.html">Lean model</a> checks the algebra, ownership and fractional indexing rules behind the construction. Its theorems cover chronological composition, disjoint updates, endpoint contributions, snapshot adoption and retention of exact target dependencies. An adjacent-merge theorem connects the composition law to adoption of a new representation.</p>

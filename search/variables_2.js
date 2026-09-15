@@ -20,5 +20,5 @@ var searchData=
   ['count_5f_17',['count_',['../structeverett_1_1front__view.html#ae0d3524acfeca7a640d6aec8a99f357e',1,'everett::front_view::count_'],['../structeverett_1_1front__array.html#a45afae3c725f7260f8021bf9e44f2e9a',1,'everett::front_array::count_'],['../structeverett_1_1profile__borrowed__writer.html#a2d7780a8b496bc92b16274f84cfc4eb0',1,'everett::profile_borrowed_writer::count_'],['../structeverett_1_1profile__sample__encoder.html#a50eb9bfc8dc9463aeb35eb4f8900681b',1,'everett::profile_sample_encoder::count_'],['../structeverett_1_1profile__sample__decoder.html#a7981334cf9a9ae5b376aba4b75458881',1,'everett::profile_sample_decoder::count_']]],
   ['count_5fcode_18',['count_code',['../structeverett_1_1profile__metadata.html#a318fadede54ec10bc2e6ae0a6f89d70d',1,'everett::profile_metadata']]],
   ['count_5funit_19',['count_unit',['../structeverett_1_1profile__metadata.html#a98293cb81ddb9cd3db96bc1846385a1c',1,'everett::profile_metadata']]],
-  ['current_5f_20',['current_',['../structeverett_1_1partition__round.html#af7db6e47cb91c4c31f46b63b5a8470ec',1,'everett::partition_round']]]
+  ['current_5f_20',['current_',['../structeverett_1_1query__cursor.html#a8d6876592a776eb857cafe8f88684f04',1,'everett::query_cursor::current_'],['../structeverett_1_1partition__round.html#af7db6e47cb91c4c31f46b63b5a8470ec',1,'everett::partition_round::current_']]]
 ];
