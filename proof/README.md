@@ -55,6 +55,7 @@ Field guide
 | [Adoption](Everett/Adoption.lean) | Discharges the semantic adoption premise for chronological adjacent merges, using the actual history-composition theorem |
 | [Fractional](Everett/Fractional.lean) | Stable tagged merging; exact every-Kth samples; sampled predecessor windows; endpoint-rank projections; local/global predecessor equivalence; false-borrow recovery for unique native keys; a list-level index builder and exact-target retention |
 | [Prefix](Everett/Prefix.lean) | Finite-string lexicographic order, prefix interval convexity and the exact LCP minimum for three ordered strings |
+| [Framing](Everett/Framing.lean) | Retained prefixes and reconstructed key lengths stay within physical stream extents; admitted extent bounds imply bounded conversion to bits |
 | [Frontier](Everett/Frontier.lean) | Merge-head ordering from carried LCP lengths, suffix-only comparison at equal lengths, and exact new frontier lengths |
 | [Transfer](Everett/Transfer.lean) | Content-mismatch transfers, the literal-position invariant, composition and associative ordered summaries |
 | [NativeMerge](Everett/NativeMerge.lean) | Executable two-way merging of strictly ordered native runs; unique sorted output; optional pointwise lookup composition; chronological reassociation and disjoint-support commutation |

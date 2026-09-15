@@ -6,6 +6,7 @@ import Everett.Examples
 import Everett.Allocation
 import Everett.FractionalExamples
 import Everett.Prefix
+import Everett.Framing
 import Everett.Frontier
 import Everett.Transfer
 import Everett.NativeMerge
