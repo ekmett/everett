@@ -21,9 +21,6 @@
 #include <string_view>
 
 namespace diet {
-  using string_registry = bin<tip<unsorted<std::optional<std::string>>>, sort_undefined>;
-  using string_policy = storage_policy<string_registry>;
-
   // A custom sort supplies state_type, initial(key), apply(key,state,arrow),
   // compose(key,older,newer), present(key,state), hash_key(key), and
   // hash_value(key,state). Its value codec encodes arrows, not necessarily

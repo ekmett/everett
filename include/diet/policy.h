@@ -71,4 +71,9 @@ namespace diet {
     static constexpr bool fixed_width = registry::fixed_width;
     static constexpr std::optional<std::uint64_t> value_width = registry::value_width;
   };
+
+  // The ordinary string table uses bit addressing and leaves one subtree for
+  // future sorts. Its sampling and count-code defaults need no tuning.
+  using string_registry = bin<tip<unsorted<std::optional<std::string>>>, sort_undefined>;
+  using string_policy = storage_policy<string_registry>;
 }

@@ -13,6 +13,7 @@
 #pragma once
 
 #include <diet/file.h>
+#include <diet/fingerprint.h>
 #include <diet/cola_local_merge.h>
 #include <diet/file_index_pipeline.h>
 #include <diet/mapped_blob.h>
@@ -26,6 +27,7 @@
 #include <filesystem>
 #include <span>
 #include <stdexcept>
+#include <string_view>
 #include <utility>
 
 namespace diet {
@@ -35,6 +37,9 @@ namespace diet {
   template <class P> struct cola;
   template <class P> struct timeline;
   template <class P> struct branch_point;
+  template <class P, class A, std::uint64_t DepthLimit> struct typed_engine;
+  template <class Core> struct connection;
+  struct connection_options;
 
   // An individual policy-bound sort code. Construction validates its packed
   // representation and unit alignment only. The owner of a sort-code family
@@ -61,7 +66,7 @@ namespace diet {
   // sealing creates immutable files under caller-reserved identities. The
   // optional SQLite catalog owns persistent roots and reservations separately.
   // Files/slices retain their mappings independently of this path holder.
-  template <class P> struct fridge {
+  template <class P = string_policy> struct fridge {
     using policy_type = P;
     using registry_type = typename P::registry_type;
     using sort = diet::sort<P>;
@@ -109,11 +114,17 @@ namespace diet {
     using cola = diet::cola<P>;
     using timeline = diet::timeline<P>;
     using branch_point = diet::branch_point<P>;
+    using active_engine = diet::typed_engine<P, wrapping_fingerprint_algebra, 256>;
+    using tap = diet::connection<active_engine>;
 
     explicit fridge(std::filesystem::path root) : root_(checked_root(std::move(root))) {}
 
     std::filesystem::path const & root() const & noexcept { return root_; }
     std::filesystem::path const & root() const && = delete;
+
+    // Include diet/connection.h and link diet::sqlite for these operations.
+    tap connect(std::string_view name) const;
+    tap connect(std::string_view name, connection_options const & options) const;
 
     file open_object(object_id const & id, file_kind kind, file_open_mode mode = file_open_mode::checked) const {
       auto result = file::open(root_ / object_path(id, kind), mode);
