@@ -942,3 +942,10 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 Separate files versus extents in managed blobs, transport and client integration
 remain policy choices. The library's correctness contracts must remain explicit
 when those implementations are selected.
+
+### Optional experiments
+
+Key-only self-cancelling toggles remain an ambitious TODO, not a required second
+arrow instance or a completion criterion for the store. Their hash deltas depend
+on prior-state polarity, so source-state validation and replay need a convincing
+contract before implementation is worthwhile. I may omit them entirely.

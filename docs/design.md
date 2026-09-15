@@ -48,8 +48,10 @@ kind of application state.
 
 The sort owns the entire record grammar, including whether it has a value at
 all. FC strings are one key codec; a fixed-width integer key can occupy its known
-bits without string controls. A key-only toggle can denote an operation with no
-payload, with two occurrences composing to identity.
+bits without string controls. A key-only toggle illustrates an operation with no
+payload, with two occurrences composing to identity. I keep toggles as an
+optional experiment: their state-dependent hash accounting and validation may
+cost more than the representation saves.
 The registry dispatches to the record handler, while the store owns navigation,
 pins and scheduling. The current profile implementation supplies the FC-string
 case; connecting other record grammars is active-handle work.

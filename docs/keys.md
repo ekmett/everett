@@ -200,6 +200,12 @@ key-associated operation rather than a mandatory `(key, value)` pair. Its query
 must account for all relevant toggle occurrences, and its fingerprint follows
 the interpreted state rather than a fictional stored value slot.
 
+I treat this toggle sort as an ambitious optional TODO, not an implementation
+requirement. Its hash delta needs the prior state's polarity: the same encoded
+toggle adds a key's contribution when absent and subtracts it when present.
+Source-state validation and replay must establish that interpretation. I may
+leave toggles out if validating them costs more than the payload saving is worth.
+
 The following count-code parameters describe the implemented FC profile. Mixed
 sorts will select each leaf's own key/value grammar through the active handle.
 
