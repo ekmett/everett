@@ -34,10 +34,11 @@ First, some names for the intended aggregates:
 `world`, `timeline` and `branch_point` associated types carrying the same policy.
 `open_query` reopens a prepared exact chain from its persisted pair identity;
 [mapped blobs](mapped-blobs.md) describes the portable sections and ownership. The [sealing primitive](object-writer.md)
-uses reserved identities; world publication remains a separate catalog operation. Persistent worlds/timelines remain design work;
-their aggregate types are forward declarations. The semantic oracle is
-`reference_world`. The [SQLite catalog](catalog.md) is the selected home for
-worlds, pins and merge/index-rebuild progress.
+uses reserved identities. The [SQLite component](sqlite-catalog.md) publishes
+immutable timeline generations, saves and forks with exact root pins. The
+`world` and `timeline` aggregate types are still forward declarations; the
+semantic oracle is `reference_world`. The [catalog design](catalog.md) extends
+that metadata owner to merge jobs, checkpoints and pin retirement.
 
 A world is represented by a small collection of immutable, memory-mappable
 blobs. Updates produce small new blobs; merges produce new larger blobs. A snapshot or

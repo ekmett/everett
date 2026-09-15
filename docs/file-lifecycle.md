@@ -3,9 +3,9 @@
 Updated 2026-09-15. SQLite manages catalog metadata; bulk data lives in two
 custom file kinds, `.kv` and `.index`. We have read-only mapping, checked object
 envelopes, typed codecs and an immutable object writer as implemented foundations.
-Portable codec sections, exact mapped chains and an optional SQLite save catalog
-are also implemented. Mutable-head publication and the recovery executor remain
-work. See
+Portable codec sections, exact mapped chains and an optional SQLite catalog
+support saves and conditional timeline publication. The recovery executor
+remains work. See
 [implementation status](implementation.md), the [catalog design](catalog.md)
 and the [failure and resumption protocol](durability.md).
 
@@ -13,8 +13,8 @@ and the [failure and resumption protocol](durability.md).
 
 | Extension | Intended encoded contents | Exact dependencies recorded in the catalog |
 | --- | --- | --- |
-| `.kv` | Immutable ordinary-FC native keys, values, W-spaced length checkpoints, final key length and native sampled offsets | Any objects required by the value/arrow representation |
-| `.index` | Ordinary-FC borrowed keys, physical length/offset metadata, K-spaced origin ranks, exact bit-LCP counts and false-borrow flags | Its native source and exact downstream blob/index versions |
+| `.kv` | Immutable ordinary-FC native keys and values, absolute retained counts at W-spaced block starts, final key length and native sampled offsets | Any objects required by the value/arrow representation |
+| `.index` | Ordinary-FC borrowed keys with the same block framing, sampled offsets, K-spaced origin ranks, exact bit-LCP counts and false-borrow flags | Its native source and exact downstream blob/index versions |
 
 Separating a fractional index from its native file lets several index versions
 share the same native bytes. We select compatible objects, their
@@ -249,12 +249,13 @@ catalog transaction selecting it to be durable. SQLite journals the metadata;
 there is no second custom update log. We cannot acknowledge
 in-memory-only payloads under this durability contract.
 
-Small versioned merge/index continuations live in SQLite BLOBs referring to
+The checkpoint design places versioned merge/index continuations in SQLite BLOBs referring to
 durable sealed ranges of `.kv` or `.index` outputs. We store exact P, byte/bit
 address units, virtual interval K, physical width W, record counts, input
 identities and sufficient coding/comparison contexts. A query comparison binds
-its exact query, bit agreement, full key length and direction; a construction
-cursor instead needs the actual prior key used to decode or emit its next suffix.
+its exact query, bit agreement, optional full key length and direction. A
+construction cursor instead needs the actual key context for its current
+position; a merge input ordinal names its next unconsumed record.
 Index continuations retain their cut ordinal, borrowed rank and cut-LCP state,
 while physical continuations retain predecessor and terminal length accounting.
 Counts of records are not byte or bit offsets. Commit a

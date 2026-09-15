@@ -70,13 +70,15 @@ successful `step(catalog_budget)` visits at most that many catalogs, stopping
 when it has a native match or no remaining route. The default budget is one.
 The cursor uses `search_window` at each catalog, carrying the sampled predecessor's
 group and query-bound comparison context into the exact target. This context
-stores exact common-prefix agreement in bits, full key length in policy units,
+stores exact common-prefix agreement in bits, an optional full key length in policy units,
 and comparison direction. It shares the owned immutable query. No inherited
 key prefix is reconstructed during traversal.
 
-The full key length remains distinct from prefix agreement. A short query may
-agree with only part of a much longer boundary; endpoints and backspace parsing
-still need the actual lengths.
+Full key length is distinct from prefix agreement. A short query may agree with
+only part of a longer boundary. General comparisons use length when that
+distinction matters; ordered cut repair obtains an exact comparison without
+reading the predecessor's length. Absolute block-start framing supplies the
+local length needed to parse subsequent backspaces.
 
 There are three states to observe:
 

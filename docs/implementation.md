@@ -398,8 +398,8 @@ sets. It preserves all existing native/index bytes and exact target pins.
 `query_cursor<P>` owns its query and unvisited target suffix. Each step visits
 at most the caller's catalog budget and pauses at a native match. Taking the
 match returns its owned value, ordinal and exact source pair. Equality continues
-to route downstream, and full boundary lengths are retained alongside the
-exact query agreement and comparison direction. Independent copies can progress separately. Decoding
+to route downstream, carrying exact query agreement, comparison direction and
+an optional full boundary length. Independent copies can progress separately. Decoding
 failure makes the cursor unusable rather than resuming partial work.
 
 The [query contract](query.md) separates entry/header bounds from string bytes,
@@ -747,12 +747,13 @@ ctest --test-dir build-sanitize --output-on-failure
 
 The default component suites cover codecs, native and borrowed writers, index
 construction, queries, world semantics, ownership, durability and mapped files.
-With SQLite enabled, five more suites cover the catalog, adversarial operations,
-forwarded VFS failures, process interruption and timeline publication. Three package consumers check relocated core and
+With SQLite enabled, six more suites cover the catalog, adversarial operations,
+forwarded VFS failures, process interruption, timeline publication and streamed
+merge publication. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
-Combined verification at `35be933` on 2026-09-15: AppleClang 21, C++20, Release with strict
-warnings and ASan/UBSan passed all **32 CTests**, including three package consumers
+Combined verification at `9e4b046` on 2026-09-15: AppleClang 21, C++20, Release with strict
+warnings and ASan/UBSan passed all **36 CTests**, including three package consumers
 and Doxygen. SQLite headers and runtime were 3.53.4. This run covers
 ordinary-FC comparison, complete owning and mapped query chains, portable
 unaligned navigation, native construction and incremental merges, immutable
@@ -766,9 +767,9 @@ rows through fresh connections. The 20 process-interruption cases additionally
 check actual writer death, including committed-but-unacknowledged operations.
 These tests do not establish behavior under physical power loss.
 
-Doxygen checked 29 public headers and 26 real declaration associations, with
+Doxygen checked 33 public headers and 32 real declaration associations, with
 clean generation that removes obsolete pages. The proof checkpoint checked
-711 Lean declarations with only standard `propext`, `Quot.sound` and
+756 Lean declarations with only standard `propext`, `Quot.sound` and
 `Classical.choice` axioms.
 
 All seven complete README programs and the native-merge and SQLite guide

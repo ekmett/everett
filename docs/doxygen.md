@@ -112,9 +112,9 @@ before each run so removed declarations cannot leave stale published pages.
 - A baseline without the aliases emits exactly the two expected unknown-command
   warnings per header. The configured run must emit no warnings.
 
-On 2026-09-15, Doxygen 1.9.8 passed these checks for all 29 public headers,
-26 real function/overload cases and twelve fixture symbols in all three
-metadata layouts. The unconfigured baseline had 58 warnings, exclusively for
+At `9e4b046` on 2026-09-15, Doxygen 1.9.8 passed these checks for all 33 public headers,
+32 real function/overload cases and twelve fixture symbols in all three
+metadata layouts. The unconfigured baseline had 66 warnings, exclusively for
 `\license` and `\endlicense`.
 
 These checks verify file metadata and the tested lexical associations. Some

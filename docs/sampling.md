@@ -296,7 +296,7 @@ borrowed key $i-1$ and that cut's boundary. If the same borrowed key precedes
 several cuts, every cut retains its own scalar. A single minimum across cuts
 would lose information needed for query comparison. If $i=0$, the scalar is
 unused and stored as zero. The terminal $i=I>0$ case still has a predecessor;
-its full length comes from stored terminal metadata.
+the same ordered comparison repair applies without reading its full length.
 
 Within one P, `profile_blob<P>::reindex` preserves the exact native allocation
 and native offset index while rebuilding ordinary borrowed FC, rank classes,
