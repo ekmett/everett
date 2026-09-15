@@ -5,11 +5,12 @@ objects, checked envelopes and mapping lifetime. The [SQLite catalog](catalog.md
 covers world representations, pins, publication outcomes and merge continuations.
 A save needs both: durable bytes and a durable way to find them.
 
-Status: design and executable protocol model, 2026-09-15. We can check ordering
+The [immutable writer](object-writer.md) and [SQLite adapter](sqlite-catalog.md)
+implement object sealing and immutable save/reopen operations. This chapter
+specifies replacement publication and merge resumption. We check its ordering
 and retention decisions with injected backend outcomes using
-[`durability.h`](../include/everett/durability.h). That model performs no filesystem
-operations and does not yet make the store's saves durable across process exit
-or power loss.
+[`durability.h`](../include/everett/durability.h); that protocol model itself
+performs no filesystem operations. Physical power-loss testing remains separate.
 
 ## Contract
 

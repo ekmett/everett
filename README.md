@@ -15,8 +15,9 @@ these pieces agree about what they own, what they can forget, and who pays
 for the work.
 
 Everett 0.1.0 is experimental. The header-only library provides encoded storage
-components, mmap-backed query chains, immutable object sealing, and an in-memory
-reference world; the persistent catalog runtime is still being integrated. The
+components, mmap-backed query chains, incremental native merges, immutable
+object sealing, an optional persistent SQLite catalog, and an in-memory reference
+world. The
 [implementation ledger](docs/implementation.md) records the tested contracts.
 APIs and persisted formats may change during this work.
 
@@ -39,12 +40,14 @@ I call the backing store and its relationships the **multiverse**.
 | --- | --- |
 | `storage_policy` | One choice of byte/bit units, value layout, group size and backspace code throughout a type family. |
 | `profile_array`, `profile_view`, `profile_cursor` | Encoded records, borrowed views, and sequential decoding. |
+| `profile_native_writer`, `native_merge_builder` | Incremental native encoding and ordered per-key value composition. |
 | `profile_blob` | Native records, a separate borrowed stream, group navigation, and false-borrow flags. |
 | `sample_cursor`, `index_builder`, `index_pipeline` | Sampling an existing pair and building new index links incrementally. |
 | `query_root`, `query_root_builder`, `query_cursor` | Preparing a bounded search head and visiting matching native entries through an exact index chain. |
 | `mapped_file`, `file`, `multiverse` | Retained read-only mappings and policy-checked object access. |
 | `encode_native_sections`, `encode_index_sections`, `mapped_blob`, `mapped_query_root` | Portable blob files and queries over exact pinned mmap chains. |
 | `object_writer`, `multiverse::seal_object` | Streamed immutable object writes with explicit persistence barriers and retained failure identities. |
+| `sqlite_catalog` | Durable reservations, exact file graphs, immutable named saves and reader pins. |
 | `reference_world`, `partition_round`, `pin_set` | Executable snapshot, update, fingerprint, and ownership semantics. |
 
 Immutability makes sharing straightforward. Two readers can retain the same
@@ -468,6 +471,56 @@ receiver's `apply()` are serialized; preparing disjoint batches can happen
 independently. The reference `save`/`restore` pair exports a resolved table,
 while `snapshot()` shares the existing immutable state.
 
+Incremental Native Merges
+-------------------------
+
+`profile_native_writer<P>` accepts records one at a time. We choose a common
+value width before writing, or let each value carry its own length. Finishing
+produces an ordinary front-coded array with its sparse offset directory.
+`profile_blob<P>::adopt_native` turns it into a terminal pair without decoding
+or rewriting the native data.
+
+The merge builder consumes two sorted native streams, older then newer. Its
+default equal-key operation takes the newer value:
+
+```cpp
+#include <everett/native_merge.h>
+#include <everett/query.h>
+#include <memory>
+#include <string_view>
+
+int main() {
+  using P = everett::storage_policy<everett::profile_unit::byte>;
+  using array = everett::profile_array<P>;
+  auto make = [](std::string_view text) {
+    everett::profile_native_writer<P> writer;
+    auto key = everett::bit_string::from_bytes("alpha");
+    auto value = everett::bit_string::from_bytes(text);
+    writer.append(key.view(), value.view());
+    return std::make_shared<array const>(writer.finish());
+  };
+  everett::native_merge_builder<P> merge(make("before"), make("after"));
+  while (!merge.done()) merge.step(16);
+  auto pair = std::make_shared<everett::profile_blob<P> const>(
+    everett::profile_blob<P>::adopt_native(merge.finish()));
+  auto root = everett::query_root<P>::build(pair);
+  auto key = everett::bit_string::from_bytes("alpha");
+  auto query = root.cursor(key.view());
+  query.step(1);
+  if (!query.has_match()) return 1;
+  return query.take_match().value == everett::bit_string::from_bytes("after") ? 0 : 2;
+}
+```
+
+A custom `compose(key, older, newer)` can combine encoded arrows instead. Its
+result may own its bits or borrow a view until the writer consumes it. With
+associative composition, we can change the merge parentheses while keeping
+each key's update order. One step unit resolves one distinct key; string work,
+composition and final EF construction have separate costs. The builder retains
+its source owners, and a failed step cannot publish a partial result. See
+[native writing and merging](docs/native-merges.md) for mapped inputs,
+value-width rules and the continuation's exact limits.
+
 Mapped Objects
 --------------
 
@@ -512,9 +565,15 @@ by value. `scan()` still performs full validation. Trusted opening assumes the
 caller already knows the object's type, policy and format; checked opening is
 the default.
 
-Worlds, pins, and merge progress belong in SQLite's metadata tables, as described
-in the [catalog design](docs/catalog.md). This leaves two immutable object kinds
-for us to manage. The [durability protocol](docs/durability.md)
+The optional `sqlite_catalog<P>` reserves objects before writing, records their
+seal receipts, registers exact query chains and retains immutable named saves
+and reader pins. We can close it, reopen a save and query its mmap chain. Enable
+`EVERETT_ENABLE_SQLITE` and link `everett::sqlite`; the ordinary core target has
+no SQLite dependency. The [working catalog guide](docs/sqlite-catalog.md) gives a
+complete publication/reopen example and explains operation replay and failed
+commits. The [catalog design](docs/catalog.md) extends this to mutable timelines,
+retirement and merge progress. This leaves two immutable object kinds for us to
+manage. The [durability protocol](docs/durability.md)
 orders verified output, durable publication, and old-pin release, with explicit
 recovery states after failed synchronization.
 
@@ -555,6 +614,13 @@ counts from one bounded field. It reduces complete bit-query time by another
 26.0–26.9% against its ordinary-FC baseline, without changing the encoded arrays.
 The byte-profile timing ranges overlap. Each report gives its own exact
 baseline, fixtures and validation; these are separate measurements.
+
+The incremental writers keep the previous key buffer and replace only its
+changed suffix after an append succeeds. Complete append/finalize measurements
+show [26–46% less time for borrowed keys](bench/borrowed_prefix.md) and
+[18–44% less for native key/value records](bench/native_prefix.md). These runs
+verify identical encoded sections and decoded contents. The retained buffer
+capacity can grow to the largest key seen; output bytes and format do not change.
 
 Proofs
 ------

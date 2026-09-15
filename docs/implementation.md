@@ -4,8 +4,9 @@ Updated 2026-09-15. Specification: [Everett design](design.md).
 
 This ledger records what works, what the tests establish, and what remains to
 be built. The C++20 foundations live in `include/everett/`, in
-namespace `everett`. The complete disk store, SQLite catalog runtime and
-bounded redundant-level scheduler remain implementation work.
+namespace `everett`. Immutable files, mmap queries and saved catalog roots work;
+the mutable world runtime and bounded redundant-level scheduler remain
+implementation work.
 
 ## Ownership and acceptance
 
@@ -24,6 +25,8 @@ for integration. These are development responsibilities.
 | Key primitives | `key_detail.h`, `profile.h`; `tests/profile.cc`; [key policies](keys.md) | bounded comparisons, bit movement, count framing and independent bit-level oracles |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `multiverse.h`; profile/blob/multiverse tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
 | Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
+| Native construction and merging | `native_writer.h`, `native_merge.h`; native writer/merge tests | streaming record acceptance, preserved FC/EF bytes, chronological composition, input pins and failure state |
+| Persistent catalog | `sqlite_catalog.h`; focused/adversarial catalog tests and optional package consumer | reserved IDs, exact prepared graphs, close/reopen saves, binary operation replay, uncertain commits and conservative pins |
 | World semantics and ownership | `fingerprint.h`, `pins.h`, `world.h`; `tests/world.cc`, `tests/pins.cc` | disjoint batch permutations, snapshots, old-value validation, contributions, replay and reference export |
 | Design documentation | [design](design.md), [arrows](arrows.md), [rebuilding](rebuild.md), [durability](durability.md), this ledger | consistent contracts, cited derivations, implementation limits and independently usable terminology |
 
@@ -293,7 +296,8 @@ chains with `open_query`. It exposes same-policy aliases for `sort`, `blob`,
 types. `sort<P>` validates one code's packing and unit
 alignment; it does not establish prefix freedom of an entire registry. Mapped
 files and slices outlive the reader object. There is no SQLite connection or
-persistent aggregate implementation behind these forward declarations.
+persistent aggregate implementation behind these forward declarations; the
+optional `sqlite_catalog<P>` is a separate owner for saved roots and reservations.
 
 ### Portable sections and mapped query chains
 
@@ -382,6 +386,71 @@ They exercise large and empty roots, zero budgets, pauses, copied cursors,
 truncated long boundary contexts, native/borrowed equality across a cut, source
 reclamation and malformed chain shapes. The matrix includes physical widths
 1, 16 and 64 independently of cascade stride, and both byte and bit policies.
+
+### Incremental native output and ordered merges
+
+`profile_native_writer<P>` accepts one unique sorted key/value pair at a time.
+It retains the preceding key, encoded output and one residual offset per
+physical block. The common value width is chosen before writing, from the
+policy or an explicit per-stream promise. Rejected appends preserve accepted
+records; final EF construction transfers the array on success. With the same
+value-width choice, bytes and navigation agree with batch encoding.
+
+`profile_blob::adopt_native` moves such an array into a native-only pair and
+constructs its zero rank/cut directories without decoding the native keys.
+`native_merge_builder<P, Native, Compose>` pins two ordered inputs and resolves
+one distinct key per step unit. Equal keys call the supplied chronological
+composition; replacement is the default. Sources may be owning arrays or
+mapped-native owners. A step failure poisons the continuation while retaining
+its inputs. The [native merge guide](native-merges.md) distinguishes the key
+budget from string/allocation work and durable checkpointing.
+
+The independent in-memory fixtures check exact wire equivalence, sparse
+offsets, partial blocks, unique-key rejection, moves and input lifetimes. The
+merge oracle checks replacement and both parenthesizations of an associative,
+noncommutative value operation. These builders do not interpret tombstones,
+evaluate endpoints or establish a bounded redundant-level schedule.
+
+Borrowed output now reserves its private predecessor buffer before fallible
+writes and updates only the actual changed suffix after those writes succeed.
+The [construction measurements](../bench/borrowed_prefix.md) report 26–46% less
+append/finalize time across six byte/bit prefix fixtures, with identical encoded
+bytes, metadata and EF arrays. Allocation-failure injection verifies rollback
+and retry without changing the previously accepted stream.
+
+The native writer uses the same predecessor-buffer rule. Its
+[measurements](../bench/native_prefix.md) show 18–44% less complete construction
+time across twelve byte/bit, fixed/variable-value fixtures. Allocation injection
+checks rollback and retry at every reached allocation. Both writers retain
+capacity for the largest key seen until finalization or destruction. The mapped
+merge tests independently check replacement, concatenation and fixed-width
+affine composition, paused/moved continuations, unlinked input mappings, and
+sealed-output queries.
+
+### Persistent immutable saves
+
+The optional `sqlite_catalog<P>` records reservations before output creation,
+sealing receipts, exact prepared chains, immutable saved roots and durable
+reader pins. Its normal registration path reads metadata only; explicit scan
+admission verifies the pinned chain before taking the SQL writer lock. All
+mutations record exact request and outcome bytes under an operation ID in the
+same transaction. Replays compare the complete request, including binary IDs.
+
+The adapter requires SQLite 3.51.3 or later in both headers and the loaded
+runtime, a serialized connection, verified WAL/FULL synchronization settings
+and foreign keys. Opening checks the required table and trigger definitions,
+rejecting unexpected triggers on protected tables. Storage errors and
+unacknowledged COMMITs poison the handle. Existing saves, reservations and pins
+are never released by this insert-only component.
+
+Focused and independent adversarial tests passed ASan/UBSan with SQLite 3.53.4.
+They cover real seal/save/close/reopen/query operations, concurrent connections,
+exact replay, binary names, before/after-COMMIT acknowledgment failures, policy
+and schema rejection, path aliases and retained input/output ownership. The
+adversarial suite also passed Release, and a separate link rejected the older
+system SQLite 3.51.0. Relocated `everett::sqlite` consumption and a core consumer
+with SQLite discovery disabled both passed. The [component guide](sqlite-catalog.md)
+states the distinction between these checks and physical power-loss recovery.
 
 ### World semantics and algebra
 
@@ -504,8 +573,9 @@ replacement oracle do not yet implement a heterogeneous sort registry.
 SQLite is the selected home for logical worlds, immutable representations,
 exact pins, contributions, index dependencies and small merge continuations.
 The [catalog design](catalog.md) specifies publication, operation identities,
-reader/GC synchronization and SQL diagnostics. No SQLite schema migration or
-C++ catalog runtime is implemented yet.
+reader/GC synchronization and SQL diagnostics. The [implemented adapter](sqlite-catalog.md)
+covers immutable roots and reservations. Mutable timeline publication, ownership
+retirement, schema migration and resumable job execution remain extensions.
 
 Direct network adoption keeps compatible native bytes and their sampled offsets
 intact. The arbitrary-prefix recurrence bounds borrowed **entries**, without
@@ -553,38 +623,38 @@ cmake --build build-sanitize --parallel 4
 ctest --test-dir build-sanitize --output-on-failure
 ```
 
-The eighteen component suites are `rank`, `groups`, `comparison_fc`, `profile`,
-`profile_blob`, `sampling`, `index_builder`, `index_pipeline`, `query`, `world`, `pins`,
-`durability`, `mapped_file`, `files`, `object_writer`, `mapped_blob`, `multiverse`
-and `crc32c`. Two additional CTests
-validate relocated installation and embedded CMake consumption, including
-typed headers and CRC calls across translation units. We record combined
-verification here after these commands run.
+The default component suites cover codecs, native and borrowed writers, index
+construction, queries, world semantics, ownership, durability and mapped files.
+With SQLite enabled, three more suites cover the catalog, adversarial operations
+and forwarded VFS failures. Three package consumers check relocated core and
+SQLite installations and embedded use. Doxygen is an optional additional check.
 
 Combined verification on 2026-09-15: AppleClang 21, C++20, Release with strict
-warnings and ASan/UBSan passed all **21 CTests**, including both package consumers
-and the optional Doxygen check. The full run took 97 seconds. It includes
+warnings and ASan/UBSan passed all **30 CTests**, including three package consumers
+and Doxygen, in 96 seconds. SQLite headers and runtime were 3.53.4. This run covers
 ordinary-FC comparison, complete owning and mapped query chains, portable
-unaligned navigation, immutable writes and metadata-only opening with every
-payload byte protected. The mapped suite also passed a separate strict Release
-run and checks CRC-valid semantic corruption, exact sample identities, moved
-owners and retained mappings after unlink.
+unaligned navigation, native construction and incremental merges, immutable
+writes, metadata-only opening, and persistent saves and reader pins.
 
 The writer tests cover failure at every syscall position, short/interrupted
 writes, disk-full errors, uncertain installation, close failures and retained
-real outputs. Doxygen checked 26 public headers and seventeen real declaration
-associations, with a clean generation that removes obsolete pages. The proof
-checkpoint checked 631 Lean declarations with only standard `propext`,
-`Quot.sound` and `Classical.choice` axioms. Neither these mathematical models
-nor injected system-call outcomes establish behavior under physical power loss.
+real outputs. The SQLite VFS suite injects 114 errors before and after reached
+write/sync calls, checking old-root retention and complete-or-absent operation
+rows through fresh connections. These tests do not establish behavior under
+physical power loss.
 
-All six complete README examples were rebuilt and passed strict warnings and
-ASan/UBSan against the mapped checkpoint; the package consumers exercise the
-mapped headers and section encoder as well. Installed licenses and generated CRC includes are checked
-byte for byte against the source bundle, and the pinned generator reproduced
-all eight backends. Windows execution coverage is limited to the recorded rank
-component tests. A persistent SQLite backend and network transport remain outside
-this combined checkpoint.
+Doxygen checked 29 public headers and 23 real declaration associations, with
+clean generation that removes obsolete pages. The proof checkpoint checked
+631 Lean declarations with only standard `propext`, `Quot.sound` and
+`Classical.choice` axioms.
+
+All seven complete README programs and the native-merge and SQLite guide
+examples passed strict warnings and ASan/UBSan, nine executables in total.
+The eight core examples have no SQLite linkage; only the catalog example links
+it. Installed licenses and generated CRC includes are checked byte for byte
+against the source bundle, and the pinned generator reproduced all eight
+backends. Windows execution coverage is limited to the recorded rank component
+tests. Network transport and durable merge resumption remain separate work.
 
 The optional `EVERETT_BUILD_DOCS` configuration generates Doxygen HTML/XML and
 checks all file footers plus representative function/member ownership. A
@@ -602,8 +672,8 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 | Comparison block encoding | ordinary FC, exact cut LCP and scalar comparison transfers | transposed count/literal layouts, ordered SIMD transfer scans, bounded tails and independently measured time/space tradeoffs |
 | Object identity and integrity | portable sections, mmap queries and immutable writer | cryptographic content addressing, durable catalog publication and lazy block-integrity strategy |
 | Attach encoded runs to world semantics | blob reader and query | batch/snapshot/export oracle tests using actual encoded immutable runs |
-| COLA scheduler and incremental string merge | correct run merge and index builder | byte/work-budgeted continuations, bounded active levels and shared-result adoption under interleaved forks |
-| SQLite catalog and persistent pins | object store and scheduler publication | reopen saves without re-encoding contents; retain exact dependency closure; query metadata with existing SQL tools; reclaim only after final pin; interruption tests |
+| COLA scheduler and durable merge continuations | incremental native merge and index builder | byte/work-budgeted continuations, bounded active levels and shared-result adoption under interleaved forks |
+| Mutable catalog roots and pin retirement | immutable saved roots, reservations and exact file graph | conditional timeline publication, reader retirement, reclaim only after final pin, schema migration and interruption tests |
 | Direct batch adoption | native file reader, prefix index builder and scheduler | preserve received ordinary-FC bytes, bound visible catalogs and work debt, preserve causal order and charge actual key bytes |
 | Durable backend and resumable merges | publication protocol and encoded merge continuations | fault injection at write/sync/rename/recovery cuts; failed barriers retain old roots; resume only from verified durable prefixes |
 | Durable round resumption | save manifests and update protocol | persist base/round identity, accepted batch identities and claimed keys; restart without double-applying a changeset |

@@ -3,8 +3,9 @@
 Updated 2026-09-15. SQLite manages catalog metadata; bulk data lives in two
 custom file kinds, `.kv` and `.index`. We have read-only mapping, checked object
 envelopes, typed codecs and an immutable object writer as implemented foundations.
-Portable codec sections and exact mapped chains are also implemented; the SQLite
-adapter and recovery executor remain work. See
+Portable codec sections, exact mapped chains and an optional SQLite save catalog
+are also implemented. Mutable-head publication and the recovery executor remain
+work. See
 [implementation status](implementation.md), the [catalog design](catalog.md)
 and the [failure and resumption protocol](durability.md).
 

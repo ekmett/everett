@@ -202,6 +202,14 @@ COMMIT and then reports an error. These tests verify poisoning, operation
 matching and conservative retention. They do not simulate torn sectors, VFS
 write reordering or power loss.
 
+A forwarding SQLite VFS test also injects errors immediately before and after
+each reached `xWrite` and `xSync` in reservation, save and reader acquisition:
+114 cases over 57 I/O sites. A fresh connection finds all old roots and pins
+unchanged, with each new operation either fully present or absent. Integrity
+and foreign-key checks and an existing saved query still succeed. These are
+real SQLite write/sync error paths with forwarded locking and shared memory;
+the test does not simulate partial writes, reordered persistence or power loss.
+
 ## Scope
 
 I can persist and reopen prepared mmap query chains, reserve their construction,

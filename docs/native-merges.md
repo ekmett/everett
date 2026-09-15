@@ -6,6 +6,12 @@ emits ordinary FC and retains the previous key, encoded output and one residual
 offset per physical block. Values and keys passed to `append` only need to live
 through that call.
 
+After an append succeeds, the writer reuses the unchanged prefix in its private
+key buffer and copies the changed suffix. It retains capacity for the largest
+key seen until finalization or destruction. The
+[construction measurements](../bench/native_prefix.md) cover both fixed and
+variable value widths and verify exact output against batch encoding.
+
 ```cpp
 #include <everett/native_writer.h>
 #include <everett/query.h>
@@ -80,7 +86,9 @@ per record. Keys occurring in only one input retain their values unchanged.
 For associative composition, we can merge `(A,B)` then `C`, or `A` then `(B,C)`.
 We still preserve the chronological order `A,B,C`. Associativity permits
 reparenthesizing; it does not permit swapping two updates to the same key.
-The tests use string concatenation as an associative, noncommutative instance.
+The tests use string concatenation and fixed-width affine maps as associative,
+noncommutative instances. Mapped-input tests seal and reopen the result, pause
+and move the merger, and keep using input mappings after their names are unlinked.
 
 The merger treats values as encoded data. It does not interpret a tombstone,
 drop an identity arrow, validate arrow endpoints or calculate a world's

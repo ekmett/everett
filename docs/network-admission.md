@@ -18,7 +18,7 @@ pinned until a replacement index is complete.
 
 A standalone base has no downstream catalog to sample. It still needs native
 navigation structures and a terminal index representation. In the
-intended format, a complete `.kv` includes its ordinary front-coded native
+[portable format](mapped-blobs.md), a complete `.kv` includes its ordinary front-coded native
 stream, W-spaced predecessor-length checkpoints, final key length, and
 Elias–Fano sampled-offset directory. We can receive
 and reuse those structures together. Receiving only the record stream instead
@@ -33,14 +33,15 @@ rank is zero. An implicit all-native representation could answer these ranks
 without storing a zero directory. The current `rank_groups<K>` representation
 requires packed zero classes and checkpoints; exact cut LCPs also occupy one
 slot per virtual group. These take $O(n/K)$ work and space for $n$ native
-entries, separately from W-spaced physical checkpoints. The general `profile_blob<P>` index
-builder also walks those $n$ entries; it has no terminal fast path yet.
+entries, separately from W-spaced physical checkpoints.
+`profile_blob<P>::adopt_native` constructs these zero directories around a trusted
+native array without walking its keys or rebuilding its existing EF directory.
 
 Direct adoption after validation needs a complete terminal representation,
 including navigation metadata. If anything is missing, construction must
 finish first. Validation itself may scan the received bytes. The current
-file envelope still has an opaque body: validating it alone does not produce a
-searchable typed blob. A preindexed prefix can likewise be adopted only when
+generic file-envelope check does not validate typed section semantics. The
+mapped codec scan supplies that stronger check when required. A preindexed prefix can likewise be adopted only when
 its complete dependency chain and policy match. Neither case implies that a
 new tiny batch can cheaply build an index against an arbitrary large existing
 head.

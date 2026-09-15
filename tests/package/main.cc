@@ -15,6 +15,8 @@
 #include <everett/mapped_file.h>
 #include <everett/mapped_blob.h>
 #include <everett/multiverse.h>
+#include <everett/native_merge.h>
+#include <everett/native_writer.h>
 #include <everett/object_path.h>
 #include <everett/object_writer.h>
 #include <everett/pins.h>
@@ -47,6 +49,8 @@ static_assert(std::is_same_v<store::query_context, everett::profile_query_contex
 static_assert(std::is_same_v<store::object_writer::policy_type, policy>);
 static_assert(std::is_same_v<store::mapped_blob::policy_type, policy>);
 static_assert(std::is_same_v<store::mapped_query_root, everett::query_root<policy, store::mapped_blob>>);
+static_assert(std::is_same_v<store::native_writer::policy_type, policy>);
+static_assert(std::is_same_v<store::native_merge_builder<>::policy_type, policy>);
 
 std::uint32_t crc32c_from_other_translation_unit(std::span<std::byte const> bytes);
 
@@ -95,6 +99,13 @@ int main() {
   auto sections = everett::encode_native_sections(target->native());
   auto serialized = sections.materialize();
   if (everett::validate_file<policy>(serialized) != sections.header()) return 12;
+  store::native_writer writer;
+  writer.append(records[0]);
+  auto native = std::make_shared<store::native_array const>(writer.finish());
+  store::native_merge_builder<> merge(native, native);
+  merge.step(1);
+  auto merged = store::blob::adopt_native(merge.finish());
+  if (merged.native().size() != 1 || merged.borrowed().size() != 0) return 13;
   return 0;
 }
 

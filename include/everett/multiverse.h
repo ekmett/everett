@@ -11,6 +11,7 @@
 
 #include <everett/file.h>
 #include <everett/mapped_blob.h>
+#include <everett/native_merge.h>
 #include <everett/object_writer.h>
 #include <everett/query.h>
 
@@ -48,13 +49,17 @@ namespace everett {
   };
 
   // Holds an existing canonical object root. Reads check envelopes by default;
-  // sealing creates immutable files under caller-reserved identities. SQLite
-  // world/pin/progress metadata integration remains separate work.
+  // sealing creates immutable files under caller-reserved identities. The
+  // optional SQLite catalog owns persistent roots and reservations separately.
   // Files/slices retain their mappings independently of this path holder.
   template <class P> struct multiverse {
     using policy_type = P;
     using sort = everett::sort<P>;
     using blob = everett::profile_blob<P>;
+    using native_array = everett::profile_array<P>;
+    using native_writer = everett::profile_native_writer<P>;
+    template <class Native = native_array, class Compose = replace_native_value>
+    using native_merge_builder = everett::native_merge_builder<P, Native, Compose>;
     using query_root = everett::query_root<P>;
     using query_root_builder = everett::query_root_builder<P>;
     using query_cursor = everett::query_cursor<P>;

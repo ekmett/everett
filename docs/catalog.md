@@ -8,9 +8,11 @@ journal for recovering it. We need no additional custom manifest, transaction-lo
 or checkpoint-file format.
 
 This document specifies the backend's architecture and acceptance contract.
-The SQLite adapter, schema migrations and transactional store executor are not
-implemented yet. The existing in-memory pin owner and durability state machine
-give us executable models of the ownership and publication rules.
+The [optional SQLite adapter](sqlite-catalog.md) implements reservations, sealed
+objects, exact prepared chains, immutable saved roots and durable reader pins.
+The broader schema below specifies mutable timelines, ownership retirement and
+merge continuations. The in-memory pin owner and durability state machine give
+us executable models for those transitions.
 
 ## 1. What the catalog owns
 

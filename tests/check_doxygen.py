@@ -212,6 +212,12 @@ def check_actual_members(items, source):
         ("struct", "everett::mapped_profile", "scan", "sections.h", None, "no"),
         ("struct", "everett::encoded_sections", "materialize", "sections.h", None, "no"),
         ("namespace", "everett", "encode_file_header", "file.h", None, "no"),
+        ("struct", "everett::profile_native_writer", "finish", "native_writer.h", None, "no"),
+        ("struct", "everett::native_merge_builder", "step", "native_merge.h", None, "no"),
+        ("struct", "everett::profile_blob", "adopt_native", "profile_blob.h", None, "yes"),
+        ("struct", "everett::sqlite_catalog", "reserve", "sqlite_catalog.h", None, "no"),
+        ("struct", "everett::sqlite_catalog", "save", "sqlite_catalog.h", None, "no"),
+        ("struct", "everett::sqlite_catalog", "acquire_save", "sqlite_catalog.h", None, "no"),
     ]
     for kind, owner, name, filename, qualifier, static in cases:
         compound = named_compound(items, kind, owner)
@@ -237,7 +243,10 @@ def check_actual_members(items, source):
     for owner, parameters in (("everett::multiverse", ["P"]), ("everett::profile_view", ["P", "Role"]),
                               ("everett::query_root", ["P", "Blob"]), ("everett::query_root_builder", ["P"]),
                               ("everett::query_cursor", ["P", "Blob"]), ("everett::mapped_blob", ["P"]),
-                              ("everett::mapped_profile", ["P", "Role"]), ("everett::encoded_sections", ["P"])):
+                              ("everett::mapped_profile", ["P", "Role"]), ("everett::encoded_sections", ["P"]),
+                              ("everett::profile_native_writer", ["P"]),
+                              ("everett::native_merge_builder", ["P", "Native", "Compose"]),
+                              ("everett::sqlite_catalog", ["P", "Ops"])):
         item = named_compound(items, "struct", owner)
         names = []
         for param in item.findall("./templateparamlist/param"):
