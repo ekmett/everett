@@ -62,15 +62,15 @@ def main():
     for path in sorted(closure):
         source = original[path].decode()
         matches = list(expression.finditer(source))
-        if not matches:
-            continue
-        sites[path] = [{"exception": m[1], "message": m[2]} for m in matches]
         output = expression.sub(r'error_detail::raise<\1>(\2);', source)
-        output = output.replace("#pragma once\n", "#pragma once\n\n#include <everett/error_detail.h>\n", 1)
         # Rethrows intentionally stay in place. Other throw expressions must
         # be reviewed explicitly before claiming closure-wide transformation.
         if re.search(r'\bthrow\s+[^;]', output):
             raise RuntimeError("unconverted throw expression in " + path)
+        if not matches:
+            continue
+        sites[path] = [{"exception": m[1], "message": m[2]} for m in matches]
+        output = output.replace("#pragma once\n", "#pragma once\n\n#include <everett/error_detail.h>\n", 1)
         transformed[path] = output.encode()
     preamble = '''/**
  * \\file
