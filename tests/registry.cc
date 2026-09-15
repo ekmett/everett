@@ -21,6 +21,11 @@
 #include <type_traits>
 #include <utility>
 
+struct registry_external_value {};
+namespace diet {
+  template <> struct value_encoding<registry_external_value> { using type = bit_encoding<fixed_values<5>>; };
+}
+
 namespace {
   using namespace diet;
   struct a { using encoding = byte_encoding<fixed_values<2>>; };
@@ -34,6 +39,7 @@ namespace {
 
   using raw_byte = encoded_sort<byte_encoding<>>;
   using raw_bit = encoded_sort<bit_encoding<>>;
+  using tagless = unsorted<std::optional<std::string>>;
   using tree = bin<tip<a>, bin<tip<bit_triple>, sort_undefined>>;
   using extended_tree = bin<tip<a>, bin<tip<bit_triple>, bin<tip<b>, tip<c>>>>;
   using list = sort_list<a, sort_undefined, b>;
@@ -55,15 +61,24 @@ namespace {
   static_assert(registry_traits<list>::sort_count == 2);
   static_assert(registry_traits<list>::value_width == 2);
   static_assert(registry_traits<bin<tip<a>, tip<sort_undefined>>>::value_width == 16);
-  static_assert(registry_traits<bin<sort_none, tip<a>>>::value_width == 16);
-  static_assert(registry_traits<sort_none>::unit == profile_unit::byte);
-  static_assert(!registry_traits<sort_none>::value_width);
+  static_assert(registry_traits<bin<sort_undefined, tip<a>>>::value_width == 16);
+  static_assert(registry_traits<tagless>::unit == profile_unit::byte);
+  static_assert(registry_traits<tagless>::sort_count == 1);
+  static_assert(!registry_traits<tagless>::value_width);
   static_assert(!registry_traits<sort_undefined>::fixed_width);
-  static_assert(!registry_traits<tip<sort_none>>::value_width);
+  static_assert(!registry_traits<tip<tagless>>::value_width);
   static_assert(registry_traits<sort_list<>>::unit == profile_unit::byte);
   static_assert(!registry_traits<sort_list<>>::value_width);
-  static_assert(registry_traits<bin<sort_none, sort_undefined>>::unit == profile_unit::bit);
-  static_assert(!registry_traits<bin<sort_none, sort_undefined>>::fixed_width);
+  static_assert(registry_traits<bin<sort_undefined, sort_undefined>>::unit == profile_unit::bit);
+  static_assert(!registry_traits<bin<sort_undefined, sort_undefined>>::fixed_width);
+  static_assert(registry_traits<sort_list<tagless, a>>::sort_count == 2);
+  static_assert(!registry_traits<sort_list<tagless, a>>::value_width);
+  static_assert(registry_traits<bin<tagless, tip<a>>>::unit == profile_unit::bit);
+  static_assert(std::is_same_v<tagless::value_type, std::optional<std::string>>);
+  static_assert(std::is_same_v<unsorted<std::string>::encoding, byte_encoding<>>);
+  static_assert(registry_traits<unsorted<a>>::value_width == 2);
+  static_assert(registry_traits<unsorted<registry_external_value>>::value_width == 5);
+  static_assert(registry_traits<unsorted<registry_external_value>>::unit == profile_unit::bit);
 
   using byte_policy = storage_policy<list, 7, exponential_golomb<0>, 16>;
   using bit_policy = storage_policy<bin<tip<a>, tip<bit_word>>, 3, golomb<5>, 15>;
@@ -73,15 +88,20 @@ namespace {
   static_assert(byte_policy::group_size == 7 && byte_policy::codec_block_size == 16);
   static_assert(bit_policy::unit == profile_unit::bit && bit_policy::bits_per_unit == 1);
   static_assert(bit_policy::value_width == 16 && bit_policy::backspace_parameter == 5);
-  static_assert(storage_policy<sort_none>::unit == profile_unit::byte);
-  static_assert(!storage_policy<sort_none>::fixed_width);
+  static_assert(storage_policy<>::unit == profile_unit::byte);
+  static_assert(!storage_policy<>::fixed_width);
+  static_assert(std::is_same_v<storage_policy<>::registry_type, tagless>);
   static_assert(storage_policy<tip<a>>::codec_block_size == 15);
 
   static_assert(registry_extends_v<tree, extended_tree>);
   static_assert(!registry_extends_v<extended_tree, tree>);
   static_assert(registry_extends_v<list, extended_list>);
   static_assert(!registry_extends_v<extended_list, list>);
-  static_assert(registry_extends_v<sort_none, tree>);
+  static_assert(!registry_extends_v<tagless, tree>);
+  static_assert(!registry_extends_v<tagless, bin<tagless, tip<a>>>);
+  static_assert(!registry_extends_v<tagless, unsorted<std::string>>);
+  static_assert(registry_extends_v<tagless, tip<tagless>>);
+  static_assert(registry_extends_v<tip<tagless>, tagless>);
   static_assert(registry_extends_v<sort_undefined, tip<a>>);
   static_assert(registry_extends_v<tip<sort_undefined>, tree>);
   static_assert(registry_extends_v<bin<tip<a>, tip<sort_undefined>>, bin<tip<a>, tip<b>>>);
@@ -207,12 +227,23 @@ namespace {
       dispatch_sort<tree>(throwing, [](auto, reader &) { throw std::runtime_error("visitor failure"); });
     });
     check(throwing.position == 1);
+    reader tagless_source{"10110010"};
+    check(dispatch_sort<typename storage_policy<>::registry_type>(tagless_source, [](auto tag, reader & source) {
+      static_assert(std::is_same_v<typename decltype(tag)::type, tagless>);
+      check(source.position == 0);
+      return source.read_bits(8);
+    }) == 0xb2);
+    reader tagless_empty{""};
+    check(dispatch_sort<tagless>(tagless_empty, [](auto, reader & source) { return source.position; }) == 0);
+    reader tagless_branch{"010"};
+    check(dispatch_sort<bin<tagless, tip<a>>>(tagless_branch, [](auto tag, reader &) {
+      return std::is_same_v<typename decltype(tag)::type, tagless>;
+    }));
+    check(tagless_branch.position == 1 && tagless_branch.read_bits(2) == 2);
     auto unreachable = [&](auto, reader &) { check(false); };
     reader none{"101"};
-    rejects<std::invalid_argument>([&] { dispatch_sort<sort_none>(none, unreachable); });
     rejects<std::invalid_argument>([&] { dispatch_sort<sort_undefined>(none, unreachable); });
     rejects<std::invalid_argument>([&] { dispatch_sort<tip<sort_undefined>>(none, unreachable); });
-    rejects<std::invalid_argument>([&] { dispatch_sort<tip<sort_none>>(none, unreachable); });
     check(none.position == 0);
     reader empty_list{"00000000"};
     rejects<std::invalid_argument>([&] { dispatch_sort<sort_list<>>(empty_list, unreachable); });

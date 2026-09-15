@@ -20,6 +20,7 @@
 #include <limits>
 #include <optional>
 #include <stdexcept>
+#include <string>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -57,17 +58,28 @@ namespace diet {
   };
   template <class Codec> struct encoded_sort { using encoding = Codec; };
 
-  // Empty registries and reserved holes admit no sort. Both are neutral about
-  // storage units; a registry consisting solely of either defaults to bytes.
-  struct sort_none {};
+  // Layout inference only: semantic value encoding and tombstone meaning stay
+  // with the value codec. Specialize this trait for types without T::encoding.
+  template <class T> struct value_encoding { using type = typename T::encoding; };
+  template <> struct value_encoding<std::string> { using type = byte_encoding<>; };
+  template <> struct value_encoding<std::optional<std::string>> { using type = byte_encoding<>; };
+
+  // One tagless sort. Its type still identifies the sort to a typed visitor;
+  // no discriminator precedes its key. Native keys must still be sorted.
+  // This does not implement value codecs.
+  template <class T> struct unsorted {
+    using value_type = T;
+    using encoding = typename value_encoding<T>::type;
+  };
+  // A reserved hole admits no sort and imposes neither unit nor value width.
+  // As a standalone empty registry it defaults to byte addressing.
   struct sort_undefined {};
   template <class S> struct tip { using sort_type = S; };
   template <class L, class R> struct bin { using left_type = L; using right_type = R; };
   template <class... S> struct sort_list {};
 
   namespace registry_detail {
-    template <class T> inline constexpr bool hole =
-      std::is_same_v<T, sort_none> || std::is_same_v<T, sort_undefined>;
+    template <class T> inline constexpr bool hole = std::is_same_v<T, sort_undefined>;
     template <class... S> struct sorts {};
     template <class A, class B> struct concatenate;
     template <class... A, class... B> struct concatenate<sorts<A...>, sorts<B...>> {
@@ -108,7 +120,7 @@ namespace diet {
       : join<leaf<S>, list_width<Rest...>> {};
 
     template <class R> struct info;
-    template <> struct info<sort_none> : empty {};
+    template <class T> struct info<unsorted<T>> : leaf<unsorted<T>> {};
     template <> struct info<sort_undefined> : empty {};
     template <class S> struct info<tip<S>> : leaf<S> {};
     template <class L, class R> struct info<bin<L, R>> : join<info<L>, info<R>> {
@@ -123,6 +135,8 @@ namespace diet {
 
     template <class Old, class New> struct extends;
     template <class Old, class New> struct extension : std::is_same<Old, New> {};
+    template <class T> struct extension<unsorted<T>, tip<unsorted<T>>> : std::true_type {};
+    template <class T> struct extension<tip<unsorted<T>>, unsorted<T>> : std::true_type {};
     template <class OL, class OR, class NL, class NR>
     struct extension<bin<OL, OR>, bin<NL, NR>>
       : std::bool_constant<extends<OL, NL>::value && extends<OR, NR>::value> {};
@@ -158,19 +172,19 @@ namespace diet {
       else return std::invoke(std::forward<Visitor>(visitor), std::type_identity<S>{}, reader);
     }
     template <class R> struct dispatch;
-    template <> struct dispatch<sort_none> {
+    template <> struct dispatch<sort_undefined> {
       template <class Result, class Reader, class Visitor>
       static Result run(Reader &, Visitor &&) {
         error_detail::raise<std::invalid_argument>("empty sort registry");
       }
     };
-    template <> struct dispatch<sort_undefined> : dispatch<sort_none> {};
     template <class S> struct dispatch<tip<S>> {
       template <class Result, class Reader, class Visitor>
       static Result run(Reader & reader, Visitor && visitor) {
         return visit<S, Result>(reader, std::forward<Visitor>(visitor));
       }
     };
+    template <class T> struct dispatch<unsorted<T>> : dispatch<tip<unsorted<T>>> {};
     template <class L, class R> struct dispatch<bin<L, R>> {
       template <class Result, class Reader, class Visitor>
       static Result run(Reader & reader, Visitor && visitor) {

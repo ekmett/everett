@@ -48,7 +48,7 @@ namespace diet {
   // The registry chooses units and the common value width, if any. Sort
   // encoding widths are converted to those units, including byte leaves
   // below bit discriminators. Associated colas and streams retain this policy.
-  template <class Registry, std::uint64_t GroupSize = 15,
+  template <class Registry = unsorted<std::optional<std::string>>, std::uint64_t GroupSize = 15,
             class BackspaceCode = exponential_golomb<0>, std::uint64_t CodecBlockSize = GroupSize>
   struct storage_policy {
     using registry_type = Registry;
