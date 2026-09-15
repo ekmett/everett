@@ -93,6 +93,8 @@ namespace everett {
     using cola_query_cursor = everett::cola_query_cursor<P>;
     using mapped_cola_index = everett::mapped_cola_index<P>;
     using mapped_cola_blob = everett::mapped_cola_blob<P>;
+    using mapped_cola_artifact = everett::mapped_cola_artifact<P>;
+    using mapped_cola_index_builder = everett::mapped_cola_index_builder<P>;
     using mapped_cola_query_root = everett::mapped_cola_query_root<P>;
     using world = everett::world<P>;
     using timeline = everett::timeline<P>;

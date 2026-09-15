@@ -49,6 +49,13 @@ preserves matching native contributions from both roles.
 `open_mapped_cola_query` implement IX03 encoding and metadata-only mapped
 opening with exact main/secondary pins. Explicit `scan` validates payloads and
 target samples. The [COLA guide](cola-indexes.md) describes the layout and API.
+`mapped_cola_index_builder` constructs those routes directly from retained
+mapped inputs. Its four-policy tests check exact IX03 equality with owning
+construction, paused and moved builders, unchanged native bytes and addresses,
+and continued construction after the source files are unlinked.
+The [complete persistence example](cola-store.md) writes native files, saves
+both input and combined roots, publishes a merged timeline, then reopens and
+queries all three representations.
 The independent eight-policy core and mapped suites passed strict O3
 ASan/UBSan. The mapped suite independently assembles IX03 bytes, checks exact
 source/ordinal/value query results, mutates valid-CRC files, verifies target
@@ -198,8 +205,9 @@ canonical byte varints and policy-selected Golomb or exponential-Golomb bit
 backspaces. Other bit counts use order-zero exponential-Golomb. Streams retain
 meaningful bit extents and canonical padding. Each physical block's first record
 stores an absolute retained-prefix count; later records use relative backspaces.
-Header-only entry needs no read of the preceding block. Profile metadata and
-mapped section directories use version 2. The terminal key length supports
+Header-only entry needs no read of the preceding block. Profile metadata,
+native KV02 directories and single-route IX02 directories use version 2;
+two-route IX03 directories use version 3. The terminal key length supports
 sequential checks and explicit endpoint length access. Common fixed
 value width is subtracted from the Elias–Fano residual positions.
 

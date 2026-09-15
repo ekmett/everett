@@ -343,6 +343,9 @@ private output remains unadopted; the test restarts that merge from its inputs.
 
 ## Scope
 
+The [mapped COLA example](cola-store.md) combines schema 3 with direct mapped
+index construction, two-route queries, saved roots and native merge publication.
+
 I can persist and reopen prepared mmap query chains, reserve their construction,
 retain immutable saves and readers, and compare-and-publish named timeline
 heads. This component does not yet release an owner, expire a reader lease,

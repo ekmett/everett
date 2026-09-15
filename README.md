@@ -51,6 +51,7 @@ I call the backing store and its relationships the **multiverse**.
 | `mapped_file`, `file`, `multiverse` | Retained read-only mappings and policy-checked object access. |
 | `encode_native_sections`, `encode_index_sections`, `mapped_blob`, `mapped_query_root` | Portable blob files and queries over exact pinned mmap chains. |
 | `encode_cola_sections`, `mapped_cola_blob`, `mapped_cola_query_root` | IX03 indexes over unchanged native files, with one recursive main route and one terminal secondary route. |
+| `mapped_cola_index_builder` | Constructing those two routes directly from pinned mappings, without rewriting native files. |
 | `object_writer`, `object_stream`, `multiverse::seal_object` | Immutable object construction with explicit persistence barriers and retained failure identities. |
 | `sqlite_catalog` | Durable reservations, exact file graphs, named saves, timeline generations and reader pins. |
 | `reference_world`, `partition_round`, `pin_set` | Executable snapshot, update, fingerprint, and ownership semantics. |
@@ -106,6 +107,9 @@ lets a query visit at most two arrays per level while shadow construction
 proceeds separately. The [COLA guide](docs/cola-indexes.md) includes a complete
 two-target example and the mapped file layout; the
 [scheduling design](docs/cola-scheduling.md) explains visibility and work.
+The [mapped save and merge example](docs/cola-store.md) writes files, retains
+both input contributions, publishes their merge and reopens the saved states.
+The [space report](bench/space_accounting.md) measures the resulting arrays.
 
 ### String compression and offsets
 
