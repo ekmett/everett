@@ -141,8 +141,9 @@ COLA schedule's worst-case theorem. We must specify whether $b$ measures
 records, encoded bytes or another work weight. Those choices do not establish
 interchangeable bounds.
 
-## 4. Entry accounting is not a byte bound
+## 4. String bytes and peak retained space
 
+First consider a sequence of prepends without enforcing level occupancy.
 We give the old head one smallest key consisting of $T$ copies of `a`.
 We prepend $q$ one-record native files with distinct short keys `z` followed
 by a counter. Each file is already sorted, and every new key exceeds the long
@@ -150,18 +151,92 @@ key. For $K\ge3$, every new augmented catalog contains two entries and
 samples that same long key at ordinal zero from its target.
 
 Each separately front-coded borrowed stream therefore starts with a literal
-copy of the $T$-unit key. The new indexes emit $\Theta(qT)$ key units,
+copy of the $T$-unit key. Constructing those indexes emits $\Theta(qT)$ key units,
 although $S=q$, $c=1$, and the borrowed-entry bound is just $B=q$.
 The incoming short keys take only $O(q\log(q+1))$ units. Ordinary prefix
 compression within each independent stream cannot remove its first literal.
 Exact cut-LCP metadata and fixed-value stride subtraction do not remove these
-independent first literals.
+independent first literals. Later physical blocks need only predecessor lengths
+and carried comparison context; they do not repeat a full-key restart.
 
-We therefore have no bound on actual index bytes or string reconstruction work
-from the entry recurrence alone. Emitted key/framing units and their reads need
-explicit charges. Shared immutable key spans, externally supplied first-key
-contexts, or distinguishing separators are possible directions, each requiring
-its own codec, query and pin-lifetime proof. **The choice remains open.**
+### The redundant-level storage budget
+
+For a scheduled snapshot, I retain approximately three indexes per binary level,
+with another three per level available during rebuilding. Write
+$h=\max(1,\lceil\log_2(N+1)\rceil)$. Once the history-to-live-size invariant
+holds, the intended occupancy bounds are
+
+$$
+I_{\mathrm{snapshot}}\le3h+O(1),\qquad
+I_{\mathrm{rebuild}}\le3h+O(1).
+$$
+
+The old and new generations have comparable live cardinalities during the
+[rebuild horizon](rebuild.md), so they use the same $h$ up to an additive constant.
+These counts cover exact retained index versions, including replacement outputs
+occupying the redundant working slots. The scheduler must enforce that budget;
+the current arbitrary-chain query API alone does not enforce it.
+
+Let $\mathcal I$ be those distinct retained indexes, $S_i$ the borrowed-key
+sequence in index $i$, and $T_{\max}$ their largest first borrowed-key length,
+counting an empty stream as zero. Their first-literal storage satisfies
+
+$$
+S_{\mathrm{first}}
+=\sum_{i\in\mathcal I}|\mathrm{first}(S_i)|
+\le |\mathcal I|T_{\max}
+\le (6h+O(1))T_{\max}.
+$$
+
+Without a rebuild the leading factor is three. Thus the repeated $T$-unit key
+contributes at most roughly $3T\log_2(N+1)$ live units for one snapshot, or
+$6T\log_2(N+1)$ while rebuilding. The unrestricted $qT$ construction cost
+cannot be charged as simultaneous storage for one scheduled snapshot after
+those index versions have been retired.
+
+### All borrowed key literals
+
+There is a bound for the remaining key literals too. Let $D$ be the sorted set
+of distinct native keys in the exact retained dependency graphs, and define
+
+$$
+F(D)=|d_0|+\sum_{j>0}\bigl(|d_j|-\mathrm{lcp}(d_{j-1},d_j)\bigr),
+$$
+
+with $F(\varnothing)=0$. This is ordinary-FC literal size in policy units,
+excluding framing and values. Equivalently, it counts the edges of the key trie:
+each distinct nonempty prefix is introduced once. Taking a subset cannot add
+trie edges, and repeated equal keys add no literal units.
+
+Every borrowed key ultimately comes from a native key in its pinned target
+chain. Each separately front-coded borrowed stream therefore has literal size
+at most $F(D)$, giving
+
+$$
+S_{\mathrm{index}}\le |\mathcal I|F(D)
+\le (6h+O(1))F(D).
+$$
+
+The first-literal bound is part of this total, not an additional charge. Sampling
+every $K$th occurrence does not promise a factor-$K$ reduction in trie-edge weight.
+For example, put one native run at each binary level, with geometrically growing
+entry counts. Put the globally smallest $T$-unit key in the largest run and make
+all other keys distinct, short and greater. Each upstream index samples ordinal zero and
+repeats that long minimum. This respects level occupancy and can retain
+$\Theta(T\log(N+1))$ first-literal units.
+
+Other saved snapshots retain their own exact dependency sets. Total multiverse
+space counts the union of those sets, sharing each physical object once.
+Pending received objects, failed attempts and unfinished outputs outside the
+working slots need their own storage budget. Native payloads, framing, rank,
+cut-LCP and offset metadata remain separate terms; the bounds above concern
+borrowed key literals, not the entire encoded database.
+
+Cumulative construction can write many generations of these bounded live sets,
+so merge and admission credits must still pay actual key/framing work. Shared
+immutable key spans, inherited first-key contexts or distinguishing separators
+could reduce the logarithmic literal term. That optimization is separate from
+enforcing the bounded live index set.
 
 ## 5. Ingestion state and published state
 

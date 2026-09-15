@@ -624,9 +624,12 @@ retirement, schema migration and resumable job execution remain extensions.
 
 Direct network adoption keeps compatible native bytes and their sampled offsets
 intact. The arbitrary-prefix recurrence bounds borrowed **entries**, without
-requiring monotone native file sizes. It does not prove a byte bound for repeated
-long sampled keys or a bounded-depth batch scheduler. The
-[network analysis](network-admission.md) records both remaining obligations.
+requiring monotone native file sizes. The intended three-indexes-per-level cap,
+doubled during rebuilding, bounds repeated first-key storage by $O(T\log(N+1))$.
+The [network analysis](network-admission.md) also bounds all borrowed literals
+by the index count times the native key union's ordinary-FC literal size, and
+separates these per-snapshot peaks from cumulative string work and historical
+pins. Enforcing occupancy and admission work budgets remains scheduler work.
 
 ### Strong deletes and global rebuilding
 

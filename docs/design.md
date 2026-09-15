@@ -730,6 +730,14 @@ retained history. A logarithmic total bound requires explicit policy contracts.
 Space accounting separately reports native key encoding, fixed values, borrowed
 keys, false-borrow bits, rank metadata, both offset indexes, exact cut-LCP
 counts, physical length checkpoints, unfinished outputs, and objects retained only by historical pins.
+The redundant schedule budgets approximately $3\log_2(N+1)$ live indexes for
+one snapshot and another $3\log_2(N+1)$ during rebuilding, with a constant-size
+base case. A repeated first borrowed key of length $T$ therefore contributes
+$O(T\log(N+1))$ simultaneous literal units across those indexes. More generally,
+their total key literals are bounded by the index count times the ordinary-FC
+literal size of the retained native key union. These are per-snapshot storage
+bounds; historical pin unions and cumulative construction work have separate
+accounting. The [network storage analysis](network-admission.md) gives the details.
 The ordinary front-compression size of the global logical union is not the sum
 of independently encoded files; prefix duplication across runs is real.
 We cannot transfer the COSB-tree's complete optimal I/O theorem to this composition.
