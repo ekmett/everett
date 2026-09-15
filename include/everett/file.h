@@ -191,6 +191,11 @@ namespace everett {
 
   // Validated typed single-object reader. The retained body slice keeps the
   // underlying read-only mapping alive independently of this file object.
+  // Both open() and from_slice() verify the entire body's CRC32C: O(physical
+  // body bytes) work, potentially faulting every mapped page. Mmap preserves
+  // zero-copy body access after validation; this is not a lazy-open hot path.
+  // A future block-checksum format could support validated lazy reads without
+  // making an unchecked whole-file reader the default.
   template <class P> struct file {
     using policy_type = P;
     static file from_slice(mapped_slice bytes) {
