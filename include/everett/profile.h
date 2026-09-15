@@ -318,6 +318,9 @@ namespace everett {
     }
   }
 
+  template <class P, stream_role Role = stream_role::native> struct profile_cursor;
+  template <class P> struct profile_borrowed_writer;
+
   // A view borrows both sections. Metadata and parsed counts are checked, but
   // complete semantic validation also requires traversing the stream. Physical
   // offsets and all encoded lengths count P units; bit_view lengths count bits.
@@ -358,6 +361,7 @@ namespace everett {
     std::span<std::byte const> bytes() const noexcept { return bytes_; }
     profile_metadata const & metadata() const noexcept { return metadata_; }
     select_groups_view<P::group_size> group_offsets() const noexcept { return offsets_; }
+    profile_cursor<P, Role> cursor() const;
 
     // One predecessor-length checkpoint is stored at each group start. This
     // permits true backspace counts without a full-key-length field per record.
@@ -442,6 +446,7 @@ namespace everett {
     }
 
   private:
+    friend struct profile_cursor<P, Role>;
     std::span<std::byte const> bytes_;
     select_groups_view<P::group_size> offsets_;
     profile_metadata metadata_;
@@ -487,6 +492,54 @@ namespace everett {
       context = record.key_units;
     }
   };
+
+  // Resumable sequential traversal. Each encoded record is parsed once and
+  // its value remains a view of the original payload. Only the current key is
+  // reconstructed. The view's sections must outlive this cursor; peek's key
+  // view additionally expires when this cursor advances or is destroyed.
+  template <class P, stream_role Role> struct profile_cursor {
+    using policy_type = P;
+    static constexpr stream_role role = Role;
+
+    explicit profile_cursor(profile_view<P, Role> view) : view_(view) {
+      if (!done()) {
+        record_ = view_.encoded_at(0);
+        profile_view<P, Role>::decode_into(record_, std::numeric_limits<std::uint64_t>::max(), scratch_, context_);
+      }
+    }
+
+    bool done() const noexcept { return ordinal_ == view_.size(); }
+    std::uint64_t ordinal() const noexcept { return ordinal_; }
+    profile_item<P> peek() const & {
+      if (done()) throw std::out_of_range("profile cursor at end");
+      return {ordinal_, {scratch_.view(), context_}, record_.value};
+    }
+    profile_item<P> peek() const && = delete;
+
+    void advance() {
+      if (done()) throw std::out_of_range("profile cursor at end");
+      if (ordinal_ + 1 == view_.size()) {
+        if (record_.next_offset != view_.metadata_.extent)
+          throw std::invalid_argument("trailing profile data");
+        ++ordinal_;
+        return;
+      }
+      auto next = view_.next_record(record_, ordinal_ + 1);
+      profile_view<P, Role>::decode_into(next, std::numeric_limits<std::uint64_t>::max(), scratch_, context_);
+      record_ = next;
+      ++ordinal_;
+    }
+
+  private:
+    profile_view<P, Role> view_;
+    bit_string scratch_;
+    std::uint64_t context_ = 0;
+    profile_encoded_record record_;
+    std::uint64_t ordinal_ = 0;
+  };
+
+  template <class P, stream_role Role>
+  profile_cursor<P, Role> profile_view<P, Role>::cursor() const { return profile_cursor<P, Role>(*this); }
 
   template <class P, stream_role Role = stream_role::native> struct profile_array {
     using policy_type = P;
@@ -564,9 +617,85 @@ namespace everett {
     profile_view<P, Role> view() const && = delete;
 
   private:
+    friend struct profile_borrowed_writer<P>;
     std::vector<std::byte> bytes_;
     select_groups<P::group_size> offsets_;
     profile_metadata metadata_ = profile_detail::initial_metadata<P, Role>();
+  };
+
+  // Incremental modified-FC output. The caller supplies any boundary-dependent
+  // prefix ceiling before appending that key. There is no all-keys staging:
+  // retained state is the previous key, encoded bytes and one offset per group.
+  // With the same ceilings this produces exactly the batch borrowed encoding
+  // (restart_factor == 0), including checkpoints, tail padding and EF metadata.
+  template <class P> struct profile_borrowed_writer {
+    using policy_type = P;
+    static constexpr stream_role role = stream_role::borrowed;
+
+    std::uint64_t size() const noexcept { return count_; }
+    bool finished() const noexcept { return finished_; }
+
+    void append(bit_view key, std::uint64_t prefix_ceiling = std::numeric_limits<std::uint64_t>::max()) {
+      if (finished_) throw std::logic_error("borrowed profile writer is finished");
+      if (key.size() % P::bits_per_unit) throw std::invalid_argument("key length does not match profile unit");
+      auto previous = previous_.view();
+      if (count_ && compare_bits(previous, key) > 0) throw std::invalid_argument("profile keys must be sorted");
+      auto next_count = profile_detail::add(count_, 1);
+      auto retained = std::min(common_prefix_units<P>(previous, key), prefix_ceiling);
+      auto previous_units = previous.size() / P::bits_per_unit;
+      auto key_units = key.size() / P::bits_per_unit;
+      auto saved_bits = data_.bit_size;
+      auto saved_offsets = offsets_.size();
+      // Take ownership before modifying output, including when the caller's
+      // key view points into other mutable decoding scratch.
+      auto next_previous = bit_string::copy(key);
+      try {
+        if (count_ % P::group_size == 0) {
+          offsets_.push_back(data_.bit_size / P::bits_per_unit);
+          profile_detail::write_count<P>(data_, previous_units);
+        }
+        profile_detail::write_count<P>(data_, previous_units - retained);
+        profile_detail::write_count<P>(data_, key_units - retained);
+        auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
+        profile_detail::append(data_, key.subview(retained_bits, key.size() - retained_bits));
+      } catch (...) {
+        profile_detail::resize(data_, saved_bits);
+        offsets_.resize(saved_offsets);
+        throw;
+      }
+      previous_ = std::move(next_previous);
+      count_ = next_count;
+    }
+
+    // Finalizing EF takes work proportional to the staged group offsets.
+    // This is not a bounded-byte or durable checkpoint operation.
+    profile_array<P, stream_role::borrowed> finish() {
+      if (finished_) throw std::logic_error("borrowed profile writer is finished");
+      profile_array<P, stream_role::borrowed> result;
+      auto extent = data_.bit_size / P::bits_per_unit;
+      offsets_.push_back(extent);
+      try {
+        result.offsets_ = select_groups<P::group_size>::build(offsets_, count_);
+      } catch (...) {
+        offsets_.pop_back();
+        throw;
+      }
+      result.metadata_.record_count = count_;
+      result.metadata_.extent = extent;
+      result.bytes_ = std::move(data_.bytes);
+      data_.bit_size = 0;
+      previous_ = {};
+      offsets_ = std::vector<std::uint64_t>{};
+      finished_ = true;
+      return result;
+    }
+
+  private:
+    bit_string data_;
+    bit_string previous_;
+    std::vector<std::uint64_t> offsets_;
+    std::uint64_t count_ = 0;
+    bool finished_ = false;
   };
 }
 

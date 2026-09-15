@@ -75,8 +75,121 @@ namespace {
     return result;
   }
 
+  template <class P, stream_role Role> void check_cursor(profile_array<P, Role> const & array,
+                                                        std::span<profile_record const> records) {
+    auto cursor = array.view().cursor();
+    for (std::size_t i = 0; i != records.size(); ++i) {
+      require(!cursor.done() && cursor.ordinal() == i, "cursor ordinal before advance");
+      auto item = cursor.peek();
+      require(item.ordinal == i && bit_string::copy(item.key.prefix) == records[i].key, "cursor key");
+      require(item.key.full_units == records[i].key.bit_size / P::bits_per_unit, "cursor full key length");
+      require(bit_string::copy(item.value) == records[i].value, "cursor value");
+      auto encoded = array.view().encoded_at(i);
+      require(item.value.storage().data() == array.bytes().data() &&
+              item.value.storage().size() == array.bytes().size() &&
+              item.value.offset() == encoded.value.offset() && item.value.size() == encoded.value.size(),
+              "cursor values must borrow the original payload, not a copy");
+      auto again = cursor.peek();
+      require(again.key.prefix.storage().data() == item.key.prefix.storage().data() &&
+              again.value.offset() == item.value.offset(), "peek preserves the current borrowed views");
+      // Pausing and moving live traversal state never reconstructs prior keys.
+      if (i % (P::group_size + 1) == 0) {
+        auto resumed = std::move(cursor);
+        require(resumed.ordinal() == i, "cursor move preserves ordinal");
+        cursor = std::move(resumed);
+      }
+      cursor.advance();
+    }
+    require(cursor.done() && cursor.ordinal() == records.size(), "cursor reaches exact terminal ordinal");
+    rejects([&] { (void)cursor.peek(); });
+    rejects([&] { cursor.advance(); });
+  }
+
+  template <class P> void same_borrowed(profile_array<P, stream_role::borrowed> const & a,
+                                       profile_array<P, stream_role::borrowed> const & b) {
+    require(std::equal(a.bytes().begin(), a.bytes().end(), b.bytes().begin(), b.bytes().end()),
+            "incremental borrowed bytes differ from batch");
+    auto const & x = a.metadata();
+    auto const & y = b.metadata();
+    require(x.version == y.version && x.key_unit == y.key_unit && x.value_unit == y.value_unit &&
+            x.count_unit == y.count_unit && x.offset_unit == y.offset_unit && x.count_code == y.count_code &&
+            x.bit_order == y.bit_order && x.role == y.role && x.policy_fixed_values == y.policy_fixed_values &&
+            x.policy_value_width == y.policy_value_width && x.common_value_width == y.common_value_width &&
+            x.group_size == y.group_size && x.record_count == y.record_count && x.extent == y.extent,
+            "incremental borrowed metadata differs from batch");
+    auto const & u = a.group_offsets();
+    auto const & v = b.group_offsets();
+    require(u.low == v.low && u.high == v.high && u.sparse == v.sparse && u.low_width == v.low_width &&
+            u.record_count == v.record_count && u.universe == v.universe && u.samples.size() == v.samples.size(),
+            "incremental borrowed EF sections differ from batch");
+    for (std::size_t i = 0; i != u.samples.size(); ++i)
+      require(u.samples[i].first == v.samples[i].first && u.samples[i].sparse == v.samples[i].sparse,
+              "incremental borrowed EF samples differ from batch");
+  }
+
+  template <class P> void incremental_borrowed() {
+    std::vector<profile_record> records;
+    for (auto const & record : fixture<P>()) {
+      records.push_back({record.key, {}});
+      records.push_back({record.key, {}});
+    }
+    for (unsigned mode = 0; mode != 3; ++mode) {
+      std::vector<std::uint64_t> ceilings;
+      if (mode) for (std::size_t i = 0; i != records.size(); ++i)
+        ceilings.push_back(mode == 1 ? 0 : i % (records[i].key.bit_size / P::bits_per_unit + 1));
+      auto batch = profile_array<P, stream_role::borrowed>::build(records, ceilings);
+      for (std::uint64_t step : {std::uint64_t{1}, P::group_size - 1, P::group_size, P::group_size + 1}) {
+        profile_borrowed_writer<P> writer;
+        std::size_t at = 0;
+        auto append_step = [&] {
+          auto end = std::min<std::uint64_t>(records.size(), at + step);
+          for (; at != end; ++at) {
+            // Scratch changes immediately after append: the writer must own
+            // its predecessor rather than retaining the caller's key view.
+            auto scratch = records[at].key;
+            writer.append(scratch.view(), ceilings.empty() ? std::numeric_limits<std::uint64_t>::max() : ceilings[at]);
+            scratch = {};
+            require(writer.size() == at + 1 && !writer.finished(), "incremental writer progress");
+          }
+        };
+        while (at != records.size()) append_step();
+        auto actual = writer.finish();
+        require(writer.finished() && writer.size() == records.size(), "incremental writer finished state");
+        same_borrowed(actual, batch);
+        check_cursor(actual, records);
+        rejects([&] { writer.append({}); });
+        rejects([&] { (void)writer.finish(); });
+      }
+    }
+    profile_borrowed_writer<P> empty;
+    auto result = empty.finish();
+    auto batch = profile_array<P, stream_role::borrowed>::build({});
+    same_borrowed(result, batch);
+    check_cursor(result, {});
+    profile_borrowed_writer<P> sorted;
+    sorted.append(records.back().key.view());
+    rejects([&] { sorted.append(records.front().key.view()); });
+    require(sorted.size() == 1, "rejected append preserves progress");
+    sorted.append(records.back().key.view());
+    std::array<profile_record, 2> last{{records.back(), records.back()}};
+    same_borrowed(sorted.finish(), profile_array<P, stream_role::borrowed>::build(last));
+    auto shifted_key = bit_string::from_bits("1");
+    profile_detail::append(shifted_key, records.back().key.view());
+    profile_borrowed_writer<P> shifted;
+    shifted.append(shifted_key.view().subview(1, records.back().key.bit_size));
+    same_borrowed(shifted.finish(), profile_array<P, stream_role::borrowed>::build(
+      std::span<profile_record const>(records).last(1)));
+    if constexpr (P::unit == profile_unit::byte) {
+      auto unaligned = bit_string::from_bits("101");
+      profile_borrowed_writer<P> writer;
+      rejects([&] { writer.append(unaligned.view()); });
+      require(writer.size() == 0, "unit rejection preserves writer state");
+    }
+  }
+
   template <class P> void check_array(profile_array<P> const & array, std::span<profile_record const> records) {
     require(array.size() == records.size(), "profile record count");
+    check_cursor(array, records);
     auto view = array.view();
     std::uint64_t ordinal = 0;
     view.visit_all([&](profile_item<P> item) {
@@ -154,6 +267,8 @@ namespace {
               "constant value bytes excluded from EF universe");
     auto empty = profile_array<P>::build({});
     require(empty.view().size() == 0 && empty.metadata().extent == 0, "empty profile");
+    check_cursor(empty, {});
+    incremental_borrowed<P>();
     profile_array<P> default_empty;
     require(default_empty.view().size() == 0, "default profile");
 
@@ -271,6 +386,10 @@ namespace {
       std::array<std::uint64_t, 2> offsets{0, metadata.extent};
       auto index = select_groups<P::group_size>::build(offsets, records);
       profile_view<P> view(data.bytes, index.view(), metadata);
+      rejects([&] {
+        auto cursor = view.cursor();
+        while (!cursor.done()) cursor.advance();
+      });
       view.visit_all([](auto) { return true; });
     };
     auto encoded = [&](std::initializer_list<std::uint64_t> headers) {
@@ -300,6 +419,27 @@ namespace {
     auto inconsistent = select_groups<P::group_size>::build(wrong_offsets, array.size());
     profile_view<P> wrong_samples(array.bytes(), inconsistent.view(), array.metadata());
     rejects([&] { wrong_samples.visit_all([](auto) { return true; }); });
+    rejects([&] {
+      auto cursor = wrong_samples.cursor();
+      while (!cursor.done()) cursor.advance();
+    });
+    // Change only a group's predecessor checkpoint. Its encoded size and
+    // sampled address stay unchanged, so sequential context must reject it.
+    auto checkpoint_bytes = std::vector<std::byte>(array.bytes().begin(), array.bytes().end());
+    auto group_start = array.group_offsets().view().offset(1, array.metadata().common_value_width.value_or(0));
+    auto group_data = bit_view(checkpoint_bytes, array.metadata().extent * P::bits_per_unit);
+    auto after_checkpoint = group_start;
+    (void)profile_detail::read_count<P>(group_data, after_checkpoint);
+    if constexpr (P::unit == profile_unit::byte) checkpoint_bytes[group_start] ^= std::byte{1};
+    else {
+      auto bit = after_checkpoint - 1;
+      checkpoint_bytes[bit / 8] ^= static_cast<std::byte>(1u << (7 - bit % 8));
+    }
+    profile_view<P> wrong_checkpoint(checkpoint_bytes, array.group_offsets().view(), array.metadata());
+    rejects([&] {
+      auto cursor = wrong_checkpoint.cursor();
+      while (!cursor.done()) cursor.advance();
+    });
     auto bad_bytes = std::vector<std::byte>(array.bytes().begin(), array.bytes().end());
     auto metadata = array.metadata();
     if constexpr (P::unit == profile_unit::bit) {
