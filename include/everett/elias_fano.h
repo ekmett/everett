@@ -251,7 +251,8 @@ namespace everett {
     std::uint64_t size() const noexcept { return entry_count_; }
 
     std::uint64_t select(std::uint64_t ordinal) const {
-      if (ordinal >= entry_count_) error_detail::raise<std::out_of_range>("Elias-Fano ordinal");
+      if (ordinal >= entry_count_) [[unlikely]]
+        error_detail::raise<std::out_of_range>("Elias-Fano ordinal");
       auto position = select_high(ordinal);
       if (position < ordinal) error_detail::raise<std::invalid_argument>("invalid elias_fano high value");
       auto hi = position - ordinal;
