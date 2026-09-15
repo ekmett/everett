@@ -87,6 +87,66 @@ namespace {
     require(everett::crc32c(input) == 0x113fdb5cu, "decreasing CRC vector mismatch");
   }
 
+  // Independent linear-map oracle: square the one-byte state transition as a
+  // matrix over GF(2), rather than multiplying reflected polynomials.
+  std::uint32_t shift_oracle(std::uint32_t value, std::uint64_t count) {
+    using matrix = std::array<std::uint32_t, 32>;
+    auto apply = [](matrix const & map, std::uint32_t input) {
+      std::uint32_t result = 0;
+      for (unsigned i = 0; i != 32; ++i)
+        if (input & (std::uint32_t{1} << i)) result ^= map[i];
+      return result;
+    };
+    matrix map{};
+    for (unsigned i = 0; i != 32; ++i) {
+      auto column = std::uint32_t{1} << i;
+      for (unsigned bit = 0; bit != 8; ++bit)
+        column = (column >> 1) ^ ((column & 1) ? 0x82f63b78u : 0);
+      map[i] = column;
+    }
+    while (count) {
+      if (count & 1) value = apply(map, value);
+      matrix squared{};
+      for (unsigned i = 0; i != 32; ++i) squared[i] = apply(map, map[i]);
+      map = squared;
+      count >>= 1;
+    }
+    return value;
+  }
+
+  void combinations() {
+    std::mt19937_64 random(0xc04b1e);
+    std::vector<std::byte> storage(8193);
+    for (auto & byte : storage) byte = std::byte(random());
+    auto input = bytes(storage);
+    for (std::size_t size : {std::size_t{0}, std::size_t{1}, std::size_t{127}, std::size_t{513}, input.size()}) {
+      auto whole = input.first(size);
+      auto expected = oracle(whole);
+      for (std::size_t split = 0; split <= size; split += size > 513 ? 31 : 1)
+        require(everett::crc32c_combine(oracle(whole.first(split)), oracle(whole.subspan(split)), size - split) == expected,
+                "combined CRC differs from independent concatenation");
+      require(everett::crc32c_combine(expected, 0, 0) == expected, "empty suffix CRC combine");
+    }
+    // Prefix replacement is what permits finalizing a section directory
+    // without reading the already-streamed FC and navigation payload again.
+    for (std::size_t prefix : {std::size_t{0}, std::size_t{96}, std::size_t{128}, std::size_t{256}, input.size()}) {
+      auto replacement = storage;
+      for (std::size_t i = 0; i != prefix; ++i) replacement[i] ^= std::byte{0xa7};
+      auto difference = oracle(input.first(prefix)) ^ oracle(bytes(replacement).first(prefix));
+      auto adjusted = oracle(input) ^ everett::crc32c_combine(difference, 0, input.size() - prefix);
+      require(adjusted == oracle(replacement), "CRC prefix adjustment rereads suffix incorrectly");
+    }
+    for (unsigned bit = 0; bit != 64; ++bit) {
+      auto count = std::uint64_t{1} << bit;
+      for (auto length : {count - 1, count, count | (count - 1)}) {
+        auto first = static_cast<std::uint32_t>(random());
+        auto second = static_cast<std::uint32_t>(random());
+        require(everett::crc32c_combine(first, second, length) == (shift_oracle(first, length) ^ second),
+                "combined CRC lost high length bits");
+      }
+    }
+  }
+
   void boundaries() {
     std::mt19937_64 random(0xc32c);
     std::vector<std::byte> input(1024 * 1024 + 96);
@@ -190,6 +250,7 @@ namespace {
 
 int main() {
   known_vectors();
+  combinations();
   boundaries();
   incremental_streams();
 #if defined(__unix__) || defined(__APPLE__)

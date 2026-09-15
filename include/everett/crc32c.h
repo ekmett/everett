@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <array>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -28,6 +29,29 @@
 #endif
 
 namespace everett::crc32c_detail {
+  // Reflected polynomial representation: bit31 is the multiplicative unit,
+  // and one rightward step multiplies by x modulo the Castagnoli polynomial.
+  constexpr std::uint32_t multiply_polynomial(std::uint32_t a, std::uint32_t b) noexcept {
+    std::uint32_t result = 0;
+    for (std::uint32_t bit = 1u << 31; bit; bit >>= 1) {
+      if (a & bit) result ^= b;
+      b = (b >> 1) ^ (0x82f63b78u & (0u - (b & 1)));
+    }
+    return result;
+  }
+  inline constexpr auto byte_powers = [] {
+    std::array<std::uint32_t, 64> result{};
+    result[0] = 1u << 23; // x^8
+    for (unsigned i = 1; i != result.size(); ++i)
+      result[i] = multiply_polynomial(result[i - 1], result[i - 1]);
+    return result;
+  }();
+  inline std::uint32_t shift(std::uint32_t crc, std::uint64_t bytes) noexcept {
+    for (unsigned i = 0; bytes; ++i, bytes >>= 1)
+      if (bytes & 1) crc = multiply_polynomial(byte_powers[i], crc);
+    return crc;
+  }
+
   // Generated C kernels load scalar words through this C++ alias-safe bridge.
   // Exactly sizeof(T) bytes are read, including unaligned and mmap-tail inputs.
   template <class T> inline T load_little(void const * bytes) noexcept {
@@ -68,6 +92,14 @@ namespace everett::crc32c_detail {
 #endif
 
 namespace everett {
+  // Combine finalized CRCs of A and B into CRC(A || B) without rereading either
+  // input. second_bytes is B's physical byte length. The CRC of empty B is 0.
+  // Lengths span all 64 bits; no bytes-to-bits multiplication can overflow.
+  inline std::uint32_t crc32c_combine(std::uint32_t first, std::uint32_t second,
+                                    std::uint64_t second_bytes) noexcept {
+    return crc32c_detail::shift(first, second_bytes) ^ second;
+  }
+
   // Reflected Castagnoli CRC32C, with the conventional initial/final complement.
   // Pinned Corsix-generated kernels are selected by the compiler target, without
   // runtime feature probes, allocation, or instructions beyond that target.

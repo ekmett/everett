@@ -280,11 +280,14 @@ namespace everett {
         }
       }
       void write_header(std::span<std::byte const> bytes) {
-        std::uint64_t offset = 0;
+        write_at(bytes, 0, "write object header");
+      }
+      void write_at(std::span<std::byte const> bytes, std::uint64_t offset, char const * operation) {
         while (!bytes.empty()) {
-          auto count = ops.write_at(fds[3], bytes, offset);
-          if (count < 0) { if (errno == EINTR) continue; fail("write object header"); }
-          if (count == 0 || std::uint64_t(count) > bytes.size()) fail("write object header", EIO);
+          auto part = bytes.first(std::min(bytes.size(), std::size_t{1} << 20));
+          auto count = ops.write_at(fds[3], part, offset);
+          if (count < 0) { if (errno == EINTR) continue; fail(operation); }
+          if (count == 0 || std::uint64_t(count) > part.size()) fail(operation, EIO);
           offset += static_cast<std::uint64_t>(count);
           bytes = bytes.subspan(static_cast<std::size_t>(count));
         }
