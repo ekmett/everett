@@ -54,6 +54,8 @@ namespace everett {
 
   inline object_write_paths object_output_paths(std::filesystem::path const & root,
       object_id const & id, object_attempt_id const & attempt, file_kind kind) {
+    if (id.hex().size() != 32 || attempt.hex().size() != 32)
+      throw std::invalid_argument("invalid Everett object or attempt identity");
     auto final = root / object_path(id, kind);
     auto temporary = final.parent_path() /
       ("." + final.filename().string() + ".attempt-" + attempt.hex());
