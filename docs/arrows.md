@@ -173,7 +173,7 @@ computed overlapping writes commute.
 
 Choose a common abelian group, such as the additive group of the selected ring
 $R$. Give each key a state potential
-$\phi_k:\operatorname{Ob}(\mathcal C_k)\to R$, with $\phi_k(o_k)=0$.
+$\phi_k:\mathrm{Ob}(\mathcal C_k)\to R$, with $\phi_k(o_k)=0$.
 Then
 
 $$

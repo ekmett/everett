@@ -134,7 +134,7 @@ pair with unique native keys, `false_borrow_recovery` proves that the matching
 native occurrence is at
 
 $$
-\operatorname{rank}_{\mathrm{native}}(j)-1
+\mathrm{rank}_{\mathrm{native}}(j)-1
 $$
 
 in the native stream, where $j$ is a borrowed occurrence of that key. The rank

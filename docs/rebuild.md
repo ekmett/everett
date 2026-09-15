@@ -311,8 +311,8 @@ $$
 
 $$
 N(\text{candidate}_t)=n_s+\sum_{i\le t}
-\bigl([v_i^{\rm new}\ne\operatorname{Nothing}]
--[v_i^{\rm old}\ne\operatorname{Nothing}]\bigr).
+\bigl([v_i^{\rm new}\ne\mathrm{Nothing}]
+-[v_i^{\rm old}\ne\mathrm{Nothing}]\bigr).
 $$
 
 We check each root independently. Adding the foreground root's signature to the

@@ -263,7 +263,7 @@ For the table specialization, we choose a common ring $R$ and write
 
 $$
 \phi_{s,x}(v)=h_K(s,x)\,h_{V,s,x}(v),\qquad
-\phi_{s,x}(\operatorname{absent})=0.
+\phi_{s,x}(\mathrm{absent})=0.
 $$
 
 The world fingerprint is the finite sum of these potentials, and an update

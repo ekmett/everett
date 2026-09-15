@@ -145,7 +145,7 @@ We assign a conceptual origin bit of one to a borrowed entry and zero to a
 native entry. We only need ranks at sampling boundaries:
 
 $$
-R(g)=\operatorname{rank15}(g)=
+R(g)=\mathrm{rank15}(g)=
 \#\{\text{borrowed entries before }\min(15g,|C|)\}.
 $$
 
@@ -196,8 +196,8 @@ We store their normalized byte positions using Elias–Fano.
 For record ordinal $i_g=\min(15g,n)$:
 
 $$
-F_g=\operatorname{physicalOffset}(i_g)-i_gv,\qquad
-\operatorname{select15}(g)=\operatorname{base}+F_g+i_gv.
+F_g=\mathrm{physicalOffset}(i_g)-i_gv,\qquad
+\mathrm{select15}(g)=\mathrm{base}+F_g+i_gv.
 $$
 
 The Elias–Fano universe $U$ measures the variable encoding, excluding fixed
@@ -368,7 +368,7 @@ preserve native-file independence.
 
 ### A concrete index-only construction
 
-Let $a_j=\operatorname{lcp}(S_{j-1},S_j)$, with $a_0=0$.
+Let $a_j=\mathrm{lcp}(S_{j-1},S_j)$, with $a_0=0$.
 We can obtain a simple conservative encoding by retaining
 $\min(a_j,a_{j+1})$ bytes of borrowed record $S_j$; define
 $a_m=0$ for the last record's right boundary. It can decode that record from
@@ -384,7 +384,7 @@ decodes from the same anchor in the usual forward direction.
 The sharper version applies this rule only at actual virtual fifteen-entry
 cuts. A cut at $15g$ whose borrowed rank is $j+1$ may need $S_j$ as its
 preceding borrowed key. Let $b_j$ be the rightmost such cut's boundary key.
-We retain $\min(a_j,\operatorname{lcp}(S_j,b_j))$; if no such cut exists, we retain
+We retain $\min(a_j,\mathrm{lcp}(S_j,b_j))$; if no such cut exists, we retain
 the ordinary $a_j$. Prefix convexity makes the rightmost cut the tightest
 constraint. The borrowed builder knows these cuts when it merges native and
 borrowed keys, and can recompute them when the index changes.
@@ -464,7 +464,7 @@ Readers hold references protecting their mappings; replacing a manifest does
 not invalidate an in-flight read.
 
 Suppose a dependent indexes old targets $X,Y$, while another branch finishes
-$Z=\operatorname{merge}(X,Y)$. The dependent continues using $X,Y$: its
+$Z=\mathrm{merge}(X,Y)$. The dependent continues using $X,Y$: its
 fractional index describes those exact layouts. It may immediately pin $Z$,
 skip the data merge work it was budgeted to perform, and spend its own schedule
 on index repair. Only then does it adopt $Z$.
@@ -544,7 +544,7 @@ appeared in 1981.
 The [rebuild protocol](rebuild.md) gives the accounting and adaptation
 in detail. Global rebuilding is separate from ordinary COLA level merges.
 
-Native records represent $(K,\operatorname{Maybe} V)$; `Nothing` is a tombstone.
+Native records represent $(K,\mathrm{Maybe}\,V)$; `Nothing` is a tombstone.
 Newer records shadow older records. A genuine delete requires knowing that the
 old binding existed. An absent-key tombstone earns no deletion credit. We count
 live bindings separately from weak mutations: overwrites also grow physical history
@@ -613,7 +613,7 @@ legitimately and are reported separately from the active universe.
 Let our hash functions take values in an algebra $R$, and define:
 
 $$
-h_V(\operatorname{Nothing})=0,\qquad
+h_V(\mathrm{Nothing})=0,\qquad
 C(T)=\sum_{(k,v)\in T}h_K(k)\,h_V(v).
 $$
 
@@ -675,8 +675,8 @@ validation evidence, an operation identity, and its fingerprint delta.
 For disjoint write sets:
 
 $$
-\operatorname{apply}(D_a,\operatorname{apply}(D_b,W_t))
-=\operatorname{apply}(D_b,\operatorname{apply}(D_a,W_t)),
+\mathrm{apply}(D_a,\mathrm{apply}(D_b,W_t))
+=\mathrm{apply}(D_b,\mathrm{apply}(D_a,W_t)),
 $$
 
 $$
