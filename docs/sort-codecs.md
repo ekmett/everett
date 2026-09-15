@@ -44,7 +44,7 @@ read.next([](auto, auto const &, auto const &, auto) {
 ```
 
 The callback is instantiated for every occupied sort. It can use `if constexpr`
-on `decltype(sort)::type` to choose the appropriate operation. References passed
+on the type carried by its tag to choose the appropriate operation. References passed
 to it last only for that call. Input records must be strictly ordered by sort
 code and then by the sort's key comparator. Both writer and reader check that
 order, including duplicate keys within a sort.

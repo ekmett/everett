@@ -760,7 +760,7 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
       int fd = ::open(path.c_str(), O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC | O_NOFOLLOW, 0600);
       if (fd < 0) throw std::system_error(errno, std::generic_category(), "create Diet catalog");
       if (::close(fd)) throw std::system_error(errno, std::generic_category(), "close new Diet catalog");
-      auto result = connect(location, options, std::move(ops));
+      auto result = connect(location, options, std::move(ops), true);
       result.schema_version_ = version;
       result.transaction("", "initialize", {}, [&] {
         catalog_detail::exec(result.db_, catalog_detail::schema_for(version).c_str());
@@ -904,7 +904,8 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
         throw std::runtime_error("Diet requires thread-safe SQLite 3.51.3 or later");
       if (options.busy_timeout_ms < 0) throw std::invalid_argument("negative SQLite busy timeout");
     }
-    static sqlite_catalog connect(std::filesystem::path const & root, catalog_options options, Ops ops) {
+    static sqlite_catalog connect(std::filesystem::path const & root, catalog_options options, Ops ops,
+        bool initialize = false) {
       validate_options(options);
       sqlite3 * db = nullptr;
       auto path = (root / "catalog.sqlite3").string();
@@ -920,7 +921,10 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
       code = sqlite3_db_config(db, SQLITE_DBCONFIG_DEFENSIVE, 1, &setting);
       if (code != SQLITE_OK || setting != 1) catalog_detail::fail(db, code == SQLITE_OK ? SQLITE_ERROR : code);
       catalog_detail::exec(db, "PRAGMA trusted_schema=OFF; PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL; PRAGMA fullfsync=ON; PRAGMA checkpoint_fullfsync=ON;");
-      catalog_detail::statement journal(db, "PRAGMA journal_mode=WAL");
+      // Opening must not format an incomplete file or change another database's
+      // persistent journal mode before its Diet schema has been established.
+      // Only the exclusive create path is allowed to enable WAL.
+      catalog_detail::statement journal(db, initialize ? "PRAGMA journal_mode=WAL" : "PRAGMA journal_mode");
       if (!journal.row() || journal.text(0) != "wal") throw std::runtime_error("Diet requires SQLite WAL mode");
       for (auto sql : {"PRAGMA foreign_keys", "PRAGMA synchronous", "PRAGMA fullfsync", "PRAGMA checkpoint_fullfsync", "PRAGMA trusted_schema"}) {
         catalog_detail::statement check(db, sql);

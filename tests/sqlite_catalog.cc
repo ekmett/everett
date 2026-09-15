@@ -15,6 +15,7 @@
 #include <cassert>
 #include <cstdio>
 #include <exception>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <thread>
@@ -117,6 +118,26 @@ namespace {
     assert(count(catalog.root(), "SELECT count(*) FROM objects WHERE bytes IS NULL") == 0);
     return identities.front();
   }
+  void opening_preserves_foreign_files() {
+    temporary directory;
+    auto path = directory.root / "catalog.sqlite3";
+    { std::ofstream empty(path, std::ios::binary); }
+    rejects([&] { (void)sqlite_catalog<policy>::open(directory.root); });
+    assert(std::filesystem::file_size(path) == 0);
+    sqlite3 * db = nullptr;
+    assert(sqlite3_open_v2(path.c_str(), &db, SQLITE_OPEN_READWRITE, nullptr) == SQLITE_OK);
+    assert(sqlite3_exec(db, "CREATE TABLE unrelated(value TEXT); INSERT INTO unrelated VALUES('retain me')",
+      nullptr, nullptr, nullptr) == SQLITE_OK);
+    assert(sqlite3_close(db) == SQLITE_OK);
+    auto bytes = [&] {
+      std::ifstream input(path, std::ios::binary);
+      return std::string(std::istreambuf_iterator<char>(input), {});
+    };
+    auto before = bytes();
+    rejects([&] { (void)sqlite_catalog<policy>::open(directory.root); });
+    assert(bytes() == before);
+    assert(count(directory.root, "SELECT count(*) FROM unrelated WHERE value='retain me'") == 1);
+  }
   void normal() {
     temporary directory;
     blob_identity identity{id(1), id(2)};
@@ -191,7 +212,7 @@ namespace {
 }
 
 int main() {
-  normal(); failures();
+  opening_preserves_foreign_files(); normal(); failures();
   {
     temporary directory;
     using bits = diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<diet::fixed_values<0>>>>, 7, diet::golomb<3>, 16>;
