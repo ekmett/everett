@@ -1,0 +1,65 @@
+--- a/include/everett/select_groups.h
++++ b/include/everett/select_groups.h
+@@ -23,0 +24,4 @@
++#if defined(__BMI2__)
++#include <immintrin.h>
++#endif
++
+@@ -37,0 +42,28 @@
++    }
++
++    // Zero-based selection in a nonzero word, with ordinal < popcount(value).
++    // Byte-prefix populations fit in seven bits, so the marked subtraction
++    // finds the first byte whose cumulative population exceeds ordinal.
++    inline unsigned select_word(std::uint64_t value, unsigned ordinal) noexcept {
++#if defined(__BMI2__)
++      return unsigned(std::countr_zero(_pdep_u64(std::uint64_t{1} << ordinal, value)));
++#else
++      auto pairs = value - ((value >> 1) & 0x5555555555555555ull);
++      auto nibbles = (pairs & 0x3333333333333333ull) + ((pairs >> 2) & 0x3333333333333333ull);
++      auto bytes = (nibbles + (nibbles >> 4)) & 0x0f0f0f0f0f0f0f0full;
++      auto prefixes = bytes * 0x0101010101010101ull;
++      auto marked = ((prefixes | 0x8080808080808080ull) -
++                     (ordinal + 1) * 0x0101010101010101ull) & 0x8080808080808080ull;
++      auto shift = unsigned(std::countr_zero(marked)) & ~7u;
++      if (shift) ordinal -= unsigned((prefixes >> (shift - 8)) & 255);
++      auto lower = unsigned((nibbles >> shift) & 15);
++      auto step = unsigned(ordinal >= lower);
++      shift += step * 4;
++      ordinal -= step * lower;
++      auto bits = unsigned(value >> shift) & 15;
++      lower = (bits & 1) + ((bits >> 1) & 1);
++      step = unsigned(ordinal >= lower);
++      shift += step * 2;
++      ordinal -= step * lower;
++      return shift + ordinal + unsigned(((value >> shift) & 1) == 0);
++#endif
+@@ -224,2 +256 @@
+-          for (; remaining; --remaining) value &= value - 1;
+-          auto position = word * 64 + unsigned(std::countr_zero(value));
++          auto position = word * 64 + select_groups_detail::select_word(value, remaining);
+--- a/include/everett/select15.h
++++ b/include/everett/select15.h
+@@ -10,0 +11,2 @@
++
++#include <everett/select_groups.h>
+@@ -125,2 +127 @@
+-          for (; remaining; --remaining) value &= value - 1;
+-          auto position = word * 64 + unsigned(std::countr_zero(value));
++          auto position = word * 64 + select_groups_detail::select_word(value, remaining);
+@@ -165,13 +166,2 @@
+-      std::uint64_t low_mask = result.low_width ? (std::uint64_t{1} << result.low_width) - 1 : 0;
+-      for (std::uint64_t i = 0; i < residuals.size(); ++i) {
+-        auto value = residuals[i];
+-        if (result.low_width) {
+-          auto bit = i * result.low_width;
+-          unsigned shift = unsigned(bit % 64);
+-          result.low[bit / 64] |= (value & low_mask) << shift;
+-          if (shift + result.low_width > 64)
+-            result.low[bit / 64 + 1] |= (value & low_mask) >> (64 - shift);
+-        }
+-        auto position = (value >> result.low_width) + i;
+-        result.high[position / 64] |= std::uint64_t{1} << (position % 64);
+-      }
++      select_groups_detail::pack_low(residuals, result.low, result.low_width);
++      select_groups_detail::write_high(residuals, result.high, result.low_width);
