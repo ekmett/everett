@@ -261,7 +261,7 @@ A decoded key frontier is not a source-state anchor for applying a value diff.
 The current fixed nine-byte value/tombstone slot is one concrete payload format,
 not a general arrow format.
 
-Variable-length inline arrow bytes enter the variable extent of `select15`.
+Variable-length inline arrow bytes enter the variable extent of `elias_fano`.
 Only fields with a common fixed width across the entire indexed stream can be
 subtracted by stride arithmetic; a different fixed width for each sort is not
 one global stride.

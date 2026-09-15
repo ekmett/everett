@@ -17,8 +17,8 @@ for integration. These are development responsibilities.
 
 | Role | Owned components | Acceptance |
 | --- | --- | --- |
-| Navigation and recovery | `rank.h`, `rank15.h`, `select15.h`, `durability.h`; `tests/rank.cc`, `tests/durability.cc` | rank and sparse-offset oracles, counter transitions, publication ordering, failure and resumption cases |
-| Grouped navigation and object files | `rank_groups.h`, `select_groups.h`, `mapped_file.h`, `file.h`, `object_path.h`; group/mapping/file tests | policy groups, checked binary envelopes, retained mappings and canonical sharded paths |
+| Navigation and recovery | `rank.h`, `rank15.h`, `elias_fano.h`, `durability.h`; `tests/rank.cc`, `tests/durability.cc` | rank and sparse-offset oracles, counter transitions, publication ordering, failure and resumption cases |
+| Grouped navigation and object files | `rank_groups.h`, `mapped_file.h`, `file.h`, `object_path.h`; group/mapping/file tests | policy groups, checked binary envelopes, retained mappings and canonical sharded paths |
 | Portable mapped blobs | `word_view.h`, `sections.h`, `mapped_blob.h`; `tests/mapped_blob.cc` | little-endian section encoding, metadata-only typed opening, exact dependency identities and complete mapped query chains |
 | Immutable object sealing | `object_writer.h`; `tests/object_writer.cc` | streamed CRC, exclusive creation, no-clobber installation, OS barrier ordering, failure identities and retained outputs |
 | Checksums | `crc32c.h`, generated backends, pinned generator and package notices; `tests/crc32c.cc` | independent CRC oracle, bounded loads, reproducible generation, target guards and multi-translation-unit installed consumption |
@@ -44,6 +44,10 @@ and five bits. A 64-bit prefix checkpoint covers 128 classes. `rank15` supplies
 the packed four-bit implementation used by `rank_groups<15>`; its checkpoint
 covers 1920 occurrences, independently of the full-bitvector layout below.
 A blob projects both endpoints with one rank query and the current class.
+Rank accepts only existing positions/groups. Owners and views store no cached
+total; `count()` derives it from the final real element, and an empty structure
+returns zero. The bitmap and packed owners/views each save eight bytes.
+Ordinary mapped opening reads no rank payload to obtain a redundant total.
 
 On little-endian AArch64, rank15 loads a complete checkpoint in four NEON
 vectors, masks classes beyond the requested boundary and widens the final
@@ -58,20 +62,24 @@ or exported ISA flags.
 
 The separate full-bitvector `rank_view` has 64-bit epoch counts every $2^{32}$
 bits, 32-bit counts every 2048 bits and three ten-bit populations for the first
-three 512-bit runs. Populations are individual, not cumulative. Packed addition
-widens their lanes before summing; the selected run uses bounded NEON popcount
+three 512-bit runs. Populations are individual, with zero spacers at bits 10 and 21. The
+three counts fit in 32 bits at shifts 0, 11 and 22; a masked multiply sums them
+without widening at query time. The selected run uses bounded NEON popcount
 on AArch64 or portable word operations. A query at a 512-bit boundary uses the
 directory without reading the bitmap. Construction handles complete 2048-bit
 blocks with four 512-bit popcounts and a separate bounded tail. This backend
 supplies rank alone and stores no select support.
 
-`select_groups<W>` encodes sparse residual offsets with Elias–Fano. Physical
-width `W` is independent of the virtual stride `K`; any positive width fitting
-the policy's 32-bit field is allowed. Fixed-width payload strides use the same
-byte/bit address unit and are added back on access. Dense select scans at most
-4096 high bits; sparse groups store exception positions. Within a selected
-word, broadword byte-prefix arithmetic locates the bit; BMI2 targets use
-`PDEP`. The helper `select15` fixes `W=15`.
+`elias_fano` encodes a monotone sequence independently of how its caller sampled
+that sequence. `elias_fano_view::select(i)` returns the value at an existing
+ordinal. The empty structure has no values; a profile explicitly encodes its
+final stream extent as an additional value. The profile layer chooses physical
+width `W`, independently of virtual stride `K`, and restores fixed-width payload
+strides in its own byte/bit units. Low-level select arithmetic uses plain unsigned
+addition and multiplication; metadata admission establishes representable extents.
+Dense select scans at most 4096 high bits; sparse groups store exception positions.
+Within a selected word, broadword byte-prefix arithmetic locates the bit; BMI2
+targets use `PDEP`.
 
 The shared Elias–Fano writer packs low fields in width-specialized tiles of
 `64/gcd(width,64)` values and assigns each high word once. AArch64 uses NEON
@@ -645,7 +653,7 @@ physical power loss.
 
 Doxygen checked 29 public headers and 23 real declaration associations, with
 clean generation that removes obsolete pages. The proof checkpoint checked
-631 Lean declarations with only standard `propext`, `Quot.sound` and
+693 Lean declarations with only standard `propext`, `Quot.sound` and
 `Classical.choice` axioms.
 
 All seven complete README programs and the native-merge and SQLite guide

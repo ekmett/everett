@@ -214,7 +214,7 @@ these boundaries. Its count and subtraction give the borrowed and native
 ordinals at a cut.
 
 A separate physical block width W selects records `0, W, 2W, ...` and the
-actual-length end sentinel. The two `select_groups<W>` structures locate those
+actual-length end sentinel. The two `elias_fano` structures locate those
 positions, one per stream. W may be a power of two; for example K = 15, W = 16
 keeps four-bit rank classes while aligning physical blocks to sixteen records.
 No offset directory is needed for the virtual merged order.
@@ -228,7 +228,7 @@ also remains separate from redundant-level catalog-size and merge-work bounds.
 
 Physical addressing still needs an explicit unit:
 
-- The byte profile uses byte-aligned records and `select_groups<W>` byte offsets.
+- The byte profile uses byte-aligned records and `elias_fano` byte offsets.
 - The bit profile packs records without inter-record padding and uses bit positions.
   For bit position $p$, the containing byte is $\lfloor p/8\rfloor$ and
   the bit offset is $p\bmod8$. A byte position alone loses information.

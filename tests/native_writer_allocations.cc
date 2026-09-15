@@ -54,7 +54,7 @@ namespace {
         "native metadata differs from batch");
       auto const & x = actual.group_offsets(); auto const & y = expected.group_offsets();
       require(x.low == y.low && x.high == y.high && x.sparse == y.sparse && x.low_width == y.low_width &&
-        x.record_count == y.record_count && x.universe == y.universe && x.samples.size() == y.samples.size(),
+        x.entry_count == y.entry_count && x.universe == y.universe && x.samples.size() == y.samples.size(),
         "native EF differs from batch");
       for (std::size_t i = 0; i != x.samples.size(); ++i)
         require(x.samples[i].first == y.samples[i].first && x.samples[i].sparse == y.samples[i].sparse,

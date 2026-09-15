@@ -95,6 +95,38 @@ drop an identity arrow, validate arrow endpoints or calculate a world's
 fingerprint. In particular, retaining a deletion marker is the default: removing
 it needs the older-coverage proof described in [rebuilding](rebuild.md).
 
+## Carrying comparisons forward
+
+Let $p$ be the last emitted key and $a,b$ the current input heads. Both heads
+follow $p$. I keep $\ell_a=\mathrm{lcp}(p,a)$ and
+$\ell_b=\mathrm{lcp}(p,b)$ in the policy's units.
+
+| Known prefixes | Next key | Additional comparison |
+| --- | --- | --- |
+| $\ell_a>\ell_b$ | $a$ | None |
+| $\ell_a<\ell_b$ | $b$ | None |
+| $\ell_a=\ell_b$ | Determined from the suffixes | Start at that common boundary |
+
+After emitting $a$, the comparison supplies the remaining head's
+$\mathrm{lcp}(a,b)$. The advancing cursor supplies $\mathrm{lcp}(a,a')$.
+`profile_cursor::advance_comparison` examines the old key and the new literal
+from the encoded retention boundary before replacing its scratch. Ordinary FC
+finds the difference in the first new unit. A redundant FC record can repeat
+more literal material; the same operation checks it and obtains the exact LCP.
+It also lets the merger reject non-increasing source keys while advancing.
+
+The output writer receives the winning head's known prefix through a private
+path. It checks units, value width and prefix bounds and writes the suffix;
+it does not rediscover that prefix by comparing from the start. Its public
+`append` still checks arbitrary caller keys. Input cursors retain their decoded
+current keys for output and composition callbacks.
+
+Byte policies carry whole-byte LCP counts; bit policies carry exact bit counts.
+Fractional-index cut scalars remain exact bit LCPs, so a byte merge count alone
+cannot replace those scalars. EOF is a separate cursor state, never a sentinel
+key. Equal heads consume both inputs and preserve the callback's older/newer
+argument order.
+
 ## Work and ownership
 
 One `step` unit resolves one distinct key and consumes at most two input records.

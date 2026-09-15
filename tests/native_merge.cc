@@ -164,7 +164,7 @@ namespace {
     // differing bit within one byte, and a final one-sided drain.
     auto prefix = std::string(129 * P::bits_per_unit, '0');
     keys.insert(prefix);
-    for (unsigned n = 0; n != 40; ++n) {
+    for (unsigned n = 0; n != 130; ++n) {
       std::string suffix(16, '0');
       for (unsigned bit = 0; bit != 16; ++bit) suffix[bit] = (n >> (15 - bit)) & 1 ? '1' : '0';
       keys.insert(prefix + suffix);
@@ -246,9 +246,9 @@ namespace {
             "frontier output metadata");
     auto groups = output.group_offsets().view();
     auto expected_groups = reference.group_offsets().view();
-    require(groups.group_count() == expected_groups.group_count(), "frontier output sample count");
-    for (std::uint64_t i = 0; i != groups.group_count(); ++i)
-      require(groups.residual(i) == expected_groups.residual(i), "frontier output offset sample");
+    require(groups.size() == expected_groups.size(), "frontier output sample count");
+    for (std::uint64_t i = 0; i != groups.size(); ++i)
+      require(groups.select(i) == expected_groups.select(i), "frontier output offset sample");
   }
   template <class P> void frontier_cases() {
     auto all = prefix_records<P>();

@@ -159,7 +159,7 @@ physical inputs or encoding choices. Bind the recipe identity to:
   actual predecessor lengths used by grouped backspace framing.
 - Output stream boundaries: completed records, sealed physical ranges, group
   offsets, native/borrowed counts, false-borrow flags, and partial `rank_groups<K>`
-  and `select_groups<K>` builder state. These group counts measure entries, not
+  and `elias_fano` builder state. These group counts measure entries, not
   address units. Elias–Fano's final width may still depend on the final extent;
   the continuation must preserve enough information to finish its sparse
   offsets without a hidden unrecorded spool.

@@ -101,11 +101,11 @@ namespace {
     return result;
   }
 
-  template <std::uint64_t K> void check_offsets(select_groups<K> const & actual, select_groups<K> const & expected) {
+  void check_offsets(elias_fano const & actual, elias_fano const & expected) {
     auto samples_equal = std::equal(actual.samples.begin(), actual.samples.end(), expected.samples.begin(), expected.samples.end(),
       [](auto const & a, auto const & b) { return a.first == b.first && a.sparse == b.sparse; });
     require(actual.low == expected.low && actual.high == expected.high && samples_equal &&
-      actual.sparse == expected.sparse && actual.record_count == expected.record_count &&
+      actual.sparse == expected.sparse && actual.entry_count == expected.entry_count &&
       actual.universe == expected.universe && actual.low_width == expected.low_width, "exact sparse offset encoding");
   }
 

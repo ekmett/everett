@@ -42,7 +42,7 @@ namespace {
     d.integer(array.bytes().size()); for (auto b : array.bytes()) d.byte(std::to_integer<unsigned>(b));
     auto const & ef = array.group_offsets();
     d.words(ef.low); d.words(ef.high); d.words(ef.sparse);
-    d.integer(ef.record_count); d.integer(ef.universe); d.integer(ef.low_width); d.integer(ef.samples.size());
+    d.integer(m.record_count); d.integer(ef.universe); d.integer(ef.low_width); d.integer(ef.samples.size());
     for (auto sample : ef.samples) { d.integer(sample.first); d.integer(sample.sparse); }
     return d.value;
   }
@@ -57,7 +57,7 @@ namespace {
       "merge metadata differs from batch");
     auto const & x = array.group_offsets(); auto const & y = expected.group_offsets();
     require(x.low == y.low && x.high == y.high && x.sparse == y.sparse && x.low_width == y.low_width &&
-      x.record_count == y.record_count && x.universe == y.universe && x.samples.size() == y.samples.size(),
+      x.universe == y.universe && x.samples.size() == y.samples.size(),
       "merge EF differs from batch");
     for (std::size_t i = 0; i != x.samples.size(); ++i)
       require(x.samples[i].first == y.samples[i].first && x.samples[i].sparse == y.samples[i].sparse,

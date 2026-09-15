@@ -243,7 +243,7 @@ $8\lceil A/K\rceil$ bytes for A augmented entries, including unused zero
 slots where no borrowed predecessor exists. They must be included in total
 index space; the packed class width is not the whole navigation overhead.
 
-Each physical stream has its own `select_groups<W>` over record boundaries
+Each physical stream has its own `elias_fano` over record boundaries
 `0, W, 2W, ...` and its exact end sentinel. Increasing W reduces the number of
 physical marks but increases the number of controls parsed to reach a selected
 lane. The Elias–Fano cost depends on both the mark count and the residual

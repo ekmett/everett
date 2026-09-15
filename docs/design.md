@@ -98,7 +98,7 @@ need not occupy one file:
 1. A front-coded array of native $(K,V)$ records.
 2. A separately front-coded array of borrowed keys and routing information.
 3. One `rank_groups<K>` describing their virtual interleaving.
-4. Two `select_groups<W>` indexes, one for each physical stream.
+4. Two `elias_fano` indexes, one for each physical stream.
 5. One false-borrow flag per borrowed record.
 6. One exact bit-LCP count per virtual cut, describing its preceding borrowed key.
 7. Exact immutable target identities, physical length checkpoints, and format information.
@@ -145,11 +145,11 @@ chain-size and scheduler assumptions. Offset units are bytes or bits according
 to the shared policy.
 
 The policy API spells these structures `rank_groups<P::group_size>` and
-`select_groups<P::codec_block_size>`. `multiverse<P>::blob` uses that policy
+`elias_fano`. `multiverse<P>::blob` uses that policy
 throughout. Rank boundaries count virtual occurrences; offset checkpoints count
 physical records. They need not have the same interval.
-The helpers in `rank15.h` and `select15.h` have a fixed interval of fifteen; they
-do not fix the store's policy to fifteen. The `rank_groups<15>` view shares rank15's
+Elias–Fano stores only the chosen monotone positions. The profile layer chooses
+physical samples and restores fixed value strides. The `rank_groups<15>` view shares rank15's
 SIMD implementation. Groups of three use packed scalar sums; seven and thirty-one
 use bounded NEON reductions on little-endian AArch64 and packed scalar reductions
 elsewhere. Other group sizes use the generic class loop. These choices preserve
@@ -158,17 +158,19 @@ the same encoded classes and checkpoints.
 ### rank15
 
 We assign a conceptual origin bit of one to a borrowed entry and zero to a
-native entry. We only need ranks at sampling boundaries:
+native entry. We only query rank at the start of an existing group:
 
 $$
 R(g)=\mathrm{rank15}(g)=
-\#\{\text{borrowed entries before }\min(15g,|C|)\}.
+\#\{\text{borrowed entries before }15g\},\qquad 15g<|C|.
 $$
 
-For a full virtual window $[15g,15(g+1))$, its borrowed range is
-$[R(g),R(g+1))$, and its native range is
-$[15g-R(g),15(g+1)-R(g+1))$. Substitute the actual final endpoint for a tail.
-The two range lengths add to at most fifteen.
+Let $a=R(g)$, let $c$ be that group's stored population, and let
+$e=\min(15g+15,|C|)$. Its borrowed range is $[a,a+c)$ and its native
+range is $[15g-a,e-a-c)$. One rank query and one class give both boundaries,
+including the final partial group; their lengths add to at most fifteen.
+There is no endpoint rank entry or cached total. An empty index has no group
+to query. A requested total can be derived from the final real rank and class.
 
 A fifteen-entry population count lies in $[0,15]$, so four bits suffice.
 A prefix directory then answers the boundary queries. There is no second
