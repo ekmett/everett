@@ -61,6 +61,11 @@ navigation. A protected-page test hides the entire native mapping through
 construction, moves, finalization and IX03 serialization, then compares the
 result with the ordinary key-walk encoding. The nonterminal builder reuses its
 exact carried LCP for borrowed FC output.
+The sampler and index builder also retain exact three-way comparison frontiers;
+the builder needs only the preceding key's length. The
+[frontier benchmark](../bench/cola_frontier.md) records complete-build measurements
+and byte-identical output across all compared variants. Lean's ordered-walk
+theorem establishes the adjacent-LCP minimum law used by the comparison argument.
 The independent eight-policy core and mapped suites passed strict O3
 ASan/UBSan. The mapped suite independently assembles IX03 bytes, checks exact
 source/ordinal/value query results, mutates valid-CRC files, verifies target
@@ -81,6 +86,8 @@ current stage; `finish_stage` explicitly performs finalization and advances to
 the next stage. It retains source and plan owners on failure and exposes only a
 completed result. Six-policy tests cover noncommutative composition, both plans,
 pauses and moves, exact batch index bytes, retained old roots and full queries.
+Separate allocation tests inject 32 first/last failures in stage finalization
+and index/carrier growth, checking poison, rejected reuse and retained pins.
 The [local merge guide](cola-merges.md) demonstrates the API. Slot assignment,
 root publication and durable continuation remain separate.
 

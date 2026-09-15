@@ -113,6 +113,8 @@ both input contributions, publishes their merge and reopens the saved states.
 The [local merge example](docs/cola-merges.md) drives both main and secondary
 destination plans while retaining the old query root.
 The [space report](bench/space_accounting.md) measures the resulting arrays.
+The [construction benchmark](bench/cola_frontier.md) measures the effect of
+carrying prefix comparisons through sampling and merging.
 
 ### String compression and offsets
 

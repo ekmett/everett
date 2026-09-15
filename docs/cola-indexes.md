@@ -57,6 +57,11 @@ two targets. `step(budget)` consumes at most that many local merged occurrences.
 Advancing a sampled target can decode up to `K` source occurrences. String
 bytes, allocation and final Elias–Fano construction are additional work.
 `finish()` returns the completed index; it does not change the native array.
+The sampler and builder carry exact LCPs for their three current heads. Unequal
+frontier lengths establish order directly; equal lengths require only a suffix
+comparison. Sampling across `K` occurrences takes the minimum of their adjacent
+LCPs. The builder retains the previous key's length instead of another full-key
+copy. The [construction benchmark](../bench/cola_frontier.md) measures both changes.
 With neither target present, all occurrences are native. Construction reads
 only the admitted native count and emits zero navigation per group; it never
 decodes native keys or accesses their payload pages. Native validation remains

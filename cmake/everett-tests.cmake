@@ -33,7 +33,7 @@ if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # Model-ops writer tests above retain their platform-independent coverage.
   list(APPEND everett_test_names mapped_index_builder file_index_builder file_index_pipeline mapped_cola mapped_cola_builder cola_terminal)
 endif()
-list(APPEND everett_test_names cola_local_merge)
+list(APPEND everett_test_names cola_local_merge cola_local_merge_failure)
 if(EVERETT_ENABLE_SQLITE)
   list(APPEND everett_test_names sqlite_catalog sqlite_catalog_adversarial sqlite_catalog_vfs sqlite_catalog_restart sqlite_catalog_timeline sqlite_catalog_streamed)
   if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
