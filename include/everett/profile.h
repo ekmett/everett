@@ -478,6 +478,17 @@ namespace everett {
         }
         throw std::invalid_argument("overflowing profile count");
       } else {
+        // A complete small code fits in the first fifteen bits. Decode its
+        // prefix and suffix from one bounded field; long codes and short tails
+        // retain the general decoder's exact offset and error behavior.
+        if (offset <= data.size() && data.size() - offset >= 16) {
+          auto word = load_bits(data, offset, 16);
+          auto zeros = unsigned(std::countl_zero(word) - 48);
+          if (zeros < 8) {
+            offset += 2 * zeros + 1;
+            return (word >> (15 - 2 * zeros)) - 1;
+          }
+        }
         auto zeros = unsigned(read_zero_run(data, offset, 64,
           "truncated exponential-Golomb count", "overflowing exponential-Golomb count"));
         if (zeros > data.size() - offset) {

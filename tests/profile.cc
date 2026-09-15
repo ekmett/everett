@@ -248,6 +248,29 @@ namespace {
     }
   }
 
+  void small_count_boundaries() {
+    for (unsigned offset = 0; offset != 8; ++offset) for (std::uint64_t value = 0; value <= 256; ++value) {
+      auto code = slow_count(value);
+      for (unsigned tail = 0; tail != 17; ++tail) {
+        auto encoded = bit_string::from_bits(std::string(offset, '1') + "101" + code + std::string(tail, '1'));
+        auto data = encoded.view().subview(offset, 3 + code.size() + tail);
+        std::uint64_t at = 3;
+        require(profile_detail::read_count<bit_policy>(data, at) == value && at == 3 + code.size(),
+                "small count full-field/alignment oracle");
+      }
+      auto encoded = bit_string::from_bits(std::string(offset, '1') + "101" + code);
+      auto data = encoded.view().subview(offset, 3 + code.size());
+      for (unsigned length = 0; length < code.size(); ++length) {
+        std::uint64_t at = 3;
+        rejects([&] { profile_detail::read_count<bit_policy>(data.prefix(3 + length), at); });
+        require(at == 3 + length, "truncated small count consumed the wrong prefix");
+      }
+      auto at = data.size() + 1;
+      rejects([&] { profile_detail::read_count<bit_policy>(data, at); });
+      require(at == data.size() + 1, "out-of-range count offset changed");
+    }
+  }
+
 #if defined(__unix__) || defined(__APPLE__)
   void guarded_primitives() {
     auto page = static_cast<std::size_t>(sysconf(_SC_PAGESIZE));
@@ -272,6 +295,18 @@ namespace {
           for (unsigned i = 0; i != width; ++i) expected = (expected << 1) | unsigned(source.at(i));
           require(profile_detail::read_fixed(source, at, width) == expected, "guarded fixed field");
         }
+      for (unsigned offset = 0; offset != 8; ++offset)
+        for (std::uint64_t value = 0; value <= 256; ++value)
+          for (unsigned tail : {0u, 1u, 15u, 16u}) {
+            auto code = slow_count(value);
+            auto encoded = bit_string::from_bits(std::string(offset, '0') + code + std::string(tail, '1'));
+            auto data = mapping + 2 * page - encoded.bytes.size();
+            std::copy(encoded.bytes.begin(), encoded.bytes.end(), data);
+            std::uint64_t at = 0;
+            require(profile_detail::read_count<bit_policy>(
+                      bit_view({data, encoded.bytes.size()}, code.size() + tail, offset), at) == value &&
+                    at == code.size(), "guarded small count boundary");
+          }
       for (unsigned offset = 0; offset != 8; ++offset) {
         auto word = std::string(offset, '0') + slow_count(~std::uint64_t{0});
         auto encoded = bit_string::from_bits(word);
@@ -1061,6 +1096,7 @@ int main() {
     intermediate_byte_anchors();
     bit_primitives();
     count_primitives();
+    small_count_boundaries();
 #if defined(__unix__) || defined(__APPLE__)
     guarded_primitives();
 #endif
