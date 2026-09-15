@@ -2,6 +2,7 @@
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
  * \brief Checks saved roots and exact operations after process interruption, without simulating power loss.
+ *
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>

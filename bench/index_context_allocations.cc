@@ -2,6 +2,7 @@
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
  * \brief Counts requested C++ allocations for one complete borrowed-only index stage.
+ *
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>

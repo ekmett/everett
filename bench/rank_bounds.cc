@@ -2,6 +2,7 @@
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
  * \brief Compares cached-total rank with bounded rank on identical inputs.
+ *
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>

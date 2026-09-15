@@ -2,6 +2,7 @@
 # \file
 # \author Edward Kmett <ekmett@gmail.com>
 # \brief Compares pinned complete query implementations with one shared oracle.
+#
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>

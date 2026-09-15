@@ -2,6 +2,7 @@
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
  * \brief Checks sampled endpoint comparisons using original keys and redundant physical FC streams.
+ *
  * \license
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0

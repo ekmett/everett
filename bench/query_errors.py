@@ -2,6 +2,7 @@
 # \file
 # \author Edward Kmett <ekmett@gmail.com>
 # \brief Compares success-path query costs of exception layout and fail-stop checks.
+#
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>

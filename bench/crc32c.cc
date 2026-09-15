@@ -2,6 +2,7 @@
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
  * \brief Benchmarks Diet's CRC32C backends.
+ *
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>

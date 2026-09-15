@@ -2,6 +2,7 @@
 # \file
 # \author Edward Kmett <ekmett@gmail.com>
 # \brief Reproduces bounded-rank measurements with a pinned cached-total baseline.
+#
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>

@@ -2,6 +2,7 @@
 # \file
 # \author Edward Kmett <ekmett@gmail.com>
 # \brief Reproduces whole-chain query measurements with pinned headers and independent oracles.
+#
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>

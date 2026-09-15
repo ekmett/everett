@@ -2,6 +2,7 @@
 # \file
 # \author Edward Kmett <ekmett@gmail.com>
 # \brief Reproduces pinned Elias-Fano query and construction comparisons.
+#
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>

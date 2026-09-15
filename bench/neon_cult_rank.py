@@ -2,6 +2,7 @@
 # \file
 # \author Edward Kmett
 # \brief Runs the pinned NEON/Cult rank comparison with an external source header.
+#
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>

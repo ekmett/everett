@@ -2,6 +2,7 @@
 # \file
 # \author Edward Kmett
 # \brief Reproduces whole-blob and pipeline comparisons using pinned header snapshots.
+#
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>

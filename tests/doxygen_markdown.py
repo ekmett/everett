@@ -3,6 +3,7 @@
 # \file
 # \author Edward Kmett <ekmett@gmail.com>
 # \brief Adapts Markdown dollar math for Diet's Doxygen build.
+#
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
