@@ -393,6 +393,9 @@ namespace {
     {
       sql_connection sql(directory.root);
       // The frozen version-1 schema is a supported read/write compatibility fixture.
+      // Original catalog creation enabled WAL before installing this schema;
+      // opening an existing file deliberately does not change its journal mode.
+      sql.exec("PRAGMA journal_mode=WAL");
       sql.exec(catalog_detail::schema);
       catalog_detail::bytes descriptor;
       for (auto value : {std::uint64_t(policy::unit), policy::group_size, policy::codec_block_size,

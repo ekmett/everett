@@ -28,7 +28,7 @@ for integration. These are development responsibilities.
 | Named typed connection | `connection.h`; `tests/sqlite_catalog_connection.cc` | mutable and asynchronous commands, mapped snapshots, exact saves/forks, restart, stale publishers and healthy input rejection |
 | Encoded runtime | `cola_runtime.h`; `tests/cola_runtime.cc` | chronological runs, real native/index/carrier work, immutable publication, budget partition, mmap restoration and failed continuation isolation |
 | Redundant runtime | `redundant_runtime.h`; redundant and typed-redundant tests | three-slot ownership, overlapping main/secondary jobs, charged admission, exact frontier checkpoints and recovery gates |
-| Runtime persistence | `runtime_store.h`; `tests/sqlite_catalog_runtime.cc` | exact graph sealing, weak owner caches, named checkpoints, saved frontiers, mapped reopening and pending carry restart |
+| Runtime persistence | `runtime_store.h`, `runtime_checkpoint.h`, `redundant_checkpoint.h`; runtime and redundant catalog tests | exact graph sealing, hidden completed artifacts, atomic auxiliary pins, saved frontiers, mapped reopening and interrupted-stage restart |
 | Typed updates | `typed_cola.h`; `tests/typed_cola.cc` | replacement reads, chronological arrows, per-sort dispatch and hashes, validated deletes, disjoint contributions, mutable commands and snapshot metadata |
 | Sort-owned record codec | `sort_codec.h`; `tests/sort_codec.cc` | heterogeneous FC/raw/integer grammars, optional/niche/no-payload values, typed stream anchors, control parsing and borrowed-role output |
 | Sort-owned physical profiles | `sort_profile.h`, `sort_profile_file.h`, `sort_profile_merge.h`; `tests/sort_profile.cc` | KV03 native framing, shared selector seeds, mapped cascading queries, prefix-preserving merges and protected-page entry |
@@ -71,7 +71,8 @@ service after each admitted record and waits only for admission readiness.
 Tests include simultaneous unsafe levels, every-stage checkpoint/restart,
 visibility and chronological-coverage oracles, failed-publication isolation,
 and K=3/K=15 budget partitions. Full-frontier metadata includes hidden completed
-outputs; persisting that closure is being integrated separately. The
+outputs. The persistent adapter seals and pins that complete closure in the same
+transaction as the query root and semantic metadata. The
 [runtime guide](redundant-runtime.md) distinguishes these checks from a universal
 proof and from byte or latency guarantees.
 
@@ -81,7 +82,9 @@ Reopening maps the published files and validates frontier metadata without
 decoding payloads. Unfinished private work restarts from the published inputs.
 The focused ASan/UBSan suites check equivalent layouts, noncommutative merges,
 protected-payload restoration, historical snapshots, reopened carries and
-competing durable publishers. The [runtime persistence guide](runtime-store.md)
+competing durable publishers. Redundant checkpoints retain every completed
+artifact through each merge stage; deliberately omitted auxiliary pins are
+rejected on restoration. The [runtime persistence guide](runtime-store.md)
 states the current retention and identity-allocation boundaries.
 
 `tap<Engine>` provides serialized mutable publication and bounded accepted
@@ -951,7 +954,15 @@ forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
-Combined verification through `4872d25` on 2026-09-15: AppleClang 21, C++20,
+Verification through `09903de` on 2026-09-15: AppleClang 21, C++20, Release
+with strict warnings and ASan/UBSan passed all **67 component/package CTests**,
+including Doxygen and the installed named-connection example. The complete run
+found one legacy catalog fixture missing its original WAL setting; the corrected
+timeline suite passed separately. ThreadSanitizer also passed the tap and named
+connection suites. Linux GCC passed the earlier tap, typed update, runtime,
+sort-codec and fridge suites with ASan/UBSan.
+
+Earlier combined verification through `4872d25` on 2026-09-15: AppleClang 21, C++20,
 Release with strict warnings and ASan/UBSan passed all **51 component/package
 CTests**, including three package consumers. The final Doxygen check passed
 separately. SQLite headers and runtime were 3.53.4. The RC suite and revised
@@ -1008,7 +1019,7 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 | General arrow policy coverage | replacement and noncommutative append instances, source validation and per-sort endpoint deltas | additional categories, bounded composition dependencies, observation costs and persisted schema migration |
 | Comparison block encoding | ordinary FC, exact cut LCP and scalar comparison transfers | transposed count/literal layouts, ordered SIMD transfer scans, bounded tails and independently measured time/space tradeoffs |
 | Object identity and integrity | portable sections, mmap queries and immutable writer | cryptographic content addressing, durable catalog publication and lazy block-integrity strategy |
-| Redundant COLA scheduling | working binary executor, incremental native merge and index builder | three-slot frontiers, paid structural service, bounded visible levels, full checkpoint restoration and shared-result adoption under interleaved forks |
+| Shared completed merges | redundant main/secondary scheduler, paid structural service and durable full-frontier restoration | reuse completed native merges across forks while each dependent rebuilds its own exact fractional indexes |
 | Catalog pin retirement | conditional timeline publication, immutable saves, reservations and exact file graph | reader/generation retirement, reclaim only after final pin, schema migration and interruption tests |
 | Direct batch adoption | native file reader, prefix index builder and scheduler | preserve received ordinary-FC bytes, bound visible catalogs and work debt, preserve causal order and charge actual key bytes |
 | Durable backend and resumable merges | publication protocol and encoded merge continuations | fault injection at write/sync/rename/recovery cuts; failed barriers retain old roots; resume only from verified durable prefixes |
