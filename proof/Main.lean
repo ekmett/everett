@@ -13,4 +13,7 @@ def main : IO Unit := do
   IO.println s!"snapshot after independent adoption: {catalog.read new_catalog (owners.adopt held_roots 0 3) 1}"
   IO.println s!"old exact pair: {repr (new_catalog 1)}"
   IO.println s!"new exact pair: {repr (new_catalog 3)}"
+  IO.println s!"K=3 duplicate route: {fractional.route fractional_examples.duplicates 3 5}"
+  IO.println s!"local augmented predecessor: {fractional.routed_predecessor fractional_examples.duplicates 3 5}"
+  IO.println s!"false-borrow native recovery: {repr ((fractional_examples.duplicates.filter fractional.native)[fractional.rank fractional.native fractional_examples.duplicates 10 - 1]?)}"
   IO.println "All theorem declarations and executable examples were checked by lake build."

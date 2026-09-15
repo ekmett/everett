@@ -33,14 +33,12 @@ lake env lean --run Main.lean
 The default build checks every model module, the theorem-based examples and the
 axiom audit. The interpreted executable prints the outcomes of
 disjoint updates, an invalid reversal of same-key updates, and a retained snapshot
-whose current owner has adopted a different exact index/target pair.
+whose current owner has adopted a different exact index/target pair. It also
+shows a sampled search whose native match lies before the routed window and is
+recovered through a false borrow.
 
 An optional native executable target is available through `lake exe proof_examples`.
-On macOS 26, I checked it using the system C compiler with `LEAN_CC`, adding the
-pinned toolchain's `lib` directory to `LIBRARY_PATH`. The release's bundled linker
-produced a binary rejected by that host's loader; the interpreted command above
-avoids this platform-specific native-linking issue. Kernel checking does not
-require the optional executable.
+Kernel checking does not require the optional executable.
 
 I use `by decide` only where Lean can reduce a concrete proposition in the
 kernel; these examples do not use `native_decide` as a proof shortcut. Executing
@@ -58,7 +56,9 @@ Field guide
 | [Snapshots](Everett/Snapshots.lean) | Exact pair/target identities; immutable catalog extension; owner-rooted reachability; snapshot retention and read preservation; complete-target readiness; eligible reclamation; independent adoption with an explicit semantic premise |
 | [Allocation](Everett/Allocation.lean) | A monotone allocation watermark, fresh installation and non-reuse of issued IDs across allocation/reclamation sequences |
 | [Adoption](Everett/Adoption.lean) | Discharges the semantic adoption premise for chronological adjacent merges, using the actual history-composition theorem |
+| [Fractional](Everett/Fractional.lean) | Stable tagged merging; exact every-Kth samples; sampled predecessor windows; endpoint-rank projections; local/global predecessor equivalence; false-borrow recovery for unique native keys; a list-level index builder and exact-target retention |
 | [Examples](Everett/Examples.lean) | Heterogeneous keys, valid and stale sources, noncommutative histories, changed index/target versions, and an old target that cannot be reclaimed while a snapshot retains it |
+| [FractionalExamples](Everett/FractionalExamples.lean) | K=3 and K=15, equal keys across several cuts, empty native projections, false-borrow recovery, empty targets, before-first queries, short tails and stored-index routing |
 | [Audit](Everett/Audit.lean) | Rejects unexpected axioms in every kernel-safe `Everett` declaration and its transitive dependencies |
 
 Examples
@@ -95,6 +95,88 @@ target is `2`. Roots `1` and `3` share a native identity but have different inde
 identities. `old_target_retained` proves that the snapshot still pins target `0`;
 a proposed reclamation list containing `0` therefore fails the eligibility
 condition.
+
+Fractional indexing
+-------------------
+
+The [sampling design](../docs/sampling.md) starts from two ordered streams. We
+merge their **occurrences**, retaining the origin tag and label even when keys
+are equal. Native occurrences precede borrowed occurrences at the same key.
+`augment_preserves_occurrences` proves a permutation of the complete input
+records; `augment_filter` and `augment_filter_right` recover each source in its
+original order. The labels are supplied by the caller. We preserve them without
+assuming that arbitrary input labels are distinct.
+
+`samples xs K` records positions $0,K,2K,\ldots$ that exist in `xs`, together
+with the exact target occurrence at each position. Let $\ell$ be the last sampled
+position whose key is at most the query, or zero if no sample qualifies. The
+search window is
+
+$$
+[\ell,\min(\ell+K,|xs|)).
+$$
+
+`predecessor_bracket` places the global rightmost qualifying occurrence inside
+that window. `routed_predecessor_correct` goes further: searching the actual
+window and translating its result back to an absolute ordinal gives exactly
+the same `Option Nat` as a full search. This includes equality runs, the short
+last group, an empty target and queries before the first key. The local spacing
+theorem needs only $K>0$; the storage policy's restriction to $K=2^n-1\geq3$ is
+a separate codec choice.
+
+Rank projects the virtual half-open window into a native interval and a
+borrowed interval. `project_window` proves that each interval is exactly the
+corresponding origin-filtered window, in order. `projected_lengths_sum` says
+their lengths sum to the virtual length, so the two ranges share one budget of
+at most $K$ occurrences.
+
+There is an equality boundary worth keeping visible. A long run of borrowed
+copies of a key may carry the route beyond its matching native occurrence.
+Searching just the projected native interval would then miss the key. For a
+pair with unique native keys, `false_borrow_recovery` proves that the matching
+native occurrence is at
+
+$$
+\operatorname{rank}_{\mathrm{native}}(j)-1
+$$
+
+in the native stream, where $j$ is a borrowed occurrence of that key. The rank
+is positive, so the subtraction is safe. `false_borrow_flag` constructs the
+semantic flag by checking for a native match, and `false_borrow_flag_correct`
+proves its exact meaning. `native_match_candidates` combines the ordinary
+projected hit with this extra probe.
+
+For example, the K=3 fixture has one native `5` at virtual position 2 and eight
+borrowed copies spanning several cuts. A query for `5` routes to position 9,
+finds its augmented predecessor at 10, and has an empty native projection.
+Native rank is 2, so the extra probe retrieves native ordinal 1. These outcomes
+are checked by reduction and by the general theorems. Native uniqueness is
+local to this key-value pair: the one-probe theorem does not recover an entire
+run of same-key native arrows. Stable merging and predecessor routing still
+retain those repeated native occurrences.
+
+The mathematical `rank` function is defined at every position. The concrete
+`rank_groups<K>` API stores boundary ranks. `rank_inside_route` connects the
+two: a finer rank is the boundary rank plus the native count in a local prefix
+of fewer than $K$ occurrences. No arbitrary-position constant-time rank API is
+assumed or proved.
+
+Finally, `build_index` stores a target ID and its sampled target occurrences.
+`build_index_matches` establishes exact correspondence from the builder's
+output. `index_route` reads those stored samples, and
+`indexed_predecessor_correct` proves that the resulting target-window search
+agrees with a full search of that exact target. Catalog extension and eligible
+reclamation preserve the certificate by preserving the target record. A source
+pair's `target_samples` follows its literal stored target edge; adding a merged
+target does not redirect that edge.
+
+This builder produces mathematical lists. Its entries retain the destination's
+occurrence labels and tags; constructing a source's borrowed stream requires
+source-local labels and borrowed tags. That retagging, encoded-file decoding,
+independent borrowed-predecessor routing and composition of an entire cascade
+remain separate refinement obligations. The searches here enumerate finite
+lists, so these theorems establish the window's entry bound and lookup meaning,
+not the running time of binary search, compressed rank or key reconstruction.
 
 What the assumptions mean
 -------------------------
@@ -148,24 +230,26 @@ Axiom audit and verification boundary
 `Audit.lean` visits every kernel-safe declaration in the `Everett` namespace,
 collects its transitive axiom dependencies, and fails the build if it finds
 anything outside Lean's standard `propext`, `Quot.sound` and `Classical.choice`
-foundations. The checked checkpoint audited 284 declarations and used only `propext` and
-`Quot.sound`. It also catches a theorem placeholder hidden behind another
-declaration. Compiler-generated unsafe
-execution artifacts are outside that logical audit; no model source declares an
-unsafe definition or an additional axiom.
+foundations. The build reports the declaration count and the actual dependencies.
+This slice uses all three, including `Classical.choice` through Std's list
+theorems. The audit also catches a theorem placeholder hidden behind another
+declaration. Compiler-generated unsafe execution artifacts are outside that
+logical audit; no model source declares an unsafe definition or an additional
+axiom.
 
 I have deliberately not claimed:
 
-- Correct byte/bit encoding, sampled-key correspondence, fractional-cascade
-  windows, rank or Elias–Fano representation bounds.
+- Correct byte/bit encoding, front coding, compressed rank or Elias–Fano
+  representation bounds.
+- A refinement from encoded source streams to the list-level sample certificate,
+  an entire cascade search, or recovery of all same-key native arrow occurrences.
 - A bounded COLA scheduler, strong-deletion work accounting, or byte/I/O costs.
 - Physical-file reachability, reader leases, SQLite transactions or crash recovery.
 - C++ memory safety, compiler refinement or correctness of external implementations.
 
 The next useful connection is a precise interpretation from encoded immutable
-pairs to the abstract catalog. That would let us discharge sampled-target and
-query equivalence obligations with codec proofs instead of leaving them at the
-representation boundary.
+pairs to these abstract sequences and catalog records. The list-level builder
+and local lookup theorems give that refinement a concrete contract to meet.
 
 Contact Information
 -------------------

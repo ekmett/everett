@@ -8,5 +8,7 @@ import Everett.Fingerprint
 import Everett.Snapshots
 import Everett.Allocation
 import Everett.Adoption
+import Everett.Fractional
+import Everett.FractionalExamples
 import Everett.Examples
 import Everett.Audit

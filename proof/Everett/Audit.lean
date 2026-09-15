@@ -4,6 +4,7 @@ SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 -/
 import Everett.Examples
 import Everett.Allocation
+import Everett.FractionalExamples
 import Lean
 
 open Lean Elab Command
