@@ -1,0 +1,312 @@
+/**
+ * \file
+ * \license
+ * SPDX-FileType: SOURCE
+ * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+ * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+ * \endlicense
+ */
+
+// Standalone public rank arithmetic and synthetic benchmark; no Everett includes.
+// Generic x86-64 compile: -O3 -std=c++20 -mpopcnt (do not use -march=native).
+#include <immintrin.h>
+#include <cpuid.h>
+#include <algorithm>
+#include <array>
+#include <bit>
+#include <chrono>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <stdexcept>
+#include <vector>
+#include <span>
+
+__attribute__((target("popcnt"), always_inline))
+inline unsigned prefix_scalar(std::uint64_t const * words, unsigned bits) {
+  unsigned result = 0;
+  for (unsigned word = 0; word < (bits >> 6); ++word)
+    result += unsigned(std::popcount(words[word]));
+  if (bits & 63)
+    result += unsigned(std::popcount(words[bits >> 6] & ((std::uint64_t{1} << (bits & 63)) - 1)));
+  return result;
+}
+
+template <unsigned Vector> __attribute__((target("avx2"), always_inline)) inline __m256i prefix512_masked_avx2(
+    std::uint64_t const * words, unsigned bits) noexcept {
+  auto positions = _mm256_setr_epi64x(4 * Vector, 4 * Vector + 1, 4 * Vector + 2, 4 * Vector + 3);
+  auto boundary = _mm256_set1_epi64x(bits >> 6);
+  auto tail = _mm256_set1_epi64x(static_cast<long long>((std::uint64_t{1} << (bits & 63)) - 1));
+  auto mask = _mm256_or_si256(_mm256_cmpgt_epi64(boundary, positions),
+    _mm256_and_si256(_mm256_cmpeq_epi64(positions, boundary), tail));
+  return _mm256_and_si256(_mm256_loadu_si256(reinterpret_cast<__m256i const *>(words + 4 * Vector)), mask);
+}
+
+// Exactly eight readable words, with no vector alignment requirement.
+__attribute__((target("avx2"), always_inline)) inline unsigned prefix512_avx2(std::uint64_t const * words, unsigned bits) noexcept {
+  auto lookup = _mm256_setr_epi8(0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,
+                                0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4);
+  auto nibble = _mm256_set1_epi8(15);
+  auto population = [&](auto data) __attribute__((target("avx2"), always_inline)) {
+    auto lo = _mm256_shuffle_epi8(lookup, _mm256_and_si256(data, nibble));
+    auto hi = _mm256_shuffle_epi8(lookup, _mm256_and_si256(_mm256_srli_epi16(data, 4), nibble));
+    return _mm256_add_epi8(lo, hi);
+  };
+  // Each byte sum is at most sixteen, so both vectors can share one SAD.
+  auto counts = _mm256_add_epi8(population(prefix512_masked_avx2<0>(words, bits)),
+                                population(prefix512_masked_avx2<1>(words, bits)));
+  auto sums = _mm256_sad_epu8(counts, _mm256_setzero_si256());
+  auto pair = _mm_add_epi64(_mm256_castsi256_si128(sums), _mm256_extracti128_si256(sums, 1));
+  return unsigned(_mm_cvtsi128_si32(_mm_add_epi64(pair, _mm_srli_si128(pair, 8))));
+}
+
+
+__attribute__((target("avx512f"), always_inline)) inline __m512i prefix512_masked_avx512(std::uint64_t const * words, unsigned bits) noexcept {
+  auto lane = bits >> 6;
+  auto full = __mmask8((1u << lane) - 1);
+  auto boundary = __mmask8(1u << lane); // lane=8 gives no boundary lane.
+  auto data = _mm512_maskz_loadu_epi64(full | boundary, words);
+  auto tail = _mm512_set1_epi64(static_cast<long long>((std::uint64_t{1} << (bits & 63)) - 1));
+  return _mm512_mask_and_epi64(data, boundary, data, tail);
+}
+
+__attribute__((target("avx512f,avx512vpopcntdq"), always_inline)) inline unsigned prefix512_avx512_vpopcnt(std::uint64_t const * words, unsigned bits) noexcept {
+  return unsigned(_mm512_reduce_add_epi64(_mm512_popcnt_epi64(prefix512_masked_avx512(words, bits))));
+}
+
+__attribute__((target("avx512f,avx512bw"), always_inline)) inline unsigned prefix512_avx512bw(std::uint64_t const * words, unsigned bits) noexcept {
+  auto data = prefix512_masked_avx512(words, bits);
+  auto lookup = _mm512_broadcast_i32x4(_mm_setr_epi8(0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4));
+  auto nibble = _mm512_set1_epi8(15);
+  auto lo = _mm512_shuffle_epi8(lookup, _mm512_and_si512(data, nibble));
+  auto hi = _mm512_shuffle_epi8(lookup, _mm512_and_si512(_mm512_srli_epi16(data, 4), nibble));
+  auto counts = _mm512_add_epi8(lo, hi);
+  return unsigned(_mm512_reduce_add_epi64(_mm512_sad_epu8(counts, _mm512_setzero_si512())));
+}
+
+
+// Same eight-byte directory and query arithmetic as rank_view. Construction of
+// these test directories uses the independent bit-at-a-time oracle below.
+struct rank_block { std::uint32_t before, runs; };
+static_assert(sizeof(rank_block) == 8);
+struct rank_view {
+  std::span<std::uint64_t const> words;
+  std::span<rank_block const> blocks;
+  std::span<std::uint64_t const> supers;
+  std::uint64_t bit_count;
+};
+constexpr unsigned run_prefix(std::uint32_t packed, unsigned run) noexcept {
+  std::uint64_t selected = packed & ((std::uint64_t{1} << (11 * run)) - 1);
+  return unsigned(((selected * 0x400801ull) >> 22) & 2047u);
+}
+__attribute__((target("popcnt"), noinline))
+std::uint64_t rank_scalar(rank_view const & view, std::uint64_t position) {
+  if (position >= view.bit_count) throw std::out_of_range("rank position");
+  auto block = view.blocks[position >> 11];
+  unsigned run = unsigned((position >> 9) & 3);
+  std::uint64_t result = view.supers[position >> 32] + block.before;
+  result += run_prefix(block.runs, run);
+  auto word = (position >> 9) << 3;
+  auto bits = unsigned(position & 511);
+  if (!bits) return result;
+  return result + prefix_scalar(view.words.data() + word, bits);
+}
+// Portable body compiled for the same ISA as each explicit SIMD consumer.
+__attribute__((target("avx2,popcnt"), noinline))
+std::uint64_t rank_scalar_auto_avx2(rank_view const & view, std::uint64_t position) {
+  if (position >= view.bit_count) throw std::out_of_range("rank position");
+  auto block = view.blocks[position >> 11];
+  unsigned run = unsigned((position >> 9) & 3);
+  std::uint64_t result = view.supers[position >> 32] + block.before;
+  result += run_prefix(block.runs, run);
+  auto word = (position >> 9) << 3;
+  auto bits = unsigned(position & 511);
+  if (!bits) return result;
+  return result + prefix_scalar(view.words.data() + word, bits);
+}
+__attribute__((target("avx512f,avx512bw,popcnt"), noinline))
+std::uint64_t rank_scalar_auto_avx512bw(rank_view const & view, std::uint64_t position) {
+  if (position >= view.bit_count) throw std::out_of_range("rank position");
+  auto block = view.blocks[position >> 11];
+  unsigned run = unsigned((position >> 9) & 3);
+  std::uint64_t result = view.supers[position >> 32] + block.before;
+  result += run_prefix(block.runs, run);
+  auto word = (position >> 9) << 3;
+  auto bits = unsigned(position & 511);
+  if (!bits) return result;
+  return result + prefix_scalar(view.words.data() + word, bits);
+}
+__attribute__((target("avx512f,avx512vpopcntdq,popcnt"), noinline))
+std::uint64_t rank_scalar_auto_vpopcnt(rank_view const & view, std::uint64_t position) {
+  if (position >= view.bit_count) throw std::out_of_range("rank position");
+  auto block = view.blocks[position >> 11];
+  unsigned run = unsigned((position >> 9) & 3);
+  std::uint64_t result = view.supers[position >> 32] + block.before;
+  result += run_prefix(block.runs, run);
+  auto word = (position >> 9) << 3;
+  auto bits = unsigned(position & 511);
+  if (!bits) return result;
+  return result + prefix_scalar(view.words.data() + word, bits);
+}
+__attribute__((target("avx2,popcnt"), noinline))
+std::uint64_t rank_avx2(rank_view const & view, std::uint64_t position) {
+  if (position >= view.bit_count) throw std::out_of_range("rank position");
+  auto block = view.blocks[position >> 11];
+  unsigned run = unsigned((position >> 9) & 3);
+  std::uint64_t result = view.supers[position >> 32] + block.before;
+  result += run_prefix(block.runs, run);
+  auto word = (position >> 9) << 3;
+  auto bits = unsigned(position & 511);
+  if (!bits) return result;
+  if (view.words.size() - word >= 8)
+    return result + prefix512_avx2(view.words.data() + word, bits);
+  return result + prefix_scalar(view.words.data() + word, bits);
+}
+__attribute__((target("avx512f,avx512bw,popcnt"), noinline))
+std::uint64_t rank_avx512bw(rank_view const & view, std::uint64_t position) {
+  if (position >= view.bit_count) throw std::out_of_range("rank position");
+  auto block = view.blocks[position >> 11];
+  unsigned run = unsigned((position >> 9) & 3);
+  std::uint64_t result = view.supers[position >> 32] + block.before;
+  result += run_prefix(block.runs, run);
+  auto word = (position >> 9) << 3;
+  auto bits = unsigned(position & 511);
+  if (!bits) return result;
+  if (view.words.size() - word >= 8)
+    return result + prefix512_avx512bw(view.words.data() + word, bits);
+  return result + prefix_scalar(view.words.data() + word, bits);
+}
+__attribute__((target("avx512f,avx512vpopcntdq,popcnt"), noinline))
+std::uint64_t rank_avx512_vpopcnt(rank_view const & view, std::uint64_t position) {
+  if (position >= view.bit_count) throw std::out_of_range("rank position");
+  auto block = view.blocks[position >> 11];
+  unsigned run = unsigned((position >> 9) & 3);
+  std::uint64_t result = view.supers[position >> 32] + block.before;
+  result += run_prefix(block.runs, run);
+  auto word = (position >> 9) << 3;
+  auto bits = unsigned(position & 511);
+  if (!bits) return result;
+  if (view.words.size() - word >= 8)
+    return result + prefix512_avx512_vpopcnt(view.words.data() + word, bits);
+  return result + prefix_scalar(view.words.data() + word, bits);
+}
+using rank_function = std::uint64_t (*)(rank_view const &, std::uint64_t);
+struct variant { char const * name; rank_function rank; };
+std::uint64_t random_word(std::uint64_t & state) {
+  state += 0x9e3779b97f4a7c15ull;
+  auto x = state;
+  x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ull;
+  x = (x ^ (x >> 27)) * 0x94d049bb133111ebull;
+  return x ^ (x >> 31);
+}
+struct fixture {
+  std::vector<std::uint64_t> words, oracle, supers;
+  std::vector<rank_block> blocks;
+  std::uint64_t bits;
+  fixture(std::uint64_t count, std::uint64_t & seed) : words((count+63)>>6), oracle(count+1),
+      supers((count+0xffffffffull)>>32), blocks((count+2047)>>11), bits(count) {
+    for (auto & word : words) word = random_word(seed);
+    for (std::uint64_t i = 0; i < bits; ++i)
+      oracle[i+1] = oracle[i] + ((words[i>>6] >> (i&63)) & 1);
+    for (std::uint64_t i = 0; i < supers.size(); ++i) supers[i] = oracle[i<<32];
+    for (std::uint64_t i = 0; i < blocks.size(); ++i) {
+      auto begin = i<<11;
+      blocks[i].before = std::uint32_t(oracle[begin] - oracle[(begin>>32)<<32]);
+      blocks[i].runs = 0;
+      for (unsigned r = 0; r < 3; ++r) {
+        auto population = oracle[std::min(bits,begin+(r+1)*512)] - oracle[std::min(bits,begin+r*512)];
+        blocks[i].runs |= std::uint32_t(population) << (11*r);
+      }
+    }
+  }
+  rank_view view() const { return {words,blocks,supers,bits}; }
+};
+int main(int argc, char ** argv) try {
+  __builtin_cpu_init();
+  bool popcnt = __builtin_cpu_supports("popcnt"), avx2 = __builtin_cpu_supports("avx2");
+  bool avx512f = __builtin_cpu_supports("avx512f");
+  bool avx512bw = avx512f && __builtin_cpu_supports("avx512bw");
+  bool vpopcnt = avx512f && __builtin_cpu_supports("avx512vpopcntdq");
+  char brand[49]{};
+  for (unsigned i=0; i<3; ++i) {
+    unsigned a=0,b=0,c=0,d=0;
+    __get_cpuid(0x80000002u+i,&a,&b,&c,&d);
+    unsigned x[]{a,b,c,d}; std::memcpy(brand+16*i,x,16);
+  }
+  std::printf("# cpu=%s\n# popcnt=%d avx2=%d avx512bw=%d avx512vpopcntdq=%d\n",brand,popcnt,avx2,avx512bw,vpopcnt);
+  if (!popcnt) throw std::runtime_error("POPCNT baseline is unavailable");
+  auto trials = argc > 1 ? unsigned(std::strtoul(argv[1],nullptr,10)) : 5u;
+  auto queries = argc > 2 ? std::strtoull(argv[2],nullptr,10) : 1048576ull;
+  if (!trials || !queries) throw std::runtime_error("positive trials and queries required");
+  std::vector<variant> variants{{"scalar_popcnt",rank_scalar}};
+  if (avx2) {
+    variants.push_back({"scalar_auto_avx2",rank_scalar_auto_avx2});
+    variants.push_back({"avx2",rank_avx2});
+  }
+  if (avx512bw) {
+    variants.push_back({"scalar_auto_avx512bw",rank_scalar_auto_avx512bw});
+    variants.push_back({"avx512bw",rank_avx512bw});
+  }
+  if (vpopcnt) {
+    variants.push_back({"scalar_auto_vpopcnt",rank_scalar_auto_vpopcnt});
+    variants.push_back({"avx512vpopcntdq",rank_avx512_vpopcnt});
+  }
+  std::uint64_t seed = 0x512f00d;
+  // Every valid position in short/partial allocations, plus domain rejection.
+  for (std::uint64_t bits=0; bits<=1088; ++bits) {
+    fixture data(bits,seed); auto view=data.view();
+    for (auto const & v:variants) {
+      for (std::uint64_t i=0; i<bits; ++i)
+        if (v.rank(view,i)!=data.oracle[i]) throw std::runtime_error("short rank oracle mismatch");
+      bool rejected=false;
+      try { (void)v.rank(view,bits); } catch(std::out_of_range const &) { rejected=true; }
+      if (!rejected) throw std::runtime_error("rank extent was accepted");
+    }
+  }
+  fixture data(253577,seed); auto view=data.view();
+  for (std::uint64_t i=0; i<data.bits; ++i)
+    for (auto const & v:variants)
+      if (v.rank(view,i)!=data.oracle[i]) throw std::runtime_error("full rank oracle mismatch");
+  std::vector<std::uint64_t> positions(65536);
+  for (auto & q:positions) q=random_word(seed);
+  std::printf("# rank oracle passed; bitmap_bytes=%zu directory_bytes=%zu query_bytes=%zu\n",
+    data.words.size()*8,data.blocks.size()*8+data.supers.size()*8,positions.size()*8);
+  std::puts("pattern,variant,trial,queries,ns_per_rank,checksum");
+  for (bool dependent:{false,true}) {
+    auto position = [&](std::uint64_t i,std::uint64_t previous) {
+      auto q=positions[i&65535] ^ (dependent ? previous*0x9e3779b97f4a7c15ull : 0);
+      return std::uint64_t((static_cast<unsigned __int128>(q)*data.bits)>>64);
+    };
+    std::uint64_t expected_checksum=0,previous=0;
+    for (std::uint64_t i=0; i<queries; ++i) {
+      auto p=position(i,previous); previous=data.oracle[p]; expected_checksum+=previous;
+      for (auto const & v:variants)
+        if (v.rank(view,p)!=previous) throw std::runtime_error("generated rank oracle mismatch");
+    }
+    auto run = [&](variant const & v,std::uint64_t count) {
+      std::uint64_t sum=0,last=0;
+      auto start=std::chrono::steady_clock::now();
+      for (std::uint64_t i=0; i<count; ++i) { last=v.rank(view,position(i,last)); sum+=last; }
+      auto ns=std::chrono::duration<double,std::nano>(std::chrono::steady_clock::now()-start).count()/count;
+      return std::pair{ns,sum};
+    };
+    std::uint64_t warmed=0;
+    for (auto const & v:variants) warmed^=run(v,std::min<std::uint64_t>(queries,32768)).second;
+    for (unsigned trial=0; trial<trials; ++trial)
+      for (unsigned slot=0; slot<variants.size(); ++slot) {
+        auto const & v=variants[(trial+slot)%variants.size()]; auto [ns,sum]=run(v,queries);
+        if (sum!=expected_checksum) throw std::runtime_error("timed rank checksum mismatch");
+        std::printf("%s,%s,%u,%llu,%.6f,%llu\n",dependent?"dependent":"independent",v.name,trial,
+          static_cast<unsigned long long>(queries),ns,static_cast<unsigned long long>(sum));
+      }
+    std::printf("# warmed=%llu\n",static_cast<unsigned long long>(warmed));
+  }
+  return 0;
+} catch(std::exception const & e) { std::fprintf(stderr,"%s\n",e.what()); return 1; }
+
+/**
+ * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Standalone CPUID-gated complete bitmap rank comparison.
+ */

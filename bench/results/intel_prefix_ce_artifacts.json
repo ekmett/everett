@@ -1,0 +1,107 @@
+{
+  "date": "2026-09-15",
+  "scope": "Standalone public prefix helpers and complete-rank query arithmetic with synthetic inputs; no repository headers uploaded",
+  "production_helper_commit": "1b1446c72dc10506e8415a277f75c97de77d5668",
+  "stages": [
+    {
+      "artifact_prefix": "intel_prefix_ce_initial",
+      "source_commit": "a51dca4258f430ad69c9b5a36d6951226aebb3f5",
+      "timing_rows": 40,
+      "source_sha256": "45d513b56afc9bc3cb7a4b373210c3bc7b7fe03393a86337aa00aa7244bb348c",
+      "queries_per_trial": 1048576,
+      "trials": 5
+    },
+    {
+      "artifact_prefix": "intel_prefix_ce_bounded",
+      "source_commit": "5d60565e437d5834e5c892dfc1bdd2c084f51257",
+      "timing_rows": 80,
+      "source_sha256": "446f40c9e26f5090cead043ae22bb6649860a3970504cb4502090eff5f247bc6",
+      "queries_per_trial": 1048576,
+      "trials": 5
+    },
+    {
+      "artifact_prefix": "intel_rank_ce_initial",
+      "source_commit": "da227b5e210c9c91103f5971240aa774f1a91e21",
+      "timing_rows": 60,
+      "source_sha256": "df134331f875cb0afcbe9df79937faf880c22cbca36717187b4dd0a022f9215a",
+      "queries_per_trial": 1048576,
+      "trials": 5
+    },
+    {
+      "artifact_prefix": "intel_rank_ce_same_isa",
+      "source_commit": "8d16dd04690fdc255735ac8cdeb3898c2fe8cde3",
+      "timing_rows": 140,
+      "source_sha256": "b7c7e415a7827f6bffa34e4e7982f6dd361733d9664236e86c8d3cbf9688721f",
+      "queries_per_trial": 1048576,
+      "trials": 5
+    },
+    {
+      "artifact_prefix": "intel_rank_ce_repeat",
+      "source_commit": "8d16dd04690fdc255735ac8cdeb3898c2fe8cde3",
+      "timing_rows": 70,
+      "source_sha256": "b7c7e415a7827f6bffa34e4e7982f6dd361733d9664236e86c8d3cbf9688721f",
+      "queries_per_trial": 1048576,
+      "trials": 5,
+      "note": "Unchanged Clang same-ISA source, second naturally scheduled execution, again Ice Lake"
+    }
+  ],
+  "prefix_remote_source_adjustment": "CPU brand CPUID print added by integration owner; exact submitted sources preserved",
+  "request_urls": [
+    "https://godbolt.org/api/compiler/clang2010/compile",
+    "https://godbolt.org/api/compiler/g152/compile"
+  ],
+  "user_arguments": "-O3 -std=c++20 -mpopcnt",
+  "execution_arguments": [
+    "5",
+    "1048576"
+  ],
+  "authorization": "User authorized Compiler Explorer execution of public helper code; integration owner submitted requests",
+  "local_standalone_validation": {
+    "bounded_prefix_compile_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-130528-g97428rk/output.log",
+    "bounded_prefix_runtime_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-130551-zf1y4_th/output.log",
+    "complete_rank_compile_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-131021-ijflgovy/output.log",
+    "complete_rank_runtime_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-131037-hgll6l95/output.log",
+    "same_isa_rank_compile_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-131344-tuhnjqup/output.log",
+    "same_isa_rank_runtime_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-131509-6zfxszln/output.log",
+    "runtime": "Rosetta scalar only; AVX2 and AVX-512 unsupported and skipped; translated timing is not native evidence"
+  },
+  "limitations": [
+    "Remote shared host, no affinity/frequency/isolation guarantee",
+    "Five timing trials within one execution process per job",
+    "Different jobs can run on different CPUs",
+    "Native standalone correctness is separate from local full-library sanitizer checks",
+    "No whole-query or cold mapping performance claim"
+  ],
+  "artifacts": {
+    "intel_prefix_ce_bounded.cc.txt": "446f40c9e26f5090cead043ae22bb6649860a3970504cb4502090eff5f247bc6",
+    "intel_prefix_ce_bounded.csv": "80323d55314b0141ec7824aa1c5bed8a64e109eac04573766bec8e2d4838260d",
+    "intel_prefix_ce_bounded_clang_request.json": "8652ef29edf9f22d04def88d6e20582335b3d96c9ae94f3b48f6a842226056f4",
+    "intel_prefix_ce_bounded_clang_result.json": "538e1af08702da7653d2934f3afcea039474293eefdfe1add3b53899917fd030",
+    "intel_prefix_ce_bounded_gcc_request.json": "2e2f6db3d2a782b3f80ab2e8b87f2826a2933ec9bdc8806510067d2eaf0c79c3",
+    "intel_prefix_ce_bounded_gcc_result.json": "b450ffa44424a1aabd2cd90ea08e9461deb11f4eda02cebba904c015635c7891",
+    "intel_prefix_ce_initial.cc.txt": "45d513b56afc9bc3cb7a4b373210c3bc7b7fe03393a86337aa00aa7244bb348c",
+    "intel_prefix_ce_initial.csv": "4db6ef3b17381f371462068101b9218a3a1ec8c15d17fceeb35d66788de428cf",
+    "intel_prefix_ce_initial_clang_request.json": "533d504625780aaaa94272110406bcf55c83f8662363e08454730fde508d97c4",
+    "intel_prefix_ce_initial_clang_result.json": "6f2625bc8444261f9a24768dedb0397b15956317cb00d965c7557f29ad88eefb",
+    "intel_prefix_ce_initial_gcc_request.json": "d1db2da2b56d3571514f8bd9d723b7df9a2692f678ebe85b0b74348e44080632",
+    "intel_prefix_ce_initial_gcc_result.json": "e525a4b90780b4ea992090461c9d1fbb065ad5e504a6a003baba792164aa49bf",
+    "intel_rank_ce_initial.cc.txt": "df134331f875cb0afcbe9df79937faf880c22cbca36717187b4dd0a022f9215a",
+    "intel_rank_ce_initial.csv": "ec55ebdf4f60226c06754499f5235145212fc8385f0219a364a9f404c9f938bc",
+    "intel_rank_ce_initial_clang_request.json": "51e1f5863f36632183ec3a3fcaa2dd104681b308d7ad172ddc2c99c5b27e841e",
+    "intel_rank_ce_initial_clang_result.json": "70d59694a97d782d3b3354f6ba10767c90ceaca6b4d29fafdcc98c51a5f6f90e",
+    "intel_rank_ce_initial_gcc_request.json": "ce6396b38c6acad7d681302d1f8b450c5e760f182792c4d48c8ecfab7999c3b1",
+    "intel_rank_ce_initial_gcc_result.json": "12c501f63933b7ff16938c2c3c182ba796036f6190bd41900c6f46d85ccbe076",
+    "intel_rank_ce_same_isa.cc.txt": "b7c7e415a7827f6bffa34e4e7982f6dd361733d9664236e86c8d3cbf9688721f",
+    "intel_rank_ce_same_isa.csv": "7040e23a7a722975838ded9e3bf1c6b42959eca8d5024c07ca4eb9131b1f2f6d",
+    "intel_rank_ce_same_isa_clang_request.json": "dee83b350195c3f827f63d9c3a3b99df76b176556613f531589df7d2fdba3c0d",
+    "intel_rank_ce_same_isa_clang_result.json": "31c13d222eb50241665cfc90679a505aaa967aff73f594cd23752cb08c44c320",
+    "intel_rank_ce_same_isa_gcc_request.json": "191cf1f66941f75489ca2177831e670915e21d32beffec790799a01030b50015",
+    "intel_rank_ce_same_isa_gcc_result.json": "8d1d0c832401d6abc2fab1d5d3c7e18f6b0a7be9c99caa29bf8ce28a13ce954d",
+    "intel_rank_ce_repeat.cc.txt": "b7c7e415a7827f6bffa34e4e7982f6dd361733d9664236e86c8d3cbf9688721f",
+    "intel_rank_ce_repeat.csv": "420e2420f4a0bbb589d5cc7a76b6744491daa0147d827700482a9de94489c98b",
+    "intel_rank_ce_repeat_clang_request.json": "dee83b350195c3f827f63d9c3a3b99df76b176556613f531589df7d2fdba3c0d",
+    "intel_rank_ce_repeat_clang_result.json": "4ffd37cb706d8b16f605528e29e6487f826f3c3df1927d1a97d2b1a04dcf8f30"
+  },
+  "total_native_timing_rows": 390,
+  "successful_native_execution_jobs": 9
+}

@@ -1,0 +1,200 @@
+/**
+ * \file
+ * \license
+ * SPDX-FileType: SOURCE
+ * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+ * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+ * \endlicense
+ */
+
+// Standalone public prefix helpers and synthetic benchmark; no Everett includes.
+// Generic x86-64 compile: -O3 -std=c++20 -mpopcnt (do not use -march=native).
+#include <immintrin.h>
+#include <cpuid.h>
+#include <algorithm>
+#include <array>
+#include <bit>
+#include <chrono>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <stdexcept>
+#include <vector>
+
+__attribute__((target("popcnt"), noinline))
+unsigned prefix_scalar(std::uint64_t const * words, unsigned bits) {
+  unsigned result = 0;
+  for (unsigned word = 0; word < (bits >> 6); ++word)
+    result += unsigned(std::popcount(words[word]));
+  if (bits & 63)
+    result += unsigned(std::popcount(words[bits >> 6] & ((std::uint64_t{1} << (bits & 63)) - 1)));
+  return result;
+}
+
+// Give the noinline baseline the same bounded-prefix fact as its rank caller.
+__attribute__((target("popcnt"), noinline))
+unsigned prefix_scalar_bounded(std::uint64_t const * words, unsigned bits) {
+  if (bits > 512) __builtin_unreachable();
+  unsigned result = 0;
+  for (unsigned word = 0; word < (bits >> 6); ++word)
+    result += unsigned(std::popcount(words[word]));
+  if (bits & 63)
+    result += unsigned(std::popcount(words[bits >> 6] & ((std::uint64_t{1} << (bits & 63)) - 1)));
+  return result;
+}
+
+template <unsigned Vector> __attribute__((target("avx2"), always_inline)) inline __m256i prefix512_masked_avx2(
+    std::uint64_t const * words, unsigned bits) noexcept {
+  auto positions = _mm256_setr_epi64x(4 * Vector, 4 * Vector + 1, 4 * Vector + 2, 4 * Vector + 3);
+  auto boundary = _mm256_set1_epi64x(bits >> 6);
+  auto tail = _mm256_set1_epi64x(static_cast<long long>((std::uint64_t{1} << (bits & 63)) - 1));
+  auto mask = _mm256_or_si256(_mm256_cmpgt_epi64(boundary, positions),
+    _mm256_and_si256(_mm256_cmpeq_epi64(positions, boundary), tail));
+  return _mm256_and_si256(_mm256_loadu_si256(reinterpret_cast<__m256i const *>(words + 4 * Vector)), mask);
+}
+
+// Exactly eight readable words, with no vector alignment requirement.
+__attribute__((target("avx2"), noinline)) unsigned prefix512_avx2(std::uint64_t const * words, unsigned bits) noexcept {
+  auto lookup = _mm256_setr_epi8(0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,
+                                0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4);
+  auto nibble = _mm256_set1_epi8(15);
+  auto population = [&](auto data) __attribute__((target("avx2"), always_inline)) {
+    auto lo = _mm256_shuffle_epi8(lookup, _mm256_and_si256(data, nibble));
+    auto hi = _mm256_shuffle_epi8(lookup, _mm256_and_si256(_mm256_srli_epi16(data, 4), nibble));
+    return _mm256_add_epi8(lo, hi);
+  };
+  // Each byte sum is at most sixteen, so both vectors can share one SAD.
+  auto counts = _mm256_add_epi8(population(prefix512_masked_avx2<0>(words, bits)),
+                                population(prefix512_masked_avx2<1>(words, bits)));
+  auto sums = _mm256_sad_epu8(counts, _mm256_setzero_si256());
+  auto pair = _mm_add_epi64(_mm256_castsi256_si128(sums), _mm256_extracti128_si256(sums, 1));
+  return unsigned(_mm_cvtsi128_si32(_mm_add_epi64(pair, _mm_srli_si128(pair, 8))));
+}
+
+__attribute__((target("avx512f"), always_inline)) inline __m512i prefix512_masked_avx512(std::uint64_t const * words, unsigned bits) noexcept {
+  auto lane = bits >> 6;
+  auto full = __mmask8((1u << lane) - 1);
+  auto boundary = __mmask8(1u << lane); // lane=8 gives no boundary lane.
+  auto data = _mm512_maskz_loadu_epi64(full | boundary, words);
+  auto tail = _mm512_set1_epi64(static_cast<long long>((std::uint64_t{1} << (bits & 63)) - 1));
+  return _mm512_mask_and_epi64(data, boundary, data, tail);
+}
+
+__attribute__((target("avx512f,avx512vpopcntdq"), noinline)) unsigned prefix512_avx512_vpopcnt(std::uint64_t const * words, unsigned bits) noexcept {
+  return unsigned(_mm512_reduce_add_epi64(_mm512_popcnt_epi64(prefix512_masked_avx512(words, bits))));
+}
+
+__attribute__((target("avx512f,avx512bw"), noinline)) unsigned prefix512_avx512bw(std::uint64_t const * words, unsigned bits) noexcept {
+  auto data = prefix512_masked_avx512(words, bits);
+  auto lookup = _mm512_broadcast_i32x4(_mm_setr_epi8(0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4));
+  auto nibble = _mm512_set1_epi8(15);
+  auto lo = _mm512_shuffle_epi8(lookup, _mm512_and_si512(data, nibble));
+  auto hi = _mm512_shuffle_epi8(lookup, _mm512_and_si512(_mm512_srli_epi16(data, 4), nibble));
+  auto counts = _mm512_add_epi8(lo, hi);
+  return unsigned(_mm512_reduce_add_epi64(_mm512_sad_epu8(counts, _mm512_setzero_si512())));
+}
+
+
+using prefix_function = unsigned (*)(std::uint64_t const *, unsigned);
+struct variant { char const * name; prefix_function prefix; };
+std::uint64_t random_word(std::uint64_t & state) {
+  state += 0x9e3779b97f4a7c15ull;
+  auto x = state;
+  x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ull;
+  x = (x ^ (x >> 27)) * 0x94d049bb133111ebull;
+  return x ^ (x >> 31);
+}
+
+int main(int argc, char ** argv) try {
+  __builtin_cpu_init();
+  char brand[49]{};
+  for (unsigned i = 0; i < 3; ++i) {
+    unsigned a, b, c, d;
+    __get_cpuid(0x80000002u + i, &a, &b, &c, &d);
+    unsigned x[]{a, b, c, d};
+    std::memcpy(brand + 16 * i, x, 16);
+  }
+  std::printf("# cpu=%s\n", brand);
+
+  bool popcnt = __builtin_cpu_supports("popcnt");
+  bool avx2 = __builtin_cpu_supports("avx2");
+  bool avx512f = __builtin_cpu_supports("avx512f");
+  bool avx512bw = avx512f && __builtin_cpu_supports("avx512bw");
+  bool vpopcnt = avx512f && __builtin_cpu_supports("avx512vpopcntdq");
+  std::printf("# popcnt=%d avx2=%d avx512bw=%d avx512vpopcntdq=%d\n", popcnt, avx2, avx512bw, vpopcnt);
+  if (!popcnt) throw std::runtime_error("POPCNT baseline is unavailable");
+  auto trials = argc > 1 ? unsigned(std::strtoul(argv[1], nullptr, 10)) : 5u;
+  auto queries = argc > 2 ? std::strtoull(argv[2], nullptr, 10) : 1048576ull;
+  if (!trials || !queries) throw std::runtime_error("positive trials and queries required");
+  std::vector<variant> variants{{"scalar_popcnt", prefix_scalar}, {"scalar_bounded", prefix_scalar_bounded}};
+  if (avx2) variants.push_back({"avx2", prefix512_avx2});
+  if (avx512bw) variants.push_back({"avx512bw", prefix512_avx512bw});
+  if (vpopcnt) variants.push_back({"avx512vpopcntdq", prefix512_avx512_vpopcnt});
+  // Independent oracle: every prefix, including 0 and512, at eight uint64
+  // offsets, for zero/all-one/random data. No vector reduction builds it.
+  alignas(64) std::array<std::uint64_t, 15> input{};
+  std::uint64_t seed = 0x512f00d;
+  for (unsigned pattern = 0; pattern < 66; ++pattern) {
+    for (auto & word : input) word = pattern == 0 ? 0 : pattern == 1 ? ~std::uint64_t{0} : random_word(seed);
+    for (unsigned offset = 0; offset < 8; ++offset) {
+      unsigned expected = 0;
+      for (unsigned bits = 0; bits <= 512; ++bits) {
+        for (auto const & v : variants)
+          if (v.prefix(input.data()+offset, bits) != expected) throw std::runtime_error("prefix oracle mismatch");
+        if (bits != 512) expected += unsigned((input[offset+(bits>>6)] >> (bits&63))&1);
+      }
+    }
+  }
+  constexpr unsigned blocks = 512;
+  std::vector<std::uint64_t> words(blocks*8), positions(65536);
+  std::vector<std::uint16_t> oracle(blocks*513);
+  for (auto & word : words) word = random_word(seed);
+  for (unsigned block = 0; block < blocks; ++block)
+    for (unsigned bit = 0; bit < 512; ++bit)
+      oracle[block*513+bit+1] = oracle[block*513+bit] + unsigned((words[block*8+(bit>>6)] >> (bit&63))&1);
+  for (auto & q : positions) q = random_word(seed);
+  std::printf("# prefix oracle passed; bitmap_bytes=%zu query_bytes=%zu\n",words.size()*8,positions.size()*8);
+  std::puts("pattern,variant,trial,queries,ns_per_prefix,checksum");
+  for (bool dependent : {false,true}) {
+    auto position = [&](std::uint64_t i, std::uint64_t previous) {
+      auto q=positions[i&65535] ^ (dependent ? previous*0x9e3779b97f4a7c15ull : 0);
+      return std::pair{unsigned((q>>10)&(blocks-1)),unsigned(q%513)};
+    };
+    std::uint64_t expected_checksum=0, previous=0;
+    for (std::uint64_t i=0;i<queries;++i) {
+      auto [block,bits]=position(i,previous);
+      previous=oracle[block*513+bits]; expected_checksum+=previous;
+      for (auto const & v:variants)
+        if (v.prefix(words.data()+block*8,bits)!=previous) throw std::runtime_error("generated query oracle mismatch");
+    }
+    auto run = [&](variant const & v, std::uint64_t count) {
+      std::uint64_t sum=0,last=0;
+      auto start=std::chrono::steady_clock::now();
+      for (std::uint64_t i=0;i<count;++i) {
+        auto [block,bits]=position(i,last);
+        last=v.prefix(words.data()+block*8,bits); sum+=last;
+      }
+      auto ns=std::chrono::duration<double,std::nano>(std::chrono::steady_clock::now()-start).count()/count;
+      return std::pair{ns,sum};
+    };
+    std::uint64_t warmed=0;
+    for (auto const & v:variants) warmed^=run(v,std::min<std::uint64_t>(queries,32768)).second;
+    for (unsigned trial=0;trial<trials;++trial)
+      for (unsigned slot=0;slot<variants.size();++slot) {
+        auto const & v=variants[(slot+trial)%variants.size()];
+        auto [ns,sum]=run(v,queries);
+        if(sum!=expected_checksum) throw std::runtime_error("timed checksum mismatch");
+        std::printf("%s,%s,%u,%llu,%.6f,%llu\n",dependent?"dependent":"independent",v.name,trial,
+          static_cast<unsigned long long>(queries),ns,static_cast<unsigned long long>(sum));
+      }
+    std::printf("# warmed=%llu\n",static_cast<unsigned long long>(warmed));
+  }
+  return 0;
+} catch (std::exception const & e) { std::fprintf(stderr,"%s\n",e.what()); return 1; }
+
+/**
+ * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Standalone CPUID-gated Intel prefix benchmark with synthetic inputs.
+ */
