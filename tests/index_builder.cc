@@ -156,9 +156,11 @@ namespace {
     auto incoming = oracle_samples<P>(target_native, target_borrowed);
     auto expected = source.reindex(incoming);
     auto output = oracle_samples<P>(native, incoming);
-    for (std::uint64_t budget : {std::uint64_t{1}, std::uint64_t{2}, P::group_size - 1,
+    for (bool coded : {false, true}) for (std::uint64_t budget : {std::uint64_t{1}, std::uint64_t{2}, P::group_size - 1,
                                  P::group_size, P::group_size + 1, std::numeric_limits<std::uint64_t>::max()}) {
       index_builder<P> builder(source);
+      profile_sample_encoder<P> input_encoder;
+      profile_sample_decoder<P> output_decoder;
       std::size_t next_in = 0;
       std::size_t next_out = 0;
       std::uint64_t processed = 0;
@@ -169,7 +171,10 @@ namespace {
           require(builder.step(budget) == 0, "missing lookahead blocks native progress");
           if (next_in != incoming.size()) {
             auto scratch = incoming[next_in];
-            builder.push(scratch.view(), next_in * P::group_size);
+            if (coded) {
+              auto frame = input_encoder.encode(scratch.view(), next_in * P::group_size);
+              builder.push(frame);
+            } else builder.push(scratch.view(), next_in * P::group_size);
             scratch = {};
             ++next_in;
             if (next_in == incoming.size() && budget % 2 == 0) builder.close_input();
@@ -182,9 +187,22 @@ namespace {
         if (builder.has_output()) {
           require(builder.step(budget) == 0, "outgoing backpressure blocks progress");
           rejects([&] { builder.finish(target); });
-          auto sample = builder.take_output();
-          require(sample.target_ordinal == next_out * P::group_size && sample.key == output[next_out],
-                  "emitted sample follows augmented tagged ordering");
+          if (coded) {
+            auto frame = builder.take_coded_output();
+            auto previous = next_out ? output[next_out - 1].view() : bit_view{};
+            auto retained = common_prefix_units<P>(previous, output[next_out].view());
+            auto suffix = output[next_out].view().subview(retained * P::bits_per_unit,
+              output[next_out].bit_size - retained * P::bits_per_unit);
+            require(frame.backspace == previous.size() / P::bits_per_unit - retained &&
+              compare_bits(frame.suffix.view(), suffix) == 0, "outgoing frame contains exact backspace and suffix");
+            auto decoded = output_decoder.accept(frame);
+            require(frame.target_ordinal == next_out * P::group_size &&
+              compare_bits(decoded, output[next_out].view()) == 0, "coded sample follows augmented tagged ordering");
+          } else {
+            auto sample = builder.take_output();
+            require(sample.target_ordinal == next_out * P::group_size && sample.key == output[next_out],
+                    "emitted sample follows augmented tagged ordering");
+          }
           ++next_out;
         }
       }
@@ -198,6 +216,60 @@ namespace {
       rejects([&] { builder.finish(target); });
       rejects([&] { builder.step(1); });
       rejects([&] { builder.take_output(); });
+      rejects([&] { builder.take_coded_output(); });
+    }
+  }
+
+  template <class P> void coded_pipeline(std::span<profile_record const> native,
+                                         std::span<profile_record const> target_native,
+                                         std::span<bit_string const> target_borrowed,
+                                         std::span<bit_string const> queries) {
+    auto target = std::make_shared<profile_blob<P> const>(profile_blob<P>::build(target_native, target_borrowed));
+    auto source = profile_blob<P>::build(native);
+    auto incoming = oracle_samples<P>(target_native, target_borrowed);
+    auto middle_samples = oracle_samples<P>(native, incoming);
+    auto final_samples = oracle_samples<P>(native, middle_samples);
+    auto expected_first = source.reindex(incoming);
+    auto expected_second = source.reindex(middle_samples);
+    for (std::uint64_t budget : {std::uint64_t{1}, std::uint64_t{2}, P::group_size - 1,
+                                 P::group_size, P::group_size + 1, std::numeric_limits<std::uint64_t>::max()}) {
+      sample_cursor<P> input(target);
+      profile_sample_encoder<P> encoder;
+      profile_sample_decoder<P> decoder;
+      index_builder<P> first(source);
+      index_builder<P> second(source);
+      bool first_closed = false;
+      bool second_closed = false;
+      std::size_t emitted = 0;
+      std::size_t iterations = 0;
+      while (!first.done() || !second.done()) {
+        require(++iterations < 100000, "coded pipeline must make progress");
+        if (first.needs_input()) {
+          if (input.done()) { first.close_input(); first_closed = true; }
+          else {
+            auto sample = input.peek();
+            first.push(encoder.encode(sample.key, sample.target_ordinal));
+            input.advance();
+          }
+        }
+        first.step(budget);
+        if (first.has_output() && second.needs_input()) second.push(first.take_coded_output());
+        if (first.done() && !second_closed) { second.close_input(); second_closed = true; }
+        second.step(budget);
+        if (second.has_output()) {
+          auto frame = second.take_coded_output();
+          require(frame.target_ordinal == emitted * P::group_size &&
+            compare_bits(decoder.accept(frame), final_samples[emitted].view()) == 0,
+            "two stages exchange coded frames without full-key queue materialization");
+          ++emitted;
+        }
+      }
+      require(first_closed && second_closed && emitted == final_samples.size(), "coded pipeline reaches exact EOF");
+      auto middle = std::make_shared<profile_blob<P> const>(first.finish(target));
+      auto head = second.finish(middle);
+      require(head.target() == middle && middle->target() == target, "coded pipeline retains exact target chain");
+      check_result(*middle, expected_first, source, native, incoming, queries);
+      check_result(head, expected_second, source, native, middle_samples, queries);
     }
   }
 
@@ -219,6 +291,8 @@ namespace {
     std::array<profile_record, 1> one{{{all[all.size() / 2], value<P>(7)}}};
     std::vector<bit_string> repeated(P::group_size * 70, one[0].key);
     exercise<P>(one, {}, repeated, all);
+    coded_pipeline<P>(native, target_native, target_borrowed, all);
+    coded_pipeline<P>(one, {}, repeated, all);
 
     auto source = profile_blob<P>::build(one);
     index_builder<P> invalid(source);
@@ -232,6 +306,9 @@ namespace {
     }
     rejects([&] { invalid.push(all.front().view(), P::group_size); });
     require(invalid.needs_input() && invalid.received_samples() == 1, "unsorted sample preserves input state");
+    profile_coded_sample<P> mixed{0, all.back(), P::group_size};
+    rejects([&] { invalid.push(mixed); });
+    require(invalid.needs_input() && invalid.received_samples() == 1, "coded input cannot enter a full-key stream");
     invalid.close_input();
     rejects([&] { invalid.close_input(); });
     rejects([&] { invalid.push(all.back().view(), P::group_size); });
@@ -239,6 +316,28 @@ namespace {
       index_builder<P> alignment(source);
       auto unaligned = bit_string::from_bits("1");
       rejects([&] { alignment.push(unaligned.view(), 0); });
+    }
+
+    index_builder<P> coded(source);
+    profile_sample_encoder<P> encoder;
+    auto frame = encoder.encode(all.back().view(), 0);
+    auto bad = frame;
+    bad.backspace = 1;
+    rejects([&] { coded.push(bad); });
+    require(coded.needs_input() && coded.received_samples() == 0, "bad coded input preserves decoder state");
+    coded.push(frame);
+    while (!coded.needs_input()) {
+      coded.step(1);
+      if (coded.has_output()) coded.take_coded_output();
+    }
+    rejects([&] { coded.push(all.back().view(), P::group_size); });
+    require(coded.needs_input() && coded.received_samples() == 1, "full keys cannot enter a coded stream");
+    auto duplicate = encoder.encode(all.back().view(), P::group_size);
+    coded.push(duplicate);
+    coded.close_input();
+    while (!coded.done()) {
+      coded.step(1);
+      if (coded.has_output()) coded.take_coded_output();
     }
 
     // The original wrapper can die, and moving a partly built stage preserves

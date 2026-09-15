@@ -28,11 +28,15 @@ namespace everett {
   // step() budgets merged occurrences, not key bytes, allocations or final EF
   // construction. Inputs must come from the exact target's trusted sampler;
   // finish() checks its count but does not rescan it to authenticate every key.
+  // Coded handoff queues a backspace count, suffix and target ordinal. Backspace
+  // counts P units relative to the preceding emitted sample. Decoder, lookahead,
+  // pending-writer and outgoing-encoder contexts still retain full current keys.
   template <class P>
   struct index_builder {
     using policy_type = P;
     using blob_type = profile_blob<P>;
     using sample_type = profile_sample<P>;
+    using coded_sample_type = profile_coded_sample<P>;
     static constexpr std::uint64_t group_size = P::group_size;
 
     explicit index_builder(blob_type const & source)
@@ -56,20 +60,26 @@ namespace everett {
 
     void push(bit_view key, std::uint64_t target_ordinal) {
       check_active();
-      if (!needs_input()) throw std::logic_error("index builder cannot accept another lookahead");
-      if (key.size() % P::bits_per_unit)
-        throw std::invalid_argument("index sample key disagrees with policy units");
-      if (received_ > std::numeric_limits<std::uint64_t>::max() / group_size ||
-          target_ordinal != received_ * group_size)
-        throw std::invalid_argument("index samples must name consecutive target groups");
-      if (received_ == std::numeric_limits<std::uint64_t>::max() - native_->size())
-        throw std::length_error("index augmented count overflows");
-      auto order = pending_ ? compare_bits(pending_->view(), key) : -1;
-      if (order > 0) throw std::invalid_argument("index samples must be sorted");
-      auto copy = bit_string::copy(key);
-      incoming_.emplace(std::move(copy));
-      incoming_false_ = !order && pending_false_;
-      ++received_;
+      if (input_mode_ == input_mode::coded) throw std::logic_error("cannot mix coded and full index inputs");
+      push_key(key, target_ordinal);
+      input_mode_ = input_mode::full;
+    }
+
+    void push(coded_sample_type const & sample) {
+      check_active();
+      if (input_mode_ == input_mode::full) throw std::logic_error("cannot mix coded and full index inputs");
+      check_input_slot(sample.target_ordinal);
+      auto key = incoming_decoder_.accept(sample);
+      try {
+        // The decoder's current key is copied once into the existing lookahead
+        // state. Failure after advancing that context makes this stage unusable.
+        push_key(key, sample.target_ordinal);
+      } catch (...) {
+        failed_ = true;
+        outgoing_.reset();
+        throw;
+      }
+      input_mode_ = input_mode::coded;
     }
 
     // EOF can accompany a final queued sample. An empty queue alone never
@@ -95,7 +105,7 @@ namespace everett {
           auto key = take_borrowed ? incoming_->view() : native_cursor_.peek().key.prefix;
           auto boundary = virtual_count_ % group_size == 0;
           if (boundary) {
-            outgoing_.emplace(sample_type{bit_string::copy(key), virtual_count_});
+            outgoing_.emplace(outgoing_encoder_.encode(key, virtual_count_));
             classes_.push_back(0);
             if (pending_) pending_ceiling_ = std::min(pending_ceiling_,
               common_prefix_units<P>(pending_->view(), key));
@@ -128,6 +138,17 @@ namespace everett {
     }
 
     sample_type take_output() {
+      check_active();
+      if (!outgoing_) throw std::logic_error("index builder has no outgoing sample");
+      // Compatibility path: materialize a full queued key only when requested.
+      sample_type result{bit_string::copy(outgoing_encoder_.key()), outgoing_->target_ordinal};
+      outgoing_.reset();
+      return result;
+    }
+
+    // Frames depend on every preceding emitted sample, including any retrieved
+    // through the full-key compatibility interface. Consume coded frames in order.
+    coded_sample_type take_coded_output() {
       check_active();
       if (!outgoing_) throw std::logic_error("index builder has no outgoing sample");
       auto result = std::move(*outgoing_);
@@ -163,18 +184,23 @@ namespace everett {
     }
 
   private:
+    enum class input_mode { unset, full, coded };
+
     std::shared_ptr<typename blob_type::native_array const> native_;
     profile_cursor<P, stream_role::native> native_cursor_;
     profile_borrowed_writer<P> writer_;
     std::optional<bit_string> incoming_;
     std::optional<bit_string> pending_;
-    std::optional<sample_type> outgoing_;
+    std::optional<coded_sample_type> outgoing_;
+    profile_sample_encoder<P> outgoing_encoder_;
+    profile_sample_decoder<P> incoming_decoder_;
     std::vector<std::uint64_t> classes_;
     std::vector<std::byte> false_borrows_;
     std::uint64_t pending_ceiling_ = std::numeric_limits<std::uint64_t>::max();
     std::uint64_t virtual_count_ = 0;
     std::uint64_t borrowed_count_ = 0;
     std::uint64_t received_ = 0;
+    input_mode input_mode_ = input_mode::unset;
     bool incoming_false_ = false;
     bool pending_false_ = false;
     bool input_closed_ = false;
@@ -183,6 +209,25 @@ namespace everett {
 
     void check_active() const {
       if (finished_ || failed_) throw std::logic_error("index builder is no longer active");
+    }
+    void check_input_slot(std::uint64_t target_ordinal) const {
+      if (!needs_input()) throw std::logic_error("index builder cannot accept another lookahead");
+      if (received_ > std::numeric_limits<std::uint64_t>::max() / group_size ||
+          target_ordinal != received_ * group_size)
+        throw std::invalid_argument("index samples must name consecutive target groups");
+      if (received_ == std::numeric_limits<std::uint64_t>::max() - native_->size())
+        throw std::length_error("index augmented count overflows");
+    }
+    void push_key(bit_view key, std::uint64_t target_ordinal) {
+      check_input_slot(target_ordinal);
+      if (key.size() % P::bits_per_unit)
+        throw std::invalid_argument("index sample key disagrees with policy units");
+      auto order = pending_ ? compare_bits(pending_->view(), key) : -1;
+      if (order > 0) throw std::invalid_argument("index samples must be sorted");
+      auto copy = bit_string::copy(key);
+      incoming_.emplace(std::move(copy));
+      incoming_false_ = !order && pending_false_;
+      ++received_;
     }
     void flush_pending() {
       if (pending_) {
