@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <everett/error_detail.h>
+
 #include <everett/word_view.h>
 
 #include <cstdint>
@@ -46,7 +48,7 @@ namespace everett {
       auto groups = group_count();
       if (classes.size() != groups / 16 + (groups % 16 != 0) ||
           checkpoints.size() != groups / 128 + (groups % 128 != 0))
-        throw std::invalid_argument("invalid rank15 spans");
+        error_detail::raise<std::invalid_argument>("invalid rank15 spans");
     }
 
     std::uint64_t size() const noexcept { return virtual_count_; }
@@ -57,7 +59,7 @@ namespace everett {
       auto last = group_count() - 1;
       auto population = class_at(last);
       if (population > virtual_count_ - last * 15)
-        throw std::invalid_argument("invalid rank15 final population");
+        error_detail::raise<std::invalid_argument>("invalid rank15 final population");
       return add_prefix(rank(last), population, virtual_count_);
     }
 
@@ -65,14 +67,14 @@ namespace everett {
     word_view checkpoint_words() const noexcept { return checkpoints_; }
 
     unsigned class_at(std::uint64_t group) const {
-      if (group >= group_count()) throw std::out_of_range("rank15 class");
+      if (group >= group_count()) error_detail::raise<std::out_of_range>("rank15 class");
       return unsigned((classes_[group / 16] >> (4 * (group % 16))) & 15);
     }
 
     // rank(group) counts entries before the start of an existing group.
     // An empty index has no valid rank query; count() handles its total.
     std::uint64_t rank(std::uint64_t group) const {
-      if (group >= group_count()) throw std::out_of_range("rank15 group");
+      if (group >= group_count()) error_detail::raise<std::out_of_range>("rank15 group");
       auto result = checkpoints_[group / 128];
       auto limit = virtual_count_;
       if (group % 128 == 0) return add_prefix(result, 0, limit);
@@ -100,7 +102,7 @@ namespace everett {
   private:
     static std::uint64_t add_prefix(std::uint64_t checkpoint, unsigned prefix, std::uint64_t limit) {
       if (checkpoint > limit || prefix > limit - checkpoint)
-        throw std::invalid_argument("invalid rank15 checkpoint or prefix");
+        error_detail::raise<std::invalid_argument>("invalid rank15 checkpoint or prefix");
       return checkpoint + prefix;
     }
 #if defined(__AVX512F__) && defined(__AVX512BW__)
@@ -193,14 +195,14 @@ namespace everett {
   struct rank15_index {
     static rank15_index build(std::span<std::uint8_t const> source, std::uint64_t count) {
       auto groups = count / 15 + (count % 15 != 0);
-      if (source.size() != groups) throw std::invalid_argument("rank15 class length");
+      if (source.size() != groups) error_detail::raise<std::invalid_argument>("rank15 class length");
       rank15_index result;
       result.virtual_count = count;
       result.classes.resize(groups / 16 + (groups % 16 != 0));
       std::uint64_t total = 0;
       for (std::uint64_t i = 0; i < groups; ++i) {
         auto limit = i + 1 == groups && count % 15 ? count % 15 : 15;
-        if (source[i] > limit) throw std::invalid_argument("rank15 class population");
+        if (source[i] > limit) error_detail::raise<std::invalid_argument>("rank15 class population");
         if (i % 128 == 0) result.checkpoints.push_back(total);
         result.classes[i / 16] |= std::uint64_t(source[i]) << (4 * (i % 16));
         total += source[i];

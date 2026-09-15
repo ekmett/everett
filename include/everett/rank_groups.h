@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <everett/error_detail.h>
+
 #include <everett/rank15.h>
 
 #include <array>
@@ -133,11 +135,11 @@ namespace everett {
       : classes_(classes), checkpoints_(checkpoints), virtual_count_(virtual_count) {
       auto groups = group_count();
       if (groups > std::numeric_limits<std::uint64_t>::max() / class_bits)
-        throw std::overflow_error("rank groups packed size");
+        error_detail::raise<std::overflow_error>("rank groups packed size");
       auto bits = groups * class_bits;
       if (classes.size() != bits / 64 + (bits % 64 != 0) ||
           checkpoints.size() != groups / 128 + (groups % 128 != 0))
-        throw std::invalid_argument("invalid rank groups spans");
+        error_detail::raise<std::invalid_argument>("invalid rank groups spans");
     }
 
     std::uint64_t size() const noexcept { return virtual_count_; }
@@ -147,7 +149,7 @@ namespace everett {
       auto last = group_count() - 1;
       auto population = class_at(last);
       if (population > virtual_count_ - last * K)
-        throw std::invalid_argument("invalid rank groups final population");
+        error_detail::raise<std::invalid_argument>("invalid rank groups final population");
       return add_prefix(rank(last), population, virtual_count_);
     }
     std::uint64_t group_count() const noexcept {
@@ -156,12 +158,12 @@ namespace everett {
     word_view class_words() const noexcept { return classes_; }
     word_view checkpoint_words() const noexcept { return checkpoints_; }
     std::uint64_t class_at(std::uint64_t group) const {
-      if (group >= group_count()) throw std::out_of_range("rank groups class");
+      if (group >= group_count()) error_detail::raise<std::out_of_range>("rank groups class");
       return read_class(group);
     }
     // Exclusive prefix at K*group for an existing group only.
     std::uint64_t rank(std::uint64_t group) const {
-      if (group >= group_count()) throw std::out_of_range("rank groups boundary");
+      if (group >= group_count()) error_detail::raise<std::out_of_range>("rank groups boundary");
       auto result = checkpoints_[group / 128];
       auto limit = virtual_count_;
       if constexpr (K == 3 || K == 7 || K == 31) {
@@ -185,7 +187,7 @@ namespace everett {
   private:
     static std::uint64_t add_prefix(std::uint64_t checkpoint, std::uint64_t prefix, std::uint64_t limit) {
       if (checkpoint > limit || prefix > limit - checkpoint)
-        throw std::invalid_argument("invalid rank groups checkpoint or prefix");
+        error_detail::raise<std::invalid_argument>("invalid rank groups checkpoint or prefix");
       return checkpoint + prefix;
     }
     std::uint64_t read_class(std::uint64_t group) const noexcept {
@@ -236,9 +238,9 @@ namespace everett {
 
     static rank_groups build(std::span<std::uint64_t const> source, std::uint64_t count) {
       auto groups = count / K + (count % K != 0);
-      if (source.size() != groups) throw std::invalid_argument("rank groups class length");
+      if (source.size() != groups) error_detail::raise<std::invalid_argument>("rank groups class length");
       if (groups > std::numeric_limits<std::uint64_t>::max() / class_bits)
-        throw std::overflow_error("rank groups packed size");
+        error_detail::raise<std::overflow_error>("rank groups packed size");
       auto bits = groups * class_bits;
       rank_groups result;
       result.virtual_count = count;
@@ -247,7 +249,7 @@ namespace everett {
       for (std::uint64_t i = 0; i < groups; ++i) {
         auto limit = i + 1 == groups && count % K ? count % K : K;
         auto value = source[i];
-        if (value > limit) throw std::invalid_argument("rank groups population");
+        if (value > limit) error_detail::raise<std::invalid_argument>("rank groups population");
         if (i % 128 == 0) result.checkpoints.push_back(total);
         auto bit = i * class_bits;
         unsigned shift = unsigned(bit % 64);
