@@ -328,7 +328,8 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
     sqlite_catalog & operator=(sqlite_catalog const &) = delete;
     sqlite_catalog(sqlite_catalog && other) noexcept
       : db_(std::exchange(other.db_, nullptr)), root_(std::move(other.root_)),
-        ops_(std::move(other.ops_)), poisoned_(other.poisoned_), schema_version_(other.schema_version_) {}
+        ops_(std::move(other.ops_)), poisoned_(other.poisoned_), schema_version_(other.schema_version_),
+        identity_(std::move(other.identity_)) {}
     sqlite_catalog & operator=(sqlite_catalog &&) = delete;
     ~sqlite_catalog() { if (db_) sqlite3_close_v2(db_); }
 
@@ -353,7 +354,7 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
       catalog_detail::statement info(result.db_, "SELECT version,identity,policy FROM catalog_info WHERE singleton=1");
       if (!info.row() || info.integer(0) != result.schema_version_ || !compatible_policy(info.blob(2)))
         throw std::invalid_argument("Diet catalog schema or policy mismatch");
-      (void)object_id(info.text(1));
+      result.identity_.emplace(info.text(1));
       if (info.row()) throw std::invalid_argument("multiple Diet catalog identities");
       return result;
     }
@@ -363,6 +364,32 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
     static char const * source_id() noexcept { return sqlite3_sourceid(); }
     std::filesystem::path const & root() const & noexcept { return root_; }
     std::filesystem::path const & root() const && = delete;
+    object_id const & identity() const & {
+      require_active();
+      if (!identity_) throw std::logic_error("uninitialized Diet catalog identity");
+      return *identity_;
+    }
+    object_id const & identity() const && = delete;
+
+    // A completed receipt is an attestation of barriers, not a request to
+    // repeat them. Verify its exact immutable catalog row and object envelope;
+    // recovery payload checks remain explicit.
+    void verify_sealed(object_seal_receipt const & receipt, file_kind expected) const {
+      require_active(); (void)file_extension(expected);
+      auto barrier = static_cast<unsigned>(receipt.barrier);
+      if (barrier > 1) throw std::invalid_argument("unsupported seal barrier");
+      if (std::filesystem::canonical(receipt.path) != root_ / object_path(receipt.object, expected))
+        throw std::invalid_argument("seal receipt names another catalog path");
+      read([&] {
+        catalog_detail::statement query(db_, "SELECT kind,attempt,bytes,crc,barrier FROM objects WHERE id=?");
+        query.text(1, receipt.object.hex());
+        if (!query.row() || query.integer(0) != kind(expected) || query.text(1) != receipt.attempt.hex() ||
+            query.is_null(2) || query.integer(2) != catalog_detail::integer(receipt.bytes) ||
+            query.integer(3) != receipt.body_crc32c || query.integer(4) != barrier)
+          throw std::invalid_argument("seal receipt disagrees with catalog reservation");
+        verify_object_envelope(receipt.object, expected, receipt.bytes, receipt.body_crc32c);
+      });
+    }
 
     std::optional<catalog_operation> lookup_operation(std::string_view op) const {
       require_active();
@@ -820,6 +847,7 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
     Ops ops_;
     mutable bool poisoned_ = false;
     unsigned schema_version_ = 2;
+    std::optional<object_id> identity_;
     inline static constexpr char const * immutable_tables[] = {
       "catalog_info", "operations", "owners", "attempts", "pairs", "owner_objects", "owner_roots", "saves",
       "timelines", "timeline_generations", "tap_checkpoints", "tap_saves"
@@ -855,6 +883,7 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
         catalog_detail::exec(result.db_, "CREATE TRIGGER objects_no_delete BEFORE DELETE ON objects BEGIN SELECT RAISE(ABORT,'retained object'); END");
         return catalog_detail::bytes{};
       }, false);
+      result.identity_ = identity;
       // SQLite's transaction is not a substitute for retaining this new name.
       posix_object_ops barriers;
       int directory = barriers.open_root(location);
@@ -1101,17 +1130,20 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
       catalog_detail::statement insert(db_, "INSERT INTO owner_roots VALUES(?,?,?,?)");
       insert.text(1, kind); insert.key(2, owner); insert.text(3, pair.native.hex()); insert.text(4, pair.index.hex()); insert.done();
     }
-    void require_sealed(object_id const & id, file_kind expected) {
+    void require_sealed(object_id const & id, file_kind expected) const {
       catalog_detail::statement query(db_, "SELECT kind,bytes,crc FROM objects WHERE id=?");
       query.text(1, id.hex());
       if (!query.row() || query.integer(0) != kind(expected) || query.is_null(1))
         throw std::invalid_argument("chain refers to an unsealed or wrongly typed object");
+      verify_object_envelope(id, expected, std::uint64_t(query.integer(1)), std::uint64_t(query.integer(2)));
+    }
+    void verify_object_envelope(object_id const & id, file_kind expected, std::uint64_t size, std::uint64_t crc) const {
       auto mapping = mapped_file::open(root_ / object_path(id, expected));
       auto slice = mapping.slice(0, mapping.size());
       auto bytes = slice.bytes();
       auto header = decode_file_header<P>(bytes);
-      if (header.kind != expected || query.integer(1) != catalog_detail::integer(bytes.size()) ||
-          file_detail::total_bytes<P>(header.extent) != bytes.size() || std::uint64_t(query.integer(2)) != file_detail::get(bytes, 64, 4))
+      if (header.kind != expected || size != bytes.size() ||
+          file_detail::total_bytes<P>(header.extent) != bytes.size() || crc != file_detail::get(bytes, 64, 4))
         throw std::invalid_argument("sealed catalog metadata disagrees with object");
     }
     template <class F> catalog_detail::bytes transaction(std::string_view op, std::string_view kind,
