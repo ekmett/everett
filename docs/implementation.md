@@ -140,6 +140,9 @@ aligned bodies with `memmove` and shifted bodies in 64-bit chunks, preserving
 masked edges, overlapping input and aliased appends. Fixed-width fields and
 Golomb framing also use bounded word operations. These are representation-neutral
 changes: bit order, counts, padding and encoded bytes remain the same.
+Subview formation checks the requested range once and preserves the containing
+view's validated storage bounds. Exhaustive small-span tests cover nested
+slices, empty endpoints and invalid ranges.
 
 The [key/bit comparison](../bench/key_bits.md) separates byte-prefix SIMD from
 word-at-a-time bit operations and measures both primitives and complete profile
@@ -196,6 +199,11 @@ directly between stages, supports bounded cursor-event stepping and returns a
 chain with exact target pins. Inter-stage samples carry a policy-unit backspace
 and suffix; the first sample is literal and later samples refer to that
 producer's preceding sample.
+The sample encoder obtains sortedness and retained-prefix length from one
+comparison. Its [direct pipeline measurement](../bench/sample_frontier.md)
+has 3.2–4.6% lower medians with 4 KiB shared prefixes and roughly unchanged
+short-prefix results; all observed trial ranges overlap. Exact occurrence,
+encoded-output and work-counter checks accompany the timings.
 Final metadata construction is a separate linear phase. See the
 [construction implementation](sampling.md#streaming-construction-pipeline).
 
