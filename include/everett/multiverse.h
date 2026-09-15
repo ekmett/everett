@@ -13,6 +13,7 @@
 #include <everett/mapped_blob.h>
 #include <everett/native_merge.h>
 #include <everett/object_writer.h>
+#include <everett/object_stream.h>
 #include <everett/query.h>
 
 #include <filesystem>
@@ -66,6 +67,7 @@ namespace everett {
     using query_context = everett::profile_query_context<P>;
     using file = everett::file<P>;
     using object_writer = everett::object_writer<P>;
+    using object_stream = everett::object_stream<P>;
     using mapped_native = everett::mapped_native<P>;
     using mapped_index = everett::mapped_index<P>;
     using mapped_blob = everett::mapped_blob<P>;

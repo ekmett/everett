@@ -30,6 +30,7 @@
 #endif
 
 namespace everett {
+  template <class P, class Ops> struct object_stream;
   // A caller-reserved, never-reused attempt identity, distinct from the opaque
   // physical object identity. Neither identity is computed from content here.
   struct object_attempt_id {
@@ -225,6 +226,7 @@ namespace everett {
     }
 
   private:
+    template <class, class> friend struct object_stream;
     struct operation {
       std::filesystem::path const & root;
       object_id const & id;
