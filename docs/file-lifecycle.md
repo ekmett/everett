@@ -155,8 +155,8 @@ use lengths and relative offsets, not unchecked pointer arithmetic. Empty
 files need no zero-length mapping. Never truncate, overwrite or recycle a file
 while a reader can still reach it.
 
-The intended ordinary-FC, cut-LCP and rank/select sections should be navigable
-directly from mappings.
+The [mapped blob views](mapped-blobs.md) navigate ordinary-FC, cut-LCP, rank
+and Elias–Fano sections directly from their mappings.
 Opaque whole-file compression would require another decompressed allocation
 before those structures can be used. LevelDB similarly avoids a second cached
 copy when an uncompressed block already resides in stable mapped memory; its

@@ -525,8 +525,10 @@ objects without becoming extra logical contributions.
 
 The generic owner does not assign chronology to arbitrary partial replacements;
 the caller must preserve semantic precedence. Current reference compaction
-replaces the entire set. IDs are process-local and lifetime tests use shared
-pointers. Durable object IDs and disk reclamation remain implementation work.
+replaces the entire set. This reference owner uses process-local IDs and shared
+pointers. The separate SQLite catalog uses persistent opaque object IDs for
+saved encoded chains; attaching the reference owner to those objects and
+implementing disk reclamation remain work.
 
 ### Durability and merge resumption
 
