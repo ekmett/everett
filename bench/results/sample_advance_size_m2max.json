@@ -1,0 +1,19 @@
+{
+  "command": [
+    "xcrun",
+    "size",
+    "-m"
+  ],
+  "variants": {
+    "baseline": {
+      "executable_bytes": 370112,
+      "executable_sha256": "acc303d2b887ff20656fddea3c7c2718999d7d8b74fc17b6adb0599349aec52f",
+      "size_output": "Segment __PAGEZERO: 4294967296 (zero fill) \nSegment __TEXT: 196608\n\tSection __text: 168764\n\tSection __stubs: 468\n\tSection __gcc_except_tab: 5624\n\tSection __const: 2440\n\tSection __cstring: 3632\n\tSection __unwind_info: 1520\n\ttotal 182448\nSegment __DATA_CONST: 16384\n\tSection __got: 504\n\tSection __const: 832\n\ttotal 1336\nSegment __LINKEDIT: 163840\ntotal 4295344128\n"
+    },
+    "candidate": {
+      "executable_bytes": 366336,
+      "executable_sha256": "58ab40ad4939df721da7953b02f496206e26d47055c2e6b62fc1cf91f7d1386d",
+      "size_output": "Segment __PAGEZERO: 4294967296 (zero fill) \nSegment __TEXT: 196608\n\tSection __text: 168128\n\tSection __stubs: 468\n\tSection __gcc_except_tab: 5624\n\tSection __const: 2440\n\tSection __cstring: 3632\n\tSection __unwind_info: 1520\n\ttotal 181812\nSegment __DATA_CONST: 16384\n\tSection __got: 504\n\tSection __const: 832\n\ttotal 1336\nSegment __LINKEDIT: 163840\ntotal 4295344128\n"
+    }
+  }
+}
