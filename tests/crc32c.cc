@@ -1,0 +1,167 @@
+/**
+ * \file
+ * \license
+ * SPDX-FileType: SOURCE
+ * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+ * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+ * \endlicense
+ */
+
+#include <everett/crc32c.h>
+
+#if defined(CRC_AINLINE) || defined(CRC_ALIGN) || defined(CRC_EXPORT) || defined(clmul_lo) || defined(clmul_hi)
+#error "generated CRC macros leaked into the consumer"
+#endif
+
+#include <algorithm>
+#include <array>
+#include <iostream>
+#include <random>
+#include <stdexcept>
+#include <string_view>
+#include <vector>
+
+#if defined(__unix__) || defined(__APPLE__)
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
+
+namespace {
+  using bytes = std::span<std::byte const>;
+  void require(bool condition, char const * message) {
+    if (!condition) throw std::runtime_error(message);
+  }
+
+  // Independent bit-at-a-time oracle: no production tables or fold constants.
+  std::uint32_t oracle(bytes input, std::uint32_t initial = 0) {
+    auto crc = ~initial;
+    for (auto byte : input) {
+      crc ^= std::to_integer<std::uint8_t>(byte);
+      for (unsigned bit = 0; bit < 8; ++bit)
+        crc = (crc >> 1) ^ ((crc & 1) ? 0x82f63b78u : 0u);
+    }
+    return ~crc;
+  }
+
+  void check(bytes input, std::uint32_t initial = 0) {
+    auto expected = oracle(input, initial);
+    auto data = reinterpret_cast<char const *>(input.data());
+    auto size = input.size();
+    using namespace everett::crc32c_detail;
+    require(portable::crc32_impl(initial, data, size) == expected, "portable CRC mismatch");
+#if defined(__aarch64__) && defined(__ARM_FEATURE_CRC32) && (defined(__GNUC__) || defined(__clang__))
+    require(arm_scalar::crc32_impl(initial, data, size) == expected, "Arm scalar CRC mismatch");
+#if (defined(__ARM_FEATURE_CRYPTO) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+    require(arm_pmull::crc32_impl(initial, data, size) == expected, "Arm PMULL CRC mismatch");
+#if defined(__ARM_FEATURE_SHA3)
+    require(arm_eor3::crc32_impl(initial, data, size) == expected, "Arm fused CRC mismatch");
+#endif
+#endif
+#elif defined(__x86_64__) && defined(__SSE4_2__)
+    require(x86_scalar::crc32_impl(initial, data, size) == expected, "x86 scalar CRC mismatch");
+#if defined(__PCLMUL__)
+    require(x86_pclmul::crc32_impl(initial, data, size) == expected, "x86 PCLMUL CRC mismatch");
+#if defined(__AVX512F__) && defined(__AVX512VL__)
+    require(x86_avx512::crc32_impl(initial, data, size) == expected, "x86 AVX512 CRC mismatch");
+#if defined(__VPCLMULQDQ__)
+    require(x86_vpclmul::crc32_impl(initial, data, size) == expected, "x86 VPCLMUL CRC mismatch");
+#endif
+#endif
+#endif
+#endif
+    if (initial == 0) require(everett::crc32c(input) == expected, "public CRC mismatch");
+  }
+
+  void known_vectors() {
+    require(everett::crc32c({}) == 0, "empty CRC mismatch");
+    auto text = std::string_view("123456789");
+    require(everett::crc32c(std::as_bytes(std::span(text))) == 0xe3069283u, "standard CRC vector mismatch");
+    std::array<std::byte, 32> input{};
+    require(everett::crc32c(input) == 0x8a9136aau, "zero CRC vector mismatch");
+    input.fill(std::byte{0xff});
+    require(everett::crc32c(input) == 0x62a8ab43u, "ones CRC vector mismatch");
+    for (unsigned i = 0; i < input.size(); ++i) input[i] = std::byte(i);
+    require(everett::crc32c(input) == 0x46dd794eu, "increasing CRC vector mismatch");
+    std::reverse(input.begin(), input.end());
+    require(everett::crc32c(input) == 0x113fdb5cu, "decreasing CRC vector mismatch");
+  }
+
+  void boundaries() {
+    std::mt19937_64 random(0xc32c);
+    std::vector<std::byte> input(1024 * 1024 + 96);
+    for (auto & byte : input) byte = std::byte(random());
+    constexpr std::array<std::uint32_t, 4> seeds{0, 0xffffffffu, 0x12345678u, 0x80000000u};
+    for (std::size_t offset = 0; offset < 32; ++offset)
+      for (std::size_t size = 0; size <= 320; ++size)
+        for (auto seed : seeds) check(bytes(input).subspan(offset, size), seed);
+    // Vector/scalar loop thresholds, multiple blocks, merge tails, and headers.
+    constexpr std::array<std::size_t, 19> sizes{
+      384, 512, 768, 1024, 1536, 2048, 3072, 4096, 8192, 12288,
+      16384, 32768, 65536, 95760, 131072, 262144, 524288, 1048576, 96
+    };
+    for (auto center : sizes)
+      for (std::size_t offset = 0; offset < 16; ++offset)
+        for (int delta = -1; delta <= 1; ++delta)
+          check(bytes(input).subspan(offset, std::size_t(std::ptrdiff_t(center) + delta)));
+    // The generated incremental convention must agree with concatenation.
+    for (std::size_t split = 0; split < 2048; split += 17) {
+      auto first = everett::crc32c(bytes(input).first(split));
+      check(bytes(input).subspan(split, 2048 - split), first);
+      auto second = everett::crc32c_detail::portable::crc32_impl(
+        first, reinterpret_cast<char const *>(input.data() + split), 2048 - split);
+      require(second == everett::crc32c(bytes(input).first(2048)), "incremental CRC mismatch");
+    }
+  }
+
+#if defined(__unix__) || defined(__APPLE__)
+  struct guarded_buffer {
+    std::byte * address = nullptr;
+    std::size_t page = 0;
+    std::size_t extent = 0;
+    guarded_buffer() {
+      auto result = ::sysconf(_SC_PAGESIZE);
+      require(result > 0, "page size unavailable");
+      page = static_cast<std::size_t>(result);
+      extent = 6 * page;
+      auto mapping = ::mmap(nullptr, extent, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+      require(mapping != MAP_FAILED, "guard mapping failed");
+      address = static_cast<std::byte *>(mapping);
+      if (::mprotect(address + page, 4 * page, PROT_READ | PROT_WRITE) != 0) {
+        ::munmap(address, extent);
+        throw std::runtime_error("guard protection failed");
+      }
+      for (std::size_t i = 0; i < 4 * page; ++i) address[page + i] = std::byte(i * 137u);
+    }
+    guarded_buffer(guarded_buffer const &) = delete;
+    ~guarded_buffer() { ::munmap(address, extent); }
+    bytes body() const { return {address + page, 4 * page}; }
+  };
+
+  void protected_tails() {
+    guarded_buffer buffer;
+    auto body = buffer.body();
+    // Direct calls to every available backend expose any hidden prefix/tail load.
+    for (std::size_t size = 0; size < 768; ++size) {
+      check(body.first(size));
+      check(body.last(size));
+    }
+    for (std::size_t size = 768; size <= body.size(); size += 193) check(body.last(size));
+    check(body);
+  }
+#endif
+}
+
+int main() {
+  known_vectors();
+  boundaries();
+#if defined(__unix__) || defined(__APPLE__)
+  protected_tails();
+#endif
+  std::cout << "CRC32C vectors, generated backends, alignments and bounded tails passed\n";
+}
+
+/**
+ * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Tests Everett's CRC32C behavior.
+ */

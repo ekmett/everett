@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <everett/crc32c.h>
 #include <everett/mapped_file.h>
 #include <everett/object_path.h>
 #include <everett/policy.h>
@@ -26,18 +27,6 @@
 
 namespace everett {
   enum class file_open_mode : std::uint8_t { checked, trusted };
-
-  // CRC32C (Castagnoli), reflected polynomial, initial/final complement. This
-  // byte-integrity check is independent of the algebraic logical-state hash.
-  inline std::uint32_t crc32c(std::span<std::byte const> bytes) noexcept {
-    std::uint32_t crc = ~std::uint32_t{0};
-    for (auto byte : bytes) {
-      crc ^= std::to_integer<std::uint32_t>(byte);
-      for (unsigned bit = 0; bit < 8; ++bit)
-        crc = (crc >> 1) ^ ((0u - (crc & 1u)) & 0x82f63b78u);
-    }
-    return ~crc;
-  }
 
   template <class P> struct file_header {
     using policy_type = P;
