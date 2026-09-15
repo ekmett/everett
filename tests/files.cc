@@ -76,6 +76,8 @@ namespace {
       require(encoded[8] == std::byte{1} && encoded[9] == std::byte{0} &&
               encoded[10] == std::byte{96} && encoded[11] == std::byte{0}, "header little-endian version");
       require(file_detail::get(encoded, 24, 8) == P::group_size, "group policy missing");
+      require(file_detail::get(encoded, 18, 1) == static_cast<unsigned>(P::backspace_code) &&
+              file_detail::get(encoded, 88, 8) == P::backspace_parameter, "backspace policy missing");
       if (kind == file_kind::fractional_index) {
         require(file_detail::get(encoded, 40, 8) == 0, "borrowed values not zero-width");
         require(file_detail::get(encoded, 32, 8) == P::value_width.value_or(0), "borrowed stream lost policy width");
@@ -140,6 +142,72 @@ namespace {
     roundtrip<storage_policy<profile_unit::bit, variable_values, K>>(directory);
     roundtrip<storage_policy<profile_unit::byte, fixed_values<5>, K>>(directory);
     roundtrip<storage_policy<profile_unit::bit, fixed_values<5>, K>>(directory);
+  }
+
+  template <profile_unit Unit> void test_default_headers(std::array<std::uint32_t, 2> expected_crc) {
+    using policy = storage_policy<Unit>;
+    std::size_t i = 0;
+    for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
+      file_header<policy> header{kind, 0, 0, std::nullopt};
+      if (kind == file_kind::fractional_index) header.common_value_width = 0;
+      auto encoded = encode_file(header, {});
+      require(encoded.size() == 96 && file_detail::get(encoded, 18, 6) == 0 &&
+              file_detail::get(encoded, 88, 8) == 0, "default reserved fields changed");
+      // These CRCs were recorded from the original version-1 encoder, before
+      // assigning its reserved bytes to the optional backspace descriptor.
+      require(file_detail::get(encoded, 68, 4) == expected_crc[i++], "default version-1 header changed");
+    }
+  }
+
+  template <class Code> void test_backspace_policy(std::filesystem::path const & directory) {
+    using policy = storage_policy<profile_unit::bit, variable_values, 15, Code>;
+    using defaults = storage_policy<profile_unit::bit>;
+    roundtrip<policy>(directory);
+    roundtrip<storage_policy<profile_unit::bit, fixed_values<5>, 7, Code>>(directory);
+    for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
+      auto path = directory / ("backspace" + std::string(file_extension(kind)));
+      file_header<policy> header{kind, 0, 0, std::nullopt};
+      if (kind == file_kind::fractional_index) header.common_value_width = 0;
+      auto encoded = encode_file(header, {});
+      require(validate_file<policy>(encoded) == header, "empty nondefault file roundtrip");
+      rejects_open<defaults>(path, encoded);
+      file_header<defaults> default_header{kind, 0, 0, header.common_value_width};
+      auto original = encode_file(default_header, {});
+      rejects_open<policy>(path, original);
+
+      // Valid descriptors for a different policy remain incompatible, even
+      // when their selector agrees and only the 64-bit parameter differs.
+      constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
+      for (auto [code, parameter] : std::array<std::pair<std::uint64_t, std::uint64_t>, 7>{
+             {{0, 0}, {0, 1}, {0, 63}, {1, 1}, {1, 3}, {1, 256}, {1, maximum}}}) {
+        if (code == static_cast<unsigned>(policy::backspace_code) && parameter == policy::backspace_parameter)
+          continue;
+        auto bad = encoded;
+        file_detail::put(bad, 18, 1, code);
+        file_detail::put(bad, 88, 8, parameter);
+        rehash_header(bad);
+        rejects([&] { validate_file<policy>(bad); });
+        rejects_open<policy>(path, bad);
+      }
+      // A valid CRC does not make an unknown selector, impossible code
+      // parameter or nonzero remaining reserved byte a valid descriptor.
+      for (auto [code, parameter] : std::array<std::pair<std::uint64_t, std::uint64_t>, 5>{
+             {{2, 0}, {255, 0}, {0, 64}, {0, maximum}, {1, 0}}}) {
+        auto bad = encoded;
+        file_detail::put(bad, 18, 1, code);
+        file_detail::put(bad, 88, 8, parameter);
+        rehash_header(bad);
+        rejects([&] { validate_file<policy>(bad); });
+        rejects_open<policy>(path, bad);
+      }
+      for (std::size_t at = 19; at < 24; ++at) {
+        auto bad = encoded;
+        bad[at] = std::byte{1};
+        rehash_header(bad);
+        rejects([&] { validate_file<policy>(bad); });
+        rejects_open<policy>(path, bad);
+      }
+    }
   }
 
   void test_descriptors(std::filesystem::path const & directory) {
@@ -223,20 +291,21 @@ namespace {
     }
   };
 
-  template <class P> void test_inaccessible_body(std::filesystem::path const & directory) {
+  template <class P> void test_inaccessible_body(std::filesystem::path const & directory, file_kind kind) {
     auto page_size = ::sysconf(_SC_PAGESIZE);
     require(page_size > static_cast<long>(file_detail::header_bytes), "invalid test page size");
     auto page = static_cast<std::size_t>(page_size);
     std::vector<std::byte> payload(page + 1, std::byte{0xa8});
     std::uint64_t extent = payload.size();
     if constexpr (P::unit == profile_unit::bit) extent = extent * 8 - 3;
-    file_header<P> header{file_kind::native_blob, extent, 1, std::nullopt};
+    file_header<P> header{kind, extent, 1, std::nullopt};
+    if (kind == file_kind::fractional_index) header.common_value_width = 0;
     auto encoded = encode_file(header, payload);
     auto prefix = page - file_detail::header_bytes;
     std::vector<std::byte> container(prefix);
     container.insert(container.end(), encoded.begin(), encoded.end());
     container.push_back(std::byte{0}); // Permit testing a too-long slice too.
-    auto path = directory / "guarded.kv";
+    auto path = directory / ("guarded" + std::string(file_extension(kind)));
     write(path, container);
     auto mapping = mapped_file::open(path);
     auto whole = mapping.slice(0, mapping.size());
@@ -253,6 +322,10 @@ namespace {
               "body access copied or changed the mapped payload");
       rejects([&] { file<P>::from_slice(whole.slice(prefix, encoded.size() - 1)); });
       rejects([&] { file<P>::from_slice(whole.slice(prefix, encoded.size() + 1)); });
+      if constexpr (P::backspace_code != bit_backspace_code::exponential_golomb || P::backspace_parameter != 0) {
+        using defaults = storage_policy<P::unit, typename P::value_layout, P::group_size>;
+        rejects([&] { file<defaults>::from_slice(whole.slice(prefix, encoded.size())); });
+      }
     }
     stored->scan();
     auto body = stored->body();
@@ -293,10 +366,22 @@ int main() {
     temporary_directory directory;
     policy_matrix<3>(directory.path); policy_matrix<7>(directory.path);
     policy_matrix<15>(directory.path); policy_matrix<31>(directory.path);
+    test_default_headers<profile_unit::byte>({2989498560u, 13510922u});
+    test_default_headers<profile_unit::bit>({3121237548u, 150226918u});
+    test_backspace_policy<exponential_golomb<1>>(directory.path);
+    test_backspace_policy<exponential_golomb<63>>(directory.path);
+    test_backspace_policy<golomb<1>>(directory.path);
+    test_backspace_policy<golomb<3>>(directory.path);
+    test_backspace_policy<golomb<256>>(directory.path);
+    test_backspace_policy<golomb<std::numeric_limits<std::uint64_t>::max()>>(directory.path);
     test_descriptors(directory.path);
 #if defined(__unix__) || defined(__APPLE__)
-    test_inaccessible_body<storage_policy<profile_unit::byte>>(directory.path);
-    test_inaccessible_body<storage_policy<profile_unit::bit>>(directory.path);
+    for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
+      test_inaccessible_body<storage_policy<profile_unit::byte>>(directory.path, kind);
+      test_inaccessible_body<storage_policy<profile_unit::bit>>(directory.path, kind);
+      test_inaccessible_body<storage_policy<profile_unit::bit, variable_values, 15, exponential_golomb<3>>>(directory.path, kind);
+      test_inaccessible_body<storage_policy<profile_unit::bit, variable_values, 15, golomb<3>>>(directory.path, kind);
+    }
 #endif
     test_paths();
     std::cout << "Header-only files, explicit body scans, retained mappings, and canonical sharded paths passed\n";
