@@ -108,7 +108,15 @@ namespace everett {
   template <class P> struct profile_sample_decoder {
     using policy_type = P;
 
-    bit_view accept(profile_coded_sample<P> const & sample) {
+    bit_view accept(profile_coded_sample<P> const & sample) { return accept_compared(sample).first; }
+
+    bit_view key() const & { return key_.view(); }
+    bit_view key() const && = delete;
+    std::uint64_t size() const noexcept { return count_; }
+
+  private:
+    template <class, class> friend struct index_builder;
+    std::pair<bit_view, bit_comparison> accept_compared(profile_coded_sample<P> const & sample) {
       sampling_detail::check_ordinal<P>(count_, sample.target_ordinal);
       auto suffix = sample.suffix.view();
       if (suffix.size() & (P::bits_per_unit - 1)) error_detail::raise<std::invalid_argument>("sample suffix unit mismatch");
@@ -118,18 +126,15 @@ namespace everett {
       auto retained = profile_detail::multiply(previous_units - sample.backspace, P::bits_per_unit);
       // Both keys share the retained prefix. Comparing only the two remaining
       // suffixes validates order without another full-key reconstruction.
-      if (compare_bits(suffix, previous.subview(retained, previous.size() - retained)) < 0)
+      auto comparison = compare_common_bits(previous.subview(retained, previous.size() - retained), suffix);
+      if (comparison.order > 0)
         error_detail::raise<std::invalid_argument>("sample keys must be sorted");
+      comparison.common_bits += retained;
       sampling_detail::replace_suffix(key_, retained, suffix);
       ++count_;
-      return key_.view();
+      return {key_.view(), comparison};
     }
 
-    bit_view key() const & { return key_.view(); }
-    bit_view key() const && = delete;
-    std::uint64_t size() const noexcept { return count_; }
-
-  private:
     bit_string key_;
     std::uint64_t count_ = 0;
   };

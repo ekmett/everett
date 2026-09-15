@@ -78,11 +78,11 @@ namespace everett {
       check_active();
       if (input_mode_ == input_mode::full) error_detail::raise<std::logic_error>("cannot mix coded and full index inputs");
       check_input_slot(sample.target_ordinal);
-      auto key = incoming_decoder_.accept(sample);
+      auto [key, comparison] = incoming_decoder_.accept_compared(sample);
       try {
         // The decoder's current key is copied once into the existing lookahead
         // state. Failure after advancing that context makes this stage unusable.
-        push_key(key, sample.target_ordinal);
+        accept_key(key, comparison);
       } catch (...) {
         failed_ = true;
         outgoing_.reset();
@@ -250,11 +250,17 @@ namespace everett {
       check_input_slot(target_ordinal);
       if (key.size() & (P::bits_per_unit - 1))
         error_detail::raise<std::invalid_argument>("index sample key disagrees with policy units");
-      auto order = pending_ ? compare_bits(pending_->view(), key) : -1;
-      if (order > 0) error_detail::raise<std::invalid_argument>("index samples must be sorted");
+      auto comparison = pending_ ? compare_common_bits(pending_->view(), key) : bit_comparison{0, -1};
+      if (comparison.order > 0) error_detail::raise<std::invalid_argument>("index samples must be sorted");
+      accept_key(key, comparison);
+    }
+    // The coded decoder's previous accepted key is exactly pending_: receiving
+    // another key requires consuming the old incoming occurrence first. Reuse
+    // its already checked suffix comparison instead of scanning the full key.
+    void accept_key(bit_view key, bit_comparison comparison) {
       auto copy = bit_string::copy(key);
       incoming_.emplace(std::move(copy));
-      incoming_false_ = !order && pending_false_;
+      incoming_false_ = !comparison.order && pending_false_;
       ++received_;
     }
     void flush_pending() {
