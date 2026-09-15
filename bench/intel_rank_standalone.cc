@@ -112,6 +112,43 @@ std::uint64_t rank_scalar(rank_view const & view, std::uint64_t position) {
   if (!bits) return result;
   return result + prefix_scalar(view.words.data() + word, bits);
 }
+// Portable body compiled for the same ISA as each explicit SIMD consumer.
+__attribute__((target("avx2,popcnt"), noinline))
+std::uint64_t rank_scalar_auto_avx2(rank_view const & view, std::uint64_t position) {
+  if (position >= view.bit_count) throw std::out_of_range("rank position");
+  auto block = view.blocks[position >> 11];
+  unsigned run = unsigned((position >> 9) & 3);
+  std::uint64_t result = view.supers[position >> 32] + block.before;
+  result += run_prefix(block.runs, run);
+  auto word = (position >> 9) << 3;
+  auto bits = unsigned(position & 511);
+  if (!bits) return result;
+  return result + prefix_scalar(view.words.data() + word, bits);
+}
+__attribute__((target("avx512f,avx512bw,popcnt"), noinline))
+std::uint64_t rank_scalar_auto_avx512bw(rank_view const & view, std::uint64_t position) {
+  if (position >= view.bit_count) throw std::out_of_range("rank position");
+  auto block = view.blocks[position >> 11];
+  unsigned run = unsigned((position >> 9) & 3);
+  std::uint64_t result = view.supers[position >> 32] + block.before;
+  result += run_prefix(block.runs, run);
+  auto word = (position >> 9) << 3;
+  auto bits = unsigned(position & 511);
+  if (!bits) return result;
+  return result + prefix_scalar(view.words.data() + word, bits);
+}
+__attribute__((target("avx512f,avx512vpopcntdq,popcnt"), noinline))
+std::uint64_t rank_scalar_auto_vpopcnt(rank_view const & view, std::uint64_t position) {
+  if (position >= view.bit_count) throw std::out_of_range("rank position");
+  auto block = view.blocks[position >> 11];
+  unsigned run = unsigned((position >> 9) & 3);
+  std::uint64_t result = view.supers[position >> 32] + block.before;
+  result += run_prefix(block.runs, run);
+  auto word = (position >> 9) << 3;
+  auto bits = unsigned(position & 511);
+  if (!bits) return result;
+  return result + prefix_scalar(view.words.data() + word, bits);
+}
 __attribute__((target("avx2,popcnt"), noinline))
 std::uint64_t rank_avx2(rank_view const & view, std::uint64_t position) {
   if (position >= view.bit_count) throw std::out_of_range("rank position");
@@ -203,9 +240,18 @@ int main(int argc, char ** argv) try {
   auto queries = argc > 2 ? std::strtoull(argv[2],nullptr,10) : 1048576ull;
   if (!trials || !queries) throw std::runtime_error("positive trials and queries required");
   std::vector<variant> variants{{"scalar_popcnt",rank_scalar}};
-  if (avx2) variants.push_back({"avx2",rank_avx2});
-  if (avx512bw) variants.push_back({"avx512bw",rank_avx512bw});
-  if (vpopcnt) variants.push_back({"avx512vpopcntdq",rank_avx512_vpopcnt});
+  if (avx2) {
+    variants.push_back({"scalar_auto_avx2",rank_scalar_auto_avx2});
+    variants.push_back({"avx2",rank_avx2});
+  }
+  if (avx512bw) {
+    variants.push_back({"scalar_auto_avx512bw",rank_scalar_auto_avx512bw});
+    variants.push_back({"avx512bw",rank_avx512bw});
+  }
+  if (vpopcnt) {
+    variants.push_back({"scalar_auto_vpopcnt",rank_scalar_auto_vpopcnt});
+    variants.push_back({"avx512vpopcntdq",rank_avx512_vpopcnt});
+  }
   std::uint64_t seed = 0x512f00d;
   // Every valid position in short/partial allocations, plus domain rejection.
   for (std::uint64_t bits=0; bits<=1088; ++bits) {
