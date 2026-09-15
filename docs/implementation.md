@@ -27,6 +27,8 @@ for integration. These are development responsibilities.
 | Mutable tap | `tap.h`; `tests/tap.cc` | serialized immutable publication, bounded accepted input, readiness backpressure, cancellation, shutdown, exact logical identity and worker failure |
 | Encoded runtime | `cola_runtime.h`; `tests/cola_runtime.cc` | chronological runs, real native/index/carrier work, immutable publication, budget partition, mmap restoration and failed continuation isolation |
 | Runtime persistence | `runtime_store.h`; `tests/sqlite_catalog_runtime.cc` | exact graph sealing, weak owner caches, named checkpoints, saved frontiers, mapped reopening and pending carry restart |
+| Typed updates | `typed_cola.h`; `tests/typed_cola.cc` | replacement reads, chronological arrows, per-sort dispatch and hashes, validated deletes, disjoint contributions, mutable commands and snapshot metadata |
+| Sort-owned record codec | `sort_codec.h`; `tests/sort_codec.cc` | heterogeneous FC/raw/integer grammars, optional/niche/no-payload values, typed stream anchors, control parsing and borrowed-role output |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `fridge.h`; profile/blob/fridge tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
 | Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
 | Native construction and merging | `native_writer.h`, `native_merge.h`; native writer/merge tests | streaming record acceptance, preserved FC/EF bytes, chronological composition, input pins and failure state |
@@ -65,6 +67,17 @@ inputs. Optional readiness blocks new claims behind prior engine debt. An
 engine can certify a preflight rejection left state unchanged; only that ticket
 fails. Uncertain or partial execution failures stop the worker. Focused tests
 exercise both paths, shutdown during required service and old snapshot ownership.
+
+`typed_engine<>` supplies the default bit-profile optional-string table. Its
+registry reserves code one for extension and assigns code zero to the current
+sort. Static command factories support ordinary mutable writes; snapshot
+factories validate each touched old value, allowing disjoint contributions from
+one base in either order. Sorts supply chronological composition and hashing;
+dispatch bits never enter the signature. Tests include a noncommutative append
+sort, different sort-code layouts with matching signatures, and byte/bit map
+oracles. The current backend transports canonical ordered keys and arrow
+payloads through the ordinary FC profile. Direct heterogeneous record framing
+works independently in `sort_codec`, with mapped integration still in progress.
 
 ### COLA main and secondary indexes
 
@@ -964,12 +977,11 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 
 | Work item | Dependencies | Concrete acceptance |
 | --- | --- | --- |
-| Sort operations | prefix-free registry, typed discriminator dispatch, extension checks and inferred physical policy | semantic pair codecs, active read/merge/hash dispatch, sort-owned hashing and stable schema identities |
-| Per-key arrow policy and second instance | categorical specification and replacement oracle | noncommuting diffs, heterogeneous keys, source validation, associative semantic composition, disjoint permutations, endpoint deltas, checkpoint observations and explicit work/dependency accounting |
+| Mixed mapped record grammar | typed sort semantics, standalone key/value grammars, registry traits and current FC transport | selector protocol, shared block seeds, direct raw/FC keys, value skipping, mapped queries and merges without an outer uniform record envelope |
+| General arrow policy coverage | replacement and noncommutative append instances, source validation and per-sort endpoint deltas | additional categories, bounded composition dependencies, observation costs and persisted schema migration |
 | Comparison block encoding | ordinary FC, exact cut LCP and scalar comparison transfers | transposed count/literal layouts, ordered SIMD transfer scans, bounded tails and independently measured time/space tradeoffs |
 | Object identity and integrity | portable sections, mmap queries and immutable writer | cryptographic content addressing, durable catalog publication and lazy block-integrity strategy |
-| Attach encoded runs to cola semantics | blob reader and query | batch/snapshot/export oracle tests using actual encoded immutable runs |
-| COLA scheduler and durable merge continuations | incremental native merge and index builder | byte/work-budgeted continuations, bounded active levels and shared-result adoption under interleaved forks |
+| Redundant COLA scheduling | working binary executor, incremental native merge and index builder | three-slot frontiers, paid structural service, bounded visible levels, full checkpoint restoration and shared-result adoption under interleaved forks |
 | Catalog pin retirement | conditional timeline publication, immutable saves, reservations and exact file graph | reader/generation retirement, reclaim only after final pin, schema migration and interruption tests |
 | Direct batch adoption | native file reader, prefix index builder and scheduler | preserve received ordinary-FC bytes, bound visible catalogs and work debt, preserve causal order and charge actual key bytes |
 | Durable backend and resumable merges | publication protocol and encoded merge continuations | fault injection at write/sync/rename/recovery cuts; failed barriers retain old roots; resume only from verified durable prefixes |

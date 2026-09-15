@@ -121,8 +121,64 @@ namespace {
     cut.pop_back();
     rejects([&] { (void)runtime_store_detail::checkpoint(cut); });
   }
+  void reindex_native_reuse() {
+    temporary dir;
+    auto storage = store::create(dir.root);
+    runtime a, b;
+    auto left = storage.create_tap("left", a.contribute(record("a", "left"), 0));
+    auto right = storage.create_tap("right", b.contribute(record("b", "right"), 0));
+    auto old_native = left.snapshot.runs()[0].node->mapped()->identity().native;
+    auto native = left.snapshot.runs()[0].native_owner();
+    using node = cola_runtime_node<P>;
+    auto changed = node::from_built(node::built_type::adopt_native(native, right.snapshot.query_root().head()));
+    std::array intervals{cola_runtime_interval{0, 1}, cola_runtime_interval{1, 2}};
+    auto snapshot = cola_runtime_snapshot<P>::restore(changed, intervals);
+    auto before = files(dir.root);
+    auto combined = storage.create_tap("combined", snapshot);
+    require(files(dir.root) == before + 1, "reindex rewrote unchanged native or target");
+    require(combined.snapshot.runs()[1].node->mapped()->identity().native == old_native,
+      "reindex changed native identity");
+    check(combined.snapshot, {{"a", "left"}, {"b", "right"}});
+  }
+  struct restore_failure {
+    bool armed = false, renamed = false;
+    std::filesystem::path source, hidden;
+  };
+  struct restore_failure_ops {
+    std::shared_ptr<restore_failure> state;
+    int commit(sqlite3 * db) noexcept {
+      auto code = sqlite3_exec(db, "COMMIT", nullptr, nullptr, nullptr);
+      if (code == SQLITE_OK && state->armed) {
+        state->armed = false;
+        state->renamed = ::rename(state->source.c_str(), state->hidden.c_str()) == 0;
+      }
+      return code;
+    }
+  };
+  void failure_after_publication() {
+    temporary dir;
+    auto normal = store::create(dir.root);
+    runtime engine;
+    auto first = normal.create_tap("earth-616", engine.contribute(record("a", "value"), 0));
+    auto state = std::make_shared<restore_failure>();
+    state->source = dir.root / object_path(first.head.timeline.head.index, file_kind::fractional_index);
+    state->hidden = state->source.string() + ".held";
+    using faulty_store = runtime_store<P, random_object_ids, restore_failure_ops>;
+    auto faulty = faulty_store::open(dir.root, {}, {}, restore_failure_ops{state});
+    auto source = faulty.find("earth-616");
+    std::array metadata{std::byte{42}};
+    state->armed = true;
+    rejects([&] { (void)faulty.publish(source->head, source->snapshot, metadata); });
+    require(state->renamed && faulty.failed(), "post-publication mapping failure was not exercised");
+    require(::rename(state->hidden.c_str(), state->source.c_str()) == 0, "restore fixture file");
+    auto reopened = store::open(dir.root).find("earth-616");
+    require(reopened && reopened->head.timeline.generation == source->head.timeline.generation + 1 &&
+      reopened->head.timeline.head == source->head.timeline.head && reopened->semantic == std::vector<std::byte>{std::byte{42}},
+      "reopen lost committed root/checkpoint after mapping failure");
+    require(get(source->snapshot, "a") == bit_string::from_bytes("value"), "failed return invalidated old mapping");
+  }
 }
 int main() {
-  try { lifecycle(); }
+  try { lifecycle(); reindex_native_reuse(); failure_after_publication(); }
   catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }

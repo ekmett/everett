@@ -92,7 +92,7 @@ namespace diet {
   // Single-owner adapter over a trusted, existing, durable directory. All
   // persisted roots remain catalog-pinned. Private failures disable this
   // adapter; reopening selects only complete root/checkpoint publications.
-  template <class P, class Ids = random_object_ids> struct runtime_store {
+  template <class P, class Ids = random_object_ids, class Ops = sqlite_catalog_ops> struct runtime_store {
     using policy_type = P;
     using snapshot_type = cola_runtime_snapshot<P>;
     using stored_type = stored_runtime<P>;
@@ -100,14 +100,16 @@ namespace diet {
     using native_type = cola_runtime_native<P>;
     using pair_type = typename node_type::pair_type;
     using native_pointer = typename node_type::native_pointer;
-    using catalog_type = sqlite_catalog<P>;
+    using catalog_type = sqlite_catalog<P, Ops>;
 
-    static runtime_store create(std::filesystem::path const & root, Ids ids = {}) {
+    static runtime_store create(std::filesystem::path const & root, Ids ids = {},
+        catalog_options options = {}, Ops ops = {}) {
       auto identity = ids();
-      return runtime_store(catalog_type::create_taps(root, identity), std::move(ids));
+      return runtime_store(catalog_type::create_taps(root, identity, options, std::move(ops)), std::move(ids));
     }
-    static runtime_store open(std::filesystem::path const & root, Ids ids = {}) {
-      auto db = catalog_type::open(root);
+    static runtime_store open(std::filesystem::path const & root, Ids ids = {},
+        catalog_options options = {}, Ops ops = {}) {
+      auto db = catalog_type::open(root, options, std::move(ops));
       if (db.schema_version() != 4) throw std::invalid_argument("named runtime needs catalog version 4");
       return runtime_store(std::move(db), std::move(ids));
     }

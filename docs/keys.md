@@ -536,9 +536,11 @@ contribution recomputation. Compatibility may be established explicitly; merely 
 
 `profile_array<P, Role>` and `profile_view<P, Role>` implement typed byte
 and bit streams with fixed/variable values and actual backspace counts. The
-blob uses ordinary FC in both roles. The registry and discriminator dispatcher
-are implemented; semantic pair encoding and active-handle integration remain
-to be supplied.
+blob uses ordinary FC in both roles. `typed_engine` connects registry-selected
+key/arrow codecs and sort-owned semantics to this encoded runtime. Its current
+transport uses canonical ordered keys inside the ordinary FC profile; the
+direct mixed grammar has a separate [record codec](sort-codecs.md). The mapped
+mixed-format continuation path described above remains integration work.
 
 Each physical block contains up to W records. Its first record stores an
 absolute **retained-prefix length**; subsequent records store a relative
@@ -607,11 +609,13 @@ validate a whole prefix-free registry. Object access validates headers by
 default; `file_open_mode::trusted` defers that validation until an explicit
 metadata request or scan.
 
-The reference cola currently takes one value type and one hashing-policy object
-per instantiation. Its existing `hash.value(value)` call does not receive the
-key or sort. Generic per-key value potentials and sort-dependent dispatch
-therefore remain design work. Supplying caller-encoded composite bytes can
-exercise the byte interface, but does not implement the broader key contract.
+`typed_cola` exposes typed reads and conditional contributions from a snapshot.
+`typed_engine` exposes unconditional mutable commands, validates old values,
+dispatches merges through the complete registry, and maintains the live count
+and signature. `sort_semantics<S>::hash_key(key)` and `hash_value(key,state)`
+exclude the sort-code bits. General arrows fold in chronological order; a
+replacement sort can stop at the first matching occurrence. The
+[typed guide](typed-cola.md) gives the implemented contracts and costs.
 
 Codec acceptance must cover:
 
@@ -628,8 +632,9 @@ Codec acceptance must cover:
 
 The implementation ledger records which profiles and integration paths have
 passed these requirements. Registry tests cover typed dispatch, extension and
-inference; the profile tests do not establish end-to-end typed mixed-sort reads
-and writes.
+inference. Typed-engine tests establish mixed semantic reads and writes through
+the opaque FC transport; standalone sort-codec tests establish the separate
+record grammar. Neither proves the forthcoming mixed mapped layout.
 
 
 ## Schema histories and migration
