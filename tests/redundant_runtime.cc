@@ -245,6 +245,33 @@ namespace {
     check(later.failed()&&later.snapshot().same_layout(admitted),"failed service changed publication");
     check(values(admitted,1).size()==2,"failed service lost source owners");
   }
+  template<class P>void partial_bits(){
+    std::array<std::string,7> keys{"","0","00","001","01","1","101"};
+    std::map<std::string,std::string> expected;
+    redundant_runtime<P> runtime;
+    for(unsigned n=0;n!=70;++n){
+      auto const & k=keys[n%keys.size()];std::string v(n%11,char('0'+n%2));
+      runtime.contribute({bit_string::from_bits(k),bit_string::from_bits(v)});expected[k]=v;
+      for(auto const &[q,want]:expected){
+        auto encoded=bit_string::from_bits(q);auto cursor=runtime.snapshot().cursor(encoded.view());std::optional<std::string> got;
+        for(unsigned steps=0;!cursor.done();++steps){check(steps<1000,"partial query stalled");cursor.step(1);if(cursor.has_match()){auto match=cursor.take_match();if(!got)got=bits(match.value.view());}}
+        check(got&&*got==want,"partial-bit replacement");
+      }
+    }
+    drain(runtime,7);topology(runtime.snapshot());
+  }
+  struct wrong_width {
+    bit_string operator()(bit_view,bit_view,bit_view)const{return bit_string::from_bits("1");}
+  };
+  void fixed_width(){
+    using P=storage_policy<tip<encoded_sort<bit_encoding<fixed_values<16>>>>,7,exponential_golomb<0>,3>;
+    redundant_runtime<P,wrong_width> runtime;auto before=runtime.snapshot();
+    rejects<std::invalid_argument>([&]{runtime.contribute({bit_string::from_bits("1"),bit_string::from_bits("1")});});
+    check(!runtime.failed()&&runtime.snapshot().same_layout(before),"invalid fixed input mutated");
+    runtime.try_contribute(row(1,11));before=runtime.snapshot();
+    rejects<std::invalid_argument>([&]{runtime.try_contribute(row(1,22),runtime.service_budget(2));});
+    check(runtime.failed()&&runtime.snapshot().same_layout(before),"wrong fixed result published");
+  }
   struct append {
     bit_string operator()(bit_view,bit_view older,bit_view newer) const {return bit_string::from_bits(bits(older)+bits(newer));}
   };
@@ -260,7 +287,7 @@ int main(){
   using byte=diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>,15,diet::exponential_golomb<0>,4>;
   scenario<bit>(512);scenario<byte>(512);composed<bit>();composed<byte>();restart_stages<bit>();restart_stages<byte>();
   budget_fuzz<bit>();budget_fuzz<byte>();failures<bit>();failures<byte>();
-  overlapping_levels<bit>();
+  overlapping_levels<bit>();partial_bits<bit>();fixed_width();
   static_assert(std::is_same_v<redundant_runtime_family<bit>::runtime_type<append>,redundant_runtime<bit,append>>);
   std::cout<<"redundant runtime tests passed\n";
 }
