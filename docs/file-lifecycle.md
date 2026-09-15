@@ -3,7 +3,8 @@
 Updated 2026-09-15. SQLite manages catalog metadata; bulk data lives in two
 custom file kinds, `.kv` and `.index`. We have read-only mapping, checked object
 envelopes, typed codecs and an immutable object writer as implemented foundations.
-Serialized codec sections, the SQLite adapter and recovery executor remain work. See
+Portable codec sections and exact mapped chains are also implemented; the SQLite
+adapter and recovery executor remain work. See
 [implementation status](implementation.md), the [catalog design](catalog.md)
 and the [failure and resumption protocol](durability.md).
 
@@ -137,10 +138,12 @@ does not suffice for a single shared stride. Ordinary FC selects key prefixes
 from adjacent keys, independently of value widths. The residual universe still
 includes variable key/framing data and physical length checkpoints.
 
-The envelope currently accepts an opaque body. It is not yet a serialized
-`profile_blob<P>`. Codec sections still need checked offsets, versions and exact
-dependency descriptors that agree with the catalog. Metadata such as world
-manifests and merge continuations belongs in SQLite rows and versioned BLOBs.
+The generic envelope accepts arbitrary bodies. The [mapped blob format](mapped-blobs.md)
+encodes native FC, borrowed FC, rank, Elias–Fano, false-borrow flags and exact
+cut LCPs in checked, versioned sections. Its index directory records the native
+identity and exact downstream pair. Section descriptors count physical bytes;
+the inner FC extent and residual offsets retain the byte/bit policy units.
+World manifests and merge continuations belong in SQLite rows and versioned BLOBs.
 
 ## Mapped lifetime
 

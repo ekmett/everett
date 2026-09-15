@@ -13,6 +13,7 @@
 #include <everett/file.h>
 #include <everett/index_pipeline.h>
 #include <everett/mapped_file.h>
+#include <everett/mapped_blob.h>
 #include <everett/multiverse.h>
 #include <everett/object_path.h>
 #include <everett/object_writer.h>
@@ -26,6 +27,8 @@
 #include <everett/rank15.h>
 #include <everett/select15.h>
 #include <everett/select_groups.h>
+#include <everett/sections.h>
+#include <everett/word_view.h>
 #include <everett/world.h>
 
 #include <array>
@@ -42,6 +45,8 @@ static_assert(std::is_same_v<store::query_root, everett::query_root<policy>>);
 static_assert(std::is_same_v<store::query_cursor, everett::query_cursor<policy>>);
 static_assert(std::is_same_v<store::query_context, everett::profile_query_context<policy>>);
 static_assert(std::is_same_v<store::object_writer::policy_type, policy>);
+static_assert(std::is_same_v<store::mapped_blob::policy_type, policy>);
+static_assert(std::is_same_v<store::mapped_query_root, everett::query_root<policy, store::mapped_blob>>);
 
 std::uint32_t crc32c_from_other_translation_unit(std::span<std::byte const> bytes);
 
@@ -87,6 +92,9 @@ int main() {
   everett::file_header<policy> envelope{everett::file_kind::native_blob, 0, 0, 3};
   auto encoded_header = everett::encode_file_header(envelope, 0);
   if (everett::decode_file_header<policy>(encoded_header) != envelope) return 11;
+  auto sections = everett::encode_native_sections(target->native());
+  auto serialized = sections.materialize();
+  if (everett::validate_file<policy>(serialized) != sections.header()) return 12;
   return 0;
 }
 

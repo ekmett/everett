@@ -206,6 +206,12 @@ def check_actual_members(items, source):
         ("struct", "everett::query_root_builder", "finish", "query.h", None, "no"),
         ("struct", "everett::query_cursor", "step", "query.h", None, "no"),
         ("struct", "everett::query_cursor", "take_match", "query.h", None, "no"),
+        ("struct", "everett::query_root", "adopt_prepared", "query.h", None, "yes"),
+        ("struct", "everett::profile_view", "from_sections", "profile.h", None, "yes"),
+        ("struct", "everett::mapped_blob", "bind", "mapped_blob.h", None, "yes"),
+        ("struct", "everett::mapped_profile", "scan", "sections.h", None, "no"),
+        ("struct", "everett::encoded_sections", "materialize", "sections.h", None, "no"),
+        ("namespace", "everett", "encode_file_header", "file.h", None, "no"),
     ]
     for kind, owner, name, filename, qualifier, static in cases:
         compound = named_compound(items, kind, owner)
@@ -229,8 +235,9 @@ def check_actual_members(items, source):
             require("=delete" in member.findtext("argsstring", "").replace(" ", ""),
                     "Deleted rvalue overload was merged with lvalue overload")
     for owner, parameters in (("everett::multiverse", ["P"]), ("everett::profile_view", ["P", "Role"]),
-                              ("everett::query_root", ["P"]), ("everett::query_root_builder", ["P"]),
-                              ("everett::query_cursor", ["P"])):
+                              ("everett::query_root", ["P", "Blob"]), ("everett::query_root_builder", ["P"]),
+                              ("everett::query_cursor", ["P", "Blob"]), ("everett::mapped_blob", ["P"]),
+                              ("everett::mapped_profile", ["P", "Role"]), ("everett::encoded_sections", ["P"])):
         item = named_compound(items, "struct", owner)
         names = []
         for param in item.findall("./templateparamlist/param"):

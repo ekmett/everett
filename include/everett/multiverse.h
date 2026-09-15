@@ -10,6 +10,7 @@
 #pragma once
 
 #include <everett/file.h>
+#include <everett/mapped_blob.h>
 #include <everett/object_writer.h>
 #include <everett/query.h>
 
@@ -60,6 +61,10 @@ namespace everett {
     using query_context = everett::profile_query_context<P>;
     using file = everett::file<P>;
     using object_writer = everett::object_writer<P>;
+    using mapped_native = everett::mapped_native<P>;
+    using mapped_index = everett::mapped_index<P>;
+    using mapped_blob = everett::mapped_blob<P>;
+    using mapped_query_root = everett::mapped_query_root<P>;
     using world = everett::world<P>;
     using timeline = everett::timeline<P>;
     using branch_point = everett::branch_point<P>;
@@ -74,6 +79,10 @@ namespace everett {
       if (mode == file_open_mode::checked && result.header().kind != kind)
         throw std::invalid_argument("unexpected Everett object kind");
       return result;
+    }
+
+    mapped_query_root open_query(blob_identity const & head) const {
+      return everett::open_mapped_query<P>(root_, head);
     }
 
     // The caller establishes root durability and reserves both identities.

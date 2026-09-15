@@ -216,9 +216,10 @@ queries with full-key oracles. They cover reindexing, equality across cuts,
 empty projections and the preceding-frontier counterexample. Protected pages
 verify that control-only entry and terminal predecessor access do not read
 earlier key payloads. Reindexing preserves native bytes and pins the exact new
-index dependencies. Construction already reconstructs
-sequentially. Recovery is intended to do the same; the existing `file<P>::scan`
-checks the envelope, CRC and padding, and is not yet a codec recovery scan.
+index dependencies. Construction reconstructs sequentially. The explicit
+[mapped codec scan](mapped-blobs.md) verifies sequential FC framing, ordinary
+prefix retention, navigation directories, cut LCPs and exact target samples.
+`file<P>::scan` supplies the lower-level envelope, CRC and padding check.
 
 `profile_view::reconstruct_at` is a separate full-reconstruction operation.
 Under ordinary FC its cost includes the preceding context it traverses. A

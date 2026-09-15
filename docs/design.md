@@ -30,8 +30,10 @@ First, some names for the intended aggregates:
   fork; `branch_point` is the intended API spelling.
 
 `multiverse<P>` opens and seals objects in an existing directory. It exposes
-`sort`, `blob`, `file`, `object_writer`, `world`, `timeline` and `branch_point`
-associated types carrying the same policy. The [sealing primitive](object-writer.md)
+`sort`, `blob`, `file`, `object_writer`, the mapped native/index/blob/query types,
+`world`, `timeline` and `branch_point` associated types carrying the same policy.
+`open_query` reopens a prepared exact chain from its persisted pair identity;
+[mapped blobs](mapped-blobs.md) describes the portable sections and ownership. The [sealing primitive](object-writer.md)
 uses reserved identities; world publication remains a separate catalog operation. Persistent worlds/timelines remain design work;
 their aggregate types are forward declarations. The semantic oracle is
 `reference_world`. The [SQLite catalog](catalog.md) is the selected home for

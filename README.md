@@ -15,8 +15,8 @@ these pieces agree about what they own, what they can forget, and who pays
 for the work.
 
 Everett 0.1.0 is experimental. The header-only library provides encoded storage
-components, a mapped read side, and an in-memory reference world; the persistent
-runtime is still being integrated. The
+components, mmap-backed query chains, immutable object sealing, and an in-memory
+reference world; the persistent catalog runtime is still being integrated. The
 [implementation ledger](docs/implementation.md) records the tested contracts.
 APIs and persisted formats may change during this work.
 
@@ -43,6 +43,7 @@ I call the backing store and its relationships the **multiverse**.
 | `sample_cursor`, `index_builder`, `index_pipeline` | Sampling an existing pair and building new index links incrementally. |
 | `query_root`, `query_root_builder`, `query_cursor` | Preparing a bounded search head and visiting matching native entries through an exact index chain. |
 | `mapped_file`, `file`, `multiverse` | Retained read-only mappings and policy-checked object access. |
+| `encode_native_sections`, `encode_index_sections`, `mapped_blob`, `mapped_query_root` | Portable blob files and queries over exact pinned mmap chains. |
 | `object_writer`, `multiverse::seal_object` | Streamed immutable object writes with explicit persistence barriers and retained failure identities. |
 | `reference_world`, `partition_round`, `pin_set` | Executable snapshot, update, fingerprint, and ownership semantics. |
 
@@ -483,6 +484,16 @@ magic, version, policy and header CRC32C, without reading the body. An explicit
 or a scrub calls for it. Opening an object does not certify its payload.
 `multiverse<P>` opens these objects beneath an existing backing directory and
 exposes their associated policy-bound types.
+
+`encode_native_sections` and `encode_index_sections` package the existing encoded
+arrays into portable file sections. They borrow the arrays while writing: we do
+not front-code the keys again or rebuild Elias–Fano. A prepared query chain can
+then be reopened with `multiverse<P>::open_query(saved_head_identity)`. Its
+`mapped_query_root` retains the exact native/index mappings and uses the same
+bounded cursor operations as the in-memory root. Typed opening reads fixed
+metadata; `mapped_blob::scan()` explicitly verifies contents, navigation and
+exact downstream samples. See [mapped blobs](docs/mapped-blobs.md) for the
+layout, lifetime and trust contracts.
 
 `multiverse<P>::seal_object` writes a body under caller-reserved object and
 attempt identities. It accepts a contiguous span or borrowed chunks, including

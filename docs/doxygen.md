@@ -97,7 +97,9 @@ before each run so removed declarations cannot leave stale published pages.
   `multiverse<P>::open_object`, `mapped_file::open`, both `mapped_slice::bytes`
   ref-qualified overloads, `profile_view<P, Role>::reconstruct_at`,
   `file_detail::get`, `crc32c`, `query_root<P>::build`,
-  `query_root_builder<P>::finish`, and the query cursor's `step` and `take_match`.
+  `query_root_builder<P>::finish`, the query cursor's `step` and `take_match`,
+  prepared root adoption, shape-only profile construction, mapped pair binding,
+  mapped profile scanning, section materialization and envelope encoding.
   Template parameters are checked as well.
 - Two files with same-named functions, same-named classes in distinct namespaces,
   overloads and distinct documentation markers retain identical ownership and
@@ -107,9 +109,9 @@ before each run so removed declarations cannot leave stale published pages.
 - A baseline without the aliases emits exactly the two expected unknown-command
   warnings per header. The configured run must emit no warnings.
 
-On 2026-09-15, Doxygen 1.9.8 passed these checks for all 22 public headers,
-eleven real function/overload cases and twelve fixture symbols in all three
-metadata layouts. The unconfigured baseline had 44 warnings, exclusively for
+On 2026-09-15, Doxygen 1.9.8 passed these checks for all 26 public headers,
+seventeen real function/overload cases and twelve fixture symbols in all three
+metadata layouts. The unconfigured baseline had 52 warnings, exclusively for
 `\license` and `\endlicense`.
 
 These checks verify file metadata and the tested lexical associations. Some

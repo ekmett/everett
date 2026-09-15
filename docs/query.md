@@ -130,7 +130,7 @@ outgoing borrowed predecessor before the window.
 The bound does not establish $D=O(\log N)$ for arbitrary user-built chains.
 That is the redundant-level scheduler's responsibility. It also does not cover
 disk faults, durable publication or the cost of applying arbitrary categorical
-arrows. This layer operates on the current in-memory encoded pairs.
+arrows. The same query layer operates on owning encoded pairs and mapped pairs.
 
 ## Construction and trust
 
@@ -143,8 +143,17 @@ These are navigation-shape checks. They do not compare every sampled key with
 the target and cannot certify arbitrary equal-count samples manually supplied
 to `index_builder`. The content precondition remains the builder's existing one:
 samples must come from that exact target's trusted sampler. `index_pipeline`
-supplies them directly. Untrusted serialized data needs its separate validation
-before it can enter this API.
+supplies them directly. For [mapped pairs](mapped-blobs.md), typed opening
+checks fixed metadata and `mapped_blob::bind` checks exact identity and count
+links. `mapped_blob::scan()` explicitly checks the complete chain, including
+every borrowed sample against the actual augmented target stream. That scan or
+a trusted construction/admission path supplies the content precondition.
+
+`query_root<P, Blob>` and its cursor share this navigation code. The default
+`Blob` is `profile_blob<P>`; `mapped_query_root<P>` selects `mapped_blob<P>`.
+`adopt_prepared` checks an already-bounded head without creating routing indexes.
+`open_mapped_query` follows persisted identities and adopts that prepared chain,
+so it reads fixed metadata without reconstructing keys.
 
 All retained blobs must remain immutable through every alias. A `shared_ptr`
 to const supplies read-only access through that handle; it cannot stop a caller

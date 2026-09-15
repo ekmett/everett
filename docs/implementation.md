@@ -18,6 +18,7 @@ for integration. These are development responsibilities.
 | --- | --- | --- |
 | Navigation and recovery | `rank.h`, `rank15.h`, `select15.h`, `durability.h`; `tests/rank.cc`, `tests/durability.cc` | rank and sparse-offset oracles, counter transitions, publication ordering, failure and resumption cases |
 | Grouped navigation and object files | `rank_groups.h`, `select_groups.h`, `mapped_file.h`, `file.h`, `object_path.h`; group/mapping/file tests | policy groups, checked binary envelopes, retained mappings and canonical sharded paths |
+| Portable mapped blobs | `word_view.h`, `sections.h`, `mapped_blob.h`; `tests/mapped_blob.cc` | little-endian section encoding, metadata-only typed opening, exact dependency identities and complete mapped query chains |
 | Immutable object sealing | `object_writer.h`; `tests/object_writer.cc` | streamed CRC, exclusive creation, no-clobber installation, OS barrier ordering, failure identities and retained outputs |
 | Checksums | `crc32c.h`, generated backends, pinned generator and package notices; `tests/crc32c.cc` | independent CRC oracle, bounded loads, reproducible generation, target guards and multi-translation-unit installed consumption |
 | Key primitives | `key_detail.h`, `profile.h`; `tests/profile.cc`; [key policies](keys.md) | bounded comparisons, bit movement, count framing and independent bit-level oracles |
@@ -76,10 +77,10 @@ adjacent comparisons to validate monotone input. Other widths use constant
 shifts. Stored low/high arrays, select samples and sparse exceptions agree
 with independent scalar construction.
 
-Views borrow aligned native-endian spans and validate their shapes. They do
-not validate the semantic contents of every directory. Portable serialization,
-untrusted section validation and retained mmap ownership remain separate
-requirements. The [sampling analysis](sampling.md) distinguishes local window
+Views borrow native-endian spans or explicitly little-endian byte spans and
+validate their shapes. Unaligned mapped arrays use bounded byte loads without
+creating `uint64_t` objects in mapped storage. Shape checking does not validate
+every directory element; the explicit mapped semantic scanner does that work. The [sampling analysis](sampling.md) distinguishes local window
 correctness from level capacity and whole-chain storage bounds.
 
 #### Tests and measurements
@@ -210,8 +211,8 @@ access for trusted handles, without a mutable lazy cache.
 or scrubbing, and `validate_file` retains whole-object validation. Recovery can
 select uncertain objects for scanning without scanning every file on restart.
 Opening alone does not establish payload integrity; lazy block-level integrity
-checking is not implemented. The body is presently opaque: portable
-rank/select/profile section serialization remains work.
+checking is not implemented. The generic envelope accepts arbitrary bodies;
+`sections.h` supplies the portable native/index body format described below.
 `encode_file` serializes a complete object; `encode_file_header` emits only its
 96-byte envelope from a caller-supplied body CRC. `crc32c(bytes, previous_crc)`
 continues a checksum over borrowed chunks without copying them.
@@ -284,13 +285,49 @@ not substitutes. The intended network path copies received native object bytes
 unchanged, then builds receiver-specific fractional indexes as detailed in
 [network admission](network-admission.md).
 
-`multiverse<P>` owns an existing object-directory path. It opens objects and
-forwards `seal_object` to the same-policy writer. It exposes
-`sort = everett::sort<P>`, `blob`, `file`, `object_writer` and forward-declared `world`, `timeline`
-and `branch_point` types. `sort<P>` validates one code's packing and unit
+`multiverse<P>` owns an existing object-directory path. It opens objects,
+forwards `seal_object` to the same-policy writer, and opens prepared mmap query
+chains with `open_query`. It exposes same-policy aliases for `sort`, `blob`,
+`file`, `object_writer`, `mapped_native`, `mapped_index`, `mapped_blob` and
+`mapped_query_root`, plus forward-declared `world`, `timeline` and `branch_point`
+types. `sort<P>` validates one code's packing and unit
 alignment; it does not establish prefix freedom of an entire registry. Mapped
 files and slices outlive the reader object. There is no SQLite connection or
 persistent aggregate implementation behind these forward declarations.
+
+### Portable sections and mapped query chains
+
+`encode_native_sections` and `encode_index_sections` expose borrowed chunks for
+the immutable writer. Their fixed directories describe ordinary FC bytes,
+Elias–Fano words and samples, packed rank classes/checkpoints, false-borrow
+flags and exact cut LCPs. The index records its native identity and the exact
+downstream pair. Section positions count physical bytes; the inner FC extent
+and residual universe retain the policy's byte/bit units. Fixed-width values
+remain subtracted from that inner universe. The encoders do not re-encode keys
+or build a second navigation directory.
+
+`mapped_native`, `mapped_index` and `mapped_blob` retain mappings and expose
+the same profile/navigation views used by owning blobs. Typed opening reads
+only the envelope and fixed directory. `open_mapped_query` follows declared
+identities, shares repeated native owners, rejects cycles and missing targets,
+and adopts an already-bounded head. The caller's catalog authenticates the
+physical object identities; opaque IDs alone are not content digests.
+
+Explicit `scan()` operations verify CRC, canonical section padding, ordinary-FC
+framing/order, physical checkpoints and rebuilt EF/rank directories. A mapped
+pair's scan also recomputes its interleaving, false-borrow bits and cut LCPs,
+then checks borrowed samples against the exact target's augmented stream.
+These semantic scans can reconstruct and compare keys; normal queries do not
+silently scan untouched data. Successful readback is not evidence that an
+earlier failed persistence barrier became durable.
+
+The independent mapped suite covers byte/bit and fixed/variable policies,
+independent physical/virtual widths, exact match/source/value oracles,
+unaligned slices, malformed descriptors and CRC-valid semantic corruption.
+Protected pages distinguish fixed-metadata opening from payload access.
+Ownership cases include paused/copied cursors, shared native files, unlinking,
+moved-from owners and missing dependencies. The [mapped format](mapped-blobs.md)
+records the complete layout and lifetime contract.
 
 ### Complete encoded-chain queries
 
@@ -312,8 +349,9 @@ The [query contract](query.md) separates entry/header bounds from string bytes,
 preparation and scheduler costs. Shape validation rejects cycles, missing
 targets and mismatched sample counts, but does not authenticate manually pushed
 sample keys. The existing exact-sampler precondition and immutable-alias contract
-remain in force. These queries retrieve entries from in-memory encoded pairs;
-they do not evaluate arrows or publish durable worlds.
+remain in force. The shared query machinery retrieves entries from owning
+encoded pairs or mapped pairs; it does not evaluate arrows or publish durable
+worlds. `adopt_prepared` checks an existing bounded chain without sampling it.
 
 The [whole-query comparison](../bench/query_compare.md) includes query
 creation, five- or six-catalog traversal and owned values. On this M2 Max,
@@ -322,6 +360,12 @@ across the six measured cases. Counted backing arrays change by less than 1%;
 root preparation has mixed results. Physical width 16 is slower than 15 in
 these scalar fixtures. The report records exact revisions, independent
 result checks, raw trials and the limits of its storage accounting.
+
+The [shared-view follow-up](../bench/shared_query.md) caught a 4–9% owning-query
+regression from repeating checked reader construction. Builder-owned arrays
+now create shape-only views; public untrusted readers retain their content
+checks. The same six resident-memory fixtures return to timing parity with
+the preceding query implementation, with identical counted arrays.
 
 The implementation was reviewed and integrated at `4285e6b`, with moved-from
 preparation guards at `79fca75`. The independent query suite checks 20 policies
@@ -501,37 +545,38 @@ cmake --build build-sanitize --parallel 4
 ctest --test-dir build-sanitize --output-on-failure
 ```
 
-The seventeen component suites are `rank`, `groups`, `comparison_fc`, `profile`,
+The eighteen component suites are `rank`, `groups`, `comparison_fc`, `profile`,
 `profile_blob`, `sampling`, `index_builder`, `index_pipeline`, `query`, `world`, `pins`,
-`durability`, `mapped_file`, `files`, `object_writer`, `multiverse` and `crc32c`. Two additional CTests
+`durability`, `mapped_file`, `files`, `object_writer`, `mapped_blob`, `multiverse`
+and `crc32c`. Two additional CTests
 validate relocated installation and embedded CMake consumption, including
 typed headers and CRC calls across translation units. We record combined
 verification here after these commands run.
 
 Combined verification on 2026-09-15: AppleClang 21, C++20, Release with strict
-warnings and ASan/UBSan passed all **19 CTests**, including both package consumers
-and the optional Doxygen check. These checks include the complete query API,
-its `multiverse<P>` aliases and the ordinary-FC path at `bac794e`/`2d58df0`.
-The independent comparison suite at `fc14481` covers exact cut LCPs, every
-candidate's comparison state and protected pre-lane/terminal payloads; the
-complete query suite checks 20 policies. Doxygen checked 22 public headers,
-eleven real function/overload associations and 31 Markdown pages, including the
-whole-query comparison report. The rendered site contains 478 dollar formulas;
-removed header pages are absent after a clean regeneration. Lean checked 631 declarations with
-only its standard `propext`, `Quot.sound` and `Classical.choice` axioms.
-The documentation includes the benchmark methods and bundles their runners,
-sources and measurements. Installed licenses and generated CRC includes were checked
-byte for byte against the source bundle; regenerating from the pinned generator
-also reproduced all eight backends.
-All six complete README examples also compiled and ran with strict warnings
-and ASan/UBSan. Local Markdown links were checked, including heading anchors.
-Windows execution coverage is limited to the recorded rank component tests.
-The object writer at `8214d4b` and its `multiverse` forwarding passed the six
-affected sanitizer CTests: CRC, files, writer, multiverse and both package
-consumers. They cover failure at every syscall position, short/interrupted
+warnings and ASan/UBSan passed all **21 CTests**, including both package consumers
+and the optional Doxygen check. The full run took 97 seconds. It includes
+ordinary-FC comparison, complete owning and mapped query chains, portable
+unaligned navigation, immutable writes and metadata-only opening with every
+payload byte protected. The mapped suite also passed a separate strict Release
+run and checks CRC-valid semantic corruption, exact sample identities, moved
+owners and retained mappings after unlink.
+
+The writer tests cover failure at every syscall position, short/interrupted
 writes, disk-full errors, uncertain installation, close failures and retained
-real outputs. A persistent SQLite backend, network transport and physical
-power loss remain outside these checks.
+real outputs. Doxygen checked 26 public headers and seventeen real declaration
+associations, with a clean generation that removes obsolete pages. The proof
+checkpoint checked 631 Lean declarations with only standard `propext`,
+`Quot.sound` and `Classical.choice` axioms. Neither these mathematical models
+nor injected system-call outcomes establish behavior under physical power loss.
+
+The six complete README examples previously passed strict warnings and
+ASan/UBSan; the package consumers now exercise the mapped headers and section
+encoder as well. Installed licenses and generated CRC includes are checked
+byte for byte against the source bundle, and the pinned generator reproduced
+all eight backends. Windows execution coverage is limited to the recorded rank
+component tests. A persistent SQLite backend and network transport remain outside
+this combined checkpoint.
 
 The optional `EVERETT_BUILD_DOCS` configuration generates Doxygen HTML/XML and
 checks all file footers plus representative function/member ownership. A
@@ -547,7 +592,7 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 | Sort registry | typed byte/bit policies and canonical key contracts | prefix-free framing and order, cross-sort boundaries, domain-separated hashes and stable policy versions |
 | Per-key arrow policy and second instance | categorical specification and replacement oracle | noncommuting diffs, heterogeneous keys, source validation, associative semantic composition, disjoint permutations, endpoint deltas, checkpoint observations and explicit work/dependency accounting |
 | Comparison block encoding | ordinary FC, exact cut LCP and scalar comparison transfers | transposed count/literal layouts, ordered SIMD transfer scans, bounded tails and independently measured time/space tradeoffs |
-| Portable blob sections and writer | checked envelope, typed codecs and retained mappings | serialize/validate codec sections, content addressing and durable publication, lazy block-integrity strategy; no full offset per key |
+| Object identity and integrity | portable sections, mmap queries and immutable writer | cryptographic content addressing, durable catalog publication and lazy block-integrity strategy |
 | Attach encoded runs to world semantics | blob reader and query | batch/snapshot/export oracle tests using actual encoded immutable runs |
 | COLA scheduler and incremental string merge | correct run merge and index builder | byte/work-budgeted continuations, bounded active levels and shared-result adoption under interleaved forks |
 | SQLite catalog and persistent pins | object store and scheduler publication | reopen saves without re-encoding contents; retain exact dependency closure; query metadata with existing SQL tools; reclaim only after final pin; interruption tests |
