@@ -39,6 +39,7 @@ I call the backing store and its relationships the **multiverse**.
 | Component | What it gives you |
 | --- | --- |
 | `storage_policy` | One choice of byte/bit units, value layout, group size and backspace code throughout a type family. |
+| `elias_fano`, `rank_groups` | Monotone offsets and grouped origin counts, independent of the key representation. |
 | `profile_array`, `profile_view`, `profile_cursor` | Encoded records, borrowed views, and sequential decoding. |
 | `profile_native_writer`, `native_merge_builder` | Incremental native encoding and ordered per-key value composition. |
 | `profile_blob` | Native records, a separate borrowed stream, group navigation, and false-borrow flags. |
@@ -123,8 +124,9 @@ Golomb's unary quotient can be long for a large backspace, so its decoding
 cost includes the count's encoded length even when the resulting key is short.
 
 We mark each physical stream's block starts and end sentinel, then encode those
-monotone offsets with Elias–Fano. Fixed-width values give us an additional
-saving: their contribution to an offset is predictable, so we subtract it before
+monotone offsets with `elias_fano`. Its `select(i)` returns the stored integer
+at ordinal `i`; sampling intervals and value strides belong to the profile.
+Fixed-width values give us an additional saving: their contribution to an offset is predictable, so we subtract it before
 encoding and add it back on access. If width is `w` and record ordinal is `i`,
 the contribution is `w * i` in the same address units. The fixed payload stride
 consequently does not inflate the residual offset universe. The terminal sample
@@ -555,7 +557,8 @@ file, installs its name without replacing an existing object, and flushes the
 directory chain. A failed operation retains surviving outputs and reports its
 identities and last acknowledged stage. The [sealing protocol](docs/object-writer.md)
 spells out Linux/macOS barriers and the caller's recovery obligations. Sealing
-an object is one step toward publishing a world; SQLite adoption remains separate.
+an object produces the receipt that `sqlite_catalog::record_sealed` records
+before the pair is registered and saved.
 
 For already trusted objects, pass `file_open_mode::trusted` to `open`,
 `from_slice`, or `multiverse<P>::open_object`. This avoids reading even the

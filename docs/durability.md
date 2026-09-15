@@ -263,7 +263,8 @@ its old-pin flag grants no authority to delete references held by another owner.
 Our tests inject failure at each publication boundary and reproduce a fake
 writeback failure that clears dirty state while leaving new cache bytes. They
 also check context-preserving checkpoint resumption, stale identities, backward
-cursors, size overflow and uncertain manifest reconciliation. Filesystem,
-power-cut, process-restart, allocator and actual mmap durability tests remain
-backend work. That backend must durably serialize recovery facts and reconstruct
-the state machine after process restart.
+cursors, size overflow and uncertain manifest reconciliation. The concrete
+[SQLite catalog](sqlite-catalog.md) separately exercises write/sync failures and
+20 process-interruption cuts while preserving saved mmap queries. Durable merge
+continuations still need serialized recovery facts and reconstruction of this
+state machine after restart. Physical power-cut testing remains separate.

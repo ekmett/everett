@@ -75,7 +75,7 @@ namespace {
     auto const & x = a.borrowed().group_offsets();
     auto const & y = b.borrowed().group_offsets();
     require(x.low == y.low && x.high == y.high && x.sparse == y.sparse &&
-            x.record_count == y.record_count && x.universe == y.universe &&
+            x.entry_count == y.entry_count && x.universe == y.universe &&
             x.low_width == y.low_width && x.samples.size() == y.samples.size(), "pipeline offset encoding");
     for (std::size_t i = 0; i != x.samples.size(); ++i)
       require(x.samples[i].first == y.samples[i].first && x.samples[i].sparse == y.samples[i].sparse,

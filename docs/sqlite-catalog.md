@@ -210,6 +210,19 @@ and foreign-key checks and an existing saved query still succeed. These are
 real SQLite write/sync error paths with forwarded locking and shared memory;
 the test does not simulate partial writes, reordered persistence or power loss.
 
+A separate process-interruption suite stops a writer at 20 bounded points.
+For reserve, each seal-receipt record, chain registration, save and reader
+acquisition, it sends `SIGKILL` immediately before COMMIT or immediately after
+a successful COMMIT, before the caller receives its result. Four more cuts
+occur after sealing an external file and before recording its receipt. Each
+process opens its own SQLite connection after `fork`.
+
+Fresh connections verify the exact committed operation prefix, descriptors,
+individual pins, target edges and saved queries, then repeat the replay checks
+after another close/reopen. The old save remains readable at every cut. These
+tests cover process death and lost acknowledgment while the operating system
+continues running; physical power-loss behavior remains a separate property.
+
 ## Scope
 
 I can persist and reopen prepared mmap query chains, reserve their construction,

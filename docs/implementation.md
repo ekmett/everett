@@ -26,7 +26,7 @@ for integration. These are development responsibilities.
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `multiverse.h`; profile/blob/multiverse tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
 | Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
 | Native construction and merging | `native_writer.h`, `native_merge.h`; native writer/merge tests | streaming record acceptance, preserved FC/EF bytes, chronological composition, input pins and failure state |
-| Persistent catalog | `sqlite_catalog.h`; focused/adversarial catalog tests and optional package consumer | reserved IDs, exact prepared graphs, close/reopen saves, binary operation replay, uncertain commits and conservative pins |
+| Persistent catalog | `sqlite_catalog.h`; focused, adversarial, VFS and process-interruption tests; optional package consumer | reserved IDs, exact prepared graphs, close/reopen saves, binary operation replay, uncertain commits and conservative pins |
 | World semantics and ownership | `fingerprint.h`, `pins.h`, `world.h`; `tests/world.cc`, `tests/pins.cc` | disjoint batch permutations, snapshots, old-value validation, contributions, replay and reference export |
 | Design documentation | [design](design.md), [arrows](arrows.md), [rebuilding](rebuild.md), [durability](durability.md), this ledger | consistent contracts, cited derivations, implementation limits and independently usable terminology |
 
@@ -114,6 +114,8 @@ predictions:
 | [Windows rank](../bench/rank_compare_windows.md) | AVX2/AVX512 on Ryzen 9 7950X3D, including scheduling outliers |
 | [NEON and Cult rank](../bench/neon_cult_rank.md) | Packed rank against the actual external Cult CPU directory |
 | [Other grouped / bitmap rank](../bench/other_rank.md) | Groups 3, 7 and 31 and complete bitmap queries |
+| [Rank without cached totals](../bench/rank_bounds.md) | Existing-position queries, whole-query timing and view size |
+| [Combined query refactor](../bench/query_refactor.md) | Complete byte/bit queries and root preparation after rank, Elias–Fano and exception outlining changes |
 | [Elias–Fano construction / select](../bench/select_compare.md) | Tiled writing, narrowing, validation and scalar/SIMD select candidates |
 
 The selected implementations retain the measured latency tradeoffs: a
@@ -459,6 +461,11 @@ adversarial suite also passed Release, and a separate link rejected the older
 system SQLite 3.51.0. Relocated `everett::sqlite` consumption and a core consumer
 with SQLite discovery disabled both passed. The [component guide](sqlite-catalog.md)
 states the distinction between these checks and physical power-loss recovery.
+A separate POSIX process-interruption suite passes 20 `SIGKILL` cuts: before
+and after actual COMMIT at eight catalog operations, plus four sealed outputs
+whose receipts have not been recorded. Fresh connections check the exact
+operation prefix, individual pins and targets, old saved queries and replay
+without duplicating ownership. No inherited SQLite connection is used.
 
 ### World semantics and algebra
 
@@ -648,8 +655,9 @@ The writer tests cover failure at every syscall position, short/interrupted
 writes, disk-full errors, uncertain installation, close failures and retained
 real outputs. The SQLite VFS suite injects 114 errors before and after reached
 write/sync calls, checking old-root retention and complete-or-absent operation
-rows through fresh connections. These tests do not establish behavior under
-physical power loss.
+rows through fresh connections. The 20 process-interruption cases additionally
+check actual writer death, including committed-but-unacknowledged operations.
+These tests do not establish behavior under physical power loss.
 
 Doxygen checked 29 public headers and 23 real declaration associations, with
 clean generation that removes obsolete pages. The proof checkpoint checked

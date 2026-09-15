@@ -100,7 +100,8 @@ before each run so removed declarations cannot leave stale published pages.
   `query_root_builder<P>::finish`, the query cursor's `step` and `take_match`,
   prepared root adoption, shape-only profile construction, mapped pair binding,
   mapped profile scanning, section materialization and envelope encoding, native writer finalization,
-  incremental merge steps, native-array adoption, and SQLite reservation, save
+  incremental merge steps, Elias–Fano selection, profile block offsets and carried
+  cursor comparisons, native-array adoption, and SQLite reservation, save
   and reader acquisition.
   Template parameters are checked as well.
 - Two files with same-named functions, same-named classes in distinct namespaces,
