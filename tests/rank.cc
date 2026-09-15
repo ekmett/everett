@@ -150,6 +150,75 @@ namespace {
     require(empty.view().rank(0) == 0, "default rank");
   }
 
+  void check_rank15_word(std::uint64_t value) {
+    std::array<std::uint64_t, 2> words{value, 0};
+    std::array<std::uint64_t, 1> checkpoints{0};
+    std::array<unsigned, 17> oracle{};
+    for (unsigned i = 0; i < 16; ++i)
+      oracle[i + 1] = oracle[i] + unsigned((value >> (4 * i)) & 15);
+    // The extra group keeps rank(16) on the packed-word path, rather than
+    // returning the endpoint's stored total. Earlier queries mask every tail.
+    everett::rank15_view view(words, checkpoints, 17 * 15, oracle.back());
+    for (unsigned i = 0; i <= 16; ++i)
+      require(view.rank(i) == oracle[i], "rank15 packed-word sum");
+  }
+
+  void test_rank15_words() {
+    auto maximum = std::numeric_limits<std::uint64_t>::max();
+    check_rank15_word(0);
+    check_rank15_word(maximum); // Sixteen classes of 15 must sum to 240.
+    check_rank15_word(0x0f0f0f0f0f0f0f0full);
+    check_rank15_word(0xf0f0f0f0f0f0f0f0ull);
+    for (unsigned lane = 0; lane < 16; ++lane)
+      for (std::uint64_t value = 0; value < 16; ++value) {
+        auto mask = std::uint64_t{15} << (4 * lane);
+        check_rank15_word(value << (4 * lane));
+        check_rank15_word((maximum & ~mask) | (value << (4 * lane)));
+      }
+    std::mt19937_64 random(0x15f015);
+    for (unsigned i = 0; i < 8192; ++i) check_rank15_word(random());
+    // Exercise accumulation through an entire checkpoint, including maximum
+    // byte-lane totals and uniformly random populations instead of bit flips.
+    for (unsigned pattern = 0; pattern < 258; ++pattern) {
+      std::array<std::uint64_t, 9> words{};
+      for (unsigned i = 0; i < 8; ++i)
+        words[i] = pattern == 0 ? 0 : pattern == 1 ? maximum : random();
+      std::array<std::uint64_t, 130> oracle{};
+      for (unsigned i = 0; i < 129; ++i)
+        oracle[i + 1] = oracle[i] + ((words[i / 16] >> (4 * (i % 16))) & 15);
+      std::array<std::uint64_t, 2> checkpoints{0, oracle[128]};
+      everett::rank15_view view(words, checkpoints, 129 * 15, oracle.back());
+      for (unsigned i = 0; i <= 129; ++i)
+        require(view.rank(i) == oracle[i], "rank15 checkpoint accumulation");
+    }
+    // Every short final checkpoint must remain within the allocated words.
+    // The first checkpoint of the larger inputs exercises the SIMD path.
+    for (unsigned groups = 1; groups <= 256; ++groups) {
+      std::vector<std::uint8_t> classes(groups);
+      std::vector<std::uint64_t> oracle(groups + 1);
+      for (unsigned i = 0; i < groups; ++i) {
+        classes[i] = random() & 15;
+        oracle[i + 1] = oracle[i] + classes[i];
+      }
+      auto index = everett::rank15_index::build(classes, groups * 15);
+      auto view = index.view();
+      for (unsigned i = 0; i <= groups; ++i)
+        require(view.rank(i) == oracle[i], "rank15 short checkpoint");
+    }
+    // Borrowed classes need only uint64_t alignment, even for vector loads.
+    alignas(64) std::array<std::uint64_t, 16> shifted{};
+    for (auto & word : shifted) word = random();
+    for (unsigned offset = 0; offset < 8; ++offset) {
+      std::array<std::uint64_t, 129> oracle{};
+      for (unsigned i = 0; i < 128; ++i)
+        oracle[i + 1] = oracle[i] + ((shifted[offset + i / 16] >> (4 * (i % 16))) & 15);
+      std::array<std::uint64_t, 1> checkpoints{0};
+      everett::rank15_view view(std::span(shifted).subspan(offset, 8), checkpoints, 128 * 15, oracle.back());
+      for (unsigned i = 0; i <= 128; ++i)
+        require(view.rank(i) == oracle[i], "rank15 unaligned checkpoint");
+    }
+  }
+
   void test_rank15() {
     std::mt19937_64 random(0x1515);
     for (std::uint64_t bits : std::initializer_list<std::uint64_t>{0, 1, 14, 15, 16, 239, 240, 241, 1919, 1920,
@@ -248,6 +317,7 @@ int main() {
     test_rank_directory();
     test_rank();
     test_rank_tails();
+    test_rank15_words();
     test_rank15();
     test_select15();
     std::cout << "Storage rank, packed rank15, and Elias-Fano select15 oracle checks passed\n";
