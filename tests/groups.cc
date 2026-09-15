@@ -18,6 +18,7 @@
 #include <span>
 #include <random>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 namespace {
@@ -68,6 +69,50 @@ namespace {
     rejects([] { everett::rank_groups<K>::build({}, K); });
     everett::rank_groups<K> empty;
     require(empty.view().rank(0) == 0, "default rank groups");
+  }
+
+  void test_rank15_agreement() {
+    static_assert(everett::rank_groups_view<15>::group_size == 15);
+    static_assert(everett::rank_groups_view<15>::class_bits == 4);
+    std::mt19937_64 random(0x151528);
+    // Keep a full checkpoint before every possible final checkpoint length,
+    // including partial virtual groups. This covers vector reductions and
+    // bounded short-span fallbacks through the policy-sized view API.
+    for (std::uint64_t tail = 0; tail <= 128 * 15; ++tail) {
+      auto count = 128 * 15 + tail;
+      auto groups = count / 15 + (count % 15 != 0);
+      for (unsigned pattern = 0; pattern < 3; ++pattern) {
+        std::vector<std::uint64_t> classes(groups);
+        std::vector<std::uint8_t> fixed_classes(groups);
+        std::vector<std::uint64_t> oracle(groups + 1);
+        for (std::uint64_t i = 0; i < groups; ++i) {
+          auto capacity = i + 1 == groups && count % 15 ? count % 15 : 15;
+          classes[i] = pattern == 0 ? 0 : pattern == 1 ? capacity : random() % (capacity + 1);
+          fixed_classes[i] = std::uint8_t(classes[i]);
+          oracle[i + 1] = oracle[i] + classes[i];
+        }
+        auto policy = everett::rank_groups<15>::build(classes, count);
+        auto fixed = everett::rank15_index::build(fixed_classes, count);
+        require(policy.classes == fixed.classes && policy.checkpoints == fixed.checkpoints &&
+                policy.total == fixed.total, "rank15 policy encoding agreement");
+        auto view = policy.view();
+        auto fixed_view = fixed.view();
+        static_assert(std::is_same_v<decltype(view.class_at(0)), std::uint64_t>);
+        require(view.size() == count && view.group_count() == groups && view.count() == oracle.back(),
+                "rank15 policy view dimensions");
+        for (std::uint64_t i = 0; i <= groups; ++i) {
+          require(view.rank(i) == oracle[i] && fixed_view.rank(i) == oracle[i],
+                  "rank15 policy prefix agreement");
+          if (i < groups) require(view.class_at(i) == classes[i], "rank15 policy class agreement");
+        }
+      }
+    }
+    rejects([] { everett::rank_groups_view<15>({}, {}, 15, 0); });
+    rejects([] { everett::rank_groups_view<15>({}, {}, 0, 1); });
+    rejects([] {
+      std::array<std::uint64_t, 1> classes{0};
+      everett::rank_groups_view<15>(classes, {}, 15, 0);
+    });
   }
 
   std::vector<std::uint64_t> low_oracle(std::span<std::uint64_t const> source, unsigned width) {
@@ -222,6 +267,7 @@ int main() {
   try {
     test_low_packing();
     test_rank<3>(); test_rank<7>(); test_rank<15>(); test_rank<31>();
+    test_rank15_agreement();
     test_select<3>(); test_select<7>(); test_select<15>(); test_select<31>();
     test_wide_policy();
     std::cout << "Policy groups 3/7/15/31, packed classes, and residual-address select checks passed\n";

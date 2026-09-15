@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <everett/rank15.h>
+
 #include <bit>
 #include <cstdint>
 #include <limits>
@@ -19,8 +21,9 @@
 namespace everett {
   // Population classes for virtual groups of K=2^n-1 entries. A class occupies
   // exactly n bits, including across word boundaries. One 64-bit checkpoint
-  // every 128 classes bounds rank queries to 127 class reads (two words each
-  // at most). No origin bitmap, arbitrary within-group rank, or select is kept.
+  // every 128 classes bounds general rank queries to 127 class reads (two words
+  // each at most). K=15 shares rank15's packed-word/SIMD prefix reduction.
+  // No origin bitmap, arbitrary within-group rank, or select is kept.
   // Views check section shapes; a reader must validate borrowed metadata.
   template <std::uint64_t K> struct rank_groups_view {
     static_assert(K >= 3 && K < std::numeric_limits<std::uint64_t>::max() && std::has_single_bit(K + 1),
@@ -72,6 +75,25 @@ namespace everett {
     std::span<std::uint64_t const> checkpoints_;
     std::uint64_t virtual_count_;
     std::uint64_t total_;
+  };
+
+  template <> struct rank_groups_view<15> {
+    static constexpr std::uint64_t group_size = 15;
+    static constexpr unsigned class_bits = 4;
+
+    rank_groups_view(std::span<std::uint64_t const> classes,
+                     std::span<std::uint64_t const> checkpoints,
+                     std::uint64_t virtual_count, std::uint64_t total)
+      : view_(classes, checkpoints, virtual_count, total) {}
+
+    std::uint64_t size() const noexcept { return view_.size(); }
+    std::uint64_t count() const noexcept { return view_.count(); }
+    std::uint64_t group_count() const noexcept { return view_.group_count(); }
+    std::uint64_t class_at(std::uint64_t group) const { return view_.class_at(group); }
+    std::uint64_t rank(std::uint64_t group) const { return view_.rank(group); }
+
+  private:
+    rank15_view view_;
   };
 
   template <std::uint64_t K> struct rank_groups {
