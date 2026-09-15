@@ -609,12 +609,16 @@ def check_markdown_pages(items, source, markdown, output):
         count += len(formulas)
     require(count > 0, "No Markdown formulas were checked")
     for source_name, target_name in (("README.md", "docs/design.md"),
+                                     ("README.md", "docs/usage.md"),
+                                     ("docs/usage.md", "README.md"),
                                      ("docs/keys.md", "docs/arrows.md"),
                                      ("docs/sampling.md", "docs/durability.md"),
                                      ("docs/network-admission.md", "docs/rebuild.md")):
         check_page_link(pages, source_name, target_name, output)
-    for anchor in ("examples", "field-guide", "building"):
+    for anchor in ("quick-start", "saved-tables", "building"):
         check_page_anchor(pages, "README.md", anchor, output)
+    for anchor in ("persistent-tables-and-saves", "examples", "field-guide", "building-and-testing"):
+        check_page_anchor(pages, "docs/usage.md", anchor, output)
     if "THIRD_PARTY.md" in pages:
         check_page_link(pages, "README.md", "THIRD_PARTY.md", output)
         for name in ("LICENSE.md", "LICENSE.MIT.md", "LICENSE.zlib.md", "UPSTREAM.md"):

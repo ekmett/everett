@@ -2,8 +2,10 @@
 
 Read README.md, docs/design.md and docs/implementation.md before changing the
 architecture. Keep the design and implementation status distinct and current.
-Keep the README an extensive introduction to the motivation and working APIs as
-the library grows. Write the documents in my voice: first person for my design
+Keep the README an approachable introduction to the common use case and working
+APIs, with recommended byte/bit defaults and small usage examples. Put backend
+details, tuning and unusual policies in docs/usage.md and the focused guides.
+Write the documents in my voice: first person for my design
 choices, and "we" when walking through an argument with the reader. Do not
 describe me or my ideas from a distant third-person perspective. Keep factual
 bibliographic attribution and copyright notices intact. Describe the current

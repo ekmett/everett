@@ -28,7 +28,7 @@ for integration. These are development responsibilities.
 | Native construction and merging | `native_writer.h`, `native_merge.h`; native writer/merge tests | streaming record acceptance, preserved FC/EF bytes, chronological composition, input pins and failure state |
 | Persistent catalog | `sqlite_catalog.h`; focused, adversarial, VFS and process-interruption tests; optional package consumer | reserved IDs, exact prepared graphs, close/reopen saves, binary operation replay, uncertain commits and conservative pins |
 | Cola semantics and ownership | `fingerprint.h`, `pins.h`, `cola.h`; `tests/cola.cc`, `tests/pins.cc` | disjoint batch permutations, snapshots, old-value validation, contributions, replay and reference export |
-| Design documentation | [design](design.md), [arrows](arrows.md), [rebuilding](rebuild.md), [durability](durability.md), this ledger | consistent contracts, cited derivations, implementation limits and independently usable terminology |
+| Design documentation | [usage](usage.md), [design](design.md), [arrows](arrows.md), [rebuilding](rebuild.md), [durability](durability.md), this ledger | working examples, consistent contracts, cited derivations and implementation limits |
 
 As components change, we update this ledger with the reviewed revision, actual
 checks and remaining limits. Host-specific resource coordination stays outside
@@ -786,8 +786,9 @@ SQLite is the selected home for logical colas, immutable representations,
 exact pins, contributions, index dependencies and small merge continuations.
 The [catalog design](catalog.md) specifies publication, operation identities,
 reader/GC synchronization and SQL diagnostics. The [implemented adapter](sqlite-catalog.md)
-covers immutable roots and reservations. Mutable timeline publication, ownership
-retirement, schema migration and resumable job execution remain extensions.
+covers immutable roots, reservations and conditional timeline publication.
+Ownership retirement, schema migration and resumable job execution remain
+extensions.
 
 Direct network adoption keeps compatible native bytes and their sampled offsets
 intact. The arbitrary-prefix recurrence bounds borrowed **entries**, without

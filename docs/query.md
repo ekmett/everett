@@ -10,7 +10,7 @@ describes navigation, so its position alone does not establish an update's age.
 
 `query_root<P>`, `query_root_builder<P>` and `query_cursor<P>` share the same
 storage policy as their blobs. They are also available through the corresponding
-aliases in `fridge<P>`. The [README example](../README.md#query-the-whole-chain)
+aliases in `fridge<P>`. The [usage example](usage.md#query-the-whole-chain)
 builds a chain, prepares its root and retrieves two entries for the same key.
 
 ## Preparing the first window
