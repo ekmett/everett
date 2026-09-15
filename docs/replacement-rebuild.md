@@ -24,9 +24,25 @@ and arrow type, declare replacement semantics, and provide
 that applying this arrow to the initial state reproduces the scanned state.
 Type equality alone does not supply that semantic law.
 
-This executor is synchronous and uses in-memory continuations. It does not
-persist the scan cursor, replay queue or rebuilding generation. There is no
-adapter to an asynchronous tap or durable named connection in this interface.
+The executor also satisfies the `tap` and `persistent_engine` contracts. It is
+opt-in; the default connection alias is unchanged:
+
+```cpp
+#include <diet/replacement_rebuild.h>
+#include <diet/connection.h>
+
+using core = diet::replacement_rebuild_engine<>;
+diet::connection<core> table(existing_directory, "earth-616");
+table.put("name", "Edward");
+auto saved = table.snapshot();
+table.save("before-edit", saved);
+```
+
+The current runtime and generation counters are durable. Private scan cursors,
+candidate objects and FIFO replay queues are not. Reopening an active rebuild
+starts a new funded cleanup from the latest acknowledged state, with writes
+gated until that cleanup finishes. It does not pretend to resume paid private
+progress.
 
 Generations and admission
 -------------------------
@@ -118,15 +134,89 @@ time. Existing EF finalization and a ready typed contribution remain atomic;
 their structural work is prepaid. The separate byte-accounting requirement in
 [Strong deletion](rebuild.md) still applies.
 
+Static tap quotes
+-----------------
+
+A tap needs a quote before it owns the mutable executor. `reservation(input)`
+therefore uses a conservative, state-independent ceiling per admitted record,
+plus the underlying typed engine's allowance. It counts every record in a
+batch, including unchanged replacements. The byte quote is the encoded input
+size; it does not describe the replay queue, retained snapshots or executor's
+working set.
+
+Let C be the redundant runtime's local charge bound, H the supported admission
+height (at most 64), and D=H+3. The candidate action allowance is
+
+$$
+G(H)=2C+16D+512+8C(H+2)+64(D+1)(K+W+16)+8H+16.
+$$
+
+There are at most 128 visible native runs. I use S=32 for each physical scan
+action and T=128(S+8)+32 for setup. At a normal large trigger, the frozen
+physical count M is no greater than the admission mass b+floor(b/4), while
+$n_s\ge b-\lfloor b/4\rfloor$. Thus M is at most 5n_s/3. For
+$h=\lfloor n_s/8\rfloor$ and $n_s\ge64$, we have $n_s/h<9$, M/h<15 and
+$(n_s+h)/h<10$. Substituting these bounds into R/h, including both the hG
+fragmentation margin and replay's additional G, gives this safe ceiling:
+
+$$
+22G(H)+10(C+32)(H+1)+T+26S+2.
+$$
+
+The eager small case has at most 64 output rows and, for an admitted valid
+generation, fewer than 256 physical input occurrences. Its bound is
+$T+321S+130G(7)+512(C+32)$. The quote takes the larger ceiling, adds the
+freeze allowance 1056 and a depth-limited preflight query allowance, then adds
+the foreground typed engine quote. The default policy's resulting single-record
+quote is 40,164,546 structural units, within the connection's 128,000,000-unit
+accepted-input limit. Arithmetic is checked. Restored generations
+must pass the same mass/trigger validation that justifies these ratios.
+
+These deliberately generous quotes are separate from `work()`'s actual runtime
+charges and committed action allowances. They bound structural admission work,
+not string bytes, arbitrary sort callbacks, storage I/O or elapsed time. Recovery
+debt is serviced through the readiness gate and is not silently charged as a
+constant-cost new write. Tests compare each normal admission's granted rebuild
+allowance plus foreground charges against its static quote, including overwrite
+and all-delete sequences.
+
 Restore and failure boundaries
 ------------------------------
 
-`from_clean(snapshot)` accepts a starting state only when native admission mass
-equals live cardinality. It does not guess a clean base from a dirty table's
-current live count. A restored native job must receive `advance` service until
-`admission_ready()` before another contribution is accepted; the wrapper does
-not hide an arbitrary recovery drain inside that contribution. Restoring an unfinished rebuild will require the complete
-generation and replay metadata described in the strong-deletion design.
+`replacement_cola` retains the typed snapshot plus `replacement_metadata`:
+the signature, live count and schema, followed logically by b, u and the active
+rebuild marker. Its semantic encoding has the `DIET.RB` signature with a zero
+terminator, a separate version 1 word, b, u and flags, then the existing typed
+metadata. This is a checkpoint extension; native and index file formats do not
+change. Plain typed semantic checkpoints are not automatically converted.
+
+`restore(runtime, metadata, schema)` checks b+u against the admission mass,
+the possible live-count interval, and the generation's trigger range. Inactive
+metadata already past its rebuild trigger is rejected. This is shape and
+consistency validation, not a payload scan or authentication.
+
+`from_snapshot(snapshot)` preserves b and u exactly. For an active marker, it
+freezes the latest published table and gates new admissions. `advance` first
+services restored native jobs, then performs a new whole-table cleanup. It
+keeps the old generation metadata until the candidate is complete and equal
+to the published table; only then does it publish b'=N, u'=0 and clear the
+marker. A second interruption repeats this recovery, charging the repeated
+work. Reads, saved states and forks remain available during recovery.
+
+The restart cost is explicit existing debt, serviced before a tap claims a
+queued input. There is no finite work guarantee under infinitely repeated
+interruptions. Lost private candidate files are not claimed as resumable work;
+the current implementation builds that candidate in memory.
+
+`from_clean(snapshot)` is a separate convenience for a plain typed snapshot
+whose native admission mass equals its live cardinality. It does not guess a
+clean base from a dirty table's current live count. A restored native job must
+receive `advance` service until `admission_ready()` before another contribution
+is accepted. No arbitrary recovery drain is hidden inside a new contribution.
+
+The persistent adapter atomically publishes the runtime and generation semantic
+payload. Saves and forks retain that exact pair. Metadata changes are publication
+changes even when `same_layout` reports the same physical graph.
 
 `advance(0)` performs no work. Positive idle service can finish a rebuild even
 if writes stop. A moved-from or failed active handle rejects mutation; snapshots

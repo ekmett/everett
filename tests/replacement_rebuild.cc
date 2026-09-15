@@ -46,6 +46,45 @@ namespace {
     }
     auto w=e.work();check(w.committed<=w.granted,"unfunded background work");
   }
+  template<class E>void quoted(E & e,typename E::contribution_type input){
+    auto quote=E::reservation(input);auto before=e.work();
+    e.contribute(std::move(input));auto after=e.work();
+    check(after.granted-before.granted+after.foreground_charged-before.foreground_charged<=quote.work,"admission exceeded static allowance");
+  }
+  void recovery_metadata(){
+    engine e;
+    for(unsigned n=0;n!=128;++n)quoted(e,engine::put(std::to_string(n),"v"));
+    while(e.pending())e.advance(1000000);
+    quoted(e,engine::put("0","dirty"));
+    auto dirty=e.snapshot();check(dirty.metadata().mutations&& !dirty.metadata().rebuilding,"inactive dirty fixture");
+    auto restored=engine::cola_type::restore(dirty.runtime(),engine::metadata_type::decode(dirty.metadata().encode()),dirty.metadata().schema_id);
+    auto resumed=engine::from_snapshot(restored);
+    check(resumed.status().clean_base==e.status().clean_base&&resumed.status().mutations==e.status().mutations,"restore reset dirty generation");
+    while(!e.status().rebuilding)quoted(e,engine::put("0","changed"));
+    auto active=e.snapshot();auto bytes=active.metadata().encode();
+    check(bytes.size()>56&&bytes[0]==std::byte{'D'}&&bytes[7]==std::byte{0}&&bytes[8]==std::byte{1},"metadata header");
+    for(std::size_t i=0;i<=56;++i)rejects([&]{(void)engine::metadata_type::decode(std::span(bytes).first(i));});
+    for(auto at:{0u,7u,8u,15u,32u,39u}){auto bad=bytes;bad[at]^=std::byte{2};rejects([&]{(void)engine::metadata_type::decode(bad);});}
+    auto bad=active.metadata();bad.mutations++;rejects([&]{(void)engine::cola_type::restore(active.runtime(),bad,bad.schema_id);});
+    bad=active.metadata();bad.rebuilding=false;rejects([&]{(void)engine::cola_type::restore(active.runtime(),bad,bad.schema_id);});
+    bad=active.metadata();bad.clean_base=0;bad.mutations=mass(active);rejects([&]{(void)engine::cola_type::restore(active.runtime(),bad,bad.schema_id);});
+    rejects([&]{(void)engine::metadata_type::decode(static_cast<engine::typed_cola_type const&>(active).metadata().encode());});
+    auto recovering=engine::from_snapshot(active);
+    check(recovering.pending()&&!recovering.admission_ready()&&recovering.work().scan_records==0,"recovery not lazy/gated");
+    rejects([&]{recovering.contribute(engine::put("forbidden","before cleanup"));});
+    check(!recovering.failed()&&recovering.snapshot().metadata()==active.metadata(),"blocked admission changed recovery");
+    unsigned steps=0;while(!recovering.status().clean_rows){recovering.advance(1000000);check(++steps<10000,"recovery stalled before copy");}
+    auto partial=recovering.snapshot();check(partial.metadata()==active.metadata(),"partial recovery changed generation");
+    auto again=engine::from_snapshot(partial);
+    check(!again.admission_ready()&&again.work().scan_records==0,"interrupted recovery resumed unsupported cursor");
+    steps=0;while(again.pending()){again.advance(1000000);check(++steps<10000,"recovery stalled");}
+    auto clean=again.snapshot();check(!clean.metadata().rebuilding&&clean.metadata().mutations==0&&clean.metadata().clean_base==128,"recovery failed clean handoff");
+    check(clean.signature()==active.signature()&&clean.get("0")=="changed"&&mass(clean)==128,"recovery changed logical state");
+    quoted(again,engine::template change<strings>("0","after"));check(again.snapshot().get("0")=="after","templated change");
+    auto quote=engine::reservation(engine::template put<strings>("quote","v"));
+    check(quote.work<128000000&&quote.bytes>0,"default admission exceeds connection allowance");
+    std::cout<<"default rebuild reservation="<<quote.work<<'\n';
+  }
   void sequences(){
     engine e;std::map<std::string,std::string> expected;
     std::vector<std::pair<engine::cola_type,std::map<std::string,std::string>>> saved;
@@ -56,18 +95,18 @@ namespace {
     std::uint64_t rebuilding=0;
     for(unsigned n=0;n!=1024;++n){
       auto k="key/"+std::to_string(n%256),v="revision/"+std::to_string(n);
-      e.contribute(engine::put(k,v));expected[k]=v;invariant(e);rebuilding+=e.status().rebuilding;
+      quoted(e,engine::put(k,v));expected[k]=v;invariant(e);rebuilding+=e.status().rebuilding;
       if(n%127==0){verify(e.snapshot(),expected);saved.emplace_back(e.snapshot(),expected);}
       check(!e.advance(0),"zero advance publication");
     }
     check(rebuilding&&e.work().replayed,"no live FIFO replay");
-    for(unsigned n=0;n!=256;++n){auto k="key/"+std::to_string(n);e.contribute(engine::erase(k));expected.erase(k);invariant(e);if(n%31==0)verify(e.snapshot(),expected);}
+    for(unsigned n=0;n!=256;++n){auto k="key/"+std::to_string(n);quoted(e,engine::erase(k));expected.erase(k);invariant(e);if(n%31==0)verify(e.snapshot(),expected);}
     verify(e.snapshot(),expected);check(mass(e.snapshot())==0,"empty cola retained tombstone mass");
     for(auto const &[state,want]:saved)verify(state,want);
     auto prior=e.snapshot();auto count=e.work().mutations;
     rejects([&]{e.contribute(engine::erase("absent"));});
     check(!e.failed()&&same(e.snapshot(),prior)&&e.work().mutations==count,"absent delete changed state");
-    for(unsigned n=0;n!=1024;++n){e.contribute(engine::put("one","same"));check(mass(e.snapshot())==1,"one-key obsolete universe grew");invariant(e);}
+    for(unsigned n=0;n!=1024;++n){quoted(e,engine::put("one","same"));check(mass(e.snapshot())==1,"one-key obsolete universe grew");invariant(e);}
     check(e.work().mutations==count+1024,"unchanged mutations disappeared");
     auto copy=engine::from_clean(e.snapshot());verify(copy.snapshot(),{{"one","same"}});
     copy.contribute(engine::put("two","different"));verify(e.snapshot(),{{"one","same"}});
@@ -144,4 +183,4 @@ namespace {
     check(!e.failed()&&same(before,e.snapshot()),"stale batch mutated");verify(e.snapshot(),expected);
   }
 }
-int main(){sequences();idle_and_stale();atomic_failure();copied_and_uncopied();native_sort_transport();std::cout<<"replacement rebuild tests passed\n";}
+int main(){recovery_metadata();sequences();idle_and_stale();atomic_failure();copied_and_uncopied();native_sort_transport();std::cout<<"replacement rebuild tests passed\n";}
