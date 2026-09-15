@@ -17,6 +17,7 @@ pass before one measured trial, followed by another exact result verification.
 """
 
 from snapshot import Snapshot
+from fixture import write_fixture
 
 import argparse
 import csv
@@ -81,7 +82,7 @@ def main():
         header_hashes[name] = hashes
         normalizations[name] = snapshot.metadata()
     source = build / "query_compare.cc"
-    source.write_bytes((repo / "bench/query_compare.cc").read_bytes())
+    write_fixture(repo / "bench/query_compare.cc", source)
     compiler = shlex.split(os.environ.get("CXX", "clang++"))
     flags = ["-std=c++20", "-Wall", "-Wextra", "-Wpedantic", "-Werror"]
     flags += (["-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer"]

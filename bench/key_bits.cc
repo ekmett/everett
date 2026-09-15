@@ -9,6 +9,8 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
+#include "policy_compat.h"
+
 #include <diet/profile.h>
 #if __has_include(<diet/front.h>)
 #include <diet/front.h>
@@ -29,8 +31,8 @@
 
 namespace {
   using clock_type = std::chrono::steady_clock;
-  using bit_policy = diet::storage_policy<diet::profile_unit::bit>;
-  using byte_policy = diet::storage_policy<diet::profile_unit::byte>;
+  using bit_policy = diet_bench::policy<diet::profile_unit::bit>;
+  using byte_policy = diet_bench::policy<diet::profile_unit::byte>;
   void require(bool condition) { if (!condition) throw std::runtime_error("key/bit benchmark oracle"); }
   std::uint64_t mix(std::uint64_t value) {
     value += 0x9e3779b97f4a7c15ull;

@@ -12,6 +12,7 @@
 """Measure complete chain queries against pinned headers under the caller's resource gate."""
 
 from snapshot import Snapshot
+from fixture import write_fixture
 
 import argparse
 import csv
@@ -54,7 +55,7 @@ def main():
         target.write_bytes(data)
         hashes[path] = hashlib.sha256(data).hexdigest()
     source = build / "query_chain.cc"
-    source.write_bytes((repo / "bench/query_chain.cc").read_bytes())
+    write_fixture(repo / "bench/query_chain.cc", source)
     compiler = shlex.split(os.environ.get("CXX", "clang++"))
     flags = ["-std=c++20", "-Wall", "-Wextra", "-Wpedantic", "-Werror"]
     flags += (["-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer"]

@@ -6,6 +6,8 @@
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  */
+#include "policy_compat.h"
+
 #include <diet/query.h>
 #ifdef DIET_DUAL
 #include <diet/cola_index.h>
@@ -93,8 +95,8 @@ namespace {
 int main() {
   std::cout<<"topology,unit,fixed,base_count,prefix_bytes,value_bytes,random,native_count,raw_key_bytes,raw_value_bytes,catalogs,borrowed_count,native_bytes,borrowed_bytes,ef_bytes,rank_bytes,lcp_bytes,false_borrow_bytes,total_array_bytes\n";
   for(auto n:{4096u,65536u}) for(auto prefix:{0u,64u}) for(bool random:{false,true}) {
-    run<diet::storage_policy<diet::profile_unit::byte,diet::fixed_values<8>>>(n,prefix,8,random);
-    run<diet::storage_policy<diet::profile_unit::bit,diet::fixed_values<64>>>(n,prefix,8,random);
-    run<diet::storage_policy<diet::profile_unit::byte>>(n,prefix,128,random);
+    run<diet_bench::policy<diet::profile_unit::byte,diet::fixed_values<8>>>(n,prefix,8,random);
+    run<diet_bench::policy<diet::profile_unit::bit,diet::fixed_values<64>>>(n,prefix,8,random);
+    run<diet_bench::policy<diet::profile_unit::byte>>(n,prefix,128,random);
   }
 }

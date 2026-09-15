@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 """Run under cpu-heavy; snapshot exact Diet revisions and preserve full wire oracles."""
 from snapshot import Snapshot
+from fixture import write_fixture
 
 import argparse, concurrent.futures, csv, datetime, hashlib, io, json, os
 from pathlib import Path
@@ -18,7 +19,7 @@ def main():
     p.add_argument('--rounds',type=int,default=3);p.add_argument('--compiler',default=os.environ.get('CXX','clang++'))
     a=p.parse_args();repo=Path(__file__).resolve().parent.parent;b=a.build_dir.resolve();b.mkdir(parents=True,exist_ok=True)
     git=lambda *args:subprocess.check_output(['git','-C',str(repo),*args])
-    source=b/'cola_payload.cc';source.write_bytes((repo/'bench/cola_payload.cc').read_bytes())
+    source=b/'cola_payload.cc';write_fixture(repo/'bench/cola_payload.cc', source)
     compiler=shlex.split(a.compiler)
     meta={'started':datetime.datetime.now(datetime.timezone.utc).isoformat(),'platform':platform.platform(),'compiler':subprocess.check_output([*compiler,'--version'],text=True),'source_sha256':sha(source.read_bytes()),'runner_sha256':sha(Path(__file__).read_bytes()),'trials':a.trials,'rounds':a.rounds,'variants':{},'execution_order':[],'wires':{}}
     commands=[]

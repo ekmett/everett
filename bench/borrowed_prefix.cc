@@ -10,6 +10,8 @@
  * \endlicense
  */
 
+#include "policy_compat.h"
+
 #include <diet/profile.h>
 
 #include <algorithm>
@@ -120,8 +122,8 @@ int main(int argc, char ** argv) {
 #endif
     std::cout << std::fixed << std::setprecision(3)
       << "profile,records,prefix_bytes,round,build_ns,record_ns,payload_bytes,wire_digest\n";
-    run<storage_policy<profile_unit::byte>>("byte", count, prefix, rounds);
-    run<storage_policy<profile_unit::bit>>("bit", count, prefix, rounds);
+    run<diet_bench::policy<profile_unit::byte>>("byte", count, prefix, rounds);
+    run<diet_bench::policy<profile_unit::bit>>("bit", count, prefix, rounds);
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n'; return 1;
   }

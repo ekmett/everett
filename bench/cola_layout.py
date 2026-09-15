@@ -7,6 +7,7 @@ Run under the host CPU/build-directory resource gate. Header snapshots are
 fresh, and only the aligned variants receive the recorded declaration patch.
 """
 from snapshot import Snapshot
+from fixture import write_fixture
 
 import argparse
 import csv
@@ -45,7 +46,7 @@ def main():
     build.mkdir(parents=True, exist_ok=True)
     git = lambda *a: subprocess.check_output(["git", "-C", str(repo), *a])
     source = build / "cola_layout.cc"
-    source.write_bytes((repo / "bench/cola_layout.cc").read_bytes())
+    write_fixture(repo / "bench/cola_layout.cc", source)
     declaration = "  inline bit_comparison compare_common_bits(bit_view a, bit_view b) {"
     patch = ("#if defined(__APPLE__) && defined(__aarch64__) && defined(__clang__)\n"
              "  // Reduce the out-of-line NEON loop's sensitivity to caller code layout.\n"

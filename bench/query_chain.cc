@@ -10,6 +10,8 @@
  * \endlicense
  */
 
+#include "policy_compat.h"
+
 #include <diet/query.h>
 
 #include <algorithm>
@@ -173,8 +175,8 @@ int main(int argc, char ** argv) try {
   auto trials = argc > 4 ? unsigned(std::stoul(argv[4])) : 5u;
   require(count >= 64 && count <= 1048576 && prefix <= 4096 && queries && trials, "invalid benchmark dimensions");
   std::cout << "profile,group_size,base_records,prefix_bytes,head_entries,prefix_catalogs,queries,trial,prepare_ns,query_ns,visited_catalogs,matches,checksum\n";
-  run<diet::storage_policy<diet::profile_unit::byte>>("byte", count, prefix, queries, trials);
-  run<diet::storage_policy<diet::profile_unit::bit>>("bit", count, prefix, queries, trials);
+  run<diet_bench::policy<diet::profile_unit::byte>>("byte", count, prefix, queries, trials);
+  run<diet_bench::policy<diet::profile_unit::bit>>("bit", count, prefix, queries, trials);
 } catch (std::exception const & error) {
   std::cerr << error.what() << '\n';
   return 1;

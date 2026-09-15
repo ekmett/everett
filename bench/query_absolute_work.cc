@@ -7,6 +7,8 @@
  * \endlicense
  */
 
+#include "policy_compat.h"
+
 #include <diet/query.h>
 
 #include <algorithm>
@@ -165,11 +167,11 @@ int main(int argc, char** argv) try {
   require(count >= 64 && count <= 1048576 && prefix <= 4096 && queries, "work dimensions");
   std::cout << "profile,base_records,prefix_bytes,queries,K,W,catalogs,matches,checksum,native_skipped,native_visited,native_compared_bits,borrowed_skipped,borrowed_visited,borrowed_compared_bits,unknown_routes,extra_value_probes\n";
 #if defined(DIET_QUERY_COMPARE_W16)
-  using B = diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 15, diet::exponential_golomb<0>, 16>;
-  using I = diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 15, diet::exponential_golomb<0>, 16>;
+  using B = diet_bench::policy<diet::profile_unit::byte, diet::variable_values, 15, diet::exponential_golomb<0>, 16>;
+  using I = diet_bench::policy<diet::profile_unit::bit, diet::variable_values, 15, diet::exponential_golomb<0>, 16>;
 #else
-  using B = diet::storage_policy<diet::profile_unit::byte>;
-  using I = diet::storage_policy<diet::profile_unit::bit>;
+  using B = diet_bench::policy<diet::profile_unit::byte>;
+  using I = diet_bench::policy<diet::profile_unit::bit>;
 #endif
   audit<B>("byte", count, prefix, queries); audit<I>("bit", count, prefix, queries);
   return 0;

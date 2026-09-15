@@ -10,6 +10,8 @@
  * \endlicense
  */
 
+#include "policy_compat.h"
+
 #include <diet/query.h>
 
 #include <algorithm>
@@ -213,11 +215,11 @@ int main(int argc, char ** argv) try {
   require(count >= 64 && count <= 1048576 && prefix <= 4096 && queries && trials, "invalid benchmark dimensions");
   std::cout << "profile,group_size,base_records,prefix_bytes,head_entries,prefix_catalogs,queries,trial,prepare_ns,query_ns,visited_catalogs,matches,checksum,codec_block_size,native_payload_bytes,borrowed_payload_bytes,offset_array_bytes,rank_array_bytes,cut_lcp_array_bytes,false_borrow_bytes,total_array_bytes\n";
 #if defined(DIET_QUERY_COMPARE_W16)
-  using byte_policy = diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 15, diet::exponential_golomb<0>, 16>;
-  using bit_policy = diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 15, diet::exponential_golomb<0>, 16>;
+  using byte_policy = diet_bench::policy<diet::profile_unit::byte, diet::variable_values, 15, diet::exponential_golomb<0>, 16>;
+  using bit_policy = diet_bench::policy<diet::profile_unit::bit, diet::variable_values, 15, diet::exponential_golomb<0>, 16>;
 #else
-  using byte_policy = diet::storage_policy<diet::profile_unit::byte>;
-  using bit_policy = diet::storage_policy<diet::profile_unit::bit>;
+  using byte_policy = diet_bench::policy<diet::profile_unit::byte>;
+  using bit_policy = diet_bench::policy<diet::profile_unit::bit>;
 #endif
   run<byte_policy>("byte", count, prefix, queries, trials);
   run<bit_policy>("bit", count, prefix, queries, trials);

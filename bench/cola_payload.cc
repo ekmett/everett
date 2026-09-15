@@ -1,5 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 // SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+#include "policy_compat.h"
+
 #include <diet/cola_sections.h>
 #include <diet/cola_query.h>
 #include <algorithm>
@@ -185,9 +187,9 @@ int main(int argc,char **argv) {
   std::filesystem::path dump=argc>2?argv[2]:"build-payload-wire";std::filesystem::create_directories(dump);
   bool default_only=argc>3 && std::string(argv[3])=="1";
   for(unsigned prefix:{0u,4096u}) {
-    run<storage_policy<profile_unit::byte,variable_values,3,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
-    run<storage_policy<profile_unit::byte,variable_values,15,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
-    run<storage_policy<profile_unit::bit,variable_values,3,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
-    run<storage_policy<profile_unit::bit,variable_values,15,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
+    run<diet_bench::policy<profile_unit::byte,variable_values,3,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
+    run<diet_bench::policy<profile_unit::byte,variable_values,15,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
+    run<diet_bench::policy<profile_unit::bit,variable_values,3,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
+    run<diet_bench::policy<profile_unit::bit,variable_values,15,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
   }
 }

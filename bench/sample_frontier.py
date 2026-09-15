@@ -12,6 +12,7 @@
 """Compare pinned sampling frontiers with a shared sample/pipeline-checked harness."""
 
 from snapshot import Snapshot
+from fixture import write_fixture
 
 import argparse
 import csv
@@ -53,7 +54,7 @@ def main():
     flags += (["-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer"]
               if args.sanitize else ["-O3", "-DNDEBUG"])
     source = build / "sample_frontier.cc"
-    source.write_bytes((repo / "bench/sample_frontier.cc").read_bytes())
+    write_fixture(repo / "bench/sample_frontier.cc", source)
     metadata = {
         "started_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "source_sha256": digest(source.read_bytes()),

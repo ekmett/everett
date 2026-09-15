@@ -2,6 +2,8 @@
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 """Count allocations against the two frozen header trees from sample_frontier.py."""
+from fixture import write_fixture
+
 import argparse
 import csv
 import hashlib
@@ -22,7 +24,8 @@ def main():
     build = args.benchmark_build.resolve()
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    source = Path(__file__).with_suffix('.cc').resolve()
+    source = output / 'index_context_allocations.cc'
+    write_fixture(Path(__file__).with_suffix('.cc'), source)
     frozen = json.loads((build / 'metadata.json').read_text())
     compiler = shlex.split(os.environ.get('CXX', 'clang++'))
     metadata = {'source_sha256': hashlib.sha256(source.read_bytes()).hexdigest(),

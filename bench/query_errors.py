@@ -12,6 +12,7 @@
 """Measure unchanged query checks with inline throws, cold throws or fail-stop helpers."""
 
 from snapshot import Snapshot
+from fixture import write_fixture
 
 import argparse
 import csv
@@ -99,7 +100,7 @@ namespace diet::error_detail {
         "fail_stop": preamble + '  inline void raise(char const *) noexcept { std::abort(); }\n}\n',
     }
     source = build / "query_compare.cc"
-    source.write_bytes((repo / "bench/query_compare.cc").read_bytes())
+    write_fixture(repo / "bench/query_compare.cc", source)
     metadata = {
         "started_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "baseline_revision": revision, "normalization": snapshot.metadata(), "query_include_closure": sorted(closure),

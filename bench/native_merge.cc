@@ -10,6 +10,8 @@
  * \endlicense
  */
 
+#include "policy_compat.h"
+
 #include <diet/native_merge.h>
 
 #include <algorithm>
@@ -146,10 +148,10 @@ int main(int argc, char ** argv) {
 #endif
     std::cout << std::fixed << std::setprecision(3)
       << "profile,records,prefix_bytes,round,build_ns,record_ns,payload_bytes,wire_digest\n";
-    run<storage_policy<profile_unit::byte, fixed_values<8>>>("byte_fixed", count, prefix, rounds);
-    run<storage_policy<profile_unit::byte>>("byte_variable", count, prefix, rounds);
-    run<storage_policy<profile_unit::bit, fixed_values<13>>>("bit_fixed", count, prefix, rounds);
-    run<storage_policy<profile_unit::bit>>("bit_variable", count, prefix, rounds);
+    run<diet_bench::policy<profile_unit::byte, fixed_values<8>>>("byte_fixed", count, prefix, rounds);
+    run<diet_bench::policy<profile_unit::byte>>("byte_variable", count, prefix, rounds);
+    run<diet_bench::policy<profile_unit::bit, fixed_values<13>>>("bit_fixed", count, prefix, rounds);
+    run<diet_bench::policy<profile_unit::bit>>("bit_variable", count, prefix, rounds);
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n'; return 1;
   }

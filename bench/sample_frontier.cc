@@ -10,6 +10,8 @@
  * \endlicense
  */
 
+#include "policy_compat.h"
+
 #include <diet/index_pipeline.h>
 
 #include <algorithm>
@@ -246,7 +248,7 @@ int main(int argc, char ** argv) try {
   std::cout << std::fixed << std::setprecision(3)
     << "profile,fixture,records,prefix_bytes,round,operation,total_ns,record_ns,source_entries,work,checksum\n";
   for (bool duplicates : {false, true}) {
-    run<storage_policy<profile_unit::byte>>("byte", count, prefix, rounds, duplicates);
-    run<storage_policy<profile_unit::bit>>("bit", count, prefix, rounds, duplicates);
+    run<diet_bench::policy<profile_unit::byte>>("byte", count, prefix, rounds, duplicates);
+    run<diet_bench::policy<profile_unit::bit>>("bit", count, prefix, rounds, duplicates);
   }
 } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }

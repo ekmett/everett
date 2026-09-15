@@ -10,6 +10,8 @@
  * \endlicense
  */
 
+#include "policy_compat.h"
+
 #include <diet/index_pipeline.h>
 
 #include <algorithm>
@@ -279,10 +281,10 @@ int main(int argc, char ** argv) try {
   auto rounds = argc > 4 ? unsigned(std::stoul(argv[4])) : 3u;
   require(count >= 64 && count <= 1048576 && prefix <= 4096 && queries && rounds, "invalid benchmark dimensions");
   std::cout << "profile,group_size,base_records,prefix_bytes,queries,rounds,operation,ns_per_operation,digest_bytes,encoding_digest,checksum\n";
-  run<diet::storage_policy<diet::profile_unit::byte>>("byte_variable", count, prefix, queries, rounds);
-  run<diet::storage_policy<diet::profile_unit::bit>>("bit_variable", count, prefix, queries, rounds);
-  run<diet::storage_policy<diet::profile_unit::byte, diet::fixed_values<8>, 7>>("byte_fixed", count, prefix, queries, rounds);
-  run<diet::storage_policy<diet::profile_unit::bit, diet::fixed_values<13>, 31>>("bit_fixed", count, prefix, queries, rounds);
+  run<diet_bench::policy<diet::profile_unit::byte>>("byte_variable", count, prefix, queries, rounds);
+  run<diet_bench::policy<diet::profile_unit::bit>>("bit_variable", count, prefix, queries, rounds);
+  run<diet_bench::policy<diet::profile_unit::byte, diet::fixed_values<8>, 7>>("byte_fixed", count, prefix, queries, rounds);
+  run<diet_bench::policy<diet::profile_unit::bit, diet::fixed_values<13>, 31>>("bit_fixed", count, prefix, queries, rounds);
 } catch (std::exception const & error) {
   std::cerr << error.what() << '\n';
   return 1;

@@ -10,6 +10,8 @@
  * \endlicense
  */
 
+#include "policy_compat.h"
+
 #include <diet/index_builder.h>
 #include <diet/sections.h>
 
@@ -130,8 +132,8 @@ namespace {
 int main() try {
   std::cout << "profile,prefix_bytes,input,records,allocations,requested_bytes,peak_bytes,builder_bytes,checksum\n";
   for (auto prefix : {0u, 4096u}) for (bool coded : {false, true}) {
-    run<diet::storage_policy<diet::profile_unit::byte>>("byte", prefix, coded);
-    run<diet::storage_policy<diet::profile_unit::bit>>("bit", prefix, coded);
+    run<diet_bench::policy<diet::profile_unit::byte>>("byte", prefix, coded);
+    run<diet_bench::policy<diet::profile_unit::bit>>("bit", prefix, coded);
   }
   return 0;
 } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }

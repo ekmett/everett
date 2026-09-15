@@ -10,6 +10,7 @@
 # \endlicense
 """Compare identical key/bit fixtures using a pinned baseline and current headers."""
 from snapshot import Snapshot
+from fixture import self_contained
 
 import argparse
 import csv
@@ -86,6 +87,9 @@ def main():
     fixture_path = "bench/key_bits.cc"
     fixture_snapshot = Snapshot(repo, harness_revision) if args.harness else None
     source = fixture_snapshot.read(fixture_path) if fixture_snapshot else (repo / fixture_path).read_bytes()
+    adapter = (fixture_snapshot.read("bench/policy_compat.h")
+               if fixture_snapshot and b'#include "policy_compat.h"' in source else None)
+    source = self_contained(source, adapter)
     source_snapshot = build / "key_bits.cc"
     source_snapshot.write_bytes(source)
     compiler = shlex.split(os.environ.get("CXX", "clang++"))
