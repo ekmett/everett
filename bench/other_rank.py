@@ -35,12 +35,19 @@ for name in ['rank', 'rank_groups', 'rank15']:
     data = subprocess.check_output(['git', 'show', f'{candidate}:include/everett/{name}.h'], cwd=root)
     (include / f'{name}.h').write_bytes(data)
     header_hashes[name] = hashlib.sha256(data).hexdigest()
-for name in ['rank', 'rank_groups']:
+if any('word_view.h' in (include / f'{name}.h').read_text() for name in ['rank', 'rank_groups', 'rank15']):
+    data = subprocess.check_output(['git', 'show', f'{candidate}:include/everett/word_view.h'], cwd=root)
+    (include / 'word_view.h').write_bytes(data)
+    header_hashes['word_view'] = hashlib.sha256(data).hexdigest()
+for name in ['rank', 'rank15', 'rank_groups']:
     text = subprocess.check_output(['git', 'show', f'{baseline}:include/everett/{name}.h'], cwd=root, text=True)
-    text = text.replace('namespace everett {', 'namespace baseline {\n  using everett::rank15_view;' if name == 'rank_groups' else 'namespace baseline {')
+    text = text.replace('namespace everett {', 'namespace baseline {')
     (build / f'baseline_{name}.h').write_text(text)
 neon = (include / 'rank_groups.h').read_text()
-neon = neon.replace('namespace everett {', 'namespace rank_neon {\n  using everett::rank15_view;').replace('if constexpr (K != 3)', 'if constexpr (true)')
+aliases = 'namespace rank_neon {\n  using everett::rank15_view;'
+if 'word_view' in neon:
+    aliases += '\n  using everett::word_view;'
+neon = neon.replace('namespace everett {', aliases).replace('if constexpr (K != 3)', 'if constexpr (true)')
 (build / 'neon_rank_groups.h').write_text(neon)
 exe = build / 'other_rank'
 flags = ['-O1', '-g', '-fsanitize=address,undefined', '-fno-omit-frame-pointer'] if args.sanitize else ['-O3', '-DNDEBUG']
