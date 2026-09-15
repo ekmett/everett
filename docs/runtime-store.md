@@ -63,9 +63,46 @@ the catalog's exact generation comparison; a stale writer cannot replace the
 winner. Current catalog generations and reservations remain pinned, so this is
 not yet a garbage-collection policy.
 
-The [encoded runtime](cola-runtime.md) currently uses one pending binary carry
+The default [encoded runtime](cola-runtime.md) uses one pending binary carry
 and blocks later admissions until it is serviced. It provides a complete
 searchable update path with explicit structural charges, but it does not give
 the redundant scheduler's worst-case update guarantee. The runtime-store tests
 exercise writes, unchanged-file reuse, snapshot saves, forks, process-equivalent
 reopen, interrupted carry restart and competing publication.
+
+Complete redundant frontiers
+----------------------------
+
+The storage adapter also accepts the three-slot redundant scheduler. Its fourth
+template parameter selects the runtime family; the second selects physical ID
+allocation and the third supplies the SQLite fault-injection seam:
+
+```cpp
+#include <diet/redundant_checkpoint.h>
+#include <diet/runtime_store.h>
+
+using family = diet::redundant_runtime_family<P>;
+using storage = diet::runtime_store<P, diet::random_object_ids,
+  diet::sqlite_catalog_ops, family>;
+```
+
+A redundant checkpoint owns more than its query root. I record every occupied
+slot, exact route, ready carrier, hidden completed native or index, pending job
+phase, chronological interval, and remaining service obligation. The catalog
+pins the additional pair roots and standalone native files in the same
+transaction as the visible root and checkpoint. Saving or forking copies these
+pins without copying file contents. An operation replay returns the exact
+historical pin set as well as its checkpoint.
+
+Reopening interns file identities across all these roots, so two routes to the
+same native or index retain the same immutable owner. It checks the scheduler's
+slot and dependency invariants before admitting the frontier. A checkpoint
+cannot refer to an artifact outside its durable pin closure. None of these
+checks scans FC strings or computes a whole-body checksum.
+
+`redundant_runtime::checkpoint()` captures the current full frontier, including
+completed artifacts from work since its previous publication. Private partial
+builders are restarted after recovery; their unfinished output is not treated
+as durable. The restored scheduler admits no new contribution until recovery
+service has made its frontier safe. The same capture and mapping path works
+for `persistent_engine` through the typed core's runtime family.

@@ -73,6 +73,13 @@ namespace diet {
         result = pair_type(new cola_runtime_node(*i, std::move(result)));
       return result;
     }
+    static pair_type from_mapped_parts(std::shared_ptr<mapped_cola_blob<P> const> source,
+        native_pointer native, pair_type main, native_pointer secondary = {}) {
+      if (!source || !native || native->mapped() != source->native_object() || secondary || source->secondary_target() ||
+          bool(main) != bool(source->main_target()) || (main && main->mapped() != source->main_target()))
+        error_detail::raise<std::invalid_argument>("runtime mapped parts do not retain exact targets");
+      return pair_type(new cola_runtime_node(std::move(source), std::move(native), std::move(main)));
+    }
     cola_index_view<P> view() const { return built_ ? built_->view() : mapped_->view(); }
     native_pointer native_owner() const noexcept { return native_; }
     native_type const & native() const & noexcept { return *native_; }
@@ -97,6 +104,9 @@ namespace diet {
     }
     cola_runtime_node(std::shared_ptr<mapped_cola_blob<P> const> value, pair_type main)
       : native_(native_type::from_mapped(value->native_object())), main_(std::move(main)), mapped_(std::move(value)),
+        depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)) {}
+    cola_runtime_node(std::shared_ptr<mapped_cola_blob<P> const> value, native_pointer native, pair_type main)
+      : native_(std::move(native)), main_(std::move(main)), mapped_(std::move(value)),
         depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)) {}
   };
 

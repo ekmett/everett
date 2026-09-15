@@ -188,35 +188,56 @@ namespace diet {
 
   template <class P> using mapped_cola_query_root = cola_query_root<P, mapped_cola_blob<P>>;
 
-  // Resolves exact targets using fixed metadata; native mappings shared by
-  // main/secondary roles are cached. It never scans or rebuilds a payload.
-  template <class P> mapped_cola_query_root<P> open_mapped_cola_query(
-      std::filesystem::path const & root, blob_identity const & head) {
+  // Interns exact immutable targets across every root of a checkpoint. Opening
+  // reads directories only; payload scans remain explicit recovery operations.
+  template <class P> struct mapped_cola_resolver {
     using blob = mapped_cola_blob<P>;
     using native_pointer = typename blob::native_pointer;
-    struct pending { blob_identity identity; native_pointer native, secondary; typename blob::index_pointer index; };
-    std::vector<pending> chain;
-    std::unordered_set<std::string> seen;
-    std::unordered_map<std::string, native_pointer> natives;
-    auto native = [&](object_id const & id) {
-      auto found = natives.find(id.hex());
-      if (found == natives.end()) found = natives.emplace(id.hex(), std::make_shared<mapped_native<P> const>(
-        mapped_native<P>::open(root / object_path(id, file_kind::native_blob)))).first;
+    using pair_type = typename blob::pair_type;
+    explicit mapped_cola_resolver(std::filesystem::path root) : root_(std::move(root)) {}
+    native_pointer native(object_id const & id) {
+      auto found = natives_.find(id.hex());
+      if (found == natives_.end()) found = natives_.emplace(id.hex(), std::make_shared<mapped_native<P> const>(
+        mapped_native<P>::open(root_ / object_path(id, file_kind::native_blob)))).first;
       return found->second;
-    };
-    std::optional<blob_identity> current = head;
-    while (current) {
-      if (!seen.insert(current->index.hex()).second) error_detail::raise<std::invalid_argument>("cyclic COLA object identities");
-      auto index = std::make_shared<mapped_cola_index<P> const>(
-        mapped_cola_index<P>::open(root / object_path(current->index, file_kind::fractional_index)));
-      if (index->native_id() != current->native) error_detail::raise<std::invalid_argument>("COLA chain native identity mismatch");
-      chain.push_back({*current, native(current->native), index->secondary_id() ? native(*index->secondary_id()) : native_pointer{}, index});
-      current = index->main_id();
     }
-    typename blob::pair_type pair;
-    for (auto i = chain.size(); i-- > 0;)
-      pair = blob::bind(std::move(chain[i].identity), std::move(chain[i].native), chain[i].index,
-        std::move(pair), std::move(chain[i].secondary), chain[i].index->secondary_id());
-    return mapped_cola_query_root<P>::adopt_prepared(std::move(pair));
+    pair_type pair(blob_identity const & head) {
+      struct pending { blob_identity identity; native_pointer native, secondary; typename blob::index_pointer index; };
+      std::vector<pending> chain;
+      std::unordered_set<std::string> seen;
+      std::optional<blob_identity> current = head;
+      pair_type target;
+      while (current) {
+        if (auto known = pairs_.find(current->index.hex()); known != pairs_.end()) {
+          if (known->second->identity() != *current)
+            error_detail::raise<std::invalid_argument>("COLA reused index has another native identity");
+          target = known->second; break;
+        }
+        if (!seen.insert(current->index.hex()).second)
+          error_detail::raise<std::invalid_argument>("cyclic COLA object identities");
+        auto index = std::make_shared<mapped_cola_index<P> const>(
+          mapped_cola_index<P>::open(root_ / object_path(current->index, file_kind::fractional_index)));
+        if (index->native_id() != current->native)
+          error_detail::raise<std::invalid_argument>("COLA chain native identity mismatch");
+        chain.push_back({*current, native(current->native), index->secondary_id() ? native(*index->secondary_id()) : native_pointer{}, index});
+        current = index->main_id();
+      }
+      for (auto i = chain.rbegin(); i != chain.rend(); ++i) {
+        target = blob::bind(i->identity, std::move(i->native), i->index,
+          std::move(target), std::move(i->secondary), i->index->secondary_id());
+        pairs_.emplace(i->identity.index.hex(), target);
+      }
+      return target;
+    }
+  private:
+    std::filesystem::path root_;
+    std::unordered_map<std::string, native_pointer> natives_;
+    std::unordered_map<std::string, pair_type> pairs_;
+  };
+
+  template <class P> mapped_cola_query_root<P> open_mapped_cola_query(
+      std::filesystem::path const & root, blob_identity const & head) {
+    mapped_cola_resolver<P> resolver(root);
+    return mapped_cola_query_root<P>::adopt_prepared(resolver.pair(head));
   }
 }

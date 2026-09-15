@@ -11,11 +11,13 @@
  */
 #pragma once
 
-#include <diet/cola_runtime.h>
+#include <diet/runtime_checkpoint.h>
 #include <diet/sqlite_catalog.h>
 
 #include <array>
 #include <map>
+#include <unordered_map>
+#include <unordered_set>
 
 #if defined(__APPLE__) || defined(__linux__)
 #include <sys/random.h>
@@ -43,64 +45,27 @@ namespace diet {
     }
   };
 
-  struct runtime_checkpoint {
-    std::vector<cola_runtime_interval> intervals;
-    std::vector<std::byte> semantic;
-  };
-
-  namespace runtime_store_detail {
-    inline constexpr std::array<std::byte, 8> magic{
-      std::byte{'D'}, std::byte{'I'}, std::byte{'E'}, std::byte{'T'},
-      std::byte{'R'}, std::byte{'T'}, std::byte{0}, std::byte{1}};
-
-    template <class P> std::vector<std::byte> checkpoint(cola_runtime_snapshot<P> const & source,
-        std::span<std::byte const> semantic) {
-      std::vector<std::byte> out(magic.begin(), magic.end());
-      catalog_detail::number(out, source.runs().size());
-      for (auto const & run : source.runs()) {
-        catalog_detail::number(out, run.first); catalog_detail::number(out, run.last);
-      }
-      catalog_detail::binary(out, semantic);
-      return out;
-    }
-    inline runtime_checkpoint checkpoint(std::span<std::byte const> encoded) {
-      if (encoded.size() < magic.size() || !std::equal(magic.begin(), magic.end(), encoded.begin()))
-        throw std::invalid_argument("unsupported Diet runtime checkpoint");
-      catalog_detail::outcome_reader input{encoded.subspan(magic.size())};
-      auto count = input.number();
-      if (count > 65 || count > input.data.size() / 16)
-        throw std::invalid_argument("invalid Diet runtime interval count");
-      runtime_checkpoint result;
-      result.intervals.reserve(static_cast<std::size_t>(count));
-      for (std::uint64_t i = 0; i != count; ++i) {
-        auto first = input.number(), last = input.number();
-        result.intervals.push_back({first, last});
-      }
-      auto size = input.number();
-      if (size != input.data.size()) throw std::invalid_argument("invalid Diet runtime semantic extent");
-      result.semantic.assign(input.data.begin(), input.data.end());
-      return result;
-    }
-  }
-
-  template <class P> struct stored_runtime {
+  template <class P, class Family = binary_runtime_family<P>> struct stored_runtime {
     catalog_tap_head head;
-    cola_runtime_snapshot<P> snapshot;
+    typename Family::snapshot_type snapshot;
     std::vector<std::byte> semantic;
   };
 
   // Single-owner adapter over a trusted, existing, durable directory. All
   // persisted roots remain catalog-pinned. Private failures disable this
   // adapter; reopening selects only complete root/checkpoint publications.
-  template <class P, class Ids = random_object_ids, class Ops = sqlite_catalog_ops> struct runtime_store {
+  template <class P, class Ids = random_object_ids, class Ops = sqlite_catalog_ops, class Family = binary_runtime_family<P>> struct runtime_store {
     using policy_type = P;
-    using snapshot_type = cola_runtime_snapshot<P>;
-    using stored_type = stored_runtime<P>;
-    using node_type = cola_runtime_node<P>;
-    using native_type = cola_runtime_native<P>;
+    using family_type = Family;
+    using codec_type = runtime_storage_codec<Family>;
+    using snapshot_type = typename Family::snapshot_type;
+    using stored_type = stored_runtime<P, Family>;
+    using node_type = typename Family::node_type;
+    using native_type = typename Family::native_type;
     using pair_type = typename node_type::pair_type;
     using native_pointer = typename node_type::native_pointer;
     using catalog_type = sqlite_catalog<P, Ops>;
+    static_assert(std::is_same_v<P, typename Family::policy_type>);
 
     static runtime_store create(std::filesystem::path const & root, Ids ids = {},
         catalog_options options = {}, Ops ops = {}) {
@@ -136,9 +101,11 @@ namespace diet {
       require_active();
       try {
         auto id = persist(source);
-        auto checkpoint = runtime_store_detail::checkpoint(source, semantic);
+        auto checkpoint = codec_type::encode(source, semantic,
+          [&](pair_type const & pair) { return nodes_.at(pair); },
+          [&](native_pointer const & native) { return natives_.at(native); });
         auto op = operation();
-        return restore(catalog_.create_tap(op, name, id, checkpoint));
+        return restore(catalog_.create_tap(op, name, id.head, checkpoint, id.auxiliary));
       } catch (...) { failed_ = true; throw; }
     }
     stored_type publish(catalog_tap_head const & expected, snapshot_type const & source,
@@ -146,9 +113,11 @@ namespace diet {
       require_active();
       try {
         auto id = persist(source);
-        auto checkpoint = runtime_store_detail::checkpoint(source, semantic);
+        auto checkpoint = codec_type::encode(source, semantic,
+          [&](pair_type const & pair) { return nodes_.at(pair); },
+          [&](native_pointer const & native) { return natives_.at(native); });
         auto op = operation();
-        auto published = catalog_.publish_tap(op, expected, id, checkpoint);
+        auto published = catalog_.publish_tap(op, expected, id.head, checkpoint, id.auxiliary);
         if (!published.published) throw std::runtime_error("named Diet tap was advanced by another connection");
         return restore(std::move(published.head));
       } catch (...) { failed_ = true; throw; }
@@ -183,73 +152,134 @@ namespace diet {
         if (i->first.expired()) i = table.erase(i); else ++i;
       }
     }
-    stored_type restore(catalog_tap_head head) {
-      auto checkpoint = runtime_store_detail::checkpoint(head.checkpoint);
-      auto graph = open_mapped_cola_query<P>(root(), head.timeline.head);
-      auto node = node_type::from_mapped(graph.head());
-      auto snapshot = snapshot_type::restore(node, checkpoint.intervals);
-      prune(nodes_); prune(natives_);
-      for (auto current = node; current; current = current->main_target()) {
-        auto const & ids = current->mapped()->identity();
-        nodes_.insert_or_assign(current, ids);
-        natives_.insert_or_assign(current->native_owner(), ids.native);
+    // Mapping one checkpoint shares physical mappings and typed facades across
+    // every visible and hidden root, preserving exact immutable dependencies.
+    struct resolver {
+      runtime_store & store;
+      mapped_cola_resolver<P> mapped;
+      std::unordered_map<std::string, native_pointer> natives;
+      std::unordered_map<std::string, pair_type> pairs;
+      bool restricted = false;
+      explicit resolver(runtime_store & value) : store(value), mapped(value.root()) {}
+      native_pointer native(object_id const & id) {
+        auto found = natives.find(id.hex());
+        if (found == natives.end()) {
+          if (restricted) throw std::invalid_argument("checkpoint native has no durable pin");
+          auto value = native_type::from_mapped(mapped.native(id));
+          store.natives_.insert_or_assign(value, id);
+          found = natives.emplace(id.hex(), std::move(value)).first;
+        }
+        return found->second;
       }
-      return {std::move(head), std::move(snapshot), std::move(checkpoint.semantic)};
-    }
-    blob_identity persist(snapshot_type const & source) {
+      pair_type pair(blob_identity const & id) {
+        if (restricted) {
+          auto found = pairs.find(id.index.hex());
+          if (found == pairs.end() || found->second->mapped()->identity() != id)
+            throw std::invalid_argument("checkpoint pair has no durable pin");
+          return found->second;
+        }
+        auto physical = mapped.pair(id);
+        std::vector<typename mapped_cola_blob<P>::pair_type> pending;
+        pair_type result;
+        for (auto p = physical; p; p = p->main_target()) {
+          if (auto known = pairs.find(p->identity().index.hex()); known != pairs.end()) { result = known->second; break; }
+          pending.push_back(p);
+        }
+        for (auto i = pending.rbegin(); i != pending.rend(); ++i) {
+          auto const & p = *i;
+          result = node_type::from_mapped_parts(p, native(p->identity().native), result,
+            p->index_object()->secondary_id() ? native(*p->index_object()->secondary_id()) : native_pointer{});
+          pairs.emplace(p->identity().index.hex(), result);
+          store.nodes_.insert_or_assign(result, p->identity());
+        }
+        return result;
+      }
+    };
+    stored_type restore(catalog_tap_head head) {
       prune(nodes_); prune(natives_);
-      struct output { pair_type node; blob_identity ids; bool native; };
-      std::vector<output> outputs;
-      cache<native_type, object_id> planned;
+      resolver loaded(*this);
+      // Load retained roots first, both to validate every durable pin and to
+      // make all subsequent checkpoint references share their exact owners.
+      (void)loaded.pair(head.timeline.head);
+      for (auto const & pair : head.auxiliary.pairs) (void)loaded.pair(pair);
+      for (auto const & native : head.auxiliary.natives) (void)loaded.native(native);
+      loaded.restricted = true;
+      auto restored = codec_type::decode(head.checkpoint, head.timeline.head, loaded);
+      return {std::move(head), std::move(restored.snapshot), std::move(restored.semantic)};
+    }
+    struct persisted { blob_identity head; catalog_auxiliary_roots auxiliary; };
+    persisted persist(snapshot_type const & source) {
+      prune(nodes_); prune(natives_);
+      std::vector<pair_type> roots, outputs;
+      std::vector<native_pointer> native_roots, native_outputs;
+      cache<node_type, blob_identity> planned_pairs;
+      cache<native_type, object_id> planned_natives;
       std::vector<catalog_object_reservation> reservations;
       std::vector<blob_identity> inputs;
-      std::optional<blob_identity> target;
-      for (auto node = source.query_root().head(); node; node = node->main_target()) {
-        if (auto known = nodes_.find(node); known != nodes_.end()) {
-          target = known->second; inputs.push_back(*target); break;
+      std::unordered_set<node_type const *> seen_pairs;
+      std::unordered_set<native_type const *> seen_natives;
+      codec_type::collect(source, [&](pair_type value) {
+          if (value && seen_pairs.insert(value.get()).second) roots.push_back(std::move(value));
+        }, [&](native_pointer value) {
+          if (value && seen_natives.insert(value.get()).second) native_roots.push_back(std::move(value));
+        });
+      auto plan_native = [&](native_pointer const & native) {
+        if (auto known = natives_.find(native); known != natives_.end()) return known->second;
+        if (auto known = planned_natives.find(native); known != planned_natives.end()) return known->second;
+        if (!native || !native->owned()) throw std::invalid_argument("mapped native was not opened by this store");
+        auto id = ids_(); planned_natives.emplace(native, id); native_outputs.push_back(native);
+        reservations.push_back({id, file_kind::native_blob}); return id;
+      };
+      std::unordered_set<node_type const *> visiting;
+      auto plan_pair = [&](auto && self, pair_type const & pair) -> blob_identity {
+        if (auto known = nodes_.find(pair); known != nodes_.end()) { inputs.push_back(known->second); return known->second; }
+        if (auto known = planned_pairs.find(pair); known != planned_pairs.end()) return known->second;
+        if (!pair || !pair->built()) throw std::invalid_argument("mapped runtime snapshot was not opened by this store");
+        if (!visiting.insert(pair.get()).second) throw std::invalid_argument("cyclic runtime pair graph");
+        if (pair->main_target()) (void)self(self, pair->main_target());
+        if (pair->secondary_target()) (void)plan_native(pair->secondary_target());
+        blob_identity id{plan_native(pair->native_owner()), ids_()};
+        planned_pairs.emplace(pair, id); reservations.push_back({id.index, file_kind::fractional_index});
+        outputs.push_back(pair); visiting.erase(pair.get()); return id;
+      };
+      for (auto const & pair : roots) (void)plan_pair(plan_pair, pair);
+      for (auto const & native : native_roots) (void)plan_native(native);
+      if (!reservations.empty()) {
+        object_attempt_id attempt(ids_().hex()); auto owner = ids_().hex();
+        std::sort(inputs.begin(), inputs.end(), [](auto const & a, auto const & b) { return a.index.hex() < b.index.hex(); });
+        inputs.erase(std::unique(inputs.begin(), inputs.end()), inputs.end());
+        auto op = operation(); catalog_.reserve(op, attempt, owner, inputs, reservations);
+        for (auto const & native : native_outputs) {
+          auto encoded = encode_native_sections(*native->owned());
+          auto receipt = encoded.seal(root(), planned_natives.at(native), attempt);
+          op = operation(); catalog_.record_sealed(op, receipt);
         }
-        if (!node->built())
-          throw std::invalid_argument("mapped runtime snapshot was not opened by this store");
-        auto native = node->native_owner();
-        auto old = natives_.find(native), pending = planned.find(native);
-        bool fresh = old == natives_.end() && pending == planned.end();
-        auto id = old != natives_.end() ? old->second : pending != planned.end() ? pending->second : ids_();
-        if (fresh) {
-          if (!native->owned()) throw std::invalid_argument("mapped native was not opened by this store");
-          planned.emplace(native, id); reservations.push_back({id, file_kind::native_blob});
+        auto native_id = [&](native_pointer const & native) {
+          auto found = planned_natives.find(native); return found == planned_natives.end() ? natives_.at(native) : found->second;
+        };
+        auto pair_id = [&](pair_type const & pair) {
+          auto found = planned_pairs.find(pair); return found == planned_pairs.end() ? nodes_.at(pair) : found->second;
+        };
+        for (auto const & pair : outputs) {
+          auto id = pair_id(pair);
+          auto encoded = encode_cola_sections(*pair->built(), id.native,
+            pair->main_target() ? std::optional<blob_identity>(pair_id(pair->main_target())) : std::nullopt,
+            pair->secondary_target() ? std::optional<object_id>(native_id(pair->secondary_target())) : std::nullopt);
+          auto receipt = encoded.seal(root(), id.index, attempt);
+          op = operation(); catalog_.record_sealed(op, receipt);
         }
-        blob_identity pair{id, ids_()};
-        reservations.push_back({pair.index, file_kind::fractional_index});
-        outputs.push_back({node, std::move(pair), fresh});
+        mapped_cola_resolver<P> loaded(root());
+        for (auto const & pair : roots) {
+          auto graph = loaded.pair(pair_id(pair)); op = operation(); catalog_.register_graph(op, graph);
+        }
+        for (auto const & [weak, id] : planned_pairs) nodes_.insert_or_assign(weak, id);
+        for (auto const & [weak, id] : planned_natives) natives_.insert_or_assign(weak, id);
       }
-      if (outputs.empty()) {
-        if (!target) throw std::logic_error("runtime has no prepared root");
-        return *target;
-      }
-      object_attempt_id attempt(ids_().hex());
-      auto owner = ids_().hex();
-      auto reserve_op = operation();
-      catalog_.reserve(reserve_op, attempt, owner, inputs, reservations);
-      // Native owners may be shared by several new indexes; seal each exactly
-      // once before sealing indexes in dependency order.
-      for (auto const & output : outputs) if (output.native) {
-        auto encoded = encode_native_sections(*output.node->native_owner()->owned());
-        auto receipt = encoded.seal(root(), output.ids.native, attempt);
-        auto op = operation(); catalog_.record_sealed(op, receipt);
-      }
-      for (auto i = outputs.rbegin(); i != outputs.rend(); ++i) {
-        auto encoded = encode_cola_sections(*i->node->built(), i->ids.native, target);
-        auto receipt = encoded.seal(root(), i->ids.index, attempt);
-        auto op = operation(); catalog_.record_sealed(op, receipt);
-        target = i->ids;
-      }
-      auto graph = open_mapped_cola_query<P>(root(), *target);
-      auto op = operation(); catalog_.register_chain(op, graph);
-      for (auto const & output : outputs) {
-        nodes_.insert_or_assign(output.node, output.ids);
-        natives_.insert_or_assign(output.node->native_owner(), output.ids.native);
-      }
-      return *target;
+      auto primary = nodes_.at(source.query_root().head());
+      catalog_auxiliary_roots retained;
+      for (auto const & pair : roots) retained.pairs.push_back(nodes_.at(pair));
+      for (auto const & native : native_roots) retained.natives.push_back(natives_.at(native));
+      return {primary, catalog_detail::canonical_auxiliary(std::move(retained), primary)};
     }
   };
 }

@@ -13,6 +13,7 @@
 
 #include <diet/fridge.h>
 #include <diet/runtime_store.h>
+#include <diet/redundant_checkpoint.h>
 #include <diet/typed_cola.h>
 
 #include <concepts>
@@ -32,7 +33,7 @@ namespace diet {
     // stable identity for their ordering, codecs, hashing and semantics.
     std::string schema_id;
     bool create_if_missing = true;
-    tap_limits limits{1'000'000, 64 * 1024 * 1024, 64, 4096};
+    tap_limits limits{128'000'000, 64 * 1024 * 1024, 64, 4096};
   };
 
   template <class Cola> struct stored_cola : Cola {
@@ -52,7 +53,7 @@ namespace diet {
     using cola_type = stored_cola<typed_cola_type>;
     using contribution_type = typename Core::contribution_type;
     using metadata_type = typename Core::metadata_type;
-    using store_type = runtime_store<policy_type, Ids>;
+    using store_type = runtime_store<policy_type, Ids, sqlite_catalog_ops, typename Core::runtime_family>;
 
     // The directory must already exist durably. Catalog creation is exclusive;
     // a competing creator can fail this call, but no existing file is formatted.
@@ -150,7 +151,7 @@ namespace diet {
     using contribution_type = typename engine_type::contribution_type;
     using ticket = typename tap_type::ticket;
     using publication_type = typename tap_type::snapshot_type;
-    using store_type = runtime_store<policy_type>;
+    using store_type = runtime_store<policy_type, random_object_ids, sqlite_catalog_ops, typename Core::runtime_family>;
 
     connection(std::filesystem::path const & root, std::string_view name, connection_options options = {})
       : root_(std::filesystem::canonical(root)), options_(checked_options(std::move(options))),

@@ -114,7 +114,7 @@ the other submission path waits for capacity. `cancel(ticket)` can cancel a
 queued command before the worker claims it. Dropping a ticket does not cancel it.
 
 The defaults allow 64 outstanding contributions, 64 MiB of retained encoded
-input, and one million structural work units. These can be changed in
+input, and 128 million reserved structural work units. These can be changed in
 `connection_options::limits`. The limits cover admitted queue input and its
 structural reservation, including the command currently executing. They do not
 bound mapped snapshots retained by readers, rewritten bytes, user-defined

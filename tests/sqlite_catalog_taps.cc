@@ -122,13 +122,13 @@ namespace {
     temporary dir;
     auto db = catalog::create_taps(dir.root, id(1));
     auto a = persist(db, 100), b = persist(db, 200);
-    auto first = db.create_tap("create", "earth-616", a, checkpoint(1));
+    auto first = db.create_tap("create", "earth-616", a, checkpoint(1), {{b}, {b.native}});
     auto state = std::make_shared<commit_control>();
     {
       auto faulty = sqlite_catalog<P, commit_ops>::open(dir.root, {}, commit_ops{state});
       state->fail = true; state->committed = committed;
       bool uncertain = false;
-      try { (void)faulty.publish_tap("uncertain", first, b, checkpoint(2)); }
+      try { (void)faulty.publish_tap("uncertain", first, b, checkpoint(2), {{a}, {a.native}}); }
       catch (catalog_error const & error) { uncertain = error.outcome_unknown; }
       require(uncertain && faulty.poisoned(), "commit failure did not poison handle");
       rejects([&] { faulty.find_tap("earth-616"); });
@@ -138,9 +138,44 @@ namespace {
     require(current.has_value(), "tap lost at commit failure");
     require(current->timeline.head == (committed ? b : a) &&
       current->checkpoint == checkpoint(committed ? 2 : 1), "root/checkpoint torn by failure");
-    auto retry = opened.publish_tap("uncertain", first, b, checkpoint(2));
+    require(current->auxiliary == (committed ? catalog_auxiliary_roots{{a}, {a.native}} : first.auxiliary),
+      "hidden roots torn by failure");
+    auto retry = opened.publish_tap("uncertain", first, b, checkpoint(2), {{a}, {a.native}});
     require(retry.published && retry.head.timeline.generation == 1 && retry.head.checkpoint == checkpoint(2),
       "uncertain publication did not replay exactly");
+  }
+  void auxiliary_pins() {
+    temporary dir;
+    auto db = catalog::create_taps(dir.root, id(1));
+    auto a = persist(db, 100), b = persist(db, 200), c = persist(db, 300);
+    catalog_auxiliary_roots roots{{b, b, a}, {c.native, c.native}};
+    auto first = db.create_tap("create-aux", "hidden", a, checkpoint(1), roots);
+    require(first.auxiliary == catalog_auxiliary_roots{{b}, {c.native}}, "auxiliary roots not canonical");
+    require(db.create_tap("create-aux", "hidden", a, checkpoint(1), roots) == first, "auxiliary create replay");
+    rejects([&] { db.create_tap("create-aux", "hidden", a, checkpoint(1)); });
+    auto wrong = first; wrong.auxiliary.natives.clear();
+    require(!db.publish_tap("wrong-aux", wrong, b, {}).published, "CAS omitted auxiliary roots");
+    auto second = db.publish_tap("next-aux", first, b, checkpoint(2), {{a}, {c.native}});
+    require(second.published && second.head.auxiliary.pairs == std::vector<blob_identity>{a}, "hidden publication pins");
+    auto fork = db.fork_tap("fork-aux", "branch", first);
+    require(fork.auxiliary == first.auxiliary, "fork lost hidden roots");
+    db.save_tap("save-aux", "old", first);
+    auto reopened = catalog::open(dir.root);
+    require(reopened.find_tap("hidden") == second.head && reopened.find_tap("branch") == fork &&
+      reopened.find_saved_tap("old") == first, "reopen lost hidden roots");
+    require(reopened.publish_tap("next-aux", first, b, checkpoint(2), {{a}, {c.native}}) == second,
+      "publication replay lost hidden roots");
+    rejects([&] { db.publish_tap("unsealed-aux", second.head, a, {}, {{}, {id(999)}}); });
+    require(db.find_tap("hidden") == second.head, "bad hidden root partially published");
+    sqlite3 * raw = nullptr;
+    require(sqlite3_open((dir.root / "catalog.sqlite3").c_str(), &raw) == SQLITE_OK, "open auxiliary SQL");
+    {
+      catalog_detail::statement pairs(raw, "SELECT count(*) FROM owner_roots WHERE owner_kind='save' AND owner_id=?");
+      pairs.key(1, "old"); require(pairs.row() && pairs.integer(0) == 2, "save did not pin hidden pair");
+      catalog_detail::statement natives(raw, "SELECT count(*) FROM owner_objects WHERE owner_kind='save' AND owner_id=?");
+      natives.key(1, "old"); require(natives.row() && natives.integer(0) == 1, "save did not pin hidden native");
+    }
+    sqlite3_close(raw);
   }
   void schema_checks() {
     temporary dir;
@@ -158,6 +193,6 @@ namespace {
   }
 }
 int main() {
-  try { lifecycle(); commit_failure(false); commit_failure(true); schema_checks(); }
+  try { lifecycle(); auxiliary_pins(); commit_failure(false); commit_failure(true); schema_checks(); }
   catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }

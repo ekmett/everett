@@ -55,9 +55,15 @@ namespace diet {
   };
   // The runtime's small, versioned continuation travels atomically with its
   // immutable root. SQLite does not interpret the checkpoint's codec.
+  struct catalog_auxiliary_roots {
+    std::vector<blob_identity> pairs;
+    std::vector<object_id> natives;
+    bool operator==(catalog_auxiliary_roots const &) const = default;
+  };
   struct catalog_tap_head {
     catalog_timeline_head timeline;
     std::vector<std::byte> checkpoint;
+    catalog_auxiliary_roots auxiliary;
     bool operator==(catalog_tap_head const &) const = default;
   };
   struct catalog_tap_publication {
@@ -108,8 +114,25 @@ namespace diet {
     inline void binary(bytes & out, std::span<std::byte const> value) {
       number(out, value.size()); out.insert(out.end(), value.begin(), value.end());
     }
+    inline void auxiliary(bytes & out, catalog_auxiliary_roots const & value) {
+      number(out, value.pairs.size());
+      for (auto const & root : value.pairs) pair(out, root);
+      number(out, value.natives.size());
+      for (auto const & native : value.natives) identity(out, native);
+    }
+    inline catalog_auxiliary_roots canonical_auxiliary(catalog_auxiliary_roots value, blob_identity const & primary) {
+      auto less = [](blob_identity const & a, blob_identity const & b) {
+        return a.native.hex() < b.native.hex() || (a.native == b.native && a.index.hex() < b.index.hex());
+      };
+      std::sort(value.pairs.begin(), value.pairs.end(), less);
+      value.pairs.erase(std::unique(value.pairs.begin(), value.pairs.end()), value.pairs.end());
+      std::erase(value.pairs, primary);
+      std::sort(value.natives.begin(), value.natives.end(), [](auto const & a, auto const & b) { return a.hex() < b.hex(); });
+      value.natives.erase(std::unique(value.natives.begin(), value.natives.end()), value.natives.end());
+      return value;
+    }
     inline void tap(bytes & out, catalog_tap_head const & value) {
-      timeline(out, value.timeline); binary(out, value.checkpoint);
+      timeline(out, value.timeline); binary(out, value.checkpoint); auxiliary(out, value.auxiliary);
     }
     // Outcomes are decoded, rather than looking up today's mutable head during
     // replay. These bounds also reject a malformed stored operation outcome.
@@ -135,13 +158,27 @@ namespace diet {
         try { return {std::move(name), generation, {object_id(native), object_id(index)}, std::move(owner)}; }
         catch (std::invalid_argument const &) { invalid(); }
       }
+      catalog_auxiliary_roots auxiliary() {
+        catalog_auxiliary_roots value;
+        auto count = number();
+        if (count > data.size() / 80) invalid();
+        for (std::uint64_t i = 0; i != count; ++i) {
+          auto native = field(), index = field();
+          value.pairs.push_back({object_id(native), object_id(index)});
+        }
+        count = number();
+        if (count > data.size() / 40) invalid();
+        for (std::uint64_t i = 0; i != count; ++i) value.natives.emplace_back(field());
+        return value;
+      }
       catalog_tap_head tap() {
         auto head = timeline();
         auto size = number();
         if (size > data.size()) invalid();
         bytes checkpoint(data.begin(), data.begin() + static_cast<std::size_t>(size));
         data = data.subspan(static_cast<std::size_t>(size));
-        return {std::move(head), std::move(checkpoint)};
+        auto retained = auxiliary();
+        return {std::move(head), std::move(checkpoint), std::move(retained)};
       }
       void end() const { if (!data.empty()) invalid(); }
     };
@@ -470,19 +507,26 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
     // linear admission, trusted mode reads fixed metadata, not payload contents.
     void register_chain(std::string_view op, mapped_cola_query_root<P> const & source,
         catalog_admission admission = catalog_admission::trusted) {
+      register_graph(op, source.head(), admission);
+    }
+    // A hidden completed artifact can be a large pair without a prepared
+    // bounded query head. Register its exact graph without manufacturing one.
+    void register_graph(std::string_view op, typename mapped_cola_blob<P>::pair_type const & source,
+        catalog_admission admission = catalog_admission::trusted) {
       require_active(); catalog_detail::name(op);
       if (schema_version_ < 3)
         throw std::logic_error("COLA admission requires catalog version 3; no automatic migration");
       if (admission != catalog_admission::trusted && admission != catalog_admission::scan)
         throw std::invalid_argument("unsupported catalog admission mode");
-      auto head = source.head();
+      auto head = source;
       if (!head) throw std::invalid_argument("empty COLA catalog query root");
-      auto opened = open_mapped_cola_query<P>(root_, head->identity());
-      if (admission == catalog_admission::scan) opened.head()->scan();
+      mapped_cola_resolver<P> resolver(root_);
+      auto opened = resolver.pair(head->identity());
+      if (admission == catalog_admission::scan) opened->scan();
       std::vector<typename mapped_cola_blob<P>::pair_type> chain;
       catalog_detail::bytes request;
       catalog_detail::number(request, static_cast<unsigned>(admission));
-      for (auto current = opened.head(); current; current = current->main_target()) {
+      for (auto current = opened; current; current = current->main_target()) {
         chain.push_back(current);
         auto view = current->view();
         auto main = current->main_target();
@@ -533,7 +577,7 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
           insert.integer(9, catalog_detail::integer(secondary_count));
           insert.integer(10, catalog_detail::integer(view.borrowed(1).size())); insert.done();
         }
-        catalog_detail::bytes result; catalog_detail::pair(result, opened.head()->identity()); return result;
+        catalog_detail::bytes result; catalog_detail::pair(result, opened->identity()); return result;
       });
     }
 
@@ -644,25 +688,27 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
     }
 
     catalog_tap_head create_tap(std::string_view op, std::string_view name,
-        blob_identity const & head, std::span<std::byte const> checkpoint) {
+        blob_identity const & head, std::span<std::byte const> checkpoint, catalog_auxiliary_roots auxiliary = {}) {
+      auxiliary = catalog_detail::canonical_auxiliary(std::move(auxiliary), head);
       require_taps(); catalog_detail::name(op); catalog_detail::name(name);
       catalog_detail::bytes request; catalog_detail::field(request, name);
-      catalog_detail::pair(request, head); catalog_detail::binary(request, checkpoint);
+      catalog_detail::pair(request, head); catalog_detail::binary(request, checkpoint); catalog_detail::auxiliary(request, auxiliary);
       auto outcome = transaction(op, "create_tap", request, [&] {
         require_prepared(head);
         catalog_detail::statement insert(db_, "INSERT INTO timelines(name) VALUES(?)");
         insert.key(1, name); insert.done();
-        auto result = add_tap_generation(name, 0, head, checkpoint);
+        auto result = add_tap_generation(name, 0, head, checkpoint, auxiliary);
         catalog_detail::bytes bytes; catalog_detail::tap(bytes, result); return bytes;
       });
       return decode_tap(outcome);
     }
 
     catalog_tap_publication publish_tap(std::string_view op, catalog_tap_head const & expected,
-        blob_identity const & candidate, std::span<std::byte const> checkpoint) {
+        blob_identity const & candidate, std::span<std::byte const> checkpoint, catalog_auxiliary_roots auxiliary = {}) {
+      auxiliary = catalog_detail::canonical_auxiliary(std::move(auxiliary), candidate);
       require_taps(); catalog_detail::name(op); validate_timeline(expected.timeline);
       catalog_detail::bytes request; catalog_detail::tap(request, expected);
-      catalog_detail::pair(request, candidate); catalog_detail::binary(request, checkpoint);
+      catalog_detail::pair(request, candidate); catalog_detail::binary(request, checkpoint); catalog_detail::auxiliary(request, auxiliary);
       auto outcome = transaction(op, "publish_tap", request, [&] {
         auto timeline = timeline_at(expected.timeline.name);
         if (!timeline) throw std::invalid_argument("unknown Diet tap");
@@ -673,7 +719,7 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
           if (current.timeline.generation == std::uint64_t(std::numeric_limits<std::int64_t>::max()))
             throw std::length_error("Diet tap generation exhausted");
           current = add_tap_generation(current.timeline.name, current.timeline.generation + 1,
-            candidate, checkpoint);
+            candidate, checkpoint, auxiliary);
         }
         catalog_detail::bytes bytes; catalog_detail::number(bytes, published);
         catalog_detail::tap(bytes, current); return bytes;
@@ -700,7 +746,7 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
         catalog_detail::statement insert(db_, "INSERT INTO timelines VALUES(?,?,?)");
         insert.key(1, name); insert.key(2, source.timeline.name);
         insert.integer(3, catalog_detail::integer(source.timeline.generation)); insert.done();
-        auto result = add_tap_generation(name, 0, source.timeline.head, source.checkpoint);
+        auto result = add_tap_generation(name, 0, source.timeline.head, source.checkpoint, source.auxiliary);
         catalog_detail::bytes bytes; catalog_detail::tap(bytes, result); return bytes;
       });
       return decode_tap(outcome);
@@ -715,7 +761,7 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
         if (!actual || attach_checkpoint(std::move(*actual)) != source)
           throw std::invalid_argument("save source is not this exact tap generation");
         auto const & head = source.timeline.head;
-        add_owner("save", name); add_root("save", name, head);
+        add_owner("save", name); add_root("save", name, head); add_auxiliary("save", name, source.auxiliary);
         catalog_detail::statement saved(db_, "INSERT INTO saves VALUES(?,?,?)");
         saved.key(1, name); saved.text(2, head.native.hex()); saved.text(3, head.index.hex()); saved.done();
         catalog_detail::statement metadata(db_, "INSERT INTO tap_saves VALUES(?,?,?)");
@@ -836,7 +882,29 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
     catalog_tap_head attach_checkpoint(catalog_timeline_head head) const {
       auto checkpoint = checkpoint_at(head.name, head.generation);
       if (!checkpoint) throw std::invalid_argument("timeline is not a named Diet tap");
-      return {std::move(head), std::move(*checkpoint)};
+      auto retained = auxiliary_at(head);
+      return {std::move(head), std::move(*checkpoint), std::move(retained)};
+    }
+    catalog_auxiliary_roots auxiliary_at(catalog_timeline_head const & head) const {
+      catalog_auxiliary_roots value;
+      catalog_detail::statement pairs(db_, "SELECT native_id,index_id FROM owner_roots WHERE owner_kind='timeline' AND owner_id=? ORDER BY native_id,index_id");
+      pairs.key(1, head.owner);
+      while (pairs.row()) {
+        blob_identity pair{object_id(pairs.text(0)), object_id(pairs.text(1))};
+        if (pair != head.head) value.pairs.push_back(std::move(pair));
+      }
+      catalog_detail::statement natives(db_, "SELECT object_id FROM owner_objects WHERE owner_kind='timeline' AND owner_id=? ORDER BY object_id");
+      natives.key(1, head.owner);
+      while (natives.row()) value.natives.emplace_back(natives.text(0));
+      return value;
+    }
+    void add_auxiliary(std::string_view kind, std::string_view owner, catalog_auxiliary_roots const & value) {
+      for (auto const & pair : value.pairs) add_root(kind, owner, pair);
+      for (auto const & native : value.natives) {
+        require_sealed(native, file_kind::native_blob);
+        catalog_detail::statement pin(db_, "INSERT INTO owner_objects VALUES(?,?,?)");
+        pin.text(1, kind); pin.key(2, owner); pin.text(3, native.hex()); pin.done();
+      }
     }
     std::optional<catalog_timeline_head> timeline_at(std::string_view name,
         std::optional<std::uint64_t> generation = {}) const {
@@ -865,12 +933,13 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
       return {std::string(name), generation, head, std::move(owner)};
     }
     catalog_tap_head add_tap_generation(std::string_view name, std::uint64_t generation,
-        blob_identity const & head, std::span<std::byte const> checkpoint) {
+        blob_identity const & head, std::span<std::byte const> checkpoint, catalog_auxiliary_roots const & auxiliary) {
       auto timeline = add_generation(name, generation, head);
+      add_auxiliary("timeline", timeline.owner, auxiliary);
       catalog_detail::statement insert(db_, "INSERT INTO tap_checkpoints VALUES(?,?,?)");
       insert.key(1, name); insert.integer(2, catalog_detail::integer(generation));
       insert.blob(3, checkpoint); insert.done();
-      return {std::move(timeline), {checkpoint.begin(), checkpoint.end()}};
+      return {std::move(timeline), {checkpoint.begin(), checkpoint.end()}, auxiliary};
     }
     template<class F> auto read(F && action) const {
       try { return action(); }
