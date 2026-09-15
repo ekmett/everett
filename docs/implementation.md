@@ -121,6 +121,7 @@ predictions:
 | [Intel prefix paths](../bench/intel_prefix.md) | Bounded SIMD prefixes and complete bitmap rank on Broadwell/Ice Lake, including same-ISA portable controls and dependent queries |
 | [Combined query refactor](../bench/query_refactor.md) | Complete byte/bit queries and root preparation after rank, Elias–Fano and exception outlining changes |
 | [Codec arithmetic integration](../bench/query_rounding.md) | Complete queries after explicit unit shifts and additive rounding |
+| [Absolute block framing](../bench/query_absolute.md) | Complete queries, preparation and navigation work after removing predecessor-length reads |
 | [Elias–Fano construction / select](../bench/select_compare.md) | Tiled writing, narrowing, validation and scalar/SIMD select candidates |
 
 The selected implementations retain the measured latency tradeoffs: a
@@ -343,6 +344,14 @@ downstream pair. Section positions count physical bytes; the inner FC extent
 and residual universe retain the policy's byte/bit units. Fixed-width values
 remain subtracted from that inner universe. The encoders do not re-encode keys
 or build a second navigation directory.
+
+`index_builder<P, Native>` accepts an owning array or pinned mapped native
+object, and `sample_cursor<P, Target>` can sample either owning or mapped exact
+pairs. `finish_index` returns an independent `profile_index<P>` for serialization
+against the unchanged native identity. Its native bytes and offsets are never
+copied or recoded. The artifact does not own dependency pins; its builder,
+sampler and publishing caller retain them. `profile_index::native_only` builds
+terminal zero directories from the admitted count without visiting native keys.
 
 `mapped_native`, `mapped_index` and `mapped_blob` retain mappings and expose
 the same profile/navigation views used by owning blobs. Typed opening reads
@@ -616,7 +625,11 @@ travels with the selected mismatch; endpoints remain separate.
 unequal lengths decide head order, equal lengths permit a suffix-only comparison,
 and either case recovers the exact LCP between the two heads. Equal keys and
 proper prefixes remain included; C++ cursor state maintenance is a separate
-refinement obligation.
+refinement obligation. `Framing` proves that retained prefixes bounded by the
+physical start, followed by bounded controls and payloads, keep reconstructed
+key lengths within the admitted physical extent. This supplies the arithmetic
+argument for checking absolute prefixes once per block; it does not prove the
+C++ parser's extraction of those fields.
 
 Those theorems do not verify stored cut-LCP scalars, literal comparisons or the
 encoded decoder. Compressed rank, Elias–Fano, front coding, full cascade execution, C++ refinement, scheduling

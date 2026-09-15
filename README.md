@@ -42,13 +42,13 @@ I call the backing store and its relationships the **multiverse**.
 | `elias_fano`, `rank_groups` | Monotone offsets and grouped origin counts, independent of the key representation. |
 | `profile_array`, `profile_view`, `profile_cursor` | Encoded records, borrowed views, and sequential decoding. |
 | `profile_native_writer`, `native_merge_builder` | Incremental native encoding and ordered per-key value composition. |
-| `profile_blob` | Native records, a separate borrowed stream, group navigation, and false-borrow flags. |
+| `profile_blob`, `profile_index` | A complete native/index pair, or an independently constructed index for existing native storage. |
 | `sample_cursor`, `index_builder`, `index_pipeline` | Sampling an existing pair and building new index links incrementally. |
 | `query_root`, `query_root_builder`, `query_cursor` | Preparing a bounded search head and visiting matching native entries through an exact index chain. |
 | `mapped_file`, `file`, `multiverse` | Retained read-only mappings and policy-checked object access. |
 | `encode_native_sections`, `encode_index_sections`, `mapped_blob`, `mapped_query_root` | Portable blob files and queries over exact pinned mmap chains. |
-| `object_writer`, `multiverse::seal_object` | Streamed immutable object writes with explicit persistence barriers and retained failure identities. |
-| `sqlite_catalog` | Durable reservations, exact file graphs, immutable named saves and reader pins. |
+| `object_writer`, `object_stream`, `multiverse::seal_object` | Immutable object construction with explicit persistence barriers and retained failure identities. |
+| `sqlite_catalog` | Durable reservations, exact file graphs, named saves, timeline generations and reader pins. |
 | `reference_world`, `partition_round`, `pin_set` | Executable snapshot, update, fingerprint, and ownership semantics. |
 
 Immutability makes sharing straightforward. Two readers can retain the same
@@ -551,6 +551,14 @@ metadata; `mapped_blob::scan()` explicitly verifies contents, navigation and
 exact downstream samples. See [mapped blobs](docs/mapped-blobs.md) for the
 layout, lifetime and trust contracts.
 
+We can also build a new index directly over a retained `mapped_native<P>`.
+`index_builder<P, mapped_native<P>>` leaves its FC bytes and sparse offsets in
+place; `finish_index` returns the new borrowed stream and navigation structures
+as a `profile_index<P>`. `sample_cursor<P, mapped_blob<P>>` supplies samples from
+an exact mapped target. For a terminal pair, `profile_index<P>::native_only`
+constructs the zero directories from the native count without reading its keys.
+See [sampling](docs/sampling.md) for ownership and target-validation contracts.
+
 `multiverse<P>::seal_object` writes a body under caller-reserved object and
 attempt identities. It accepts a contiguous span or borrowed chunks, including
 mmap-backed input. The writer computes CRC32C while streaming, seals a private
@@ -560,6 +568,12 @@ identities and last acknowledged stage. The [sealing protocol](docs/object-write
 spells out Linux/macOS barriers and the caller's recovery obligations. Sealing
 an object produces the receipt that `sqlite_catalog::record_sealed` records
 before the pair is registered and saved.
+
+`object_stream<P>` accepts body chunks across calls when the final extent is
+not yet known. It can reserve a directory prefix and fill it at completion;
+CRC combination accounts for that replacement without rereading the body.
+An unfinished stream retains a private attempt, and `finish` seals it using
+the same persistence protocol.
 
 For already trusted objects, pass `file_open_mode::trusted` to `open`,
 `from_slice`, or `multiverse<P>::open_object`. This avoids reading even the

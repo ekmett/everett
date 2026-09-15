@@ -36,6 +36,10 @@ slot per virtual group. These take $O(n/K)$ work and space for $n$ native
 entries, separately from W-spaced physical checkpoints.
 `profile_blob<P>::adopt_native` constructs these zero directories around a trusted
 native array without walking its keys or rebuilding its existing EF directory.
+`profile_index<P>::native_only(native_count)` builds the same terminal index
+separately for an already mapped native object. We can seal it with
+`encode_index_sections` and bind the resulting pair while retaining the original
+native mapping and identity.
 
 Direct adoption after validation needs a complete terminal representation,
 including navigation metadata. If anything is missing, construction must

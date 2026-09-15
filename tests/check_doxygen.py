@@ -214,6 +214,10 @@ def check_actual_members(items, source):
         ("namespace", "everett", "encode_file_header", "file.h", None, "no"),
         ("struct", "everett::profile_native_writer", "finish", "native_writer.h", None, "no"),
         ("struct", "everett::native_merge_builder", "step", "native_merge.h", None, "no"),
+        ("struct", "everett::object_stream", "append", "object_stream.h", None, "no"),
+        ("struct", "everett::profile_index", "native_only", "profile_index.h", None, "yes"),
+        ("struct", "everett::index_builder", "finish_index", "index_builder.h", None, "no"),
+        ("struct", "everett::sample_cursor", "advance", "sampling.h", None, "no"),
         ("struct", "everett::elias_fano_view", "select", "elias_fano.h", None, "no"),
         ("struct", "everett::profile_view", "block_offset", "profile.h", None, "no"),
         ("struct", "everett::profile_cursor", "advance_comparison", "profile.h", None, "no"),
@@ -248,7 +252,11 @@ def check_actual_members(items, source):
                               ("everett::query_cursor", ["P", "Blob"]), ("everett::mapped_blob", ["P"]),
                               ("everett::mapped_profile", ["P", "Role"]), ("everett::encoded_sections", ["P"]),
                               ("everett::profile_native_writer", ["P"]),
-                              ("everett::native_merge_builder", ["P", "Native", "Compose"]),
+                              ("everett::native_merge_builder", ["P", "Native", "Compose", "Output"]),
+                              ("everett::object_stream", ["P", "Ops"]),
+                              ("everett::profile_index", ["P"]),
+                              ("everett::index_builder", ["P", "Native"]),
+                              ("everett::sample_cursor", ["P", "Target"]),
                               ("everett::sqlite_catalog", ["P", "Ops"])):
         item = named_compound(items, "struct", owner)
         names = []

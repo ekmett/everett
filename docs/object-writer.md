@@ -38,6 +38,46 @@ allocator, dependency and recovery-root obligations. An explicit later
 `file<P>::scan()` checks readable envelope/body bytes; it is not evidence that
 an earlier failed persistence attempt recovered.
 
+Appending an unfinished body
+---------------------------
+
+`object_stream<P>` keeps the same private attempt open across calls. I use it
+when the final extent and header are not known until construction finishes:
+
+```cpp
+everett::object_stream<P> output(object_directory, reserved_object_id,
+  reserved_attempt_id, everett::file_kind::native_blob);
+output.append(first_chunk);
+output.append(second_chunk);
+auto sealed = output.finish(completed_header);
+```
+
+Each `append` consumes its borrowed span synchronously, completes short writes,
+and updates CRC32C from the same bytes. It keeps no body-sized allocation. A
+chunk is a physical byte sequence; the caller retains an unfinished bit byte
+until its contents are final. `finish` checks the final extent and bit padding,
+then writes the envelope and performs the sealing sequence below.
+
+For a directory whose contents become known at the end, the constructor also
+accepts a reserved prefix size after the file kind. The stream initially writes
+that many zero body bytes. `finish(header, directory)` replaces exactly that
+prefix while the output remains private. We adjust the accumulated CRC using
+`crc32c_combine` and the suffix length, so backpatching the directory does not
+require reading the body again. `body_bytes()` includes the reserved prefix;
+before finalization, `body_crc32c()` includes its provisional zero contents.
+
+The stream is neither copyable nor movable. It owns its attempt and descriptors;
+the borrowed-operations constructor additionally requires the supplied operation
+object to outlive it. `multiverse<P>::object_stream` names the same policy-bound
+type. Metadata rejection before final I/O leaves the stream active. An I/O error
+poisons it: later `append` and `finish` calls fail without issuing more writes.
+Destruction closes handles and preserves surviving names for reconciliation.
+
+This supports construction that pauses in the current process. It does not
+reopen an interrupted append stream or make an unsealed prefix a durable
+checkpoint. [Merge resumption](merge-resumption.md) describes the additional
+ownership and continuation state needed for that.
+
 Sealing sequence
 ----------------
 

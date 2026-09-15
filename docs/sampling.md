@@ -52,7 +52,8 @@ We retain the remaining navigation rules as well:
 - A predecessor borrowed key C can lie just before the selected window. At
   boundary B, the exact index-local $\ell=\mathrm{lcp}_{\mathrm{bits}}(C,B)$
   repairs its query comparison by taking the minimum with the incoming exact
-  agreement. Its full length resolves endpoints. C is absent iff borrowed rank
+  agreement. The known order resolves equality without fetching C's length.
+  C is absent iff borrowed rank
   is zero, and remains present when that rank equals a nonzero stream length.
 - A native match and a downstream route can both be returned. Equality does
   not terminate a general arrow-valued query; older matching segments may
@@ -99,7 +100,8 @@ visited headers, prefix/suffix decoding, key comparisons and emitted sample
 bytes. A separate streaming pass can visit all A augmented entries; producing
 only $\lceil A/K\rceil$ samples does not make it O(A/K) work.
 
-`sample_cursor<P>` implements this scan over an owned pin to the exact pair.
+`sample_cursor<P, Target>` implements this scan over an owned pin to the exact
+pair. `Target` defaults to `profile_blob<P>` and can be `mapped_blob<P>`.
 It keeps two decoding contexts, preserves tagged ordering and decodes each
 record once over a full traversal. Values remain views of their source payloads.
 `index_builder<P>` consumes consecutive samples with one incoming lookahead and
@@ -109,6 +111,23 @@ completed pair to the exact target that supplied its samples. The batch
 tests use a separately materialized ordering as their independent oracle.
 Low-level builders trust their sampler's provenance and check order, ordinals
 and count; these checks do not authenticate arbitrary externally supplied keys.
+
+`index_builder<P, Native>` can likewise read a pinned `mapped_native<P>` in
+place; its default native type is `profile_array<P>`. `finish_index(target_size)`
+returns a `profile_index<P>` containing only the newly constructed borrowed
+stream and navigation metadata. `encode_index_sections` writes that artifact
+against the unchanged native identity and exact target identity. The native
+FC bytes and Elias–Fano offsets remain in their original file. The builder
+retains its native owner, and the sampler retains its target pair; the caller
+keeps the corresponding catalog pins through sealing and publication.
+
+The standalone artifact does not own either dependency. Its supplied target
+extent checks the number of samples, while binding the sealed mapped pair checks
+declared identities and shapes. An explicit scan checks sampled key contents.
+For a terminal pair, `profile_index<P>::native_only(native_count)` constructs an
+empty borrowed stream and all-zero rank and cut directories from the admitted
+count alone, without walking native keys. Closing and draining an index builder
+against an empty target produces the same representation.
 
 **Unselected space/time option.** An ephemeral outgoing-sample sink avoids the
 second key-encoding pass only when a fresh target index and its upstream samples
