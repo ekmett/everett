@@ -33,6 +33,9 @@
 #include <iostream>
 #include <numeric>
 #include <string>
+#if defined(_MSC_VER)
+#include <intrin.h>
+#endif
 #if defined(__APPLE__)
 #include <pthread/qos.h>
 #endif
@@ -47,7 +50,11 @@ namespace {
     return value ^ (value >> 31);
   }
   std::uint64_t reduce(std::uint64_t value, std::uint64_t count) {
+#if defined(_MSC_VER) && defined(_M_X64)
+    return __umulh(value, count);
+#else
     return std::uint64_t((static_cast<unsigned __int128>(value) * count) >> 64);
+#endif
   }
   unsigned range_population(std::span<std::uint64_t const> words, std::uint64_t first, unsigned count) {
     auto value = words[first / 64] >> (first % 64);
@@ -64,6 +71,7 @@ namespace {
     unsigned class_at(std::uint64_t group) const { return range_population(words, group * 15, 15); }
   };
 
+#if defined(__aarch64__) && defined(__ARM_NEON)
   // CPU translation of the Poppy 2048/512 layout in ekmett/vr shaders/poppy.glsl.
   // Uses all four 128-bit vectors of the selected 512-bit run. Instead of the
   // shader's lane prefix scan, it masks lanes at the query then reduces NEON
@@ -78,7 +86,6 @@ namespace {
       auto packed = block.runs & ((std::uint32_t{1} << (10 * run)) - 1);
       auto before = std::uint64_t(block.before) + (packed & 1023u) +
         ((packed >> 10) & 1023u) + ((packed >> 20) & 1023u);
-#if defined(__aarch64__) && defined(__ARM_NEON)
       auto data = reinterpret_cast<std::uint32_t const *>(words.data() + (position / 512) * 8);
       auto lane = vdupq_n_u32(unsigned(position % 512) / 32);
       auto tail = vdupq_n_u32((std::uint32_t{1} << (position % 32)) - 1);
@@ -96,14 +103,18 @@ namespace {
       auto c = vcntq_u8(vreinterpretq_u8_u32(vandq_u32(vld1q_u32(data + 8), mask2)));
       auto d = vcntq_u8(vreinterpretq_u8_u32(vandq_u32(vld1q_u32(data + 12), mask3)));
       return before + vaddlvq_u8(vaddq_u8(vaddq_u8(a, b), vaddq_u8(c, d)));
-#else
-      return bitmap::rank(group);
-#endif
     }
   };
+#endif
 
   using function = std::uint64_t (*)(void const *, std::uint64_t);
-  template <class V, unsigned Mode> [[gnu::noinline]] std::uint64_t query(void const * pointer, std::uint64_t group) {
+  template <class V, unsigned Mode>
+#if defined(_MSC_VER)
+  __declspec(noinline)
+#else
+  [[gnu::noinline]]
+#endif
+  std::uint64_t query(void const * pointer, std::uint64_t group) {
     auto const & view = *static_cast<V const *>(pointer);
     auto lo = view.rank(group);
     if constexpr (Mode == 0) return lo;
@@ -174,7 +185,9 @@ namespace {
     counts.clear(); counts.shrink_to_fit();
     packed.classes.shrink_to_fit(); packed.checkpoints.shrink_to_fit();
     bitmap raw{{std::span(full.words).first(logical_words), full.blocks, full.supers, bits, full.total}, full.words, full.blocks, groups};
+#if defined(__aarch64__) && defined(__ARM_NEON)
     poppy512 poppy{raw};
+#endif
     auto rank15 = packed.view();
     everett::rank_groups_view<15> typed{packed.classes, packed.checkpoints, bits, packed.total};
     auto raw_data = full.words.size() * 8, raw_metadata = full.blocks.size() * 8 + full.supers.size() * 8;
