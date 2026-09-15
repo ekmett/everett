@@ -98,9 +98,9 @@ namespace everett {
       auto selected_high = _mm512_cmplt_epu8_mask(_mm512_add_epi8(positions, _mm512_set1_epi8(1)), boundary);
       auto pairs = _mm512_add_epi8(_mm512_maskz_mov_epi8(selected_low, low),
                                    _mm512_maskz_mov_epi8(selected_high, high));
-      // Reduce eight qwords first: byte lanes total at most 240, so they
-      // cannot carry into each other. Exactly 64 bytes are readable.
-      return sum_bytes(std::uint64_t(_mm512_reduce_add_epi64(pairs)));
+      // Each byte is at most 30. SAD widens groups of eight bytes before the
+      // qword reduction, whose maximum is 1920. Exactly 64 bytes are readable.
+      return unsigned(_mm512_reduce_add_epi64(_mm512_sad_epu8(pairs, _mm512_setzero_si512())));
     }
 #elif defined(__AVX2__)
     static unsigned prefix128_avx2(std::uint64_t const * words, unsigned count) noexcept {
@@ -120,13 +120,11 @@ namespace everett {
       };
       auto a = selected_pairs(_mm256_loadu_si256(reinterpret_cast<__m256i const *>(words)), 0);
       auto b = selected_pairs(_mm256_loadu_si256(reinterpret_cast<__m256i const *>(words + 4)), 64);
-      // Two vectors contribute at most 60 per byte. Reduce four qwords first;
-      // byte lanes total at most 240. Exactly 64 bytes are readable.
-      auto totals = _mm256_add_epi8(a, b);
+      // Two vectors contribute at most 60 per byte. Widen before reducing the
+      // total, which fits in 32 bits (at most 1920). Exactly 64 bytes are readable.
+      auto totals = _mm256_sad_epu8(_mm256_add_epi8(a, b), _mm256_setzero_si256());
       auto halves = _mm_add_epi64(_mm256_castsi256_si128(totals), _mm256_extracti128_si256(totals, 1));
-      std::uint64_t value;
-      _mm_storel_epi64(reinterpret_cast<__m128i *>(&value), _mm_add_epi64(halves, _mm_srli_si128(halves, 8)));
-      return sum_bytes(value);
+      return unsigned(_mm_cvtsi128_si32(_mm_add_epi64(halves, _mm_srli_si128(halves, 8))));
     }
 #endif
 
