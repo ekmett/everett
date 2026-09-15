@@ -537,7 +537,7 @@ License
 Copyright 2026 Edward Kmett. My code is available under
 [BSD-2-Clause](LICENSES/BSD-2-Clause.txt) **OR**
 [Apache-2.0](LICENSES/Apache-2.0.txt), at your option. Both complete license texts
-are included in source and installed packages; see [LICENSE](LICENSE).
+are included in source and installed packages; see [LICENSE](./LICENSE).
 The CRC generator and its output retain Peter Cawley's **MIT OR zlib** terms;
 the [third-party notices](THIRD_PARTY.md) and complete upstream licenses ship
 with the package.

@@ -22,6 +22,8 @@ Use `$...$` for inline math and `$$...$$` for display math in Markdown.
 without changing line counts or rewriting the source files. Code spans, fenced
 and indented code, escaped dollars and ordinary currency remain literal. The
 generated HTML uses MathJax; its default script is loaded from the configured CDN.
+Use `\mathrm{rank}` for named functions in shared Markdown math: GitHub's
+renderer rejects `\operatorname` in these documents.
 
 GitHub-style heading IDs keep local section links usable. Doxygen 1.9.8 leaves
 some links to headings in other Markdown files unresolved, and can link to an
@@ -29,6 +31,12 @@ empty file compound when a Markdown page starts with a notice. The build repairs
 these links in HTML and XML using the generated page and section IDs. The checks
 verify page inclusion, formula contents, heading targets and code literals.
 Mermaid fences remain code in this Doxygen configuration.
+
+Links to Lean files, source examples and license texts resolve relative to their
+original Markdown file. The build copies these files under the HTML directory's
+`source/` tree, checks their bytes and rewrites the links. No linked file may
+escape the source tree. For extensionless names, write `./LICENSE` or
+`./lean-toolchain` so Doxygen recognizes the link.
 
 ## Configuration
 
@@ -59,6 +67,20 @@ Open `build-docs/docs/reference/html/index.html` for the reference documentation
 Generated Doxyfiles, XML and diagnostic logs remain alongside it. The CTest
 check uses a separate `docs-test` directory. With `EVERETT_BUILD_TESTS=OFF`, the
 documentation target remains available but the CTest check is not registered.
+
+## Publishing
+
+I publish the checked HTML directly to the `gh-pages` branch. The site is
+[ekmett.github.io/everett](https://ekmett.github.io/everett/). GitHub Pages uses
+that branch's root directory; no Actions workflow generates the documentation.
+
+Build `everett_docs`, then copy the contents of
+`build-docs/docs/reference/html/` into a separate `gh-pages` worktree. Keep its
+Git metadata, replace the previous generated site, and add an empty `.nojekyll`
+file so GitHub serves Doxygen's underscored files unchanged. Commit with the
+source revision and push `gh-pages`. Updating `main` alone does not update the
+site. The publication should include the complete generated tree, including
+search assets and bundled source files.
 
 ## What the check establishes
 

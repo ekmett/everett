@@ -15,9 +15,10 @@ import html as html_module
 from pathlib import Path
 import re
 import shlex
+import shutil
 import subprocess
 import sys
-from urllib.parse import unquote, urlsplit
+from urllib.parse import quote as urlquote, unquote, urlsplit
 import xml.etree.ElementTree as xml
 
 from doxygen_markdown import adapt_markdown
@@ -357,6 +358,28 @@ def page_html(page):
     return "index.html" if page.attrib["id"] == "indexpage" else page.attrib["id"] + ".html"
 
 
+def write_page_links(page, replacements, output, name):
+    if not replacements:
+        return
+    html_path = output / "html" / page_html(page)
+    rendered = html_path.read_text(encoding="utf-8")
+    found = set()
+    def replace(match):
+        url = html_module.unescape(match.group(1))
+        if url not in replacements:
+            return match.group(0)
+        found.add(url)
+        return 'href="' + html_module.escape(replacements[url], quote=True) + '"'
+    rendered = re.sub(r'href="([^"]+)"', replace, rendered)
+    require(found == set(replacements), f"Markdown link absent from HTML: {name}: {set(replacements) - found}")
+    html_path.write_text(rendered, encoding="utf-8")
+    xml_path = output / "xml" / (page.attrib["id"] + ".xml")
+    tree = xml.parse(xml_path)
+    tree.getroot().remove(tree.getroot().find("compounddef"))
+    tree.getroot().append(page)
+    tree.write(xml_path, encoding="utf-8", xml_declaration=True)
+
+
 def repair_markdown_links(items, source, output):
     # Doxygen 1.9.8 resolves .md pages and local #headings, but leaves
     # cross-page .md#heading URLs literal. Resolve those from generated page
@@ -415,26 +438,37 @@ def repair_markdown_links(items, source, output):
             link.attrib.clear()
             link.attrib.update(refid=refid, kindref=kind)
             count += 1
-        if not replacements:
-            continue
-        html_path = output / "html" / page_html(page)
-        rendered = html_path.read_text(encoding="utf-8")
-        found = set()
-        def replace(match):
-            url = html_module.unescape(match.group(1))
-            if url not in replacements:
-                return match.group(0)
-            found.add(url)
-            return 'href="' + html_module.escape(replacements[url], quote=True) + '"'
-        rendered = re.sub(r'href="([^"]+)"', replace, rendered)
-        require(found == set(replacements), f"Markdown link absent from HTML: {name}: {set(replacements) - found}")
-        html_path.write_text(rendered, encoding="utf-8")
-        xml_path = output / "xml" / (page.attrib["id"] + ".xml")
-        tree = xml.parse(xml_path)
-        tree.getroot().remove(tree.getroot().find("compounddef"))
-        tree.getroot().append(page)
-        tree.write(xml_path, encoding="utf-8", xml_declaration=True)
+        write_page_links(page, replacements, output, name)
     return count
+
+
+def bundle_source_links(items, source, output):
+    bundled = set()
+    for name, page in markdown_pages(items, source).items():
+        replacements = {}
+        for link in page.findall(".//ulink"):
+            url = link.attrib["url"]
+            parts = urlsplit(url)
+            if parts.scheme or parts.netloc or not parts.path:
+                continue
+            target = (source / name).parent.joinpath(unquote(parts.path)).resolve()
+            require(target.is_relative_to(source), f"Source link leaves the input tree: {name}: {url}")
+            require(target.is_file(), f"Missing linked source file: {name}: {url}")
+            relative = Path("source") / target.relative_to(source)
+            destination = output / "html" / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(target, destination)
+            require(destination.read_bytes() == target.read_bytes(), f"Source copy differs: {target}")
+            rewritten = urlquote(relative.as_posix())
+            if parts.query:
+                rewritten += "?" + parts.query
+            if parts.fragment:
+                rewritten += "#" + parts.fragment
+            replacements[url] = rewritten
+            link.set("url", rewritten)
+            bundled.add(relative)
+        write_page_links(page, replacements, output, name)
+    return len(bundled)
 
 
 def check_page_link(pages, source_name, target_name, output):
@@ -604,6 +638,8 @@ def main():
     check_actual_members(items, source)
     repaired_links = repair_markdown_links(items, source, reference)
     items = compounds(reference)
+    source_files = bundle_source_links(items, source, reference)
+    items = compounds(reference)
     formula_count = check_markdown_pages(items, source, markdown, reference)
     check_markdown_fixture(args.doxygen, output)
     fixture_results = []
@@ -621,6 +657,7 @@ def main():
           "and twelve fixture symbols with file metadata before/after/split around declarations.")
     print(f"Checked {len(markdown)} Markdown pages and {formula_count} dollar formulas with MathJax HTML, "
           f"cross-page links ({repaired_links} repaired links), and protected-code/currency fixtures.")
+    print(f"Bundled {source_files} linked source files with byte-for-byte checks.")
     print(f"Reference documentation: {reference / 'html/index.html'}")
 
 

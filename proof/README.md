@@ -18,7 +18,7 @@ Build and run
 -------------
 
 I pin this project to **Lean 4.19.0**, release commit `6caaee842e94`, through
-[lean-toolchain](lean-toolchain). The [official release](https://github.com/leanprover/lean4/releases/tag/v4.19.0)
+[lean-toolchain](./lean-toolchain). The [official release](https://github.com/leanprover/lean4/releases/tag/v4.19.0)
 contains the toolchain. With Lean's `elan` toolchain manager installed, Lake uses
 that file to select the version. No mathlib or external package download is
 required after the toolchain is available.
