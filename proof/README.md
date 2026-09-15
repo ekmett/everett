@@ -200,6 +200,17 @@ state. Equality and proper-prefix cases are included. The statement needs the
 ordering hypotheses; arbitrary triples only satisfy the usual lower bound.
 The theorem does not certify that a stored index contains the right scalar.
 
+`frontier_recovery_without_length` sharpens the endpoint test: because $C\le Q$,
+equality holds exactly when the recovered LCP equals $|Q|$. The preceding key's
+full length is unnecessary for this comparison. This includes an empty query
+and proper-prefix cases.
+
+`merge_retained_le` and `merge_literal_suffix` justify forwarding a slice of an
+input literal into the merge output. If the input predecessor precedes the last
+output key, the output retains at least as much prefix as the input frame.
+Skipping output keys can break that premise; the cursor's retained key context
+then supplies any prefix material needed by the next emitted key.
+
 `Frontier.lean` applies the same string law during a sorted merge. If both
 heads follow the preceding output, the head sharing the longer prefix with
 that output sorts first. Their mutual LCP is then the smaller carried length.

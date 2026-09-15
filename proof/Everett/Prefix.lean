@@ -145,7 +145,7 @@ theorem ordered_lcp_min (c b q : List Nat) (cb : c ≤ b) (bq : b ≤ q) :
           · subst b; simp [lcp, ends]
           · simp [lcp, ends, first]
 
-/-- Equality needs both endpoint lengths, not a mismatch position alone. -/
+/-- Without an ordering hypothesis, equality needs both endpoint lengths. -/
 theorem lcp_full_iff (xs ys : List Nat) :
     xs = ys ↔ lcp xs ys = xs.length ∧ lcp xs ys = ys.length := by
   induction xs generalizing ys with
@@ -156,6 +156,21 @@ theorem lcp_full_iff (xs ys : List Nat) :
     | cons y ys =>
       by_cases same : x = y
       · subst y; simpa [lcp] using ih ys
+      · simp [lcp, same]
+
+/-- For a known lower key, matching the entire query already establishes
+equality. Its own full length is unnecessary. -/
+theorem lcp_full_right_iff_of_le (xs ys : List Nat) (ordered : xs ≤ ys) :
+    xs = ys ↔ lcp xs ys = ys.length := by
+  induction xs generalizing ys with
+  | nil => cases ys <;> simp
+  | cons x xs ih =>
+    cases ys with
+    | nil => simp at ordered
+    | cons y ys =>
+      by_cases same : x = y
+      · subst y
+        simpa [lcp] using ih ys (List.le_of_cons_le_cons ordered)
       · simp [lcp, same]
 
 /-- Exact cut-local LCP metadata repairs the outgoing frontier's comparison
@@ -172,6 +187,39 @@ theorem frontier_recovery (c b q : List Nat) (cb : c ≤ b) (bq : b ≤ q)
   subst incoming_lcp
   have repair := ordered_lcp_min c b q cb bq
   exact ⟨List.le_trans cb bq, repair, repair ▸ lcp_full_iff c q⟩
+
+/-- An ordered borrowed frontier can be repaired using only exact LCPs and
+the query length, with no preceding-key length checkpoint. -/
+theorem frontier_recovery_without_length (c b q : List Nat) (cb : c ≤ b) (bq : b ≤ q)
+    (cut_lcp incoming_lcp : Nat) (cut_exact : cut_lcp = lcp c b)
+    (incoming_exact : incoming_lcp = lcp b q) :
+    c ≤ q ∧ lcp c q = min cut_lcp incoming_lcp ∧
+      (c = q ↔ min cut_lcp incoming_lcp = q.length) := by
+  subst cut_lcp
+  subst incoming_lcp
+  have cq := List.le_trans cb bq
+  have repair := ordered_lcp_min c b q cb bq
+  have equality := lcp_full_right_iff_of_le c q cq
+  rw [repair] at equality
+  exact ⟨cq, repair, equality⟩
+
+/-- A merge that emits each distinct key can only increase the retained
+prefix relative to an input frame. Skipped output keys require another premise. -/
+theorem merge_retained_le (previous_input previous_output key : List Nat)
+    (before : previous_input ≤ previous_output) (after : previous_output ≤ key)
+    (retained : Nat) (valid : retained ≤ lcp previous_input key) :
+    retained ≤ lcp previous_output key := by
+  rw [ordered_lcp_min previous_input previous_output key before after] at valid
+  exact Nat.le_trans valid (Nat.min_le_right _ _)
+
+/-- The output literal is a suffix of the current input literal whenever
+the output retains at least as much prefix. -/
+theorem merge_literal_suffix (key : List Nat) (input_retained output_retained : Nat)
+    (within : input_retained ≤ output_retained) :
+    key.drop output_retained = (key.drop input_retained).drop (output_retained - input_retained) := by
+  rw [List.drop_drop]
+  congr 1
+  omega
 
 -- Kernel-checked endpoint and interior examples; no native_decide shortcut.
 example : lcp [] [1, 2] = 0 := by decide
