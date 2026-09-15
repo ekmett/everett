@@ -80,7 +80,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="complete-queries-with-comparison-state"></a> This experiment compares the complete query implementation at <code>71a92a9</code> with ordinary front coding and exact cut LCPs at <code>2d58df0</code>. It also measures the latter with physical block width <code>W=16</code>; cascade stride stays <code>K=15</code> throughout.</p>
-<h1><a class="anchor" id="method-2"></a>
+<h1><a class="anchor" id="method-3"></a>
 Method</h1>
 <p>The <a href="source/bench/query_compare.cc">shared harness</a> retains the fixture, timers and integer oracle from <a href="source/bench/query_chain.cc">query_chain.cc</a>. Both revisions compile that same source. The added backing-array accounting runs outside the timers; the optional <code>W=16</code> definition changes only the candidate's policy instantiation.</p>
 <p>Four native catalogs contain <code>N</code>, <code>N/4</code>, <code>N/16</code> and <code>N/64</code> records. Sequential index construction links them, then each trial prepares the small query root. For <code>N=4096</code>, preparation adds one routing catalog to an 87-entry head. For <code>N=65536</code>, it adds two routing catalogs to a 1,390-entry head. The corresponding queries visit five and six catalogs, respectively.</p>
