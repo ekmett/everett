@@ -28,6 +28,22 @@ publication** means an atomic catalog transaction selecting it. SQLite owns the
 database and journaling files; Diet adds no custom manifest file, root-selector
 file or metadata journal.
 
+### Debug dumps
+
+`reference_cola::save` and `restore` provide a `.rc` debug dump: a fully resolved
+table with full keys in sorted order and codec-encoded values. Its eight-byte
+magic is `DIET.RC` followed by zero. Separate 64-bit little-endian fields carry
+the export version, value-codec tag and live-entry count. Each entry contains
+its 64-bit key byte length, key bytes and encoded value.
+
+This is a debugging feature, not an intended access pattern. It materializes
+all live entries; ordinary saves and snapshots retain existing object roots
+through the catalog. These debug files are outside the fridge's `.kv` and
+`.index` object graph.
+
+I reserve `.fc` for a front-coded table dump. That encoding is a separate future
+format; `.rc` stores complete keys without front coding.
+
 ### Path spelling and content identity
 
 Within an object directory, a canonical 128-bit physical identity is spelled as

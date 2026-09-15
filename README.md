@@ -496,6 +496,11 @@ receiver's `apply()` are serialized; preparing disjoint batches can happen
 independently. `snapshot()` shares the existing immutable state; compaction
 preserves both the resolved entries and their fingerprint.
 
+The reference model also has a `.rc` debug dump for inspecting or round-tripping
+all live entries. This is a debugging feature, not an intended access pattern;
+ordinary saves retain object roots through the catalog. See
+[debug dumps](docs/file-lifecycle.md#debug-dumps).
+
 Incremental Native Merges
 -------------------------
 
