@@ -12,8 +12,8 @@ byte strings, or strings of sixteen-bit code units. The category of allowed
 updates may depend on the complete pair \((s,x)\), not just on the sort.
 
 This is the sort/key design contract. Both byte-at-a-time and bit-at-a-time
-profiles are implementation targets for the first package; the sixteen-bit
-code-unit profile and sort registry remain design work. The existing
+profiles have concrete typed codecs in `profile.h`; the sixteen-bit
+code-unit profile and sort registry remain design work. The older
 `front.h` prototype is byte-only. Consult the [implementation ledger](implementation.md)
 for completed codec work, the [store design](design.md) for blobs, and
 [per-key arrows](arrows.md) for update semantics.
@@ -59,6 +59,23 @@ likewise need not appear in numeric order unless their code assignment promises 
 
 ## 2. Byte and bit profiles
 
+The storage policy is part of the type:
+
+```cpp
+using bytes = everett::storage_policy<
+  everett::profile_unit::byte, everett::fixed_values<8>, 15>;
+using bits = everett::storage_policy<
+  everett::profile_unit::bit, everett::variable_values, 7>;
+```
+
+`fixed_values<N>` measures `N` in the selected profile's units; zero is valid.
+The same policy type belongs to the multiverse and its associated sorts,
+worlds, timelines and blobs. A sort cannot silently select a conflicting unit
+or value-layout policy. A variable-value policy can discover that all values
+in one stream have equal width and exploit that encoding optimization; it does
+not thereby make a type-level fixed-width promise. The `borrowed` stream role
+retains the parent policy type while requiring zero value payload.
+
 The initial **byte profile** forces byte-at-a-time representation of both keys
 and values. Prefix and backspace counts are in bytes, and physical offsets are
 in bytes. Its framed pair encoding must admit the byte-oriented reader; the
@@ -66,16 +83,16 @@ abstract bit-level contract is not permission to feed an unaligned bit format
 to that reader.
 
 The **bit profile** uses meaningful bits for both keys and values. Backspace
-counts and physical offsets are in bits. A versioned Golomb or exponential-Golomb
-code encodes the backspace bit count; order-zero Exp-Golomb is sufficient for
-the initial implementation. The chosen code and any parameters are metadata,
-not something readers infer from the first few bits. Sixteen-bit code-unit
+counts and physical offsets are in bits. Order-zero exponential-Golomb
+encodes the backspace bit count in the implemented bit profile; the byte profile
+uses canonical unsigned base-128 varints. The chosen code and any parameters
+are metadata, not something readers infer from the first few bits. Sixteen-bit code-unit
 handling remains a later profile/codec extension.
 
 A backspace count is the number of units removed from a predecessor, not the
 number retained. If its length is \(\ell\) units and the retained prefix is
 \(p\), the backspace count is \(\ell-p\). The existing `front.h` stores \(p\)
-as a byte count instead. The new profiles must make the distinction explicit,
+as a byte count instead. The typed profiles make the distinction explicit,
 including when a fractional search supplies a different prefix-compatible
 anchor from the physical predecessor.
 
@@ -83,7 +100,8 @@ Every encoded stream needs explicit interpretation metadata:
 
 - Profile and format version, key/value units, and count-code parameters.
 - Prefix/backspace units and physical offset units.
-- Record count, meaningful encoded extent, bit order, and padding rules.
+- Sampling group size, record count, meaningful encoded extent, bit order,
+  and padding rules.
 - Either a proven common fixed value width across the **whole indexed stream**,
   or a variable-value declaration.
 
@@ -157,8 +175,8 @@ There are two coherent implementation choices:
 
 These are requirements for the eventual mixed-sort codec, rather than a claim
 that the existing byte reader handles both conventions. With sort-specific
-counts, the codec must translate a unit prefix into its encoded bit extent. Multiplication by \(w\) is insufficient when framing or escaping
-adds bits. For the illustration above, a prefix of \(m\) complete units occupies
+counts, the codec must translate a unit prefix into its encoded bit extent.
+Multiplication by \(w\) is insufficient when framing or escaping adds bits. For the illustration above, a prefix of \(m\) complete units occupies
 \(m(w+1)\) key-code bits, excluding the final marker and the sort code.
 
 The conservative boundary rule also needs one declared alphabet. Its retained
@@ -173,17 +191,28 @@ two. Native/borrowed equality compares the whole pair, so a borrowed `(s,x)` is
 false only when the native stream contains that same pair. The same `x` in a
 different sort does not qualify.
 
-## 6. Fifteen entries still mean fifteen entries
+## 6. Sampling counts entries, addressing counts profile units
 
-`rank15` describes the virtual interleaving at fifteen-entry boundaries.
-`select15` locates groups beginning at physical records `0, 15, 30, ...`, plus
-the actual-length end sentinel. These counts are independent of whether keys
-use bits, bytes, or sixteen-bit units. A virtual group may cross a sort boundary;
-neither navigation primitive grants permission to use the wrong codec there.
+The policy selects a group size \(K=2^n-1\). The current generic codecs accept
+\(K\ge3\), including 3, 7, 15 and 31; 15 is the default. The class width is
+\(n=\log_2(K+1)\) bits because a full group's borrowed population ranges from
+zero through \(K\). `rank_groups<K>` describes the virtual interleaving at
+these boundaries. `select_groups<K>` locates physical records `0, K, 2K, ...`,
+plus the actual-length end sentinel. The older `rank15`/`select15` interfaces
+remain the fixed-15 prototype.
+
+These counts are independent of whether keys use bits or bytes. Increasing
+\(K\) lowers class metadata per entry and samples fewer physical offsets;
+it also scans more records per projected window. The Elias–Fano sample count
+shrinks; its universe remains the measured residual stream extent, which can
+also change when group framing changes. Neither navigation primitive grants
+permission to interpret a sort with the wrong codec. Local codec correctness
+at \(K=3\) is separate from the chosen redundant-level schedule's catalog-size
+and merge-work bounds.
 
 Physical addressing still needs an explicit unit:
 
-- If record starts remain byte-aligned, `select15` can continue to encode byte
+- If record starts remain byte-aligned, `select_groups<K>` can encode byte
   offsets. The sort/key boundary inside a record may nevertheless be unaligned.
   Encoded bit lengths and any padding belong to that record's framing.
 - If records themselves are packed without byte alignment, locating them needs
@@ -206,8 +235,11 @@ byte offset at ordinal \(i\). For bit offsets the same contribution is \(8iv\).
 The writer tracks whether **all** values have the same physical width,
 including empty values, tombstones where supported, every represented sort,
 and the final partial group. At sampled group \(j\), the entry ordinal is
-\(15j\); the final sentinel instead uses the actual record count. A common
-fixed width of zero is valid and differs from variable width.
+\(Kj\); the final sentinel instead uses the actual record count. A common
+fixed width of zero is valid and differs from variable width. This removes
+the direct value-payload contribution. A restart rule that measures physical
+encoded distance can still emit more literal keys when larger values separate
+them, indirectly changing the residual key/framing extent.
 
 If each sort has a different fixed value width, there is no single global
 \(v\): the initial rule treats that stream as variable-width. Correct cumulative
@@ -219,7 +251,7 @@ variable storage extent; fixed descriptors retain their external payload pins.
 
 Work budgets must also name their units. Charge encoded bits/bytes read or
 written, code units compared, framing work, and requested output separately
-where needed. Fifteen candidates do not bound the lengths of their keys.
+where needed. \(K\) candidates do not bound the lengths of their keys.
 
 ## 7. Hash policies share a composite algebra
 
@@ -290,11 +322,40 @@ established explicitly; merely reusing the same numeric sort ID is insufficient.
 
 The existing `front.h`/`blob.h` prototype has `std::string`/`std::string_view`
 keys, unsigned-byte comparison, byte-count prefixes and suffixes, and a
-nine-byte native value slot for an optional unsigned 64-bit value. The byte
-and bit profile implementation is being developed separately, including
-value lengths, actual backspace counts, and profile-specific offsets. Neither
-that work nor the existing prototype supplies a sort registry, sixteen-bit
-key-unit codec, or the final prefix-free pair encoder.
+nine-byte native value slot for an optional unsigned 64-bit value. The separate
+`profile_array<P, Role>` and `profile_view<P, Role>` implement both typed byte
+and bit streams. They support fixed/variable values, actual backspace counts,
+partial-prefix windows and native LPFC reconstruction. Neither codec supplies
+a sort registry, sixteen-bit key-unit codec, or the final prefix-free pair encoder.
+
+Each physical group starts with one count-coded **actual predecessor key
+length**, followed by up to \(K\) records. A record stores its backspace count,
+suffix length, a value length when values are variable, then suffix and value
+payloads. The group checkpoint lets a sampled lookup recover actual predecessor
+lengths while scanning at most \(K-1\) headers; there is no full-key-length or
+record-offset array with one machine word per key. Group checkpoints are part
+of the residual Elias–Fano extent.
+
+In the byte profile all counts and payloads use byte positions. In the bit
+profile all counts use order-zero Exp-Golomb, payloads concatenate without
+inter-record padding, and physical offsets count bits. Bits are most significant
+first; unused low bits of the final storage byte must be zero. Metadata records
+and checks the profile, policy, role and group size. It is a logical descriptor,
+not a finalized portable serialization of the header and its sections.
+
+The native builder accepts an LPFC restart factor and emits a literal key when
+the previous literal becomes too distant in encoded profile units. A partial
+query reconstructs only its requested prefix. The separately supplied borrowed
+prefix ceilings can shorten a copy prefix and re-emit erased units, without
+changing native bytes. The stored retained prefix is an absolute copy length;
+it is not presumed to equal LCP with an incoming surrogate frontier. Values
+returned by independent reconstruction are copied in full; view callbacks borrow
+their encoded value span and an ephemeral key-prefix scratch buffer.
+
+`encoded_at` parses from a bounded group checkpoint. Full traversal additionally
+checks predecessor continuity, sampled group offsets and the terminal extent. The borrowed views check
+metadata, section bounds, padding and parsed counts; they do not authenticate
+objects or prove an arbitrary caller-supplied anchor shares the required prefix.
 
 The reference world accepts one value type and one hashing-policy object per
 instantiation. Its existing `hash.value(value)` call does not receive the key
