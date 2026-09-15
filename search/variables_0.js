@@ -1,6 +1,8 @@
 var searchData=
 [
-  ['accepted_5f_0',['accepted_',['../structeverett_1_1partition__round.html#a1cd28dd19ff11e3669d135b411d6f9ad',1,'everett::partition_round']]],
-  ['after_1',['after',['../structeverett_1_1world__edit.html#adf3fc300a7ac137ff2d39d08451814eb',1,'everett::world_edit']]],
-  ['attempt_2',['attempt',['../structeverett_1_1object__write__error.html#a5273bc794420be1118367e256fb7ee74',1,'everett::object_write_error::attempt'],['../structeverett_1_1object__seal__receipt.html#a0dbafc0aca14e103b3aa25e159470b7d',1,'everett::object_seal_receipt::attempt'],['../structeverett_1_1object__writer_1_1operation.html#a3da141bdc01752caca68f17b953a3d5d',1,'everett::object_writer::operation::attempt']]]
+  ['accepted_5f_0',['accepted_',['../structdiet_1_1partition__round.html#a7195729a105621c6cacfc32381807cd4',1,'diet::partition_round']]],
+  ['active_5f_1',['active_',['../structdiet_1_1encoded__cola__sections.html#af9a498e38342cc5c1d53d93c7594d657',1,'diet::encoded_cola_sections']]],
+  ['after_2',['after',['../structdiet_1_1cola__edit.html#a9943ff887bfbbc80ac4a77d36c30c885',1,'diet::cola_edit']]],
+  ['attempt_3',['attempt',['../structdiet_1_1file__index__stage.html#a6a8dbefa9cace0e363229ab9536eab26',1,'diet::file_index_stage::attempt'],['../structdiet_1_1object__write__error.html#a092e5acec31d913fe6aaf87a32986825',1,'diet::object_write_error::attempt'],['../structdiet_1_1object__seal__receipt.html#a76a1c97c6c02422ef7fd13a26c27770c',1,'diet::object_seal_receipt::attempt'],['../structdiet_1_1object__writer_1_1operation.html#a29b8f54058fc0c19eb05ffa31dd3a16a',1,'diet::object_writer::operation::attempt']]],
+  ['attempt_5f_4',['attempt_',['../structdiet_1_1object__stream.html#a69281ec5582be67388d035505716e9c8',1,'diet::object_stream']]]
 ];

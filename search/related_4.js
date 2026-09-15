@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['query_5froot_5fbuilder_3c_20p_20_3e_0',['query_root_builder&lt; P &gt;',['../structeverett_1_1query__root.html#a9dbfd85b6556d32ab1a3af443d0cec74',1,'everett::query_root']]]
+  ['object_5fstream_0',['object_stream',['../structdiet_1_1object__writer.html#a06896e7951edbb0da2ca7079f59c56c6',1,'diet::object_writer']]]
 ];

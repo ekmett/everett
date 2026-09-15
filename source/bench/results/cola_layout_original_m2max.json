@@ -1,0 +1,137 @@
+{
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "baseline_revision": "111a2d6",
+  "candidate_revision": "f12d708",
+  "trials": 5,
+  "rounds": 3,
+  "summary": [
+    {
+      "unit": "bit",
+      "k": 3,
+      "prefix": 0,
+      "baseline": {
+        "min": 231.393,
+        "median": 235.545,
+        "max": 282.96
+      },
+      "candidate": {
+        "min": 226.64,
+        "median": 232.476,
+        "max": 332.191
+      },
+      "median_change_percent": -1.302935744762146
+    },
+    {
+      "unit": "bit",
+      "k": 3,
+      "prefix": 4096,
+      "baseline": {
+        "min": 1078.87,
+        "median": 1097.2,
+        "max": 1140.91
+      },
+      "candidate": {
+        "min": 1370.17,
+        "median": 1422.96,
+        "max": 1470.17
+      },
+      "median_change_percent": 29.690120306234057
+    },
+    {
+      "unit": "bit",
+      "k": 15,
+      "prefix": 0,
+      "baseline": {
+        "min": 258.391,
+        "median": 266.416,
+        "max": 318.199
+      },
+      "candidate": {
+        "min": 256.222,
+        "median": 259.166,
+        "max": 344.842
+      },
+      "median_change_percent": -2.7213080295477754
+    },
+    {
+      "unit": "bit",
+      "k": 15,
+      "prefix": 4096,
+      "baseline": {
+        "min": 1189.7,
+        "median": 1255.03,
+        "max": 1296.27
+      },
+      "candidate": {
+        "min": 1617.05,
+        "median": 1668.99,
+        "max": 1737.13
+      },
+      "median_change_percent": 32.98407209389418
+    },
+    {
+      "unit": "byte",
+      "k": 3,
+      "prefix": 0,
+      "baseline": {
+        "min": 137.405,
+        "median": 142.326,
+        "max": 199.385
+      },
+      "candidate": {
+        "min": 134.307,
+        "median": 141.769,
+        "max": 248.33
+      },
+      "median_change_percent": -0.39135505810602433
+    },
+    {
+      "unit": "byte",
+      "k": 3,
+      "prefix": 4096,
+      "baseline": {
+        "min": 993.058,
+        "median": 1027.34,
+        "max": 1066.18
+      },
+      "candidate": {
+        "min": 1305.48,
+        "median": 1330.16,
+        "max": 1390.31
+      },
+      "median_change_percent": 29.476122802577542
+    },
+    {
+      "unit": "byte",
+      "k": 15,
+      "prefix": 0,
+      "baseline": {
+        "min": 150.076,
+        "median": 164.229,
+        "max": 198.787
+      },
+      "candidate": {
+        "min": 154.762,
+        "median": 159.922,
+        "max": 233.678
+      },
+      "median_change_percent": -2.622557526380853
+    },
+    {
+      "unit": "byte",
+      "k": 15,
+      "prefix": 4096,
+      "baseline": {
+        "min": 1103.8,
+        "median": 1129.65,
+        "max": 1176.29
+      },
+      "candidate": {
+        "min": 1496.66,
+        "median": 1560.54,
+        "max": 1656.08
+      },
+      "median_change_percent": 38.14367281901472
+    }
+  ]
+}

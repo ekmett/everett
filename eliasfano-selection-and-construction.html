@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Elias–Fano Selection and Construction</title>
+<title>Diet: Elias–Fano Selection and Construction</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -138,7 +138,7 @@ Rejected prototypes and limits</h1>
 <p>The four-word SIMD population/batch-scan prototype is slower than the retained scalar scan plus bounded word select in these cases. This does not rule out other SIMD select designs. The prototype's width 32 narrowing loop is also excluded: hot packing measured 0.226 ns/entry versus the baseline 0.163, and larger packing 0.245 versus 0.181. Widths1/7/63 are controls whose packing algorithm is unchanged.</p>
 <p><a href="source/bench/select_stage1.patch">The stage-one patch</a> reconstructs the initial broadword and sharing change from the pinned baseline. <a href="source/bench/select_simd_prototype.patch">The prototype patch</a> then reconstructs the evaluated SIMD scan, width 8/16/32 narrowing, and validation. They are benchmark fixtures, not additional production backends. The runner's <code>--prototype</code> option reconstructs both automatically; default runs compare only the baseline and retained implementation.</p>
 <p>Rosetta AVX2 medians for generic hot select were 48.498→37.337 ns with BMI2 explicitly disabled, and 46.357→36.932 ns with BMI2 enabled. These are separate translated runs, not native x86 performance or proof of a PDEP speed advantage. The BMI2 executable contains <code>pdepq</code>. No native x86 measurements were obtained for this comparison.</p>
-<h1><a class="anchor" id="validation-and-reproduction"></a>
+<h1><a class="anchor" id="validation-and-reproduction-1"></a>
 Validation and reproduction</h1>
 <p>The public EF views pass every 16-bit bitmap in each quarter of a word, full-word selection ordinals, random bitmaps, and exact 1..65-word spans ending at a protected page. Additional cases exercise low widths 0..63, both source and destination packing guards, all short constructor tails, unsigned decreases in every SIMD lane, partial record groups, equal residuals, sparse exceptions, and exact select15/generic encoded agreement against bit-at-a-time oracles.</p>
 <p><code>tests/groups.cc</code> passed in Release and ASan/UBSan on ARM and Rosetta AVX2 with BMI2 enabled and disabled (six executions). Focused Release+ASan CMake/CTest passed groups, rank, front, profile, relocated installation, and embedded consumption (six CTests). Header/source hashes were unchanged during verification.</p>

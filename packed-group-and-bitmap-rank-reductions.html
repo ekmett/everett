@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Packed group and bitmap rank reductions</title>
+<title>Diet: Packed group and bitmap rank reductions</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -135,7 +135,7 @@ Validation and limits</h1>
 <li>The benchmark checks the pinned baseline and all alternatives under native and Rosetta ASan/UBSan. Its AVX2 lookup-popcount builder experiment is retained only in the harness; the production x86 builder remains unchanged. No native x86 timing was obtained, and Rosetta correctness is not native x86 performance evidence.</li>
 </ul>
 <p>The stored class packing, checkpoint spacing, public signatures, object sizes and exceptional-input behavior are unchanged. Borrowed views continue to check section shapes; these optimizations do not validate untrusted directory contents.</p>
-<h1><a class="anchor" id="reproduction-4"></a>
+<h1><a class="anchor" id="reproduction-6"></a>
 Reproduction</h1>
 <p>Run through the host's usual exclusive CPU/build resource gate. The runner does not acquire a second lease internally. Both pinned commits must be present in the clone's history.</p>
 <div class="fragment"><div class="line">python3 bench/other_rank.py --build-dir build-other-rank --mode all \</div>

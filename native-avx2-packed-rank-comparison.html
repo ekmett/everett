@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Native AVX2 packed-rank comparison</title>
+<title>Diet: Native AVX2 packed-rank comparison</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -124,7 +124,7 @@ Storage</h1>
 <td class="markdownTableBodyNone"><code>large_packed96MiB</code>   </td><td class="markdownTableBodyRight">2,684,353,920   </td><td class="markdownTableBodyRight">89,478,464 + 11,184,808 = 100,663,272 B   </td><td class="markdownTableBodyRight">335,544,256 + 10,485,768 = 346,030,024 B   </td><td class="markdownTableBodyRight">8 MiB   </td></tr>
 </table>
 <p>These are encoded array sizes; vector capacities matched them. They exclude C++ view/vector objects, allocator bookkeeping and untimed oracle buffers. All data is in memory; this does not measure storage I/O. The large packed and full representations both exceed the shared 30 MiB L3 cache. Hot packed classes began at byte offset 32 modulo 64, and large classes at offset 16; both checkpoint arrays began at offset 16. All packed variants share those same addresses. Full-data offsets were 0 and 16 respectively.</p>
-<h1><a class="anchor" id="results-5"></a>
+<h1><a class="anchor" id="results-6"></a>
 Results</h1>
 <p>Entries are <b>median [minimum, maximum] nanoseconds per query</b>, across five trials. The paired rows report the complete pair operation.</p>
 <table class="markdownTable">
@@ -152,7 +152,7 @@ Results</h1>
 <td class="markdownTableBodyNone">Dependent rank   </td><td class="markdownTableBodyRight">89.827 [88.399, 92.079]   </td><td class="markdownTableBodyRight">92.089 [91.948, 92.602]   </td><td class="markdownTableBodyRight">92.929 [92.732, 93.295]   </td></tr>
 </table>
 <p>This supports SAD-first over qword-first for these AVX2 workloads on this host. It does not establish a universal ISA or microarchitecture ranking, and the large dependent row prevents a blanket SIMD-over-scalar conclusion. The retained bitmap and typed-wrapper controls are available in the CSV; the table focuses on the reduction choice using identical packed storage.</p>
-<h1><a class="anchor" id="reproduction-5"></a>
+<h1><a class="anchor" id="reproduction-7"></a>
 Reproduction</h1>
 <p>Run the following on an AVX2 Linux machine, through its configured resource gate. CPU 12 was suitable on this host; choose a permitted performance-core thread on another host. The source extraction and compilation use only an ignored build directory. The general <code>rank_compare.sh</code> runner pins the earlier Apple comparison and therefore does not select these three snapshots.</p>
 <div class="fragment"><div class="line">repo=$(git rev-parse --show-toplevel)</div>

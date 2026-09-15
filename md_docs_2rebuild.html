@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Strong deletion by incremental rebuilding</title>
+<title>Diet: Strong deletion by incremental rebuilding</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -79,7 +79,7 @@ $(function() {
   <div class="headertitle"><div class="title">Strong deletion by incremental rebuilding</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="strong-deletion-by-incremental-rebuilding"></a> Design checkpoint, 2026-09-15. Tombstones remove bindings from query results, but leave their old records behind. To keep the active representation proportional to live state, we need to rebuild before too much of it becomes history. This is the rebuilding executor planned above the <a class="el" href="md_docs_2design.html">Everett design</a>. The existing reference world tests eager compaction, live counts and fingerprints; it does not implement this schedule or its disk publication protocol.</p>
+<div class="textblock"><p><a class="anchor" id="strong-deletion-by-incremental-rebuilding"></a> Design checkpoint, 2026-09-15. Tombstones remove bindings from query results, but leave their old records behind. To keep the active representation proportional to live state, we need to rebuild before too much of it becomes history. This is the rebuilding executor planned above the <a class="el" href="md_docs_2design.html">Diet design</a>. The existing reference cola tests eager compaction, live counts and fingerprints; it does not implement this schedule or its disk publication protocol.</p>
 <p>The concrete elision and clean-image rules below apply to replacement-valued records. To use the <a class="el" href="md_docs_2arrows.html">per-key categorical extension</a>, we additionally need a category-specific clean representation: preserve the composite arrow, or establish that a materialized endpoint is sufficient for all supported future updates and observations. Equal endpoint hashes alone do not authorize us to discard arrow semantics or source dependencies.</p>
 <h1><a class="anchor" id="autotoc_md1-the-overmarsvan-leeuwen-construction"></a>
 1. The Overmars–van Leeuwen construction</h1>
@@ -100,7 +100,7 @@ $(function() {
 <p>These are counts of uniquely addressed logical bindings. Several historical records for one key are not several current members available for deletion. For unit-valued multiplicity normalized to \((k,n_k)\), a decrement requires \(n_k&gt;0\) and counts as a weak mutation. It changes \(N\) only on \(1\to0\). Total multiplicity \(\sum_k n_k\) is a separate quantity; shrinking it does not imply that the table has fewer occupied keys. The count's representation and arithmetic costs also remain part of the byte/work budget.</p>
 <p>A mutation that emits an unchanged binding still consumes history if we append it, so we count it in \(u\). We reject an absent-key delete and treat an identical network delivery already accepted as a replay, not another mutation. Executing a distinct admitted mutation on the candidate does count toward that candidate generation's \(u\). A batch of a thousand key changes contains a thousand scheduling units.</p>
 <p>The target is an active record universe \(O(N)\), hence \(O(\log(N+1))\) levels, with the redundant-level scheme's constant factors. Concurrent updates can create new obsolete versions immediately after cleanup. The schedule must bound their accumulation; it need not eliminate every tombstone at every instant.</p>
-<p>“Half-size” refers to a world with half as many live bindings. Its byte size may change quite differently: key lengths, prefix compression and retained snapshots can differ substantially. The record-count result alone does not establish a byte-space bound relative to the surviving strings. Section 8 states the additional byte accounting.</p>
+<p>“Half-size” refers to a cola with half as many live bindings. Its byte size may change quite differently: key lengths, prefix compression and retained snapshots can differ substantially. The record-count result alone does not establish a byte-space bound relative to the surviving strings. Section 8 states the additional byte accounting.</p>
 <h1><a class="anchor" id="autotoc_md3-trigger-early-and-preserve-the-next-generations-slack"></a>
 3. Trigger early and preserve the next generation's slack</h1>
 <p>For a sufficiently large generation, I trigger rebuilding when</p>
@@ -144,13 +144,13 @@ Freeze a complete logical cut</h2>
 <p>Persistence gives us a stable rebuilding source directly. We can scan the pinned snapshot while the foreground root changes, without maintaining a second mutable copy just to protect that source.</p>
 <p>Every subsequently accepted change has two effects:</p>
 <ol type="1">
-<li>It updates the foreground world through the ordinary validated update path.</li>
+<li>It updates the foreground cola through the ordinary validated update path.</li>
 <li>Its exact operation identity and old/new bindings enter a replay queue for the candidate, with a reserved bound on its replay/maintenance work.</li>
 </ol>
 <p>Queue insertion is part of admission. A crash must not leave an acknowledged foreground mutation absent from the recorded rebuilding continuation.</p>
 <h2><a class="anchor" id="build-the-clean-base"></a>
 Build the clean base</h2>
-<p>We merge the <b>entire resolved frozen world</b> into fresh immutable native data. For each key, we retain its newest visible live value and emit nothing if its resolved value is a tombstone. This removes every version obsolete at the freeze cut, including the deletion markers that hid them.</p>
+<p>We merge the <b>entire resolved frozen cola</b> into fresh immutable native data. For each key, we retain its newest visible live value and emit nothing if its resolved value is a tombstone. This removes every version obsolete at the freeze cut, including the deletion markers that hid them.</p>
 <p>This is where we turn tombstones into strong deletion. We cannot get that result by copying every frozen physical record or merging only some older runs without a coverage proof.</p>
 <p>We construct fresh native offsets, index streams and their dependency closure as part of the rebuilding job. If the new data file's fractional indexes still require the old generation, we have not yet built a fully independent root.</p>
 <h2><a class="anchor" id="replay-while-the-foreground-remains-available"></a>
@@ -194,12 +194,12 @@ n_s+h\le 9n_s/8
 <p>record occurrences, while current live cardinality is at least \(7n_s/8\). We have therefore bounded this part of the representation by \(9/7\) times current live size. The candidate contains no obsolete records from before the freeze.</p>
 <p>Between handoffs, the carried counter and quarter-size trigger bound the new history by another constant multiple of the base. During a rebuild there are a bounded number of generations; each is still \(O(N)\), assuming the local redundant-level scheduler itself keeps only its bounded array multiplicities. The active level bound is therefore \(O(\log(N+1))\), rather than \(O(\log H)\) for the number \(H\) of updates since the timeline began.</p>
 <p>We have to count overwrites for this argument to work. Repeatedly changing one key must eventually replace its old generation even when live cardinality never changes. We would not reset the universe by resetting a nominal counter while retaining all physical versions.</p>
-<p>This bound includes the current query dependency closure and unfinished current rebuilds. We charge objects retained solely by old saves, readers, other timeline forks or their checkpoints separately as retained history. We cannot require a snapshot of an old large world to occupy space proportional to today's small world.</p>
+<p>This bound includes the current query dependency closure and unfinished current rebuilds. We charge objects retained solely by old saves, readers, other timeline forks or their checkpoints separately as retained history. We cannot require a snapshot of an old large cola to occupy space proportional to today's small cola.</p>
 <h1><a class="anchor" id="autotoc_md7-coverage-contributions-and-durable-continuation"></a>
 7. Coverage, contributions and durable continuation</h1>
 <h2><a class="anchor" id="elision-coverage"></a>
 Elision coverage</h2>
-<p>A frozen-world rebuild knows every older contribution relevant to that world, so it can omit both a winning tombstone and every value that tombstone hides. An unrelated historical snapshot does not prevent this omission in the new root; that snapshot retains its own old files. A partial compaction may elide a tombstone only if its recipe proves that no unmerged older binding can become visible through the result's query graph.</p>
+<p>A frozen-cola rebuild knows every older contribution relevant to that cola, so it can omit both a winning tombstone and every value that tombstone hides. An unrelated historical snapshot does not prevent this omission in the new root; that snapshot retains its own old files. A partial compaction may elide a tombstone only if its recipe proves that no unmerged older binding can become visible through the result's query graph.</p>
 <h2><a class="anchor" id="hash-and-live-count-checks"></a>
 Hash and live-count checks</h2>
 <p>At any common admitted cut \(t\), require</p>
@@ -215,7 +215,7 @@ N(\text{candidate}_t)=n_s+\sum_{i\le t}
 -[v_i^{\rm old}\ne\mathrm{Nothing}]\bigr).
 \]
 </p>
-<p>We check each root independently. Adding the foreground root's signature to the candidate root's signature would count the same logical world twice during rebuilding. The candidate clean base contributes \(C_s\); its replayed update entries contribute their validated deltas. Index-only dependencies contribute zero. The old owner is replaced, not algebraically combined with the new owner. Fingerprint equality remains a lint check, not a proof of record equality or of complete elision coverage.</p>
+<p>We check each root independently. Adding the foreground root's signature to the candidate root's signature would count the same logical cola twice during rebuilding. The candidate clean base contributes \(C_s\); its replayed update entries contribute their validated deltas. Index-only dependencies contribute zero. The old owner is replaced, not algebraically combined with the new owner. Fingerprint equality remains a lint check, not a proof of record equality or of complete elision coverage.</p>
 <h2><a class="anchor" id="checkpoint-contents"></a>
 Checkpoint contents</h2>
 <p>To resume a rebuild, we must record at least:</p>
@@ -238,12 +238,12 @@ Checkpoint contents</h2>
 9. Acceptance cases for the executor</h1>
 <p>Test the executor's schedule against a simple resolved-table oracle:</p>
 <ul>
-<li>Pure deletion, insertion and overwrite streams, including a fixed one-key live world with arbitrarily many overwrites.</li>
+<li>Pure deletion, insertion and overwrite streams, including a fixed one-key live cola with arbitrarily many overwrites.</li>
 <li>Adversarial updates immediately before a key is copied, immediately after it is copied, and while queued replay has not reached it yet.</li>
 <li>Repeated delete/reinsert cycles; absent deletes and duplicate deliveries must not invent accounting credits or replay history.</li>
 <li>Unequal replay costs, verifying the outstanding-work inequality after every admission; large batches are charged per changed binding.</li>
 <li>Handoff exactly at a queue-empty cut, followed immediately by another update; replay debt persists and the next trigger still has the promised slack.</li>
-<li>Complete tombstone elision versus partial coverage, including snapshots that continue reading values deleted from the current world.</li>
+<li>Complete tombstone elision versus partial coverage, including snapshots that continue reading values deleted from the current cola.</li>
 <li>Replacement indexes that do not retain unwanted old query dependencies.</li>
 <li>Foreground/candidate fingerprints and live counts at matched cuts, without double-counting temporary copies.</li>
 <li>Failure and restart at every durable barrier, with all checkpoint/pin owners retained until the recovery protocol permits reclamation.</li>

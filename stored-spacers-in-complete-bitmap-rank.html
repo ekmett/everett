@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Stored spacers in complete bitmap rank</title>
+<title>Diet: Stored spacers in complete bitmap rank</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -95,7 +95,7 @@ Scope and validation</h1>
 <p>The <a href="source/bench/rank_spacers.cc">harness</a> derives the hot bitmap case, independent/dependent query generator, warm-up and alternating order from <code>other_rank.cc</code>. Each revision builds its own index from the same deterministic bitmap: their packed run words cannot be shared. The fixture has 253,577 logical bits, including a partial final word and block, and 32,704 bytes of encoded bitmap and directory arrays per index. A 65,536-word query stream occupies another 524,288 bytes. The source bitmap, independent oracle, both index allocations and benchmark objects are excluded from the per-index encoded-size field. This is a resident workload, not a claim that all benchmark data fits in L1 cache.</p>
 <p>Before timing, a bit-at-a-time oracle checks every valid rank position and the derived total for both revisions. It also checks every generated query, including the complete dependent chain. Each of five trials then makes 1,048,576 calls to the complete public <code>rank_view::rank</code> through an equally non-inlined wrapper. Independent positions do not depend on earlier results. Dependent positions mix in the preceding rank result before reducing to the query domain. Every trial checks cross-revision checksums. The CSV retains all twenty timing rows and the final verified checksum for each pattern. A separate ASan/UBSan check passes the every-position oracle and 65,536 generated queries per pattern; its CSV contains only the header because check mode performs no timing.</p>
 <p>Review of the arithmetic found that the stored ten-bit populations fit at offsets 0, 11 and 22 within the 32-bit word. The multiply uses a 64-bit value; the selected three-run sum is at most 1,536 and fits its eleven-bit result lane. Full and partial builders write the same layout, and exact 512-bit boundaries still return from the directory without reading the bitmap payload. The separate Elias–Fano packer rounding guard identified during review is outside this bitmap benchmark.</p>
-<h1><a class="anchor" id="reproduction-6"></a>
+<h1><a class="anchor" id="reproduction-8"></a>
 Reproduction</h1>
 <p>The native M2 Max run uses Apple Clang 21, C++20, strict warnings and <code>-O3 -DNDEBUG</code>, with a checked user-initiated QoS request. Each variant warms up for 32,768 queries. Trial order alternates within each pattern under the host's exclusive CPU/build-directory lease. Frequency and core affinity are not fixed. No Intel performance claim follows from these M2 measurements.</p>
 <div class="fragment"><div class="line">python3 bench/rank_spacers.py --build-dir build-rank-spacers/release \</div>

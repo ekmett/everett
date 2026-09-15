@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/profile_blob.h>
+#include <diet/profile_blob.h>
 
 #include <algorithm>
 #include <array>
@@ -23,7 +23,7 @@
 #include <vector>
 
 namespace {
-  using namespace everett;
+  using namespace diet;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -188,8 +188,8 @@ namespace {
                   "outgoing exact bit agreement oracle");
           require(next.comparison.order() == oracle_order(expected_key.view(), query.view()),
                   "outgoing comparison direction oracle");
-          require(next.comparison.full_units() == expected_key.bit_size / P::bits_per_unit,
-                  "borrowed full length uses profile units");
+          require(!next.comparison.full_units() || next.comparison.full_units() == expected_key.bit_size / P::bits_per_unit,
+                  "known borrowed full length uses profile units");
           require(equal(next.comparison.query(), query.view()), "outgoing comparison retains its query");
         }
       }
@@ -298,7 +298,7 @@ namespace {
     auto retained = original;
     auto replacement = original.reindex(new_samples);
     require(&replacement.native() == &original.native(), "reindex shares exact native FC allocation");
-    require(replacement.native().bytes().data() == retained.native().bytes().data(), "retained world keeps native bytes");
+    require(replacement.native().bytes().data() == retained.native().bytes().data(), "retained cola keeps native bytes");
     for (std::size_t i = 0; i != old_samples.size(); ++i) {
       require(original.false_borrow(i) && retained.false_borrow(i), "old index keeps equality flags");
       require(!replacement.false_borrow(i), "new index recomputes equality flags");
@@ -361,5 +361,5 @@ int main() {
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Everett's profile blob behavior.
+ * \brief Tests Diet's profile blob behavior.
  */

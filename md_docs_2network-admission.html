@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Admitting sorted blobs from peers</title>
+<title>Diet: Admitting sorted blobs from peers</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -79,12 +79,13 @@ $(function() {
   <div class="headertitle"><div class="title">Admitting sorted blobs from peers</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="admitting-sorted-blobs-from-peers"></a> Suppose a peer sends us an immutable sorted blob. We can retain its native bytes, chain it onto an existing world, and build fractional indexes back over the new prefix. Local cascading allows arbitrary incoming sizes. The harder questions are when that index work finishes and how much space and string work it costs. The entry-count argument, counterexample and remaining scheduling obligations follow below; an admission scheduler is not yet implemented.</p>
+<div class="textblock"><p><a class="anchor" id="admitting-sorted-blobs-from-peers"></a> Suppose a peer sends us an immutable sorted blob. We can retain its native bytes, chain it onto an existing cola, and build fractional indexes back over the new prefix. Local cascading allows arbitrary incoming sizes. The harder questions are when that index work finishes and how much space and string work it costs. The entry-count argument, counterexample and remaining scheduling obligations follow below; an admission scheduler is not yet implemented.</p>
 <h1><a class="anchor" id="autotoc_md1-what-can-be-adopted-directly"></a>
 1. What can be adopted directly</h1>
 <p>A received native blob can keep its content-addressed identity and bytes. Its receiver-specific fractional index is a separate immutable object. Reusing an existing index also requires its exact downstream augmented catalog version, including sampled ordinals and duplicate ordering. An equal logical-state fingerprint does not establish that routing layout. The exact dependencies stay pinned until a replacement index is complete.</p>
-<p>A standalone base has no downstream catalog to sample. It still needs native navigation structures and a terminal index representation. In the <a class="el" href="mapped-blobs-and-exact-query-roots.html">portable format</a>, a complete <code>.kv</code> includes its ordinary front-coded native stream, W-spaced predecessor-length checkpoints, final key length, and Elias–Fano sampled-offset directory. We can receive and reuse those structures together. Receiving only the record stream instead requires scanning its framing, collecting sampled offsets and constructing EF; validation does not supply missing navigation metadata.</p>
-<p>At the terminal catalog, the borrowed stream and false-borrow flags are empty, and the borrowed offset directory has only its empty-stream endpoint. Every virtual cut has zero borrowed rank and therefore an unused zero cut-LCP scalar. Origin bits are zero for native entries and one for borrowed entries, so every grouped rank is zero. An implicit all-native representation could answer these ranks without storing a zero directory. The current <code>rank_groups&lt;K&gt;</code> representation requires packed zero classes and checkpoints; exact cut LCPs also occupy one slot per virtual group. These take \(O(n/K)\) work and space for \(n\) native entries, separately from W-spaced physical checkpoints. <code>profile_blob&lt;P&gt;::adopt_native</code> constructs these zero directories around a trusted native array without walking its keys or rebuilding its existing EF directory.</p>
+<p>A standalone base has no downstream catalog to sample. It still needs native navigation structures and a terminal index representation. In the <a class="el" href="mapped-blobs-and-exact-query-roots.html">portable format</a>, a complete <code>.kv</code> includes its ordinary front-coded native stream with absolute retained counts at W-spaced block starts, final key length, and Elias–Fano sampled-offset directory. We can receive and reuse those structures together. Receiving only the record stream instead requires scanning its framing, collecting sampled offsets and constructing EF; validation does not supply missing navigation metadata.</p>
+<p>At the terminal catalog, the borrowed stream and false-borrow flags are empty, and the borrowed offset directory has only its empty-stream endpoint. Every virtual cut has zero borrowed rank and therefore an unused zero cut-LCP scalar. Origin bits are zero for native entries and one for borrowed entries, so every grouped rank is zero. An implicit all-native representation could answer these ranks without storing a zero directory. The current <code>rank_groups&lt;K&gt;</code> representation requires packed zero classes and checkpoints; exact cut LCPs also occupy one slot per virtual group. These take \(O(n/K)\) work and space for \(n\) native entries, separately from W-spaced physical checkpoints. <code>profile_blob&lt;P&gt;::adopt_native</code> constructs these zero directories around a trusted native array without walking its keys or rebuilding its existing EF directory. <code>profile_index&lt;P&gt;::native_only(native_count)</code> builds the same terminal index separately for an already mapped native object. We can seal it with <code>encode_index_sections</code> and bind the resulting pair while retaining the original native mapping and identity.</p>
+<p>The two-route COLA representation has the same terminal shortcut: <code>mapped_cola_index_builder&lt;P&gt;(native)</code> reads only the admitted count and builds both zero-population navigation directories. It retains the existing native EF directory and never accesses native payload pages. See the <a class="el" href="cola-indexes-and-mapped-queries.html">COLA construction guide</a>.</p>
 <p>Direct adoption after validation needs a complete terminal representation, including navigation metadata. If anything is missing, construction must finish first. Validation itself may scan the received bytes. The current generic file-envelope check does not validate typed section semantics. The mapped codec scan supplies that stronger check when required. A preindexed prefix can likewise be adopted only when its complete dependency chain and policy match. Neither case implies that a new tiny batch can cheaply build an index against an arbitrary large existing head.</p>
 <p>Admission preserves per-key chronology. Disjoint partition updates from one shared base commute; arbitrary same-key arrows need their original composition order. Assigning files size classes is not permission to sort history by size. Merges must preserve that order, for example by combining contiguous history intervals. See <a class="el" href="md_docs_2arrows.html">categorical updates</a>.</p>
 <h1><a class="anchor" id="autotoc_md2-exact-new-prefix-entry-accounting"></a>
@@ -123,11 +124,11 @@ B\le\frac{S+c-A_0}{K-1}+q\le\frac{S+c}{K-1}+q.
 <p>A complete chain with \(R\) native entries has \(A_0\le R\). To conclude \(O(\log(R+1))\) navigation for fixed \(K\) and \(W\), its published depth must also be \(O(\log(R+1))\). Live bindings \(N\) replace \(R\) only after the <a class="el" href="md_docs_2rebuild.html">history-to-live-size rebuilding invariant</a> is established.</p>
 <p>Depth does not follow from cheap indexing. A chain of one-entry files has \(A_0\le2\) yet needs one visit per file. Empty routing catalogs eventually carry one sample forever because \(\lceil1/K\rceil=1\). A minimum file size bounds depth by total size divided by that minimum, not by its logarithm.</p>
 <p>Geometric size control helps bound repairs and level occupancy. For example, if \(n_{i+j}\le Cg^j n_i\) with \(g&lt;K\), the recurrence bounds \(A_i\) by \(Cn_i/(1-g/K)+1\). Without such control a tiny native file can own a large fractional index. That affects local capacities even when total entry space is linear. Small-to-large schedules also keep repaired predecessors small relative to the downstream merge that changed their target.</p>
-<p>I am considering comparable-size merges and classes such as \(\lfloor\log_2 b\rfloor\) as scheduling tools. Direct admission at arbitrary classes still needs an admission/repair proof; it does not inherit the original COLA schedule's worst-case theorem. We must specify whether \(b\) measures records, encoded bytes or another work weight. Those choices do not establish interchangeable bounds.</p>
+<p>I use the <a class="el" href="cola-scheduling-with-immutable-pairs.html">standard COLA main/secondary/shadow arrangement</a> as the scheduling baseline. A main catalog indexes the next main catalog and the next secondary native array; only the main route continues. The formulas above describe a single-route prefix, not those two-route level capacities. Direct admission of arbitrary-sized files at arbitrary levels still needs an admission/repair proof; it does not inherit the original COLA schedule's worst-case theorem. We must specify whether a size class measures records, encoded bytes or another work weight. Those choices do not establish interchangeable bounds.</p>
 <h1><a class="anchor" id="autotoc_md4-string-bytes-and-peak-retained-space"></a>
 4. String bytes and peak retained space</h1>
 <p>First consider a sequence of prepends without enforcing level occupancy. We give the old head one smallest key consisting of \(T\) copies of <code>a</code>. We prepend \(q\) one-record native files with distinct short keys <code>z</code> followed by a counter. Each file is already sorted, and every new key exceeds the long key. For \(K\ge3\), every new augmented catalog contains two entries and samples that same long key at ordinal zero from its target.</p>
-<p>Each separately front-coded borrowed stream therefore starts with a literal copy of the \(T\)-unit key. Constructing those indexes emits \(\Theta(qT)\) key units, although \(S=q\), \(c=1\), and the borrowed-entry bound is just \(B=q\). The incoming short keys take only \(O(q\log(q+1))\) units. Ordinary prefix compression within each independent stream cannot remove its first literal. Exact cut-LCP metadata and fixed-value stride subtraction do not remove these independent first literals. Later physical blocks need only predecessor lengths and carried comparison context; they do not repeat a full-key restart.</p>
+<p>Each separately front-coded borrowed stream therefore starts with a literal copy of the \(T\)-unit key. Constructing those indexes emits \(\Theta(qT)\) key units, although \(S=q\), \(c=1\), and the borrowed-entry bound is just \(B=q\). The incoming short keys take only \(O(q\log(q+1))\) units. Ordinary prefix compression within each independent stream cannot remove its first literal. Exact cut-LCP metadata and fixed-value stride subtraction do not remove these independent first literals. Later physical blocks need only retained-prefix positions and carried comparison context; they do not repeat a full-key restart.</p>
 <h2><a class="anchor" id="the-redundant-level-storage-budget"></a>
 The redundant-level storage budget</h2>
 <p>For a scheduled snapshot, I retain approximately three indexes per binary level, with another three per level available during rebuilding. Write \(h=\max(1,\lceil\log_2(N+1)\rceil)\). Once the history-to-live-size invariant holds, the intended occupancy bounds are</p>
@@ -137,17 +138,18 @@ I_{\mathrm{snapshot}}\le3h+O(1),\qquad
 I_{\mathrm{rebuild}}\le3h+O(1).
 \]
 </p>
-<p>The old and new generations have comparable live cardinalities during the <a class="el" href="md_docs_2rebuild.html">rebuild horizon</a>, so they use the same \(h\) up to an additive constant. These counts cover exact retained index versions, including replacement outputs occupying the redundant working slots. The scheduler must enforce that budget; the current arbitrary-chain query API alone does not enforce it.</p>
-<p>Let \(\mathcal I\) be those distinct retained indexes, \(S_i\) the borrowed-key sequence in index \(i\), and \(T_{\max}\) their largest first borrowed-key length, counting an empty stream as zero. Their first-literal storage satisfies</p>
+<p>The old and new generations have comparable live cardinalities during the <a class="el" href="md_docs_2rebuild.html">rebuild horizon</a>, so they use the same \(h\) up to an additive constant. This is a conditional budget for exact retained index versions, including replacement outputs occupying the redundant working slots. It requires the <a href="cola-scheduling-with-immutable-pairs.html#current-cola-object-closure">closure and retirement invariant</a>: live jobs and private carriers must not retain dependencies outside those slots. The executable scheduler model checks that invariant on its tested histories; it is not yet an all-histories proof or a production scheduler guarantee. Terminal secondaries have no index of their own. Staging outside the working slots and retained historical roots need separate budgets.</p>
+<p>Let \(\mathcal I\) be those distinct retained index files, and \(\mathcal J\) their separately encoded borrowed streams. IX03 has two streams per index, so \(|\mathcal J|\le2|\mathcal I|\). Let \(S_j\) be stream \(j\)'s borrowed-key sequence, and \(T_{\max}\) their largest first borrowed-key length, counting an empty stream as zero. Their first-literal storage satisfies</p>
 <p class="formulaDsp">
 \[
 S_{\mathrm{first}}
-=\sum_{i\in\mathcal I}|\mathrm{first}(S_i)|
-\le |\mathcal I|T_{\max}
-\le (6h+O(1))T_{\max}.
+=\sum_{j\in\mathcal J}|\mathrm{first}(S_j)|
+\le |\mathcal J|T_{\max}
+\le 2|\mathcal I|T_{\max}
+\le (12h+O(1))T_{\max}.
 \]
 </p>
-<p>Without a rebuild the leading factor is three. Thus the repeated \(T\)-unit key contributes at most roughly \(3T\log_2(N+1)\) live units for one snapshot, or \(6T\log_2(N+1)\) while rebuilding. The unrestricted \(qT\) construction cost cannot be charged as simultaneous storage for one scheduled snapshot after those index versions have been retired.</p>
+<p>Without a rebuild the conservative leading factor is six. Single-route IX02 indexes use one stream per file and halve those coefficients. These bounds count streams independently; exact sharing and empty routes can reduce the actual storage. The unrestricted \(qT\) construction cost cannot be charged as simultaneous storage for one scheduled snapshot after those index versions have been retired.</p>
 <h2><a class="anchor" id="all-borrowed-key-literals"></a>
 All borrowed key literals</h2>
 <p>There is a bound for the remaining key literals too. Let \(D\) be the sorted set of distinct native keys in the exact retained dependency graphs, and define</p>
@@ -160,20 +162,21 @@ F(D)=|d_0|+\sum_{j&gt;0}\bigl(|d_j|-\mathrm{lcp}(d_{j-1},d_j)\bigr),
 <p>Every borrowed key ultimately comes from a native key in its pinned target chain. Each separately front-coded borrowed stream therefore has literal size at most \(F(D)\), giving</p>
 <p class="formulaDsp">
 \[
-S_{\mathrm{index}}\le |\mathcal I|F(D)
-\le (6h+O(1))F(D).
+S_{\mathrm{index}}\le |\mathcal J|F(D)
+\le 2|\mathcal I|F(D)
+\le (12h+O(1))F(D).
 \]
 </p>
 <p>The first-literal bound is part of this total, not an additional charge. Sampling every \(K\)th occurrence does not promise a factor- \(K\) reduction in trie-edge weight. For example, put one native run at each binary level, with geometrically growing entry counts. Put the globally smallest \(T\)-unit key in the largest run and make all other keys distinct, short and greater. Each upstream index samples ordinal zero and repeats that long minimum. This respects level occupancy and can retain \(\Theta(T\log(N+1))\) first-literal units.</p>
-<p>Other saved snapshots retain their own exact dependency sets. Total multiverse space counts the union of those sets, sharing each physical object once. Pending received objects, failed attempts and unfinished outputs outside the working slots need their own storage budget. Native payloads, framing, rank, cut-LCP and offset metadata remain separate terms; the bounds above concern borrowed key literals, not the entire encoded database.</p>
+<p>Other saved snapshots retain their own exact dependency sets. Total fridge space counts the union of those sets, sharing each physical object once. Pending received objects, failed attempts and unfinished outputs outside the working slots need their own storage budget. Native payloads, framing, rank, cut-LCP and offset metadata remain separate terms; the bounds above concern borrowed key literals, not the entire encoded database.</p>
 <p>Cumulative construction can write many generations of these bounded live sets, so merge and admission credits must still pay actual key/framing work. Shared immutable key spans, inherited first-key contexts or distinguishing separators could reduce the logarithmic literal term. That optimization is separate from enforcing the bounded live index set.</p>
 <h1><a class="anchor" id="autotoc_md5-ingestion-state-and-published-state"></a>
 5. Ingestion state and published state</h1>
-<p>Pending received files and unfinished index/merge work may exist in an ingestion state. A published world needs a completed exact-target dependency chain with the promised depth and its prepared query root, or a separately justified bounded fallback query path. Unbounded independent searches over pending files are not that fallback.</p>
-<p>The completion rule must preserve the previous readable root while work is unfinished, account for both index and native merges, and retain replay/progress metadata. Immutable <code>.kv</code>/<code>.index</code> objects and planned SQLite world/pin/progress metadata supply the intended boundaries; the network admission scheduler and its byte-budget proof remain implementation work.</p>
+<p>Pending received files and unfinished index/merge work may exist in an ingestion state. A published cola needs a completed exact-target dependency chain with the promised depth and its prepared query root, or a separately justified bounded fallback query path. Unbounded independent searches over pending files are not that fallback.</p>
+<p>The completion rule must preserve the previous readable root while work is unfinished, account for both index and native merges, and retain replay/progress metadata. Immutable <code>.kv</code>/<code>.index</code> objects and planned SQLite cola/pin/progress metadata supply the intended boundaries; the network admission scheduler and its byte-budget proof remain implementation work.</p>
 <h1><a class="anchor" id="reference-boundary"></a>
 Reference boundary</h1>
-<p>Bender et al., <em>Cache-Oblivious Streaming B-trees</em>, §3: <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=8">original PDF p. 8</a> introduces levels and cascading; <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=9">p. 9</a> gives Lemma 21's level-zero admission and unsafe-level scheduling argument; <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=10">p. 10</a> completes index-linked visibility. The arbitrary-prefix equations and string counterexample above are derived here for Everett; they are not claims from that paper. </p>
+<p>Bender et al., <em>Cache-Oblivious Streaming B-trees</em>, §3: <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=8">original PDF p. 8</a> introduces levels and cascading; <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=9">p. 9</a> gives Lemma 21's level-zero admission and unsafe-level scheduling argument; <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=10">p. 10</a> completes index-linked visibility. The arbitrary-prefix equations and string counterexample above are derived here for Diet; they are not claims from that paper. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->

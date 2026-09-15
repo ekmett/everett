@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['universe_0',['universe',['../structeverett_1_1elias__fano__view.html#ad2a15952f0faa6761b66365269531c3f',1,'everett::elias_fano_view']]]
+  ['universe_0',['universe',['../structdiet_1_1elias__fano__view.html#a5d1826381243e8a2c68e1a446aca152c',1,'diet::elias_fano_view']]]
 ];

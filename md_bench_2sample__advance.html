@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Specializing cursor advancement</title>
+<title>Diet: Specializing cursor advancement</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -91,7 +91,7 @@ Isolated change and correctness</h1>
 </ul>
 <p>The candidate has the same Git tree as <code>7918b1c2b768d76e21efe445c8fd790c6af2db25</code> (tree <code>7a09160749190760163bec5bc9e708421b6ebd00</code>). These names identify the same content, including the common encoder change. The private call sites supply a valid output pointer exactly when that comparison block exists; the previous validation, reconstruction, errors and endpoint handling remain in both modes.</p>
 <p>I use the unchanged <a href="source/bench/sample_frontier.cc">sampling harness</a> and <a href="source/bench/sample_frontier.py">runner</a>, with the fixtures and independent oracles described in <a href="md_bench_2sample__frontier.html#method-and-oracle">the sampling report</a>. There are 4,096 native keys, byte/bit profiles, interleaved and duplicate-borrow fixtures, and 0/64/4,096 shared prefix bytes. Five alternating process trials with three rounds each produce 720 rows. Every occurrence, counter and exact pipeline-encoding check passed. Separate scoped O3 ASan/UBSan sampling and native-merge tests also passed for this header change.</p>
-<h1><a class="anchor" id="results-6"></a>
+<h1><a class="anchor" id="results-7"></a>
 Results</h1>
 <p>These are median ns per augmented source occurrence on the same native arm64 M2 Max host, AppleClang 21 <code>-O3 -DNDEBUG</code>, under the exclusive CPU/build-directory lease. Sampling changes range from −3.0% to +2.0%. Short-prefix pipeline changes range from −4.1% to +4.3%; long-prefix changes range from −0.7% to +0.7%. Every baseline/candidate observation range overlaps. I find no material regression in this matrix and no defensible speedup claim.</p>
 <table class="markdownTable">
@@ -127,7 +127,7 @@ Results</h1>
 <h1><a class="anchor" id="separate-subview-assembly-probe"></a>
 Separate subview assembly probe</h1>
 <p>The baseline above already contains the accepted <code>bit_view::subview</code> change. Its separate earlier probe compares <code>f072b1c</code> with <code>37b8b28</code>: after checking the requested range, a subview reuses its validated backing span instead of repeating the original view constructor's capacity checks. In that small arm64 probe the successful path goes from three conditional branches to one and from a 16-byte stack frame to no frame. This is assembly evidence, with no attributed timing measurement. The <a href="source/bench/results/sample_advance_probe_m2max.json">probe metadata and exact source</a>, <a href="source/bench/results/sample_subview_probe_baseline.asm.txt">before assembly</a> and <a href="source/bench/results/sample_subview_probe_candidate.asm.txt">after assembly</a> keep it separate from the bool-specialization benchmark.</p>
-<h1><a class="anchor" id="reproduction-7"></a>
+<h1><a class="anchor" id="reproduction-9"></a>
 Reproduction</h1>
 <p>The <a href="source/bench/results/sample_advance_m2max.csv">CSV</a> preserves all 720 observations; the <a href="source/bench/results/sample_advance_m2max.json">metadata</a> records full revisions, every header hash, the shared harness/runner hashes, compiler commands, host and trial order. Only CSV line endings are normalized to LF. Run inside the host's configured CPU/build-directory resource lease:</p>
 <div class="fragment"><div class="line">python3 bench/sample_frontier.py \</div>

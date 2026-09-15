@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: include/everett/sampling.h File Reference</title>
+<title>Diet: include/diet/sampling.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -76,7 +76,7 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_684ffc4129be141202002a94cb0feed4.html">everett</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_c7071025d4f9f9a9bd9b595194cb3993.html">diet</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -88,11 +88,12 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 
-<p>Declares Everett's sequential sampling of pinned encoded blob pairs.  
+<p>Declares Diet's sequential sampling of pinned encoded blob pairs.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;<a class="el" href="error__detail_8h_source.html">everett/error_detail.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="profile__blob_8h_source.html">everett/profile_blob.h</a>&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="el" href="error__detail_8h_source.html">diet/error_detail.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="profile__blob_8h_source.html">diet/profile_blob.h</a>&gt;</code><br />
 <code>#include &lt;algorithm&gt;</code><br />
+<code>#include &lt;concepts&gt;</code><br />
 <code>#include &lt;cstddef&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;limits&gt;</code><br />
@@ -104,38 +105,40 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__sample.html">everett::profile_sample&lt; P &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1profile__sample.html">diet::profile_sample&lt; P &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__sample__view.html">everett::profile_sample_view&lt; P &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1profile__sample__view.html">diet::profile_sample_view&lt; P &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__coded__sample.html">everett::profile_coded_sample&lt; P &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1profile__coded__sample.html">diet::profile_coded_sample&lt; P &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__sample__encoder.html">everett::profile_sample_encoder&lt; P &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1profile__sample__encoder.html">diet::profile_sample_encoder&lt; P &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__sample__decoder.html">everett::profile_sample_decoder&lt; P &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1profile__sample__decoder.html">diet::profile_sample_decoder&lt; P &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sampling__work.html">everett::sampling_work</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1sampling__work.html">diet::sampling_work</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sample__cursor.html">everett::sample_cursor&lt; P &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1sample__cursor.html">diet::sample_cursor&lt; P, Target &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1sample__cursor_1_1binding.html">diet::sample_cursor&lt; P, Target &gt;::binding</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
-<tr class="memitem:namespaceeverett" id="r_namespaceeverett"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html">everett</a></td></tr>
+<tr class="memitem:namespacediet" id="r_namespacediet"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet.html">diet</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:namespaceeverett_1_1sampling__detail" id="r_namespaceeverett_1_1sampling__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1sampling__detail.html">everett::sampling_detail</a></td></tr>
+<tr class="memitem:namespacediet_1_1sampling__detail" id="r_namespacediet_1_1sampling__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1sampling__detail.html">diet::sampling_detail</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a3cda5b7682bd33b2a16800d2e5101cf4" id="r_a3cda5b7682bd33b2a16800d2e5101cf4"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
-<tr class="memitem:a3cda5b7682bd33b2a16800d2e5101cf4"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1sampling__detail.html#a3cda5b7682bd33b2a16800d2e5101cf4">everett::sampling_detail::check_ordinal</a> (std::uint64_t count, std::uint64_t ordinal)</td></tr>
-<tr class="separator:a3cda5b7682bd33b2a16800d2e5101cf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adf1fabcc5723757e4d7149a1c74b47d7" id="r_adf1fabcc5723757e4d7149a1c74b47d7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1sampling__detail.html#adf1fabcc5723757e4d7149a1c74b47d7">everett::sampling_detail::replace_suffix</a> (<a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &amp;context, std::uint64_t retained, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> suffix)</td></tr>
-<tr class="separator:adf1fabcc5723757e4d7149a1c74b47d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a532620b6c365d124eb75e62944d461f3" id="r_a532620b6c365d124eb75e62944d461f3"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
+<tr class="memitem:a532620b6c365d124eb75e62944d461f3"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacediet_1_1sampling__detail.html#a532620b6c365d124eb75e62944d461f3">diet::sampling_detail::check_ordinal</a> (std::uint64_t count, std::uint64_t ordinal)</td></tr>
+<tr class="separator:a532620b6c365d124eb75e62944d461f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16ccbd0531a0835175dce7007ff522a7" id="r_a16ccbd0531a0835175dce7007ff522a7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1sampling__detail.html#a16ccbd0531a0835175dce7007ff522a7">diet::sampling_detail::replace_suffix</a> (<a class="el" href="structdiet_1_1bit__string.html">bit_string</a> &amp;context, std::uint64_t retained, <a class="el" href="structdiet_1_1bit__view.html">bit_view</a> suffix)</td></tr>
+<tr class="separator:a16ccbd0531a0835175dce7007ff522a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Declares Everett's sequential sampling of pinned encoded blob pairs. </p>
+<div class="textblock"><p>Declares Diet's sequential sampling of pinned encoded blob pairs. </p>
 <div class="fragment"><div class="line">SPDX-FileType: SOURCE</div>
 <div class="line">SPDX-FileCopyrightText: 2026 Edward Kmett &lt;ekmett@gmail.com&gt;</div>
 <div class="line">SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0</div>

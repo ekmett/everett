@@ -1,0 +1,558 @@
+{
+  "started_utc": "2026-09-15T20:24:41.143554+00:00",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "source_sha256": "8757aad627c34e9622a07ec5ef420680a477a698abbbd91121570207f4df0a27",
+  "runner_sha256": "2edb46c20b0f3c0e999aee061eb23bc86c9d6287ee83518b0ecdeab1fff43de1",
+  "alignment_patch": "#if defined(__APPLE__) && defined(__aarch64__) && defined(__clang__)\n  // Reduce the out-of-line NEON loop's sensitivity to caller code layout.\n  [[gnu::aligned(64)]]\n#endif\n  inline bit_comparison compare_common_bits(bit_view a, bit_view b) {",
+  "inputs": {
+    "baseline": {
+      "revision": "111a2d6b33968fc332fce34dd2962617026dca0f",
+      "alignment64": false,
+      "headers_sha256": {
+        "include/everett/cola_index.h": "d010f08aa7a0858f41254fffffa6e6a7f8f83c705d6900e64b587bf4b69146a4",
+        "include/everett/cola_query.h": "5f58e684a9d5b1818ecb106faf628d4a4f56cfbca5fd367de4153b0424cf1a42",
+        "include/everett/cola_sections.h": "692bc9bf27c3551b91b37895ace12c29979d05c954c94a615ac0c23d75a8803a",
+        "include/everett/crc32c.h": "deab489b333ff0911254fe2d7efc7d8e1665d6294d561ab92ec103ca23d2c16a",
+        "include/everett/durability.h": "f62f489a90771ec79ac8375a2132b72daf88d9f81d494128e76a10606ecab077",
+        "include/everett/elias_fano.h": "da0721307af2602201aa9deedf7ecd913d960d88a7d7aeb7f82a8395a1d2685d",
+        "include/everett/error_detail.h": "e112149e16d60030f2ab65e74c604cfc54b9e066a3520af045ac4a9a76e1cbe2",
+        "include/everett/file.h": "596bbc62a9ca8aa83a217c1426dc4fc5a8bb8b7355c8be7d945767afad203f26",
+        "include/everett/file_index_builder.h": "64b32f74582f95522d3cf677d533948980d4c2eef69f56b8466e02642cad3a70",
+        "include/everett/file_index_pipeline.h": "61971de9ab0efdd53bba67b4160a6a6230751ed6df3041a5ac31177e8c1b0ad2",
+        "include/everett/fingerprint.h": "e3f9c99c464c7c230fbb5aebdb03481e51a74ce8ff205ca3ffb68cace096e884",
+        "include/everett/index_builder.h": "1aafce1a18766cf75e6e35bf906c25d419f67b97bccc3abd5cf57c3fd3a6ce03",
+        "include/everett/index_pipeline.h": "c485cf80d7093f2b54d2c0c08810a65404ae0f6f54a3e8a543e3df5afde2a6ff",
+        "include/everett/index_pipeline_detail.h": "a4e555865c93a2a766a307286ce92bb8edff4f0817be480c9d0aeccbe7069432",
+        "include/everett/key_detail.h": "3ef132ff61e912cc19882e9e76c4a76e26038592f95cb449ba5f98598dbf2ef2",
+        "include/everett/mapped_blob.h": "05cd856e5eea2fbfb1500f239d58195aa8c88503edf1052bcf66c5bed8f909cc",
+        "include/everett/mapped_cola.h": "051d0668141c1633fdc4dbe0feeb52968e662eaca30ce1ba112cd33c04ab8b2e",
+        "include/everett/mapped_file.h": "3c23b931da21a9ae1eb4eea738a33b04557f81854a9207501082152eaa62cb4d",
+        "include/everett/multiverse.h": "9893acf1163b5e392a3e529ca61fdff200177c5d5212dd8fec50c606f87e1848",
+        "include/everett/native_file_merge.h": "10d961bf40b6eeb00c2cc61ca6a1a8a7a3a4c8918f9b7fe7a00351c1b35c8fcc",
+        "include/everett/native_file_writer.h": "00d675ef449d478445b43880eb6d3a12822aae21af86c1892818b5e1696721d5",
+        "include/everett/native_merge.h": "874e268f3aa3209e9628983f638bc6b888d850e9278bf6bccef750dbac0379fb",
+        "include/everett/native_writer.h": "b4c3209cd29b288f13f09e4e494ffc69f758af0175d43bc2e8552f9143f0ef9d",
+        "include/everett/object_path.h": "5bd65b01d5b0ca5fca95cfac433ab87006c832281769e9ced662517a2767f5a0",
+        "include/everett/object_stream.h": "0794fabca29bf8df61a76b936c7de9b097fb59e98a9a42dba9607d61e2610f9c",
+        "include/everett/object_writer.h": "9bc6281eda2ab0de8fc2cd66ef8edbfa2f0dc33be9fad523e635a1f51e03655c",
+        "include/everett/pins.h": "21dc90f2a270d240805fa11076a25dcfc77bca069203d799b2a4a69457db9987",
+        "include/everett/policy.h": "5c490e8b3e9c8dd157a2c7b7caa3820a9fdf6b80cc1a20e7d0f0a443c3370004",
+        "include/everett/profile.h": "af4639c3f5435a93e55f8940416db473fa0f78497c871f2158df67c5cf75c24a",
+        "include/everett/profile_blob.h": "84017d45f94746d4ff8de72cb50c27eeedbbdd3f031aeee63365bd36f580babf",
+        "include/everett/profile_file_output.h": "99f3299235b40ee96597c9de0bbf292fcaa885bb0c1bd11b6ae0cbf81d424d2b",
+        "include/everett/profile_index.h": "ee3fa6a774b888863e186f6990b9205c6d32dfda4f58143075dac1564dbb8d72",
+        "include/everett/query.h": "025fb12b33971ecac7b73f7ca9ad8d8551790d7082020c369a34d46d719b2f7d",
+        "include/everett/rank.h": "e7af6bcfce2f335ed549dc7db2794759b4fa3748b7a542ad71794810dd1913aa",
+        "include/everett/rank15.h": "55bec223493794f8f6387748b6481b0085a50df2bb588e032e38a9e746f135e2",
+        "include/everett/rank_groups.h": "a1a000b5b0a5c7b86896448c1b32e1b50f3c1b894e5420fe2e62d1b2ff905452",
+        "include/everett/sampling.h": "171c0447c54bc1e0048c0c38bcd8301734b06a0b2ae6e0856cd00feaaef65c77",
+        "include/everett/sections.h": "da69428fb971cc7020e2ed8c7e1b108008445bee3da81f686bac22d31065b527",
+        "include/everett/sqlite_catalog.h": "838df6ec976d0995bc0132b3812e9491e5f1e67578d04bd94ccef3cfbc1b5d8a",
+        "include/everett/word_view.h": "67af7b0c35afeca9c0550885f479f08af7b2a761744beacab621dd6a48b722d7",
+        "include/everett/world.h": "2b983903738943b21cdca407bd98950c373db0a4434c010560ab590982a9fabe"
+      }
+    },
+    "candidate": {
+      "revision": "f12d708f2f6c85c9b7bd40a492a3811c79e2b447",
+      "alignment64": false,
+      "headers_sha256": {
+        "include/everett/cola_index.h": "5495fdd8ae14aecf42af4e573cc0aaf73c261c3a8a07e8af6a933cfa96e399cd",
+        "include/everett/cola_query.h": "5f58e684a9d5b1818ecb106faf628d4a4f56cfbca5fd367de4153b0424cf1a42",
+        "include/everett/cola_sections.h": "692bc9bf27c3551b91b37895ace12c29979d05c954c94a615ac0c23d75a8803a",
+        "include/everett/crc32c.h": "deab489b333ff0911254fe2d7efc7d8e1665d6294d561ab92ec103ca23d2c16a",
+        "include/everett/durability.h": "f62f489a90771ec79ac8375a2132b72daf88d9f81d494128e76a10606ecab077",
+        "include/everett/elias_fano.h": "da0721307af2602201aa9deedf7ecd913d960d88a7d7aeb7f82a8395a1d2685d",
+        "include/everett/error_detail.h": "e112149e16d60030f2ab65e74c604cfc54b9e066a3520af045ac4a9a76e1cbe2",
+        "include/everett/file.h": "596bbc62a9ca8aa83a217c1426dc4fc5a8bb8b7355c8be7d945767afad203f26",
+        "include/everett/file_index_builder.h": "64b32f74582f95522d3cf677d533948980d4c2eef69f56b8466e02642cad3a70",
+        "include/everett/file_index_pipeline.h": "61971de9ab0efdd53bba67b4160a6a6230751ed6df3041a5ac31177e8c1b0ad2",
+        "include/everett/fingerprint.h": "e3f9c99c464c7c230fbb5aebdb03481e51a74ce8ff205ca3ffb68cace096e884",
+        "include/everett/index_builder.h": "1aafce1a18766cf75e6e35bf906c25d419f67b97bccc3abd5cf57c3fd3a6ce03",
+        "include/everett/index_pipeline.h": "c485cf80d7093f2b54d2c0c08810a65404ae0f6f54a3e8a543e3df5afde2a6ff",
+        "include/everett/index_pipeline_detail.h": "a4e555865c93a2a766a307286ce92bb8edff4f0817be480c9d0aeccbe7069432",
+        "include/everett/key_detail.h": "3ef132ff61e912cc19882e9e76c4a76e26038592f95cb449ba5f98598dbf2ef2",
+        "include/everett/mapped_blob.h": "05cd856e5eea2fbfb1500f239d58195aa8c88503edf1052bcf66c5bed8f909cc",
+        "include/everett/mapped_cola.h": "051d0668141c1633fdc4dbe0feeb52968e662eaca30ce1ba112cd33c04ab8b2e",
+        "include/everett/mapped_file.h": "3c23b931da21a9ae1eb4eea738a33b04557f81854a9207501082152eaa62cb4d",
+        "include/everett/multiverse.h": "1e5750e0147dce235440e4535603bc6bf4603d450205cc818fda7c0a3c152fea",
+        "include/everett/native_file_merge.h": "10d961bf40b6eeb00c2cc61ca6a1a8a7a3a4c8918f9b7fe7a00351c1b35c8fcc",
+        "include/everett/native_file_writer.h": "00d675ef449d478445b43880eb6d3a12822aae21af86c1892818b5e1696721d5",
+        "include/everett/native_merge.h": "874e268f3aa3209e9628983f638bc6b888d850e9278bf6bccef750dbac0379fb",
+        "include/everett/native_writer.h": "b4c3209cd29b288f13f09e4e494ffc69f758af0175d43bc2e8552f9143f0ef9d",
+        "include/everett/object_path.h": "5bd65b01d5b0ca5fca95cfac433ab87006c832281769e9ced662517a2767f5a0",
+        "include/everett/object_stream.h": "0794fabca29bf8df61a76b936c7de9b097fb59e98a9a42dba9607d61e2610f9c",
+        "include/everett/object_writer.h": "9bc6281eda2ab0de8fc2cd66ef8edbfa2f0dc33be9fad523e635a1f51e03655c",
+        "include/everett/pins.h": "21dc90f2a270d240805fa11076a25dcfc77bca069203d799b2a4a69457db9987",
+        "include/everett/policy.h": "5c490e8b3e9c8dd157a2c7b7caa3820a9fdf6b80cc1a20e7d0f0a443c3370004",
+        "include/everett/profile.h": "dac8ab22dc1ce5ce47eb1b5536a0405ec4e9e2b7fd1fd26ba02d8e8bb6d399ac",
+        "include/everett/profile_blob.h": "84017d45f94746d4ff8de72cb50c27eeedbbdd3f031aeee63365bd36f580babf",
+        "include/everett/profile_file_output.h": "99f3299235b40ee96597c9de0bbf292fcaa885bb0c1bd11b6ae0cbf81d424d2b",
+        "include/everett/profile_index.h": "ee3fa6a774b888863e186f6990b9205c6d32dfda4f58143075dac1564dbb8d72",
+        "include/everett/query.h": "025fb12b33971ecac7b73f7ca9ad8d8551790d7082020c369a34d46d719b2f7d",
+        "include/everett/rank.h": "e7af6bcfce2f335ed549dc7db2794759b4fa3748b7a542ad71794810dd1913aa",
+        "include/everett/rank15.h": "55bec223493794f8f6387748b6481b0085a50df2bb588e032e38a9e746f135e2",
+        "include/everett/rank_groups.h": "a1a000b5b0a5c7b86896448c1b32e1b50f3c1b894e5420fe2e62d1b2ff905452",
+        "include/everett/sampling.h": "171c0447c54bc1e0048c0c38bcd8301734b06a0b2ae6e0856cd00feaaef65c77",
+        "include/everett/sections.h": "da69428fb971cc7020e2ed8c7e1b108008445bee3da81f686bac22d31065b527",
+        "include/everett/sqlite_catalog.h": "838df6ec976d0995bc0132b3812e9491e5f1e67578d04bd94ccef3cfbc1b5d8a",
+        "include/everett/word_view.h": "67af7b0c35afeca9c0550885f479f08af7b2a761744beacab621dd6a48b722d7",
+        "include/everett/world.h": "2b983903738943b21cdca407bd98950c373db0a4434c010560ab590982a9fabe"
+      }
+    },
+    "baseline_aligned": {
+      "revision": "111a2d6b33968fc332fce34dd2962617026dca0f",
+      "alignment64": true,
+      "headers_sha256": {
+        "include/everett/cola_index.h": "d010f08aa7a0858f41254fffffa6e6a7f8f83c705d6900e64b587bf4b69146a4",
+        "include/everett/cola_query.h": "5f58e684a9d5b1818ecb106faf628d4a4f56cfbca5fd367de4153b0424cf1a42",
+        "include/everett/cola_sections.h": "692bc9bf27c3551b91b37895ace12c29979d05c954c94a615ac0c23d75a8803a",
+        "include/everett/crc32c.h": "deab489b333ff0911254fe2d7efc7d8e1665d6294d561ab92ec103ca23d2c16a",
+        "include/everett/durability.h": "f62f489a90771ec79ac8375a2132b72daf88d9f81d494128e76a10606ecab077",
+        "include/everett/elias_fano.h": "da0721307af2602201aa9deedf7ecd913d960d88a7d7aeb7f82a8395a1d2685d",
+        "include/everett/error_detail.h": "e112149e16d60030f2ab65e74c604cfc54b9e066a3520af045ac4a9a76e1cbe2",
+        "include/everett/file.h": "596bbc62a9ca8aa83a217c1426dc4fc5a8bb8b7355c8be7d945767afad203f26",
+        "include/everett/file_index_builder.h": "64b32f74582f95522d3cf677d533948980d4c2eef69f56b8466e02642cad3a70",
+        "include/everett/file_index_pipeline.h": "61971de9ab0efdd53bba67b4160a6a6230751ed6df3041a5ac31177e8c1b0ad2",
+        "include/everett/fingerprint.h": "e3f9c99c464c7c230fbb5aebdb03481e51a74ce8ff205ca3ffb68cace096e884",
+        "include/everett/index_builder.h": "1aafce1a18766cf75e6e35bf906c25d419f67b97bccc3abd5cf57c3fd3a6ce03",
+        "include/everett/index_pipeline.h": "c485cf80d7093f2b54d2c0c08810a65404ae0f6f54a3e8a543e3df5afde2a6ff",
+        "include/everett/index_pipeline_detail.h": "a4e555865c93a2a766a307286ce92bb8edff4f0817be480c9d0aeccbe7069432",
+        "include/everett/key_detail.h": "3ef132ff61e912cc19882e9e76c4a76e26038592f95cb449ba5f98598dbf2ef2",
+        "include/everett/mapped_blob.h": "05cd856e5eea2fbfb1500f239d58195aa8c88503edf1052bcf66c5bed8f909cc",
+        "include/everett/mapped_cola.h": "051d0668141c1633fdc4dbe0feeb52968e662eaca30ce1ba112cd33c04ab8b2e",
+        "include/everett/mapped_file.h": "3c23b931da21a9ae1eb4eea738a33b04557f81854a9207501082152eaa62cb4d",
+        "include/everett/multiverse.h": "9893acf1163b5e392a3e529ca61fdff200177c5d5212dd8fec50c606f87e1848",
+        "include/everett/native_file_merge.h": "10d961bf40b6eeb00c2cc61ca6a1a8a7a3a4c8918f9b7fe7a00351c1b35c8fcc",
+        "include/everett/native_file_writer.h": "00d675ef449d478445b43880eb6d3a12822aae21af86c1892818b5e1696721d5",
+        "include/everett/native_merge.h": "874e268f3aa3209e9628983f638bc6b888d850e9278bf6bccef750dbac0379fb",
+        "include/everett/native_writer.h": "b4c3209cd29b288f13f09e4e494ffc69f758af0175d43bc2e8552f9143f0ef9d",
+        "include/everett/object_path.h": "5bd65b01d5b0ca5fca95cfac433ab87006c832281769e9ced662517a2767f5a0",
+        "include/everett/object_stream.h": "0794fabca29bf8df61a76b936c7de9b097fb59e98a9a42dba9607d61e2610f9c",
+        "include/everett/object_writer.h": "9bc6281eda2ab0de8fc2cd66ef8edbfa2f0dc33be9fad523e635a1f51e03655c",
+        "include/everett/pins.h": "21dc90f2a270d240805fa11076a25dcfc77bca069203d799b2a4a69457db9987",
+        "include/everett/policy.h": "5c490e8b3e9c8dd157a2c7b7caa3820a9fdf6b80cc1a20e7d0f0a443c3370004",
+        "include/everett/profile.h": "e3722fe13a90ecae5eafa8b1d5f86700da0b076b48ba761d4d5ba5ad201af009",
+        "include/everett/profile_blob.h": "84017d45f94746d4ff8de72cb50c27eeedbbdd3f031aeee63365bd36f580babf",
+        "include/everett/profile_file_output.h": "99f3299235b40ee96597c9de0bbf292fcaa885bb0c1bd11b6ae0cbf81d424d2b",
+        "include/everett/profile_index.h": "ee3fa6a774b888863e186f6990b9205c6d32dfda4f58143075dac1564dbb8d72",
+        "include/everett/query.h": "025fb12b33971ecac7b73f7ca9ad8d8551790d7082020c369a34d46d719b2f7d",
+        "include/everett/rank.h": "e7af6bcfce2f335ed549dc7db2794759b4fa3748b7a542ad71794810dd1913aa",
+        "include/everett/rank15.h": "55bec223493794f8f6387748b6481b0085a50df2bb588e032e38a9e746f135e2",
+        "include/everett/rank_groups.h": "a1a000b5b0a5c7b86896448c1b32e1b50f3c1b894e5420fe2e62d1b2ff905452",
+        "include/everett/sampling.h": "171c0447c54bc1e0048c0c38bcd8301734b06a0b2ae6e0856cd00feaaef65c77",
+        "include/everett/sections.h": "da69428fb971cc7020e2ed8c7e1b108008445bee3da81f686bac22d31065b527",
+        "include/everett/sqlite_catalog.h": "838df6ec976d0995bc0132b3812e9491e5f1e67578d04bd94ccef3cfbc1b5d8a",
+        "include/everett/word_view.h": "67af7b0c35afeca9c0550885f479f08af7b2a761744beacab621dd6a48b722d7",
+        "include/everett/world.h": "2b983903738943b21cdca407bd98950c373db0a4434c010560ab590982a9fabe"
+      }
+    },
+    "candidate_aligned": {
+      "revision": "f12d708f2f6c85c9b7bd40a492a3811c79e2b447",
+      "alignment64": true,
+      "headers_sha256": {
+        "include/everett/cola_index.h": "5495fdd8ae14aecf42af4e573cc0aaf73c261c3a8a07e8af6a933cfa96e399cd",
+        "include/everett/cola_query.h": "5f58e684a9d5b1818ecb106faf628d4a4f56cfbca5fd367de4153b0424cf1a42",
+        "include/everett/cola_sections.h": "692bc9bf27c3551b91b37895ace12c29979d05c954c94a615ac0c23d75a8803a",
+        "include/everett/crc32c.h": "deab489b333ff0911254fe2d7efc7d8e1665d6294d561ab92ec103ca23d2c16a",
+        "include/everett/durability.h": "f62f489a90771ec79ac8375a2132b72daf88d9f81d494128e76a10606ecab077",
+        "include/everett/elias_fano.h": "da0721307af2602201aa9deedf7ecd913d960d88a7d7aeb7f82a8395a1d2685d",
+        "include/everett/error_detail.h": "e112149e16d60030f2ab65e74c604cfc54b9e066a3520af045ac4a9a76e1cbe2",
+        "include/everett/file.h": "596bbc62a9ca8aa83a217c1426dc4fc5a8bb8b7355c8be7d945767afad203f26",
+        "include/everett/file_index_builder.h": "64b32f74582f95522d3cf677d533948980d4c2eef69f56b8466e02642cad3a70",
+        "include/everett/file_index_pipeline.h": "61971de9ab0efdd53bba67b4160a6a6230751ed6df3041a5ac31177e8c1b0ad2",
+        "include/everett/fingerprint.h": "e3f9c99c464c7c230fbb5aebdb03481e51a74ce8ff205ca3ffb68cace096e884",
+        "include/everett/index_builder.h": "1aafce1a18766cf75e6e35bf906c25d419f67b97bccc3abd5cf57c3fd3a6ce03",
+        "include/everett/index_pipeline.h": "c485cf80d7093f2b54d2c0c08810a65404ae0f6f54a3e8a543e3df5afde2a6ff",
+        "include/everett/index_pipeline_detail.h": "a4e555865c93a2a766a307286ce92bb8edff4f0817be480c9d0aeccbe7069432",
+        "include/everett/key_detail.h": "3ef132ff61e912cc19882e9e76c4a76e26038592f95cb449ba5f98598dbf2ef2",
+        "include/everett/mapped_blob.h": "05cd856e5eea2fbfb1500f239d58195aa8c88503edf1052bcf66c5bed8f909cc",
+        "include/everett/mapped_cola.h": "051d0668141c1633fdc4dbe0feeb52968e662eaca30ce1ba112cd33c04ab8b2e",
+        "include/everett/mapped_file.h": "3c23b931da21a9ae1eb4eea738a33b04557f81854a9207501082152eaa62cb4d",
+        "include/everett/multiverse.h": "1e5750e0147dce235440e4535603bc6bf4603d450205cc818fda7c0a3c152fea",
+        "include/everett/native_file_merge.h": "10d961bf40b6eeb00c2cc61ca6a1a8a7a3a4c8918f9b7fe7a00351c1b35c8fcc",
+        "include/everett/native_file_writer.h": "00d675ef449d478445b43880eb6d3a12822aae21af86c1892818b5e1696721d5",
+        "include/everett/native_merge.h": "874e268f3aa3209e9628983f638bc6b888d850e9278bf6bccef750dbac0379fb",
+        "include/everett/native_writer.h": "b4c3209cd29b288f13f09e4e494ffc69f758af0175d43bc2e8552f9143f0ef9d",
+        "include/everett/object_path.h": "5bd65b01d5b0ca5fca95cfac433ab87006c832281769e9ced662517a2767f5a0",
+        "include/everett/object_stream.h": "0794fabca29bf8df61a76b936c7de9b097fb59e98a9a42dba9607d61e2610f9c",
+        "include/everett/object_writer.h": "9bc6281eda2ab0de8fc2cd66ef8edbfa2f0dc33be9fad523e635a1f51e03655c",
+        "include/everett/pins.h": "21dc90f2a270d240805fa11076a25dcfc77bca069203d799b2a4a69457db9987",
+        "include/everett/policy.h": "5c490e8b3e9c8dd157a2c7b7caa3820a9fdf6b80cc1a20e7d0f0a443c3370004",
+        "include/everett/profile.h": "9e96629d9a656db5ad7e5270338a49e6fceff37d1452b1fc28ff856f4ff0f5bd",
+        "include/everett/profile_blob.h": "84017d45f94746d4ff8de72cb50c27eeedbbdd3f031aeee63365bd36f580babf",
+        "include/everett/profile_file_output.h": "99f3299235b40ee96597c9de0bbf292fcaa885bb0c1bd11b6ae0cbf81d424d2b",
+        "include/everett/profile_index.h": "ee3fa6a774b888863e186f6990b9205c6d32dfda4f58143075dac1564dbb8d72",
+        "include/everett/query.h": "025fb12b33971ecac7b73f7ca9ad8d8551790d7082020c369a34d46d719b2f7d",
+        "include/everett/rank.h": "e7af6bcfce2f335ed549dc7db2794759b4fa3748b7a542ad71794810dd1913aa",
+        "include/everett/rank15.h": "55bec223493794f8f6387748b6481b0085a50df2bb588e032e38a9e746f135e2",
+        "include/everett/rank_groups.h": "a1a000b5b0a5c7b86896448c1b32e1b50f3c1b894e5420fe2e62d1b2ff905452",
+        "include/everett/sampling.h": "171c0447c54bc1e0048c0c38bcd8301734b06a0b2ae6e0856cd00feaaef65c77",
+        "include/everett/sections.h": "da69428fb971cc7020e2ed8c7e1b108008445bee3da81f686bac22d31065b527",
+        "include/everett/sqlite_catalog.h": "838df6ec976d0995bc0132b3812e9491e5f1e67578d04bd94ccef3cfbc1b5d8a",
+        "include/everett/word_view.h": "67af7b0c35afeca9c0550885f479f08af7b2a761744beacab621dd6a48b722d7",
+        "include/everett/world.h": "2b983903738943b21cdca407bd98950c373db0a4434c010560ab590982a9fabe"
+      }
+    }
+  },
+  "commands": {
+    "baseline": [
+      "c++",
+      "-O3",
+      "-DNDEBUG",
+      "-std=c++20",
+      "-I/Users/ekmett/cult/ai/worktrees/everett-cola-lcp-diagnosis/build-cola-layout-final/baseline/headers/include",
+      "/Users/ekmett/cult/ai/worktrees/everett-cola-lcp-diagnosis/build-cola-layout-final/cola_layout.cc",
+      "-o",
+      "/Users/ekmett/cult/ai/worktrees/everett-cola-lcp-diagnosis/build-cola-layout-final/baseline/run"
+    ],
+    "candidate": [
+      "c++",
+      "-O3",
+      "-DNDEBUG",
+      "-std=c++20",
+      "-I/Users/ekmett/cult/ai/worktrees/everett-cola-lcp-diagnosis/build-cola-layout-final/candidate/headers/include",
+      "/Users/ekmett/cult/ai/worktrees/everett-cola-lcp-diagnosis/build-cola-layout-final/cola_layout.cc",
+      "-o",
+      "/Users/ekmett/cult/ai/worktrees/everett-cola-lcp-diagnosis/build-cola-layout-final/candidate/run"
+    ],
+    "baseline_aligned": [
+      "c++",
+      "-O3",
+      "-DNDEBUG",
+      "-std=c++20",
+      "-I/Users/ekmett/cult/ai/worktrees/everett-cola-lcp-diagnosis/build-cola-layout-final/baseline_aligned/headers/include",
+      "/Users/ekmett/cult/ai/worktrees/everett-cola-lcp-diagnosis/build-cola-layout-final/cola_layout.cc",
+      "-o",
+      "/Users/ekmett/cult/ai/worktrees/everett-cola-lcp-diagnosis/build-cola-layout-final/baseline_aligned/run"
+    ],
+    "candidate_aligned": [
+      "c++",
+      "-O3",
+      "-DNDEBUG",
+      "-std=c++20",
+      "-I/Users/ekmett/cult/ai/worktrees/everett-cola-lcp-diagnosis/build-cola-layout-final/candidate_aligned/headers/include",
+      "/Users/ekmett/cult/ai/worktrees/everett-cola-lcp-diagnosis/build-cola-layout-final/cola_layout.cc",
+      "-o",
+      "/Users/ekmett/cult/ai/worktrees/everett-cola-lcp-diagnosis/build-cola-layout-final/candidate_aligned/run"
+    ]
+  },
+  "trials": 5,
+  "rounds": 3,
+  "execution_order": [
+    {
+      "trial": 0,
+      "variant": "baseline"
+    },
+    {
+      "trial": 0,
+      "variant": "candidate"
+    },
+    {
+      "trial": 0,
+      "variant": "baseline_aligned"
+    },
+    {
+      "trial": 0,
+      "variant": "candidate_aligned"
+    },
+    {
+      "trial": 1,
+      "variant": "baseline"
+    },
+    {
+      "trial": 1,
+      "variant": "candidate_aligned"
+    },
+    {
+      "trial": 1,
+      "variant": "baseline_aligned"
+    },
+    {
+      "trial": 1,
+      "variant": "candidate"
+    },
+    {
+      "trial": 2,
+      "variant": "baseline_aligned"
+    },
+    {
+      "trial": 2,
+      "variant": "candidate_aligned"
+    },
+    {
+      "trial": 2,
+      "variant": "baseline"
+    },
+    {
+      "trial": 2,
+      "variant": "candidate"
+    },
+    {
+      "trial": 3,
+      "variant": "baseline_aligned"
+    },
+    {
+      "trial": 3,
+      "variant": "candidate"
+    },
+    {
+      "trial": 3,
+      "variant": "baseline"
+    },
+    {
+      "trial": 3,
+      "variant": "candidate_aligned"
+    },
+    {
+      "trial": 4,
+      "variant": "baseline"
+    },
+    {
+      "trial": 4,
+      "variant": "candidate"
+    },
+    {
+      "trial": 4,
+      "variant": "baseline_aligned"
+    },
+    {
+      "trial": 4,
+      "variant": "candidate_aligned"
+    }
+  ],
+  "wire_files_sha256": {
+    "byte-15-4096.index": "22e391c42417f52ecb6da21b4067cf9b3454509c7eb535ddefcf997be0e0af7b",
+    "bit-3-0.index": "665362e972cd01732559ad15c911d78a67b27440f305ac41cab7defab142de34",
+    "byte-3-0.index": "f40fb53f406c262481a60689deaac735444d816d2cb593578bcb1c4c23f5eab8",
+    "byte-15-0.index": "20e1e234836e589bd766ead7ae276f21e6563cfc0b321bc571032d64afd556d8",
+    "byte-3-4096.index": "9971ea6883d0681ca8931a2ad1babf221d7c83b961691496d109ec20b649fdb8",
+    "bit-15-0.index": "c2c2fbf4f4f94b3b40b7f0908ed5c28fed26a5cee60268a06e3bc125d5e8ce3a",
+    "bit-15-4096.index": "d764aa37e0fd181a9cbad6e2c863319c6962b5578aea72956dfdf97f08ddb426",
+    "bit-3-4096.index": "d503f171c891845bfd56f9974b1d14ff11301c50f9e5940eed11b196843994e7"
+  },
+  "binaries_sha256": {
+    "baseline": "83e998931e065aa96cc9c8d2922ed5d52a878447f86bdc9d03e401546280c749",
+    "candidate": "b1fe3e2382b0ec99cf6108138b8b5c8a9816552a4e9fa73afcae9b9ddcb9eeda",
+    "baseline_aligned": "d2625d1890fd68ef90b7c2875ed438726da7db89830d7b88ac64b409323d291b",
+    "candidate_aligned": "2a17466265c5c283edd2a60926eb6fa94d42cd407f2ab4c993e6b754e5dfafa7"
+  },
+  "hardware": {
+    "machdep.cpu.brand_string": {
+      "unavailable": "sysctl: sysctl fmt -1 1024 1: Operation not permitted",
+      "returncode": 1
+    },
+    "hw.memsize": {
+      "unavailable": "sysctl: sysctl fmt -1 1024 1: Operation not permitted",
+      "returncode": 1
+    },
+    "hw.ncpu": {
+      "unavailable": "sysctl: sysctl fmt -1 1024 1: Operation not permitted",
+      "returncode": 1
+    }
+  },
+  "summary": [
+    {
+      "unit": "bit",
+      "k": 3,
+      "prefix": 0,
+      "baseline": {
+        "median": 244.383,
+        "min": 231.818,
+        "max": 362.302
+      },
+      "candidate": {
+        "median": 249.114,
+        "min": 228.207,
+        "max": 386.57
+      },
+      "baseline_aligned": {
+        "median": 247.144,
+        "min": 229.906,
+        "max": 309.014
+      },
+      "candidate_aligned": {
+        "median": 238.078,
+        "min": 229.035,
+        "max": 368.622
+      }
+    },
+    {
+      "unit": "bit",
+      "k": 3,
+      "prefix": 4096,
+      "baseline": {
+        "median": 1124.1,
+        "min": 1095.06,
+        "max": 1195.39
+      },
+      "candidate": {
+        "median": 1424.93,
+        "min": 1398.55,
+        "max": 1487.21
+      },
+      "baseline_aligned": {
+        "median": 1131.87,
+        "min": 1091.97,
+        "max": 1175.56
+      },
+      "candidate_aligned": {
+        "median": 1074.34,
+        "min": 1027.58,
+        "max": 1104.82
+      }
+    },
+    {
+      "unit": "bit",
+      "k": 15,
+      "prefix": 0,
+      "baseline": {
+        "median": 277.039,
+        "min": 261.129,
+        "max": 368.098
+      },
+      "candidate": {
+        "median": 275.028,
+        "min": 257.678,
+        "max": 370.314
+      },
+      "baseline_aligned": {
+        "median": 273.176,
+        "min": 261.461,
+        "max": 356.51
+      },
+      "candidate_aligned": {
+        "median": 265.72,
+        "min": 251.931,
+        "max": 370.346
+      }
+    },
+    {
+      "unit": "bit",
+      "k": 15,
+      "prefix": 4096,
+      "baseline": {
+        "median": 1288.56,
+        "min": 1232.21,
+        "max": 1418.28
+      },
+      "candidate": {
+        "median": 1692.57,
+        "min": 1641.5,
+        "max": 1813.34
+      },
+      "baseline_aligned": {
+        "median": 1274.95,
+        "min": 1229.99,
+        "max": 1361.58
+      },
+      "candidate_aligned": {
+        "median": 1244.32,
+        "min": 1198.2,
+        "max": 1301.64
+      }
+    },
+    {
+      "unit": "byte",
+      "k": 3,
+      "prefix": 0,
+      "baseline": {
+        "median": 147.957,
+        "min": 142.172,
+        "max": 329.628
+      },
+      "candidate": {
+        "median": 142.868,
+        "min": 135.245,
+        "max": 343.995
+      },
+      "baseline_aligned": {
+        "median": 146.859,
+        "min": 138.496,
+        "max": 226.714
+      },
+      "candidate_aligned": {
+        "median": 141.623,
+        "min": 134.293,
+        "max": 283.612
+      }
+    },
+    {
+      "unit": "byte",
+      "k": 3,
+      "prefix": 4096,
+      "baseline": {
+        "median": 1048.24,
+        "min": 997.422,
+        "max": 1189.89
+      },
+      "candidate": {
+        "median": 1348.7,
+        "min": 1328.41,
+        "max": 1463.82
+      },
+      "baseline_aligned": {
+        "median": 1043.83,
+        "min": 1017.77,
+        "max": 1097.26
+      },
+      "candidate_aligned": {
+        "median": 968.021,
+        "min": 927.622,
+        "max": 1080.59
+      }
+    },
+    {
+      "unit": "byte",
+      "k": 15,
+      "prefix": 0,
+      "baseline": {
+        "median": 159.195,
+        "min": 153.337,
+        "max": 281.962
+      },
+      "candidate": {
+        "median": 158.641,
+        "min": 147.163,
+        "max": 287.535
+      },
+      "baseline_aligned": {
+        "median": 163.485,
+        "min": 151.928,
+        "max": 267.382
+      },
+      "candidate_aligned": {
+        "median": 162.503,
+        "min": 155.158,
+        "max": 273.398
+      }
+    },
+    {
+      "unit": "byte",
+      "k": 15,
+      "prefix": 4096,
+      "baseline": {
+        "median": 1191.58,
+        "min": 1106.56,
+        "max": 1220.14
+      },
+      "candidate": {
+        "median": 1593.66,
+        "min": 1512.71,
+        "max": 1696.98
+      },
+      "baseline_aligned": {
+        "median": 1164.04,
+        "min": 1108.39,
+        "max": 1297.38
+      },
+      "candidate_aligned": {
+        "median": 1130.35,
+        "min": 1076.94,
+        "max": 1232.73
+      }
+    }
+  ],
+  "finished_utc": "2026-09-15T20:25:07.081943+00:00"
+}

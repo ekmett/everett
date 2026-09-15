@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Key prefixes, bit copies, and framing</title>
+<title>Diet: Key prefixes, bit copies, and framing</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -82,7 +82,7 @@ $(function() {
 <div class="textblock"><p><a class="anchor" id="key-prefixes-bit-copies-and-framing"></a> I compared the key/bit changes against a fixed baseline on an Apple M2. The byte-prefix helper uses bounded NEON vectors on this host, with SSE2 and portable word paths for other builds. Shifted bit copies and framing use words and masked bytes; these are not SIMD kernels.</p>
 <h1><a class="anchor" id="reproduce"></a>
 Reproduce</h1>
-<p>The <a href="source/bench/key_bits.py">runner</a> compiles one snapshotted fixture twice. The measurements below use the fixture from <code>b208f18</code> (SHA-256 <code>e6d0ce2b434f7b79dfbf86b6ba11c5d9f133ada2bddc064e82846640a0959d59</code>). Its baseline is <code>62ead3fab9d0ee5bda1b47780b7905a45aae1182</code>; the measured candidate headers come from <code>d027162</code>. Only <code><a class="el" href="profile_8h.html" title="Declares Everett&#39;s profile support.">profile.h</a></code>, <code>front.h</code>, and <code><a class="el" href="key__detail_8h.html" title="Provides bounded byte comparison shared by the key codecs.">key_detail.h</a></code> are overlaid. Every dependency remains at the baseline revision, so this comparison excludes concurrent rank/select changes.</p>
+<p>The <a href="source/bench/key_bits.py">runner</a> compiles one snapshotted fixture twice. The measurements below use the fixture from <code>b208f18</code> (SHA-256 <code>e6d0ce2b434f7b79dfbf86b6ba11c5d9f133ada2bddc064e82846640a0959d59</code>). Its baseline is <code>62ead3fab9d0ee5bda1b47780b7905a45aae1182</code>; the measured candidate headers come from <code>d027162</code>. Only <code><a class="el" href="profile_8h.html" title="Declares Diet&#39;s profile support.">profile.h</a></code>, <code>front.h</code>, and <code><a class="el" href="key__detail_8h.html" title="Provides bounded byte comparison shared by the key codecs.">key_detail.h</a></code> are overlaid. Every dependency remains at the baseline revision, so this comparison excludes concurrent rank/select changes.</p>
 <p>Run these commands under the host's CPU/build-directory resource lease:</p>
 <div class="fragment"><div class="line">python3 bench/key_bits.py --candidate d027162 --harness b208f18 \</div>
 <div class="line">  --isolate-key-headers --trials 5 \</div>
@@ -90,8 +90,8 @@ Reproduce</h1>
 <div class="line">python3 bench/key_bits.py --candidate d027162 --harness b208f18 \</div>
 <div class="line">  --isolate-key-headers --sanitize --trials 1 \</div>
 <div class="line">  --work 65536 --output build-key-bits/check.csv</div>
-</div><!-- fragment --><p>The runner needs Python's standard library, Git, and a C++20 compiler. It makes no network requests. <code>CXX</code> selects the compiler. By default, it compares complete header snapshots; omitting <code>--candidate</code> uses the working-tree headers. The explicit <code>--isolate-key-headers</code> switch preserves this historical experiment's three-header overlay. <code>--harness</code> selects the source revision independently and is required above to reproduce the recorded fixture. New JSON files record both resolved revisions, whether either snapshot used working-tree files, exact source/header hashes, flags, and host information.</p>
-<p>The current <a href="source/bench/key_bits.cc">fixture</a> uses typed profile comparisons when the untyped front-code header is absent. Its <code>front_order_and_lcp</code> row retains the label so output comparisons remain possible, but current runs are a different API path; they do not replace the historical results below. Complete-header comparisons can also include changes outside the three measured key helpers.</p>
+</div><!-- fragment --><p>The runner needs Python's standard library, Git, and a C++20 compiler. It makes no network requests. <code>CXX</code> selects the compiler. It can compare complete header snapshots; its working-tree mode requires a checkout with the historical include paths. Use the explicit candidate and harness above from a current Diet checkout. The explicit <code>--isolate-key-headers</code> switch preserves this historical experiment's three-header overlay. <code>--harness</code> selects the source revision independently and is required above to reproduce the recorded fixture. New JSON files record both resolved revisions, whether either snapshot used working-tree files, exact source/header hashes, flags, and host information.</p>
+<p>The retained <a href="source/bench/key_bits.cc">fixture</a> uses typed profile comparisons when the untyped front-code header is absent. Its <code>front_order_and_lcp</code> row retains the label so output comparisons remain possible, but those runs are a different API path; they do not replace the historical results below. Complete-header comparisons can also include changes outside the three measured key helpers.</p>
 <p>The checked-in <a href="source/bench/key_bits_m2.csv">CSV</a> contains every trial; the <a href="source/bench/key_bits_m2.json">metadata</a> identifies the measured sources. I used Apple Clang 21, <code>-O3 -DNDEBUG</code>, macOS 26.6.2, and five alternating baseline/candidate process orders. Each process requests interactive QoS. No other gated CPU-heavy job ran concurrently with timing. This is an ordinary operating-system measurement, not a real-time latency guarantee.</p>
 <h1><a class="anchor" id="what-is-measured"></a>
 What is measured</h1>
@@ -103,7 +103,7 @@ What is measured</h1>
 </ul>
 <p>The larger key fixture is a large <em>key</em>, not a cache-sized or disk-sized data set. These tests use a small, repeatedly accessed working set. They do not measure page faults, cold mmap traversal, or storage-device I/O.</p>
 <p>The harness validates copy results with independent bit extraction, validates profile reconstruction against the input records, and checks count values and consumed positions. Every trial must match baseline output checksums and exact encoded-byte digests. Validation, hashing, and formatting happen outside timed intervals. Profile digests cover encoded record bytes; the broader integration benchmark separately checks the complete blob/index encoding.</p>
-<h1><a class="anchor" id="results-1"></a>
+<h1><a class="anchor" id="results-2"></a>
 Results</h1>
 <p>Times are nanoseconds per operation, shown as median [minimum, maximum] over five trials. The ratio is baseline/candidate; values above 1 mean less time in the candidate. The <code>bits</code> column is key length for primitive cases, value width for counts, and shared-prefix length for profile cases. Source offset is in bits.</p>
 <table class="markdownTable">

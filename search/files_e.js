@@ -8,6 +8,6 @@ var searchData=
   ['rank_5fcompare_5fwindows_2emd_5',['rank_compare_windows.md',['../rank__compare__windows_8md.html',1,'']]],
   ['rank_5fgroups_2eh_6',['rank_groups.h',['../rank__groups_8h.html',1,'']]],
   ['rank_5fspacers_2emd_7',['rank_spacers.md',['../rank__spacers_8md.html',1,'']]],
-  ['readme_2emd_8',['readme.md',['../_r_e_a_d_m_e_8md.html',1,'(Global Namespace)'],['../proof_2_r_e_a_d_m_e_8md.html',1,'(Global Namespace)']]],
+  ['readme_2emd_8',['readme.md',['../bench_2_r_e_a_d_m_e_8md.html',1,'(Global Namespace)'],['../proof_2_r_e_a_d_m_e_8md.html',1,'(Global Namespace)'],['../_r_e_a_d_m_e_8md.html',1,'(Global Namespace)']]],
   ['rebuild_2emd_9',['rebuild.md',['../rebuild_8md.html',1,'']]]
 ];

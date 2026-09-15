@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Bounded rank without cached totals</title>
+<title>Diet: Bounded rank without cached totals</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -103,9 +103,13 @@ Measurements</h1>
 <td class="markdownTableBodyNone">Bitmap dependent rank   </td><td class="markdownTableBodyRight">17.998   </td><td class="markdownTableBodyRight">17.935   </td></tr>
 </table>
 <p>The full table includes K=3, 7 and 31 and all observed ranges. These results show similar hot-query costs, not a general speedup. The measured views shrink by exactly eight bytes. Arrays occupy 20,480 / 28,672 / 36,864 / 45,056 bytes for K=3 / 7 / 15 / 31, and 33,800 bytes for the bitmap. The bitmap's reported <code>view_bytes</code> includes a 16-byte benchmark adapter span in both variants. This bounded run does not measure cold mappings, LLC-exceeding data, construction, or <code>count()</code> latency.</p>
-<p>Reproduce under the host's resource gate:</p>
-<div class="fragment"><div class="line">python3 bench/rank_bounds.py --build-dir build-rank-bounds --trials 5 --queries 1048576</div>
-</div><!-- fragment --><p>The runner uses the current checkout for the candidate and Git history for the baseline. The older <code>rank_compare.sh</code> and <code>neon_cult_rank.py</code> retain their pinned historical headers and original observations. <code>other_rank.py</code> accepts either old constructors or the new API without changing its default historical pins.</p>
+<p>Reproduce from the measured header revision in a separate worktree. The benchmark files were recorded in <code>e581ad37e5b832b42c872490631b70ea8b10f640</code>; copy those two files into the worktree before running under the host's resource gate:</p>
+<div class="fragment"><div class="line">git worktree add --detach ../diet-rank-reproduction f02434a94b7c1250c29d6d4e20a1401a0700cd4d</div>
+<div class="line">git show e581ad37e5b832b42c872490631b70ea8b10f640:bench/rank_bounds.py &gt; ../diet-rank-reproduction/bench/rank_bounds.py</div>
+<div class="line">git show e581ad37e5b832b42c872490631b70ea8b10f640:bench/rank_bounds.cc &gt; ../diet-rank-reproduction/bench/rank_bounds.cc</div>
+<div class="line">cd ../diet-rank-reproduction</div>
+<div class="line">python3 bench/rank_bounds.py --build-dir build-rank-bounds --trials 5 --queries 1048576</div>
+</div><!-- fragment --><p>The runner uses that worktree for the candidate and Git history for the baseline. <code>rank_compare.sh</code> and <code>neon_cult_rank.py</code> retain their pinned historical headers and original observations. <code>other_rank.py</code> accepts either old constructors or the new API without changing its default historical pins.</p>
 <p>-Edward Kmett </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->

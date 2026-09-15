@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Querying an immutable catalog chain</title>
+<title>Diet: Querying an immutable catalog chain</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -79,8 +79,8 @@ $(function() {
   <div class="headertitle"><div class="title">Querying an immutable catalog chain</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="querying-an-immutable-catalog-chain"></a> The query layer connects the encoded window operations into a complete search. It returns every matching native entry, together with its exact source pair and native ordinal. The caller decides how those entries compose. An index link describes navigation, so its position alone does not establish an update's age.</p>
-<p><code>query_root&lt;P&gt;</code>, <code>query_root_builder&lt;P&gt;</code> and <code>query_cursor&lt;P&gt;</code> share the same storage policy as their blobs. They are also available through the corresponding aliases in <code>multiverse&lt;P&gt;</code>. The <a href="index.html#query-the-whole-chain">README example</a> builds a chain, prepares its root and retrieves two entries for the same key.</p>
+<div class="textblock"><p><a class="anchor" id="querying-an-immutable-catalog-chain"></a> The single-route query layer connects the encoded window operations into a complete search. The <a class="el" href="cola-indexes-and-mapped-queries.html">COLA query layer</a> separately follows a recursive main route and a terminal secondary route, including both level-zero arrays. This guide covers the supported <code>profile_blob</code>/IX02 chain APIs. It returns every matching native entry, together with its exact source pair and native ordinal. The caller decides how those entries compose. An index link describes navigation, so its position alone does not establish an update's age.</p>
+<p><code>query_root&lt;P&gt;</code>, <code>query_root_builder&lt;P&gt;</code> and <code>query_cursor&lt;P&gt;</code> share the same storage policy as their blobs. They are also available through the corresponding aliases in <code>fridge&lt;P&gt;</code>. The <a href="index.html#query-the-whole-chain">README example</a> builds a chain, prepares its root and retrieves two entries for the same key.</p>
 <h1><a class="anchor" id="preparing-the-first-window"></a>
 Preparing the first window</h1>
 <p>A bounded window search needs its group and an incoming key context. At the start of a chain, neither is known. If the head contains at most <code>P::group_size</code> augmented occurrences, group zero covers it and an empty context suffices: the first physical record in each stream is literal.</p>
@@ -101,8 +101,8 @@ a_0=A,\qquad a_{i+1}=\left\lceil\frac{a_i}{K}\right\rceil.
 <p><code>finish()</code> requires completion and returns the same prepared head on repeated calls. <code>query_root&lt;P&gt;::build(head)</code> is the eager convenience. Retain and reuse the result: preparation is indexing work, rather than a hidden cost of each query. This does not make attaching a tiny batch to a large head cheap; see <a class="el" href="md_docs_2network-admission.html">network admission</a>.</p>
 <h1><a class="anchor" id="following-the-chain"></a>
 Following the chain</h1>
-<p><code>root.cursor(query)</code> copies the query key and initially pins the root. Each successful <code>step(catalog_budget)</code> visits at most that many catalogs, stopping when it has a native match or no remaining route. The default budget is one. The cursor uses <code>search_window</code> at each catalog, carrying the sampled predecessor's group and query-bound comparison context into the exact target. This context stores exact common-prefix agreement in bits, full key length in policy units, and comparison direction. It shares the owned immutable query. No inherited key prefix is reconstructed during traversal.</p>
-<p>The full key length remains distinct from prefix agreement. A short query may agree with only part of a much longer boundary; endpoints and backspace parsing still need the actual lengths.</p>
+<p><code>root.cursor(query)</code> copies the query key and initially pins the root. Each successful <code>step(catalog_budget)</code> visits at most that many catalogs, stopping when it has a native match or no remaining route. The default budget is one. The cursor uses <code>search_window</code> at each catalog, carrying the sampled predecessor's group and query-bound comparison context into the exact target. This context stores exact common-prefix agreement in bits, an optional full key length in policy units, and comparison direction. It shares the owned immutable query. No inherited key prefix is reconstructed during traversal.</p>
+<p>Full key length is distinct from prefix agreement. A short query may agree with only part of a longer boundary. General comparisons use length when that distinction matters; ordered cut repair obtains an exact comparison without reading the predecessor's length. Absolute block-start framing supplies the local length needed to parse subsequent backspaces.</p>
 <p>There are three states to observe:</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -130,7 +130,7 @@ Construction and trust</h1>
 <p>These are navigation-shape checks. They do not compare every sampled key with the target and cannot certify arbitrary equal-count samples manually supplied to <code>index_builder</code>. The content precondition remains the builder's existing one: samples must come from that exact target's trusted sampler. <code>index_pipeline</code> supplies them directly. For <a class="el" href="mapped-blobs-and-exact-query-roots.html">mapped pairs</a>, typed opening checks fixed metadata and <code>mapped_blob::bind</code> checks exact identity and count links. <code>mapped_blob::scan()</code> explicitly checks the complete chain, including every borrowed sample against the actual augmented target stream. That scan or a trusted construction/admission path supplies the content precondition.</p>
 <p><code>query_root&lt;P, Blob&gt;</code> and its cursor share this navigation code. The default <code>Blob</code> is <code>profile_blob&lt;P&gt;</code>; <code>mapped_query_root&lt;P&gt;</code> selects <code>mapped_blob&lt;P&gt;</code>. <code>adopt_prepared</code> checks an already-bounded head without creating routing indexes. <code>open_mapped_query</code> follows persisted identities and adopts that prepared chain, so it reads fixed metadata without reconstructing keys.</p>
 <p>All retained blobs must remain immutable through every alias. A <code>shared_ptr</code> to const supplies read-only access through that handle; it cannot stop a caller from changing the same object through some other mutable handle.</p>
-<p>This query root is a physical navigation owner. It does not publish a durable world, resolve replacements, infer chronology or evaluate arrows. Keeping those choices with the caller lets the same query machinery retrieve fragments for different per-key categories.</p>
+<p>This query root is a physical navigation owner. It does not publish a durable cola, resolve replacements, infer chronology or evaluate arrows. Keeping those choices with the caller lets the same query machinery retrieve fragments for different per-key categories.</p>
 <p>The <a class="el" href="md_bench_2query__compare.html">complete-query benchmark</a> records preparation and query timings, visited catalogs and returned matches with an independent integer-key oracle. Its source, raw trials and reproduction commands are bundled with the documentation. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->

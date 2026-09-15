@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Reusing native-key prefixes</title>
+<title>Diet: Reusing native-key prefixes</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -97,7 +97,7 @@ Method</h1>
 </ul>
 <p>Each fresh process constructs a batch reference and warms the incremental writer. The timer covers all appends, value writes, output allocation, <code>finish()</code> and its EF construction, and destruction of the finished writer. Result destruction and correctness checks are outside the timer. Every warm and timed result is compared directly with the batch payload, metadata, EF arrays and samples. A sequential cursor checks every full reconstructed key and every meaningful value bit against the input. The runner additionally checks payload sizes and framed wire digests across variants.</p>
 <p>Each case uses 16,384 records, five alternating baseline/candidate process trials, and three rounds per process. All policies have <code>K=W=15</code>. Native M2 Max, AppleClang 21, C++20, <code>-O3 -DNDEBUG</code>, requested user-initiated QoS. Compilation and timing hold the exclusive CPU/build-directory lease. The OS controls core placement and frequency.</p>
-<h1><a class="anchor" id="results-2"></a>
+<h1><a class="anchor" id="results-3"></a>
 Results</h1>
 <p>Times are median nanoseconds per record over 15 rounds per variant/case, including amortized finalization. A negative change means less time.</p>
 <table class="markdownTable">
@@ -131,7 +131,7 @@ Results</h1>
 <p>Round ranges are disjoint between variants in all twelve cases. These ranges are averages over whole construction rounds, not per-record tail latencies. All 360 release rows passed the exact-section, full-key/value and cross-variant checks. The <a href="source/bench/results/native_prefix_m2max.csv">CSV</a> and <a href="source/bench/results/native_prefix_m2max.json">metadata</a> contain every measurement.</p>
 <p>A separate 257-record ASan/UBSan run used both revisions and all twelve profile/prefix combinations. All 24 rows passed. Its <a href="source/bench/results/native_prefix_sanitizer.csv">CSV</a> and <a href="source/bench/results/native_prefix_sanitizer.json">metadata</a> are separate from the timing evidence.</p>
 <p>Logical predecessor contents remain only the current key; capacity can retain the largest key allocation seen until finalization or destruction. The fixture has fixed key lengths within each case and does not establish the same gain for varying lengths. Full common-prefix comparison and value copying remain part of construction. These resident-memory writer measurements do not cover complete merge pipelines, mapped reads, disk I/O, durability or native x86.</p>
-<h1><a class="anchor" id="reproduction-2"></a>
+<h1><a class="anchor" id="reproduction-4"></a>
 Reproduction</h1>
 <p>Run under the host's CPU/build-directory resource gate.</p>
 <div class="fragment"><div class="line">python3 bench/native_prefix.py --baseline fdcad44 --candidate 08ea0d3 \</div>

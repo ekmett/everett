@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Immutable object sealing</title>
+<title>Diet: Immutable object sealing</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -79,22 +79,35 @@ $(function() {
   <div class="headertitle"><div class="title">Immutable object sealing</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><code>object_writer&lt;P&gt;</code> writes an already encoded body under a reserved physical <code>object_id</code>. I keep this operation separate from publishing a world: sealing does not reserve identities, retain inputs, adopt objects in SQLite, select a recovery root, or authorize reclamation. CRC32C checks accidental corruption; it does not turn an opaque object identity into a content address.</p>
+<div class="textblock"><p><code>object_writer&lt;P&gt;</code> writes an already encoded body under a reserved physical <code>object_id</code>. I keep this operation separate from publishing a cola: sealing does not reserve identities, retain inputs, adopt objects in SQLite, select a recovery root, or authorize reclamation. CRC32C checks accidental corruption; it does not turn an opaque object identity into a content address.</p>
 <p>The caller supplies an existing, durably established object directory, an object identity, and a stable <code>object_attempt_id</code>. Both identities must already be reserved and must never identify different work. The caller also retains the verified source inputs and owns reconciliation after an uncertain result.</p>
-<div class="fragment"><div class="line"><span class="keyword">using </span>P = <a class="code hl_struct" href="structeverett_1_1storage__policy.html">everett::storage_policy&lt;everett::profile_unit::byte&gt;</a>;</div>
-<div class="line"><a class="code hl_struct" href="structeverett_1_1file__header.html">everett::file_header&lt;P&gt;</a> header{</div>
-<div class="line">  <a class="code hl_enumvalue" href="namespaceeverett.html#afb3ec78839f4e10d47ce9b6bb33ed0f4a0a6889dd08bdde656324c9c0a73c0f29">everett::file_kind::native_blob</a>, encoded_body.size(), record_count, std::nullopt};</div>
+<div class="fragment"><div class="line"><span class="keyword">using </span>P = <a class="code hl_struct" href="structdiet_1_1storage__policy.html">diet::storage_policy&lt;diet::profile_unit::byte&gt;</a>;</div>
+<div class="line"><a class="code hl_struct" href="structdiet_1_1file__header.html">diet::file_header&lt;P&gt;</a> header{</div>
+<div class="line">  <a class="code hl_enumvalue" href="namespacediet.html#a4e0bcf7a2700e77beb4d27e45e014978a0a6889dd08bdde656324c9c0a73c0f29">diet::file_kind::native_blob</a>, encoded_body.size(), record_count, std::nullopt};</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> sealed = <a class="code hl_function" href="structeverett_1_1object__writer.html#a095e87042d41c2d72f498014c460c9df">everett::object_writer&lt;P&gt;::seal</a>(</div>
+<div class="line"><span class="keyword">auto</span> sealed = <a class="code hl_function" href="structdiet_1_1object__writer.html#a1ce4bc4e772b582d275691ed6e49d12e">diet::object_writer&lt;P&gt;::seal</a>(</div>
 <div class="line">  object_directory, reserved_object_id, reserved_attempt_id, header,</div>
 <div class="line">  std::span&lt;std::byte const&gt;(encoded_body));</div>
-<div class="ttc" id="anamespaceeverett_html_afb3ec78839f4e10d47ce9b6bb33ed0f4a0a6889dd08bdde656324c9c0a73c0f29"><div class="ttname"><a href="namespaceeverett.html#afb3ec78839f4e10d47ce9b6bb33ed0f4a0a6889dd08bdde656324c9c0a73c0f29">everett::file_kind::native_blob</a></div><div class="ttdeci">@ native_blob</div></div>
-<div class="ttc" id="astructeverett_1_1file__header_html"><div class="ttname"><a href="structeverett_1_1file__header.html">everett::file_header</a></div><div class="ttdef"><b>Definition</b> file.h:31</div></div>
-<div class="ttc" id="astructeverett_1_1object__writer_html_a095e87042d41c2d72f498014c460c9df"><div class="ttname"><a href="structeverett_1_1object__writer.html#a095e87042d41c2d72f498014c460c9df">everett::object_writer::seal</a></div><div class="ttdeci">static object_seal_receipt seal(std::filesystem::path const &amp;root, object_id const &amp;id, object_attempt_id const &amp;attempt, file_header&lt; P &gt; const &amp;header, std::span&lt; std::span&lt; std::byte const &gt; const &gt; chunks, Ops &amp;ops)</div><div class="ttdef"><b>Definition</b> object_writer.h:158</div></div>
-<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:62</div></div>
-</div><!-- fragment --><p><code>multiverse&lt;P&gt;::seal_object</code> forwards the same operation through its existing root; <code>multiverse&lt;P&gt;::object_writer</code> names the policy-bound writer type.</p>
+<div class="ttc" id="anamespacediet_html_a4e0bcf7a2700e77beb4d27e45e014978a0a6889dd08bdde656324c9c0a73c0f29"><div class="ttname"><a href="namespacediet.html#a4e0bcf7a2700e77beb4d27e45e014978a0a6889dd08bdde656324c9c0a73c0f29">diet::file_kind::native_blob</a></div><div class="ttdeci">@ native_blob</div></div>
+<div class="ttc" id="astructdiet_1_1file__header_html"><div class="ttname"><a href="structdiet_1_1file__header.html">diet::file_header</a></div><div class="ttdef"><b>Definition</b> file.h:31</div></div>
+<div class="ttc" id="astructdiet_1_1object__writer_html_a1ce4bc4e772b582d275691ed6e49d12e"><div class="ttname"><a href="structdiet_1_1object__writer.html#a1ce4bc4e772b582d275691ed6e49d12e">diet::object_writer::seal</a></div><div class="ttdeci">static object_seal_receipt seal(std::filesystem::path const &amp;root, object_id const &amp;id, object_attempt_id const &amp;attempt, file_header&lt; P &gt; const &amp;header, std::span&lt; std::span&lt; std::byte const &gt; const &gt; chunks, Ops &amp;ops)</div><div class="ttdef"><b>Definition</b> object_writer.h:161</div></div>
+<div class="ttc" id="astructdiet_1_1storage__policy_html"><div class="ttname"><a href="structdiet_1_1storage__policy.html">diet::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:62</div></div>
+</div><!-- fragment --><p><code>fridge&lt;P&gt;::seal_object</code> forwards the same operation through its existing root; <code>fridge&lt;P&gt;::object_writer</code> names the policy-bound writer type.</p>
 <p>The body can instead be a span of borrowed byte spans, including empty spans. Their bytes must remain readable and immutable for the whole call. A retained mapping is suitable; the writer does not allocate or reconstruct the body. It checks the total physical extent and canonical bit-profile padding before I/O. It does not validate kind-specific codec sections or exact index dependencies.</p>
 <p>The receipt records the identities, final path, byte count, body CRC and barrier used. It acknowledges successfully submitted bytes and completed OS persistence operations. It is not <code>persistence_result::durable_verified</code>, which has broader allocator, dependency and recovery-root obligations. An explicit later <code>file&lt;P&gt;::scan()</code> checks readable envelope/body bytes; it is not evidence that an earlier failed persistence attempt recovered.</p>
+<h1><a class="anchor" id="appending-an-unfinished-body"></a>
+Appending an unfinished body</h1>
+<p><code>object_stream&lt;P&gt;</code> keeps the same private attempt open across calls. I use it when the final extent and header are not known until construction finishes:</p>
+<div class="fragment"><div class="line"><a class="code hl_struct" href="structdiet_1_1object__stream.html">diet::object_stream&lt;P&gt;</a> output(object_directory, reserved_object_id,</div>
+<div class="line">  reserved_attempt_id, <a class="code hl_enumvalue" href="namespacediet.html#a4e0bcf7a2700e77beb4d27e45e014978a0a6889dd08bdde656324c9c0a73c0f29">diet::file_kind::native_blob</a>);</div>
+<div class="line">output.append(first_chunk);</div>
+<div class="line">output.append(second_chunk);</div>
+<div class="line"><span class="keyword">auto</span> sealed = output.finish(completed_header);</div>
+<div class="ttc" id="astructdiet_1_1object__stream_html"><div class="ttname"><a href="structdiet_1_1object__stream.html">diet::object_stream</a></div><div class="ttdef"><b>Definition</b> object_stream.h:29</div></div>
+</div><!-- fragment --><p>Each <code>append</code> consumes its borrowed span synchronously, completes short writes, and updates CRC32C from the same bytes. It keeps no body-sized allocation. A chunk is a physical byte sequence; the caller retains an unfinished bit byte until its contents are final. <code>finish</code> checks the final extent and bit padding, then writes the envelope and performs the sealing sequence below.</p>
+<p>For a directory whose contents become known at the end, the constructor also accepts a reserved prefix size after the file kind. The stream initially writes that many zero body bytes. <code>finish(header, directory)</code> replaces exactly that prefix while the output remains private. We adjust the accumulated CRC using <code>crc32c_combine</code> and the suffix length, so backpatching the directory does not require reading the body again. <code>body_bytes()</code> includes the reserved prefix; before finalization, <code>body_crc32c()</code> includes its provisional zero contents.</p>
+<p>The stream is neither copyable nor movable. It owns its attempt and descriptors; the borrowed-operations constructor additionally requires the supplied operation object to outlive it. <code>fridge&lt;P&gt;::object_stream</code> names the same policy-bound type. Metadata rejection before final I/O leaves the stream active. An I/O error poisons it: later <code>append</code> and <code>finish</code> calls fail without issuing more writes. Destruction closes handles and preserves surviving names for reconciliation.</p>
+<p>This supports construction that pauses in the current process. It does not reopen an interrupted append stream or make an unsealed prefix a durable checkpoint. <a class="el" href="md_docs_2merge-resumption.html">Merge resumption</a> describes the additional ownership and continuation state needed for that.</p>
 <h1><a class="anchor" id="sealing-sequence"></a>
 Sealing sequence</h1>
 <p>We create the two shard directories from <code>object_path(id, kind)</code> as needed, opening each relative to its parent directory handle without following a symlink. The final object is never replaced, even if existing bytes happen to match. The private file is created exclusively in the destination shard:</p>

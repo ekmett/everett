@@ -1,0 +1,46 @@
+{
+  "commands": {
+    "baseline_w15": [
+      "clang++",
+      "-std=c++20",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Werror",
+      "-Ibuild-query-absolute-release/baseline-headers/include",
+      "build-query-absolute-release/query_absolute_work.cc",
+      "-o",
+      "build-query-absolute-release/work_baseline_w15"
+    ],
+    "candidate_w15": [
+      "clang++",
+      "-std=c++20",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Werror",
+      "-Ibuild-query-absolute-release/candidate-headers/include",
+      "build-query-absolute-release/query_absolute_work.cc",
+      "-o",
+      "build-query-absolute-release/work_candidate_w15"
+    ],
+    "candidate_w16": [
+      "clang++",
+      "-std=c++20",
+      "-O3",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Werror",
+      "-DEVERETT_QUERY_COMPARE_W16=1",
+      "-Ibuild-query-absolute-release/candidate-headers/include",
+      "build-query-absolute-release/query_absolute_work.cc",
+      "-o",
+      "build-query-absolute-release/work_candidate_w16"
+    ]
+  },
+  "source_sha256": "539cc1e95d8eb708bcc5e6396043cc0b19a35c677596add7b8b6ce0668e455f5",
+  "fixture_source_sha256": "5200a36f81c194c854443a3e031db7eb6158062df88f77829fb9e8049269df18"
+}

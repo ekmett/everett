@@ -1,0 +1,14 @@
+{
+  "single_revision": "6474321ddb564634791e66a457dbc35a03667627",
+  "dual_revision": "ff0588ac03014e191dc704576d946e137234e8a8",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "flags": [
+    "-std=c++20",
+    "-O2"
+  ],
+  "harness_sha256": "24a7d5a7e7d8993ee0551eae9f348b909dfea7ecdb8bb39a348a4800cac7012c",
+  "scope": "occupied encoded arrays only; not timing or allocated file space",
+  "single_rows": 24,
+  "dual_rows": 24,
+  "harness_revision": "fc02351409d09f13e8deadfbfdfc9046830dc22b"
+}

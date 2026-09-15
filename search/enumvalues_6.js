@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['golomb_0',['golomb',['../namespaceeverett.html#a5cc5bbbccae07743f192dd109d44e18ca9f2a577b1282dadac5850e485d4fe9c5',1,'everett']]]
+  ['golomb_0',['golomb',['../namespacediet.html#aed0a885b9a4035b3f23dc0484d8c41f7a9f2a577b1282dadac5850e485d4fe9c5',1,'diet']]]
 ];

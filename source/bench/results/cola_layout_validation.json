@@ -1,0 +1,30 @@
+{
+  "revision": "a4c823ede5246a8b65525872e0f5406826859960",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "test": "tests/profile.cc",
+  "test_sha256": "035e55897bc2610caedf30246ebe82ede792faf6fd02ee67afe02f8b2bcfaa22",
+  "profile_sha256": "9e96629d9a656db5ad7e5270338a49e6fceff37d1452b1fc28ff856f4ff0f5bd",
+  "command": [
+    "clang++",
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "-Werror",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer",
+    "-Iinclude",
+    "tests/profile.cc",
+    "-o",
+    "build-cola-alignment-validation/profile"
+  ],
+  "environment": {
+    "ASAN_OPTIONS": "detect_leaks=0",
+    "UBSAN_OPTIONS": "halt_on_error=1"
+  },
+  "exit_code": 0,
+  "output": "profile tests passed",
+  "gate_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-161948-qzx60mj0/output.log"
+}

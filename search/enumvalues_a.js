@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['private_5fcreated_0',['private_created',['../namespaceeverett.html#a17f6895b13a893618f9eac92af8e2bd3a6225233dcd3e01e2fcdd38a0e3ab5597',1,'everett']]],
-  ['private_5fremoved_1',['private_removed',['../namespaceeverett.html#a17f6895b13a893618f9eac92af8e2bd3a0a243e796e796e2032f5d9e55244a521',1,'everett']]],
-  ['published_2',['published',['../namespaceeverett.html#a32e7c25e258570adfdbc424e5b59fa80a8f888fedf6bd5ff7c93c6d76bb8dc21c',1,'everett']]]
+  ['old_5froot_5fselected_0',['old_root_selected',['../namespacediet.html#a9ca72ed07d7a40184b2d7c5873426601aa9b21f9585bc926229b3095e894592a8',1,'diet']]],
+  ['output_5fdurable_1',['output_durable',['../namespacediet.html#a3a23f628991eb0934fb3ecd07d3cf4b7adc92bd2a6859c6669553d67d6e212949',1,'diet']]]
 ];

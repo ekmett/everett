@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Doxygen metadata and declaration ownership</title>
+<title>Diet: Doxygen metadata and declaration ownership</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -90,16 +90,16 @@ Markdown pages and math</h1>
 Configuration</h1>
 <div class="fragment"><div class="line">ALIASES = &quot;license=@code{.spdx}&quot;</div>
 <div class="line">ALIASES += &quot;endlicense=@endcode&quot;</div>
-</div><!-- fragment --><p>These aliases preserve the three SPDX notice lines as a code block. The author and file brief remain separate metadata. The public-header notices record Everett's <code>BSD-2-Clause OR Apache-2.0</code> license choice. Generated CRC kernels retain their upstream notices; see <a class="el" href="third_party.html">third-party components</a>. Our fixture comparison checks both end-of-file placement and the split layout. Doxygen describes alias expansion in its <a href="https://www.doxygen.nl/manual/custcmd.html">custom-command manual</a>.</p>
+</div><!-- fragment --><p>These aliases preserve the three SPDX notice lines as a code block. The author and file brief remain separate metadata. The public-header notices record Diet's <code>BSD-2-Clause OR Apache-2.0</code> license choice. Generated CRC kernels retain their upstream notices; see <a class="el" href="third_party.html">third-party components</a>. Our fixture comparison checks both end-of-file placement and the split layout. Doxygen describes alias expansion in its <a href="https://www.doxygen.nl/manual/custcmd.html">custom-command manual</a>.</p>
 <p>Documentation tooling is optional and requires Doxygen 1.9.8 or newer and Python 3.9 or newer. It is not an installed-package dependency. Graphviz is not required by this configuration.</p>
-<div class="fragment"><div class="line">cmake -S . -B build-docs -DEVERETT_BUILD_DOCS=ON</div>
-<div class="line">cmake --build build-docs --target everett_docs --parallel 4</div>
-<div class="line">ctest --test-dir build-docs -R &#39;^everett[.]doxygen$&#39; --output-on-failure</div>
-</div><!-- fragment --><p>Open <code>build-docs/docs/reference/html/index.html</code> for the reference documentation. Generated Doxyfiles, XML and diagnostic logs remain alongside it. The CTest check uses a separate <code>docs-test</code> directory. With <code>EVERETT_BUILD_TESTS=OFF</code>, the documentation target remains available but the CTest check is not registered.</p>
+<div class="fragment"><div class="line">cmake -S . -B build-docs -DDIET_BUILD_DOCS=ON</div>
+<div class="line">cmake --build build-docs --target diet_docs --parallel 4</div>
+<div class="line">ctest --test-dir build-docs -R &#39;^diet[.]doxygen$&#39; --output-on-failure</div>
+</div><!-- fragment --><p>Open <code>build-docs/docs/reference/html/index.html</code> for the reference documentation. Generated Doxyfiles, XML and diagnostic logs remain alongside it. The CTest check uses a separate <code>docs-test</code> directory. With <code>DIET_BUILD_TESTS=OFF</code>, the documentation target remains available but the CTest check is not registered.</p>
 <h1><a class="anchor" id="publishing"></a>
 Publishing</h1>
-<p>I publish the checked HTML directly to the <code>gh-pages</code> branch. The site is <a href="https://ekmett.github.io/everett/">ekmett.github.io/everett</a>. GitHub Pages uses that branch's root directory; no Actions workflow generates the documentation.</p>
-<p>Build <code>everett_docs</code>, then copy the contents of <code>build-docs/docs/reference/html/</code> into a separate <code>gh-pages</code> worktree. Keep its Git metadata, replace the previous generated site, and add an empty <code>.nojekyll</code> file so GitHub serves Doxygen's underscored files unchanged. Commit with the source revision and push <code>gh-pages</code>. Updating <code>main</code> alone does not update the site. The publication should include the complete generated tree, including search assets and bundled source files. The checker clears generated HTML/XML before each run so removed declarations cannot leave stale published pages.</p>
+<p>I publish the checked HTML directly to the <code>gh-pages</code> branch. The site is <a href="https://ekmett.github.io/diet/">ekmett.github.io/diet</a>. GitHub Pages uses that branch's root directory; no Actions workflow generates the documentation.</p>
+<p>Build <code>diet_docs</code>, then copy the contents of <code>build-docs/docs/reference/html/</code> into a separate <code>gh-pages</code> worktree. Keep its Git metadata, replace the previous generated site, and add an empty <code>.nojekyll</code> file so GitHub serves Doxygen's underscored files unchanged. Commit with the source revision and push <code>gh-pages</code>. Updating <code>main</code> alone does not update the site. The publication should include the complete generated tree, including search assets and bundled source files. The checker clears generated HTML/XML before each run so removed declarations cannot leave stale published pages.</p>
 <h1><a class="anchor" id="what-the-check-establishes"></a>
 What the check establishes</h1>
 <p><code>tests/check_doxygen.py</code> runs Doxygen over the actual public headers and checks:</p>
@@ -107,11 +107,11 @@ What the check establishes</h1>
 <li>Each file compound has its own exact brief, author and all three SPDX notices.</li>
 <li>Each SPDX field appears exactly once in the source, in the leading file block before code. The final file block contains only author and brief metadata.</li>
 <li>The SPDX code block ends before the author and brief, and file metadata does not appear in namespace, structure or member descriptions.</li>
-<li>Namespace functions and class members have the expected qualified owners, source files and declaration lines. Concrete cases include <code>multiverse&lt;P&gt;::open_object</code>, <code>mapped_file::open</code>, both <code>mapped_slice::bytes</code> ref-qualified overloads, <code>profile_view&lt;P, Role&gt;::reconstruct_at</code>, <code>file_detail::get</code>, <code>crc32c</code>, <code>query_root&lt;P&gt;::build</code>, <code>query_root_builder&lt;P&gt;::finish</code>, the query cursor's <code>step</code> and <code>take_match</code>, prepared root adoption, shape-only profile construction, mapped pair binding, mapped profile scanning, section materialization and envelope encoding, native writer finalization, incremental merge steps, Elias–Fano selection, profile block offsets and carried cursor comparisons, native-array adoption, and SQLite reservation, save and reader acquisition. Template parameters are checked as well.</li>
+<li>Namespace functions and class members have the expected qualified owners, source files and declaration lines. Concrete cases include <code>fridge&lt;P&gt;::open_object</code>, <code>mapped_file::open</code>, both <code>mapped_slice::bytes</code> ref-qualified overloads, <code>profile_view&lt;P, Role&gt;::reconstruct_at</code>, <code>file_detail::get</code>, <code>crc32c</code>, <code>query_root&lt;P&gt;::build</code>, <code>query_root_builder&lt;P&gt;::finish</code>, the query cursor's <code>step</code> and <code>take_match</code>, prepared root adoption, shape-only profile construction, mapped pair binding, mapped profile scanning, section materialization and envelope encoding, native writer finalization, incremental merge steps, Elias–Fano selection, profile block offsets and carried cursor comparisons, native-array adoption, and SQLite reservation, save and reader acquisition. Template parameters are checked as well.</li>
 <li>Two files with same-named functions, same-named classes in distinct namespaces, overloads and distinct documentation markers retain identical ownership and descriptions with combined file blocks before or after the declarations, and with SPDX notices before and author/brief after. The source locations must change by precisely the actual movement.</li>
 <li>A baseline without the aliases emits exactly the two expected unknown-command warnings per header. The configured run must emit no warnings.</li>
 </ul>
-<p>On 2026-09-15, Doxygen 1.9.8 passed these checks for all 29 public headers, 26 real function/overload cases and twelve fixture symbols in all three metadata layouts. The unconfigured baseline had 58 warnings, exclusively for <code>@code{.spdx}</code> and <code>@endcode</code>.</p>
+<p>At <code>ca33a77</code> on 2026-09-15, Doxygen 1.9.8 passed these checks for all 42 public headers, 41 real function/overload cases and twelve fixture symbols in all three metadata layouts. The unconfigured baseline had 84 warnings, exclusively for <code>@code{.spdx}</code> and <code>@endcode</code>.</p>
 <p>These checks verify file metadata and the tested lexical associations. Some APIs still lack prose descriptions. <code>EXTRACT_ALL=YES</code> exposes declarations for inspection; ordinary <code>//</code> implementation comments do not automatically become Doxygen member descriptions. The reference includes private declarations to make ownership inspectable; that does not make them public API. The check does not parse CMake or Python source metadata and is not a whole-project REUSE audit. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: include/everett/crc32c.h File Reference</title>
+<title>Diet: include/diet/crc32c.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -76,45 +76,58 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_684ffc4129be141202002a94cb0feed4.html">everett</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_c7071025d4f9f9a9bd9b595194cb3993.html">diet</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#namespaces">Namespaces</a> &#124;
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions</a> &#124;
+<a href="#var-members">Variables</a>  </div>
   <div class="headertitle"><div class="title">crc32c.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Declares Everett's CRC32C support.  
+<p>Declares Diet's CRC32C support.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;bit&gt;</code><br />
+<div class="textblock"><code>#include &lt;array&gt;</code><br />
+<code>#include &lt;bit&gt;</code><br />
 <code>#include &lt;cstddef&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;cstring&gt;</code><br />
 <code>#include &lt;span&gt;</code><br />
-<code>#include &lt;everett/detail/crc32c_portable.inc&gt;</code><br />
+<code>#include &lt;diet/detail/crc32c_portable.inc&gt;</code><br />
 </div>
 <p><a href="crc32c_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
-<tr class="memitem:namespaceeverett" id="r_namespaceeverett"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html">everett</a></td></tr>
+<tr class="memitem:namespacediet" id="r_namespacediet"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet.html">diet</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:namespaceeverett_1_1crc32c__detail" id="r_namespaceeverett_1_1crc32c__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html">everett::crc32c_detail</a></td></tr>
+<tr class="memitem:namespacediet_1_1crc32c__detail" id="r_namespacediet_1_1crc32c__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1crc32c__detail.html">diet::crc32c_detail</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a4a46ceaf46514195b2a4f5ea5f01c062" id="r_a4a46ceaf46514195b2a4f5ea5f01c062"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:a4a46ceaf46514195b2a4f5ea5f01c062"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#a4a46ceaf46514195b2a4f5ea5f01c062">everett::crc32c_detail::load_little</a> (void const *bytes) noexcept</td></tr>
-<tr class="separator:a4a46ceaf46514195b2a4f5ea5f01c062"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1e83ad80494eac7bb571ae6902ec44f4" id="r_a1e83ad80494eac7bb571ae6902ec44f4"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a1e83ad80494eac7bb571ae6902ec44f4">everett::crc32c</a> (std::span&lt; std::byte const &gt; bytes, std::uint32_t previous_crc=0) noexcept</td></tr>
-<tr class="separator:a1e83ad80494eac7bb571ae6902ec44f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fa5a678bd7d60148397dd72c071f685" id="r_a4fa5a678bd7d60148397dd72c071f685"><td class="memItemLeft" align="right" valign="top">constexpr std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1crc32c__detail.html#a4fa5a678bd7d60148397dd72c071f685">diet::crc32c_detail::multiply_polynomial</a> (std::uint32_t a, std::uint32_t b) noexcept</td></tr>
+<tr class="separator:a4fa5a678bd7d60148397dd72c071f685"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45e744967d22716d416f12d4e0112c9a" id="r_a45e744967d22716d416f12d4e0112c9a"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1crc32c__detail.html#a45e744967d22716d416f12d4e0112c9a">diet::crc32c_detail::shift</a> (std::uint32_t crc, std::uint64_t bytes) noexcept</td></tr>
+<tr class="separator:a45e744967d22716d416f12d4e0112c9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2453b99453e12db4d59d1b0cd1501c6" id="r_ad2453b99453e12db4d59d1b0cd1501c6"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:ad2453b99453e12db4d59d1b0cd1501c6"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacediet_1_1crc32c__detail.html#ad2453b99453e12db4d59d1b0cd1501c6">diet::crc32c_detail::load_little</a> (void const *bytes) noexcept</td></tr>
+<tr class="separator:ad2453b99453e12db4d59d1b0cd1501c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a37b6def7d1d8232e3658a048c53de3c2" id="r_a37b6def7d1d8232e3658a048c53de3c2"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet.html#a37b6def7d1d8232e3658a048c53de3c2">diet::crc32c_combine</a> (std::uint32_t first, std::uint32_t second, std::uint64_t second_bytes) noexcept</td></tr>
+<tr class="separator:a37b6def7d1d8232e3658a048c53de3c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa44af34660164b7d629e7a71da9748b8" id="r_aa44af34660164b7d629e7a71da9748b8"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet.html#aa44af34660164b7d629e7a71da9748b8">diet::crc32c</a> (std::span&lt; std::byte const &gt; bytes, std::uint32_t previous_crc=0) noexcept</td></tr>
+<tr class="separator:aa44af34660164b7d629e7a71da9748b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
+Variables</h2></td></tr>
+<tr class="memitem:a3fed3f8b7c7f69ca39cd15121f9e8997" id="r_a3fed3f8b7c7f69ca39cd15121f9e8997"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1crc32c__detail.html#a3fed3f8b7c7f69ca39cd15121f9e8997">diet::crc32c_detail::byte_powers</a></td></tr>
+<tr class="separator:a3fed3f8b7c7f69ca39cd15121f9e8997"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Declares Everett's CRC32C support. </p>
+<div class="textblock"><p>Declares Diet's CRC32C support. </p>
 <div class="fragment"><div class="line">SPDX-FileType: SOURCE</div>
 <div class="line">SPDX-FileCopyrightText: 2026 Edward Kmett &lt;ekmett@gmail.com&gt;</div>
 <div class="line">SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0</div>

@@ -1,14 +1,14 @@
 var searchData=
 [
-  ['with_5fkey_0',['with_key',['../structeverett_1_1profile__query__context.html#af0709bde7565dfc3b123d7b913ea6b2e',1,'everett::profile_query_context']]],
-  ['word_5fview_1',['word_view',['../structeverett_1_1word__view.html#a699c2e10a00c5fa39f9e01456e7ff655',1,'everett::word_view::word_view()=default'],['../structeverett_1_1word__view.html#a449e5b6df720d8c8bc22e7a413c22340',1,'everett::word_view::word_view(std::span&lt; std::uint64_t const &gt; words) noexcept'],['../structeverett_1_1word__view.html#a79092d8ffbb016480eb392a73d0529f9',1,'everett::word_view::word_view(std::span&lt; std::byte const &gt; bytes, bool little) noexcept']]],
-  ['words_2',['words',['../structeverett_1_1encoded__sections.html#ad49e7777a12aa62cb12c22cb5bb58ee3',1,'everett::encoded_sections::words()'],['../structeverett_1_1sample__view.html#ae100153be231fd444634d62ffd9a08f7',1,'everett::sample_view::words()'],['../namespaceeverett_1_1elias__fano__detail.html#a8a470b669acea5d76692a39c248d9c03',1,'everett::elias_fano_detail::words()']]],
-  ['world_5frun_3',['world_run',['../structeverett_1_1world__run.html#adcacec70aaf82ce880f7a05fd6316c57',1,'everett::world_run']]],
-  ['write_4',['write',['../structeverett_1_1u64__world__codec.html#abe9f0878570e9f3a7a47ff0caa19a673',1,'everett::u64_world_codec']]],
-  ['write_5fall_5',['write_all',['../structeverett_1_1object__writer_1_1operation.html#a098558315234e721947037c10dca1d13',1,'everett::object_writer::operation']]],
-  ['write_5fbackspace_6',['write_backspace',['../namespaceeverett_1_1profile__detail.html#a4bff626bc2875fb4527795d51c640cb9',1,'everett::profile_detail']]],
-  ['write_5fcount_7',['write_count',['../namespaceeverett_1_1profile__detail.html#a12fee97090b78ace066a89cd20b836ac',1,'everett::profile_detail']]],
-  ['write_5fheader_8',['write_header',['../structeverett_1_1object__writer_1_1operation.html#a30b5c611ac75a4a6f10de49058808d5b',1,'everett::object_writer::operation']]],
-  ['write_5fhigh_9',['write_high',['../namespaceeverett_1_1elias__fano__detail.html#af2181c74d2efd13e87c999552d80986f',1,'everett::elias_fano_detail']]],
-  ['write_5fu64_10',['write_u64',['../namespaceeverett_1_1world__detail.html#a3370b34fe33b8572af72cee0394858f1',1,'everett::world_detail']]]
+  ['with_5fkey_0',['with_key',['../structdiet_1_1profile__query__context.html#a77b65169de52bfb0b76d9260470f30cb',1,'diet::profile_query_context']]],
+  ['word_5fview_1',['word_view',['../structdiet_1_1word__view.html#a327e1004f210992317dcd6c3b083f3e7',1,'diet::word_view::word_view()=default'],['../structdiet_1_1word__view.html#afaa8429ebf705025eb82b87ba07bcb05',1,'diet::word_view::word_view(std::span&lt; std::uint64_t const &gt; words) noexcept'],['../structdiet_1_1word__view.html#a11b651aaefd2c2b39d41c8ade74ba32d',1,'diet::word_view::word_view(std::span&lt; std::byte const &gt; bytes, bool little) noexcept']]],
+  ['words_2',['words',['../structdiet_1_1encoded__cola__sections.html#a3d41a95e3729c37ac3a74340434274eb',1,'diet::encoded_cola_sections::words()'],['../structdiet_1_1encoded__sections.html#a6d22838c6b6709b4956bf81b892cc2fd',1,'diet::encoded_sections::words()'],['../structdiet_1_1sample__view.html#ad3e327b2004d8dc2e689efad76ef022d',1,'diet::sample_view::words()'],['../namespacediet_1_1elias__fano__detail.html#a6607991314528c1ab59f9d389fc39b1d',1,'diet::elias_fano_detail::words()']]],
+  ['write_3',['write',['../structdiet_1_1u64__cola__codec.html#ab0fb5fa238e09e76ce5e706b591fc4e3',1,'diet::u64_cola_codec']]],
+  ['write_5fall_4',['write_all',['../structdiet_1_1object__writer_1_1operation.html#af7305ea6be87ed49c2955e058e1c4c85',1,'diet::object_writer::operation']]],
+  ['write_5fat_5',['write_at',['../structdiet_1_1object__writer_1_1operation.html#a0fe5972e863a81cc2ed9532580918f4b',1,'diet::object_writer::operation']]],
+  ['write_5fbackspace_6',['write_backspace',['../namespacediet_1_1profile__detail.html#a99d53ed96a683c155396e992fbcd9426',1,'diet::profile_detail']]],
+  ['write_5fcount_7',['write_count',['../namespacediet_1_1profile__detail.html#a8fcb5642e3cb21a5f43cc644896afea3',1,'diet::profile_detail']]],
+  ['write_5fheader_8',['write_header',['../structdiet_1_1object__writer_1_1operation.html#a69223aeb6323bfdbfd237533035f374c',1,'diet::object_writer::operation']]],
+  ['write_5fhigh_9',['write_high',['../namespacediet_1_1elias__fano__detail.html#a79da5e0811743c5f907fe46a29234c53',1,'diet::elias_fano_detail']]],
+  ['write_5fu64_10',['write_u64',['../namespacediet_1_1cola__detail.html#a414856bddc42f2bbdc3fbcbe2241d357',1,'diet::cola_detail']]]
 ];

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Updates in a category chosen per key</title>
+<title>Diet: Updates in a category chosen per key</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -79,8 +79,8 @@ $(function() {
   <div class="headertitle"><div class="title">Updates in a category chosen per key</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="updates-in-a-category-chosen-per-key"></a> Design extension, 2026-09-15. A replacement tells us the new value of a key. A patch tells us how to get there. To extend the <a class="el" href="md_docs_2design.html">Everett design</a> to patches and other composable changes, we need to say when two changes can compose and what their composition means. Ordinary category theory gives us just those laws.</p>
-<p><code>reference_world</code> implements replacement-valued updates. The <a class="el" href="md_docs_2native-merges.html">native merge builder</a> also accepts a composition callback over encoded values; typed per-key categories and endpoint validation remain the design developed here. The <a class="el" href="md_docs_2implementation.html">implementation ledger</a> records the tested contracts. The <a class="el" href="everett-an-abstract-proof-core.html">Lean proof core</a> checks typed composition, disjoint updates and adjacent-merge adoption in an abstract model.</p>
+<div class="textblock"><p><a class="anchor" id="updates-in-a-category-chosen-per-key"></a> Design extension, 2026-09-15. A replacement tells us the new value of a key. A patch tells us how to get there. To extend the <a class="el" href="md_docs_2design.html">Diet design</a> to patches and other composable changes, we need to say when two changes can compose and what their composition means. Ordinary category theory gives us just those laws.</p>
+<p><code>reference_cola</code> implements replacement-valued updates. The <a class="el" href="md_docs_2native-merges.html">native merge builder</a> also accepts a composition callback over encoded values; typed per-key categories and endpoint validation remain the design developed here. The <a class="el" href="md_docs_2implementation.html">implementation ledger</a> records the tested contracts. The <a class="el" href="diet-an-abstract-proof-core.html">Lean proof core</a> checks typed composition, disjoint updates and adjacent-merge adoption in an abstract model.</p>
 <h1><a class="anchor" id="autotoc_md1-a-family-of-categories"></a>
 1. A family of categories</h1>
 <p>Let \(\mathcal K\) be the discrete set of full, sort-qualified logical keys. A key includes its sort identity and its canonical local key, as specified in <a class="el" href="md_docs_2keys.html">Sorts and key policies</a>. Give each \(k\in\mathcal K\) a category \(\mathcal C_k\):</p>
@@ -91,15 +91,15 @@ $(function() {
 <li>Composition combines compatible changes, retaining their chronological order.</li>
 </ul>
 <p>The full key chooses the category; a sort may provide a category resolver rather than one category shared by every key of that sort. Values at different keys need not have the same type, update language, or composition algorithm. A counter, a document edited by splices, and a large structured value edited by patches can share the same outer store. Describing an arrow's endpoints mathematically does not require serializing two full configurations with every change.</p>
-<p>We choose baseline objects \(o_k\) and define a sparse world as a family \(X=(X_k)_k\), with \(X_k=o_k\) outside finitely many keys. An update \(f:X\to Y\) is a family \(f_k:X_k\to Y_k\), with identity arrows outside finite support. These form the <b>category of finite-support sections</b>, or restricted product</p>
+<p>We choose baseline objects \(o_k\) and define a sparse cola as a family \(X=(X_k)_k\), with \(X_k=o_k\) outside finitely many keys. An update \(f:X\to Y\) is a family \(f_k:X_k\to Y_k\), with identity arrows outside finite support. These form the <b>category of finite-support sections</b>, or restricted product</p>
 <p class="formulaDsp">
 \[
 \mathcal W=\prod_{k\in\mathcal K}^{\mathrm{fin}}(\mathcal C_k,o_k).
 \]
 </p>
-<p>Composition and identities are componentwise. For a finite key space this is the ordinary product of the per-key categories. A baseline may be an absent binding, or an initial configuration supplied by the world definition.</p>
+<p>Composition and identities are componentwise. For a finite key space this is the ordinary product of the per-key categories. A baseline may be an absent binding, or an initial configuration supplied by the cola definition.</p>
 <p>Omitting a key from an update means \(1_{X_k}\). This differs from deleting the key. Where supported, deletion is an arrow to a distinguished absent object; the category determines which such arrows exist. No invertibility is required.</p>
-<p>The key-to-category rule and its interpretation version belong in the pinned world/schema context. Changing them requires explicit migration or transport. An old arrow cannot silently acquire a different meaning when loaded by a newer program. Exact source compatibility also needs its own validation: the weak world fingerprint is not a proof that an arrow is applicable.</p>
+<p>The key-to-category rule and its interpretation version belong in the pinned cola/schema context. Changing them requires explicit migration or transport. An old arrow cannot silently acquire a different meaning when loaded by a newer program. Exact source compatibility also needs its own validation: the weak cola fingerprint is not a proof that an arrow is applicable.</p>
 <h2><a class="anchor" id="logical-key-identity-and-multiplicity"></a>
 Logical key identity and multiplicity</h2>
 <p>There is still one logical configuration per key. A key may occur in several history files because it has changed several times. Those occurrences describe changes to one binding.</p>
@@ -149,7 +149,7 @@ h\circ(g\circ f)=(h\circ g)\circ f.
 \]
 </p>
 <p>The identity in the second step is at the state produced by the first step. This is why disjoint changesets computed against the same round base can be admitted in either order, even when their keys use different categories. Within each partition, same-key changes retain their causal order.</p>
-<p>This describes the store's update law. Application-level cross-key constraints must also permit the intermediate worlds, or define visibility/admission at the completed round. Reading the same pinned round base still matters when workers calculate their arrows from other keys' state. The algebra does not make independently computed overlapping writes commute.</p>
+<p>This describes the store's update law. Application-level cross-key constraints must also permit the intermediate colas, or define visibility/admission at the completed round. Reading the same pinned round base still matters when workers calculate their arrows from other keys' state. The algebra does not make independently computed overlapping writes commute.</p>
 <h1><a class="anchor" id="autotoc_md4-fingerprints-are-exact-additive-changes-of-state-potential"></a>
 4. Fingerprints are exact additive changes of state potential</h1>
 <p>Choose a common abelian group, such as the additive group of the selected ring \(R\). Give each key a state potential \(\phi_k:\mathrm{Ob}(\mathcal C_k)\to R\), with \(\phi_k(o_k)=0\). Then</p>
@@ -168,7 +168,7 @@ C(X)=\sum_k\phi_k(X_k),\qquad
 \]
 </p>
 <p>Summing the finite support gives \(\Delta(f:X\to Y)=C(Y)-C(X)\). Thus \(\Delta\) is a functor \(\mathcal W\to B(R,+)\), where \(B(R,+)\) is the one-object category with elements of \(R\) as arrows and addition as composition. On the nerve this is the exact additive 1-cocycle \(dC\).</p>
-<p>Exactness expresses our choice to fingerprint the endpoint world. An arbitrary additive functor can instead assign a nonzero value to a loop and thereby record history. Our endpoint difference assigns zero to every loop. In particular, <b>zero delta does not imply an identity arrow</b>: a category can have nontrivial loops and distinct arrows with the same endpoints, even without hash collisions.</p>
+<p>Exactness expresses our choice to fingerprint the endpoint cola. An arbitrary additive functor can instead assign a nonzero value to a loop and thereby record history. Our endpoint difference assigns zero to every loop. In particular, <b>zero delta does not imply an identity arrow</b>: a category can have nontrivial loops and distinct arrows with the same endpoints, even without hash collisions.</p>
 <p>The pin owner's existing algebra now applies unchanged: an initial base contributes its fingerprint, update entries contribute validated deltas, and a merged entry contributes their sum. Borrowed keys and index-only dependencies contribute zero. No division is introduced.</p>
 <p>We still need a way to compute the delta efficiently. An arbitrary patch and the hash of its source do not necessarily determine the target hash cheaply. A category can provide a maintained summary, inspect the affected state, or pay for evaluation. The additive law alone supplies no such algorithm.</p>
 <h1><a class="anchor" id="autotoc_md5-navigation-cost-and-evaluation-cost-separate"></a>

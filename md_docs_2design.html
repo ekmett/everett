@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Everett design</title>
+<title>Diet: Diet design</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -76,23 +76,23 @@ $(function() {
 
 </div><!-- top -->
 <div><div class="header">
-  <div class="headertitle"><div class="title">Everett design</div></div>
+  <div class="headertitle"><div class="title">Diet design</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="everett-design"></a> Updated 2026-09-15.</p>
-<p>Start with immutable blobs and a way to merge them. Small updates can become small blobs, and retained collections can represent persistent worlds. We can share completed merges between those worlds, provided each reader keeps the exact dependencies its indexes describe. This document develops that design. Public headers are under <code>include/everett/</code>; the <a class="el" href="md_docs_2implementation.html">implementation ledger</a> distinguishes executable components from the remaining storage and scheduling work.</p>
+<div class="textblock"><p><a class="anchor" id="diet-design"></a> Updated 2026-09-15.</p>
+<p>Start with immutable blobs and a way to merge them. Small updates can become small blobs, and retained collections can represent persistent colas. We can share completed merges between those colas, provided each reader keeps the exact dependencies its indexes describe. This document develops that design. Public headers are under <code>include/diet/</code>; the <a class="el" href="md_docs_2implementation.html">implementation ledger</a> distinguishes executable components from the remaining storage and scheduling work.</p>
 <p>I use ordinary front coding in both the native and borrowed streams. A search carries a comparison against its query rather than reconstructing inherited key prefixes. An exact LCP at each virtual sampling cut repairs the preceding borrowed context. That small piece of index-local metadata lets native bytes remain independent of the fractional index built over them. The <a class="el" href="md_docs_2comparison-fc.html">comparison argument</a> gives the detailed transfer laws; entry, string, and I/O costs remain separate throughout this design.</p>
 <h1><a class="anchor" id="autotoc_md1-purpose-and-abstraction"></a>
 1. Purpose and abstraction</h1>
 <p>First, some names for the intended aggregates:</p>
 <ul>
-<li>A <b>multiverse</b> owns backing storage and the immutable objects shared by its worlds, timelines and retained references.</li>
-<li>A <b>world</b> is a logical state, independent of its current physical layout.</li>
-<li>A <b>timeline</b> is an ordered progression of worlds.</li>
+<li>A <b>fridge</b> owns backing storage and the immutable objects shared by its colas, timelines and retained references.</li>
+<li>A <b>cola</b> is a logical state, independent of its current physical layout.</li>
+<li>A <b>timeline</b> is an ordered progression of colas.</li>
 <li>A <b>branch point</b> is a retained point from which a timeline can continue or fork; <code>branch_point</code> is the intended API spelling.</li>
 </ul>
-<p><code>multiverse&lt;P&gt;</code> opens and seals objects in an existing directory. It exposes <code>sort</code>, <code>blob</code>, <code>file</code>, <code>object_writer</code>, the mapped native/index/blob/query types, <code>world</code>, <code>timeline</code> and <code>branch_point</code> associated types carrying the same policy. <code>open_query</code> reopens a prepared exact chain from its persisted pair identity; <a class="el" href="mapped-blobs-and-exact-query-roots.html">mapped blobs</a> describes the portable sections and ownership. The <a class="el" href="immutable-object-sealing.html">sealing primitive</a> uses reserved identities; world publication remains a separate catalog operation. Persistent worlds/timelines remain design work; their aggregate types are forward declarations. The semantic oracle is <code>reference_world</code>. The <a class="el" href="md_docs_2catalog.html">SQLite catalog</a> is the selected home for worlds, pins and merge/index-rebuild progress.</p>
-<p>A world is represented by a small collection of immutable, memory-mappable blobs. Updates produce small new blobs; merges produce new larger blobs. A snapshot or save pins an exact collection and the dependencies needed to query it. A save adds durable retention to that logical snapshot; it does not define a separate kind of application state.</p>
+<p><code>fridge&lt;P&gt;</code> opens and seals objects in an existing directory. It exposes <code>sort</code>, <code>blob</code>, <code>file</code>, <code>object_writer</code>, the mapped native/index/blob/query types, <code>cola</code>, <code>timeline</code> and <code>branch_point</code> associated types carrying the same policy. <code>open_query</code> reopens a prepared exact chain from its persisted pair identity; <a class="el" href="mapped-blobs-and-exact-query-roots.html">mapped blobs</a> describes the portable sections and ownership. The <a class="el" href="immutable-object-sealing.html">sealing primitive</a> uses reserved identities. The <a class="el" href="md_docs_2sqlite-catalog.html">SQLite component</a> publishes immutable timeline generations, saves and forks with exact root pins. The <code>cola</code> and <code>timeline</code> aggregate types are still forward declarations; the semantic oracle is <code>reference_cola</code>. The <a class="el" href="md_docs_2catalog.html">catalog design</a> extends that metadata owner to merge jobs, checkpoints and pin retirement.</p>
+<p>A cola is represented by a small collection of immutable, memory-mappable blobs. Updates produce small new blobs; merges produce new larger blobs. A snapshot or save pins an exact collection and the dependencies needed to query it. A save adds durable retention to that logical snapshot; it does not define a separate kind of application state.</p>
 <p>The outer dynamization mechanism needs a merge operation, a query operation, and laws relating them. Maps give us one useful instance. We can leave the exact monoid/homomorphism interface open until its consumers tell us which laws they need. The typed blob specialization supports byte or bit keys and opaque fixed- or variable-width values. The replacement oracle uses fixed-width values and tombstones. The intended key space is sort-qualified: each logical key combines a sort identity with a key interpreted by that sort's policy. <a class="el" href="md_docs_2keys.html">Sorts and key policies</a> specifies key units, canonical ordering, prefix-free coding and hash-policy selection. The byte-key encoding below is a starting point; it does not yet implement the sort envelope. The general update model allows a category chosen per full logical key: records carry composable arrows, and omission means the identity update. <a class="el" href="md_docs_2arrows.html">Updates in a category chosen per key</a> specifies that model, its nerve interpretation, and the additional cost and retention contracts. The replacement-specific rules below remain the implemented first instance.</p>
 <p><a href="https://hackage.haskell.org/package/structures-0.2/docs/Data-Vector-Map.html">Data.Vector.Map</a> and <a href="https://hackage.haskell.org/package/structures-0.2/docs/Data-Vector-Map-Deamortized.html">Data.Vector.Map.Deamortized</a> provide a functional numeral scheme for immutable merges and shared work. Here I use <b>COLA-style redundant levels</b> in place of that initial zeroless, mostly-oneless binary presentation.</p>
 <p>Logical state and physical representation have different identities. Two peers can have the same table and its composite fingerprint while retaining different files, index versions, and completed compactions.</p>
@@ -102,7 +102,7 @@ Notation</h2>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Symbol   </th><th class="markdownTableHeadNone">Meaning    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">\(N\)   </td><td class="markdownTableBodyNone">Number of live bindings in the selected world    </td></tr>
+<td class="markdownTableBodyNone">\(N\)   </td><td class="markdownTableBodyNone">Number of live bindings in the selected cola    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">\(H\)   </td><td class="markdownTableBodyNone">Historical updates; distinct from live size    </td></tr>
 <tr class="markdownTableRowOdd">
@@ -122,10 +122,10 @@ Notation</h2>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">\(v\)   </td><td class="markdownTableBodyNone">Fixed value width in policy units, common across the indexed stream   </td></tr>
 </table>
-<p>An index targets the next catalog's <b>augmented</b> ordering, including borrowed entries. Sampling only its native keys would not establish the stated windows.</p>
+<p>For the single-route primitive below, an index targets the next catalog's <b>augmented</b> ordering, including borrowed entries. Sampling only its native keys would not establish the stated windows. The COLA main route follows the same rule; its secondary route targets a native-only leaf, which has no borrowed entries.</p>
 <h1><a class="anchor" id="autotoc_md2-the-blob"></a>
 2. The blob</h1>
-<p>Putting the pieces together, a blob has the following logical components. They need not occupy one file:</p>
+<p>I first describe the single-route blob, retained by the IX02 APIs. Its logical components need not occupy one file:</p>
 <ol type="1">
 <li>A front-coded array of native \((K,V)\) records.</li>
 <li>A separately front-coded array of borrowed keys and routing information.</li>
@@ -133,8 +133,9 @@ Notation</h2>
 <li>Two <code>elias_fano</code> indexes, one for each physical stream.</li>
 <li>One false-borrow flag per borrowed record.</li>
 <li>One exact bit-LCP count per virtual cut, describing its preceding borrowed key.</li>
-<li>Exact immutable target identities, physical length checkpoints, and format information.</li>
+<li>Exact immutable target identities, physical block framing, and format information.</li>
 </ol>
+<p>The <a class="el" href="cola-indexes-and-mapped-queries.html">COLA extension</a> adds a second borrowed stream with its own rank, offsets, flags and cut LCPs, while sharing the same native component.</p>
 <div class="fragment"><div class="line">flowchart TD</div>
 <div class="line">  M[&quot;SQLite representation / pins&quot;] --&gt; B[&quot;Blob version&quot;]</div>
 <div class="line">  B --&gt; A[&quot;.kv: native FC K,V + physical offsets&quot;]</div>
@@ -147,7 +148,7 @@ Notation</h2>
 <h1><a class="anchor" id="autotoc_md3-navigation"></a>
 3. Navigation</h1>
 <p>We can work through the navigation equations with the default \(K=15\). The codecs accept a policy-selected group size; <a class="el" href="md_docs_2sampling.html">sampling.md</a> proves the local \(K=3\) case and states the separate chain-size and scheduler assumptions. Offset units are bytes or bits according to the shared policy.</p>
-<p>The policy API spells these structures <code>rank_groups&lt;P::group_size&gt;</code> and <code>elias_fano</code>. <code>multiverse&lt;P&gt;::blob</code> uses that policy throughout. Rank boundaries count virtual occurrences; offset checkpoints count physical records. They need not have the same interval. Elias–Fano stores only the chosen monotone positions. The profile layer chooses physical samples and restores fixed value strides. The <code>rank_groups&lt;15&gt;</code> view shares rank15's SIMD implementation. Groups of three use packed scalar sums; seven and thirty-one use bounded NEON reductions on little-endian AArch64 and packed scalar reductions elsewhere. Other group sizes use the generic class loop. These choices preserve the same encoded classes and checkpoints.</p>
+<p>The policy API spells these structures <code>rank_groups&lt;P::group_size&gt;</code> and <code>elias_fano</code>. <code>fridge&lt;P&gt;::blob</code> uses that policy throughout. Rank boundaries count virtual occurrences; offset checkpoints count physical records. They need not have the same interval. Elias–Fano stores only the chosen monotone positions. The profile layer chooses physical samples and restores fixed value strides. The <code>rank_groups&lt;15&gt;</code> view shares rank15's SIMD implementation. Groups of three use packed scalar sums; seven and thirty-one use bounded NEON reductions on little-endian AArch64 and packed scalar reductions elsewhere. Other group sizes use the generic class loop. These choices preserve the same encoded classes and checkpoints.</p>
 <h2><a class="anchor" id="rank15"></a>
 rank15</h2>
 <p>We assign a conceptual origin bit of one to a borrowed entry and zero to a native entry. We only query rank at the start of an existing group:</p>
@@ -191,24 +192,25 @@ False borrows and equality</h2>
 <h1><a class="anchor" id="autotoc_md4-front-coding-and-comparison-context"></a>
 4. Front coding and comparison context</h1>
 <p>I encode both streams with ordinary FC: each record retains its longest common prefix with the previous physical key and emits the remaining suffix. Native keys and borrowed keys have separate predecessor chains. Reindexing changes the borrowed stream and its navigation metadata while sharing the exact native allocation.</p>
-<p>Each physical block begins with its predecessor's actual full key length. Within a block, records have the following fields:</p>
-<div class="fragment"><div class="line">backspace_count : encoded unsigned count</div>
+<p>The first record of each physical block starts with an absolute retained-prefix length. Other records start with a backspace relative to their physical predecessor. The remaining fields are the same:</p>
+<div class="fragment"><div class="line">retained_length : encoded unsigned count at block start</div>
+<div class="line">backspace_count : encoded unsigned count otherwise</div>
 <div class="line">suffix_length   : encoded unsigned count</div>
 <div class="line">value_length    : encoded unsigned count, omitted for a common fixed width</div>
 <div class="line">suffix          : suffix_length profile units</div>
 <div class="line">value           : value_length profile units</div>
-</div><!-- fragment --><p>If the actual predecessor has length \(a\), a backspace of \(b\) retains \(a-b\) units. Adding the suffix length gives the next full length. These arithmetic operations do not require the predecessor's key contents. Byte counts use unsigned varints. Bit backspaces use the policy's Golomb or exponential-Golomb code; other bit counts use order-zero exponential-Golomb. A large Golomb unary quotient can dominate the work even when the next key is short, so count parsing is charged to the encoded controls.</p>
-<p>The block checkpoint stores a length, not a key. For a physical ordinal at the start of a block, it directly gives that record's predecessor length. For an ordinal inside the block, we parse controls from its start. At the stream's end, <code>terminal_key_units</code> gives the final key length even when the end sentinel is block-aligned. No preceding-block scan is needed just to recover that length. Fixed-width values remove their length fields and direct payload stride from the residual offsets; they do not influence which key prefix ordinary FC retains.</p>
+</div><!-- fragment --><p>If the actual predecessor has length \(a\), a backspace of \(b\) retains \(a-b\) units; a block's first count supplies that retained position directly. Adding the suffix length gives the next full length. These arithmetic operations do not require the predecessor's key contents. Byte counts use unsigned varints. Bit backspaces use the policy's Golomb or exponential-Golomb code; other bit counts use order-zero exponential-Golomb. A large Golomb unary quotient can dominate the work even when the next key is short, so count parsing is charged to the encoded controls.</p>
+<p>The first record of the entire stream retains zero units. Later blocks can retain arbitrarily long prefixes: the count is a position within the key, not a full-key restart. We parse controls from the selected block's start without reading its predecessor. <code>terminal_key_units</code> records the final full length for sequential validation and explicit predecessor-length access at the endpoint. Fixed-width values remove their length fields and direct payload stride from the residual offsets; they do not influence which key prefix ordinary FC retains.</p>
 <h2><a class="anchor" id="a-comparison-belongs-to-one-query"></a>
 A comparison belongs to one query</h2>
 <p><code>profile_query_context&lt;P&gt;</code> owns a shared immutable query and records:</p>
 <ul>
 <li>The exact common-prefix length <b>in bits</b>, including for a byte policy.</li>
-<li>The compared key's actual full length in policy units.</li>
+<li>The compared key's full length in policy units, when known.</li>
 <li>Its ordering relative to the query.</li>
 </ul>
-<p>Its constructor starts with the comparison of the empty key. <code>with_key</code> can establish a context from a known key; normal cascading transfers the context without copying that key's inherited prefix. <code>query()</code>, <code>common_bits()</code>, <code>full_units()</code> and <code>order()</code> expose the corresponding quantities. A comparison from one query cannot silently become an anchor for another.</p>
-<p>Byte FC retains whole bytes, but two unequal bytes can share several leading bits. Keeping an exact bit LCP avoids throwing that information away. Endpoints remain separate: a full-prefix match means equality only when both full lengths also agree. Empty keys and proper prefixes follow the same rule.</p>
+<p>Its constructor starts with the comparison of the empty key. <code>with_key</code> can establish a context from a known key; normal cascading transfers the context without copying that key's inherited prefix. <code>query()</code>, <code>common_bits()</code>, <code>full_units()</code> and <code>order()</code> expose the corresponding quantities. <code>full_units()</code> returns an optional length: reading a frame establishes it, while repairing a strictly lower borrowed frontier can leave it unknown. A comparison from one query cannot silently become an anchor for another.</p>
+<p>Byte FC retains whole bytes, but two unequal bytes can share several leading bits. Keeping an exact bit LCP avoids throwing that information away. Endpoints remain separate. In a general comparison, full-prefix agreement needs length information to establish equality. A known lower bound \(C\le Q\) lets us do better: agreement over all of \(Q\) proves \(C=Q\) without fetching \(C\)'s length.</p>
 <h2><a class="anchor" id="entering-a-projected-stream-1"></a>
 Entering a projected stream</h2>
 <p>Let \(B\) be the known virtual boundary key, \(A\) the physical predecessor in one stream, and \(D\) its first candidate at or after the cut. Sorted order gives \(A\le B\le D\). Every key in this interval shares the prefix retained by \(D\) from \(A\). We can therefore compare \(D\) using the comparison of \(B\) and the literal suffix, without reconstructing \(A\) or the inherited prefix of \(D\).</p>
@@ -230,7 +232,7 @@ Repairing the preceding borrowed frontier</h2>
 =\min\bigl(\ell_g,\mathrm{lcp}_{\mathrm{bits}}(B,Q)\bigr).
 \]
 </p>
-<p>Together with \(C\)'s full length, this supplies its exact query comparison. The borrowed predecessor is absent precisely when \(i=0\), at any cut. We store zero in that unused cut-LCP slot. Conversely, \(i=|S|&gt;0\) is a valid terminal frontier, with its length supplied by the stream's terminal metadata. A native false-borrow match before the projected range still needs a separate value probe at the rank-derived native ordinal; it does not need key reconstruction.</p>
+<p>The recovered LCP spans all of \(Q\) exactly when \(C=Q\); otherwise \(C&lt;Q\). This supplies its exact query comparison without reading \(C\)'s full length. The borrowed predecessor is absent precisely when \(i=0\), at any cut. We store zero in that unused cut-LCP slot. Conversely, \(i=|S|&gt;0\) is a valid terminal frontier, repaired by the same formula. A native false-borrow match before the projected range still needs a separate value probe at the rank-derived native ordinal; it does not need key reconstruction.</p>
 <p><code>cut_lcps()</code> exposes these counts as unsigned 64-bit integers, one per virtual group. They belong to the exact index version, including its target pair and native-before-borrowed tie order. One borrowed key can precede several cuts with different LCPs. We retain each cut's exact count, not a minimum shared between those cuts. The builder has both keys in its merged-order walk and emits the scalar alongside the rank class. The keys remain in two physical streams; there is no third interleaved key copy.</p>
 <h2><a class="anchor" id="construction-queries-and-their-separate-costs"></a>
 Construction, queries, and their separate costs</h2>
@@ -239,10 +241,11 @@ Construction, queries, and their separate costs</h2>
 <p><code>query_root&lt;P&gt;</code> adds empty-native routing catalogs until its head fits in one virtual group. Its initial comparison is against the empty key. Preparation is paid once for that root; each query can then use the same local comparison protocol throughout the chain. See <a class="el" href="md_docs_2query.html">complete queries</a>.</p>
 <p>For each physical stream, navigation parses at most \(W-1\) controls before its first selected lane, then at most \(K\) forward records. The two forward ranges contain at most \(K\) records in total. Cut-LCP repair and the extra false-borrow value probe have separate bounded addressing work. With \(W=O(K)\) this retains an \(O(K)\) entry/control bound per catalog. Encoded count lengths, compared literal bits, requested values, allocation, and arrow evaluation are additional charges; an entry budget is not a byte or I/O bound.</p>
 <p>Sequential construction and sampling retain actual key contexts and decode each stream in order. Arbitrary full-key reconstruction is a different operation: ordinary FC may need to traverse an earlier prefix chain. The low-level <code>profile_array</code> can provide opt-in locality-preserving restarts for that use, but those restarts are not part of the blob's encoding or cascade proof.</p>
-<p>The LPFC construction in <a href="https://people.csail.mit.edu/bradley/papers/BenderFaKu06.pdf#page=6">Bender, Farach-Colton, and Kuszmaul, §3.2</a> is useful background for independent reconstruction through selective full-key copies. Our query uses ordinary FC and comparison transfer instead. The <a class="el" href="md_docs_2comparison-fc.html">comparison design</a> and <a class="el" href="everett-an-abstract-proof-core.html">Lean proof guide</a> distinguish the checked ordered-string laws from the remaining encoded-codec, scheduler and filesystem proof obligations.</p>
+<p>The LPFC construction in <a href="https://people.csail.mit.edu/bradley/papers/BenderFaKu06.pdf#page=6">Bender, Farach-Colton, and Kuszmaul, §3.2</a> is useful background for independent reconstruction through selective full-key copies. Our query uses ordinary FC and comparison transfer instead. The <a class="el" href="md_docs_2comparison-fc.html">comparison design</a> and <a class="el" href="diet-an-abstract-proof-core.html">Lean proof guide</a> distinguish the checked ordered-string laws from the remaining encoded-codec, scheduler and filesystem proof obligations.</p>
 <h1><a class="anchor" id="autotoc_md5-redundant-levels-and-merge-work"></a>
 5. Redundant levels and merge work</h1>
-<p>For scheduling, start with <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf">Cache-Oblivious Streaming B-trees, §3</a>. Its deamortized COLA uses redundant arrays and prioritizes small unsafe levels. Data merging and lookahead construction both participate in becoming safe and in switching visibility. Its exact schedule and bounds are useful starting points, not a proof for arbitrary extra compactions or persistent retention.</p>
+<p>For scheduling, start with <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf">Cache-Oblivious Streaming B-trees, §3</a>. I adopt its main/secondary/shadow arrangement and smallest-unsafe-level service as the baseline. Data merging and lookahead construction both participate in becoming safe and switching visibility. A main catalog routes to the next main and terminal secondary; only the main route continues. Diet's <code>cola_index</code> implements this topology with two borrowed FC streams and two rank directories over one three-way virtual order. The native FC and offsets remain unchanged. The <a class="el" href="cola-indexes-and-mapped-queries.html">COLA guide</a> describes construction, queries and IX03 files.</p>
+<p>The <a class="el" href="cola-scheduling-with-immutable-pairs.html">scheduling model</a> separates logical unmerged slots, root visibility and physical snapshot pins. It checks fixed-admission transitions and slot-reuse deadlines. Arbitrary extra compaction, received-file admission and persistent retention still need their corresponding bounds.</p>
 <p>I want the store to keep \(O(\log N)\) active blobs, with a bounded number per level. Small updates pay for later merging and index construction. Work may be performed during downtime as well as on arrivals; logical state does not depend on the amount of compaction already completed.</p>
 <p>Network admission retains received content-addressed <code>.kv</code> bytes unchanged, including their ordinary FC stream and physical sampled offsets. We build receiver-specific fractional indexes backward over the incoming prefix and retain the old suffix. Received <code>.index</code> objects are reusable only with matching exact source/target versions. Native re-encoding waits for a real merge. The <a class="el" href="md_docs_2network-admission.html">admission analysis</a> gives the arbitrary-file-size entry bound and identifies the remaining scheduling and variable-key-byte obligations. No power-of-two physical-file requirement follows from the query argument; the original redundant-counter schedule still requires an admission proof.</p>
 <p>There are several distinct points at which work becomes reusable:</p>
@@ -259,13 +262,13 @@ Construction, queries, and their separate costs</h2>
 <h1><a class="anchor" id="autotoc_md6-snapshots-saves-and-shared-work"></a>
 6. Snapshots, saves, and shared work</h1>
 <p>By manifest I mean the logical selection recorded by SQLite rows, with exact immutable representation identity. There is no custom manifest/checkpoint file format. The <a class="el" href="md_docs_2catalog.html">catalog</a> and <a class="el" href="md_docs_2file-lifecycle.html">file lifecycle</a> separate transactional metadata from the <code>.kv</code> and <code>.index</code> objects it retains.</p>
-<p>A snapshot pins the exact blob/index graph needed to read its world. A durable save records that manifest and retains those pins across process lifetimes. Readers hold references protecting their mappings; replacing a manifest does not invalidate an in-flight read.</p>
+<p>A snapshot pins the exact blob/index graph needed to read its cola. A durable save records that manifest and retains those pins across process lifetimes. Readers hold references protecting their mappings; replacing a manifest does not invalidate an in-flight read.</p>
 <p>Suppose a dependent indexes old targets \(X,Y\), while another branch finishes \(Z=\mathrm{merge}(X,Y)\). The dependent continues using \(X,Y\): its fractional index describes those exact layouts. It may immediately pin \(Z\), skip the data merge work it was budgeted to perform, and spend its own schedule on index repair. Only then does it adopt \(Z\).</p>
 <p>This is <b>shared completion with independent adoption</b>. The merge can be shared even while each fork repairs its own index on its own schedule.</p>
 <p>Pins cover readers, saved manifests, builders, and cached results in use. Lookup-and-retain of a cached merge must be atomic with respect to reclamation. Construction references transfer to a published manifest before being released. Cancellation has a corresponding release path.</p>
 <h2><a class="anchor" id="the-pin-set-owner"></a>
 The pin-set owner</h2>
-<p>The current world has one immutable pin-set owner. Each entry records an exact object identity, its lifetime pin, its local additive contribution, and optionally its own-native-record fingerprint. The owner caches the sum of the contributions; this sum is the world's composite key. A snapshot shares the owner. Updating or compacting constructs a replacement owner without changing previous snapshots.</p>
+<p>The current cola has one immutable pin-set owner. Each entry records an exact object identity, its lifetime pin, its local additive contribution, and optionally its own-native-record fingerprint. The owner caches the sum of the contributions; this sum is the cola's composite key. A snapshot shares the owner. Updating or compacting constructs a replacement owner without changing previous snapshots.</p>
 <p>The contribution is defined by the entry's role: a base contributes its table fingerprint, an update contributes its validated old-to-new delta, and a merge contributes the sum of the entries it replaces. A tombstone-only update can have zero native fingerprint and a nonzero negative contribution. Section 8 defines the algebra. Index-only dependencies retain objects but contribute no bindings.</p>
 <p>Physical replacement checks that all expected input identities are present and that the replacement contribution equals their sum before publishing the new owner. Equality of this weak sum is a lint check, not proof that a merge is correct. Record precedence and exact index dependencies must also be preserved. An in-memory shared pointer provides lifetime safety; durable saves additionally need a persisted root and recovery protocol.</p>
 <h2><a class="anchor" id="durability-and-resumption"></a>
@@ -284,7 +287,7 @@ Durability and resumption</h2>
 Generation state and trigger</h2>
 <p>Each generation records its clean base cardinality \(b\) and the number \(u\) of admitted key mutations since that base's freeze cut. **Replayed mutations count toward \(u\)**. I choose to start rebuilding at \(u\ge\lfloor b/4\rfloor\), early enough to finish before half the base could disappear. These constants are our adaptation, not the constants printed in the paper. Tiny generations use a bounded direct rebuild rather than fractional counters.</p>
 <ol type="1">
-<li><b>Freeze.</b> We pin a complete world manifest at an admitted update cut and keep the serving generation current while this pinned source remains unchanged. Let \(n_s\) be the source's live cardinality.</li>
+<li><b>Freeze.</b> We pin a complete cola manifest at an admitted update cut and keep the serving generation current while this pinned source remains unchanged. Let \(n_s\) be the source's live cardinality.</li>
 <li><b>Build clean contents.</b> We merge the frozen native streams with full older coverage, emitting only each key's newest live binding. We discard the frozen tombstones and shadowed versions, and construct the replacement's fractional indexes against its exact new catalogs.</li>
 <li><b>Capture and replay.</b> Every later admitted mutation updates the serving generation and enters an ordered replay queue. After clean construction, we apply that queue to the replacement, retaining causal order for each key. Queries continue using the serving generation throughout.</li>
 <li><b>Catch up and adopt.</b> When the queue is empty at an admitted cut and all replacement indexes are ready, we compare live count and composite fingerprint, then publish the new owner. The new counters are \(b=n_s\) and \(u=\text{replayed mutations}\), not zero. Durable adoption follows the publication protocol; other snapshots keep their old pins.</li>
@@ -319,10 +322,10 @@ C(T)=\sum_{(k,v)\in T}h_K(k)\,h_V(v).
 <li>A fingerprint of a file's own native records.</li>
 <li>The algebraic delta of a changeset relative to validated old bindings.</li>
 </ul>
-<p>Borrowed entries never contribute world contents. Overlapping own-record file fingerprints are not simply additive: shadowed bindings require cancellation. A tombstone's zero value does not by itself subtract an older contribution.</p>
+<p>Borrowed entries never contribute cola contents. Overlapping own-record file fingerprints are not simply additive: shadowed bindings require cancellation. A tombstone's zero value does not by itself subtract an older contribution.</p>
 <p>For a category chosen per key, we use a local state potential \(\phi_k\) and assign an arrow \(f:x\to y\) the delta \(\phi_k(y)-\phi_k(x)\). Composition telescopes, so the same pin-owner sum applies. This is an exact additive 1-cocycle; zero delta does not imply an identity arrow. Obtaining the target potential cheaply is an additional policy obligation. The <a class="el" href="md_docs_2arrows.html">arrow design</a> gives the construction and distinguishes endpoint fingerprints from history.</p>
-<h1><a class="anchor" id="autotoc_md9-partitioned-world-rounds"></a>
-9. Partitioned world rounds</h1>
+<h1><a class="anchor" id="autotoc_md9-partitioned-cola-rounds"></a>
+9. Partitioned cola rounds</h1>
 <p>For round \(t\), all workers read the same immutable base \(W_t\). A partitioning function assigns each writable key to exactly one owner for that round. This can be ranges, bins, or another specified function; it need not be a permanent physical sharding of the store.</p>
 <p>Each worker performs its expensive computation against the base and emits a sorted changeset for a subset of its assigned keys. A changeset carries the round/base reference, owner/partition identity, old/new bindings or equivalent validation evidence, an operation identity, and its fingerprint delta.</p>
 <p>For disjoint write sets:</p>
@@ -345,7 +348,7 @@ C(W_{t+1})=C(W_t)+\sum_j\Delta(D_j).
 10. Bounds and acceptance</h1>
 <p>I target an active level count of \(O(\log N)\), contingent on completed live-size accounting. After root preparation, a cascade examines \(O(K+W)\) entries/controls per catalog, including its bounded frontier/value probes. For fixed \(K\) and \(W\), this is \(O(L)\) navigation work. Literal comparison work is bounded separately by the query length and records visited; count parsing must also include the selected codeword lengths. I accept repeating query-prefix work across levels, without requiring full inherited keys to be reconstructed. The prepared root bounds bootstrap work; it does not prove that an arbitrarily deep received chain satisfies the level invariant.</p>
 <p>With arbitrary update arrows, these are navigation bounds. Arrow access, composition and observation add their own costs. Constant-time construction of a composite expression does not establish constant-time evaluation or bounded retained history. A logarithmic total bound requires explicit policy contracts.</p>
-<p>Space accounting separately reports native key encoding, fixed values, borrowed keys, false-borrow bits, rank metadata, both offset indexes, exact cut-LCP counts, physical length checkpoints, unfinished outputs, and objects retained only by historical pins. The redundant schedule budgets approximately \(3\log_2(N+1)\) live indexes for one snapshot and another \(3\log_2(N+1)\) during rebuilding, with a constant-size base case. A repeated first borrowed key of length \(T\) therefore contributes \(O(T\log(N+1))\) simultaneous literal units across those indexes. More generally, their total key literals are bounded by the index count times the ordinary-FC literal size of the retained native key union. These are per-snapshot storage bounds; historical pin unions and cumulative construction work have separate accounting. The <a class="el" href="md_docs_2network-admission.html">network storage analysis</a> gives the details. The ordinary front-compression size of the global logical union is not the sum of independently encoded files; prefix duplication across runs is real. We cannot transfer the COSB-tree's complete optimal I/O theorem to this composition.</p>
+<p>Space accounting separately reports native key encoding, fixed values, borrowed keys, false-borrow bits, rank metadata, both offset indexes, exact cut-LCP counts, physical block framing, unfinished outputs, and objects retained only by historical pins. The redundant schedule budgets approximately \(3\log_2(N+1)\) live indexes for one snapshot and another \(3\log_2(N+1)\) during rebuilding, with a constant-size base case. A repeated first borrowed key of length \(T\) therefore contributes \(O(T\log(N+1))\) simultaneous literal units across those indexes. More generally, their total key literals are bounded by the index count times the ordinary-FC literal size of the retained native key union. These are per-snapshot storage bounds; historical pin unions and cumulative construction work have separate accounting. The <a class="el" href="md_docs_2network-admission.html">network storage analysis</a> gives the details. The ordinary front-compression size of the global logical union is not the sum of independently encoded files; prefix duplication across runs is real. We cannot transfer the COSB-tree's complete optimal I/O theorem to this composition.</p>
 <p>I require the implementation checks to include:</p>
 <ul>
 <li>Rank/class counts against a simple oracle; tails and all-ones 512-bit runs.</li>

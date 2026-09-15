@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['name_5finstalled_0',['name_installed',['../namespaceeverett.html#a17f6895b13a893618f9eac92af8e2bd3a72ce7902862b66c00fd516e01fa930ea',1,'everett']]],
-  ['names_5fsynced_1',['names_synced',['../namespaceeverett.html#a17f6895b13a893618f9eac92af8e2bd3a1717d8b02409bd04b2cdae7c0cc3aaa3',1,'everett']]],
-  ['native_2',['native',['../namespaceeverett.html#a374f546e980dc1c516a6bca9073270d3a8e5f3adee38c8fccc13c1f3be0143796',1,'everett']]],
-  ['native_5fblob_3',['native_blob',['../namespaceeverett.html#afb3ec78839f4e10d47ce9b6bb33ed0f4a0a6889dd08bdde656324c9c0a73c0f29',1,'everett']]]
+  ['main_0',['main',['../namespacediet.html#a1a5d3241775b3d0e477ebe7efc33c384afad58de7366495db4650cfefac2fcd61',1,'diet::main'],['../namespacediet.html#af5e4b8aac25a8ae855db94e9ca5e8383afad58de7366495db4650cfefac2fcd61',1,'diet::main'],['../namespacediet.html#a151eb5baa623638845a2402b27323de9afad58de7366495db4650cfefac2fcd61',1,'diet::main']]],
+  ['manifest_5fpending_1',['manifest_pending',['../namespacediet.html#a3a23f628991eb0934fb3ecd07d3cf4b7a23a01bb0e39bb5e7d8fc30b5a067b629',1,'diet']]],
+  ['msb_5ffirst_2',['msb_first',['../namespacediet.html#ad520dfd9571c04c712b3e91b2ef5b810a0d142fa5ab9b24b770ea5c3e73da6e1a',1,'diet']]]
 ];

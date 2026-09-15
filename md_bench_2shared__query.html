@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Owning queries with shared navigation views</title>
+<title>Diet: Owning queries with shared navigation views</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -80,7 +80,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="owning-queries-with-shared-navigation-views"></a> The shared owning/mapped query path retains shape and bounds checks while internally built arrays avoid repeated padding and EF-endpoint reads. In the final comparison, median complete-query times are within 0.8% of the version before portable navigation views. This recovers the initial owning-path regression; it does not establish a new speedup over that earlier version.</p>
-<h1><a class="anchor" id="what-changed"></a>
+<h1><a class="anchor" id="what-changed-2"></a>
 What changed</h1>
 <p>The shared-view/navigation revision <code>3882d3c</code> introduced byte-backed directory words, bounded rank accumulation, shared blob projection and generic query owners. Owning queries still constructed checked <code>profile_view</code> instances for their native and borrowed arrays at every catalog. Those constructors read the padding and first/terminal EF offsets each time.</p>
 <p>The final candidate <code>d8bc932</code> changes <code>profile_array::view()</code> to use <code>profile_view::from_sections</code>. Its private sections already come from checked builders. Each returned view still checks metadata and section shapes; it does not retain pointers across array copies or moves. The public <code>profile_view</code> constructor and explicit <code>validate_contents()</code> retain their content checks. Query parsing, rank overflow checks and projected-range bounds are unchanged.</p>
@@ -138,7 +138,7 @@ Final owning-array path</h1>
 <p>The <a href="source/bench/results/shared_query_fixed_m2max.csv">final CSV</a> and <a href="source/bench/results/shared_query_fixed_m2max.json">metadata</a> contain every result. Comparisons above are within each paired run. The runs do not support a precise percentage attribution between the intermediate and final candidates.</p>
 <p>All 120 release profile/trial rows passed the independent full-result and cross-variant checks. Encoded-array sizes are identical within each experiment. This accounting covers arrays reachable from one prepared root and excludes the separate warm root, capacities, fixed objects/view fields and allocation overhead; it does not establish unchanged total process memory. No encoded byte-hash equality check is claimed.</p>
 <p>The final candidate also passed focused CMake ASan/UBSan profile and query suites plus the installed-package consumer check. The <a href="source/bench/results/shared_query_checks.json">check record</a> identifies exact source hashes and test configuration. These checks are independent of release timing.</p>
-<h1><a class="anchor" id="reproduction-8"></a>
+<h1><a class="anchor" id="reproduction-10"></a>
 Reproduction</h1>
 <p>Run each command under the host's CPU/build-directory resource gate. The runner snapshots headers from the supplied commits and compiles one shared harness.</p>
 <div class="fragment"><div class="line">python3 bench/query_compare.py --baseline 8214d4b --candidate 3882d3c \</div>

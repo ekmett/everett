@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Complete queries with comparison state</title>
+<title>Diet: Complete queries with comparison state</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -88,7 +88,7 @@ Method</h1>
 <p>Every process first prepares a warm root and verifies every query result. It then times one root preparation and 4,096 complete queries, followed by another full result verification. Timed matches and value checksums must match the oracle. The Python runner also requires identical head sizes, routing depths, catalog visits, match counts and checksums across revisions and block widths. Encoded byte equality is not required.</p>
 <p>Preparation includes validation, allocation and index finalization, but excludes source encoding and construction of the existing chain. Query time includes cursor creation/destruction, owned query and result storage, one-catalog steps, and a checksum consuming every returned value byte. Root destruction is outside the preparation timer.</p>
 <p>Five fresh-process trials alternate variant order: <code>baseline, candidate W15, candidate W16</code>, then the reverse. Each process measures byte followed by bit. This controls variant order, but does not isolate operating system activity, fix core frequency or measure cold storage. The harness requests user-initiated QoS. All builds and runs use the host's exclusive CPU/build-directory resource gate with sequential compilation.</p>
-<h1><a class="anchor" id="results-3"></a>
+<h1><a class="anchor" id="results-4"></a>
 Results</h1>
 <p>Native M2 Max host, AppleClang 21, C++20, <code>-O3 -DNDEBUG</code>. Current <code>W=15</code> reduced median complete-query time by <b>38.2–47.5%</b> in all six cases. Every baseline query-time range was above the corresponding current <code>W=15</code> range. These are comparisons within this run, not against timings in older reports.</p>
 <table class="markdownTable">

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: THIRD_PARTY</title>
+<title>Diet: THIRD_PARTY</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -81,15 +81,15 @@ $(function() {
 <div class="contents">
 <div class="textblock"><h1><a class="anchor" id="third-party-components"></a>
 Third-party components</h1>
-<p>I use <a href="https://github.com/corsix/fast-crc32">Peter Cawley's fast-crc32</a> to generate Everett's portable and accelerated CRC32C implementations. I pin the generator to commit <code>13f5289ceb6065d014f9e1e64f161ea7a926c3b7</code>.</p>
-<p>The upstream generator and its generated output are available under <b>MIT OR zlib</b>, at the recipient's choice. These components retain Peter Cawley's copyright and their upstream terms; Everett's BSD-2-Clause OR Apache-2.0 choice does not replace them. The unmodified upstream notices are included together:</p>
+<p>I use <a href="https://github.com/corsix/fast-crc32">Peter Cawley's fast-crc32</a> to generate Diet's portable and accelerated CRC32C implementations. I pin the generator to commit <code>13f5289ceb6065d014f9e1e64f161ea7a926c3b7</code>.</p>
+<p>The upstream generator and its generated output are available under <b>MIT OR zlib</b>, at the recipient's choice. These components retain Peter Cawley's copyright and their upstream terms; Diet's BSD-2-Clause OR Apache-2.0 choice does not replace them. The unmodified upstream notices are included together:</p>
 <ul>
 <li><a class="el" href="license-1.html">License choice</a></li>
 <li><a class="el" href="licensemit.html">MIT license</a></li>
 <li><a class="el" href="licensezlib.html">zlib license</a></li>
 </ul>
-<p>The source copy is <code>third_party/fast-crc32/generate.c</code>. Generated implementations live in <code>include/everett/detail/crc32c_*.inc</code>; their notices identify the upstream revision, generation parameters and C++ adaptation. I keep the integration wrapper and regeneration script under Everett's own license.</p>
-<p><a class="el" href="upstream.html">Upstream provenance</a> records the source hashes and regeneration procedure. Ordinary source and installed consumers use the checked-in generated implementations: they do not fetch this dependency or run the generator. Installed packages carry this document and the upstream notices under the configured data directory's <code>everett</code> subdirectory. </p>
+<p>The source copy is <code>third_party/fast-crc32/generate.c</code>. Generated implementations live in <code>include/diet/detail/crc32c_*.inc</code>; their notices identify the upstream revision, generation parameters and C++ adaptation. I keep the integration wrapper and regeneration script under Diet's own license.</p>
+<p><a class="el" href="upstream.html">Upstream provenance</a> records the source hashes and regeneration procedure. Ordinary source and installed consumers use the checked-in generated implementations: they do not fetch this dependency or run the generator. Installed packages carry this document and the upstream notices under the configured data directory's <code>diet</code> subdirectory. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->

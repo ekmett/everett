@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: SQLite catalog for worlds, pins and background work</title>
+<title>Diet: SQLite catalog for colas, pins and background work</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -76,23 +76,23 @@ $(function() {
 
 </div><!-- top -->
 <div><div class="header">
-  <div class="headertitle"><div class="title">SQLite catalog for worlds, pins and background work</div></div>
+  <div class="headertitle"><div class="title">SQLite catalog for colas, pins and background work</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="sqlite-catalog-for-worlds-pins-and-background-work"></a> Chosen architecture, 2026-09-15. Most of the bytes belong in immutable <code>.kv</code> and <code>.index</code> files. The metadata is comparatively small: which worlds exist, which representations they use, who retains them, and how far each merge or index build has progressed. SQLite gives us transactions over that metadata and a journal for recovering it. We need no additional custom manifest, transaction-log or checkpoint-file format.</p>
-<p>This document specifies the backend's architecture and acceptance contract. The <a class="el" href="md_docs_2sqlite-catalog.html">optional SQLite adapter</a> implements reservations, sealed objects, exact prepared chains, immutable saved roots and durable reader pins. The broader schema below specifies mutable timelines, ownership retirement and merge continuations. The in-memory pin owner and durability state machine give us executable models for those transitions.</p>
+<div class="textblock"><p><a class="anchor" id="sqlite-catalog-for-colas-pins-and-background-work"></a> Chosen architecture, 2026-09-15. Most of the bytes belong in immutable <code>.kv</code> and <code>.index</code> files. The metadata is comparatively small: which colas exist, which representations they use, who retains them, and how far each merge or index build has progressed. SQLite gives us transactions over that metadata and a journal for recovering it. We need no additional custom manifest, transaction-log or checkpoint-file format.</p>
+<p>This document specifies the backend's architecture and acceptance contract. The <a class="el" href="md_docs_2sqlite-catalog.html">optional SQLite adapter</a> implements reservations, sealed objects, exact prepared chains, immutable saved roots, timeline generations and durable reader pins. The broader schema below specifies logical cola metadata, ownership retirement and merge continuations. The in-memory pin owner and durability state machine give us executable models for those transitions.</p>
 <h1><a class="anchor" id="autotoc_md1-what-the-catalog-owns"></a>
 1. What the catalog owns</h1>
 <p>SQLite records which exact immutable objects are reachable and which transitions have committed. It does not contain the bulk key/value table, and a committed catalog row does not itself make an external file durable.</p>
-<p>We need to distinguish the world we mean from the objects we use to read it:</p>
+<p>We need to distinguish the cola we mean from the objects we use to read it:</p>
 <ul>
-<li>A <b>world</b> identifies an admitted logical cut, with its schema context, live count and weak composite fingerprint. The fingerprint is not a unique ID.</li>
-<li>A <b>representation</b> is an immutable manifest of the exact blob/index versions used to read that world. Pure compaction makes a new representation of the same world. It does not change an old representation in place.</li>
-<li>A <b>timeline</b> selects a current world and representation, with a monotonically advancing revision used for conditional publication.</li>
+<li>A <b>cola</b> identifies an admitted logical cut, with its schema context, live count and weak composite fingerprint. The fingerprint is not a unique ID.</li>
+<li>A <b>representation</b> is an immutable manifest of the exact blob/index versions used to read that cola. Pure compaction makes a new representation of the same cola. It does not change an old representation in place.</li>
+<li>A <b>timeline</b> selects a current cola and representation, with a monotonically advancing revision used for conditional publication.</li>
 <li>A <b>branch point</b> retains one exact representation. Readers, saved branch points, jobs and caches likewise have explicit retention owners.</li>
 </ul>
-<p>A description of a historical world can outlive the files needed to read it. Retention therefore follows the designated roots below. Keeping a descriptive row alone does not keep those files. A branch point intended to remain readable must have a root.</p>
-<p>The catalog records the canonical policy P: byte/bit unit, group size, value layout and interpretation versions. Opening it as <code>multiverse&lt;P&gt;</code> validates that policy. Changing P is an explicit format migration. Sort and category schema versions are pinned by each world and by the jobs interpreting it.</p>
+<p>A description of a historical cola can outlive the files needed to read it. Retention therefore follows the designated roots below. Keeping a descriptive row alone does not keep those files. A branch point intended to remain readable must have a root.</p>
+<p>The catalog records the canonical policy P: byte/bit unit, group size, value layout and interpretation versions. The optional <code>sqlite_catalog&lt;P&gt;::open</code> validates that policy; <code>fridge&lt;P&gt;</code> separately owns file access. Changing P is an explicit format migration. Sort and category schema versions are pinned by each cola and by the jobs interpreting it.</p>
 <h1><a class="anchor" id="autotoc_md2-proposed-relational-schema"></a>
 2. Proposed relational schema</h1>
 <p>The following names specify the relationships; final DDL and migrations remain implementation work. Immutable rows are inserted once and cannot be edited into a different object, manifest, recipe or checkpoint. Mutable lifecycle rows carry an expected revision/generation for conditional updates.</p>
@@ -104,23 +104,23 @@ Contents and exact layouts</h2>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>catalog_info</code>   </td><td class="markdownTableBodyNone">singleton ID, schema version, canonical P, catalog identity, allocator state   </td><td class="markdownTableBodyNone">exactly one identity/policy; reject unsupported versions    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>schema_contexts</code>   </td><td class="markdownTableBodyNone">schema ID, sort/codec/hash/category resolver versions   </td><td class="markdownTableBodyNone">immutable canonical descriptor; worlds and recipes refer to exact versions    </td></tr>
+<td class="markdownTableBodyNone"><code>schema_contexts</code>   </td><td class="markdownTableBodyNone">schema ID, sort/codec/hash/category resolver versions   </td><td class="markdownTableBodyNone">immutable canonical descriptor; colas and recipes refer to exact versions    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>objects</code>   </td><td class="markdownTableBodyNone">allocation/object ID, kind, generation, final content identity, relative path, lifecycle state, byte extent, integrity digest, optional native fingerprint   </td><td class="markdownTableBodyNone">kind is <code>kv</code> or <code>index</code>; unique ID/path; generation and IDs never reused; final identity/extent are fixed at sealing    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>object_edges</code>   </td><td class="markdownTableBodyNone">source object, target object, dependency role   </td><td class="markdownTableBodyNone">composite primary key; both ends foreign keys; exact immutable dependency graph    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>blob_versions</code>   </td><td class="markdownTableBodyNone">blob ID, native object, optional index object, optional target blob, native/augmented counts   </td><td class="markdownTableBodyNone">native kind is <code>kv</code>; index kind is <code>index</code>; exact target and policy validation; immutable    </td></tr>
+<td class="markdownTableBodyNone"><code>blob_versions</code>   </td><td class="markdownTableBodyNone">blob ID, native object, optional index object, layout, optional main target blob, optional secondary native object, native/borrowed/augmented counts   </td><td class="markdownTableBodyNone">native and secondary kinds are <code>kv</code>; index kind is <code>index</code>; exact role-specific targets and policy validation; immutable    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>worlds</code>   </td><td class="markdownTableBodyNone">world ID, admitted cut ID, schema ID, live count, composite fingerprint   </td><td class="markdownTableBodyNone">immutable; signature has no uniqueness constraint    </td></tr>
+<td class="markdownTableBodyNone"><code>colas</code>   </td><td class="markdownTableBodyNone">cola ID, admitted cut ID, schema ID, live count, composite fingerprint   </td><td class="markdownTableBodyNone">immutable; signature has no uniqueness constraint    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>representations</code>   </td><td class="markdownTableBodyNone">representation ID, world ID, layout version, cached contribution sum   </td><td class="markdownTableBodyNone">immutable; composite unique key <code>(representation_id, world_id)</code>    </td></tr>
+<td class="markdownTableBodyNone"><code>representations</code>   </td><td class="markdownTableBodyNone">representation ID, cola ID, layout version, cached contribution sum   </td><td class="markdownTableBodyNone">immutable; composite unique key <code>(representation_id, cola_id)</code>    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>representation_entries</code>   </td><td class="markdownTableBodyNone">representation ID, position, logical factor ID, blob ID, contribution role, contribution   </td><td class="markdownTableBodyNone">primary key <code>(representation_id, position)</code>; unique factor within one representation; exact semantic ordering   </td></tr>
 </table>
-<p>Construction identities and generations are reserved before output exists. A final content identity is established only after the bytes and its defined hash input have been verified. The catalog distinguishes these roles; the weak world fingerprint is never a file content address. A private construction can acquire its final name at sealing, before durable publication. Sealed identity, path and content descriptors are immutable.</p>
-<p>An index's dependency edges include its own native object and the native/index objects of its exact target blob. Additional retained value/arrow dependencies must also be explicit edges. Registering a blob validates agreement among those edges, the target blob and the external index metadata. Foreign keys establish row existence; they do not establish this semantic agreement or graph acyclicity.</p>
-<p>The initial representation is a chain. We reject cycles and require each target to be fully registered before sealing its dependent. Metadata about unfinished work does not become a visible query graph. We obtain paths from the checked object-name allocator; a path field is not permission to open an arbitrary filesystem path.</p>
+<p>Construction identities and generations are reserved before output exists. A final content identity is established only after the bytes and its defined hash input have been verified. The catalog distinguishes these roles; the weak cola fingerprint is never a file content address. A private construction can acquire its final name at sealing, before durable publication. Sealed identity, path and content descriptors are immutable.</p>
+<p>An index's dependency edges include its own native object and the native/index objects of its exact main target. IX03 also retains its terminal secondary's native object directly; IX02 has only the single target pair. Additional retained value/arrow dependencies must also be explicit edges. Registering a blob validates agreement among those edges, the targets and the external index metadata. Foreign keys establish row existence; they do not establish this semantic agreement or graph acyclicity.</p>
+<p>IX02 follows a single chain; IX03 follows a main chain with terminal secondary native edges. We reject cycles and register each target before its dependent, possibly within one transaction. All required files must already be sealed. Metadata about unfinished work does not become a visible query graph. We obtain paths from the checked object-name allocator; a path field is not permission to open an arbitrary filesystem path.</p>
 <h2><a class="anchor" id="retention-roots-and-mutable-selections"></a>
 Retention roots and mutable selections</h2>
 <table class="markdownTable">
@@ -133,15 +133,15 @@ Retention roots and mutable selections</h2>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>owner_representations</code>   </td><td class="markdownTableBodyNone">owner ID, representation ID   </td><td class="markdownTableBodyNone">composite primary key and foreign keys; retains that exact manifest    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>owner_blobs</code>   </td><td class="markdownTableBodyNone">owner ID, blob ID   </td><td class="markdownTableBodyNone">direct roots for jobs/cached results before a world adopts them    </td></tr>
+<td class="markdownTableBodyNone"><code>owner_blobs</code>   </td><td class="markdownTableBodyNone">owner ID, blob ID   </td><td class="markdownTableBodyNone">direct roots for jobs/cached results before a cola adopts them    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>owner_objects</code>   </td><td class="markdownTableBodyNone">owner ID, object ID   </td><td class="markdownTableBodyNone">roots for unfinished outputs, sealed ranges and quarantined generations    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>timelines</code>   </td><td class="markdownTableBodyNone">timeline ID/name, owner ID, head world, head representation, revision   </td><td class="markdownTableBodyNone">unique name; head representation belongs to head world and is retained by that owner    </td></tr>
+<td class="markdownTableBodyNone"><code>timelines</code>   </td><td class="markdownTableBodyNone">timeline ID/name, owner ID, head cola, head representation, revision   </td><td class="markdownTableBodyNone">unique name; head representation belongs to head cola and is retained by that owner    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>branch_points</code>   </td><td class="markdownTableBodyNone">branch ID/name, owner ID, world ID, representation ID   </td><td class="markdownTableBodyNone">exact world/representation pair retained by that owner   </td></tr>
+<td class="markdownTableBodyNone"><code>branch_points</code>   </td><td class="markdownTableBodyNone">branch ID/name, owner ID, cola ID, representation ID   </td><td class="markdownTableBodyNone">exact cola/representation pair retained by that owner   </td></tr>
 </table>
-<p>Composite foreign keys can express some of this contract directly. For example, <code>(head_representation_id, head_world_id)</code> references the corresponding unique pair in <code>representations</code>, and <code>(owner_id, head_representation_id)</code> references <code>owner_representations</code>. The latter can be deferrable during an atomic head change. A branch point uses the equivalent constraints. Index the reverse dependency and owner-reference columns used by reachability and cleanup.</p>
+<p>Composite foreign keys can express some of this contract directly. For example, <code>(head_representation_id, head_cola_id)</code> references the corresponding unique pair in <code>representations</code>, and <code>(owner_id, head_representation_id)</code> references <code>owner_representations</code>. The latter can be deferrable during an atomic head change. A branch point uses the equivalent constraints. Index the reverse dependency and owner-reference columns used by reachability and cleanup.</p>
 <p>A root retains the transitive closure of its objects. We can cache refcounts to accelerate this, provided we maintain them transactionally and can audit them against the graph. They are not an independent authority to delete files.</p>
 <h2><a class="anchor" id="operations-and-background-work"></a>
 Operations and background work</h2>
@@ -151,7 +151,7 @@ Operations and background work</h2>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>operations</code>   </td><td class="markdownTableBodyNone">operation ID, operation kind, canonical request digest, expected revision, outcome IDs, status   </td><td class="markdownTableBodyNone">duplicate ID with different contents is rejected; committed outcome is discoverable after acknowledgment loss    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>rounds</code>   </td><td class="markdownTableBodyNone">round ID, base world/representation, partition rule version, admission/completion state   </td><td class="markdownTableBodyNone">retain the exact shared read base; distinguish round completion from representation work    </td></tr>
+<td class="markdownTableBodyNone"><code>rounds</code>   </td><td class="markdownTableBodyNone">round ID, base cola/representation, partition rule version, admission/completion state   </td><td class="markdownTableBodyNone">retain the exact shared read base; distinguish round completion from representation work    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>accepted_batches</code>   </td><td class="markdownTableBodyNone">round ID, batch ID, partition owner, exact update blob, request digest, advertised delta, accepted cut   </td><td class="markdownTableBodyNone">unique <code>(round_id, batch_id)</code>; independent validation before first admission    </td></tr>
 <tr class="markdownTableRowEven">
@@ -174,18 +174,18 @@ Operations and background work</h2>
 <p>Replay bookkeeping need not put every logical key in SQLite. Retaining accepted batches' immutable update files lets us reconstruct a round's claimed-key set after restart; a separately specified compact summary is another option. We must budget that reconstruction as real recovery work. Completed rounds need an explicit replay horizon or durable rejection watermark before we retire old batch identities and their retained update files.</p>
 <h2><a class="anchor" id="value-encodings-and-constraints"></a>
 Value encodings and constraints</h2>
-<p>Object/world/job identities and algebra elements use canonical BLOB encodings when their full range is not a checked SQLite integer range. Never truncate an unsigned ID, reinterpret a wrapping fingerprint as a signed sum, or store an algebra element as floating point. Checked nonnegative integer counters need explicit overflow limits.</p>
+<p>Object/cola/job identities and algebra elements use canonical BLOB encodings when their full range is not a checked SQLite integer range. Never truncate an unsigned ID, reinterpret a wrapping fingerprint as a signed sum, or store an algebra element as floating point. Checked nonnegative integer counters need explicit overflow limits.</p>
 <p>Use <code>NOT NULL</code>, primary/unique keys, foreign keys and <code>CHECK</code> constraints for local invariants: valid object kinds/states, nonnegative positions, ordered ranges, expected digest widths and matching version tags. Use transactional validation or triggers for cross-row rules and graph/state transitions that cannot be expressed by those constraints. Enable and verify foreign-key enforcement on every connection before beginning transactions. <a href="https://www.sqlite.org/foreignkeys.html#fk_enable">SQLite foreign-key configuration</a>.</p>
 <h1><a class="anchor" id="autotoc_md3-contributions-are-not-retention-counts"></a>
 3. Contributions are not retention counts</h1>
-<p>Only <code>representation_entries</code> contribute to a representation's world sum:</p>
+<p>Only <code>representation_entries</code> contribute to a representation's cola sum:</p>
 <ul>
 <li>An initial base contributes its logical table fingerprint.</li>
 <li>An update contributes its validated old-to-new delta.</li>
 <li>A merged entry contributes the sum of the logical factors it replaces.</li>
 </ul>
-<p>We compute the sum with the pinned algebra policy and compare it with the world's fingerprint. A file's own-native-record hash is a different optional diagnostic. A tombstone can have zero native hash and a nonzero negative contribution.</p>
-<p>Owner roots, borrowed keys, index dependencies, cached completed merges and unfinished candidates add <b>retention</b>, not extra terms in that sum. Retaining both an input representation and its replacement temporarily does not represent twice the world. Two representations with equal sums can still have different contents through collisions or a bug; the sum is a lint check, not the merge correctness proof.</p>
+<p>We compute the sum with the pinned algebra policy and compare it with the cola's fingerprint. A file's own-native-record hash is a different optional diagnostic. A tombstone can have zero native hash and a nonzero negative contribution.</p>
+<p>Owner roots, borrowed keys, index dependencies, cached completed merges and unfinished candidates add <b>retention</b>, not extra terms in that sum. Retaining both an input representation and its replacement temporarily does not represent twice the cola. Two representations with equal sums can still have different contents through collisions or a bug; the sum is a lint check, not the merge correctness proof.</p>
 <p>The configured C++ algebra computes these sums. SQL <code>SUM(contribution)</code> need not implement its arithmetic, particularly for finite fields or wrapping integers. We can display canonical values with <code>hex(...)</code> and audit their sums through the configured algebra. Contributions belong to the logical manifest entries, not to one global object refcount.</p>
 <h1><a class="anchor" id="autotoc_md4-connection-and-transaction-policy"></a>
 4. Connection and transaction policy</h1>
@@ -201,7 +201,7 @@ Value encodings and constraints</h2>
 <li><b>Build privately.</b> Write only this attempt's private objects. Published objects and checkpointed immutable ranges are never rewritten.</li>
 <li><b>Seal external state.</b> Complete required data/index sections and validate lengths, policy tags, exact dependencies and integrity digests. Synchronize file contents and every directory/name change needed to reopen them. Only then may the catalog describe an object or checkpoint range as durably sealed.</li>
 <li><b>Prepare exact representations.</b> Register sealed objects, the immutable dependency graph and completed blob versions. A data merge may stop here and remain a retained cached result while dependents rebuild their indexes.</li>
-<li><b>Adopt atomically.</b> In a write transaction, recheck the operation identity, expected head/revision, exact inputs, candidate readiness and semantic checks. Insert the immutable representation/entries, add its selected owner root, change the timeline's head, and record the operation outcome in one commit. A logical update also creates its new world/cut; pure compaction keeps the world ID. Remove only this timeline owner's superseded selection.</li>
+<li><b>Adopt atomically.</b> In a write transaction, recheck the operation identity, expected head/revision, exact inputs, candidate readiness and semantic checks. Insert the immutable representation/entries, add its selected owner root, change the timeline's head, and record the operation outcome in one commit. A logical update also creates its new cola/cut; pure compaction keeps the cola ID. Remove only this timeline owner's superseded selection.</li>
 <li><b>Acknowledge, then retire auxiliary retention.</b> After successful commit, report the durable outcome. A later transaction can release the job/recovery owner's old inputs. Branch points, readers, other jobs and caches retain their own independent roots.</li>
 </ol>
 <p>The recovery owner stays in place across the head-swap transaction. If the commit's result becomes uncertain, retention committed before the attempt still lets us discover both the old representation and the candidate. We resolve an acknowledgment lost after success using the operation ID, without applying the same changes twice.</p>
@@ -239,7 +239,7 @@ Claim, unlink, finish</h2>
 </ul>
 <p>External ranges become durable before the checkpoint row commits. A new checkpoint preserves the prior checkpoint's inputs until the new continuation is durable. Appending must not overwrite a sealed physical update unit; use padding or fresh immutable storage as required by the file backend. A checkpoint names ranges in existing <code>.kv</code>/<code>.index</code> generations, not another custom file format. After uncertain writes, resumption may need a fresh output generation.</p>
 <p>A full predecessor key can be large; putting it in a cursor BLOB does not make its space or write cost constant. We budget the actual context bytes and avoid checkpointing full contexts after every record. We can reference sufficient already sealed context when the codec proves it valid. Explicit limits and backpressure must account for this storage; moving it into a checkpoint file would still leave us with the same space and work to charge.</p>
-<p>A global rebuild additionally records the frozen source, current foreground and candidate representations, admission/replay cuts and counters b, u, n_s and h. Replayed mutations remain part of the candidate's weak-update debt. Foreground and candidate roots have separate contributions; summing both is not a world fingerprint. The <a class="el" href="md_docs_2rebuild.html">rebuilding schedule</a> remains responsible for bounded catch-up and byte/work accounting.</p>
+<p>A global rebuild additionally records the frozen source, current foreground and candidate representations, admission/replay cuts and counters b, u, n_s and h. Replayed mutations remain part of the candidate's weak-update debt. Foreground and candidate roots have separate contributions; summing both is not a cola fingerprint. The <a class="el" href="md_docs_2rebuild.html">rebuilding schedule</a> remains responsible for bounded catch-up and byte/work accounting.</p>
 <h1><a class="anchor" id="autotoc_md8-browse-with-existing-sql-tools"></a>
 8. Browse with existing SQL tools</h1>
 <p>Ordinary SQL tools should make this state inspectable. For example, open the catalog read-only with SQLite's shell to inspect its rows and views: <a href="https://www.sqlite.org/cli.html#opening_database_files">SQLite CLI</a>.</p>
@@ -248,11 +248,11 @@ Claim, unlink, finish</h2>
 <div class="line">.mode box</div>
 <div class="line"><span class="keyword">SELECT</span> sqlite_version(), sqlite_source_id();</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">SELECT</span> t.name, t.revision, hex(t.head_world_id) <span class="keyword">AS</span> world,</div>
+<div class="line"><span class="keyword">SELECT</span> t.name, t.revision, hex(t.head_cola_id) <span class="keyword">AS</span> cola,</div>
 <div class="line">       hex(t.head_representation_id) <span class="keyword">AS</span> representation,</div>
 <div class="line">       w.live_count, hex(w.composite_fingerprint) <span class="keyword">AS</span> fingerprint</div>
 <div class="line"><span class="keyword">FROM</span> timelines <span class="keyword">AS</span> t</div>
-<div class="line"><span class="keyword">JOIN</span> worlds <span class="keyword">AS</span> w <span class="keyword">ON</span> w.world_id = t.head_world_id;</div>
+<div class="line"><span class="keyword">JOIN</span> colas <span class="keyword">AS</span> w <span class="keyword">ON</span> w.cola_id = t.head_cola_id;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">SELECT</span> e.position, hex(e.blob_id) <span class="keyword">AS</span> <span class="keywordtype">blob</span>, e.contribution_role,</div>
 <div class="line">       hex(e.contribution) <span class="keyword">AS</span> contribution,</div>
@@ -288,12 +288,12 @@ Claim, unlink, finish</h2>
 <div class="line"><span class="keyword">FROM</span> objects <span class="keyword">AS</span> o</div>
 <div class="line"><span class="keyword">LEFT</span> <span class="keyword">JOIN</span> reachable <span class="keyword">AS</span> r <span class="keyword">ON</span> r.object_id = o.object_id</div>
 <div class="line"><span class="keyword">WHERE</span> o.state = <span class="stringliteral">&#39;sealed&#39;</span> <span class="keyword">AND</span> r.object_id <span class="keyword">IS</span> <span class="stringliteral">NULL</span>;</div>
-</div><!-- fragment --><p>This last query diagnoses apparently unowned objects at its read snapshot; it is not authority to unlink them. Actual collection rechecks and claims them in a write transaction. Read-only SQL browsing likewise does not acquire permission to hold external file views. CLI parameter values must be bound with the correct ID encoding; display hex is not automatically a BLOB parameter. A complete multiverse backup must retain and copy the referenced external objects as well; a catalog-only copy is a metadata backup.</p>
+</div><!-- fragment --><p>This last query diagnoses apparently unowned objects at its read snapshot; it is not authority to unlink them. Actual collection rechecks and claims them in a write transaction. Read-only SQL browsing likewise does not acquire permission to hold external file views. CLI parameter values must be bound with the correct ID encoding; display hex is not automatically a BLOB parameter. A complete fridge backup must retain and copy the referenced external objects as well; a catalog-only copy is a metadata backup.</p>
 <h1><a class="anchor" id="autotoc_md9-acceptance-before-the-backend-is-called-durable"></a>
 9. Acceptance before the backend is called durable</h1>
 <p>Before calling this backend durable, we need tests covering:</p>
 <ul>
-<li>Schema/version/policy mismatch, foreign-key enforcement, invalid dependencies, wrong file kinds and cycles; equal fingerprints with distinct world/object IDs.</li>
+<li>Schema/version/policy mismatch, foreign-key enforcement, invalid dependencies, wrong file kinds and cycles; equal fingerprints with distinct cola/object IDs.</li>
 <li>Concurrent reader acquisition versus GC claims, including a paused live reader, a dead process, PID reuse and an acquisition abandoned after commit.</li>
 <li>Logical updates, pure compaction and reindexing with old branch points still readable through their exact original representations.</li>
 <li>Lost acknowledgments, duplicate operation IDs, changed requests under the same ID, and durable round restart without double application.</li>

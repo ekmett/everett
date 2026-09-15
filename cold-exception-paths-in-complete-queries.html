@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Cold exception paths in complete queries</title>
+<title>Diet: Cold exception paths in complete queries</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -91,7 +91,7 @@ What was measured</h1>
 <p>Conditions, catch handlers, rethrows, allocations and encoded data remain unchanged. None of these builds uses <code>-fno-exceptions</code>. The timed queries do not fail, so the comparison measures generated code and layout on the successful path, not the time taken to unwind an exception.</p>
 <p>Each fixture has four native levels, containing \(N\), \(N/4\), \(N/16\) and \(N/64\) records, and a prepared routing prefix. Each trial runs 4,096 deterministic queries using byte and bit policies. Half target known base-level keys; the remainder cover the key domain. An independent integer-key oracle checks every returned source, ordinal and value before and after timing. All value bytes contribute to the timed checksum. Match counts, catalog visits, preparation shape and encoded array sizes agree across variants.</p>
 <p>Five trials rotate and reverse variant order after warming the fixture. Builds use Apple Clang 21, C++20, <code>-O3 -DNDEBUG</code> on the native M2 Max. The harness requests user-initiated QoS. The host resource lease excludes other participating heavy jobs; cores and clock frequencies are not pinned. These are resident owning queries, not mmap fault, disk-I/O or native x86 measurements.</p>
-<h1><a class="anchor" id="results-4"></a>
+<h1><a class="anchor" id="results-5"></a>
 Results</h1>
 <p>Times are median nanoseconds per complete query; lower is better.</p>
 <table class="markdownTable">

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['zero_0',['zero',['../structeverett_1_1wrapping__fingerprint__algebra.html#ab0e3c622b39af2706e65f813afe56106',1,'everett::wrapping_fingerprint_algebra::zero()'],['../namespaceeverett_1_1section__detail.html#ab90d894c4ebbf60e2e8587eecbf1f085',1,'everett::section_detail::zero()']]]
+  ['zero_0',['zero',['../structdiet_1_1wrapping__fingerprint__algebra.html#a106f852a94dc2b49e3a1ebb9b4d43628',1,'diet::wrapping_fingerprint_algebra::zero()'],['../namespacediet_1_1section__detail.html#aa420723b787d62751d87f1ce2486459c',1,'diet::section_detail::zero()']]]
 ];

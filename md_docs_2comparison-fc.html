@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Front coding with comparison state</title>
+<title>Diet: Front coding with comparison state</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -79,7 +79,7 @@ $(function() {
   <div class="headertitle"><div class="title">Front coding with comparison state</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="front-coding-with-comparison-state"></a> I use ordinary front coding in both physical streams, with enough navigation state to compare keys without reconstructing their inherited prefixes. The <a class="el" href="md_docs_2query.html">query API</a> connects these comparisons into complete chain traversal. Each index carries exact cut LCPs alongside its origin rank and borrowed stream.</p>
+<div class="textblock"><p><a class="anchor" id="front-coding-with-comparison-state"></a> I use ordinary front coding in each physical stream, with enough navigation state to compare keys without reconstructing their inherited prefixes. The <a class="el" href="md_docs_2query.html">query API</a> connects these comparisons into complete chain traversal. Each borrowed route carries exact cut LCPs alongside its origin rank and FC stream. I derive the transfer below for one borrowed route; the <a class="el" href="cola-indexes-and-mapped-queries.html">COLA index</a> applies it independently to its two routes.</p>
 <h1><a class="anchor" id="entering-a-projected-stream"></a>
 Entering a projected stream</h1>
 <p>Let \(B\) be the sampled boundary at virtual cut \(q\). For either physical stream, let \(A\) be its preceding key and \(C\) its first candidate at or after the cut. Sorted order gives</p>
@@ -113,7 +113,7 @@ One exact LCP per cut</h2>
 \min\bigl(\ell,\mathrm{lcp}(B,Q)\bigr).
 \]
 </p>
-<p>The identity includes equal keys and proper-prefix endpoints. Together with the full lengths of \(C\) and \(Q\), it determines equality; otherwise the known order is \(C&lt;Q\). At the initial cut there is no preceding borrowed occurrence to repair.</p>
+<p>The identity includes equal keys and proper-prefix endpoints. Since \(C\le Q\), equality holds exactly when this LCP spans all of \(Q\). Otherwise \(C&lt;Q\). We do not need \(C\)'s full length. At the initial cut there is no preceding borrowed occurrence to repair.</p>
 <p>This scalar belongs to the exact fractional-index view. It depends on the current cut layout and borrowed frontier, and stays pinned with those dependencies. It is not native <code>.kv</code> metadata. If the same borrowed key precedes several cuts, each cut needs its own exact LCP; a single minimum cannot stand in for all of them.</p>
 <p>The streaming builder has both keys and records the exact LCP at each cut. Alternatively, the LCP of sorted endpoints is the minimum adjacent LCP along the intervening sequence, which suggests maintaining a running minimum since the last borrowed key. That construction still needs checks for the cut's before/after convention and native-before-borrowed ties.</p>
 <p>False-borrow recovery of a native match before the projected range continues to use the rank-derived native ordinal. It needs the value at that ordinal, without reconstructing its key.</p>
@@ -144,17 +144,17 @@ e_b &amp; e_a\ge r_b.
 <p>Associativity permits an ordered parallel prefix scan. It does not permit reordering records. A 16-lane scan takes four doubling stages after the literal comparisons are available.</p>
 <h1><a class="anchor" id="two-physical-offset-directories"></a>
 Two physical offset directories</h1>
-<p>Keep exactly one Elias–Fano directory for native records and one for borrowed records, together with interleaving rank. There is no offset directory for an imaginary third, physically merged stream.</p>
-<p>The cascade stride \(K\) and codec block width \(W\) serve different purposes. At virtual cut \(q=Kk\), half-open borrowed rank gives</p>
+<p>For the single-route layout, keep one Elias–Fano directory for native records and one for borrowed records, together with interleaving rank. A two-route COLA index adds the second borrowed stream's directory and rank; its native directory is shared by both projections. Neither layout stores an offset directory for the virtual merged order.</p>
+<p>The cascade stride \(K\) and codec block width \(W\) serve different purposes. For the single-route projection at virtual cut \(q=Kk\), half-open borrowed rank gives</p>
 <p class="formulaDsp">
 \[
 i=\mathrm{rank}_{\mathrm{borrowed}}(q),\qquad d=q-i.
 \]
 </p>
 <p>Seek native block \(\lfloor d/W\rfloor\) and borrowed block \(\lfloor i/W\rfloor\), then enter at lanes \(d\bmod W\) and \(i\bmod W\). These directories replace the corresponding physical sampling cadence when \(W\) changes. The native directory continues to know nothing about later fractional-index layouts. Fixed-width values retain their separately calculated offset contribution.</p>
-<p>Each block needs its predecessor's full key <b>length</b> to parse backspaces and compute retained lengths. It does not need the predecessor's key bits or a full reset. Controls before the selected lane can be parsed without reconstructing their keys; the selected lane enters with the carried comparison state.</p>
+<p>The first record in each block stores an absolute <b>retained-prefix length</b> instead of a backspace. Adding its suffix length gives that key's full length; the remaining records use relative backspaces. Neither the preceding block nor its key contents are needed to parse these controls. Controls before the selected lane can be parsed without reconstructing their keys; the selected lane enters with the carried comparison state.</p>
 <p>A nonempty interval of \(L\) records can cross at most \(\lceil(W-1+L)/W\rceil\) blocks. Since each projected interval has \(L\le K\), \(W\ge K\) limits it to two. That two-block bound does not hold for arbitrary independent choices of \(W\) and \(K\). Control parsing costs \(O(W)\) per touched block. Keeping \(W=O(K)\) retains an \(O(K)\) entry/control bound for the whole projected window.</p>
-<p>That span counts forward candidates. The preceding borrowed record or a false-borrow native value can require an additional preceding block. In particular, \(i\) may equal the borrowed stream's length even though \(i-1\) is needed. If \(i\) is also block-aligned, its directory entry is an end sentinel, not a block carrying the predecessor length. The stream's terminal key-length metadata supplies it without reading the preceding block. Fetching the native value at \(d-1\) still requires its encoded record; the comparison counters exclude that separate false-borrow probe.</p>
+<p>That span counts forward candidates. Repairing the preceding borrowed comparison uses the cut LCP even when \(i\) is the stream's length: it reads no preceding record. The repaired context leaves its full length unknown unless equality establishes it. Fetching a false-borrow native value at \(d-1\) still requires its encoded record and can touch an additional preceding block; the comparison counters exclude that separate probe.</p>
 <p>The index currently stores each exact cut LCP in an unsigned 64-bit word. This allows direct addressing without another Elias–Fano directory and costs about \(64/K\) bits per augmented occurrence, including unused zero entries where there is no preceding borrowed key. Compressed counts or a narrower validated key-length limit are possible space tradeoffs.</p>
 <h1><a class="anchor" id="simd-encoding-experiment"></a>
 SIMD encoding experiment</h1>
@@ -164,20 +164,20 @@ SIMD encoding experiment</h1>
 w=\lfloor\log_2(x+1)\rfloor,\qquad x=2^w-1+\mathrm{tail}.
 \]
 </p>
-<p>Scalar scans can locate the unary terminators for the block's backspace and literal-length counts. Prefix sums locate the tails and literals. If \(b_j\) and \(s_j\) are backspace and literal lengths, respectively, then</p>
+<p>Scalar scans can locate the unary terminators for the block's prefix and literal-length counts. Prefix sums locate the tails and literals. With initial absolute retained count \(r_0\), suffix lengths \(s_j\) and later backspaces \(b_j\),</p>
 <p class="formulaDsp">
 \[
-L_j=L_{\mathrm{anchor}}+\sum_{t\le j}(s_t-b_t),
-\qquad r_j=L_j-s_j.
+L_0=r_0+s_0,\qquad
+L_j=L_0+\sum_{t=1}^{j}(s_t-b_t),\qquad r_j=L_j-s_j.
 \]
 </p>
-<p>Here \(L_{\mathrm{anchor}}\) is the actual physical block predecessor's length from its checkpoint. It is not the surrogate boundary \(B\)'s length.</p>
+<p>The initial retained position comes from the block itself; no predecessor length or surrogate boundary length appears in this calculation.</p>
 <p>We can align each literal with its query interval, compare those intervals independently, then scan the transfer summaries in order. Overflow, bounded loads, partial lanes and endpoints remain part of correctness. An explicit 32-bit key-position limit may be useful; a 64-bit file offset alone does not force every in-key position to occupy 64 bits.</p>
 <p>The scalar implementation defaults to \(W=K\). The <a class="el" href="md_bench_2query__compare.html">whole-query comparison</a> favors \(W=15\) over \(W=16\) with \(K=15\) in its measured fixtures. That does not select a transposed control layout or establish a SIMD speedup. The policy's other Golomb and exponential-Golomb choices also need an explicit encoding decision before this layout can replace them.</p>
 <h1><a class="anchor" id="verification-boundary"></a>
 Verification boundary</h1>
-<p>The existing fractional-index proof establishes ranks, sampled windows, exact target retention and false-borrow ordinals over abstract ordered keys. It does not yet connect these string comparisons to encoded bytes or bit positions. The <a class="el" href="everett-an-abstract-proof-core.html">proof guide</a> records the checked mathematical pieces.</p>
-<p>The independent tests compare exact cut LCPs, per-candidate states and complete queries with full-key oracles. They cover reindexing, equality across cuts, empty projections and the preceding-frontier counterexample. Protected pages verify that control-only entry and terminal predecessor access do not read earlier key payloads. Reindexing preserves native bytes and pins the exact new index dependencies. Construction reconstructs sequentially. The explicit <a class="el" href="mapped-blobs-and-exact-query-roots.html">mapped codec scan</a> verifies sequential FC framing, ordinary prefix retention, navigation directories, cut LCPs and exact target samples. <code>file&lt;P&gt;::scan</code> supplies the lower-level envelope, CRC and padding check.</p>
+<p>The existing fractional-index proof establishes ranks, sampled windows, exact target retention and false-borrow ordinals over abstract ordered keys. It does not yet connect these string comparisons to encoded bytes or bit positions. The <a class="el" href="diet-an-abstract-proof-core.html">proof guide</a> records the checked mathematical pieces.</p>
+<p>The independent tests compare exact cut LCPs, per-candidate states and complete queries with full-key oracles. They cover reindexing, equality across cuts, empty projections and the preceding-frontier counterexample. Protected pages verify that control-only entry skips key payloads and borrowed-frontier repair does not replay the preceding block. Reindexing preserves native bytes and pins the exact new index dependencies. Construction reconstructs sequentially. The explicit <a class="el" href="mapped-blobs-and-exact-query-roots.html">mapped codec scan</a> verifies sequential FC framing, ordinary prefix retention, navigation directories, cut LCPs and exact target samples. <code>file&lt;P&gt;::scan</code> supplies the lower-level envelope, CRC and padding check.</p>
 <p><code>profile_view::reconstruct_at</code> is a separate full-reconstruction operation. Under ordinary FC its cost includes the preceding context it traverses. A standalone profile encoder can opt into locality-preserving restarts for this operation; blob construction and cascade queries use ordinary FC. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->

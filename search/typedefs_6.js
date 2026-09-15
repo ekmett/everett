@@ -1,8 +1,12 @@
 var searchData=
 [
-  ['native_5farray_0',['native_array',['../structeverett_1_1multiverse.html#a9b43c51959c1f2531ec9200122d50b3f',1,'everett::multiverse::native_array'],['../structeverett_1_1profile__blob.html#afce5a4ac82351d910c8608f3631416dd',1,'everett::profile_blob::native_array']]],
-  ['native_5fmerge_5fbuilder_1',['native_merge_builder',['../structeverett_1_1multiverse.html#a7d10dc51216227a6424163c2201a6de6',1,'everett::multiverse']]],
-  ['native_5ftype_2',['native_type',['../structeverett_1_1mapped__blob.html#a99258e8913b6adc3277739eae609057b',1,'everett::mapped_blob']]],
-  ['native_5fview_3',['native_view',['../structeverett_1_1profile__blob__view.html#a7cd39471163ffa71eb31da02d0617a18',1,'everett::profile_blob_view']]],
-  ['native_5fwriter_4',['native_writer',['../structeverett_1_1multiverse.html#aa018526b081b943a655a20ad746c077a',1,'everett::multiverse']]]
+  ['native_5farray_0',['native_array',['../structdiet_1_1cola__index.html#a8f744c1a000ec7ff82a1745211999fc9',1,'diet::cola_index::native_array'],['../structdiet_1_1fridge.html#a4be55723147e23c6e92f51f676b0a98a',1,'diet::fridge::native_array'],['../structdiet_1_1profile__blob.html#aa0a16f0df7fa0b7c746a9a6dd9a9e19b',1,'diet::profile_blob::native_array']]],
+  ['native_5ffile_5fmerge_1',['native_file_merge',['../structdiet_1_1fridge.html#ae28adaee610baf1b93650608c6ed287a',1,'diet::fridge']]],
+  ['native_5ffile_5foutput_2',['native_file_output',['../namespacediet_1_1profile__detail.html#a2ab296316de3393462a2fabb94a7c057',1,'diet::profile_detail']]],
+  ['native_5ffile_5fwriter_3',['native_file_writer',['../structdiet_1_1fridge.html#a5ec8d4e1c6dce9fc59ab4425d640ddbc',1,'diet::fridge']]],
+  ['native_5fmerge_5fbuilder_4',['native_merge_builder',['../structdiet_1_1fridge.html#ac3b606f3e2e955700df549d907a6fcff',1,'diet::fridge']]],
+  ['native_5fpointer_5',['native_pointer',['../structdiet_1_1cola__index__builder.html#a4890288c545a0785726865f9a1586b09',1,'diet::cola_index_builder::native_pointer'],['../structdiet_1_1cola__destination__plan.html#ac68e369a0d135405e3e76e1ac4a7e119',1,'diet::cola_destination_plan::native_pointer'],['../structdiet_1_1cola__local__merge__result.html#ac325644eb58e1982a99773823ab37583',1,'diet::cola_local_merge_result::native_pointer'],['../structdiet_1_1cola__index.html#ad36a9cc23f4402cd887ef5e21ab3b278',1,'diet::cola_index::native_pointer'],['../structdiet_1_1mapped__cola__blob.html#a3c91f890647db8a16f7ed55b37db7143',1,'diet::mapped_cola_blob::native_pointer'],['../structdiet_1_1cola__local__merge__job.html#ab81e6aecd3ce66ca2fb98a51d14d56f3',1,'diet::cola_local_merge_job::native_pointer']]],
+  ['native_5ftype_6',['native_type',['../structdiet_1_1index__builder.html#a7a4ea107982f12711d2867bb28764a81',1,'diet::index_builder::native_type'],['../structdiet_1_1mapped__blob.html#abd24860dc693917f431a0e6e55be32d7',1,'diet::mapped_blob::native_type'],['../structdiet_1_1mapped__cola__blob.html#a559e7f1e22155ef6367ec25510678169',1,'diet::mapped_cola_blob::native_type'],['../structdiet_1_1cola__local__merge__job.html#a515a6e5f17fb5a74df0045e20fd214d2',1,'diet::cola_local_merge_job::native_type']]],
+  ['native_5fview_7',['native_view',['../structdiet_1_1cola__index__view.html#ac6e319c2f41ba4982c95e971197c74db',1,'diet::cola_index_view::native_view'],['../structdiet_1_1profile__blob__view.html#a9e3aa49cfbf838e45a4cd6e359453e18',1,'diet::profile_blob_view::native_view']]],
+  ['native_5fwriter_8',['native_writer',['../structdiet_1_1fridge.html#ab7e1c81c1267c6bfefcb25e11a2488fe',1,'diet::fridge']]]
 ];

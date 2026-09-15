@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: Everett</title>
+<title>Diet: Diet</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Everett
+   <div id="projectname">Diet
    </div>
   </td>
  </tr>
@@ -76,10 +76,10 @@ $(function() {
 
 </div><!-- top -->
 <div><div class="header">
-  <div class="headertitle"><div class="title">Everett</div></div>
+  <div class="headertitle"><div class="title">Diet</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="everett"></a> Read README.md, <a class="el" href="md_docs_2design.html">docs/design.md</a> and <a class="el" href="md_docs_2implementation.html">docs/implementation.md</a> before changing the architecture. Keep the design and implementation status distinct and current. Keep the README an extensive introduction to the motivation and working APIs as the library grows. Write the documents in my voice: first person for my design choices, and "we" when walking through an argument with the reader. Do not describe me or my ideas from a distant third-person perspective. Keep factual bibliographic attribution and copyright notices intact. Describe the current API directly; omit internal prototype history and incidental development provenance. Follow the approachable, example-led style of my Haskell packages: setext headings, useful documentation links, Contact Information and the final -Edward Kmett signoff. Demonstrate tested features; keep detailed implementation tracking in <a class="el" href="md_docs_2implementation.html">docs/implementation.md</a>. Use <code>$...$</code> for inline Markdown math and <code>$$...$$</code> for display math. Include the README and design Markdown in Doxygen, and verify that equations render.</p>
+<div class="textblock"><p><a class="anchor" id="diet"></a> Read README.md, <a class="el" href="md_docs_2design.html">docs/design.md</a> and <a class="el" href="md_docs_2implementation.html">docs/implementation.md</a> before changing the architecture. Keep the design and implementation status distinct and current. Keep the README an extensive introduction to the motivation and working APIs as the library grows. Write the documents in my voice: first person for my design choices, and "we" when walking through an argument with the reader. Do not describe me or my ideas from a distant third-person perspective. Keep factual bibliographic attribution and copyright notices intact. Describe the current API directly; omit internal prototype history and incidental development provenance. Follow the approachable, example-led style of my Haskell packages: setext headings, useful documentation links, Contact Information and the final -Edward Kmett signoff. Demonstrate tested features; keep detailed implementation tracking in <a class="el" href="md_docs_2implementation.html">docs/implementation.md</a>. Use <code>$...$</code> for inline Markdown math and <code>$$...$$</code> for display math. Include the README and design Markdown in Doxygen, and verify that equations render.</p>
 <h1><a class="anchor" id="coding-style"></a>
 Coding style</h1>
 <ul>
@@ -87,7 +87,7 @@ Coding style</h1>
 <li>Follow the lowercase, struct-first style of <a href="https://github.com/ekmett/bad">https://github.com/ekmett/bad</a> (reference revision 978b8056ffafc992fd1b7300ccf7bd1219cd3a20), without importing its ISA assumptions or macro-dispatch machinery.</li>
 <li>Use lowercase/snake_case names for concrete types, functions, namespaces, variables and files. Short uppercase template parameters are welcome.</li>
 <li>Use struct with explicit private/protected sections, two-space indentation, .h headers with <code>#pragma once</code>, .cc implementations, and T const &amp; spelling.</li>
-<li>Include public headers through everett/foo.h. Keep helpers with their sole consumer and extract them only for actual sharing.</li>
+<li>Include public headers through diet/foo.h. Keep helpers with their sole consumer and extract them only for actual sharing.</li>
 <li>Prefer templates, CRTP and associated type families for policy specialization. Avoid virtual dispatch, PImpl and type-erased backend payloads.</li>
 <li>Use standard attributes and facilities where practical. Individual named modifier macros are permitted; do not add variadic modifier-dispatch macros.</li>
 <li>Retain author notices. Place SPDX-FileCopyrightText and SPDX-License-Identifier in a license comment before code (after a shebang, if present). The identifier is BSD-2-Clause OR Apache-2.0, at the recipient's choice; both complete texts are in LICENSES/ and the choice is stated in LICENSE. Do not change license terms without an explicit instruction.</li>
@@ -97,7 +97,7 @@ Coding style</h1>
 Work and verification</h1>
 <p>The main checkout belongs to the integration owner. Workers use isolated Git worktrees from a committed revision; record ownership and acceptance in the implementation ledger. Preserve unrelated edits and retained worker branches. Make reviewed local checkpoints. Publish only within my authorization.</p>
 <p>Use the configured host resource gate for heavy builds when one is available; host-specific paths and coordination tools stay outside this package. Limit initial compile concurrency to four jobs. Build and test with CMake/CTest; exercise ASan/UBSan where supported. Keep generated outputs in ignored build folders. Validate the installed CMake package from a separate consumer.</p>
-<p>Keep the library independent of application policy. A multiverse owns backing storage, a world is a logical state, and a timeline is an ordered progression. Do not label design-only codecs, schedulers or persistence as implemented. </p>
+<p>Keep the library independent of application policy. A fridge owns backing storage, a cola is a logical state, and a timeline is an ordered progression. Do not label design-only codecs, schedulers or persistence as implemented. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->

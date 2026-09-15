@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['_7eoperation_0',['~operation',['../structeverett_1_1object__writer_1_1operation.html#a751509aa373390224e9f474134ec5a90',1,'everett::object_writer::operation']]],
-  ['_7eregion_1',['~region',['../structeverett_1_1mapped__file__detail_1_1region.html#ac908d363ec1117a67f554513dfd19db0',1,'everett::mapped_file_detail::region']]],
-  ['_7esqlite_5fcatalog_2',['~sqlite_catalog',['../structeverett_1_1sqlite__catalog.html#a0bacbbdd1b0e0e90cc5d1b524da63e26',1,'everett::sqlite_catalog']]],
-  ['_7estatement_3',['~statement',['../structeverett_1_1catalog__detail_1_1statement.html#af73e130ce239542429630a0e20fd40b5',1,'everett::catalog_detail::statement']]]
+  ['zero_0',['zero',['../structdiet_1_1wrapping__fingerprint__algebra.html#a106f852a94dc2b49e3a1ebb9b4d43628',1,'diet::wrapping_fingerprint_algebra::zero()'],['../namespacediet_1_1section__detail.html#aa420723b787d62751d87f1ce2486459c',1,'diet::section_detail::zero()']]],
+  ['zero_5f_1',['zero_',['../structdiet_1_1encoded__cola__sections.html#a50850480f4dddfd448ebbc6a236f8b98',1,'diet::encoded_cola_sections::zero_'],['../structdiet_1_1encoded__sections.html#a3704630579b2c8c87d23ed182694307e',1,'diet::encoded_sections::zero_']]],
+  ['zlib_2',['LICENSE.zlib',['../licensezlib.html',1,'']]]
 ];
