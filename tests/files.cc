@@ -15,6 +15,11 @@
 #include <random>
 #include <string>
 
+#if defined(__unix__) || defined(__APPLE__)
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
+
 namespace {
   using namespace everett;
   void require(bool condition, char const * message) {
@@ -47,6 +52,12 @@ namespace {
     output.exceptions(std::ios::failbit | std::ios::badbit);
     output.write(reinterpret_cast<char const *>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
     output.close();
+  }
+  template <class P> void rejects_open(std::filesystem::path const & path, std::span<std::byte const> bytes) {
+    write(path, bytes);
+    rejects([&] { file<P>::open(path); });
+    auto mapping = mapped_file::open(path);
+    rejects([&] { file<P>::from_slice(mapping.slice(0, mapping.size())); });
   }
   void rehash_header(std::vector<std::byte> & bytes) {
     file_detail::put(bytes, 68, 4, 0);
@@ -88,12 +99,39 @@ namespace {
       {
         auto stored = file<P>::open(path);
         require(stored.header() == header, "mapped file header mismatch");
+        stored.scan();
         retained = stored.body();
+        auto mapping = mapped_file::open(path);
+        auto whole = mapping.slice(0, mapping.size());
+        auto sliced = file<P>::from_slice(whole);
+        require(sliced.header() == header, "sliced file header mismatch");
+        sliced.scan();
+        for (std::uint64_t length = 0; length < whole.size(); ++length)
+          rejects([&] { file<P>::from_slice(whole.slice(0, length)); });
       }
       require(std::ranges::equal(retained.bytes(), body), "mapped body pin did not retain bytes");
       auto suffix_wrong = directory / "bad.extension";
       write(suffix_wrong, encoded);
       rejects([&] { file<P>::open(suffix_wrong); });
+
+      // The header remains valid when a payload byte is corrupt. Both entry
+      // points retain the object; only deliberate full-body scanning rejects it.
+      auto corrupt_path = directory / ("corrupt" + std::string(file_extension(kind)));
+      changed = encoded;
+      changed[96] ^= std::byte{0x80};
+      write(corrupt_path, changed);
+      {
+        auto corrupt = file<P>::open(corrupt_path);
+        require(corrupt.header() == header, "payload corruption changed decoded header");
+        rejects([&] { corrupt.scan(); });
+        auto mapping = mapped_file::open(corrupt_path);
+        auto sliced = file<P>::from_slice(mapping.slice(0, mapping.size()));
+        rejects([&] { sliced.scan(); });
+      }
+      changed = encoded; changed.push_back(std::byte{0});
+      rejects_open<P>(corrupt_path, changed);
+      changed = encoded; changed[68] ^= std::byte{1};
+      rejects_open<P>(corrupt_path, changed);
     }
   }
 
@@ -104,12 +142,17 @@ namespace {
     roundtrip<storage_policy<profile_unit::bit, fixed_values<5>, K>>(directory);
   }
 
-  void test_descriptors() {
+  void test_descriptors(std::filesystem::path const & directory) {
+    auto path = directory / "descriptor.kv";
     using byte_fixed = storage_policy<profile_unit::byte, fixed_values<5>, 15>;
     using bit_fixed = storage_policy<profile_unit::bit, fixed_values<5>, 15>;
     auto encoded = encode_file(file_header<byte_fixed>{file_kind::native_blob, 25, 3, 5},
                                std::vector<std::byte>(25));
     rejects([&] { validate_file<bit_fixed>(encoded); });
+    rejects_open<bit_fixed>(path, encoded);
+    rejects_open<storage_policy<profile_unit::byte, fixed_values<6>>>(path, encoded);
+    rejects_open<storage_policy<profile_unit::byte, variable_values>>(path, encoded);
+    rejects_open<storage_policy<profile_unit::byte, fixed_values<5>, 7>>(path, encoded);
     rejects([&] { validate_file<storage_policy<profile_unit::byte, fixed_values<6>>>(encoded); });
     rejects([&] { validate_file<storage_policy<profile_unit::byte, variable_values>>(encoded); });
     rejects([&] { validate_file<storage_policy<profile_unit::byte, fixed_values<5>, 7>>(encoded); });
@@ -120,15 +163,18 @@ namespace {
       file_detail::put(bad, patch.first, 1, patch.second);
       rehash_header(bad);
       rejects([&] { validate_file<byte_fixed>(bad); });
+      rejects_open<byte_fixed>(path, bad);
     }
     auto bad = encoded;
     file_detail::put(bad, 80, 8, std::numeric_limits<std::uint64_t>::max());
     rehash_header(bad);
     rejects([&] { validate_file<byte_fixed>(bad); });
+    rejects_open<byte_fixed>(path, bad);
     bad = encoded;
     file_detail::put(bad, 48, 8, std::numeric_limits<std::uint64_t>::max());
     rehash_header(bad);
     rejects([&] { validate_file<byte_fixed>(bad); });
+    rejects_open<byte_fixed>(path, bad);
     rejects([] { encode_file(file_header<byte_fixed>{file_kind::native_blob, 5, 2, 5}, std::vector<std::byte>(5)); });
     rejects([] { encode_file(file_header<byte_fixed>{file_kind::fractional_index, 0, 0, std::nullopt}, {}); });
     rejects([] { encode_file(file_header<byte_fixed>{file_kind::fractional_index, 0, 0, 5}, {}); });
@@ -141,13 +187,78 @@ namespace {
     file_detail::put(padded, 64, 4, crc32c(std::span<std::byte const>(padded).subspan(96)));
     rehash_header(padded);
     rejects([&] { validate_file<bits>(padded); }); // CRC valid; padding still noncanonical.
+    write(path, padded);
+    {
+      auto stored = file<bits>::open(path);
+      require(stored.header() == bit_header, "padding checked during header-only open");
+      rejects([&] { stored.scan(); });
+      auto mapping = mapped_file::open(path);
+      auto sliced = file<bits>::from_slice(mapping.slice(0, mapping.size()));
+      rejects([&] { sliced.scan(); });
+    }
     rejects([&] { encode_file(bit_header, std::array<std::byte, 1>{std::byte{0xa1}}); });
     auto empty = encode_file(file_header<bits>{}, {});
     require(empty.size() == 96 && validate_file<bits>(empty).extent == 0, "empty body file");
+    write(path, empty);
+    file<bits>::open(path).scan();
     using zero_fixed = storage_policy<profile_unit::byte, fixed_values<0>>;
     auto zero = encode_file(file_header<zero_fixed>{file_kind::native_blob, 0, 3, 0}, {});
     require(validate_file<zero_fixed>(zero).common_value_width == 0, "zero fixed width lost");
+    write(path, zero);
+    file<zero_fixed>::open(path).scan();
   }
+
+#if defined(__unix__) || defined(__APPLE__)
+  struct inaccessible_pages {
+    void * address;
+    std::size_t size;
+    explicit inaccessible_pages(std::span<std::byte const> bytes)
+      : address(const_cast<std::byte *>(bytes.data())), size(bytes.size()) {
+      if (::mprotect(address, size, PROT_NONE) != 0)
+        throw std::system_error(errno, std::generic_category(), "protect test payload");
+    }
+    inaccessible_pages(inaccessible_pages const &) = delete;
+    ~inaccessible_pages() {
+      if (::mprotect(address, size, PROT_READ) != 0) std::terminate();
+    }
+  };
+
+  template <class P> void test_inaccessible_body(std::filesystem::path const & directory) {
+    auto page_size = ::sysconf(_SC_PAGESIZE);
+    require(page_size > static_cast<long>(file_detail::header_bytes), "invalid test page size");
+    auto page = static_cast<std::size_t>(page_size);
+    std::vector<std::byte> payload(page + 1, std::byte{0xa8});
+    std::uint64_t extent = payload.size();
+    if constexpr (P::unit == profile_unit::bit) extent = extent * 8 - 3;
+    file_header<P> header{file_kind::native_blob, extent, 1, std::nullopt};
+    auto encoded = encode_file(header, payload);
+    auto prefix = page - file_detail::header_bytes;
+    std::vector<std::byte> container(prefix);
+    container.insert(container.end(), encoded.begin(), encoded.end());
+    container.push_back(std::byte{0}); // Permit testing a too-long slice too.
+    auto path = directory / "guarded.kv";
+    write(path, container);
+    auto mapping = mapped_file::open(path);
+    auto whole = mapping.slice(0, mapping.size());
+    auto guarded = whole.slice(page, payload.size());
+    std::optional<file<P>> stored;
+    {
+      // Put all 96 header bytes before the page boundary. Every payload byte,
+      // including bit-profile tail padding, lies on inaccessible pages.
+      inaccessible_pages guard(guarded.bytes());
+      stored.emplace(file<P>::from_slice(whole.slice(prefix, encoded.size())));
+      require(stored->header() == header, "guarded header decode mismatch");
+      auto body = stored->body();
+      require(body.size() == payload.size() && body.bytes().data() == guarded.bytes().data(),
+              "body access copied or changed the mapped payload");
+      rejects([&] { file<P>::from_slice(whole.slice(prefix, encoded.size() - 1)); });
+      rejects([&] { file<P>::from_slice(whole.slice(prefix, encoded.size() + 1)); });
+    }
+    stored->scan();
+    auto body = stored->body();
+    require(std::ranges::equal(body.bytes(), payload), "guard restoration changed payload");
+  }
+#endif
 
   void test_paths() {
     auto id = object_id::from_hex("abcdef0123456789abcdef0123456789");
@@ -182,9 +293,13 @@ int main() {
     temporary_directory directory;
     policy_matrix<3>(directory.path); policy_matrix<7>(directory.path);
     policy_matrix<15>(directory.path); policy_matrix<31>(directory.path);
-    test_descriptors();
+    test_descriptors(directory.path);
+#if defined(__unix__) || defined(__APPLE__)
+    test_inaccessible_body<storage_policy<profile_unit::byte>>(directory.path);
+    test_inaccessible_body<storage_policy<profile_unit::bit>>(directory.path);
+#endif
     test_paths();
-    std::cout << "Typed binary files, CRC32C, mapped bodies, and canonical sharded paths passed\n";
+    std::cout << "Header-only files, explicit body scans, retained mappings, and canonical sharded paths passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';
     return 1;

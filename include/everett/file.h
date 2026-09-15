@@ -198,17 +198,17 @@ namespace everett {
     return result;
   }
 
-  // Validated typed single-object reader. The retained body slice keeps the
-  // underlying read-only mapping alive independently of this file object.
-  // Both open() and from_slice() verify the entire body's CRC32C: O(physical
-  // body bytes) work, potentially faulting every mapped page. Mmap preserves
-  // zero-copy body access after validation; this is not a lazy-open hot path.
-  // A future block-checksum format could support validated lazy reads without
-  // making an unchecked whole-file reader the default.
+  // Typed single-object reader. Opening validates the header and exact file
+  // extent without reading payload bytes. The retained body slice keeps the
+  // read-only mapping alive; obtaining it does not verify the body's integrity.
+  // Call scan() explicitly when admission, recovery, or scrubbing needs the
+  // whole-body CRC32C and canonical padding checked: O(physical body bytes).
   template <class P> struct file {
     using policy_type = P;
     static file from_slice(mapped_slice bytes) {
-      auto header = validate_file<P>(bytes.bytes());
+      auto header = decode_file_header<P>(bytes.bytes());
+      if (file_detail::total_bytes<P>(header.extent) != bytes.size())
+        throw std::invalid_argument("truncated or trailing Everett object bytes");
       return {std::move(bytes), std::move(header)};
     }
     static file open(std::filesystem::path const & path) {
@@ -221,6 +221,12 @@ namespace everett {
     file_header<P> const & header() const & noexcept { return header_; }
     file_header<P> const & header() const && = delete;
     mapped_slice body() const { return bytes_.slice(file_detail::header_bytes, file_detail::body_bytes<P>(header_.extent)); }
+    void scan() const {
+      auto payload = body();
+      file_detail::validate_body(header_, payload.bytes());
+      if (file_detail::get(bytes_.bytes(), 64, 4) != crc32c(payload.bytes()))
+        throw std::invalid_argument("Everett body CRC32C mismatch");
+    }
   private:
     file(mapped_slice bytes, file_header<P> header) : bytes_(std::move(bytes)), header_(std::move(header)) {}
     mapped_slice bytes_;
