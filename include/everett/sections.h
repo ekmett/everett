@@ -154,11 +154,14 @@ namespace everett {
       metadata.terminal_key_units = layout.terminal_key_units;
       metadata.common_value_width = header.common_value_width;
       auto part = [&](std::size_t slot) { return section(body, layout, slot); };
-      select_groups_view<P::codec_block_size> offsets{
+      elias_fano_view offsets{
         word_view::little_endian(part(low)), word_view::little_endian(part(high)),
         sample_view::little_endian(part(samples)), word_view::little_endian(part(sparse)),
-        header.record_count, layout.universe, layout.low_width};
-      return profile_view<P, Role>::from_sections(part(fc), offsets, metadata);
+        profile_detail::add(header.record_count / P::codec_block_size +
+          (header.record_count % P::codec_block_size != 0), 1), layout.universe, layout.low_width};
+      auto result = profile_view<P, Role>::from_sections(part(fc), offsets, metadata);
+      result.validate_offset_metadata();
+      return result;
     }
     inline void equal_words(word_view actual, std::span<std::uint64_t const> expected, char const * message) {
       if (actual.size() != expected.size()) throw std::invalid_argument(message);
@@ -170,7 +173,7 @@ namespace everett {
       auto const & metadata = view.metadata();
       auto offsets = view.group_offsets();
       std::vector<std::uint64_t> residuals;
-      auto groups = offsets.group_count();
+      auto groups = view.block_count();
       if (groups == std::numeric_limits<std::uint64_t>::max() || groups + 1 > residuals.max_size())
         throw std::length_error("Everett scan offset count");
       residuals.reserve(static_cast<std::size_t>(groups + 1));
@@ -219,7 +222,7 @@ namespace everett {
       auto stride = profile_detail::multiply(metadata.record_count, metadata.common_value_width.value_or(0));
       if (stride > at) throw std::invalid_argument("Everett fixed payload exceeds extent");
       residuals.push_back(at - stride);
-      auto expected = select_groups<P::codec_block_size>::build(residuals, metadata.record_count);
+      auto expected = elias_fano::build(residuals);
       if (expected.universe != offsets.universe() || expected.low_width != offsets.low_width())
         throw std::invalid_argument("noncanonical Everett Elias-Fano parameters");
       equal_words(offsets.low_words(), expected.low, "Everett Elias-Fano low words mismatch");
@@ -312,9 +315,9 @@ namespace everett {
         sections_.push_back(bytes);
       }
     }
-    void samples(std::span<select_groups_sample const> values) {
-      static_assert(sizeof(select_groups_sample) == 16 && offsetof(select_groups_sample, first) == 0 &&
-                    offsetof(select_groups_sample, sparse) == 8);
+    void samples(std::span<elias_fano_sample const> values) {
+      static_assert(sizeof(elias_fano_sample) == 16 && offsetof(elias_fano_sample, first) == 0 &&
+                    offsetof(elias_fano_sample, sparse) == 8);
       if constexpr (std::endian::native == std::endian::little) sections_.push_back(std::as_bytes(values));
       else {
         auto & bytes = converted_.emplace_back(values.size() * 16);

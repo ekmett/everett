@@ -394,7 +394,7 @@ namespace {
     auto const & u = a.group_offsets();
     auto const & v = b.group_offsets();
     require(u.low == v.low && u.high == v.high && u.sparse == v.sparse && u.low_width == v.low_width &&
-            u.record_count == v.record_count && u.universe == v.universe && u.samples.size() == v.samples.size(),
+            u.entry_count == v.entry_count && u.universe == v.universe && u.samples.size() == v.samples.size(),
             "incremental borrowed EF sections differ from batch");
     for (std::size_t i = 0; i != u.samples.size(); ++i)
       require(u.samples[i].first == v.samples[i].first && u.samples[i].sparse == v.samples[i].sparse,
@@ -502,14 +502,14 @@ namespace {
       require(at == last, "window count");
     }
     auto common = array.metadata().common_value_width.value_or(0);
-    auto groups = records.size() / P::group_size + (records.size() % P::group_size != 0);
+    auto groups = view.block_count();
     for (std::uint64_t group = 0; group != groups; ++group) {
-      auto first = group * P::group_size;
-      auto offset = view.group_offsets().offset(group, common);
+      auto first = group * P::codec_block_size;
+      auto offset = view.block_offset(group);
       require(offset < view.encoded_at(first).next_offset, "sample points before record group prefix");
-      require(offset == view.group_offsets().residual(group) + first * common, "fixed value stride restoration");
+      require(offset == view.group_offsets().select(group) + first * common, "fixed value stride restoration");
     }
-    require(view.group_offsets().offset(groups, common) == array.metadata().extent, "actual-N terminal offset");
+    require(view.block_offset(groups) == array.metadata().extent, "actual-N terminal offset");
     require(array.metadata().group_size == P::group_size, "group policy metadata");
     require(array.metadata().backspace_code == P::backspace_code &&
             array.metadata().backspace_parameter == P::backspace_parameter, "backspace policy metadata");
@@ -538,8 +538,8 @@ namespace {
     for (auto & item : no_values) item.value = {};
     auto borrowed = profile_array<P, stream_role::borrowed>::build(no_values);
     require(borrowed.metadata().common_value_width == 0, "same-P borrowed empty values");
-    for (std::uint64_t group = 0; group <= fixed.group_offsets().view().group_count(); ++group)
-      require(fixed.group_offsets().view().residual(group) == borrowed.group_offsets().view().residual(group),
+    for (std::uint64_t group = 0; group < fixed.group_offsets().view().size(); ++group)
+      require(fixed.group_offsets().view().select(group) == borrowed.group_offsets().view().select(group),
               "constant value bytes excluded from EF universe");
     auto empty = profile_array<P>::build({});
     require(empty.view().size() == 0 && empty.metadata().extent == 0, "empty profile");
@@ -842,7 +842,7 @@ namespace {
     metadata.extent = bad.bit_size;
     metadata.common_value_width = 0;
     std::array<std::uint64_t, 2> offsets{0, bad.bit_size};
-    auto index = select_groups<P::group_size>::build(offsets, 1);
+    auto index = elias_fano::build(offsets);
     profile_view<P, stream_role::borrowed> view(bad.bytes, index.view(), metadata);
     rejects([&] { view.cursor(); });
   }
@@ -870,7 +870,7 @@ namespace {
       metadata.extent = data.bit_size / P::bits_per_unit;
       metadata.common_value_width = 0;
       std::array<std::uint64_t, 2> offsets{0, metadata.extent};
-      auto index = select_groups<P::group_size>::build(offsets, records);
+      auto index = elias_fano::build(offsets);
       profile_view<P> view(data.bytes, index.view(), metadata);
       rejects([&] {
         auto cursor = view.cursor();
@@ -895,16 +895,16 @@ namespace {
     auto records = fixture<P>();
     auto array = profile_array<P>::build(records);
     std::vector<std::uint64_t> wrong_offsets;
-    for (std::uint64_t group = 0; group <= array.group_offsets().view().group_count(); ++group)
-      wrong_offsets.push_back(array.group_offsets().view().residual(group));
+    for (std::uint64_t group = 0; group < array.group_offsets().view().size(); ++group)
+      wrong_offsets.push_back(array.group_offsets().view().select(group));
     wrong_offsets[0] = 1;
-    auto leading = select_groups<P::group_size>::build(wrong_offsets, array.size());
+    auto leading = elias_fano::build(wrong_offsets);
     rejects([&] { profile_view<P> invalid(array.bytes(), leading.view(), array.metadata()); });
     auto shape_leading = profile_view<P>::from_sections(array.bytes(), leading.view(), array.metadata());
     rejects([&] { shape_leading.validate_contents(); });
     wrong_offsets[0] = 0;
     ++wrong_offsets[1];
-    auto inconsistent = select_groups<P::group_size>::build(wrong_offsets, array.size());
+    auto inconsistent = elias_fano::build(wrong_offsets);
     profile_view<P> wrong_samples(array.bytes(), inconsistent.view(), array.metadata());
     rejects([&] { wrong_samples.visit_all([](auto) { return true; }); });
     rejects([&] {
@@ -914,7 +914,7 @@ namespace {
     // Change only a group's predecessor checkpoint. Its encoded size and
     // sampled address stay unchanged, so sequential context must reject it.
     auto checkpoint_bytes = std::vector<std::byte>(array.bytes().begin(), array.bytes().end());
-    auto group_start = array.group_offsets().view().offset(1, array.metadata().common_value_width.value_or(0));
+    auto group_start = array.view().block_offset(1);
     auto group_data = bit_view(checkpoint_bytes, array.metadata().extent * P::bits_per_unit);
     auto after_checkpoint = group_start;
     (void)profile_detail::read_count<P>(group_data, after_checkpoint);
@@ -980,10 +980,10 @@ namespace {
     for (auto sample : ef.samples) { sample_words.push_back(sample.first); sample_words.push_back(sample.sparse); }
     sections[3] = encode(sample_words);
     auto inspect = [&](std::array<std::span<std::byte const>, 5> spans, bool read) {
-      select_groups_view<P::codec_block_size> offsets(
+      elias_fano_view offsets(
         word_view::little_endian(spans[1]), word_view::little_endian(spans[2]),
         sample_view::little_endian(spans[3]), word_view::little_endian(spans[4]),
-        ef.record_count, ef.universe, ef.low_width);
+        ef.entry_count, ef.universe, ef.low_width);
       auto view = profile_view<P, Role>::from_sections(spans[0], offsets, array.metadata());
       require(view.bytes().data() == spans[0].data() && view.size() == records.size(), "mapped profile retains payload");
       require(view.group_offsets().samples().bytes().data() == spans[3].data(), "mapped profile retains samples");
@@ -1078,6 +1078,61 @@ namespace {
     }
   }
 
+  template <class P> void offset_metadata() {
+    static_assert(!P::fixed_width);
+    auto records = fixture<P>(true);
+    // W is independent of the virtual sampling stride K. Include a short
+    // physical tail, so the EOF stride must use the actual record count.
+    records.resize(2 * P::codec_block_size + 1);
+    auto array = profile_array<P>::build(records);
+    auto view = array.view();
+    auto width = array.metadata().common_value_width.value_or(0);
+    require(width != 0 && view.block_count() == 3, "offset metadata fixture");
+    require(view.group_offsets().size() == 4, "profile must encode explicit EOF in generic EF");
+    view.validate_offset_metadata();
+    view.validate_contents();
+    for (std::uint64_t block = 0; block <= view.block_count(); ++block) {
+      auto ordinal = std::min(block * P::codec_block_size, view.size());
+      require(view.block_offset(block) == view.group_offsets().select(block) + ordinal * width,
+              "profile-owned fixed stride arithmetic");
+    }
+    require(view.block_offset(3) == array.metadata().extent, "short tail actual-N EOF");
+    rejects([&] { (void)view.block_offset(4); });
+
+    auto wrong = array.metadata();
+    ++wrong.common_value_width.value();
+    auto mismatch = profile_view<P>::from_sections(array.bytes(), array.group_offsets().view(), wrong);
+    rejects([&] { mismatch.validate_offset_metadata(); });
+    rejects([&] { mismatch.validate_contents(); });
+    wrong.common_value_width = std::numeric_limits<std::uint64_t>::max();
+    auto overflow = profile_view<P>::from_sections(array.bytes(), array.group_offsets().view(), wrong);
+    rejects([&] { overflow.validate_offset_metadata(); });
+    rejects([&] { overflow.validate_contents(); });
+
+    std::vector<std::uint64_t> offsets;
+    for (std::uint64_t i = 0; i != view.group_offsets().size(); ++i)
+      offsets.push_back(view.group_offsets().select(i));
+    auto missing = offsets; missing.pop_back();
+    auto no_eof = elias_fano::build(missing);
+    rejects([&] { (void)profile_view<P>::from_sections(array.bytes(), no_eof.view(), array.metadata()); });
+    auto extra = offsets; extra.push_back(extra.back());
+    auto two_eof = elias_fano::build(extra);
+    rejects([&] { (void)profile_view<P>::from_sections(array.bytes(), two_eof.view(), array.metadata()); });
+    for (auto & value : offsets) ++value;
+    auto shifted = elias_fano::build(offsets);
+    auto bad_universe = profile_view<P>::from_sections(array.bytes(), shifted.view(), array.metadata());
+    rejects([&] { bad_universe.validate_offset_metadata(); });
+
+    elias_fano empty;
+    require(empty.view().size() == 0, "generic EF defaults to no values");
+    profile_array<P> empty_profile;
+    auto empty_view = empty_profile.view();
+    require(empty_view.block_count() == 0 && empty_view.group_offsets().size() == 1 &&
+            empty_view.block_offset(0) == 0, "empty profile explicitly retains EOF");
+    empty_view.validate_contents();
+    rejects([&] { (void)profile_view<P>::from_sections({}, empty.view(), empty_profile.metadata()); });
+  }
+
   template <std::uint64_t K> void policies() {
     roundtrip<storage_policy<profile_unit::byte, variable_values, K>>();
     roundtrip<storage_policy<profile_unit::byte, fixed_values<3>, K>>();
@@ -1093,6 +1148,8 @@ namespace {
 int main() {
   try {
     byte_comparison_oracle();
+    offset_metadata<storage_policy<profile_unit::byte, variable_values, 7, exponential_golomb<0>, 16>>();
+    offset_metadata<storage_policy<profile_unit::bit, variable_values, 3, golomb<3>, 7>>();
     intermediate_byte_anchors();
     bit_primitives();
     count_primitives();

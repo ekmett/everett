@@ -13,9 +13,10 @@
 
 #include <everett/policy.h>
 #include <everett/key_detail.h>
-#include <everett/select_groups.h>
+#include <everett/elias_fano.h>
 
 #include <algorithm>
+#include <array>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -612,15 +613,17 @@ namespace everett {
     using policy_type = P;
     static constexpr stream_role role = Role;
 
-    profile_view(std::span<std::byte const> bytes, select_groups_view<P::codec_block_size> offsets, profile_metadata metadata)
+    profile_view(std::span<std::byte const> bytes, elias_fano_view offsets, profile_metadata metadata)
       : profile_view(bytes, offsets, metadata, shape_only{}) {
       validate_contents();
     }
 
     // Metadata/shape checks only: no stream, EF-word or sample bytes are read.
     // Mapped owners may construct this view before touching any payload page.
+    // External metadata must also pass validate_offset_metadata() before
+    // navigation; trusted array builders establish that invariant themselves.
     static profile_view from_sections(std::span<std::byte const> bytes,
-        select_groups_view<P::codec_block_size> offsets, profile_metadata metadata) {
+        elias_fano_view offsets, profile_metadata metadata) {
       return {bytes, offsets, metadata, shape_only{}};
     }
 
@@ -628,19 +631,41 @@ namespace everett {
     // and the first/terminal offsets; it is not a complete framing, ordering or
     // EF semantic scan. Query parsing still bounds each accessed record.
     void validate_contents() const {
+      validate_offset_metadata();
       auto bits = data_.size();
       if (bits % 8 && (std::to_integer<unsigned>(bytes_.back()) & ((1u << (8 - bits % 8)) - 1)))
         error_detail::raise<std::invalid_argument>("nonzero profile padding");
-      auto groups = metadata_.record_count / P::codec_block_size + (metadata_.record_count % P::codec_block_size != 0);
-      if (offsets_.offset(0, metadata_.common_value_width.value_or(0)) != 0 ||
-          offsets_.offset(groups, metadata_.common_value_width.value_or(0)) != metadata_.extent)
+      if (block_offset(0) != 0 || block_offset(block_count()) != metadata_.extent)
         error_detail::raise<std::invalid_argument>("profile offset units or extent mismatch");
+    }
+
+    // External metadata admission checks fixed-stride representability once;
+    // it reads neither the FC payload nor any Elias–Fano word or sample.
+    // Trusted owning arrays establish this invariant while they are built.
+    void validate_offset_metadata() const {
+      auto stride = profile_detail::multiply(metadata_.record_count, metadata_.common_value_width.value_or(0));
+      if (stride > metadata_.extent || offsets_.universe() != metadata_.extent - stride)
+        error_detail::raise<std::invalid_argument>("profile offset universe or fixed stride mismatch");
+    }
+
+    std::uint64_t block_count() const noexcept {
+      return metadata_.record_count / P::codec_block_size +
+        (metadata_.record_count % P::codec_block_size != 0);
+    }
+    // The final sample is EOF at the actual record count. Fixed-stride
+    // arithmetic is unchecked here after metadata admission; the generic EF
+    // codec only selects the stored residual value.
+    std::uint64_t block_offset(std::uint64_t block) const {
+      auto blocks = block_count();
+      if (block > blocks) error_detail::raise<std::out_of_range>("profile block ordinal");
+      auto ordinal = block == blocks ? metadata_.record_count : block * P::codec_block_size;
+      return offsets_.select(block) + ordinal * metadata_.common_value_width.value_or(0);
     }
 
     std::uint64_t size() const noexcept { return metadata_.record_count; }
     std::span<std::byte const> bytes() const noexcept { return bytes_; }
     profile_metadata const & metadata() const noexcept { return metadata_; }
-    select_groups_view<P::codec_block_size> group_offsets() const noexcept { return offsets_; }
+    elias_fano_view group_offsets() const noexcept { return offsets_; }
     profile_cursor<P, Role> cursor() const;
 
     // One predecessor-length checkpoint is stored at each group start. This
@@ -754,7 +779,7 @@ namespace everett {
 
   private:
     struct shape_only {};
-    profile_view(std::span<std::byte const> bytes, select_groups_view<P::codec_block_size> offsets,
+    profile_view(std::span<std::byte const> bytes, elias_fano_view offsets,
                  profile_metadata metadata, shape_only)
       : bytes_(bytes), offsets_(offsets), metadata_(metadata) {
       auto expected = profile_detail::initial_metadata<P, Role>();
@@ -776,21 +801,23 @@ namespace everett {
       if (!metadata.record_count && (metadata.extent || metadata.terminal_key_units))
         error_detail::raise<std::invalid_argument>("nonempty data for empty profile");
       auto bits = profile_detail::multiply(metadata.extent, P::bits_per_unit);
-      if (bytes.size() != profile_detail::byte_count(bits) || offsets.size() != metadata.record_count)
+      auto blocks = block_count();
+      if (bytes.size() != profile_detail::byte_count(bits) ||
+          blocks == std::numeric_limits<std::uint64_t>::max() || offsets.size() != blocks + 1)
         error_detail::raise<std::invalid_argument>("profile section length mismatch");
       data_ = {bytes, bits};
     }
 
     friend struct profile_cursor<P, Role>;
     std::span<std::byte const> bytes_;
-    select_groups_view<P::codec_block_size> offsets_;
+    elias_fano_view offsets_;
     profile_metadata metadata_;
     bit_view data_;
 
     std::pair<std::uint64_t, std::uint64_t> locate(std::uint64_t ordinal,
                                                  profile_comparison_work * work) const {
       auto group = ordinal / P::codec_block_size;
-      auto at = offsets_.offset(group, metadata_.common_value_width.value_or(0));
+      auto at = block_offset(group);
       auto previous = profile_detail::read_count<P>(data_, at);
       if (!group && previous) error_detail::raise<std::invalid_argument>("first profile predecessor is not empty");
       for (auto i = group * P::codec_block_size; i < ordinal; ++i) {
@@ -822,7 +849,7 @@ namespace everett {
     profile_encoded_record next_record(profile_encoded_record const & previous, std::uint64_t ordinal) const {
       auto at = previous.next_offset;
       if (ordinal % P::codec_block_size == 0) {
-        if (offsets_.offset(ordinal / P::codec_block_size, metadata_.common_value_width.value_or(0)) != at)
+        if (block_offset(ordinal / P::codec_block_size) != at)
           error_detail::raise<std::invalid_argument>("profile group offset mismatch");
         if (profile_detail::read_count<P>(data_, at) != previous.key_units)
           error_detail::raise<std::invalid_argument>("profile group predecessor mismatch");
@@ -988,7 +1015,7 @@ namespace everett {
       result.metadata_.terminal_key_units = previous_units;
       result.metadata_.extent = data.bit_size / P::bits_per_unit;
       offsets.push_back(result.metadata_.extent - profile_detail::multiply(records.size(), common.value_or(0)));
-      result.offsets_ = select_groups<P::codec_block_size>::build(offsets, records.size());
+      result.offsets_ = elias_fano::build(offsets);
       result.bytes_ = std::move(data.bytes);
       return result;
     }
@@ -996,7 +1023,7 @@ namespace everett {
     std::uint64_t size() const noexcept { return metadata_.record_count; }
     std::span<std::byte const> bytes() const noexcept { return bytes_; }
     profile_metadata const & metadata() const noexcept { return metadata_; }
-    select_groups<P::codec_block_size> const & group_offsets() const noexcept { return offsets_; }
+    elias_fano const & group_offsets() const noexcept { return offsets_; }
     // These private sections come from the checked builders. Recheck their
     // shapes after copying/moving, without rereading payload or EF endpoints.
     profile_view<P, Role> view() const & {
@@ -1008,7 +1035,8 @@ namespace everett {
     friend struct profile_borrowed_writer<P>;
     friend struct profile_native_writer<P>;
     std::vector<std::byte> bytes_;
-    select_groups<P::codec_block_size> offsets_;
+    // The profile's EOF marker is explicit; the generic codec defaults empty.
+    elias_fano offsets_ = elias_fano::build(std::array<std::uint64_t, 1>{0});
     profile_metadata metadata_ = profile_detail::initial_metadata<P, Role>();
   };
 
@@ -1072,7 +1100,7 @@ namespace everett {
       auto extent = data_.bit_size / P::bits_per_unit;
       offsets_.push_back(extent);
       try {
-        result.offsets_ = select_groups<P::codec_block_size>::build(offsets_, count_);
+        result.offsets_ = elias_fano::build(offsets_);
       } catch (...) {
         offsets_.pop_back();
         throw;

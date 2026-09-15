@@ -65,7 +65,7 @@ namespace everett {
       auto stride = profile_detail::multiply(count_, common_.value_or(0));
       offsets_.push_back(extent - stride);
       try {
-        result.offsets_ = select_groups<P::codec_block_size>::build(offsets_, count_);
+        result.offsets_ = elias_fano::build(offsets_);
       } catch (...) {
         offsets_.pop_back();
         throw;
