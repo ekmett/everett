@@ -19,7 +19,7 @@ if(EVERETT_SANITIZERS)
   everett_check_sanitizers()
 endif()
 
-set(everett_test_names rank front world pins durability mapped_file)
+set(everett_test_names rank groups front world pins durability mapped_file)
 # Include profile fixtures when present in the checkout.
 foreach(everett_profile_test IN ITEMS profile profile_blob)
   if(EXISTS "${PROJECT_SOURCE_DIR}/tests/${everett_profile_test}.cc")

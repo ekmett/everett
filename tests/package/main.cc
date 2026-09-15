@@ -5,8 +5,10 @@
 #include <everett/mapped_file.h>
 #include <everett/pins.h>
 #include <everett/rank.h>
+#include <everett/rank_groups.h>
 #include <everett/rank15.h>
 #include <everett/select15.h>
+#include <everett/select_groups.h>
 #include <everett/world.h>
 
 #include <array>
