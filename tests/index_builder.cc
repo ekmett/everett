@@ -36,6 +36,17 @@ namespace {
     return std::equal(a.begin(), a.end(), b.begin(), b.end());
   }
 
+  std::uint64_t oracle_common(bit_view a, bit_view b) {
+    std::uint64_t i = 0;
+    while (i < std::min(a.size(), b.size()) && a.at(i) == b.at(i)) ++i;
+    return i;
+  }
+  int oracle_order(bit_view a, bit_view b) {
+    auto i = oracle_common(a, b);
+    if (i < std::min(a.size(), b.size())) return a.at(i) ? 1 : -1;
+    return a.size() < b.size() ? -1 : a.size() > b.size() ? 1 : 0;
+  }
+
   template <class P> bit_string value(unsigned seed) {
     auto units = P::value_width.value_or(seed % 7);
     std::string bits(units * P::bits_per_unit, '0');
@@ -62,7 +73,7 @@ namespace {
       }
     }
     std::sort(result.begin(), result.end(), [](auto const & a, auto const & b) {
-      return compare_bits(a.view(), b.view()) < 0;
+      return oracle_order(a.view(), b.view()) < 0;
     });
     return result;
   }
@@ -77,7 +88,7 @@ namespace {
     for (auto const & entry : native) result.push_back({entry.key, false});
     for (auto const & key : borrowed) result.push_back({key, true});
     std::stable_sort(result.begin(), result.end(), [](auto const & a, auto const & b) {
-      auto order = compare_bits(a.key.view(), b.key.view());
+      auto order = oracle_order(a.key.view(), b.key.view());
       return order ? order < 0 : a.borrowed < b.borrowed;
     });
     return result;
@@ -112,9 +123,11 @@ namespace {
       a_meta.count_unit == b_meta.count_unit && a_meta.offset_unit == b_meta.offset_unit && a_meta.count_code == b_meta.count_code &&
       a_meta.bit_order == b_meta.bit_order && a_meta.role == b_meta.role && a_meta.policy_fixed_values == b_meta.policy_fixed_values &&
       a_meta.policy_value_width == b_meta.policy_value_width && a_meta.common_value_width == b_meta.common_value_width &&
-      a_meta.group_size == b_meta.group_size && a_meta.record_count == b_meta.record_count && a_meta.extent == b_meta.extent,
+      a_meta.group_size == b_meta.group_size && a_meta.codec_block_size == b_meta.codec_block_size &&
+      a_meta.terminal_key_units == b_meta.terminal_key_units && a_meta.record_count == b_meta.record_count && a_meta.extent == b_meta.extent,
       "exact borrowed metadata");
     require(same(actual.false_borrow_bits(), expected.false_borrow_bits()), "exact false-borrow flags");
+    require(same(actual.cut_lcps(), expected.cut_lcps()), "exact batch/incremental cut LCPs");
     check_offsets(actual.native().group_offsets(), source.native().group_offsets());
     check_offsets(actual.borrowed().group_offsets(), expected.borrowed().group_offsets());
     auto const & rank = actual.interleave();
@@ -122,26 +135,43 @@ namespace {
     require(rank.classes == reference.classes && rank.checkpoints == reference.checkpoints &&
       rank.virtual_count == reference.virtual_count && rank.total == reference.total, "exact rank encoding");
     auto catalog = merge_order(native, borrowed);
+    require(actual.cut_lcps().size() == actual.group_count(), "one LCP for every emitted cut");
+    bit_view frontier;
+    bool has_frontier = false;
+    for (std::size_t i = 0; i != catalog.size(); ++i) {
+      if (i % P::group_size == 0) {
+        auto lcp = has_frontier ? oracle_common(frontier, catalog[i].key.view()) : 0;
+        require(actual.cut_lcps()[i / P::group_size] == lcp, "independent cut LCP oracle");
+      }
+      if (catalog[i].borrowed) { frontier = catalog[i].key.view(); has_frontier = true; }
+    }
     for (auto const & query : queries) {
       if (catalog.empty()) break;
       auto found = std::upper_bound(catalog.begin(), catalog.end(), query, [](auto const & q, auto const & item) {
-        return compare_bits(q.view(), item.key.view()) < 0;
+        return oracle_order(q.view(), item.key.view()) < 0;
       });
       auto ordinal = found == catalog.begin() ? 0 : std::uint64_t(found - catalog.begin() - 1);
       auto group = ordinal / P::group_size;
       auto const & boundary = catalog[group * P::group_size].key;
-      profile_anchor<P> anchor{boundary.view().prefix(query.bit_size), boundary.bit_size / P::bits_per_unit};
-      auto a = actual.search_window(query.view(), group, anchor);
-      auto b = expected.search_window(query.view(), group, anchor);
+      profile_query_context<P> anchor(query.view());
+      if (found != catalog.begin()) anchor = anchor.with_key(boundary.view());
+      auto a = actual.search_window(group, anchor);
+      auto b = expected.search_window(group, anchor);
       require(bool(a.native) == bool(b.native), "lookup native presence");
       if (a.native) require(a.native->ordinal == b.native->ordinal && a.native->value == b.native->value, "lookup native payload");
       require(bool(a.borrowed_predecessor) == bool(b.borrowed_predecessor), "lookup outgoing presence");
       if (a.borrowed_predecessor) {
         auto const & x = *a.borrowed_predecessor;
         auto const & y = *b.borrowed_predecessor;
-        require(x.ordinal == y.ordinal && x.target_ordinal == y.target_ordinal && x.has_context == y.has_context &&
-          x.prefix == y.prefix && x.full_units == y.full_units && x.false_borrow == y.false_borrow,
-          "lookup outgoing anchor and exact ordinal");
+        require(x.ordinal == y.ordinal && x.target_ordinal == y.target_ordinal && x.comparison.common_bits() == y.comparison.common_bits() &&
+          x.comparison.full_units() == y.comparison.full_units() && x.comparison.order() == y.comparison.order() &&
+          x.false_borrow == y.false_borrow,
+          "lookup outgoing comparison and exact ordinal");
+        auto const & key = borrowed[x.ordinal];
+        require(x.comparison.common_bits() == oracle_common(key.view(), query.view()) &&
+          x.comparison.order() == oracle_order(key.view(), query.view()) &&
+          x.comparison.full_units() == key.bit_size / P::bits_per_unit,
+          "independent outgoing comparison oracle");
       }
     }
   }
@@ -190,14 +220,14 @@ namespace {
           if (coded) {
             auto frame = builder.take_coded_output();
             auto previous = next_out ? output[next_out - 1].view() : bit_view{};
-            auto retained = common_prefix_units<P>(previous, output[next_out].view());
+            auto retained = oracle_common(previous, output[next_out].view()) / P::bits_per_unit;
             auto suffix = output[next_out].view().subview(retained * P::bits_per_unit,
               output[next_out].bit_size - retained * P::bits_per_unit);
             require(frame.backspace == previous.size() / P::bits_per_unit - retained &&
-              compare_bits(frame.suffix.view(), suffix) == 0, "outgoing frame contains exact backspace and suffix");
+              oracle_order(frame.suffix.view(), suffix) == 0, "outgoing frame contains exact backspace and suffix");
             auto decoded = output_decoder.accept(frame);
             require(frame.target_ordinal == next_out * P::group_size &&
-              compare_bits(decoded, output[next_out].view()) == 0, "coded sample follows augmented tagged ordering");
+              oracle_order(decoded, output[next_out].view()) == 0, "coded sample follows augmented tagged ordering");
           } else {
             auto sample = builder.take_output();
             require(sample.target_ordinal == next_out * P::group_size && sample.key == output[next_out],
@@ -259,7 +289,7 @@ namespace {
         if (second.has_output()) {
           auto frame = second.take_coded_output();
           require(frame.target_ordinal == emitted * P::group_size &&
-            compare_bits(decoder.accept(frame), final_samples[emitted].view()) == 0,
+            oracle_order(decoder.accept(frame), final_samples[emitted].view()) == 0,
             "two stages exchange coded frames without full-key queue materialization");
           ++emitted;
         }

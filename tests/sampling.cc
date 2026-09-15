@@ -112,10 +112,9 @@ namespace {
   }
 
   template <class P> void check_fixture(std::vector<profile_record> const & native,
-                                      std::vector<bit_string> const & borrowed,
-                                      profile_borrowed_policy policy = profile_borrowed_policy::shared_boundaries) {
+                                      std::vector<bit_string> const & borrowed) {
     auto expected = flatten(native, borrowed);
-    auto source = std::make_shared<profile_blob<P> const>(profile_blob<P>::build(native, borrowed, 18, {}, policy));
+    auto source = std::make_shared<profile_blob<P> const>(profile_blob<P>::build(native, borrowed));
     std::weak_ptr<profile_blob<P> const> weak = source;
     auto native_bytes = source->native().bytes();
     auto borrowed_bytes = source->borrowed().bytes();
@@ -322,8 +321,6 @@ namespace {
         borrowed.push_back(keys[i]);
     }
     check_fixture<P>(native, borrowed);
-    check_fixture<P>(native, borrowed, profile_borrowed_policy::ordinary);
-    check_fixture<P>(native, borrowed, profile_borrowed_policy::bidirectional);
 
     std::mt19937_64 random(0xd1479a45 + P::group_size);
     for (unsigned trial = 0; trial != 8; ++trial) {
