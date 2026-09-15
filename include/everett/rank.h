@@ -30,6 +30,37 @@ namespace everett {
   static_assert(sizeof(rank_block) == 8);
 
   namespace rank_detail {
+    // Read only words contributing to the prefix, including a masked tail.
+    inline unsigned prefix512_portable(std::uint64_t const * words, unsigned bits) noexcept {
+      unsigned result = 0;
+      for (unsigned word = 0; word < bits / 64; ++word)
+        result += unsigned(std::popcount(words[word]));
+      if (bits % 64)
+        result += unsigned(std::popcount(words[bits / 64] & ((std::uint64_t{1} << (bits % 64)) - 1)));
+      return result;
+    }
+
+#if defined(__aarch64__) && defined(__ARM_NEON)
+    template <unsigned Vector> inline uint8x16_t prefix512_vector(
+        std::uint64_t const * words, unsigned bits) noexcept {
+      uint64x2_t positions{2 * Vector, 2 * Vector + 1};
+      auto boundary = vdupq_n_u64(bits / 64);
+      auto tail = vdupq_n_u64((std::uint64_t{1} << (bits % 64)) - 1);
+      auto mask = vorrq_u64(vcltq_u64(positions, boundary),
+                            vandq_u64(vceqq_u64(positions, boundary), tail));
+      return vcntq_u8(vreinterpretq_u8_u64(vandq_u64(vld1q_u64(words + 2 * Vector), mask)));
+    }
+
+    // Exactly eight readable words, with arbitrary uint64_t alignment.
+    inline unsigned prefix512_neon(std::uint64_t const * words, unsigned bits) noexcept {
+      auto a = prefix512_vector<0>(words, bits);
+      auto b = prefix512_vector<1>(words, bits);
+      auto c = prefix512_vector<2>(words, bits);
+      auto d = prefix512_vector<3>(words, bits);
+      return vaddlvq_u8(vaddq_u8(vaddq_u8(a, b), vaddq_u8(c, d)));
+    }
+#endif
+
     // Exactly eight readable words; no alignment beyond uint64_t is required.
     inline unsigned popcount512_portable(std::uint64_t const * words) noexcept {
       unsigned total = 0;
@@ -111,11 +142,13 @@ namespace everett {
       std::uint64_t result = supers_[position >> 32] + block.before;
       result += rank_detail::run_prefix(block.runs, run);
       auto word = (position / 512) * 8;
-      for (; word < position / 64; ++word)
-        result += unsigned(std::popcount(words_[word]));
-      unsigned tail = unsigned(position % 64);
-      if (tail) result += unsigned(std::popcount(words_[word] & ((std::uint64_t{1} << tail) - 1)));
-      return result;
+      auto bits = unsigned(position % 512);
+      if (!bits) return result;
+#if defined(__aarch64__) && defined(__ARM_NEON)
+      if (words_.size() - word >= 8)
+        return result + rank_detail::prefix512_neon(words_.data() + word, bits);
+#endif
+      return result + rank_detail::prefix512_portable(words_.data() + word, bits);
     }
 
   private:

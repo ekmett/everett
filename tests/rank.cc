@@ -9,6 +9,7 @@
 
 #include <everett/rank.h>
 #include <everett/rank15.h>
+#include <everett/rank_groups.h>
 #include <everett/select15.h>
 
 #include <algorithm>
@@ -59,6 +60,91 @@ namespace {
       require(everett::rank_detail::popcount512_portable(shifted.data() + offset) == expected,
               "unaligned portable 512-bit population");
     }
+  }
+
+  void test_prefix512() {
+    alignas(64) std::array<std::uint64_t, 15> words{};
+    std::mt19937_64 random(0x512f00d);
+    for (unsigned pattern = 0; pattern < 66; ++pattern) {
+      for (auto & word : words) word = pattern == 0 ? 0 : pattern == 1 ? ~std::uint64_t{0} : random();
+      for (unsigned offset = 0; offset < 8; ++offset) {
+        unsigned expected = 0;
+        for (unsigned bit = 0; bit <= 512; ++bit) {
+          require(everett::rank_detail::prefix512_portable(words.data() + offset, bit) == expected,
+                  "portable 512-bit prefix oracle");
+#if defined(__aarch64__) && defined(__ARM_NEON)
+          require(everett::rank_detail::prefix512_neon(words.data() + offset, bit) == expected,
+                  "NEON 512-bit prefix oracle");
+#endif
+          if (bit != 512) expected += unsigned((words[offset + bit / 64] >> (bit % 64)) & 1);
+        }
+      }
+    }
+  }
+
+  template <unsigned K> void check_group_prefixes(std::span<std::uint64_t const> words,
+      std::span<std::uint64_t const> populations, std::uint64_t virtual_count) {
+    constexpr unsigned bits = everett::rank_groups<K>::class_bits;
+    std::vector<std::uint64_t> oracle(populations.size() + 1), checkpoints;
+    for (std::size_t i = 0; i < populations.size(); ++i) {
+      if (i % 128 == 0) checkpoints.push_back(oracle[i]);
+      oracle[i + 1] = oracle[i] + populations[i];
+    }
+    everett::rank_groups_view<K> view(words, checkpoints, virtual_count, oracle.back());
+    for (std::size_t i = 0; i <= populations.size(); ++i) {
+      require(view.rank(i) == oracle[i], "group prefix oracle");
+      if (i < populations.size()) {
+        require(view.class_at(i) == populations[i], "group class oracle");
+        if constexpr (K == 3 || K == 7 || K == 31) {
+          auto begin = (i / 128) * (2 * bits);
+          // count=0 reads no words, including an empty span's protected address.
+          auto expected = unsigned(oracle[i] - oracle[(i / 128) * 128]);
+          require(everett::rank_groups_detail::prefix_portable<bits>(words.data() + begin, unsigned(i % 128)) == expected,
+                  "portable grouped prefix oracle");
+#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+          if (words.size() - begin >= 2 * bits)
+            require(everett::rank_groups_detail::prefix_neon<bits>(words.data() + begin, unsigned(i % 128)) == expected,
+                    "NEON grouped prefix oracle");
+#endif
+        }
+      }
+    }
+  }
+
+  template <unsigned K> void test_group_prefixes() {
+    std::mt19937_64 random(0x345);
+    constexpr unsigned bits = everett::rank_groups<K>::class_bits;
+    // Short final virtual groups, short checkpoints, crossings of packed word
+    // boundaries, and every word alignment within a cache line.
+    for (unsigned groups = 0; groups <= 260; ++groups) {
+      for (unsigned pattern = 0; pattern < 3; ++pattern) {
+        auto count = groups ? (groups - 1) * K + 1 + groups % K : 0;
+        std::vector<std::uint64_t> populations(groups);
+        for (unsigned i = 0; i < groups; ++i) {
+          auto limit = i + 1 == groups ? count - i * K : K;
+          populations[i] = pattern == 0 ? 0 : pattern == 1 ? limit : random() % (limit + 1);
+        }
+        auto index = everett::rank_groups<K>::build(populations, count);
+        // Padding is not a population and must not contribute to a prefix.
+        if (groups * bits % 64) index.classes.back() |= ~std::uint64_t{0} << (groups * bits % 64);
+        for (unsigned offset = 0; offset < 8; ++offset) {
+          std::vector<std::uint64_t> shifted(index.classes.size() + offset);
+          std::copy(index.classes.begin(), index.classes.end(), shifted.begin() + offset);
+          check_group_prefixes<K>(std::span(shifted).subspan(offset), populations, count);
+        }
+      }
+    }
+    // Isolate every class bit and its complement to catch the rotating weights
+    // where three- and five-bit fields cross a word or vector boundary.
+    for (unsigned lane = 0; lane < 128; ++lane)
+      for (unsigned bit = 0; bit < bits; ++bit)
+        for (bool complement : {false, true}) {
+          std::array<std::uint64_t, 128> populations{};
+          populations.fill(complement ? K : 0);
+          populations[lane] ^= std::uint64_t{1} << bit;
+          auto index = everett::rank_groups<K>::build(populations, 128 * K);
+          check_group_prefixes<K>(index.classes, populations, 128 * K);
+        }
   }
 
   void test_rank_tails() {
@@ -280,6 +366,56 @@ namespace {
     std::byte * end() const { return address + 2 * page; }
   };
 
+  template <unsigned K> void test_groups_guarded_tails() {
+    guarded_rank15_page memory;
+    for (unsigned groups = 0; groups <= 260; ++groups) {
+      auto count = groups ? (groups - 1) * K + 1 + groups % K : 0;
+      std::vector<std::uint64_t> populations(groups);
+      for (unsigned i = 0; i < groups; ++i)
+        populations[i] = i + 1 == groups ? count - i * K : K;
+      auto index = everett::rank_groups<K>::build(populations, count);
+      constexpr auto width = everett::rank_groups<K>::class_bits;
+      if (groups * width % 64) index.classes.back() |= ~std::uint64_t{0} << (groups * width % 64);
+      auto bytes = index.classes.size() * 8;
+      auto destination = memory.end() - bytes;
+      memory.protect(PROT_READ | PROT_WRITE);
+      if (bytes) std::memcpy(destination, index.classes.data(), bytes);
+      memory.protect(PROT_READ);
+      check_group_prefixes<K>({reinterpret_cast<std::uint64_t const *>(destination), index.classes.size()}, populations, count);
+    }
+  }
+
+  void test_bitmap_guarded_tails() {
+    guarded_rank15_page memory;
+    for (unsigned bits = 0; bits <= 1088; ++bits) {
+      std::vector<std::uint64_t> source((bits + 63) / 64, ~std::uint64_t{0});
+      auto index = everett::rank_index::build(source, bits);
+      // Keep all-one padding in the borrowed final word.
+      auto bytes = source.size() * 8;
+      auto destination = memory.end() - bytes;
+      memory.protect(PROT_READ | PROT_WRITE);
+      if (bytes) std::memcpy(destination, source.data(), bytes);
+      memory.protect(PROT_READ);
+      std::span words{reinterpret_cast<std::uint64_t const *>(destination), source.size()};
+      everett::rank_view view(words, index.blocks, index.supers, bits, bits);
+      for (unsigned bit = 0; bit <= bits; ++bit)
+        require(view.rank(bit) == bit, "guarded bitmap prefix");
+    }
+    // A run boundary needs only the directory, even when the payload page is
+    // not resident/readable. This catches accidental speculative full-run loads.
+    std::array<std::uint64_t, 32> source;
+    source.fill(~std::uint64_t{0});
+    auto index = everett::rank_index::build(source, 2048);
+    auto destination = memory.end() - sizeof(source);
+    memory.protect(PROT_READ | PROT_WRITE);
+    std::memcpy(destination, source.data(), sizeof(source));
+    memory.protect(PROT_NONE);
+    everett::rank_view view({reinterpret_cast<std::uint64_t const *>(destination), source.size()},
+                           index.blocks, index.supers, 2048, 2048);
+    for (unsigned bit = 0; bit <= 2048; bit += 512)
+      require(view.rank(bit) == bit, "directory-only guarded boundary");
+  }
+
   void test_rank15_guarded_tails() {
     guarded_rank15_page memory;
     for (unsigned groups = 0; groups <= 256; ++groups)
@@ -405,6 +541,11 @@ namespace {
 int main() {
   try {
     test_popcount512();
+    test_prefix512();
+    test_group_prefixes<3>();
+    test_group_prefixes<7>();
+    test_group_prefixes<31>();
+    test_group_prefixes<63>();
     test_rank_directory();
     test_rank();
     test_rank_tails();
@@ -412,6 +553,10 @@ int main() {
     test_rank15_lanes();
 #if defined(__unix__) || defined(__APPLE__)
     test_rank15_guarded_tails();
+    test_groups_guarded_tails<3>();
+    test_groups_guarded_tails<7>();
+    test_groups_guarded_tails<31>();
+    test_bitmap_guarded_tails();
 #endif
     test_rank15();
     test_select15();

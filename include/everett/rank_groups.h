@@ -11,6 +11,7 @@
 
 #include <everett/rank15.h>
 
+#include <array>
 #include <bit>
 #include <cstdint>
 #include <limits>
@@ -19,10 +20,94 @@
 #include <vector>
 
 namespace everett {
+  namespace rank_groups_detail {
+    template <unsigned Bits, unsigned Word, unsigned Plane>
+    constexpr std::uint64_t plane_mask() noexcept {
+      std::uint64_t mask = 0;
+      for (unsigned bit = 0; bit < 64; ++bit)
+        if ((Word * 64 + bit) % Bits == Plane) mask |= std::uint64_t{1} << bit;
+      return mask;
+    }
+
+    // The caller supplies at most 128 classes and exactly the words containing
+    // them. Weighted bit populations preserve fields split across word cuts.
+    template <unsigned Bits> inline unsigned prefix_portable(
+        std::uint64_t const * words, unsigned count) noexcept {
+      static_assert(Bits == 2 || Bits == 3 || Bits == 5);
+      constexpr auto masks = [] {
+        std::array<std::array<std::uint64_t, Bits>, Bits> result{};
+        for (unsigned word = 0; word < Bits; ++word)
+          for (unsigned bit = 0; bit < 64; ++bit)
+            result[word][(word * 64 + bit) % Bits] |= std::uint64_t{1} << bit;
+        return result;
+      }();
+      unsigned result = 0;
+      std::uint64_t pairs = 0;
+      auto bits = count * Bits;
+      for (unsigned word = 0; word * 64 < bits; ++word) {
+        auto value = words[word];
+        auto remaining = bits - word * 64;
+        if (remaining < 64) value &= (std::uint64_t{1} << remaining) - 1;
+        if constexpr (Bits == 2) {
+          value = (value & 0x3333333333333333ull) + ((value >> 2) & 0x3333333333333333ull);
+          pairs += (value & 0x0f0f0f0f0f0f0f0full) + ((value >> 4) & 0x0f0f0f0f0f0f0f0full);
+        } else {
+          for (unsigned plane = 0; plane < Bits; ++plane)
+            result += unsigned(std::popcount(value & masks[word % Bits][plane])) << plane;
+        }
+      }
+      if constexpr (Bits == 2) {
+        // Four two-bit classes per byte contribute at most twelve per word;
+        // four words fit in byte lanes. Widen before summing their total.
+        pairs = (pairs & 0x00ff00ff00ff00ffull) + ((pairs >> 8) & 0x00ff00ff00ff00ffull);
+        return unsigned((pairs * 0x0001000100010001ull) >> 48);
+      }
+      return result;
+    }
+
+#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    template <unsigned Bits, unsigned Vector, unsigned Plane = 0>
+    inline uint8x16_t weighted_bits(uint8x16_t value) noexcept {
+      if constexpr (Bits == 2) {
+        auto pairs = vaddq_u8(vandq_u8(value, vdupq_n_u8(0x33)),
+                              vandq_u8(vshrq_n_u8(value, 2), vdupq_n_u8(0x33)));
+        return vaddq_u8(vandq_u8(pairs, vdupq_n_u8(15)), vshrq_n_u8(pairs, 4));
+      }
+      uint64x2_t mask{plane_mask<Bits, 2 * Vector, Plane>(),
+                     plane_mask<Bits, 2 * Vector + 1, Plane>()};
+      auto population = vshlq_n_u8(vcntq_u8(vandq_u8(value, vreinterpretq_u8_u64(mask))), Plane);
+      if constexpr (Plane + 1 == Bits) return population;
+      else return vaddq_u8(population, weighted_bits<Bits, Vector, Plane + 1>(value));
+    }
+
+    template <unsigned Bits, unsigned Vector = 0>
+    inline uint16x8_t prefix_vectors(std::uint64_t const * words, unsigned bits) noexcept {
+      uint64x2_t positions{2 * Vector, 2 * Vector + 1};
+      auto boundary = vdupq_n_u64(bits / 64);
+      auto tail = vdupq_n_u64((std::uint64_t{1} << (bits % 64)) - 1);
+      auto mask = vorrq_u64(vcltq_u64(positions, boundary),
+                            vandq_u64(vceqq_u64(positions, boundary), tail));
+      auto selected = vandq_u64(vld1q_u64(words + 2 * Vector), mask);
+      // Widen before adding vectors: five-bit classes can otherwise overflow
+      // an eight-bit lane. The complete checkpoint sums to at most 128*31.
+      auto counts = vpaddlq_u8(weighted_bits<Bits, Vector>(vreinterpretq_u8_u64(selected)));
+      if constexpr (Vector + 1 == Bits) return counts;
+      else return vaddq_u16(counts, prefix_vectors<Bits, Vector + 1>(words, bits));
+    }
+
+    // A complete checkpoint has exactly 2*Bits words. Each selected bit
+    // contributes its class-place weight, even when a class straddles words.
+    template <unsigned Bits> inline unsigned prefix_neon(
+        std::uint64_t const * words, unsigned count) noexcept {
+      return vaddvq_u16(prefix_vectors<Bits>(words, count * Bits));
+    }
+#endif
+  }
+
   // Population classes for virtual groups of K=2^n-1 entries. A class occupies
   // exactly n bits, including across word boundaries. One 64-bit checkpoint
-  // every 128 classes bounds general rank queries to 127 class reads (two words
-  // each at most). K=15 shares rank15's packed-word/SIMD prefix reduction.
+  // every 128 classes bounds general rank queries to 127 class reads. K=3,7,31
+  // reduce packed words; K=15 shares rank15's packed-word/SIMD reduction.
   // No origin bitmap, arbitrary within-group rank, or select is kept.
   // Views check section shapes; a reader must validate borrowed metadata.
   template <std::uint64_t K> struct rank_groups_view {
@@ -58,6 +143,19 @@ namespace everett {
       if (group > group_count()) throw std::out_of_range("rank groups boundary");
       if (group == group_count()) return total_;
       auto result = checkpoints_[group / 128];
+      if constexpr (K == 3 || K == 7 || K == 31) {
+        auto count = unsigned(group % 128);
+        if (!count) return result;
+        auto word = (group / 128) * (2 * class_bits);
+#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+        // Two-bit broadword sums have lower dependent query latency. Wider
+        // classes favor NEON for the rank-plus-class projection operation.
+        if constexpr (K != 3)
+          if (classes_.size() - word >= 2 * class_bits)
+            return result + rank_groups_detail::prefix_neon<class_bits>(classes_.data() + word, count);
+#endif
+        return result + rank_groups_detail::prefix_portable<class_bits>(classes_.data() + word, count);
+      }
       for (auto i = (group / 128) * 128; i < group; ++i) result += read_class(i);
       return result;
     }
