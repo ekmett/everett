@@ -2,7 +2,7 @@
 
 I keep the encoder change that obtains ordering and retained-prefix length from
 one comparison. I leave `sample_cursor` unchanged: the carried-prefix variants
-help long keys, but their short-key costs are too large for the measured default.
+help long shared prefixes, but their short-key costs are too large for the measured default.
 The measurements below distinguish the accepted encoder-only change from those
 rejected cursor variants.
 
