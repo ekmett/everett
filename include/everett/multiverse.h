@@ -10,6 +10,7 @@
 #pragma once
 
 #include <everett/file.h>
+#include <everett/cola_local_merge.h>
 #include <everett/file_index_pipeline.h>
 #include <everett/mapped_blob.h>
 #include <everett/mapped_cola.h>
@@ -89,6 +90,10 @@ namespace everett {
     using mapped_query_root = everett::mapped_query_root<P>;
     using cola_index = everett::cola_index<P>;
     using cola_index_builder = everett::cola_index_builder<P>;
+    using cola_destination_plan = everett::cola_destination_plan<P>;
+    using cola_local_merge_result = everett::cola_local_merge_result<P>;
+    template <class Compose = replace_native_value>
+    using cola_local_merge_job = everett::cola_local_merge_job<P, Compose>;
     using cola_query_root = everett::cola_query_root<P>;
     using cola_query_cursor = everett::cola_query_cursor<P>;
     using mapped_cola_index = everett::mapped_cola_index<P>;

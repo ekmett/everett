@@ -223,6 +223,7 @@ def check_actual_members(items, source):
         ("struct", "everett::file_index_pipeline", "seal_next", "file_index_pipeline.h", None, "no"),
         ("struct", "everett::rank_groups_builder", "append", "rank_groups.h", None, "no"),
         ("struct", "everett::cola_index_builder", "step", "cola_index.h", None, "no"),
+        ("struct", "everett::cola_local_merge_job", "finish_stage", "cola_local_merge.h", None, "no"),
         ("struct", "everett::cola_query_cursor", "step", "cola_query.h", None, "no"),
         ("struct", "everett::mapped_cola_index", "scan", "cola_sections.h", None, "no"),
         ("struct", "everett::mapped_cola_blob", "bind", "mapped_cola.h", None, "yes"),
