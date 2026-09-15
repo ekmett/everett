@@ -214,8 +214,8 @@ namespace everett {
   // semantic consistency of borrowed metadata: use a builder or validated
   // reader. These native-endian spans are not a portable file-format parser.
   template <std::uint64_t K> struct select_groups_view {
-    static_assert(K >= 3 && K < std::numeric_limits<std::uint64_t>::max() && std::has_single_bit(K + 1),
-                  "group size must be 2^n-1 and at least three");
+    static_assert(K >= 1 && K < std::numeric_limits<std::uint64_t>::max(),
+                  "physical block size must be positive and below UINT64_MAX");
     static constexpr std::uint64_t group_size = K;
 
     select_groups_view(std::span<std::uint64_t const> low,
@@ -307,8 +307,8 @@ namespace everett {
   };
 
   template <std::uint64_t K> struct select_groups {
-    static_assert(K >= 3 && K < std::numeric_limits<std::uint64_t>::max() && std::has_single_bit(K + 1),
-                  "group size must be 2^n-1 and at least three");
+    static_assert(K >= 1 && K < std::numeric_limits<std::uint64_t>::max(),
+                  "physical block size must be positive and below UINT64_MAX");
     static constexpr std::uint64_t group_size = K;
 
     static select_groups build(std::span<std::uint64_t const> residuals,

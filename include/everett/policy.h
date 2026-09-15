@@ -58,18 +58,21 @@ namespace everett {
   // N in fixed_values<N> is measured in this policy's units; zero is valid.
   // Associated worlds, sorts and streams retain this same policy type.
   template <profile_unit Unit, class Values = variable_values, std::uint64_t GroupSize = 15,
-            class BackspaceCode = exponential_golomb<0>>
+            class BackspaceCode = exponential_golomb<0>, std::uint64_t CodecBlockSize = GroupSize>
   struct storage_policy {
     static_assert(Unit == profile_unit::byte || Unit == profile_unit::bit);
     static_assert(GroupSize >= 3 && GroupSize != std::numeric_limits<std::uint64_t>::max() &&
                   std::has_single_bit(GroupSize + 1), "group size must be 2^n - 1 and at least three");
     static_assert(Unit == profile_unit::bit || std::is_same_v<BackspaceCode, exponential_golomb<0>>,
                   "byte profiles use varints and require the default backspace policy");
+    static_assert(CodecBlockSize && CodecBlockSize <= std::numeric_limits<std::uint32_t>::max(),
+                  "codec block size must fit a positive 32-bit count");
     using value_layout = Values;
     using backspace_encoding = BackspaceCode;
     static constexpr bit_backspace_code backspace_code = policy_detail::backspace_traits<BackspaceCode>::code;
     static constexpr std::uint64_t backspace_parameter = policy_detail::backspace_traits<BackspaceCode>::parameter;
     static constexpr std::uint64_t group_size = GroupSize;
+    static constexpr std::uint64_t codec_block_size = CodecBlockSize;
     static constexpr unsigned class_bits = static_cast<unsigned>(std::bit_width(GroupSize));
     static constexpr profile_unit unit = Unit;
     static constexpr unsigned bits_per_unit = Unit == profile_unit::byte ? 8 : 1;

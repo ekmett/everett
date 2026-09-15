@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <span>
 #include <stdexcept>
@@ -267,6 +268,8 @@ namespace everett {
     std::uint64_t policy_value_width = 0;
     std::optional<std::uint64_t> common_value_width = 0;
     std::uint64_t group_size = 15;
+    std::uint64_t codec_block_size = 15;
+    std::uint64_t terminal_key_units = 0;
     std::uint64_t record_count = 0;
     std::uint64_t extent = 0;
   };
@@ -299,6 +302,83 @@ namespace everett {
     bit_string value;
     profile_anchor<P> anchor() const & { return {prefix.view(), full_units}; }
     profile_anchor<P> anchor() const && = delete;
+  };
+
+  // A comparison is inseparable from its owned query. Agreement counts bits;
+  // record lengths/backspaces still count P units. No prefix bytes are implied.
+  template <class P> struct profile_query_context {
+    explicit profile_query_context(bit_view query) {
+      if (query.size() % P::bits_per_unit) throw std::invalid_argument("query unit mismatch");
+      query_ = std::make_shared<bit_string const>(bit_string::copy(query));
+      order_ = query.size() ? -1 : 0;
+    }
+    bit_view query() const {
+      if (!query_) throw std::logic_error("comparison context has no query");
+      return query_->view();
+    }
+    std::uint64_t common_bits() const noexcept { return common_bits_; }
+    std::uint64_t full_units() const noexcept { return full_units_; }
+    int order() const noexcept { return order_; }
+
+    profile_query_context with_key(bit_view key) const {
+      if (key.size() % P::bits_per_unit) throw std::invalid_argument("boundary key unit mismatch");
+      auto result = *this;
+      auto comparison = compare_common_bits(key, query());
+      result.common_bits_ = comparison.common_bits;
+      result.full_units_ = key.size() / P::bits_per_unit;
+      result.order_ = comparison.order;
+      return result;
+    }
+
+  private:
+    template <class, stream_role> friend struct profile_view;
+    template <class> friend struct profile_blob;
+    std::shared_ptr<bit_string const> query_;
+    std::uint64_t common_bits_ = 0;
+    std::uint64_t full_units_ = 0;
+    int order_ = 0;
+
+    std::uint64_t advance(profile_encoded_record const & record) {
+      if (record.retained > full_units_) throw std::invalid_argument("comparison anchor is too short");
+      auto retained_bits = profile_detail::multiply(record.retained, P::bits_per_unit);
+      std::uint64_t compared = 0;
+      if (common_bits_ >= retained_bits) {
+        auto suffix_query = query().subview(retained_bits, query().size() - retained_bits);
+        auto comparison = compare_common_bits(record.suffix, suffix_query);
+        common_bits_ = profile_detail::add(retained_bits, comparison.common_bits);
+        order_ = comparison.order;
+        compared = comparison.common_bits +
+          (comparison.common_bits < std::min(record.suffix.size(), suffix_query.size()));
+      }
+      full_units_ = record.key_units;
+      return compared;
+    }
+
+    profile_query_context predecessor(std::uint64_t lcp_bits, std::uint64_t key_units) const {
+      auto key_bits = profile_detail::multiply(key_units, P::bits_per_unit);
+      if (order_ > 0 || lcp_bits > key_bits ||
+          lcp_bits > profile_detail::multiply(full_units_, P::bits_per_unit))
+        throw std::invalid_argument("invalid cut predecessor comparison");
+      auto result = *this;
+      result.common_bits_ = std::min(lcp_bits, common_bits_);
+      result.full_units_ = key_units;
+      if (result.common_bits_ == query().size() && key_bits > query().size())
+        throw std::invalid_argument("cut predecessor exceeds query");
+      result.order_ = key_bits == query().size() && result.common_bits_ == key_bits ? 0 : -1;
+      return result;
+    }
+  };
+
+  struct profile_comparison_work {
+    std::uint64_t skipped_headers = 0;
+    std::uint64_t visited_headers = 0;
+    std::uint64_t compared_bits = 0;
+  };
+
+  template <class P> struct profile_comparison_item {
+    std::uint64_t ordinal = 0;
+    profile_query_context<P> const & comparison;
+    bit_view value;
   };
 
   namespace profile_detail {
@@ -499,6 +579,7 @@ namespace everett {
       result.backspace_parameter = P::backspace_parameter;
       result.role = Role;
       result.group_size = P::group_size;
+      result.codec_block_size = P::codec_block_size;
       result.policy_fixed_values = P::fixed_width;
       result.policy_value_width = P::value_width.value_or(0);
       result.common_value_width = Role == stream_role::borrowed ? 0 : P::value_width.value_or(0);
@@ -516,14 +597,15 @@ namespace everett {
     using policy_type = P;
     static constexpr stream_role role = Role;
 
-    profile_view(std::span<std::byte const> bytes, select_groups_view<P::group_size> offsets, profile_metadata metadata)
+    profile_view(std::span<std::byte const> bytes, select_groups_view<P::codec_block_size> offsets, profile_metadata metadata)
       : bytes_(bytes), offsets_(offsets), metadata_(metadata) {
       auto expected = profile_detail::initial_metadata<P, Role>();
       if (metadata.version != 1 || metadata.key_unit != P::unit || metadata.value_unit != P::unit ||
           metadata.count_unit != P::unit || metadata.offset_unit != P::unit ||
           metadata.backspace_code != P::backspace_code || metadata.backspace_parameter != P::backspace_parameter ||
           metadata.count_code != expected.count_code || metadata.bit_order != profile_bit_order::msb_first ||
-          metadata.role != Role || metadata.group_size != P::group_size || metadata.policy_fixed_values != P::fixed_width ||
+          metadata.role != Role || metadata.group_size != P::group_size ||
+          metadata.codec_block_size != P::codec_block_size || metadata.policy_fixed_values != P::fixed_width ||
           metadata.policy_value_width != P::value_width.value_or(0))
         throw std::invalid_argument("profile metadata does not match reader policy");
       if constexpr (Role == stream_role::borrowed) {
@@ -533,13 +615,14 @@ namespace everett {
         if (metadata.common_value_width != P::value_width)
           throw std::invalid_argument("fixed value width metadata mismatch");
       }
-      if (!metadata.record_count && metadata.extent) throw std::invalid_argument("nonempty data for empty profile");
+      if (!metadata.record_count && (metadata.extent || metadata.terminal_key_units))
+        throw std::invalid_argument("nonempty data for empty profile");
       auto bits = profile_detail::multiply(metadata.extent, P::bits_per_unit);
       if (bytes.size() != profile_detail::byte_count(bits) || offsets.size() != metadata.record_count)
         throw std::invalid_argument("profile section length mismatch");
       if (bits % 8 && (std::to_integer<unsigned>(bytes.back()) & ((1u << (8 - bits % 8)) - 1)))
         throw std::invalid_argument("nonzero profile padding");
-      auto groups = metadata.record_count / P::group_size + (metadata.record_count % P::group_size != 0);
+      auto groups = metadata.record_count / P::codec_block_size + (metadata.record_count % P::codec_block_size != 0);
       if (offsets.offset(0, metadata.common_value_width.value_or(0)) != 0 ||
           offsets.offset(groups, metadata.common_value_width.value_or(0)) != metadata.extent)
         throw std::invalid_argument("profile offset units or extent mismatch");
@@ -549,23 +632,48 @@ namespace everett {
     std::uint64_t size() const noexcept { return metadata_.record_count; }
     std::span<std::byte const> bytes() const noexcept { return bytes_; }
     profile_metadata const & metadata() const noexcept { return metadata_; }
-    select_groups_view<P::group_size> group_offsets() const noexcept { return offsets_; }
+    select_groups_view<P::codec_block_size> group_offsets() const noexcept { return offsets_; }
     profile_cursor<P, Role> cursor() const;
 
     // One predecessor-length checkpoint is stored at each group start. This
     // permits true backspace counts without a full-key-length field per record.
     profile_encoded_record encoded_at(std::uint64_t ordinal) const {
       if (ordinal >= size()) throw std::out_of_range("profile record ordinal");
-      auto group = ordinal / P::group_size;
-      auto at = offsets_.offset(group, metadata_.common_value_width.value_or(0));
-      auto previous = profile_detail::read_count<P>(data_, at);
-      if (!group && previous) throw std::invalid_argument("first profile predecessor is not empty");
-      for (auto i = group * P::group_size; i < ordinal; ++i) {
-        auto record = parse(at, previous);
-        previous = record.key_units;
-        at = record.next_offset;
-      }
+      auto [at, previous] = locate(ordinal, nullptr);
       return parse(at, previous);
+    }
+
+    // A block checkpoint is the actual physical predecessor length. At EOF
+    // the terminal metadata supplies it, including an exactly full final block.
+    std::uint64_t predecessor_units(std::uint64_t ordinal,
+                                    profile_comparison_work * work = nullptr) const {
+      if (ordinal > size()) throw std::out_of_range("profile predecessor ordinal");
+      if (!ordinal) return 0;
+      if (ordinal == size()) return metadata_.terminal_key_units;
+      return locate(ordinal, work).second;
+    }
+
+    // Only headers preceding the selected lane are parsed. The first candidate
+    // must share its retained prefix with the supplied query-bound context.
+    // Callback comparison references expire on the next call or return.
+    template <class F> void compare_window(std::uint64_t first, std::uint64_t last,
+      profile_query_context<P> context, F && callback, profile_comparison_work * work = nullptr,
+      std::uint64_t * predecessor = nullptr) const {
+      if (first > last || last > size() || last - first > P::group_size)
+        throw std::out_of_range("profile comparison window exceeds cascade group");
+      if (first == last) {
+        if (predecessor) *predecessor = predecessor_units(first, work);
+        return;
+      }
+      auto [at, previous] = locate(first, work);
+      if (predecessor) *predecessor = previous;
+      auto record = parse(at, previous);
+      for (auto i = first; i != last; ++i) {
+        auto compared = context.advance(record);
+        if (work) { ++work->visited_headers; work->compared_bits += compared; }
+        if (!callback(profile_comparison_item<P>{i, context, record.value})) return;
+        if (i + 1 != last) record = next_record(record, i + 1);
+      }
     }
 
     // The supplied anchor must share the first record's retained prefix. An
@@ -604,6 +712,8 @@ namespace everett {
         if (i + 1 != size()) record = next_record(record, i + 1);
       }
       if (record.next_offset != metadata_.extent) throw std::invalid_argument("trailing profile data");
+      if (record.key_units != metadata_.terminal_key_units)
+        throw std::invalid_argument("profile terminal length mismatch");
     }
 
     // Ordinary FC can traverse the entire prefix chain. LPFC bounds backward
@@ -637,9 +747,24 @@ namespace everett {
   private:
     friend struct profile_cursor<P, Role>;
     std::span<std::byte const> bytes_;
-    select_groups_view<P::group_size> offsets_;
+    select_groups_view<P::codec_block_size> offsets_;
     profile_metadata metadata_;
     bit_view data_;
+
+    std::pair<std::uint64_t, std::uint64_t> locate(std::uint64_t ordinal,
+                                                 profile_comparison_work * work) const {
+      auto group = ordinal / P::codec_block_size;
+      auto at = offsets_.offset(group, metadata_.common_value_width.value_or(0));
+      auto previous = profile_detail::read_count<P>(data_, at);
+      if (!group && previous) throw std::invalid_argument("first profile predecessor is not empty");
+      for (auto i = group * P::codec_block_size; i < ordinal; ++i) {
+        auto record = parse(at, previous);
+        previous = record.key_units;
+        at = record.next_offset;
+        if (work) ++work->skipped_headers;
+      }
+      return {at, previous};
+    }
 
     profile_encoded_record parse(std::uint64_t at, std::uint64_t previous) const {
       auto backspace = profile_detail::read_backspace<P>(data_, at);
@@ -660,8 +785,8 @@ namespace everett {
 
     profile_encoded_record next_record(profile_encoded_record const & previous, std::uint64_t ordinal) const {
       auto at = previous.next_offset;
-      if (ordinal % P::group_size == 0) {
-        if (offsets_.offset(ordinal / P::group_size, metadata_.common_value_width.value_or(0)) != at)
+      if (ordinal % P::codec_block_size == 0) {
+        if (offsets_.offset(ordinal / P::codec_block_size, metadata_.common_value_width.value_or(0)) != at)
           throw std::invalid_argument("profile group offset mismatch");
         if (profile_detail::read_count<P>(data_, at) != previous.key_units)
           throw std::invalid_argument("profile group predecessor mismatch");
@@ -710,6 +835,8 @@ namespace everett {
       if (ordinal_ + 1 == view_.size()) {
         if (record_.next_offset != view_.metadata_.extent)
           throw std::invalid_argument("trailing profile data");
+        if (record_.key_units != view_.metadata_.terminal_key_units)
+          throw std::invalid_argument("profile terminal length mismatch");
         ++ordinal_;
         return;
       }
@@ -772,7 +899,7 @@ namespace everett {
         auto comparison = compare_common_bits(previous, key);
         if (i && comparison.order > 0) throw std::invalid_argument("profile keys must be sorted");
         auto position = data.bit_size / P::bits_per_unit;
-        if (i % P::group_size == 0) {
+        if (i % P::codec_block_size == 0) {
           offsets.push_back(position - profile_detail::multiply(i, common.value_or(0)));
           profile_detail::write_count<P>(data, previous_units);
         }
@@ -792,9 +919,10 @@ namespace everett {
         previous = key;
         previous_units = key_units;
       }
+      result.metadata_.terminal_key_units = previous_units;
       result.metadata_.extent = data.bit_size / P::bits_per_unit;
       offsets.push_back(result.metadata_.extent - profile_detail::multiply(records.size(), common.value_or(0)));
-      result.offsets_ = select_groups<P::group_size>::build(offsets, records.size());
+      result.offsets_ = select_groups<P::codec_block_size>::build(offsets, records.size());
       result.bytes_ = std::move(data.bytes);
       return result;
     }
@@ -802,14 +930,14 @@ namespace everett {
     std::uint64_t size() const noexcept { return metadata_.record_count; }
     std::span<std::byte const> bytes() const noexcept { return bytes_; }
     profile_metadata const & metadata() const noexcept { return metadata_; }
-    select_groups<P::group_size> const & group_offsets() const noexcept { return offsets_; }
+    select_groups<P::codec_block_size> const & group_offsets() const noexcept { return offsets_; }
     profile_view<P, Role> view() const & { return {bytes_, offsets_.view(), metadata_}; }
     profile_view<P, Role> view() const && = delete;
 
   private:
     friend struct profile_borrowed_writer<P>;
     std::vector<std::byte> bytes_;
-    select_groups<P::group_size> offsets_;
+    select_groups<P::codec_block_size> offsets_;
     profile_metadata metadata_ = profile_detail::initial_metadata<P, Role>();
   };
 
@@ -841,7 +969,7 @@ namespace everett {
       // key view points into other mutable decoding scratch.
       auto next_previous = bit_string::copy(key);
       try {
-        if (count_ % P::group_size == 0) {
+        if (count_ % P::codec_block_size == 0) {
           offsets_.push_back(data_.bit_size / P::bits_per_unit);
           profile_detail::write_count<P>(data_, previous_units);
         }
@@ -866,13 +994,14 @@ namespace everett {
       auto extent = data_.bit_size / P::bits_per_unit;
       offsets_.push_back(extent);
       try {
-        result.offsets_ = select_groups<P::group_size>::build(offsets_, count_);
+        result.offsets_ = select_groups<P::codec_block_size>::build(offsets_, count_);
       } catch (...) {
         offsets_.pop_back();
         throw;
       }
       result.metadata_.record_count = count_;
       result.metadata_.extent = extent;
+      result.metadata_.terminal_key_units = previous_.bit_size / P::bits_per_unit;
       result.bytes_ = std::move(data_.bytes);
       data_.bit_size = 0;
       previous_ = {};

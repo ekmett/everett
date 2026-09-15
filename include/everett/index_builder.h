@@ -22,7 +22,7 @@
 #include <vector>
 
 namespace everett {
-  // Incremental shared-cut index construction over an unchanged native array.
+  // Incremental ordinary-FC index construction over an unchanged native array.
   // One incoming and one outgoing sample provide explicit backpressure. The
   // source wrapper may expire: native_ retains its actual encoded allocation.
   // step() budgets merged occurrences, not key bytes, allocations or final EF
@@ -107,14 +107,12 @@ namespace everett {
           if (boundary) {
             outgoing_.emplace(outgoing_encoder_.encode(key, virtual_count_));
             classes_.push_back(0);
-            if (pending_) pending_ceiling_ = std::min(pending_ceiling_,
-              common_prefix_units<P>(pending_->view(), key));
+            cut_lcps_.push_back(pending_ ? compare_common_bits(pending_->view(), key).common_bits : 0);
           }
           if (take_borrowed) {
             flush_pending();
             pending_ = std::move(incoming_);
             incoming_.reset();
-            pending_ceiling_ = std::numeric_limits<std::uint64_t>::max();
             pending_false_ = incoming_false_;
             incoming_false_ = false;
             auto ordinal = borrowed_count_++;
@@ -173,7 +171,7 @@ namespace everett {
         result.interleave_ = rank_groups<group_size>::build(classes_, virtual_count_);
         result.false_borrows_ = std::move(false_borrows_);
         result.virtual_count_ = virtual_count_;
-        result.borrowed_policy_ = profile_borrowed_policy::shared_boundaries;
+        result.cut_lcps_ = std::move(cut_lcps_);
         result.target_ = std::move(target);
         finished_ = true;
         return result;
@@ -196,7 +194,7 @@ namespace everett {
     profile_sample_decoder<P> incoming_decoder_;
     std::vector<std::uint64_t> classes_;
     std::vector<std::byte> false_borrows_;
-    std::uint64_t pending_ceiling_ = std::numeric_limits<std::uint64_t>::max();
+    std::vector<std::uint64_t> cut_lcps_;
     std::uint64_t virtual_count_ = 0;
     std::uint64_t borrowed_count_ = 0;
     std::uint64_t received_ = 0;
@@ -231,7 +229,7 @@ namespace everett {
     }
     void flush_pending() {
       if (pending_) {
-        writer_.append(pending_->view(), pending_ceiling_);
+        writer_.append(pending_->view());
         pending_.reset();
       }
     }

@@ -26,12 +26,6 @@
 namespace everett {
   template <class P> struct index_builder;
 
-  enum class profile_borrowed_policy {
-    ordinary,
-    bidirectional,
-    shared_boundaries
-  };
-
   struct profile_blob_window {
     std::uint64_t native_first = 0;
     std::uint64_t native_last = 0;
@@ -51,13 +45,8 @@ namespace everett {
     using policy_type = P;
     std::uint64_t ordinal = 0;
     std::uint64_t target_ordinal = 0;
-    bool has_context = false;
-    bit_string prefix;
-    std::uint64_t full_units = 0;
     bool false_borrow = false;
-
-    profile_anchor<P> anchor() const & { return {prefix.view(), full_units}; }
-    profile_anchor<P> anchor() const && = delete;
+    profile_query_context<P> comparison;
   };
 
   template <class P>
@@ -79,10 +68,7 @@ namespace everett {
 
     static profile_blob build(
         std::span<profile_record const> native,
-        std::span<bit_string const> borrowed = {},
-        std::uint64_t native_restart_factor = 18,
-        std::span<std::uint64_t const> borrowed_prefix_ceilings = {},
-        profile_borrowed_policy policy = profile_borrowed_policy::shared_boundaries) {
+        std::span<bit_string const> borrowed = {}) {
       check_count(native.size(), borrowed.size());
       for (std::size_t i = 1; i < native.size(); ++i) {
         if (compare_bits(native[i - 1].key.view(), native[i].key.view()) >= 0) {
@@ -91,18 +77,14 @@ namespace everett {
       }
       profile_blob result;
       result.native_ = std::make_shared<native_array const>(
-        native_array::build(native, {}, native_restart_factor));
-      build_index(result, native, borrowed, borrowed_prefix_ceilings, policy);
+        native_array::build(native));
+      build_index(result, native, borrowed);
       return result;
     }
 
-    // This builder uses decoded native keys as scratch, but retains the exact
-    // native allocation and its offset index. It never changes native LPFC to
-    // match a replacement fractional index's new shared boundaries.
-    profile_blob reindex(
-        std::span<bit_string const> borrowed,
-        std::span<std::uint64_t const> borrowed_prefix_ceilings = {},
-        profile_borrowed_policy policy = profile_borrowed_policy::shared_boundaries) const {
+    // Reindexing retains the exact ordinary-FC native allocation and its
+    // independent physical directory. Only index-local navigation is rebuilt.
+    profile_blob reindex(std::span<bit_string const> borrowed) const {
       check_count(native_->size(), borrowed.size());
       std::vector<profile_record> native_records;
       native_records.reserve(static_cast<std::size_t>(native_->size()));
@@ -112,7 +94,7 @@ namespace everett {
       });
       profile_blob result;
       result.native_ = native_;
-      build_index(result, native_records, borrowed, borrowed_prefix_ceilings, policy);
+      build_index(result, native_records, borrowed);
       return result;
     }
 
@@ -121,7 +103,7 @@ namespace everett {
     rank_groups<group_size> const & interleave() const noexcept { return interleave_; }
     std::span<std::byte const> false_borrow_bits() const noexcept { return false_borrows_; }
     std::uint64_t virtual_size() const noexcept { return virtual_count_; }
-    profile_borrowed_policy borrowed_policy() const noexcept { return borrowed_policy_; }
+    std::span<std::uint64_t const> cut_lcps() const noexcept { return cut_lcps_; }
     // Incremental construction binds the exact downstream pair. Legacy batch
     // build/reindex accept unbound sample spans and leave this empty.
     std::shared_ptr<profile_blob const> target() const noexcept { return target_; }
@@ -145,58 +127,46 @@ namespace everett {
       return {first - a, last - b, a, b};
     }
 
-    // The caller selects the group containing the last virtual key <= query,
-    // with group zero used when query precedes the entire catalog. lower is
-    // the group's known boundary key (empty context is sufficient at zero).
-    // The result owns its value and outgoing prefix; it survives later calls.
-    // Native equality does not suppress routing or resolve older value arrows.
+    // lower compares the exact sampled boundary to its owned query. At group
+    // zero an empty-key context suffices. The query must not precede lower.
     profile_blob_window_result<P> search_window(
-        bit_view query, std::uint64_t group, profile_anchor<P> lower) const {
-      if (query.size() % P::bits_per_unit) {
-        throw std::invalid_argument("query length is not aligned to the profile unit");
-      }
-      auto query_units = query.size() / P::bits_per_unit;
+        std::uint64_t group, profile_query_context<P> const & lower,
+        profile_comparison_work * native_work = nullptr,
+        profile_comparison_work * borrowed_work = nullptr) const {
+      if (lower.order() > 0) throw std::invalid_argument("query precedes its routed boundary");
       auto window = project(group);
       profile_blob_window_result<P> result;
-      native_->view().visit_window(window.native_first, window.native_last, lower, query_units,
-        [&](profile_item<P> item) {
-          auto order = compare_profile_prefix(item.key, query);
-          if (!order) {
-            result.native = profile_blob_native_match<P>{item.ordinal, bit_string::copy(item.value)};
-          }
+      native_->view().compare_window(window.native_first, window.native_last, lower,
+        [&](profile_comparison_item<P> item) {
+          auto order = item.comparison.order();
+          if (!order) result.native = profile_blob_native_match<P>{item.ordinal, bit_string::copy(item.value)};
           return order < 0;
-        });
+        }, native_work);
 
-      auto consider_sample = [&](profile_item<P> item) {
-        auto order = compare_profile_prefix(item.key, query);
-        if (order > 0) return false;
-        auto is_false = false_borrow(item.ordinal);
+      auto remember = [&](std::uint64_t ordinal, profile_query_context<P> const & comparison) {
+        auto is_false = false_borrow(ordinal);
         result.borrowed_predecessor = profile_blob_borrowed_predecessor<P>{
-          item.ordinal, checked_target_ordinal(item.ordinal), true,
-          bit_string::copy(item.key.prefix), item.key.full_units, is_false};
-        if (!order && is_false && !result.native) {
-          if (!window.native_first) {
-            throw std::invalid_argument("false borrow has no native predecessor");
-          }
-          // The native-before-borrowed tie order makes this the unique matching
-          // native slot, even when many equal borrowed samples span group cuts.
-          auto ordinal = window.native_first - 1;
+          ordinal, checked_target_ordinal(ordinal), is_false, comparison};
+        if (!comparison.order() && is_false && !result.native) {
+          if (!window.native_first) throw std::invalid_argument("false borrow has no native predecessor");
+          auto native_ordinal = window.native_first - 1;
           result.native = profile_blob_native_match<P>{
-            ordinal, bit_string::copy(native_->view().encoded_at(ordinal).value)};
+            native_ordinal, bit_string::copy(native_->view().encoded_at(native_ordinal).value)};
         }
-        return true;
       };
-      if (window.borrowed_first) {
-        auto ordinal = window.borrowed_first - 1;
-        if (borrowed_policy_ != profile_borrowed_policy::ordinary) {
-          borrowed_.view().visit_window(ordinal, ordinal + 1, lower, query_units, consider_sample);
-        } else {
-          result.borrowed_predecessor = profile_blob_borrowed_predecessor<P>{
-            ordinal, checked_target_ordinal(ordinal), false, {}, 0, false_borrow(ordinal)};
-        }
+      std::uint64_t previous_units = 0;
+      borrowed_.view().compare_window(window.borrowed_first, window.borrowed_last, lower,
+        [&](profile_comparison_item<P> item) {
+          if (item.comparison.order() > 0) return false;
+          remember(item.ordinal, item.comparison);
+          return true;
+        }, borrowed_work, &previous_units);
+      if (!result.borrowed_predecessor && window.borrowed_first) {
+        // The cut LCP repairs comparison only. Its physical predecessor length
+        // comes from header replay or the terminal checkpoint, never key bytes.
+        auto comparison = lower.predecessor(cut_lcps_.at(static_cast<std::size_t>(group)), previous_units);
+        remember(window.borrowed_first - 1, comparison);
       }
-      borrowed_.view().visit_window(window.borrowed_first, window.borrowed_last, lower,
-                                   query_units, consider_sample);
       return result;
     }
 
@@ -209,7 +179,7 @@ namespace everett {
     rank_groups<group_size> interleave_ = rank_groups<group_size>::build({}, 0);
     std::vector<std::byte> false_borrows_;
     std::uint64_t virtual_count_ = 0;
-    profile_borrowed_policy borrowed_policy_ = profile_borrowed_policy::shared_boundaries;
+    std::vector<std::uint64_t> cut_lcps_;
     std::shared_ptr<profile_blob const> target_;
 
     static void check_count(std::uint64_t native, std::uint64_t borrowed) {
@@ -226,37 +196,7 @@ namespace everett {
     }
 
     static void build_index(profile_blob & result, std::span<profile_record const> native,
-                            std::span<bit_string const> borrowed,
-                            std::span<std::uint64_t const> borrowed_prefix_ceilings,
-                            profile_borrowed_policy policy) {
-      if (!borrowed_prefix_ceilings.empty() && borrowed_prefix_ceilings.size() != borrowed.size()) {
-        throw std::invalid_argument("one borrowed prefix ceiling is required per record");
-      }
-      if (policy != profile_borrowed_policy::ordinary &&
-          policy != profile_borrowed_policy::bidirectional &&
-          policy != profile_borrowed_policy::shared_boundaries) {
-        throw std::invalid_argument("invalid profile borrowed prefix policy");
-      }
-      std::vector<std::uint64_t> ceilings;
-      if (policy == profile_borrowed_policy::shared_boundaries) {
-        ceilings.assign(borrowed.size(), std::numeric_limits<std::uint64_t>::max());
-        if (!borrowed_prefix_ceilings.empty()) {
-          std::copy(borrowed_prefix_ceilings.begin(), borrowed_prefix_ceilings.end(), ceilings.begin());
-        }
-        borrowed_prefix_ceilings = ceilings;
-      } else if (policy == profile_borrowed_policy::bidirectional) {
-        ceilings.reserve(borrowed.size());
-        for (std::size_t i = 0; i != borrowed.size(); ++i) {
-          auto ceiling = i + 1 == borrowed.size() ? 0 :
-            common_prefix_units<P>(borrowed[i].view(), borrowed[i + 1].view());
-          if (!borrowed_prefix_ceilings.empty()) {
-            ceiling = std::min<std::uint64_t>(ceiling, borrowed_prefix_ceilings[i]);
-          }
-          ceilings.push_back(ceiling);
-        }
-        borrowed_prefix_ceilings = ceilings;
-      }
-      result.borrowed_policy_ = policy;
+                            std::span<bit_string const> borrowed) {
       std::vector<profile_record> borrowed_records;
       borrowed_records.reserve(borrowed.size());
       result.false_borrows_.resize(borrowed.size() / 8 + (borrowed.size() % 8 != 0));
@@ -283,10 +223,9 @@ namespace everett {
         // Native precedes every borrowed occurrence of an equal key.
         auto take_borrowed = s != borrowed.size() &&
           (a == native.size() || compare_bits(borrowed[s].view(), native[a].key.view()) < 0);
-        if (policy == profile_borrowed_policy::shared_boundaries && i % group_size == 0 && s) {
+        if (i % group_size == 0) {
           auto const & boundary = take_borrowed ? borrowed[s] : native[a].key;
-          ceilings[s - 1] = std::min<std::uint64_t>(ceilings[s - 1],
-            common_prefix_units<P>(borrowed[s - 1].view(), boundary.view()));
+          result.cut_lcps_.push_back(s ? compare_common_bits(borrowed[s - 1].view(), boundary.view()).common_bits : 0);
         }
         if (take_borrowed) {
           ++classes[static_cast<std::size_t>(i / group_size)];
@@ -295,7 +234,7 @@ namespace everett {
           ++a;
         }
       }
-      result.borrowed_ = borrowed_array::build(borrowed_records, borrowed_prefix_ceilings);
+      result.borrowed_ = borrowed_array::build(borrowed_records);
       result.interleave_ = rank_groups<group_size>::build(classes, count);
       result.virtual_count_ = count;
     }
