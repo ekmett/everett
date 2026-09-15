@@ -1004,9 +1004,11 @@ namespace everett {
       auto key_units = key.size() / P::bits_per_unit;
       auto saved_bits = data_.bit_size;
       auto saved_offsets = offsets_.size();
-      // Take ownership before modifying output, including when the caller's
-      // key view points into other mutable decoding scratch.
-      auto next_previous = bit_string::copy(key);
+      // Reserve before modifying output. The private predecessor retains its
+      // logical contents until all potentially allocating output writes finish.
+      auto next_bytes = profile_detail::byte_count(key.size());
+      if (next_bytes > previous_.bytes.max_size()) throw std::length_error("profile bit string too large");
+      previous_.bytes.reserve(static_cast<std::size_t>(next_bytes));
       try {
         if (count_ % P::codec_block_size == 0) {
           offsets_.push_back(data_.bit_size / P::bits_per_unit);
@@ -1021,7 +1023,12 @@ namespace everett {
         offsets_.resize(saved_offsets);
         throw;
       }
-      previous_ = std::move(next_previous);
+      // This resize cannot allocate after reserve. Keep the actual shared
+      // prefix even when the encoding used a smaller boundary prefix ceiling.
+      auto common_bits = comparison.common_bits - comparison.common_bits % P::bits_per_unit;
+      profile_detail::resize(previous_, key.size());
+      profile_detail::copy_into(previous_, common_bits,
+        key.subview(common_bits, key.size() - common_bits));
       count_ = next_count;
     }
 
