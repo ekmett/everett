@@ -99,9 +99,9 @@ string.
 
 The sort's `encoding::unit` covers both key and value requirements. Whole-byte
 values alone do not make a sort byte-oriented when its keys require bit
-addressing. Current raw profile readers still implement the FC-string grammar,
-including suffix lengths. Registry dispatch is in place, but those readers have
-not yet been replaced by per-sort record handlers.
+addressing. The ordinary profile reader implements the FC-string grammar.
+The opt-in [sort-owned profile](sort-profiles.md) supplies a separate mapped
+reader, writer and merge path for heterogeneous key/value grammars.
 
 ## 2. Byte and bit profiles
 
@@ -634,44 +634,60 @@ The implementation ledger records which profiles and integration paths have
 passed these requirements. Registry tests cover typed dispatch, extension and
 inference. Typed-engine tests establish mixed semantic reads and writes through
 the opaque FC transport; standalone sort-codec tests establish the separate
-record grammar. Neither proves the forthcoming mixed mapped layout.
+record grammar. Sort-profile tests additionally exercise mapped mixed grammars,
+cascading queries, false borrows, protected payload pages and native merges.
+The mutable typed runtime still uses its opaque transport.
 
 
 ## Schema histories and migration
 
-As a future extension, I can give an active handle a list of schema handlers
-and forward migrations between them. A file identifies the schema that wrote
-its sort codes. The handle dispatches through that registry, then migrates its
-records toward a common current schema while merging. This lets a fully occupied
-registry evolve even when it left no reserved code space. Schema identity is
-separate from the physical file-format version and the SQLite catalog schema.
-These file-level schema identities and migration execution are not implemented.
+A global policy can dispatch an on-disk **user schema identifier** to a concrete
+sort manager, which then selects a sort from trailing prefix-free bits:
 
-The cost depends on what the migration changes:
+```cpp
+policy.with_schema(version, [&]<class Schema>(Schema const & schema) {
+  schema.select(bits, [&]<class Sort>(std::type_identity<Sort>) {
+    // Run the loop specialized for this schema and sort.
+  });
+});
+```
 
-- A value-only conversion with unchanged key order can run as a streaming merge
-  transform. It still pays to decode, transform and write the affected values.
-- Tree migration preserves the left-to-right order of occupied sorts and the
-  key order within each sort. It may rebalance the prefix-code tree: shorter
-  or longer codes change the bytes, but preserve the order of complete keys.
-  Decoding the old sort and writing its new code therefore stays streaming.
-  Front coding and fractional indexes are rebuilt over those new encodings.
-- Sorts keep stable logical identities across these trees. This migration does
-  not coalesce distinct logical keys. A value/arrow conversion must preserve
-  the relevant identities and composition, or first materialize the old state.
+These spellings illustrate the protocol. Version identifiers and their mapping
+belong to user policy: they need not be consecutive numbers, or numerically
+ordered at all. The library's physical file-format version and SQLite catalog
+schema are separate. Convenient single-schema, version-map and historical
+adapter policies can implement the same protocol.
 
-Reads must cover old schemas before merging reaches them. The query identifies
-its logical sort and key, then uses each file's tree to encode that sort's
-historical prefix. A sort introduced later is simply absent from an older
-schema. Value conversion can run on demand. This translation requires the
-stable sort correspondence, not an inverse for an arbitrary migration function.
-General order-changing key migrations are outside this extension's contract.
+Dispatch encloses the work loop. Once selected, specialized code processes the
+sort's run without redispatching every record. The selected handler persists
+until a sort transition or work yields. Inlining small internal seams can help;
+it does not replace that structural removal of dispatch. Internal helper
+attributes such as `diet_inline`, `diet_pure` or `diet_const` must not impose
+attributes on user selectors, codecs or callbacks, or force every large
+specialized loop into its callers.
 
-Old snapshots keep their original schema and exact files. Resumed merges retain
-the chosen source/destination schema identities and migration version. Hash
-comparison needs one agreed semantic interpretation. The sort supplies the
-key and value hashes; sort-code bits are not hashed. Tree rebalancing therefore
-preserves the fingerprint automatically. A migration that changes hashing or
-interpreted contents must account for the resulting fingerprint change while
-retaining the old snapshot's value. Admission work pays for migration and
-re-encoding instead of hiding them inside a nominal constant-cost record step.
+The current typed runtime persists and checks one stable semantic `schema_id`.
+The version-dispatch protocol is an extension for historical readers, explicit
+validation and resumption. Normal opening stays metadata-only. Full validation
+uses the old cola's context wherever decoding needs inherited key material.
+
+I am happy to begin migration with an **offline whole-database worker**. It
+reads a pinned old cola with its old handlers and context, transforms keys and
+values, writes fresh native files and fractional indexes, then durably publishes
+the new root. Old snapshots keep their original files and interpretation.
+Sophisticated online mixed-schema migration is not a prerequisite for this path.
+
+The conversion may change sort codes, rebalance the tree, change key compression
+or grammar, and convert values. Preserving logical key order permits streaming,
+but does not preserve old front-coding context. A newly encoded incoming key
+need not recover the prefix required by an old decoder. Historical handler
+dispatch therefore does not itself solve cross-version fractional routing.
+Arbitrary reordering or collisions require an additional policy; I do not assume
+that a forward migration is invertible.
+
+Sorts retain stable logical identities when a migration only rebalances their
+codes. Sort-code bits do not enter their hashes, so that conversion preserves
+the signature. A migration that changes semantic contents or hash functions
+must account for the new signature separately. All decoding, transformation,
+encoding and index construction remain real work. This migration executor is
+future scope, separate from the current typed storage path.

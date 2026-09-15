@@ -5,8 +5,8 @@ Updated 2026-09-15. Specification: [Diet design](design.md).
 This ledger records what works, what the tests establish, and what remains to
 be built. The C++20 foundations live in `include/diet/`, in
 namespace `diet`. Immutable files, mmap queries and saved catalog roots work;
-the encoded mutable runtime now executes real carries. The bounded redundant-level
-scheduler remains separate implementation work.
+the encoded mutable runtime now executes real carries, including a three-slot
+redundant-level scheduler with explicit service obligations.
 
 ## Ownership and acceptance
 
@@ -27,9 +27,12 @@ for integration. These are development responsibilities.
 | Mutable tap | `tap.h`; `tests/tap.cc` | serialized immutable publication, bounded accepted input, readiness backpressure, cancellation, shutdown, exact logical identity and worker failure |
 | Named typed connection | `connection.h`; `tests/sqlite_catalog_connection.cc` | mutable and asynchronous commands, mapped snapshots, exact saves/forks, restart, stale publishers and healthy input rejection |
 | Encoded runtime | `cola_runtime.h`; `tests/cola_runtime.cc` | chronological runs, real native/index/carrier work, immutable publication, budget partition, mmap restoration and failed continuation isolation |
+| Redundant runtime | `redundant_runtime.h`; redundant and typed-redundant tests | three-slot ownership, overlapping main/secondary jobs, charged admission, exact frontier checkpoints and recovery gates |
 | Runtime persistence | `runtime_store.h`; `tests/sqlite_catalog_runtime.cc` | exact graph sealing, weak owner caches, named checkpoints, saved frontiers, mapped reopening and pending carry restart |
 | Typed updates | `typed_cola.h`; `tests/typed_cola.cc` | replacement reads, chronological arrows, per-sort dispatch and hashes, validated deletes, disjoint contributions, mutable commands and snapshot metadata |
 | Sort-owned record codec | `sort_codec.h`; `tests/sort_codec.cc` | heterogeneous FC/raw/integer grammars, optional/niche/no-payload values, typed stream anchors, control parsing and borrowed-role output |
+| Sort-owned physical profiles | `sort_profile.h`, `sort_profile_file.h`, `sort_profile_merge.h`; `tests/sort_profile.cc` | KV03 native framing, shared selector seeds, mapped cascading queries, prefix-preserving merges and protected-page entry |
+| Resolved scans | `typed_scan.h`; typed and mapped scan tests | ordered rows, newest replacements, chronological arrows, tombstone elision, bounded traversal and snapshot ownership |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `fridge.h`; profile/blob/fridge tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
 | Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
 | Native construction and merging | `native_writer.h`, `native_merge.h`; native writer/merge tests | streaming record acceptance, preserved FC/EF bytes, chronological composition, input pins and failure state |
@@ -62,6 +65,16 @@ current carry; this is conservative backpressure, not the three-slot redundant
 schedule's worst-case update bound. Structural charges cover executed stages;
 codec finalization remains atomic and byte/callback costs remain separate.
 
+`redundant_runtime` executes the main/secondary/shadow schedule with actual
+native, destination-index and carrier jobs. The typed family offers logarithmic
+service after each admitted record and waits only for admission readiness.
+Tests include simultaneous unsafe levels, every-stage checkpoint/restart,
+visibility and chronological-coverage oracles, failed-publication isolation,
+and K=3/K=15 budget partitions. Full-frontier metadata includes hidden completed
+outputs; persisting that closure is being integrated separately. The
+[runtime guide](redundant-runtime.md) distinguishes these checks from a universal
+proof and from byte or latency guarantees.
+
 `runtime_store<P>` seals that exact graph, reuses known native owners during
 reindexing, and publishes its root plus small checkpoint through schema 4.
 Reopening maps the published files and validates frontier metadata without
@@ -86,7 +99,9 @@ dispatch bits never enter the signature. Tests include a noncommutative append
 sort, different sort-code layouts with matching signatures, and byte/bit map
 oracles. The current backend transports canonical ordered keys and arrow
 payloads through the ordinary FC profile. Direct heterogeneous record framing
-works independently in `sort_codec`, with mapped integration still in progress.
+works independently in `sort_codec`; `sort_profile` connects that grammar to
+mapped native files, cascading queries and prefix-preserving merges. Connecting
+that physical family to the active typed runtime is in progress.
 
 ### COLA main and secondary indexes
 
