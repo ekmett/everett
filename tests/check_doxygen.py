@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+##
+# \file
+# \license
+# SPDX-FileType: SOURCE
+# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+# SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+# \endlicense
+
 """Generate reference documentation and verify Doxygen's XML associations."""
 
 import argparse
@@ -89,27 +97,45 @@ def description(element):
                     ("briefdescription", "detaileddescription", "inbodydescription"))
 
 
-def footer_fields(path):
-    blocks = re.findall(r"/\*\*(.*?)\*/", path.read_text(encoding="utf-8"), re.S)
-    require(bool(blocks), f"Missing footer: {path}")
-    footer = blocks[-1]
-    require(re.search(r"\\file\s", footer), f"Missing file command: {path}")
-    brief = re.search(r"\\brief ([^\n]+)", footer)
-    author = re.search(r"\\author ([^\n]+)", footer)
-    require(brief is not None and author is not None, f"Incomplete footer: {path}")
-    notices = re.findall(r"SPDX-[^\n]+", footer)
-    require(len(notices) == 3, f"Incomplete SPDX notices: {path}")
+def metadata_fields(path, split=False):
+    source = path.read_text(encoding="utf-8")
+    blocks = [block for block in re.finditer(r"/\*\*(.*?)\*/", source, re.S)
+              if re.search(r"\\file\s", block.group(1))]
+    require(bool(blocks), f"Missing file metadata: {path}")
+    metadata = "\n".join(block.group(1) for block in blocks)
+    briefs = re.findall(r"\\brief ([^\n]+)", metadata)
+    authors = re.findall(r"\\author ([^\n]+)", metadata)
+    require(len(briefs) == 1 and len(authors) == 1, f"Nonunique brief or author: {path}")
+    fields = ("FileType", "FileCopyrightText", "License-Identifier")
+    notices = []
+    for field in fields:
+        matches = re.findall(r"SPDX-" + field + r":[^\n]+", source)
+        require(len(matches) == 1, f"Expected exactly one SPDX-{field}: {path}")
+        require(matches[0] in metadata, f"SPDX notice outside file metadata: {path}")
+        notices.append(matches[0])
+    if split:
+        require(len(blocks) == 2, f"Expected separate leading/trailing file blocks: {path}")
+        head, tail = blocks
+        require(not source[:head.start()].strip(), f"SPDX header must precede code: {path}")
+        require(not source[tail.end():].strip(), f"File brief/author must follow code: {path}")
+        require(all(notice in head.group(1) for notice in notices), f"SPDX notices must be in header: {path}")
+        require("\\license" in head.group(1) and "\\endlicense" in head.group(1),
+                f"Missing SPDX block delimiters: {path}")
+        require("\\brief" not in head.group(1) and "\\author" not in head.group(1),
+                f"Brief/author must remain in footer: {path}")
+        require("SPDX-" not in tail.group(1) and "\\license" not in tail.group(1)
+                and "\\endlicense" not in tail.group(1), f"License repeated in footer: {path}")
     normalize = lambda value: " ".join(value.replace("<", "").replace(">", "").split())
-    return normalize(brief.group(1)), normalize(author.group(1)), [" ".join(value.split()) for value in notices]
+    return normalize(briefs[0]), normalize(authors[0]), [" ".join(value.split()) for value in notices]
 
 
-def check_file_metadata(items, headers, aliases=True):
+def check_file_metadata(items, headers, aliases=True, split=False):
     files = {item.findtext("compoundname"): item for item in items
              if item.attrib["kind"] == "file"}
     require(set(files) == {path.name for path in headers}, "Unexpected documented file set")
     briefs = []
     for path in headers:
-        brief, author, notices = footer_fields(path)
+        brief, author, notices = metadata_fields(path, split=split)
         briefs.append(brief)
         item = files[path.name]
         require(text(item.find("briefdescription")) == brief, f"Wrong file brief: {path}")
@@ -212,11 +238,16 @@ def make_fixtures(directory, placement):
                   f"inline {parameter} standalone({parameter} value) {{ return value; }}"]
         specs.append((filename, "standalone", marker, "function"))
         footer = ["/**", r" * \file", r" * \license", " * SPDX-FileType: SOURCE",
-                  " * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>. All rights reserved.",
-                  " * SPDX-License-Identifier: LicenseRef-Everett-All-Rights-Reserved",
+                  " * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>",
+                  " * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0",
                   r" * \endlicense", r" * \author Edward Kmett <ekmett@gmail.com>",
                   f" * \\brief File {filename} marker.", " */"]
-        complete = footer + lines if placement == "before" else lines + footer
+        if placement == "split":
+            head = footer[:7] + [" */"]
+            tail = ["/**", r" * \file"] + footer[7:]
+            complete = head + lines + tail
+        else:
+            complete = footer + lines if placement == "before" else lines + footer
         (directory / filename).write_text("\n".join(complete) + "\n", encoding="utf-8")
         for owner, name, marker, kind in specs:
             line = next(i + 2 for i, value in enumerate(complete) if value.strip() == "/// \\brief " + marker)
@@ -274,26 +305,27 @@ def main():
     require(all(re.search(r"warning: Found unknown command ['`]\\(?:end)?license['`]", line) for line in lines),
             f"Unexpected baseline diagnostics: {diagnostics}")
     baseline_items = compounds(baseline)
-    check_file_metadata(baseline_items, headers, aliases=False)
+    check_file_metadata(baseline_items, headers, aliases=False, split=True)
     check_actual_members(baseline_items, source)
 
     reference = output / "reference"
     run_doxygen(args.doxygen, source, headers, reference, aliases=True, html=True)
     items = compounds(reference)
-    check_file_metadata(items, headers)
+    check_file_metadata(items, headers, split=True)
     check_actual_members(items, source)
     fixture_results = []
-    for placement in ("before", "after"):
+    for placement in ("before", "after", "split"):
         inputs = output / ("fixture-" + placement)
         expected = make_fixtures(inputs, placement)
         generated = output / ("fixture-" + placement + "-docs")
         run_doxygen(args.doxygen, source, [inputs], generated, aliases=True)
         items = compounds(generated)
-        check_file_metadata(items, sorted(inputs.glob("*.h")))
+        check_file_metadata(items, sorted(inputs.glob("*.h")), split=placement == "split")
         fixture_results.append(check_fixtures(items, expected))
-    require(fixture_results[0] == fixture_results[1], "Moving the file block changed symbol documentation")
+    require(all(result == fixture_results[0] for result in fixture_results[1:]),
+            "Moving or splitting file metadata changed symbol documentation")
     print(f"Checked {len(headers)} headers, seven real function/overload associations, "
-          "and twelve fixture symbols with file blocks before/after declarations.")
+          "and twelve fixture symbols with file metadata before/after/split around declarations.")
     print(f"Reference documentation: {reference / 'html/index.html'}")
 
 
@@ -307,10 +339,5 @@ if __name__ == "__main__":
 
 ##
 # \file
-# \license
-# SPDX-FileType: SOURCE
-# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>. All rights reserved.
-# SPDX-License-Identifier: LicenseRef-Everett-All-Rights-Reserved
-# \endlicense
 # \author Edward Kmett <ekmett@gmail.com>
 # \brief Tests Everett's Doxygen metadata and declaration associations.

@@ -1,8 +1,11 @@
 # Doxygen metadata and declaration ownership
 
-Everett keeps its file documentation blocks at the end of each public header.
-The `\file` command attaches that block to its containing file; it does not
-attach the block to the last namespace, structure or function. Doxygen's
+Everett puts each public header's SPDX notices in a Doxygen file block before
+the code, with its author and brief in a second file block at the end. Each
+SPDX field appears once. This follows the
+[REUSE recommendation to place licensing information near the top](https://reuse.software/spec-3.3/#comment-headers).
+The `\file` command attaches each block to its containing file; it does not
+attach the trailing block to the last namespace, structure or function. Doxygen's
 [structural-command documentation](https://www.doxygen.nl/manual/docblocks.html#structuralcommands)
 describes this explicit association. Everett also checks the generated XML
 instead of relying on that convention alone.
@@ -18,10 +21,12 @@ ALIASES += "endlicense=@endcode"
 ```
 
 These aliases preserve the three SPDX notice lines as a code block. The author
-and file brief remain separate metadata. They do not change any license terms.
+and file brief remain separate metadata. The notices record the repository's
+`BSD-2-Clause OR Apache-2.0` license choice.
 `ein` supplies the command definitions; its representative `src/ein/wait.hpp`
 puts the file block at the top, so Everett's fixture comparison independently
-checks the end-of-file placement. Doxygen describes alias expansion in its
+checks both end-of-file placement and the split layout. Doxygen describes alias
+expansion in its
 [custom-command manual](https://www.doxygen.nl/manual/custcmd.html).
 
 Documentation tooling is optional and requires Doxygen 1.9.8 or newer and
@@ -44,6 +49,8 @@ documentation target remains available but the CTest check is not registered.
 `tests/check_doxygen.py` runs Doxygen over the actual public headers and checks:
 
 - Each file compound has its own exact brief, author and all three SPDX notices.
+- Each SPDX field appears exactly once in the source, in the leading file block
+  before code. The final file block contains only author and brief metadata.
 - The SPDX code block ends before the author and brief, and file metadata does
   not appear in namespace, structure or member descriptions.
 - Namespace functions and class members have the expected qualified owners,
@@ -53,18 +60,21 @@ documentation target remains available but the CTest check is not registered.
   `file_detail::get` and `crc32c`. Template parameters are checked as well.
 - Two files with same-named functions, same-named classes in distinct namespaces,
   overloads and distinct documentation markers retain identical ownership and
-  descriptions when the file blocks move from before to after the declarations.
-  The source locations must change by precisely the actual movement.
+  descriptions with combined file blocks before or after the declarations, and
+  with SPDX notices before and author/brief after. The source locations must
+  change by precisely the actual movement.
 - A baseline without the aliases emits exactly the two expected unknown-command
   warnings per header. The configured run must emit no warnings.
 
 On 2026-09-15, Doxygen 1.9.8 passed these checks for all 18 public headers,
-seven real function/overload cases and twelve fixture symbols. The unconfigured
-baseline had 36 warnings, exclusively for `\license` and `\endlicense`.
+seven real function/overload cases and twelve fixture symbols in all three
+metadata layouts. The unconfigured baseline had 36 warnings, exclusively for
+`\license` and `\endlicense`.
 
 This verifies file metadata and the tested lexical associations. It does not
 claim complete prose documentation for every API. `EXTRACT_ALL=YES` exposes
 declarations for inspection; ordinary `//` implementation comments do not
 automatically become Doxygen member descriptions. The reference includes
 private declarations to make ownership inspectable; that does not make them
-public API. The check does not parse CMake or Python source footers.
+public API. The check does not parse CMake or Python source metadata and is not
+a whole-project REUSE audit.
