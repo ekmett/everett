@@ -221,6 +221,75 @@ theorem merge_literal_suffix (key : List Nat) (input_retained output_retained : 
   congr 1
   omega
 
+/-- The last key of a walk with a supplied first key. An empty tail leaves
+that first key as the endpoint. -/
+def walk_last (first : List Nat) : List (List Nat) → List Nat
+  | [] => first
+  | next :: rest => walk_last next rest
+
+/-- Exact LCPs of consecutive pairs, in traversal order. A singleton walk
+has no adjacent pairs. -/
+def adjacent_lcps (first : List Nat) : List (List Nat) → List Nat
+  | [] => []
+  | next :: rest => lcp first next :: adjacent_lcps next rest
+
+theorem ordered_walk_last (first : List Nat) (rest : List (List Nat))
+    (ordered : (first :: rest).Pairwise (fun a b => a ≤ b)) :
+    first ≤ walk_last first rest := by
+  induction rest generalizing first with
+  | nil => exact List.le_refl first
+  | cons next rest ih =>
+    have parts := List.pairwise_cons.mp ordered
+    exact List.le_trans (parts.1 next (by simp)) (ih next parts.2)
+
+/-- Left-to-right minimum accumulation preserves an existing cap. Bounding
+that cap by the first key's length gives the correct zero-step convention. -/
+theorem accumulated_lcp_min (first : List Nat) (rest : List (List Nat)) (cap : Nat)
+    (ordered : (first :: rest).Pairwise (fun a b => a ≤ b)) (bounded : cap ≤ first.length) :
+    (adjacent_lcps first rest).foldl min cap = min cap (lcp first (walk_last first rest)) := by
+  induction rest generalizing first cap with
+  | nil => simp [adjacent_lcps, walk_last, Nat.min_eq_left bounded]
+  | cons next rest ih =>
+    have parts := List.pairwise_cons.mp ordered
+    have first_next := parts.1 next (by simp)
+    have next_last := ordered_walk_last next rest parts.2
+    have next_cap : min cap (lcp first next) ≤ next.length :=
+      Nat.le_trans (Nat.min_le_right _ _) (lcp_le_right first next)
+    simp only [adjacent_lcps, List.foldl_cons, walk_last]
+    rw [ih next (min cap (lcp first next)) parts.2 next_cap, Nat.min_assoc,
+      ← ordered_lcp_min first next (walk_last next rest) first_next next_last]
+
+/-- After the first transition its exact adjacent LCP supplies the initial
+cap. No artificial infinity or maximum-length sentinel is needed. -/
+theorem adjacent_min_eq_endpoints (first next : List Nat) (rest : List (List Nat))
+    (ordered : (first :: next :: rest).Pairwise (fun a b => a ≤ b)) :
+    (adjacent_lcps next rest).foldl min (lcp first next) = lcp first (walk_last next rest) := by
+  have parts := List.pairwise_cons.mp ordered
+  rw [accumulated_lcp_min next rest (lcp first next) parts.2 (lcp_le_right first next)]
+  exact (ordered_lcp_min first next (walk_last next rest)
+    (parts.1 next (by simp)) (ordered_walk_last next rest parts.2)).symm
+
+/-- Empty walk convention: zero. Singleton convention: that key's full length,
+which is its self-LCP. Longer walks accumulate minima of exact adjacent LCPs.
+These are string laws, not a refinement proof for a C++ cursor or codec. -/
+def walk_min : List (List Nat) → Nat
+  | [] => 0
+  | first :: rest => (adjacent_lcps first rest).foldl min first.length
+
+@[simp] theorem walk_min_empty : walk_min [] = 0 := rfl
+@[simp] theorem walk_min_singleton (key : List Nat) : walk_min [key] = key.length := rfl
+
+theorem walk_min_eq_endpoints (first : List Nat) (rest : List (List Nat))
+    (ordered : (first :: rest).Pairwise (fun a b => a ≤ b)) :
+    walk_min (first :: rest) = lcp first (walk_last first rest) := by
+  rw [walk_min, accumulated_lcp_min first rest first.length ordered (Nat.le_refl _)]
+  exact Nat.min_eq_right (lcp_le_left first (walk_last first rest))
+
+example : walk_min [[], [1], [1], [1, 2]] = 0 := by decide
+example : walk_min [[1], [1], [1, 2], [1, 2, 3]] = 1 := by decide
+example : walk_min [[1, 2], [1, 2], [1, 2]] = 2 := by decide
+example : walk_min [[1, 2], [1, 3], [2]] = 0 := by decide
+
 -- Kernel-checked endpoint and interior examples; no native_decide shortcut.
 example : lcp [] [1, 2] = 0 := by decide
 example : lcp [1] [1, 2] = 1 := by decide

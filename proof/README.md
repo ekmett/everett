@@ -237,6 +237,15 @@ output key, the output retains at least as much prefix as the input frame.
 Skipping output keys can break that premise; the cursor's retained key context
 then supplies any prefix material needed by the next emitted key.
 
+`adjacent_min_eq_endpoints` extends this law to any nondecreasing finite walk:
+the minimum of its exact adjacent LCPs is the LCP of the first and last keys.
+`accumulated_lcp_min` proves the actual left-fold update with an existing cap;
+`walk_min_eq_endpoints` initializes it to the first key's length. The empty-walk
+convention is zero, and a singleton's result is its self-LCP. Repeated keys and
+proper prefixes are included. This supports a sampler's comparison argument
+across several occurrences, without asserting that its C++ cursor implements
+the mathematical walk.
+
 `Frontier.lean` applies the same string law during a sorted merge. If both
 heads follow the preceding output, the head sharing the longer prefix with
 that output sorts first. Their mutual LCP is then the smaller carried length.
