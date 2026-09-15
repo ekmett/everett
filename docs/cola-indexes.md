@@ -22,6 +22,17 @@ Two routes over one order
 | Main borrow | Every `K`th occurrence in the next main's augmented catalog | Native/index pair |
 | Secondary borrow | Every `K`th native entry in the next secondary | Native file |
 
+A terminal secondary needs no `.index` of its own: its `.kv` already contains
+the native offset directory, and the parent supplies the incoming route.
+An existing main pair can remain intact when we add a secondary beside it.
+If another branch later gives that secondary a main index, our native-only
+reference is unaffected by the role change.
+
+Changing a target still requires repairing the parent's shared virtual order.
+An unchanged route's FC bytes and EF directory remain reusable, but the current
+builder reconstructs both borrowed outputs. Their rank and cut metadata depend
+on the combined order and must be recomputed when its cuts change.
+
 Native, main-borrow and secondary-borrow keys form one virtual sorted order.
 On equality, native precedes main-borrow, which precedes secondary-borrow.
 Occurrences are retained, including borrowed copies of the same key. There is
