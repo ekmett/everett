@@ -29,7 +29,7 @@ endif()
 
 set(everett_test_names crc32c rank groups elias_fano profile borrowed_writer profile_blob comparison_fc sampling index_builder index_pipeline query native_writer native_writer_allocations native_merge native_merge_mapped world pins durability mapped_file files object_writer mapped_blob multiverse)
 if(EVERETT_ENABLE_SQLITE)
-  list(APPEND everett_test_names sqlite_catalog sqlite_catalog_adversarial sqlite_catalog_vfs sqlite_catalog_restart)
+  list(APPEND everett_test_names sqlite_catalog sqlite_catalog_adversarial sqlite_catalog_vfs sqlite_catalog_restart sqlite_catalog_timeline)
 endif()
 foreach(everett_test IN LISTS everett_test_names)
   add_executable(everett_test_${everett_test} "${PROJECT_SOURCE_DIR}/tests/${everett_test}.cc")
