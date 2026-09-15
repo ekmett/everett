@@ -206,6 +206,10 @@ namespace everett {
     std::uint64_t common_bits = 0;
     int order = 0;
   };
+#if defined(__APPLE__) && defined(__aarch64__) && defined(__clang__)
+  // Reduce the out-of-line NEON loop's sensitivity to caller code layout.
+  [[gnu::aligned(64)]]
+#endif
   inline bit_comparison compare_common_bits(bit_view a, bit_view b) {
     auto count = std::min(a.size(), b.size());
     // Most unrelated keys can differ immediately; do not load a whole word
