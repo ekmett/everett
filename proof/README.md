@@ -54,6 +54,7 @@ Field guide
 | [Allocation](Everett/Allocation.lean) | A monotone allocation watermark, fresh installation and non-reuse of issued IDs across allocation/reclamation sequences |
 | [Adoption](Everett/Adoption.lean) | Discharges the semantic adoption premise for chronological adjacent merges, using the actual history-composition theorem |
 | [Fractional](Everett/Fractional.lean) | Stable tagged merging; exact every-Kth samples; sampled predecessor windows; endpoint-rank projections; local/global predecessor equivalence; false-borrow recovery for unique native keys; a list-level index builder and exact-target retention |
+| [DualRoute](Everett/DualRoute.lean) | Three-origin rank windows share one entry budget; independent main/secondary predecessors and optional cut-LCP repairs; terminal-secondary traversal visits at most twice the main height |
 | [Prefix](Everett/Prefix.lean) | Finite-string lexicographic order, prefix interval convexity and the exact LCP minimum for three ordered strings |
 | [Framing](Everett/Framing.lean) | Retained prefixes and reconstructed key lengths stay within physical stream extents; admitted extent bounds imply bounded conversion to bits |
 | [Frontier](Everett/Frontier.lean) | Merge-head ordering from carried LCP lengths, suffix-only comparison at equal lengths, and exact new frontier lengths |
@@ -179,6 +180,30 @@ independent borrowed-predecessor routing and composition of an entire cascade
 remain separate refinement obligations. The searches here enumerate finite
 lists, so these theorems establish the window's entry bound and lookup meaning,
 not the running time of binary search, compressed rank or key reconstruction.
+
+Two-route fractional indexing
+-----------------------------
+
+I model the dual-target topology separately in `DualRoute.lean`. Three origin
+predicates project a virtual window into native, main-borrowed and
+secondary-borrowed intervals. Their lengths sum exactly to the original window
+length, hence share its $K$-entry budget. The two children retain independent
+predecessor answers, including missing answers and equality runs.
+
+Each optional borrowed predecessor has its own exact cut LCP. `repair_both`
+uses the ordered-string law to recover both comparisons from the same incoming
+boundary state. An absent predecessor stays absent; an existing empty key is
+not confused with absence. The required stored-cut equalities are explicit
+content assumptions, not inferred from counts or hashes.
+
+The executable chain recurses only through main catalogs; a secondary contains
+native entries and no child. `search_correct` agrees with full list searches,
+and `visits_bound` gives at most $2h$ catalog visits for main height $h$, including
+a synthetic root if present. These visits are not instruction or byte costs.
+The traversal computes exact samples and an independent route in each catalog;
+it does not yet derive the next window from a carried parent result. Connecting
+that handoff, stored dual-target samples, false-borrow probes, immutable file
+identities and C++ decoding to this model remains separate. No scheduler, visibility deadline or space theorem is claimed.
 
 String prefixes and comparison transfers
 ---------------------------------------

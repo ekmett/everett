@@ -5,6 +5,7 @@ SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 import Everett.Examples
 import Everett.Allocation
 import Everett.FractionalExamples
+import Everett.DualRoute
 import Everett.Prefix
 import Everett.Framing
 import Everett.Frontier

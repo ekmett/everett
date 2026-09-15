@@ -10,6 +10,7 @@ import Everett.Allocation
 import Everett.Adoption
 import Everett.Fractional
 import Everett.FractionalExamples
+import Everett.DualRoute
 import Everett.Prefix
 import Everett.Framing
 import Everett.Frontier
