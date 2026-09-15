@@ -550,6 +550,12 @@ fixtures, with counted backing arrays changing by less than 1%. Root preparation
 has mixed results. These are resident-memory measurements; disk faults remain
 a separate cost.
 
+A [count-decoding follow-up](bench/small_count.md) measures the common bit
+counts from one bounded field. It reduces complete bit-query time by another
+26.0–26.9% against its ordinary-FC baseline, without changing the encoded arrays.
+The byte-profile timing ranges overlap. Each report gives its own exact
+baseline, fixtures and validation; these are separate measurements.
+
 Proofs
 ------
 

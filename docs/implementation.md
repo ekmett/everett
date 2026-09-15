@@ -367,6 +367,14 @@ now create shape-only views; public untrusted readers retain their content
 checks. The same six resident-memory fixtures return to timing parity with
 the preceding query implementation, with identical counted arrays.
 
+The [small-count decoder](../bench/small_count.md) handles bit counts 0–254 from
+one bounded 16-bit field and retains the checked general decoder for longer
+codes and short tails. The six whole-query fixtures show 26.0–26.9% less bit
+query time; byte timing ranges overlap. Encoded arrays are identical. The
+independent count oracle covers every starting alignment, truncation, short
+tail and the fast/fallback boundary; the affected profile/query/package
+sanitizer checks passed. These are resident-memory M2 Max measurements.
+
 The implementation was reviewed and integrated at `4285e6b`, with moved-from
 preparation guards at `79fca75`. The independent query suite checks 20 policies
 against native-array oracles for exact source, ordinal, value and match order.
@@ -570,9 +578,9 @@ checkpoint checked 631 Lean declarations with only standard `propext`,
 `Quot.sound` and `Classical.choice` axioms. Neither these mathematical models
 nor injected system-call outcomes establish behavior under physical power loss.
 
-The six complete README examples previously passed strict warnings and
-ASan/UBSan; the package consumers now exercise the mapped headers and section
-encoder as well. Installed licenses and generated CRC includes are checked
+All six complete README examples were rebuilt and passed strict warnings and
+ASan/UBSan against the mapped checkpoint; the package consumers exercise the
+mapped headers and section encoder as well. Installed licenses and generated CRC includes are checked
 byte for byte against the source bundle, and the pinned generator reproduced
 all eight backends. Windows execution coverage is limited to the recorded rank
 component tests. A persistent SQLite backend and network transport remain outside
