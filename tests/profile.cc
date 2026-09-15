@@ -72,6 +72,71 @@ namespace {
     if (a.size() % 8 == 0 && b.size() % 8 == 0)
       require(common_prefix_units<byte_policy>(a, b) == want.common_bits / 8, "byte common-prefix oracle");
   }
+  void byte_comparison_oracle() {
+    for (std::size_t length : {0u,1u,7u,8u,9u,15u,16u,17u,31u,32u,33u,127u,128u,129u,1024u}) {
+      std::string text(length, '\0');
+      for (std::size_t i = 0; i != length; ++i) text[i] = char((i * 19 + 137) & 255);
+      auto a = bit_string::from_bytes(text);
+      require(compare_bits(a.view(), a.view()) == 0 &&
+              common_prefix_units<byte_policy>(a.view(), a.view()) == length, "equal byte keys");
+      for (std::size_t i = 0; i != length; ++i) {
+        auto other = text;
+        other[i] ^= 1;
+        auto b = bit_string::from_bytes(other);
+        auto order = static_cast<unsigned char>(text[i]) < static_cast<unsigned char>(other[i]) ? -1 : 1;
+        auto both = compare_common_bits(a.view(), b.view());
+        require(both.common_bits == i * 8 + 7 && both.order == order, "long byte comparison oracle");
+        require(compare_bits(b.view(), a.view()) == -order, "reverse byte comparison oracle");
+        require(common_prefix_units<byte_policy>(a.view(), b.view()) == i, "whole-byte LCP oracle");
+      }
+      if (length) {
+        auto shorter = a.view().prefix((length - 1) * 8);
+        require(compare_bits(a.view(), shorter) > 0 && compare_bits(shorter, a.view()) < 0,
+                "byte strict prefix order");
+        require(common_prefix_units<byte_policy>(a.view(), shorter) == length - 1, "byte strict prefix LCP");
+      }
+    }
+  }
+
+  void intermediate_byte_anchors() {
+    std::vector<std::string> keys{"", "a", "aa", "aaa", "aab", "ab", "aba", "abb", "b", "ba"};
+    for (std::size_t x = 0; x != keys.size(); ++x)
+      for (std::size_t y = x; y != keys.size(); ++y) {
+        std::array<profile_record, 2> records{{{bit_string::from_bytes(keys[x]), {}},
+                                            {bit_string::from_bytes(keys[y]), {}}}};
+        auto array = profile_array<byte_policy>::build(records);
+        for (std::size_t middle = x; middle <= y; ++middle)
+          for (std::uint64_t limit = 0; limit != 4; ++limit) {
+            auto key = bit_string::from_bytes(keys[middle]);
+            profile_anchor<byte_policy> anchor{key.view().prefix(std::min<std::uint64_t>(key.bit_size, limit * 8)),
+                                                keys[middle].size()};
+            unsigned visited = 0;
+            array.view().visit_window(1, 2, anchor, limit, [&](profile_item<byte_policy> item) {
+              auto expected = bit_string::from_bytes(keys[y].substr(0, limit));
+              require(bit_string::copy(item.key.prefix) == expected && item.key.full_units == keys[y].size(),
+                      "intermediate byte anchor prefix convexity");
+              ++visited;
+              return true;
+            });
+            require(visited == 1, "intermediate byte anchor visit count");
+          }
+      }
+    std::string prefix(200000, 'x');
+    std::vector<profile_record> records;
+    for (char suffix : {'a', 'b', 'c'}) records.push_back({bit_string::from_bytes(prefix + suffix), {}});
+    auto array = profile_array<byte_policy>::build(records);
+    auto key = bit_string::from_bytes("xxx");
+    profile_anchor<byte_policy> anchor{key.view(), prefix.size() + 1};
+    unsigned visited = 0;
+    array.view().visit_window(1, 3, anchor, 3, [&](profile_item<byte_policy> item) {
+      require(bit_string::copy(item.key.prefix) == key && item.key.full_units == prefix.size() + 1,
+              "long key partial reconstruction");
+      ++visited;
+      return true;
+    });
+    require(visited == 2, "long key partial visit count");
+  }
+
   void bit_primitives() {
     constexpr std::array<unsigned, 22> lengths{0,1,2,7,8,9,15,16,17,31,32,33,63,64,65,127,128,129,255,256,257,1023};
     for (unsigned source_offset = 0; source_offset != 8; ++source_offset)
@@ -863,6 +928,8 @@ namespace {
 
 int main() {
   try {
+    byte_comparison_oracle();
+    intermediate_byte_anchors();
     bit_primitives();
     count_primitives();
 #if defined(__unix__) || defined(__APPLE__)

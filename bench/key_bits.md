@@ -7,7 +7,9 @@ bytes; these are not SIMD kernels.
 
 ## Reproduce
 
-The [runner](key_bits.py) compiles the same [fixture](key_bits.cc) twice. Its baseline is
+The [runner](key_bits.py) compiles one snapshotted fixture twice. The measurements
+below use the fixture from `b208f18` (SHA-256
+`e6d0ce2b434f7b79dfbf86b6ba11c5d9f133ada2bddc064e82846640a0959d59`). Its baseline is
 `62ead3fab9d0ee5bda1b47780b7905a45aae1182`; the measured candidate headers come
 from `d027162`. Only `profile.h`, `front.h`, and `key_detail.h` are overlaid.
 Every dependency remains at the baseline revision, so this comparison excludes
@@ -16,16 +18,28 @@ concurrent rank/select changes.
 Run these commands under the host's CPU/build-directory resource lease:
 
 ```sh
-python3 bench/key_bits.py --candidate d027162 --trials 5 \
+python3 bench/key_bits.py --candidate d027162 --harness b208f18 \
+  --isolate-key-headers --trials 5 \
   --work 8388608 --output build-key-bits/results.csv
-python3 bench/key_bits.py --candidate d027162 --sanitize --trials 1 \
+python3 bench/key_bits.py --candidate d027162 --harness b208f18 \
+  --isolate-key-headers --sanitize --trials 1 \
   --work 65536 --output build-key-bits/check.csv
 ```
 
 The runner needs Python's standard library, Git, and a C++20 compiler. It makes
-no network requests. `CXX` selects the compiler. Omitting `--candidate` measures
-the three working-tree headers. The JSON records exact source/header hashes,
-resolved revisions, flags, and host information.
+no network requests. `CXX` selects the compiler. By default, it compares complete
+header snapshots; omitting `--candidate` uses the working-tree headers. The
+explicit `--isolate-key-headers` switch preserves this historical experiment's
+three-header overlay. `--harness` selects the source revision independently and
+is required above to reproduce the recorded fixture. New JSON files record both
+resolved revisions, whether either snapshot used working-tree files, exact
+source/header hashes, flags, and host information.
+
+The current [fixture](key_bits.cc) uses typed profile comparisons when the
+untyped front-code header is absent. Its `front_order_and_lcp` row retains the
+label so output comparisons remain possible, but current runs are a different
+API path; they do not replace the historical results below. Complete-header
+comparisons can also include changes outside the three measured key helpers.
 
 The checked-in [CSV](key_bits_m2.csv) contains every trial; the
 [metadata](key_bits_m2.json) identifies the measured sources. I used Apple

@@ -14,6 +14,8 @@ import json
 import os
 from pathlib import Path
 import platform
+import shutil
+import shlex
 import subprocess
 import tarfile
 
@@ -25,6 +27,9 @@ def main():
     parser.add_argument("--build-dir", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--candidate", help="candidate Git revision; omit to use working-tree headers")
+    parser.add_argument("--harness", help="fixture Git revision; omit to snapshot the working-tree fixture")
+    parser.add_argument("--isolate-key-headers", action="store_true",
+                        help="overlay only profile/front/key_detail on baseline dependencies (historical experiment)")
     parser.add_argument("--trials", type=int, default=5)
     parser.add_argument("--work", type=int, default=8388608)
     parser.add_argument("--sanitize", action="store_true")
@@ -32,9 +37,15 @@ def main():
     if args.trials < 1 or args.work < 1:
         parser.error("trials and work must be positive")
     repo = Path(__file__).resolve().parent.parent
+    def resolve(revision):
+        return subprocess.check_output(["git", "-C", str(repo), "rev-parse", revision], text=True).strip()
+    candidate_revision = resolve(args.candidate or "HEAD")
+    harness_revision = resolve(args.harness or "HEAD")
     build = (args.build_dir or repo / "build-key-bits-bench").resolve()
     build.mkdir(parents=True, exist_ok=True)
     def extract(reference, destination):
+        if destination.exists():
+            shutil.rmtree(destination)
         archive = subprocess.check_output(["git", "-C", str(repo), "archive", reference, "include/"])
         with tarfile.open(fileobj=io.BytesIO(archive)) as data:
             for member in data:
@@ -45,25 +56,43 @@ def main():
         return destination / "include"
 
     baseline = extract(BASE, build / "baseline")
-    # Isolate these changes: every dependency is the same pinned baseline in
-    # both builds, even when the candidate revision contains unrelated work.
-    headers = ["profile.h", "front.h", "key_detail.h"]
-    candidate = build / "candidate-overlay"
-    (candidate / "everett").mkdir(parents=True, exist_ok=True)
-    for name in headers:
-        source = "include/everett/" + name
-        contents = subprocess.check_output(["git", "-C", str(repo), "show", args.candidate + ":" + source]) if args.candidate else (repo / source).read_bytes()
-        (candidate / "everett" / name).write_bytes(contents)
-    source = (repo / "bench/key_bits.cc").read_bytes()
+    candidate = build / "candidate" / "include"
+    if args.isolate_key_headers:
+        # Reproduce the historical three-header experiment with its original
+        # dependency set. This mode requires all three named candidate files.
+        if candidate.parent.exists():
+            shutil.rmtree(candidate.parent)
+        shutil.copytree(baseline, candidate)
+        overlay = ["profile.h", "front.h", "key_detail.h"]
+        for name in overlay:
+            path = "include/everett/" + name
+            contents = subprocess.check_output(["git", "-C", str(repo), "show", candidate_revision + ":" + path]) if args.candidate else (repo / path).read_bytes()
+            (candidate / "everett" / name).write_bytes(contents)
+        dependency_revision = BASE
+    else:
+        # A current profile can depend on newer policy/navigation descriptors;
+        # compile a complete, self-consistent header snapshot without fallback.
+        overlay = None
+        if args.candidate:
+            candidate = extract(candidate_revision, build / "candidate")
+        else:
+            if candidate.parent.exists():
+                shutil.rmtree(candidate.parent)
+            shutil.copytree(repo / "include", candidate)
+        dependency_revision = candidate_revision if args.candidate else "working-tree"
+    fixture_path = "bench/key_bits.cc"
+    source = subprocess.check_output(["git", "-C", str(repo), "show", harness_revision + ":" + fixture_path]) if args.harness else (repo / fixture_path).read_bytes()
     source_snapshot = build / "key_bits.cc"
     source_snapshot.write_bytes(source)
-    compiler = os.environ.get("CXX", "clang++")
+    compiler = shlex.split(os.environ.get("CXX", "clang++"))
+    if not compiler:
+        parser.error("CXX must name a compiler")
     flags = ["-std=c++20", "-Wall", "-Wextra", "-Wpedantic", "-Werror"]
     flags += ["-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer"] if args.sanitize else ["-O3", "-DNDEBUG"]
     executables = {}
     for variant, headers in (("baseline", baseline), ("candidate", candidate)):
         executable = build / ("key_bits_" + variant + ("-sanitize" if args.sanitize else ""))
-        subprocess.run([compiler, *flags, "-I" + str(headers), "-I" + str(baseline), str(source_snapshot), "-o", str(executable)], check=True)
+        subprocess.run([*compiler, *flags, "-I" + str(headers), str(source_snapshot), "-o", str(executable)], check=True)
         executables[variant] = executable
     rows = []
     expected = {}
@@ -84,14 +113,19 @@ def main():
         writer = csv.DictWriter(stream, fieldnames=rows[0].keys())
         writer.writeheader()
         writer.writerows(rows)
-    headers = ["profile.h", "front.h", "key_detail.h"]
-    hashes = {name: hashlib.sha256((candidate / "everett" / name).read_bytes()).hexdigest() for name in headers}
-    metadata = {"baseline": BASE, "candidate_revision": subprocess.check_output(["git", "-C", str(repo), "rev-parse", args.candidate or "HEAD"], text=True).strip(),
-                "candidate_working_tree": args.candidate is None, "dependency_revision": BASE, "candidate_overlay": headers,
-                "candidate_header_sha256": hashes, "source_sha256": hashlib.sha256(source).hexdigest(),
-                "compiler": subprocess.check_output([compiler, "--version"], text=True), "flags": flags,
+    hashes = {path.relative_to(candidate).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+              for path in sorted(candidate.rglob("*")) if path.is_file()}
+    metadata = {"baseline": BASE, "candidate_revision": candidate_revision,
+                "candidate_working_tree": args.candidate is None, "dependency_revision": dependency_revision,
+                "candidate_overlay": overlay, "candidate_header_sha256": hashes,
+                "harness_revision": harness_revision, "harness_working_tree": args.harness is None,
+                "source_sha256": hashlib.sha256(source).hexdigest(),
+                "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                "compiler_command": compiler,
+                "compiler": subprocess.check_output([*compiler, "--version"], text=True), "flags": flags,
                 "platform": platform.platform(), "machine": platform.machine(), "trials": args.trials,
-                "work": args.work, "sanitize": args.sanitize}
+                "work": args.work, "sanitize": args.sanitize,
+                "byte_comparison_api": {"baseline": "front", "candidate": "front" if (candidate / "everett/front.h").exists() else "profile"}}
     output.with_suffix(".json").write_text(json.dumps(metadata, indent=2) + "\n")
     print(output)
 
