@@ -885,8 +885,8 @@ fields and checksums.
 
 The optional `DIET_BUILD_DOCS` configuration generates Doxygen HTML/XML and
 checks leading file metadata plus representative function/member ownership. A
-two-file fixture compares top, bottom and split file documentation across namespaces,
-same-name classes and overloaded functions. The license aliases render
+two-file fixture checks namespaces, same-name classes and overloaded functions;
+negative cases reject malformed or misplaced file metadata. The license aliases render
 SPDX as a code block and remove the unconfigured unknown-command warnings.
 See [the documentation check](doxygen.md) for the exact assertions and limits.
 

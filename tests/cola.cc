@@ -216,7 +216,7 @@ namespace {
     require(old_run.expired(), "old run reclaimed after its last save pin goes away");
   }
 
-  void export_rcs() {
+  void rc_dumps() {
     using cola = reference_cola<>;
     auto base = cola::from_records({{"", 0}, {std::string("a\0b", 3), 255}, {"z", UINT64_MAX}});
     std::ostringstream output(std::ios::binary);
@@ -300,7 +300,7 @@ int main() {
     commuting_partitions<binary_field>();
     validation();
     pin_lifetime();
-    export_rcs();
+    rc_dumps();
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';
     return 1;
