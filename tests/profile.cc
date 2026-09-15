@@ -18,6 +18,7 @@
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 #if defined(__unix__) || defined(__APPLE__)
 #include <sys/mman.h>
@@ -1002,6 +1003,46 @@ namespace {
 #endif
   }
 
+  template <class P, stream_role Role> void owning_views() {
+    using array = profile_array<P, Role>;
+    array default_array;
+    require(default_array.view().size() == 0, "default empty owner has no usable view");
+    default_array.view().validate_contents();
+    auto empty = array::build({});
+    require(empty.view().size() == 0, "built empty owner has no usable view");
+    empty.view().validate_contents();
+
+    auto value = [&] {
+      if constexpr (Role == stream_role::borrowed) return bit_string{};
+      else return binary(P::value_width.value_or(2) * P::bits_per_unit, 991);
+    }();
+    std::vector<profile_record> records{
+      {bit_string::from_bytes("shared/a"), value}, {bit_string::from_bytes("shared/b"), value}};
+    auto source = array::build(records);
+    auto copy = source;
+    auto moved = std::move(source);
+    rejects([&] { (void)source.view(); });
+    require(copy.bytes().data() != moved.bytes().data(), "copied owner aliases its payload allocation");
+    source = array::build({});
+    for (auto const * owner : {&copy, &moved}) {
+      auto view = owner->view();
+      view.validate_contents();
+      std::size_t at = 0;
+      view.visit_all([&](profile_item<P> item) {
+        require(at < records.size() && compare_bits(item.key.prefix, records[at].key.view()) == 0 &&
+                compare_bits(item.value, records[at].value.view()) == 0, "copied/moved owner view changed records");
+        ++at;
+        return true;
+      });
+      require(at == records.size(), "copied/moved owner view lost records");
+      // Public readers still validate supplied contents at construction.
+      auto metadata = owner->metadata();
+      auto offsets = owner->group_offsets();
+      offsets.high.assign(offsets.high.size(), 0);
+      rejects([&] { profile_view<P, Role> checked(owner->bytes(), offsets.view(), metadata); });
+    }
+  }
+
   template <std::uint64_t K> void policies() {
     roundtrip<storage_policy<profile_unit::byte, variable_values, K>>();
     roundtrip<storage_policy<profile_unit::byte, fixed_values<3>, K>>();
@@ -1037,6 +1078,10 @@ int main() {
     mapped_profile_sections<storage_policy<profile_unit::bit, fixed_values<3>, 31, exponential_golomb<2>, 1>, stream_role::native>();
     mapped_profile_sections<storage_policy<profile_unit::byte, fixed_values<3>, 15, exponential_golomb<0>, 16>, stream_role::borrowed>();
     mapped_profile_sections<storage_policy<profile_unit::bit, fixed_values<3>, 15, golomb<7>, 16>, stream_role::borrowed>();
+    owning_views<storage_policy<profile_unit::byte, variable_values, 15>, stream_role::native>();
+    owning_views<storage_policy<profile_unit::bit, variable_values, 7, golomb<3>, 16>, stream_role::native>();
+    owning_views<storage_policy<profile_unit::byte, fixed_values<3>, 15>, stream_role::borrowed>();
+    owning_views<storage_policy<profile_unit::bit, fixed_values<3>, 15>, stream_role::borrowed>();
     policies<3>();
     policies<7>();
     policies<15>();

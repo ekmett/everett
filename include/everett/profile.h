@@ -953,7 +953,11 @@ namespace everett {
     std::span<std::byte const> bytes() const noexcept { return bytes_; }
     profile_metadata const & metadata() const noexcept { return metadata_; }
     select_groups<P::codec_block_size> const & group_offsets() const noexcept { return offsets_; }
-    profile_view<P, Role> view() const & { return {bytes_, offsets_.view(), metadata_}; }
+    // These private sections come from the checked builders. Recheck their
+    // shapes after copying/moving, without rereading payload or EF endpoints.
+    profile_view<P, Role> view() const & {
+      return profile_view<P, Role>::from_sections(bytes_, offsets_.view(), metadata_);
+    }
     profile_view<P, Role> view() const && = delete;
 
   private:
