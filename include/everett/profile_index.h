@@ -29,6 +29,17 @@ namespace everett {
     using borrowed_array = profile_array<P, stream_role::borrowed>;
     static constexpr std::uint64_t group_size = P::group_size;
 
+    // A terminal pair has no borrowed occurrences. Construct its zero
+    // directories from the admitted native count without visiting native keys.
+    static profile_index native_only(std::uint64_t count) {
+      auto groups = count / group_size + (count % group_size != 0);
+      std::vector<std::uint64_t> cuts;
+      if (groups > cuts.max_size()) error_detail::raise<std::length_error>("native index is too large");
+      cuts.resize(static_cast<std::size_t>(groups), 0);
+      auto ranks = rank_groups<group_size>::build(cuts, count);
+      return profile_index(borrowed_array::build({}), std::move(ranks), {}, std::move(cuts), count);
+    }
+
     borrowed_array const & borrowed() const & noexcept { return borrowed_; }
     borrowed_array const & borrowed() const && = delete;
     rank_groups<group_size> const & interleave() const & noexcept { return interleave_; }
