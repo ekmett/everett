@@ -142,8 +142,8 @@ instantiations, not every consumer's size change. The
 [size output and executable hashes](results/native_encoded_first_size_m2max.json)
 retain the evidence; I did not measure compilation time.
 
-Method and correctness
-----------------------
+Native merge method and correctness
+-----------------------------------
 
 The shared [harness](native_encoded.cc) generates 4,096 original records. Older
 and newer subsets overlap on every third key; overlapping older values differ

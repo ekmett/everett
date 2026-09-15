@@ -77,7 +77,7 @@ Complete merge runtime
 Median nanoseconds per distinct output key, with five alternating process trials
 and three rounds per trial. These fifteen observations per variant are not
 fifteen independent processes. The resident-memory fixture and complete-build
-timer are unchanged from [the preceding report](native_encoded.md#method-and-correctness).
+timer are unchanged from [the preceding report](native_encoded.md#native-merge-method-and-correctness).
 
 | Policy | Fixture | Shared prefix | Changing tail | 40-byte spans | 16-byte spans | Change |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
