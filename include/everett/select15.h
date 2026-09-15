@@ -54,7 +54,8 @@ namespace everett {
   // not a tuned succinct select implementation.
   // Views check shapes and guard navigation bounds. They do not establish
   // semantic consistency of borrowed metadata: use a builder or validated
-  // reader. These native-endian spans are not a portable file-format parser.
+  // reader. Native spans and portable little-endian byte sections share navigation;
+  // neither constructor performs a complete semantic scan.
   struct select15_view {
     select15_view(std::span<std::uint64_t const> low,
                   std::span<std::uint64_t const> high,
@@ -62,6 +63,13 @@ namespace everett {
                   std::span<std::uint64_t const> sparse,
                   std::uint64_t record_count, std::uint64_t universe,
                   unsigned low_width)
+      : select15_view(word_view(low), word_view(high), sample_view(samples), word_view(sparse),
+                         record_count, universe, low_width) {}
+
+    template <class Words, class Samples>
+      requires (std::is_same_v<Words, word_view> && std::is_same_v<Samples, sample_view>)
+    select15_view(Words low, Words high, Samples samples, Words sparse,
+                       std::uint64_t record_count, std::uint64_t universe, unsigned low_width)
       : low_(low), high_(high), samples_(samples), sparse_(sparse),
         record_count_(record_count), universe_(universe), low_width_(low_width) {
       if (low_width > 63) throw std::invalid_argument("select15 low width");
@@ -74,6 +82,12 @@ namespace everett {
         throw std::invalid_argument("invalid select15 spans");
     }
 
+    word_view low_words() const noexcept { return low_; }
+    word_view high_words() const noexcept { return high_; }
+    sample_view samples() const noexcept { return samples_; }
+    word_view sparse_words() const noexcept { return sparse_; }
+    std::uint64_t universe() const noexcept { return universe_; }
+    unsigned low_width() const noexcept { return low_width_; }
     std::uint64_t size() const noexcept { return record_count_; }
     std::uint64_t group_count() const noexcept {
       return record_count_ / 15 + (record_count_ % 15 != 0);
@@ -134,10 +148,10 @@ namespace everett {
       throw std::invalid_argument("select15 missing high bit");
     }
 
-    std::span<std::uint64_t const> low_;
-    std::span<std::uint64_t const> high_;
-    std::span<select15_sample const> samples_;
-    std::span<std::uint64_t const> sparse_;
+    word_view low_;
+    word_view high_;
+    sample_view samples_;
+    word_view sparse_;
     std::uint64_t record_count_;
     std::uint64_t universe_;
     std::uint64_t high_bits_ = 0;

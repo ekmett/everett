@@ -333,6 +333,7 @@ namespace everett {
   private:
     template <class, stream_role> friend struct profile_view;
     template <class> friend struct profile_blob;
+    template <class> friend struct profile_blob_view;
     std::shared_ptr<bit_string const> query_;
     std::uint64_t common_bits_ = 0;
     std::uint64_t full_units_ = 0;
@@ -598,35 +599,28 @@ namespace everett {
     static constexpr stream_role role = Role;
 
     profile_view(std::span<std::byte const> bytes, select_groups_view<P::codec_block_size> offsets, profile_metadata metadata)
-      : bytes_(bytes), offsets_(offsets), metadata_(metadata) {
-      auto expected = profile_detail::initial_metadata<P, Role>();
-      if (metadata.version != 1 || metadata.key_unit != P::unit || metadata.value_unit != P::unit ||
-          metadata.count_unit != P::unit || metadata.offset_unit != P::unit ||
-          metadata.backspace_code != P::backspace_code || metadata.backspace_parameter != P::backspace_parameter ||
-          metadata.count_code != expected.count_code || metadata.bit_order != profile_bit_order::msb_first ||
-          metadata.role != Role || metadata.group_size != P::group_size ||
-          metadata.codec_block_size != P::codec_block_size || metadata.policy_fixed_values != P::fixed_width ||
-          metadata.policy_value_width != P::value_width.value_or(0))
-        throw std::invalid_argument("profile metadata does not match reader policy");
-      if constexpr (Role == stream_role::borrowed) {
-        if (metadata.common_value_width != std::optional<std::uint64_t>(0))
-          throw std::invalid_argument("borrowed profile must have empty values");
-      } else if constexpr (P::fixed_width) {
-        if (metadata.common_value_width != P::value_width)
-          throw std::invalid_argument("fixed value width metadata mismatch");
-      }
-      if (!metadata.record_count && (metadata.extent || metadata.terminal_key_units))
-        throw std::invalid_argument("nonempty data for empty profile");
-      auto bits = profile_detail::multiply(metadata.extent, P::bits_per_unit);
-      if (bytes.size() != profile_detail::byte_count(bits) || offsets.size() != metadata.record_count)
-        throw std::invalid_argument("profile section length mismatch");
-      if (bits % 8 && (std::to_integer<unsigned>(bytes.back()) & ((1u << (8 - bits % 8)) - 1)))
+      : profile_view(bytes, offsets, metadata, shape_only{}) {
+      validate_contents();
+    }
+
+    // Metadata/shape checks only: no stream, EF-word or sample bytes are read.
+    // Mapped owners may construct this view before touching any payload page.
+    static profile_view from_sections(std::span<std::byte const> bytes,
+        select_groups_view<P::codec_block_size> offsets, profile_metadata metadata) {
+      return {bytes, offsets, metadata, shape_only{}};
+    }
+
+    // The existing constructor's local content checks. This validates padding
+    // and the first/terminal offsets; it is not a complete framing, ordering or
+    // EF semantic scan. Query parsing still bounds each accessed record.
+    void validate_contents() const {
+      auto bits = data_.size();
+      if (bits % 8 && (std::to_integer<unsigned>(bytes_.back()) & ((1u << (8 - bits % 8)) - 1)))
         throw std::invalid_argument("nonzero profile padding");
-      auto groups = metadata.record_count / P::codec_block_size + (metadata.record_count % P::codec_block_size != 0);
-      if (offsets.offset(0, metadata.common_value_width.value_or(0)) != 0 ||
-          offsets.offset(groups, metadata.common_value_width.value_or(0)) != metadata.extent)
+      auto groups = metadata_.record_count / P::codec_block_size + (metadata_.record_count % P::codec_block_size != 0);
+      if (offsets_.offset(0, metadata_.common_value_width.value_or(0)) != 0 ||
+          offsets_.offset(groups, metadata_.common_value_width.value_or(0)) != metadata_.extent)
         throw std::invalid_argument("profile offset units or extent mismatch");
-      data_ = {bytes, bits};
     }
 
     std::uint64_t size() const noexcept { return metadata_.record_count; }
@@ -745,6 +739,34 @@ namespace everett {
     }
 
   private:
+    struct shape_only {};
+    profile_view(std::span<std::byte const> bytes, select_groups_view<P::codec_block_size> offsets,
+                 profile_metadata metadata, shape_only)
+      : bytes_(bytes), offsets_(offsets), metadata_(metadata) {
+      auto expected = profile_detail::initial_metadata<P, Role>();
+      if (metadata.version != 1 || metadata.key_unit != P::unit || metadata.value_unit != P::unit ||
+          metadata.count_unit != P::unit || metadata.offset_unit != P::unit ||
+          metadata.backspace_code != P::backspace_code || metadata.backspace_parameter != P::backspace_parameter ||
+          metadata.count_code != expected.count_code || metadata.bit_order != profile_bit_order::msb_first ||
+          metadata.role != Role || metadata.group_size != P::group_size ||
+          metadata.codec_block_size != P::codec_block_size || metadata.policy_fixed_values != P::fixed_width ||
+          metadata.policy_value_width != P::value_width.value_or(0))
+        throw std::invalid_argument("profile metadata does not match reader policy");
+      if constexpr (Role == stream_role::borrowed) {
+        if (metadata.common_value_width != std::optional<std::uint64_t>(0))
+          throw std::invalid_argument("borrowed profile must have empty values");
+      } else if constexpr (P::fixed_width) {
+        if (metadata.common_value_width != P::value_width)
+          throw std::invalid_argument("fixed value width metadata mismatch");
+      }
+      if (!metadata.record_count && (metadata.extent || metadata.terminal_key_units))
+        throw std::invalid_argument("nonempty data for empty profile");
+      auto bits = profile_detail::multiply(metadata.extent, P::bits_per_unit);
+      if (bytes.size() != profile_detail::byte_count(bits) || offsets.size() != metadata.record_count)
+        throw std::invalid_argument("profile section length mismatch");
+      data_ = {bytes, bits};
+    }
+
     friend struct profile_cursor<P, Role>;
     std::span<std::byte const> bytes_;
     select_groups_view<P::codec_block_size> offsets_;

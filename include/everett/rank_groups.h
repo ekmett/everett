@@ -32,7 +32,7 @@ namespace everett {
     // The caller supplies at most 128 classes and exactly the words containing
     // them. Weighted bit populations preserve fields split across word cuts.
     template <unsigned Bits> inline unsigned prefix_portable(
-        std::uint64_t const * words, unsigned count) noexcept {
+        word_view words, unsigned count) noexcept {
       static_assert(Bits == 2 || Bits == 3 || Bits == 5);
       constexpr auto masks = [] {
         std::array<std::array<std::uint64_t, Bits>, Bits> result{};
@@ -65,6 +65,11 @@ namespace everett {
       return result;
     }
 
+    template <unsigned Bits> inline unsigned prefix_portable(
+        std::uint64_t const * words, unsigned count) noexcept {
+      return prefix_portable<Bits>(word_view(std::span(words, (count * Bits + 63) / 64)), count);
+    }
+
 #if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     template <unsigned Bits, unsigned Vector, unsigned Plane = 0>
     inline uint8x16_t weighted_bits(uint8x16_t value) noexcept {
@@ -81,25 +86,26 @@ namespace everett {
     }
 
     template <unsigned Bits, unsigned Vector = 0>
-    inline uint16x8_t prefix_vectors(std::uint64_t const * words, unsigned bits) noexcept {
+    inline uint16x8_t prefix_vectors(std::byte const * bytes, unsigned bits) noexcept {
       uint64x2_t positions{2 * Vector, 2 * Vector + 1};
       auto boundary = vdupq_n_u64(bits / 64);
       auto tail = vdupq_n_u64((std::uint64_t{1} << (bits % 64)) - 1);
       auto mask = vorrq_u64(vcltq_u64(positions, boundary),
                             vandq_u64(vceqq_u64(positions, boundary), tail));
-      auto selected = vandq_u64(vld1q_u64(words + 2 * Vector), mask);
+      auto selected = vandq_u64(vreinterpretq_u64_u8(vld1q_u8(
+        reinterpret_cast<std::uint8_t const *>(bytes + 16 * Vector))), mask);
       // Widen before adding vectors: five-bit classes can otherwise overflow
       // an eight-bit lane. The complete checkpoint sums to at most 128*31.
       auto counts = vpaddlq_u8(weighted_bits<Bits, Vector>(vreinterpretq_u8_u64(selected)));
       if constexpr (Vector + 1 == Bits) return counts;
-      else return vaddq_u16(counts, prefix_vectors<Bits, Vector + 1>(words, bits));
+      else return vaddq_u16(counts, prefix_vectors<Bits, Vector + 1>(bytes, bits));
     }
 
     // A complete checkpoint has exactly 2*Bits words. Each selected bit
     // contributes its class-place weight, even when a class straddles words.
     template <unsigned Bits> inline unsigned prefix_neon(
         std::uint64_t const * words, unsigned count) noexcept {
-      return vaddvq_u16(prefix_vectors<Bits>(words, count * Bits));
+      return vaddvq_u16(prefix_vectors<Bits>(reinterpret_cast<std::byte const *>(words), count * Bits));
     }
 #endif
   }
@@ -119,6 +125,11 @@ namespace everett {
     rank_groups_view(std::span<std::uint64_t const> classes,
                      std::span<std::uint64_t const> checkpoints,
                      std::uint64_t virtual_count, std::uint64_t total)
+      : rank_groups_view(word_view(classes), word_view(checkpoints), virtual_count, total) {}
+
+    template <class Words> requires std::is_same_v<Words, word_view>
+    rank_groups_view(Words classes, Words checkpoints,
+                     std::uint64_t virtual_count, std::uint64_t total)
       : classes_(classes), checkpoints_(checkpoints), virtual_count_(virtual_count), total_(total) {
       auto groups = group_count();
       if (groups > std::numeric_limits<std::uint64_t>::max() / class_bits)
@@ -134,6 +145,8 @@ namespace everett {
     std::uint64_t group_count() const noexcept {
       return virtual_count_ / K + (virtual_count_ % K != 0);
     }
+    word_view class_words() const noexcept { return classes_; }
+    word_view checkpoint_words() const noexcept { return checkpoints_; }
     std::uint64_t class_at(std::uint64_t group) const {
       if (group >= group_count()) throw std::out_of_range("rank groups class");
       return read_class(group);
@@ -145,22 +158,28 @@ namespace everett {
       auto result = checkpoints_[group / 128];
       if constexpr (K == 3 || K == 7 || K == 31) {
         auto count = unsigned(group % 128);
-        if (!count) return result;
+        if (!count) return add_prefix(result, 0);
         auto word = (group / 128) * (2 * class_bits);
 #if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
         // Two-bit broadword sums have lower dependent query latency. Wider
         // classes favor NEON for the rank-plus-class projection operation.
         if constexpr (K != 3)
           if (classes_.size() - word >= 2 * class_bits)
-            return result + rank_groups_detail::prefix_neon<class_bits>(classes_.data() + word, count);
+            return add_prefix(result, vaddvq_u16(rank_groups_detail::prefix_vectors<class_bits>(
+              classes_.bytes().data() + word * 8, count * class_bits)));
 #endif
-        return result + rank_groups_detail::prefix_portable<class_bits>(classes_.data() + word, count);
+        return add_prefix(result, rank_groups_detail::prefix_portable<class_bits>(classes_.subspan(word), count));
       }
-      for (auto i = (group / 128) * 128; i < group; ++i) result += read_class(i);
-      return result;
+      for (auto i = (group / 128) * 128; i < group; ++i) result = add_prefix(result, read_class(i));
+      return add_prefix(result, 0);
     }
 
   private:
+    std::uint64_t add_prefix(std::uint64_t checkpoint, std::uint64_t prefix) const {
+      if (checkpoint > total_ || prefix > total_ - checkpoint)
+        throw std::invalid_argument("invalid rank groups checkpoint or prefix");
+      return checkpoint + prefix;
+    }
     std::uint64_t read_class(std::uint64_t group) const noexcept {
       auto bit = group * class_bits;
       auto word = bit / 64;
@@ -169,8 +188,8 @@ namespace everett {
       if (shift + class_bits > 64) value |= classes_[word + 1] << (64 - shift);
       return value & K;
     }
-    std::span<std::uint64_t const> classes_;
-    std::span<std::uint64_t const> checkpoints_;
+    word_view classes_;
+    word_view checkpoints_;
     std::uint64_t virtual_count_;
     std::uint64_t total_;
   };
@@ -183,6 +202,14 @@ namespace everett {
                      std::span<std::uint64_t const> checkpoints,
                      std::uint64_t virtual_count, std::uint64_t total)
       : view_(classes, checkpoints, virtual_count, total) {}
+
+    template <class Words> requires std::is_same_v<Words, word_view>
+    rank_groups_view(Words classes, Words checkpoints,
+                     std::uint64_t virtual_count, std::uint64_t total)
+      : view_(classes, checkpoints, virtual_count, total) {}
+
+    word_view class_words() const noexcept { return view_.class_words(); }
+    word_view checkpoint_words() const noexcept { return view_.checkpoint_words(); }
 
     std::uint64_t size() const noexcept { return view_.size(); }
     std::uint64_t count() const noexcept { return view_.count(); }

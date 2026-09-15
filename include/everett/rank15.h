@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <everett/word_view.h>
+
 #include <cstdint>
 #include <span>
 #include <stdexcept>
@@ -33,6 +35,11 @@ namespace everett {
     rank15_view(std::span<std::uint64_t const> classes,
                 std::span<std::uint64_t const> checkpoints,
                 std::uint64_t virtual_count, std::uint64_t total)
+      : rank15_view(word_view(classes), word_view(checkpoints), virtual_count, total) {}
+
+    template <class Words> requires std::is_same_v<Words, word_view>
+    rank15_view(Words classes, Words checkpoints,
+                std::uint64_t virtual_count, std::uint64_t total)
       : classes_(classes), checkpoints_(checkpoints),
         virtual_count_(virtual_count),
         group_count_(virtual_count / 15 + (virtual_count % 15 != 0)), total_(total) {
@@ -47,6 +54,9 @@ namespace everett {
     std::uint64_t group_count() const noexcept { return group_count_; }
     std::uint64_t count() const noexcept { return total_; }
 
+    word_view class_words() const noexcept { return classes_; }
+    word_view checkpoint_words() const noexcept { return checkpoints_; }
+
     unsigned class_at(std::uint64_t group) const {
       if (group >= group_count()) throw std::out_of_range("rank15 class");
       return unsigned((classes_[group / 16] >> (4 * (group % 16))) & 15);
@@ -58,17 +68,17 @@ namespace everett {
       if (group > group_count()) throw std::out_of_range("rank15 group");
       if (group == group_count()) return total_;
       auto result = checkpoints_[group / 128];
-      if (group % 128 == 0) return result;
+      if (group % 128 == 0) return add_prefix(result, 0);
       auto word = (group / 128) * 8;
 #if defined(__AVX512F__) && defined(__AVX512BW__)
       if (classes_.size() - word >= 8)
-        return result + prefix128_avx512(classes_.data() + word, unsigned(group % 128));
+        return add_prefix(result, prefix128_avx512(classes_.bytes().data() + word * 8, unsigned(group % 128)));
 #elif defined(__AVX2__)
       if (classes_.size() - word >= 8)
-        return result + prefix128_avx2(classes_.data() + word, unsigned(group % 128));
+        return add_prefix(result, prefix128_avx2(classes_.bytes().data() + word * 8, unsigned(group % 128)));
 #elif defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       if (classes_.size() - word >= 8)
-        return result + prefix128_neon(classes_.data() + word, unsigned(group % 128));
+        return add_prefix(result, prefix128_neon(classes_.bytes().data() + word * 8, unsigned(group % 128)));
 #endif
       // Each word contributes at most 30 to each byte. Eight words fit in
       // byte lanes (240), so we can accumulate before the horizontal sum.
@@ -77,12 +87,17 @@ namespace everett {
       auto tail = unsigned(group % 16);
       // The endpoint returned above, so this word exists even for tail=0.
       pairs += pair_nibbles(classes_[word] & ((std::uint64_t{1} << (4 * tail)) - 1));
-      return result + sum_bytes(pairs);
+      return add_prefix(result, sum_bytes(pairs));
     }
 
   private:
+    std::uint64_t add_prefix(std::uint64_t checkpoint, unsigned prefix) const {
+      if (checkpoint > total_ || prefix > total_ - checkpoint)
+        throw std::invalid_argument("invalid rank15 checkpoint or prefix");
+      return checkpoint + prefix;
+    }
 #if defined(__AVX512F__) && defined(__AVX512BW__)
-    static unsigned prefix128_avx512(std::uint64_t const * words, unsigned count) noexcept {
+    static unsigned prefix128_avx512(std::byte const * words, unsigned count) noexcept {
       auto positions = _mm512_set_epi8(
         126, 124, 122, 120, 118, 116, 114, 112, 110, 108, 106, 104, 102, 100, 98, 96,
         94, 92, 90, 88, 86, 84, 82, 80, 78, 76, 74, 72, 70, 68, 66, 64,
@@ -103,7 +118,7 @@ namespace everett {
       return unsigned(_mm512_reduce_add_epi64(_mm512_sad_epu8(pairs, _mm512_setzero_si512())));
     }
 #elif defined(__AVX2__)
-    static unsigned prefix128_avx2(std::uint64_t const * words, unsigned count) noexcept {
+    static unsigned prefix128_avx2(std::byte const * words, unsigned count) noexcept {
       auto positions = _mm256_setr_epi8(
         0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30,
         32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62);
@@ -119,7 +134,7 @@ namespace everett {
                               _mm256_and_si256(high, _mm256_cmpgt_epi8(boundary, high_positions)));
       };
       auto a = selected_pairs(_mm256_loadu_si256(reinterpret_cast<__m256i const *>(words)), 0);
-      auto b = selected_pairs(_mm256_loadu_si256(reinterpret_cast<__m256i const *>(words + 4)), 64);
+      auto b = selected_pairs(_mm256_loadu_si256(reinterpret_cast<__m256i const *>(words + 32)), 64);
       // Two vectors contribute at most 60 per byte. Widen before reducing the
       // total, which fits in 32 bits (at most 1920). Exactly 64 bytes are readable.
       auto totals = _mm256_sad_epu8(_mm256_add_epi8(a, b), _mm256_setzero_si256());
@@ -129,7 +144,7 @@ namespace everett {
 #endif
 
 #if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    static unsigned prefix128_neon(std::uint64_t const * words, unsigned count) noexcept {
+    static unsigned prefix128_neon(std::byte const * words, unsigned count) noexcept {
       uint8x16_t const positions{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
       auto boundary = vdupq_n_u8(count);
       auto selected_pairs = [&](uint8x16_t packed, unsigned base) {
@@ -162,8 +177,8 @@ namespace everett {
       return unsigned((value * 0x0001000100010001ull) >> 48);
     }
 
-    std::span<std::uint64_t const> classes_;
-    std::span<std::uint64_t const> checkpoints_;
+    word_view classes_;
+    word_view checkpoints_;
     std::uint64_t virtual_count_;
     std::uint64_t group_count_;
     std::uint64_t total_;

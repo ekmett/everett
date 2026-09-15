@@ -864,6 +864,8 @@ namespace {
     wrong_offsets[0] = 1;
     auto leading = select_groups<P::group_size>::build(wrong_offsets, array.size());
     rejects([&] { profile_view<P> invalid(array.bytes(), leading.view(), array.metadata()); });
+    auto shape_leading = profile_view<P>::from_sections(array.bytes(), leading.view(), array.metadata());
+    rejects([&] { shape_leading.validate_contents(); });
     wrong_offsets[0] = 0;
     ++wrong_offsets[1];
     auto inconsistent = select_groups<P::group_size>::build(wrong_offsets, array.size());
@@ -899,6 +901,8 @@ namespace {
       require(tail.metadata().extent % 8 != 0, "partial-byte fixture");
       bytes.back() |= std::byte{1};
       rejects([&] { profile_view<P> invalid(bytes, tail.group_offsets().view(), tail.metadata()); });
+      auto shape_padding = profile_view<P>::from_sections(bytes, tail.group_offsets().view(), tail.metadata());
+      rejects([&] { shape_padding.validate_contents(); });
     }
     bad_bytes.pop_back();
     rejects([&] { profile_view<P> invalid(bad_bytes, array.group_offsets().view(), metadata); });
@@ -912,6 +916,90 @@ namespace {
       std::vector<profile_record> invalid{{bit_string::from_bits("101"), {}}};
       rejects([&] { profile_array<P>::build(invalid); });
     }
+  }
+
+  template <class P, stream_role Role> void mapped_profile_sections() {
+    std::vector<profile_record> records;
+    for (unsigned i = 0; i < 33; ++i) {
+      auto key = bit_string::from_bytes("prefix/" + std::to_string(100 + i));
+      bit_string value;
+      if constexpr (Role == stream_role::native) {
+        if constexpr (P::fixed_width) value = binary(*P::value_width * P::bits_per_unit, i + 1);
+        else value = binary((i % 5) * P::bits_per_unit, i + 1);
+      }
+      records.push_back({std::move(key), std::move(value)});
+    }
+    auto array = profile_array<P, Role>::build(records);
+    auto const & ef = array.group_offsets();
+    std::array<std::vector<std::byte>, 5> sections;
+    sections[0].assign(array.bytes().begin(), array.bytes().end());
+    auto encode = [](std::span<std::uint64_t const> words) {
+      std::vector<std::byte> result(words.size() * 8);
+      for (std::size_t i = 0; i < words.size(); ++i)
+        for (unsigned j = 0; j < 8; ++j) result[i * 8 + j] = std::byte((words[i] >> (j * 8)) & 255);
+      return result;
+    };
+    sections[1] = encode(ef.low); sections[2] = encode(ef.high); sections[4] = encode(ef.sparse);
+    std::vector<std::uint64_t> sample_words;
+    for (auto sample : ef.samples) { sample_words.push_back(sample.first); sample_words.push_back(sample.sparse); }
+    sections[3] = encode(sample_words);
+    auto inspect = [&](std::array<std::span<std::byte const>, 5> spans, bool read) {
+      select_groups_view<P::codec_block_size> offsets(
+        word_view::little_endian(spans[1]), word_view::little_endian(spans[2]),
+        sample_view::little_endian(spans[3]), word_view::little_endian(spans[4]),
+        ef.record_count, ef.universe, ef.low_width);
+      auto view = profile_view<P, Role>::from_sections(spans[0], offsets, array.metadata());
+      require(view.bytes().data() == spans[0].data() && view.size() == records.size(), "mapped profile retains payload");
+      require(view.group_offsets().samples().bytes().data() == spans[3].data(), "mapped profile retains samples");
+      auto bad = array.metadata(); ++bad.codec_block_size;
+      rejects([&] { (void)profile_view<P, Role>::from_sections(spans[0], offsets, bad); });
+      if (!read) return;
+      view.validate_contents();
+      auto cursor = view.cursor();
+      for (std::size_t i = 0; i < records.size(); ++i) {
+        require(!cursor.done(), "mapped cursor early EOF");
+        auto item = cursor.peek();
+        require(compare_bits(item.key.prefix, records[i].key.view()) == 0 &&
+                compare_bits(item.value, records[i].value.view()) == 0, "mapped sequential profile oracle");
+        auto encoded = view.encoded_at(i);
+        require(compare_bits(encoded.value, records[i].value.view()) == 0, "mapped selected value oracle");
+        cursor.advance();
+      }
+      require(cursor.done() && view.predecessor_units(view.size()) == array.metadata().terminal_key_units,
+              "mapped terminal key length");
+    };
+    for (unsigned offset = 0; offset < 8; ++offset) {
+      std::array<std::vector<std::byte>, 5> unaligned;
+      std::array<std::span<std::byte const>, 5> spans;
+      for (std::size_t i = 0; i < sections.size(); ++i) {
+        unaligned[i].resize(offset, std::byte{0x97});
+        unaligned[i].insert(unaligned[i].end(), sections[i].begin(), sections[i].end());
+        spans[i] = std::span(unaligned[i]).subspan(offset);
+      }
+      inspect(spans, true);
+    }
+#if defined(__unix__) || defined(__APPLE__)
+    auto page = std::size_t(sysconf(_SC_PAGESIZE));
+    auto raw = mmap(nullptr, page * 5, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    require(raw != MAP_FAILED, "mapped profile guard allocation");
+    struct cleanup {
+      void * memory;
+      std::size_t size;
+      ~cleanup() { munmap(memory, size); }
+    } guard{raw, page * 5};
+    std::array<std::span<std::byte const>, 5> unread;
+    for (std::size_t i = 0; i < sections.size(); ++i) {
+      require(sections[i].size() + 1 <= page, "mapped profile fixture fits page");
+      unread[i] = {static_cast<std::byte const *>(raw) + i * page + 1, sections[i].size()};
+    }
+    // Every directory and payload page is inaccessible: even an EF endpoint
+    // or the final stream-padding byte would fault during shape construction.
+    inspect(unread, false);
+    require(mprotect(raw, page * 5, PROT_READ | PROT_WRITE) == 0, "mapped profile unprotect");
+    for (std::size_t i = 0; i < sections.size(); ++i)
+      std::copy(sections[i].begin(), sections[i].end(), static_cast<std::byte *>(raw) + i * page + 1);
+    inspect(unread, true);
+#endif
   }
 
   template <std::uint64_t K> void policies() {
@@ -943,6 +1031,12 @@ int main() {
     coded_profiles<storage_policy<profile_unit::bit, fixed_values<3>, 7, golomb<5>>>();
     coded_profiles<storage_policy<profile_unit::bit, fixed_values<0>, 15, exponential_golomb<2>>>();
     coded_profiles<storage_policy<profile_unit::bit, variable_values, 31, exponential_golomb<63>>>();
+    mapped_profile_sections<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>, stream_role::native>();
+    mapped_profile_sections<storage_policy<profile_unit::byte, fixed_values<3>, 15, exponential_golomb<0>, 7>, stream_role::native>();
+    mapped_profile_sections<storage_policy<profile_unit::bit, variable_values, 7, golomb<3>, 16>, stream_role::native>();
+    mapped_profile_sections<storage_policy<profile_unit::bit, fixed_values<3>, 31, exponential_golomb<2>, 1>, stream_role::native>();
+    mapped_profile_sections<storage_policy<profile_unit::byte, fixed_values<3>, 15, exponential_golomb<0>, 16>, stream_role::borrowed>();
+    mapped_profile_sections<storage_policy<profile_unit::bit, fixed_values<3>, 15, golomb<7>, 16>, stream_role::borrowed>();
     policies<3>();
     policies<7>();
     policies<15>();
