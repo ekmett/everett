@@ -8,6 +8,7 @@
  */
 
 #include <everett/mapped_blob.h>
+#include <everett/native_writer.h>
 #include <everett/sections.h>
 
 #include <algorithm>
@@ -735,6 +736,96 @@ namespace {
     }
   }
 
+  // CRC-valid mutations exercise the semantic reader, not just its checksum.
+  // Accepted native changes must round-trip through a separate sequential
+  // decoder/writer. A bound index has only one canonical encoding for its
+  // unchanged native and target owners, so accepted index bytes must agree.
+  template <class P> void mutation_tests(persisted_fixture<P> const & fixture) {
+    auto layer = fixture.routing_layers();
+    std::size_t accepted_native = 0, changed_native = 0, rejected_native = 0, rejected_index = 0;
+    auto check_native = [&](std::vector<std::byte> const & bytes) {
+      bool scanned = false;
+      try {
+        with_native<P>(bytes, [&](auto mapped) {
+          mapped.scan();
+          scanned = true;
+          auto view = mapped.view();
+          profile_native_writer<P> writer(view.metadata().common_value_width);
+          auto cursor = view.cursor();
+          std::uint64_t count = 0;
+          while (!cursor.done()) {
+            auto item = cursor.peek();
+            writer.append(item.key.prefix, item.value);
+            cursor.advance();
+            require(++count <= view.size(), "accepted native mutation decoder exceeded count");
+          }
+          require(count == view.size(), "accepted native mutation decoder lost records");
+          auto rebuilt = writer.finish();
+          require(encode_native_sections(rebuilt).materialize() == bytes,
+                  "accepted native mutation was not canonical round-trip output");
+          ++accepted_native;
+          changed_native += bytes != fixture.native_bytes[layer];
+        });
+      } catch (std::logic_error const &) {
+        if (scanned) throw;
+        ++rejected_native;
+      } catch (std::overflow_error const &) {
+        if (scanned) throw;
+        ++rejected_native;
+      }
+    };
+    auto check_index = [&](std::vector<std::byte> const & bytes) {
+      bool scanned = false;
+      try {
+        with_index<P>(bytes, [&](auto mapped) {
+          auto owner = std::make_shared<mapped_index<P> const>(std::move(mapped));
+          auto pair = mapped_blob<P>::bind(fixture.identities[layer], fixture.natives[layer],
+                                           std::move(owner), fixture.pairs[layer + 1]);
+          pair->scan();
+          scanned = true;
+          require(bytes == fixture.index_bytes[layer], "accepted index mutation changed its exact pair");
+        });
+      } catch (std::logic_error const &) {
+        if (scanned) throw;
+        ++rejected_index;
+      } catch (std::overflow_error const &) {
+        if (scanned) throw;
+        ++rejected_index;
+      }
+    };
+    auto mutate = [&](auto const & original, auto && check) {
+      check(original);
+      // Visit every byte of the envelope, directory, payload and auxiliary
+      // arrays. Repairing both CRCs prevents a checksum-only rejection.
+      for (std::size_t at = 0; at != original.size(); ++at) {
+        auto bytes = original;
+        bytes[at] ^= std::byte(1u << (at % 8));
+        repair_crc(bytes);
+        check(bytes);
+      }
+      // Contiguous overwrites stress multi-byte counts and offsets. The
+      // sequence is deterministic, including the all-zero/all-one cases.
+      std::uint64_t random = 0xbaf317e5938726d1ull;
+      for (unsigned trial = 0; trial != 128; ++trial) {
+        random ^= random << 13; random ^= random >> 7; random ^= random << 17;
+        auto bytes = original;
+        auto at = std::size_t(random % bytes.size());
+        auto length = std::min<std::size_t>(1 + ((random >> 32) % 8), bytes.size() - at);
+        auto fill = std::byte(trial & 1 ? 255 : 0);
+        std::fill_n(bytes.begin() + at, length, fill);
+        repair_crc(bytes);
+        check(bytes);
+      }
+    };
+    mutate(fixture.native_bytes[layer], check_native);
+    mutate(fixture.index_bytes[layer], check_index);
+    require(accepted_native > 1 && changed_native && rejected_native && rejected_index,
+            "mutation fixture did not cover valid changes and semantic rejections");
+    std::cout << "CRC-valid " << (P::unit == profile_unit::byte ? "byte" : "bit")
+      << " mutations: " << changed_native << " changed native round trips, "
+      << rejected_native << " native rejections, " << rejected_index << " index rejections\n";
+  }
+
   template <class P> void empty_test() {
     temporary_directory directory;
     auto empty = profile_blob<P>::build({});
@@ -893,6 +984,7 @@ namespace {
     if (exhaustive_shapes) {
       shape_tests(fixture);
       semantic_tests(fixture);
+      mutation_tests(fixture);
     }
     if constexpr (P::fixed_width) {
       auto broken = fixture.native_bytes[fixture.routing_layers()];
