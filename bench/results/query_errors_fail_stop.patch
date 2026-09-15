@@ -1,0 +1,1296 @@
+--- a/include/everett/index_builder.h
++++ b/include/everett/index_builder.h
+@@ -8,6 +8,8 @@
+  */
+ 
+ #pragma once
++
++#include <everett/error_detail.h>
+ 
+ #include <everett/sampling.h>
+ 
+@@ -60,14 +62,14 @@
+ 
+     void push(bit_view key, std::uint64_t target_ordinal) {
+       check_active();
+-      if (input_mode_ == input_mode::coded) throw std::logic_error("cannot mix coded and full index inputs");
++      if (input_mode_ == input_mode::coded) error_detail::raise<std::logic_error>("cannot mix coded and full index inputs");
+       push_key(key, target_ordinal);
+       input_mode_ = input_mode::full;
+     }
+ 
+     void push(coded_sample_type const & sample) {
+       check_active();
+-      if (input_mode_ == input_mode::full) throw std::logic_error("cannot mix coded and full index inputs");
++      if (input_mode_ == input_mode::full) error_detail::raise<std::logic_error>("cannot mix coded and full index inputs");
+       check_input_slot(sample.target_ordinal);
+       auto key = incoming_decoder_.accept(sample);
+       try {
+@@ -86,7 +88,7 @@
+     // authorizes consuming native keys: a later borrowed key may precede them.
+     void close_input() {
+       check_active();
+-      if (input_closed_) throw std::logic_error("index input is already closed");
++      if (input_closed_) error_detail::raise<std::logic_error>("index input is already closed");
+       input_closed_ = true;
+     }
+ 
+@@ -137,7 +139,7 @@
+ 
+     sample_type take_output() {
+       check_active();
+-      if (!outgoing_) throw std::logic_error("index builder has no outgoing sample");
++      if (!outgoing_) error_detail::raise<std::logic_error>("index builder has no outgoing sample");
+       // Compatibility path: materialize a full queued key only when requested.
+       sample_type result{bit_string::copy(outgoing_encoder_.key()), outgoing_->target_ordinal};
+       outgoing_.reset();
+@@ -148,7 +150,7 @@
+     // through the full-key compatibility interface. Consume coded frames in order.
+     coded_sample_type take_coded_output() {
+       check_active();
+-      if (!outgoing_) throw std::logic_error("index builder has no outgoing sample");
++      if (!outgoing_) error_detail::raise<std::logic_error>("index builder has no outgoing sample");
+       auto result = std::move(*outgoing_);
+       outgoing_.reset();
+       return result;
+@@ -159,10 +161,10 @@
+     // Empty targets may be retained too. No durable publication is implied.
+     blob_type finish(std::shared_ptr<blob_type const> target = {}) {
+       check_active();
+-      if (!done()) throw std::logic_error("index builder is not drained at EOF");
++      if (!done()) error_detail::raise<std::logic_error>("index builder is not drained at EOF");
+       auto target_count = target ? target->virtual_size() : 0;
+       auto expected = target_count / group_size + (target_count % group_size != 0);
+-      if (expected != received_) throw std::invalid_argument("index samples disagree with target extent");
++      if (expected != received_) error_detail::raise<std::invalid_argument>("index samples disagree with target extent");
+       try {
+         flush_pending();
+         blob_type result;
+@@ -206,22 +208,22 @@
+     bool failed_ = false;
+ 
+     void check_active() const {
+-      if (finished_ || failed_) throw std::logic_error("index builder is no longer active");
++      if (finished_ || failed_) error_detail::raise<std::logic_error>("index builder is no longer active");
+     }
+     void check_input_slot(std::uint64_t target_ordinal) const {
+-      if (!needs_input()) throw std::logic_error("index builder cannot accept another lookahead");
++      if (!needs_input()) error_detail::raise<std::logic_error>("index builder cannot accept another lookahead");
+       if (received_ > std::numeric_limits<std::uint64_t>::max() / group_size ||
+           target_ordinal != received_ * group_size)
+-        throw std::invalid_argument("index samples must name consecutive target groups");
++        error_detail::raise<std::invalid_argument>("index samples must name consecutive target groups");
+       if (received_ == std::numeric_limits<std::uint64_t>::max() - native_->size())
+-        throw std::length_error("index augmented count overflows");
++        error_detail::raise<std::length_error>("index augmented count overflows");
+     }
+     void push_key(bit_view key, std::uint64_t target_ordinal) {
+       check_input_slot(target_ordinal);
+       if (key.size() % P::bits_per_unit)
+-        throw std::invalid_argument("index sample key disagrees with policy units");
++        error_detail::raise<std::invalid_argument>("index sample key disagrees with policy units");
+       auto order = pending_ ? compare_bits(pending_->view(), key) : -1;
+-      if (order > 0) throw std::invalid_argument("index samples must be sorted");
++      if (order > 0) error_detail::raise<std::invalid_argument>("index samples must be sorted");
+       auto copy = bit_string::copy(key);
+       incoming_.emplace(std::move(copy));
+       incoming_false_ = !order && pending_false_;
+--- a/include/everett/index_pipeline.h
++++ b/include/everett/index_pipeline.h
+@@ -8,6 +8,8 @@
+  */
+ 
+ #pragma once
++
++#include <everett/error_detail.h>
+ 
+ #include <everett/index_builder.h>
+ 
+@@ -42,7 +44,7 @@
+       : target_(std::move(target)), source_(target_) {
+       stages_.reserve(native_stages.size());
+       for (auto const & source : native_stages) {
+-        if (!source) throw std::invalid_argument("null pipeline native source");
++        if (!source) error_detail::raise<std::invalid_argument>("null pipeline native source");
+         stages_.push_back(std::make_unique<index_builder<P>>(*source));
+       }
+       results_.resize(stages_.size());
+@@ -64,11 +66,11 @@
+     std::size_t size() const noexcept { return stages_.size(); }
+ 
+     std::uint64_t step(std::uint64_t quanta) {
+-      if (finished_ || failed_) throw std::logic_error("pipeline is no longer active");
++      if (finished_ || failed_) error_detail::raise<std::logic_error>("pipeline is no longer active");
+       std::uint64_t work = 0;
+       try {
+         while (work != quanta && !done()) {
+-          if (!advance_one()) throw std::logic_error("index pipeline made no progress");
++          if (!advance_one()) error_detail::raise<std::logic_error>("index pipeline made no progress");
+           ++work;
+         }
+       } catch (...) {
+@@ -79,8 +81,8 @@
+     }
+ 
+     pair_type finish() {
+-      if (failed_) throw std::logic_error("index pipeline has failed");
+-      if (!done()) throw std::logic_error("index pipeline still has input");
++      if (failed_) error_detail::raise<std::logic_error>("index pipeline has failed");
++      if (!done()) error_detail::raise<std::logic_error>("index pipeline still has input");
+       if (!finished_) {
+         try {
+           auto target = target_;
+--- a/include/everett/profile.h
++++ b/include/everett/profile.h
+@@ -8,6 +8,8 @@
+  */
+ 
+ #pragma once
++
++#include <everett/error_detail.h>
+ 
+ #include <everett/policy.h>
+ #include <everett/key_detail.h>
+@@ -31,12 +33,12 @@
+   namespace profile_detail {
+     inline std::uint64_t add(std::uint64_t a, std::uint64_t b) {
+       if (b > std::numeric_limits<std::uint64_t>::max() - a)
+-        throw std::overflow_error("profile addition");
++        error_detail::raise<std::overflow_error>("profile addition");
+       return a + b;
+     }
+     inline std::uint64_t multiply(std::uint64_t a, std::uint64_t b) {
+       if (b && a > std::numeric_limits<std::uint64_t>::max() / b)
+-        throw std::overflow_error("profile multiplication");
++        error_detail::raise<std::overflow_error>("profile multiplication");
+       return a * b;
+     }
+     inline std::uint64_t byte_count(std::uint64_t bits) noexcept {
+@@ -51,19 +53,19 @@
+       : bytes_(bytes), offset_(offset), size_(bits) {
+       auto capacity = profile_detail::multiply(bytes.size(), 8);
+       if (offset > capacity || bits > capacity - offset)
+-        throw std::invalid_argument("bit view exceeds storage");
++        error_detail::raise<std::invalid_argument>("bit view exceeds storage");
+     }
+     std::uint64_t size() const noexcept { return size_; }
+     bool empty() const noexcept { return size_ == 0; }
+     std::uint64_t offset() const noexcept { return offset_; }
+     std::span<std::byte const> storage() const noexcept { return bytes_; }
+     bool at(std::uint64_t i) const {
+-      if (i >= size_) throw std::out_of_range("bit position");
++      if (i >= size_) error_detail::raise<std::out_of_range>("bit position");
+       auto bit = offset_ + i;
+       return (std::to_integer<unsigned>(bytes_[bit / 8]) >> (7 - bit % 8)) & 1;
+     }
+     bit_view subview(std::uint64_t first, std::uint64_t count) const {
+-      if (first > size_ || count > size_ - first) throw std::out_of_range("bit subview");
++      if (first > size_ || count > size_ - first) error_detail::raise<std::out_of_range>("bit subview");
+       return {bytes_, count, offset_ + first};
+     }
+     bit_view prefix(std::uint64_t count) const { return subview(0, std::min(count, size_)); }
+@@ -158,10 +160,10 @@
+ 
+     void validate() const {
+       if (bytes.size() != profile_detail::byte_count(bit_size))
+-        throw std::invalid_argument("packed bit-string length");
++        error_detail::raise<std::invalid_argument>("packed bit-string length");
+       if (bit_size % 8 &&
+           (std::to_integer<unsigned>(bytes.back()) & ((1u << (8 - bit_size % 8)) - 1)))
+-        throw std::invalid_argument("nonzero bit-string padding");
++        error_detail::raise<std::invalid_argument>("nonzero bit-string padding");
+     }
+     bit_view view() const & { validate(); return {bytes, bit_size}; }
+     bit_view view() const && = delete;
+@@ -184,7 +186,7 @@
+       result.bit_size = source.size();
+       result.bytes.resize(static_cast<std::size_t>(profile_detail::byte_count(source.size())));
+       for (std::size_t i = 0; i != source.size(); ++i) {
+-        if (source[i] != '0' && source[i] != '1') throw std::invalid_argument("expected binary digits");
++        if (source[i] != '0' && source[i] != '1') error_detail::raise<std::invalid_argument>("expected binary digits");
+         if (source[i] == '1') result.bytes[i / 8] |= static_cast<std::byte>(1u << (7 - i % 8));
+       }
+       return result;
+@@ -226,7 +228,7 @@
+   inline int compare_bits(bit_view a, bit_view b) { return compare_common_bits(a, b).order; }
+   template <class P> std::uint64_t common_prefix_units(bit_view a, bit_view b) {
+     if (a.size() % P::bits_per_unit || b.size() % P::bits_per_unit)
+-      throw std::invalid_argument("key length does not match profile unit");
++      error_detail::raise<std::invalid_argument>("key length does not match profile unit");
+     return compare_common_bits(a, b).common_bits / P::bits_per_unit;
+   }
+ 
+@@ -234,17 +236,17 @@
+     bit_view prefix;
+     std::uint64_t full_units = 0;
+     static profile_anchor complete(bit_view key) {
+-      if (key.size() % P::bits_per_unit) throw std::invalid_argument("anchor unit mismatch");
++      if (key.size() % P::bits_per_unit) error_detail::raise<std::invalid_argument>("anchor unit mismatch");
+       return {key, key.size() / P::bits_per_unit};
+     }
+   };
+ 
+   template <class P> int compare_profile_prefix(profile_anchor<P> key, bit_view query) {
+     if (query.size() % P::bits_per_unit || key.prefix.size() % P::bits_per_unit)
+-      throw std::invalid_argument("query unit mismatch");
++      error_detail::raise<std::invalid_argument>("query unit mismatch");
+     auto query_units = query.size() / P::bits_per_unit;
+     auto needed = profile_detail::multiply(std::min(key.full_units, query_units), P::bits_per_unit);
+-    if (key.prefix.size() < needed) throw std::invalid_argument("query prefix is incomplete");
++    if (key.prefix.size() < needed) error_detail::raise<std::invalid_argument>("query prefix is incomplete");
+     auto order = compare_bits(key.prefix.prefix(needed), query.prefix(needed));
+     if (order) return order;
+     return key.full_units < query_units ? -1 : key.full_units > query_units ? 1 : 0;
+@@ -308,12 +310,12 @@
+   // record lengths/backspaces still count P units. No prefix bytes are implied.
+   template <class P> struct profile_query_context {
+     explicit profile_query_context(bit_view query) {
+-      if (query.size() % P::bits_per_unit) throw std::invalid_argument("query unit mismatch");
++      if (query.size() % P::bits_per_unit) error_detail::raise<std::invalid_argument>("query unit mismatch");
+       query_ = std::make_shared<bit_string const>(bit_string::copy(query));
+       order_ = query.size() ? -1 : 0;
+     }
+     bit_view query() const {
+-      if (!query_) throw std::logic_error("comparison context has no query");
++      if (!query_) error_detail::raise<std::logic_error>("comparison context has no query");
+       return query_->view();
+     }
+     std::uint64_t common_bits() const noexcept { return common_bits_; }
+@@ -321,7 +323,7 @@
+     int order() const noexcept { return order_; }
+ 
+     profile_query_context with_key(bit_view key) const {
+-      if (key.size() % P::bits_per_unit) throw std::invalid_argument("boundary key unit mismatch");
++      if (key.size() % P::bits_per_unit) error_detail::raise<std::invalid_argument>("boundary key unit mismatch");
+       auto result = *this;
+       auto comparison = compare_common_bits(key, query());
+       result.common_bits_ = comparison.common_bits;
+@@ -340,7 +342,7 @@
+     int order_ = 0;
+ 
+     std::uint64_t advance(profile_encoded_record const & record) {
+-      if (record.retained > full_units_) throw std::invalid_argument("comparison anchor is too short");
++      if (record.retained > full_units_) error_detail::raise<std::invalid_argument>("comparison anchor is too short");
+       auto retained_bits = profile_detail::multiply(record.retained, P::bits_per_unit);
+       std::uint64_t compared = 0;
+       if (common_bits_ >= retained_bits) {
+@@ -359,12 +361,12 @@
+       auto key_bits = profile_detail::multiply(key_units, P::bits_per_unit);
+       if (order_ > 0 || lcp_bits > key_bits ||
+           lcp_bits > profile_detail::multiply(full_units_, P::bits_per_unit))
+-        throw std::invalid_argument("invalid cut predecessor comparison");
++        error_detail::raise<std::invalid_argument>("invalid cut predecessor comparison");
+       auto result = *this;
+       result.common_bits_ = std::min(lcp_bits, common_bits_);
+       result.full_units_ = key_units;
+       if (result.common_bits_ == query().size() && key_bits > query().size())
+-        throw std::invalid_argument("cut predecessor exceeds query");
++        error_detail::raise<std::invalid_argument>("cut predecessor exceeds query");
+       result.order_ = key_bits == query().size() && result.common_bits_ == key_bits ? 0 : -1;
+       return result;
+     }
+@@ -385,14 +387,14 @@
+   namespace profile_detail {
+     inline void resize(bit_string & value, std::uint64_t bits) {
+       auto bytes = byte_count(bits);
+-      if (bytes > value.bytes.max_size()) throw std::length_error("profile bit string too large");
++      if (bytes > value.bytes.max_size()) error_detail::raise<std::length_error>("profile bit string too large");
+       value.bytes.resize(static_cast<std::size_t>(bytes));
+       value.bit_size = bits;
+       if (bits % 8) value.bytes.back() &= static_cast<std::byte>(0xffu << (8 - bits % 8));
+     }
+     inline void copy_into(bit_string & target, std::uint64_t first, bit_view source) {
+       if (first > target.bit_size || source.size() > target.bit_size - first)
+-        throw std::out_of_range("profile copy exceeds destination");
++        error_detail::raise<std::out_of_range>("profile copy exceeds destination");
+       copy_bits(target.bytes.data(), first, source);
+     }
+ 
+@@ -415,20 +417,20 @@
+       if (bit) target.bytes[at / 8] |= static_cast<std::byte>(1u << (7 - at % 8));
+     }
+     inline void append_byte(bit_string & target, unsigned value) {
+-      if (target.bit_size % 8) throw std::logic_error("unaligned byte profile writer");
++      if (target.bit_size % 8) error_detail::raise<std::logic_error>("unaligned byte profile writer");
+       target.bytes.push_back(static_cast<std::byte>(value));
+       target.bit_size = add(target.bit_size, 8);
+     }
+     // Fixed-width fields are MSB-first. Width 64 is valid; no shift uses 64.
+     inline void put_fixed(bit_string & target, std::uint64_t & at, std::uint64_t value, unsigned width) {
+       if (width > 64 || at > target.bit_size || width > target.bit_size - at)
+-        throw std::out_of_range("profile fixed field exceeds destination");
++        error_detail::raise<std::out_of_range>("profile fixed field exceeds destination");
+       store_bits(target.bytes.data(), at, value, width);
+       at += width;
+     }
+     inline std::uint64_t read_fixed(bit_view data, std::uint64_t & at, unsigned width) {
+       if (width > 64 || at > data.size() || width > data.size() - at)
+-        throw std::invalid_argument("truncated backspace remainder");
++        error_detail::raise<std::invalid_argument>("truncated backspace remainder");
+       auto value = load_bits(data, at, width);
+       at += width;
+       return value;
+@@ -437,13 +439,13 @@
+         char const * truncated, char const * overflow) {
+       std::uint64_t zeros = 0;
+       for (;;) {
+-        if (at >= data.size()) throw std::invalid_argument(truncated);
++        if (at >= data.size()) error_detail::raise<std::invalid_argument>(truncated);
+         auto width = unsigned(std::min<std::uint64_t>(data.size() - at, 64));
+         auto word = load_bits(data, at, width);
+         auto leading = unsigned(std::countl_zero(word)) - (64 - width);
+         if (leading > limit - zeros) {
+           at += limit - zeros + 1;
+-          throw std::invalid_argument(overflow);
++          error_detail::raise<std::invalid_argument>(overflow);
+         }
+         zeros += leading; at += leading;
+         if (leading != width) { ++at; return zeros; }
+@@ -467,16 +469,16 @@
+       if constexpr (P::unit == profile_unit::byte) {
+         std::uint64_t value = 0;
+         for (unsigned shift = 0; shift <= 63; shift += 7) {
+-          if (offset >= data.size() / 8) throw std::invalid_argument("truncated profile count");
++          if (offset >= data.size() / 8) error_detail::raise<std::invalid_argument>("truncated profile count");
+           auto part = std::to_integer<unsigned>(data.storage()[offset++]);
+-          if (shift == 63 && part > 1) throw std::invalid_argument("overflowing profile count");
++          if (shift == 63 && part > 1) error_detail::raise<std::invalid_argument>("overflowing profile count");
+           value |= std::uint64_t(part & 127) << shift;
+           if (!(part & 128)) {
+-            if (shift && !(part & 127)) throw std::invalid_argument("noncanonical profile count");
++            if (shift && !(part & 127)) error_detail::raise<std::invalid_argument>("noncanonical profile count");
+             return value;
+           }
+         }
+-        throw std::invalid_argument("overflowing profile count");
++        error_detail::raise<std::invalid_argument>("overflowing profile count");
+       } else {
+         // A complete small code fits in the first fifteen bits. Decode its
+         // prefix and suffix from one bounded field; long codes and short tails
+@@ -493,11 +495,11 @@
+           "truncated exponential-Golomb count", "overflowing exponential-Golomb count"));
+         if (zeros > data.size() - offset) {
+           offset = data.size();
+-          throw std::invalid_argument("truncated exponential-Golomb count");
++          error_detail::raise<std::invalid_argument>("truncated exponential-Golomb count");
+         }
+         auto suffix = read_fixed(data, offset, zeros);
+         if (zeros == 64) {
+-          if (suffix) throw std::invalid_argument("overflowing exponential-Golomb count");
++          if (suffix) error_detail::raise<std::invalid_argument>("overflowing exponential-Golomb count");
+           return std::numeric_limits<std::uint64_t>::max();
+         }
+         return ((std::uint64_t{1} << zeros) - 1) + suffix;
+@@ -562,7 +564,7 @@
+       else if constexpr (P::backspace_code == bit_backspace_code::exponential_golomb) {
+         auto quotient = read_count<P>(data, offset);
+         if (quotient > (std::numeric_limits<std::uint64_t>::max() >> P::backspace_parameter))
+-          throw std::invalid_argument("overflowing exponential-Golomb backspace");
++          error_detail::raise<std::invalid_argument>("overflowing exponential-Golomb backspace");
+         auto remainder = read_fixed(data, offset, unsigned(P::backspace_parameter));
+         return (quotient << P::backspace_parameter) | remainder;
+       } else {
+@@ -579,7 +581,7 @@
+         }
+         auto base = quotient * modulus;
+         if (remainder > std::numeric_limits<std::uint64_t>::max() - base)
+-          throw std::invalid_argument("overflowing Golomb backspace");
++          error_detail::raise<std::invalid_argument>("overflowing Golomb backspace");
+         return base + remainder;
+       }
+     }
+@@ -628,11 +630,11 @@
+     void validate_contents() const {
+       auto bits = data_.size();
+       if (bits % 8 && (std::to_integer<unsigned>(bytes_.back()) & ((1u << (8 - bits % 8)) - 1)))
+-        throw std::invalid_argument("nonzero profile padding");
++        error_detail::raise<std::invalid_argument>("nonzero profile padding");
+       auto groups = metadata_.record_count / P::codec_block_size + (metadata_.record_count % P::codec_block_size != 0);
+       if (offsets_.offset(0, metadata_.common_value_width.value_or(0)) != 0 ||
+           offsets_.offset(groups, metadata_.common_value_width.value_or(0)) != metadata_.extent)
+-        throw std::invalid_argument("profile offset units or extent mismatch");
++        error_detail::raise<std::invalid_argument>("profile offset units or extent mismatch");
+     }
+ 
+     std::uint64_t size() const noexcept { return metadata_.record_count; }
+@@ -644,7 +646,7 @@
+     // One predecessor-length checkpoint is stored at each group start. This
+     // permits true backspace counts without a full-key-length field per record.
+     profile_encoded_record encoded_at(std::uint64_t ordinal) const {
+-      if (ordinal >= size()) throw std::out_of_range("profile record ordinal");
++      if (ordinal >= size()) error_detail::raise<std::out_of_range>("profile record ordinal");
+       auto [at, previous] = locate(ordinal, nullptr);
+       return parse(at, previous);
+     }
+@@ -653,7 +655,7 @@
+     // the terminal metadata supplies it, including an exactly full final block.
+     std::uint64_t predecessor_units(std::uint64_t ordinal,
+                                     profile_comparison_work * work = nullptr) const {
+-      if (ordinal > size()) throw std::out_of_range("profile predecessor ordinal");
++      if (ordinal > size()) error_detail::raise<std::out_of_range>("profile predecessor ordinal");
+       if (!ordinal) return 0;
+       if (ordinal == size()) return metadata_.terminal_key_units;
+       return locate(ordinal, work).second;
+@@ -666,7 +668,7 @@
+       profile_query_context<P> context, F && callback, profile_comparison_work * work = nullptr,
+       std::uint64_t * predecessor = nullptr) const {
+       if (first > last || last > size() || last - first > P::group_size)
+-        throw std::out_of_range("profile comparison window exceeds cascade group");
++        error_detail::raise<std::out_of_range>("profile comparison window exceeds cascade group");
+       if (first == last) {
+         if (predecessor) *predecessor = predecessor_units(first, work);
+         return;
+@@ -689,11 +691,11 @@
+     template <class F> void visit_window(std::uint64_t first, std::uint64_t last,
+       profile_anchor<P> anchor, std::uint64_t prefix_limit, F && callback) const {
+       if (first > last || last > size() || last - first > P::group_size)
+-        throw std::out_of_range("profile window exceeds the policy group size");
++        error_detail::raise<std::out_of_range>("profile window exceeds the policy group size");
+       if (first == last) return;
+       if (anchor.prefix.size() % P::bits_per_unit ||
+           anchor.prefix.size() / P::bits_per_unit > anchor.full_units)
+-        throw std::invalid_argument("profile anchor units");
++        error_detail::raise<std::invalid_argument>("profile anchor units");
+       auto prefix_bits = profile_detail::multiply(
+         std::min(prefix_limit, anchor.prefix.size() / P::bits_per_unit), P::bits_per_unit);
+       auto scratch = bit_string::copy(anchor.prefix.prefix(prefix_bits));
+@@ -712,14 +714,14 @@
+       std::uint64_t context = 0;
+       auto record = encoded_at(0);
+       for (std::uint64_t i = 0; i != size(); ++i) {
+-        if (record.previous_units != context) throw std::invalid_argument("profile predecessor length mismatch");
++        if (record.previous_units != context) error_detail::raise<std::invalid_argument>("profile predecessor length mismatch");
+         decode_into(record, std::numeric_limits<std::uint64_t>::max(), scratch, context);
+         if (!callback(profile_item<P>{i, {scratch.view(), context}, record.value})) return;
+         if (i + 1 != size()) record = next_record(record, i + 1);
+       }
+-      if (record.next_offset != metadata_.extent) throw std::invalid_argument("trailing profile data");
++      if (record.next_offset != metadata_.extent) error_detail::raise<std::invalid_argument>("trailing profile data");
+       if (record.key_units != metadata_.terminal_key_units)
+-        throw std::invalid_argument("profile terminal length mismatch");
++        error_detail::raise<std::invalid_argument>("profile terminal length mismatch");
+     }
+ 
+     // Ordinary FC can traverse the entire prefix chain. LPFC bounds backward
+@@ -734,7 +736,7 @@
+       auto need = std::min(record.key_units, prefix_limit);
+       profile_detail::resize(result.prefix, profile_detail::multiply(need, P::bits_per_unit));
+       while (need) {
+-        if (record.key_units < need) throw std::invalid_argument("profile predecessor prefix is too short");
++        if (record.key_units < need) error_detail::raise<std::invalid_argument>("profile predecessor prefix is too short");
+         if (record.retained < need) {
+           auto copy = profile_detail::multiply(need - record.retained, P::bits_per_unit);
+           profile_detail::copy_into(result.prefix, profile_detail::multiply(record.retained, P::bits_per_unit),
+@@ -742,10 +744,10 @@
+           need = record.retained;
+         }
+         if (!need) break;
+-        if (!ordinal) throw std::invalid_argument("nonliteral first profile key");
++        if (!ordinal) error_detail::raise<std::invalid_argument>("nonliteral first profile key");
+         auto expected = record.previous_units;
+         record = encoded_at(--ordinal);
+-        if (record.key_units != expected) throw std::invalid_argument("profile predecessor length mismatch");
++        if (record.key_units != expected) error_detail::raise<std::invalid_argument>("profile predecessor length mismatch");
+       }
+       return result;
+     }
+@@ -763,19 +765,19 @@
+           metadata.role != Role || metadata.group_size != P::group_size ||
+           metadata.codec_block_size != P::codec_block_size || metadata.policy_fixed_values != P::fixed_width ||
+           metadata.policy_value_width != P::value_width.value_or(0))
+-        throw std::invalid_argument("profile metadata does not match reader policy");
++        error_detail::raise<std::invalid_argument>("profile metadata does not match reader policy");
+       if constexpr (Role == stream_role::borrowed) {
+         if (metadata.common_value_width != std::optional<std::uint64_t>(0))
+-          throw std::invalid_argument("borrowed profile must have empty values");
++          error_detail::raise<std::invalid_argument>("borrowed profile must have empty values");
+       } else if constexpr (P::fixed_width) {
+         if (metadata.common_value_width != P::value_width)
+-          throw std::invalid_argument("fixed value width metadata mismatch");
++          error_detail::raise<std::invalid_argument>("fixed value width metadata mismatch");
+       }
+       if (!metadata.record_count && (metadata.extent || metadata.terminal_key_units))
+-        throw std::invalid_argument("nonempty data for empty profile");
++        error_detail::raise<std::invalid_argument>("nonempty data for empty profile");
+       auto bits = profile_detail::multiply(metadata.extent, P::bits_per_unit);
+       if (bytes.size() != profile_detail::byte_count(bits) || offsets.size() != metadata.record_count)
+-        throw std::invalid_argument("profile section length mismatch");
++        error_detail::raise<std::invalid_argument>("profile section length mismatch");
+       data_ = {bytes, bits};
+     }
+ 
+@@ -790,7 +792,7 @@
+       auto group = ordinal / P::codec_block_size;
+       auto at = offsets_.offset(group, metadata_.common_value_width.value_or(0));
+       auto previous = profile_detail::read_count<P>(data_, at);
+-      if (!group && previous) throw std::invalid_argument("first profile predecessor is not empty");
++      if (!group && previous) error_detail::raise<std::invalid_argument>("first profile predecessor is not empty");
+       for (auto i = group * P::codec_block_size; i < ordinal; ++i) {
+         auto record = parse(at, previous);
+         previous = record.key_units;
+@@ -804,11 +806,11 @@
+       auto backspace = profile_detail::read_backspace<P>(data_, at);
+       auto suffix = profile_detail::read_count<P>(data_, at);
+       auto value = metadata_.common_value_width ? *metadata_.common_value_width : profile_detail::read_count<P>(data_, at);
+-      if (backspace > previous) throw std::invalid_argument("profile backspace exceeds predecessor");
++      if (backspace > previous) error_detail::raise<std::invalid_argument>("profile backspace exceeds predecessor");
+       auto retained = previous - backspace;
+       auto key_units = profile_detail::add(retained, suffix);
+       if (at > metadata_.extent || suffix > metadata_.extent - at || value > metadata_.extent - at - suffix)
+-        throw std::invalid_argument("truncated profile payload");
++        error_detail::raise<std::invalid_argument>("truncated profile payload");
+       auto suffix_bits = profile_detail::multiply(suffix, P::bits_per_unit);
+       auto value_bits = profile_detail::multiply(value, P::bits_per_unit);
+       auto key_data = data_.subview(profile_detail::multiply(at, P::bits_per_unit), suffix_bits);
+@@ -821,19 +823,19 @@
+       auto at = previous.next_offset;
+       if (ordinal % P::codec_block_size == 0) {
+         if (offsets_.offset(ordinal / P::codec_block_size, metadata_.common_value_width.value_or(0)) != at)
+-          throw std::invalid_argument("profile group offset mismatch");
++          error_detail::raise<std::invalid_argument>("profile group offset mismatch");
+         if (profile_detail::read_count<P>(data_, at) != previous.key_units)
+-          throw std::invalid_argument("profile group predecessor mismatch");
++          error_detail::raise<std::invalid_argument>("profile group predecessor mismatch");
+       }
+       return parse(at, previous.key_units);
+     }
+ 
+     static void decode_into(profile_encoded_record const & record, std::uint64_t limit,
+                             bit_string & scratch, std::uint64_t & context) {
+-      if (record.retained > context) throw std::invalid_argument("profile anchor is too short");
++      if (record.retained > context) error_detail::raise<std::invalid_argument>("profile anchor is too short");
+       auto keep = std::min(record.retained, limit);
+       auto keep_bits = profile_detail::multiply(keep, P::bits_per_unit);
+-      if (keep_bits > scratch.bit_size) throw std::invalid_argument("profile anchor prefix is incomplete");
++      if (keep_bits > scratch.bit_size) error_detail::raise<std::invalid_argument>("profile anchor prefix is incomplete");
+       profile_detail::resize(scratch, keep_bits);
+       auto full = std::min(record.key_units, limit);
+       profile_detail::append(scratch, record.suffix.prefix(profile_detail::multiply(full - keep, P::bits_per_unit)));
+@@ -859,18 +861,18 @@
+     bool done() const noexcept { return ordinal_ == view_.size(); }
+     std::uint64_t ordinal() const noexcept { return ordinal_; }
+     profile_item<P> peek() const & {
+-      if (done()) throw std::out_of_range("profile cursor at end");
++      if (done()) error_detail::raise<std::out_of_range>("profile cursor at end");
+       return {ordinal_, {scratch_.view(), context_}, record_.value};
+     }
+     profile_item<P> peek() const && = delete;
+ 
+     void advance() {
+-      if (done()) throw std::out_of_range("profile cursor at end");
++      if (done()) error_detail::raise<std::out_of_range>("profile cursor at end");
+       if (ordinal_ + 1 == view_.size()) {
+         if (record_.next_offset != view_.metadata_.extent)
+-          throw std::invalid_argument("trailing profile data");
++          error_detail::raise<std::invalid_argument>("trailing profile data");
+         if (record_.key_units != view_.metadata_.terminal_key_units)
+-          throw std::invalid_argument("profile terminal length mismatch");
++          error_detail::raise<std::invalid_argument>("profile terminal length mismatch");
+         ++ordinal_;
+         return;
+       }
+@@ -898,8 +900,8 @@
+     static profile_array build(std::span<profile_record const> records,
+       std::span<std::uint64_t const> prefix_ceilings = {}, std::uint64_t restart_factor = 0) {
+       if (!prefix_ceilings.empty() && prefix_ceilings.size() != records.size())
+-        throw std::invalid_argument("one profile prefix ceiling is required per record");
+-      if (restart_factor && restart_factor < 3) throw std::invalid_argument("LPFC factor must be at least three");
++        error_detail::raise<std::invalid_argument>("one profile prefix ceiling is required per record");
++      if (restart_factor && restart_factor < 3) error_detail::raise<std::invalid_argument>("LPFC factor must be at least three");
+       profile_array result;
+       std::optional<std::uint64_t> common;
+       if constexpr (Role == stream_role::borrowed) common = 0;
+@@ -910,12 +912,12 @@
+         auto key_bits = record.key.view().size();
+         auto value_bits = record.value.view().size();
+         if (key_bits % P::bits_per_unit || value_bits % P::bits_per_unit)
+-          throw std::invalid_argument("record length does not match profile unit");
++          error_detail::raise<std::invalid_argument>("record length does not match profile unit");
+         auto width = value_bits / P::bits_per_unit;
+         if constexpr (Role == stream_role::borrowed) {
+-          if (width) throw std::invalid_argument("borrowed profile cannot carry values");
++          if (width) error_detail::raise<std::invalid_argument>("borrowed profile cannot carry values");
+         } else if constexpr (P::fixed_width) {
+-          if (width != *P::value_width) throw std::invalid_argument("value does not match fixed policy width");
++          if (width != *P::value_width) error_detail::raise<std::invalid_argument>("value does not match fixed policy width");
+         } else {
+           if (common && *common != width) common.reset();
+         }
+@@ -931,7 +933,7 @@
+         auto key = records[i].key.view();
+         auto value = records[i].value.view();
+         auto comparison = compare_common_bits(previous, key);
+-        if (i && comparison.order > 0) throw std::invalid_argument("profile keys must be sorted");
++        if (i && comparison.order > 0) error_detail::raise<std::invalid_argument>("profile keys must be sorted");
+         auto position = data.bit_size / P::bits_per_unit;
+         if (i % P::codec_block_size == 0) {
+           offsets.push_back(position - profile_detail::multiply(i, common.value_or(0)));
+@@ -993,11 +995,11 @@
+     bool finished() const noexcept { return finished_; }
+ 
+     void append(bit_view key, std::uint64_t prefix_ceiling = std::numeric_limits<std::uint64_t>::max()) {
+-      if (finished_) throw std::logic_error("borrowed profile writer is finished");
+-      if (key.size() % P::bits_per_unit) throw std::invalid_argument("key length does not match profile unit");
++      if (finished_) error_detail::raise<std::logic_error>("borrowed profile writer is finished");
++      if (key.size() % P::bits_per_unit) error_detail::raise<std::invalid_argument>("key length does not match profile unit");
+       auto previous = previous_.view();
+       auto comparison = compare_common_bits(previous, key);
+-      if (count_ && comparison.order > 0) throw std::invalid_argument("profile keys must be sorted");
++      if (count_ && comparison.order > 0) error_detail::raise<std::invalid_argument>("profile keys must be sorted");
+       auto next_count = profile_detail::add(count_, 1);
+       auto retained = std::min(comparison.common_bits / P::bits_per_unit, prefix_ceiling);
+       auto previous_units = previous.size() / P::bits_per_unit;
+@@ -1007,7 +1009,7 @@
+       // Reserve before modifying output. The private predecessor retains its
+       // logical contents until all potentially allocating output writes finish.
+       auto next_bytes = profile_detail::byte_count(key.size());
+-      if (next_bytes > previous_.bytes.max_size()) throw std::length_error("profile bit string too large");
++      if (next_bytes > previous_.bytes.max_size()) error_detail::raise<std::length_error>("profile bit string too large");
+       previous_.bytes.reserve(static_cast<std::size_t>(next_bytes));
+       try {
+         if (count_ % P::codec_block_size == 0) {
+@@ -1035,7 +1037,7 @@
+     // Finalizing EF takes work proportional to the staged group offsets.
+     // This is not a bounded-byte or durable checkpoint operation.
+     profile_array<P, stream_role::borrowed> finish() {
+-      if (finished_) throw std::logic_error("borrowed profile writer is finished");
++      if (finished_) error_detail::raise<std::logic_error>("borrowed profile writer is finished");
+       profile_array<P, stream_role::borrowed> result;
+       auto extent = data_.bit_size / P::bits_per_unit;
+       offsets_.push_back(extent);
+--- a/include/everett/profile_blob.h
++++ b/include/everett/profile_blob.h
+@@ -8,6 +8,8 @@
+  */
+ 
+ #pragma once
++
++#include <everett/error_detail.h>
+ 
+ #include <everett/profile.h>
+ #include <everett/rank_groups.h>
+@@ -79,7 +81,7 @@
+           interleave.size() != virtual_count || interleave.count() != borrowed.size() ||
+           false_borrows.size() != borrowed.size() / 8 + (borrowed.size() % 8 != 0) ||
+           cut_lcps.size() != group_count())
+-        throw std::invalid_argument("profile blob section shape mismatch");
++        error_detail::raise<std::invalid_argument>("profile blob section shape mismatch");
+     }
+ 
+     native_view const & native() const noexcept { return native_; }
+@@ -93,12 +95,12 @@
+     }
+ 
+     bool false_borrow(std::uint64_t ordinal) const {
+-      if (ordinal >= borrowed_.size()) throw std::out_of_range("profile blob borrowed ordinal");
++      if (ordinal >= borrowed_.size()) error_detail::raise<std::out_of_range>("profile blob borrowed ordinal");
+       return (std::to_integer<unsigned>(false_borrows_[ordinal / 8]) >> (ordinal % 8)) & 1;
+     }
+ 
+     profile_blob_window project(std::uint64_t group) const {
+-      if (group >= group_count()) throw std::out_of_range("profile blob virtual group");
++      if (group >= group_count()) error_detail::raise<std::out_of_range>("profile blob virtual group");
+       auto first = group * group_size;
+       auto last = first + std::min<std::uint64_t>(group_size, virtual_count_ - first);
+       auto const & ranks = interleave_;
+@@ -106,10 +108,10 @@
+       auto population = ranks.class_at(group);
+       if (a > first || a > borrowed_.size() || population > last - first ||
+           population > borrowed_.size() - a)
+-        throw std::invalid_argument("invalid profile blob rank projection");
++        error_detail::raise<std::invalid_argument>("invalid profile blob rank projection");
+       auto b = a + population;
+       if (last - b > native_.size())
+-        throw std::invalid_argument("invalid profile blob native projection");
++        error_detail::raise<std::invalid_argument>("invalid profile blob native projection");
+       return {first - a, last - b, a, b};
+     }
+ 
+@@ -119,7 +121,7 @@
+         std::uint64_t group, profile_query_context<P> const & lower,
+         profile_comparison_work * native_work = nullptr,
+         profile_comparison_work * borrowed_work = nullptr) const {
+-      if (lower.order() > 0) throw std::invalid_argument("query precedes its routed boundary");
++      if (lower.order() > 0) error_detail::raise<std::invalid_argument>("query precedes its routed boundary");
+       auto window = project(group);
+       profile_blob_window_result<P> result;
+       native_.compare_window(window.native_first, window.native_last, lower,
+@@ -134,7 +136,7 @@
+         result.borrowed_predecessor = profile_blob_borrowed_predecessor<P>{
+           ordinal, checked_target_ordinal(ordinal), is_false, comparison};
+         if (!comparison.order() && is_false && !result.native) {
+-          if (!window.native_first) throw std::invalid_argument("false borrow has no native predecessor");
++          if (!window.native_first) error_detail::raise<std::invalid_argument>("false borrow has no native predecessor");
+           auto native_ordinal = window.native_first - 1;
+           result.native = profile_blob_native_match<P>{
+             native_ordinal, bit_string::copy(native_.encoded_at(native_ordinal).value)};
+@@ -167,7 +169,7 @@
+ 
+     static std::uint64_t checked_target_ordinal(std::uint64_t ordinal) {
+       if (ordinal > std::numeric_limits<std::uint64_t>::max() / group_size) {
+-        throw std::overflow_error("borrowed target ordinal overflows");
++        error_detail::raise<std::overflow_error>("borrowed target ordinal overflows");
+       }
+       return ordinal * group_size;
+     }
+@@ -189,7 +191,7 @@
+       check_count(native.size(), borrowed.size());
+       for (std::size_t i = 1; i < native.size(); ++i) {
+         if (compare_bits(native[i - 1].key.view(), native[i].key.view()) >= 0) {
+-          throw std::invalid_argument("profile blob native keys must be strictly sorted");
++          error_detail::raise<std::invalid_argument>("profile blob native keys must be strictly sorted");
+         }
+       }
+       profile_blob result;
+@@ -207,7 +209,7 @@
+       profile_blob result;
+       result.virtual_count_ = native.size();
+       auto groups = result.group_count();
+-      if (groups > result.cut_lcps_.max_size()) throw std::length_error("native index is too large");
++      if (groups > result.cut_lcps_.max_size()) error_detail::raise<std::length_error>("native index is too large");
+       result.cut_lcps_.resize(static_cast<std::size_t>(groups), 0);
+       result.interleave_ = rank_groups<group_size>::build(result.cut_lcps_, native.size());
+       result.native_ = std::make_shared<native_array const>(std::move(native));
+@@ -272,7 +274,7 @@
+ 
+     static void check_count(std::uint64_t native, std::uint64_t borrowed) {
+       if (native > std::numeric_limits<std::uint64_t>::max() - borrowed) {
+-        throw std::length_error("profile blob virtual count overflows");
++        error_detail::raise<std::length_error>("profile blob virtual count overflows");
+       }
+     }
+ 
+@@ -285,7 +287,7 @@
+       std::size_t native_at = 0;
+       for (std::size_t i = 0; i != borrowed.size(); ++i) {
+         if (i && compare_bits(borrowed[i - 1].view(), borrowed[i].view()) > 0) {
+-          throw std::invalid_argument("profile blob borrowed keys must be sorted");
++          error_detail::raise<std::invalid_argument>("profile blob borrowed keys must be sorted");
+         }
+         while (native_at != native.size() &&
+                compare_bits(native[native_at].key.view(), borrowed[i].view()) < 0) {
+--- a/include/everett/query.h
++++ b/include/everett/query.h
+@@ -8,6 +8,8 @@
+  */
+ 
+ #pragma once
++
++#include <everett/error_detail.h>
+ 
+ #include <everett/index_pipeline.h>
+ 
+@@ -55,7 +57,7 @@
+     static query_root adopt_prepared(pair_type source) {
+       validate(source);
+       if (source->virtual_size() > P::group_size)
+-        throw std::invalid_argument("query root head exceeds one cascade group");
++        error_detail::raise<std::invalid_argument>("query root head exceeds one cascade group");
+       return query_root(std::move(source));
+     }
+     pair_type head() const noexcept { return head_; }
+@@ -68,23 +70,23 @@
+ 
+     static void validate(pair_type const & source) {
+       static_assert(P::group_size >= 3);
+-      if (!source) throw std::invalid_argument("null query root");
++      if (!source) error_detail::raise<std::invalid_argument>("null query root");
+       std::unordered_set<blob_type const *> seen;
+       for (auto current = source; current; current = current->target()) {
+-        if (!seen.insert(current.get()).second) throw std::invalid_argument("cyclic query chain");
++        if (!seen.insert(current.get()).second) error_detail::raise<std::invalid_argument>("cyclic query chain");
+         auto native = current->native().size(), borrowed = current->borrowed().size();
+         if (native > std::numeric_limits<std::uint64_t>::max() - borrowed ||
+             native + borrowed != current->virtual_size())
+-          throw std::invalid_argument("query catalog size mismatch");
++          error_detail::raise<std::invalid_argument>("query catalog size mismatch");
+         auto groups = current->virtual_size() / P::group_size +
+           (current->virtual_size() % P::group_size != 0);
+         if (current->group_count() != groups)
+-          throw std::invalid_argument("query catalog group count mismatch");
++          error_detail::raise<std::invalid_argument>("query catalog group count mismatch");
+         auto target = current->target();
+         if (borrowed != (target ? target->group_count() : 0))
+-          throw std::invalid_argument("query chain sample count or target mismatch");
++          error_detail::raise<std::invalid_argument>("query chain sample count or target mismatch");
+         if (current->cut_lcps().size() != current->group_count())
+-          throw std::invalid_argument("query chain cut LCP count mismatch");
++          error_detail::raise<std::invalid_argument>("query chain cut LCP count mismatch");
+       }
+     }
+   };
+@@ -121,13 +123,13 @@
+     bool done() const noexcept { return !pipeline_ || pipeline_->done(); }
+     bool finished() const noexcept { return finished_; }
+     std::uint64_t step(std::uint64_t quanta) {
+-      if (!head_) throw std::logic_error("query root preparation has no source");
+-      if (finished_) throw std::logic_error("query root preparation is finished");
++      if (!head_) error_detail::raise<std::logic_error>("query root preparation has no source");
++      if (finished_) error_detail::raise<std::logic_error>("query root preparation is finished");
+       return pipeline_ ? pipeline_->step(quanta) : 0;
+     }
+     query_root<P> finish() {
+-      if (!head_) throw std::logic_error("query root preparation has no source");
+-      if (!done()) throw std::logic_error("query root preparation still has input");
++      if (!head_) error_detail::raise<std::logic_error>("query root preparation has no source");
++      if (!done()) error_detail::raise<std::logic_error>("query root preparation still has input");
+       if (!finished_) {
+         if (pipeline_) head_ = pipeline_->finish();
+         finished_ = true;
+@@ -161,7 +163,7 @@
+ 
+     explicit query_cursor(query_root<P, Blob> const & root, bit_view query)
+       : current_(root.head()), context_(query) {
+-      if (!current_) throw std::invalid_argument("query root has no head");
++      if (!current_) error_detail::raise<std::invalid_argument>("query root has no head");
+       if (!current_->virtual_size()) current_.reset();
+     }
+     bool done() const noexcept { return !current_ && !pending_; }
+@@ -169,7 +171,7 @@
+     bool failed() const noexcept { return failed_; }
+ 
+     std::uint64_t step(std::uint64_t catalog_budget = 1) {
+-      if (failed_) throw std::logic_error("query cursor has failed");
++      if (failed_) error_detail::raise<std::logic_error>("query cursor has failed");
+       if (pending_) return 0;
+       std::uint64_t visited = 0;
+       try {
+@@ -180,7 +182,7 @@
+             auto const & next = *result.borrowed_predecessor;
+             if (!target || next.target_ordinal % P::group_size ||
+                 next.target_ordinal >= target->virtual_size())
+-              throw std::invalid_argument("query descent has no valid target context");
++              error_detail::raise<std::invalid_argument>("query descent has no valid target context");
+           }
+           if (result.native)
+             pending_.emplace(match_type{current_, result.native->ordinal, std::move(result.native->value)});
+@@ -204,8 +206,8 @@
+       return visited;
+     }
+     match_type take_match() {
+-      if (failed_) throw std::logic_error("query cursor has failed");
+-      if (!pending_) throw std::logic_error("query cursor has no pending match");
++      if (failed_) error_detail::raise<std::logic_error>("query cursor has failed");
++      if (!pending_) error_detail::raise<std::logic_error>("query cursor has no pending match");
+       auto result = std::move(*pending_);
+       pending_.reset();
+       return result;
+--- a/include/everett/rank15.h
++++ b/include/everett/rank15.h
+@@ -8,6 +8,8 @@
+  */
+ 
+ #pragma once
++
++#include <everett/error_detail.h>
+ 
+ #include <everett/word_view.h>
+ 
+@@ -47,7 +49,7 @@
+       if (classes.size() != groups / 16 + (groups % 16 != 0) ||
+           checkpoints.size() != groups / 128 + (groups % 128 != 0) ||
+           total > virtual_count)
+-        throw std::invalid_argument("invalid rank15 spans");
++        error_detail::raise<std::invalid_argument>("invalid rank15 spans");
+     }
+ 
+     std::uint64_t size() const noexcept { return virtual_count_; }
+@@ -58,14 +60,14 @@
+     word_view checkpoint_words() const noexcept { return checkpoints_; }
+ 
+     unsigned class_at(std::uint64_t group) const {
+-      if (group >= group_count()) throw std::out_of_range("rank15 class");
++      if (group >= group_count()) error_detail::raise<std::out_of_range>("rank15 class");
+       return unsigned((classes_[group / 16] >> (4 * (group % 16))) & 15);
+     }
+ 
+     // rank(group) counts borrowed entries before virtual position 15*group;
+     // group_count() is the actual-length endpoint of a partial final group.
+     std::uint64_t rank(std::uint64_t group) const {
+-      if (group > group_count()) throw std::out_of_range("rank15 group");
++      if (group > group_count()) error_detail::raise<std::out_of_range>("rank15 group");
+       if (group == group_count()) return total_;
+       auto result = checkpoints_[group / 128];
+       if (group % 128 == 0) return add_prefix(result, 0);
+@@ -93,7 +95,7 @@
+   private:
+     std::uint64_t add_prefix(std::uint64_t checkpoint, unsigned prefix) const {
+       if (checkpoint > total_ || prefix > total_ - checkpoint)
+-        throw std::invalid_argument("invalid rank15 checkpoint or prefix");
++        error_detail::raise<std::invalid_argument>("invalid rank15 checkpoint or prefix");
+       return checkpoint + prefix;
+     }
+ #if defined(__AVX512F__) && defined(__AVX512BW__)
+@@ -187,13 +189,13 @@
+   struct rank15_index {
+     static rank15_index build(std::span<std::uint8_t const> source, std::uint64_t count) {
+       auto groups = count / 15 + (count % 15 != 0);
+-      if (source.size() != groups) throw std::invalid_argument("rank15 class length");
++      if (source.size() != groups) error_detail::raise<std::invalid_argument>("rank15 class length");
+       rank15_index result;
+       result.virtual_count = count;
+       result.classes.resize(groups / 16 + (groups % 16 != 0));
+       for (std::uint64_t i = 0; i < groups; ++i) {
+         auto limit = i + 1 == groups && count % 15 ? count % 15 : 15;
+-        if (source[i] > limit) throw std::invalid_argument("rank15 class population");
++        if (source[i] > limit) error_detail::raise<std::invalid_argument>("rank15 class population");
+         if (i % 128 == 0) result.checkpoints.push_back(result.total);
+         result.classes[i / 16] |= std::uint64_t(source[i]) << (4 * (i % 16));
+         result.total += source[i];
+--- a/include/everett/rank_groups.h
++++ b/include/everett/rank_groups.h
+@@ -8,6 +8,8 @@
+  */
+ 
+ #pragma once
++
++#include <everett/error_detail.h>
+ 
+ #include <everett/rank15.h>
+ 
+@@ -133,11 +135,11 @@
+       : classes_(classes), checkpoints_(checkpoints), virtual_count_(virtual_count), total_(total) {
+       auto groups = group_count();
+       if (groups > std::numeric_limits<std::uint64_t>::max() / class_bits)
+-        throw std::overflow_error("rank groups packed size");
++        error_detail::raise<std::overflow_error>("rank groups packed size");
+       auto bits = groups * class_bits;
+       if (classes.size() != bits / 64 + (bits % 64 != 0) ||
+           checkpoints.size() != groups / 128 + (groups % 128 != 0) || total > virtual_count)
+-        throw std::invalid_argument("invalid rank groups spans");
++        error_detail::raise<std::invalid_argument>("invalid rank groups spans");
+     }
+ 
+     std::uint64_t size() const noexcept { return virtual_count_; }
+@@ -148,12 +150,12 @@
+     word_view class_words() const noexcept { return classes_; }
+     word_view checkpoint_words() const noexcept { return checkpoints_; }
+     std::uint64_t class_at(std::uint64_t group) const {
+-      if (group >= group_count()) throw std::out_of_range("rank groups class");
++      if (group >= group_count()) error_detail::raise<std::out_of_range>("rank groups class");
+       return read_class(group);
+     }
+     // Exclusive prefix at K*group, with the final endpoint clamped to actual N.
+     std::uint64_t rank(std::uint64_t group) const {
+-      if (group > group_count()) throw std::out_of_range("rank groups boundary");
++      if (group > group_count()) error_detail::raise<std::out_of_range>("rank groups boundary");
+       if (group == group_count()) return total_;
+       auto result = checkpoints_[group / 128];
+       if constexpr (K == 3 || K == 7 || K == 31) {
+@@ -177,7 +179,7 @@
+   private:
+     std::uint64_t add_prefix(std::uint64_t checkpoint, std::uint64_t prefix) const {
+       if (checkpoint > total_ || prefix > total_ - checkpoint)
+-        throw std::invalid_argument("invalid rank groups checkpoint or prefix");
++        error_detail::raise<std::invalid_argument>("invalid rank groups checkpoint or prefix");
+       return checkpoint + prefix;
+     }
+     std::uint64_t read_class(std::uint64_t group) const noexcept {
+@@ -229,9 +231,9 @@
+ 
+     static rank_groups build(std::span<std::uint64_t const> source, std::uint64_t count) {
+       auto groups = count / K + (count % K != 0);
+-      if (source.size() != groups) throw std::invalid_argument("rank groups class length");
++      if (source.size() != groups) error_detail::raise<std::invalid_argument>("rank groups class length");
+       if (groups > std::numeric_limits<std::uint64_t>::max() / class_bits)
+-        throw std::overflow_error("rank groups packed size");
++        error_detail::raise<std::overflow_error>("rank groups packed size");
+       auto bits = groups * class_bits;
+       rank_groups result;
+       result.virtual_count = count;
+@@ -239,7 +241,7 @@
+       for (std::uint64_t i = 0; i < groups; ++i) {
+         auto limit = i + 1 == groups && count % K ? count % K : K;
+         auto value = source[i];
+-        if (value > limit) throw std::invalid_argument("rank groups population");
++        if (value > limit) error_detail::raise<std::invalid_argument>("rank groups population");
+         if (i % 128 == 0) result.checkpoints.push_back(result.total);
+         auto bit = i * class_bits;
+         unsigned shift = unsigned(bit % 64);
+--- a/include/everett/sampling.h
++++ b/include/everett/sampling.h
+@@ -9,6 +9,8 @@
+ 
+ #pragma once
+ 
++#include <everett/error_detail.h>
++
+ #include <everett/profile_blob.h>
+ 
+ #include <algorithm>
+@@ -47,7 +49,7 @@
+   namespace sampling_detail {
+     template <class P> void check_ordinal(std::uint64_t count, std::uint64_t ordinal) {
+       if (count > std::numeric_limits<std::uint64_t>::max() / P::group_size || ordinal != count * P::group_size)
+-        throw std::invalid_argument("sample ordinals must be consecutive policy groups");
++        error_detail::raise<std::invalid_argument>("sample ordinals must be consecutive policy groups");
+     }
+ 
+     // Suffix must not alias context. Allocate before changing its retained
+@@ -57,7 +59,7 @@
+     inline void replace_suffix(bit_string & context, std::uint64_t retained, bit_view suffix) {
+       auto bits = profile_detail::add(retained, suffix.size());
+       auto bytes = profile_detail::byte_count(bits);
+-      if (bytes > context.bytes.max_size()) throw std::length_error("sample key is too large");
++      if (bytes > context.bytes.max_size()) error_detail::raise<std::length_error>("sample key is too large");
+       if (bytes > context.bytes.capacity()) {
+         auto capacity = context.bytes.capacity();
+         auto grown = capacity > context.bytes.max_size() / 2 ? context.bytes.max_size() : capacity * 2;
+@@ -76,9 +78,9 @@
+ 
+     profile_coded_sample<P> encode(bit_view key, std::uint64_t target_ordinal) {
+       sampling_detail::check_ordinal<P>(count_, target_ordinal);
+-      if (key.size() % P::bits_per_unit) throw std::invalid_argument("sample key unit mismatch");
++      if (key.size() % P::bits_per_unit) error_detail::raise<std::invalid_argument>("sample key unit mismatch");
+       auto previous = key_.view();
+-      if (compare_bits(previous, key) > 0) throw std::invalid_argument("sample keys must be sorted");
++      if (compare_bits(previous, key) > 0) error_detail::raise<std::invalid_argument>("sample keys must be sorted");
+       auto retained = common_prefix_units<P>(previous, key);
+       auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
+       // Copy the transmitted suffix before editing context. Input may alias
+@@ -105,15 +107,15 @@
+     bit_view accept(profile_coded_sample<P> const & sample) {
+       sampling_detail::check_ordinal<P>(count_, sample.target_ordinal);
+       auto suffix = sample.suffix.view();
+-      if (suffix.size() % P::bits_per_unit) throw std::invalid_argument("sample suffix unit mismatch");
++      if (suffix.size() % P::bits_per_unit) error_detail::raise<std::invalid_argument>("sample suffix unit mismatch");
+       auto previous = key_.view();
+       auto previous_units = previous.size() / P::bits_per_unit;
+-      if (sample.backspace > previous_units) throw std::invalid_argument("sample backspace exceeds previous key");
++      if (sample.backspace > previous_units) error_detail::raise<std::invalid_argument>("sample backspace exceeds previous key");
+       auto retained = profile_detail::multiply(previous_units - sample.backspace, P::bits_per_unit);
+       // Both keys share the retained prefix. Comparing only the two remaining
+       // suffixes validates order without another full-key reconstruction.
+       if (compare_bits(suffix, previous.subview(retained, previous.size() - retained)) < 0)
+-        throw std::invalid_argument("sample keys must be sorted");
++        error_detail::raise<std::invalid_argument>("sample keys must be sorted");
+       sampling_detail::replace_suffix(key_, retained, suffix);
+       ++count_;
+       return key_.view();
+@@ -162,7 +164,7 @@
+     bool done() const noexcept { return native_.done() && borrowed_.done(); }
+ 
+     profile_sample_view<P> peek() const & {
+-      if (done()) throw std::out_of_range("sample cursor at end");
++      if (done()) error_detail::raise<std::out_of_range>("sample cursor at end");
+       auto item = next_borrowed_ ? borrowed_.peek() : native_.peek();
+       return {item.key.prefix, ordinal_, next_borrowed_ ? stream_role::borrowed : stream_role::native,
+               item.ordinal};
+@@ -170,7 +172,7 @@
+     profile_sample_view<P> peek() const && = delete;
+ 
+     void advance() {
+-      if (done()) throw std::out_of_range("sample cursor at end");
++      if (done()) error_detail::raise<std::out_of_range>("sample cursor at end");
+       auto count = std::min(group_size, target_->virtual_size() - ordinal_);
+       for (std::uint64_t i = 0; i != count; ++i) {
+         if (next_borrowed_) {
+@@ -192,7 +194,7 @@
+ 
+   private:
+     static std::shared_ptr<target_type const> checked_target(std::shared_ptr<target_type const> target) {
+-      if (!target) throw std::invalid_argument("sample cursor requires a pinned target");
++      if (!target) error_detail::raise<std::invalid_argument>("sample cursor requires a pinned target");
+       return target;
+     }
+ 
+--- a/include/everett/select_groups.h
++++ b/include/everett/select_groups.h
+@@ -8,6 +8,8 @@
+  */
+ 
+ #pragma once
++
++#include <everett/error_detail.h>
+ 
+ #include <algorithm>
+ #include <array>
+@@ -34,12 +36,12 @@
+   namespace select_groups_detail {
+     inline std::uint64_t add(std::uint64_t a, std::uint64_t b) {
+       if (b > std::numeric_limits<std::uint64_t>::max() - a)
+-        throw std::overflow_error("select_groups addition");
++        error_detail::raise<std::overflow_error>("select_groups addition");
+       return a + b;
+     }
+     inline std::uint64_t multiply(std::uint64_t a, std::uint64_t b) {
+       if (b && a > std::numeric_limits<std::uint64_t>::max() / b)
+-        throw std::overflow_error("select_groups multiplication");
++        error_detail::raise<std::overflow_error>("select_groups multiplication");
+       return a * b;
+     }
+     inline std::uint64_t words(std::uint64_t bits) noexcept {
+@@ -166,9 +168,9 @@
+     // including zero tail padding. Source and destination must not overlap.
+     inline void pack_low(std::span<std::uint64_t const> source,
+                          std::span<std::uint64_t> out, unsigned width) {
+-      if (width > 63) throw std::invalid_argument("select_groups low width");
++      if (width > 63) error_detail::raise<std::invalid_argument>("select_groups low width");
+       if (out.size() != words(multiply(source.size(), width)))
+-        throw std::invalid_argument("select_groups low output size");
++        error_detail::raise<std::invalid_argument>("select_groups low output size");
+       static constexpr auto packers = low_packers(std::make_index_sequence<64>{});
+       packers[width](source, out);
+     }
+@@ -236,14 +238,14 @@
+                        std::uint64_t record_count, std::uint64_t universe, unsigned low_width)
+       : low_(low), high_(high), samples_(samples), sparse_(sparse),
+         record_count_(record_count), universe_(universe), low_width_(low_width) {
+-      if (low_width > 63) throw std::invalid_argument("select_groups low width");
++      if (low_width > 63) error_detail::raise<std::invalid_argument>("select_groups low width");
+       auto entries = select_groups_detail::add(group_count(), 1);
+       auto low_bits = select_groups_detail::multiply(entries, low_width);
+       high_bits_ = select_groups_detail::add(universe >> low_width, entries);
+       if (low.size() != select_groups_detail::words(low_bits) ||
+           high.size() != select_groups_detail::words(high_bits_) ||
+           samples.size() != entries / 256 + (entries % 256 != 0))
+-        throw std::invalid_argument("invalid select_groups spans");
++        error_detail::raise<std::invalid_argument>("invalid select_groups spans");
+     }
+ 
+     word_view low_words() const noexcept { return low_; }
+@@ -258,11 +260,11 @@
+     }
+ 
+     std::uint64_t residual(std::uint64_t group) const {
+-      if (group > group_count()) throw std::out_of_range("select_groups group");
++      if (group > group_count()) error_detail::raise<std::out_of_range>("select_groups group");
+       auto position = select_high(group);
+-      if (position < group) throw std::invalid_argument("invalid select_groups high value");
++      if (position < group) error_detail::raise<std::invalid_argument>("invalid select_groups high value");
+       auto hi = position - group;
+-      if (hi > (universe_ >> low_width_)) throw std::invalid_argument("select_groups high overflow");
++      if (hi > (universe_ >> low_width_)) error_detail::raise<std::invalid_argument>("select_groups high overflow");
+       std::uint64_t lo = 0;
+       if (low_width_) {
+         auto bit = group * low_width_;
+@@ -273,7 +275,7 @@
+         lo &= (std::uint64_t{1} << low_width_) - 1;
+       }
+       auto value = (hi << low_width_) | lo;
+-      if (value > universe_) throw std::invalid_argument("select_groups value exceeds universe");
++      if (value > universe_) error_detail::raise<std::invalid_argument>("select_groups value exceeds universe");
+       return value;
+     }
+ 
+@@ -289,13 +291,13 @@
+       unsigned remaining = unsigned(ordinal % 256);
+       if (sample.sparse != std::numeric_limits<std::uint64_t>::max()) {
+         if (sample.sparse > sparse_.size() || remaining >= sparse_.size() - sample.sparse)
+-          throw std::invalid_argument("invalid select_groups exception");
++          error_detail::raise<std::invalid_argument>("invalid select_groups exception");
+         auto position = sparse_[sample.sparse + remaining];
+         if (position >= high_bits_ || !(high_[position / 64] & (std::uint64_t{1} << (position % 64))))
+-          throw std::invalid_argument("invalid select_groups sparse position");
++          error_detail::raise<std::invalid_argument>("invalid select_groups sparse position");
+         return position;
+       }
+-      if (sample.first >= high_bits_) throw std::invalid_argument("invalid select_groups sample");
++      if (sample.first >= high_bits_) error_detail::raise<std::invalid_argument>("invalid select_groups sample");
+       auto word = sample.first / 64;
+       auto value = high_[word] & (~std::uint64_t{0} << (sample.first % 64));
+       for (unsigned scanned = 0; scanned < 65 && word < high_.size(); ++scanned, ++word) {
+@@ -304,12 +306,12 @@
+         if (remaining < population) {
+           auto position = word * 64 + select_groups_detail::select_word(value, remaining);
+           if (position >= high_bits_ || position - sample.first >= 4096)
+-            throw std::invalid_argument("select_groups dense span");
++            error_detail::raise<std::invalid_argument>("select_groups dense span");
+           return position;
+         }
+         remaining -= population;
+       }
+-      throw std::invalid_argument("select_groups missing high bit");
++      error_detail::raise<std::invalid_argument>("select_groups missing high bit");
+     }
+ 
+     word_view low_;
+@@ -331,9 +333,9 @@
+                                std::uint64_t records) {
+       auto groups = records / K + (records % K != 0);
+       if (residuals.size() != select_groups_detail::add(groups, 1))
+-        throw std::invalid_argument("select_groups residual count");
++        error_detail::raise<std::invalid_argument>("select_groups residual count");
+       if (!select_groups_detail::monotone(residuals))
+-        throw std::invalid_argument("select_groups nonmonotone offsets");
++        error_detail::raise<std::invalid_argument>("select_groups nonmonotone offsets");
+       select_groups result;
+       result.record_count = records;
+       result.universe = residuals.back();
+--- a/include/everett/word_view.h
++++ b/include/everett/word_view.h
+@@ -8,6 +8,8 @@
+  */
+ 
+ #pragma once
++
++#include <everett/error_detail.h>
+ 
+ #include <bit>
+ #include <cstddef>
+@@ -29,7 +31,7 @@
+       : bytes_(std::as_bytes(words)), little_(std::endian::native == std::endian::little) {}
+ 
+     static word_view little_endian(std::span<std::byte const> bytes) {
+-      if (bytes.size() % 8) throw std::invalid_argument("word section length is not a multiple of eight");
++      if (bytes.size() % 8) error_detail::raise<std::invalid_argument>("word section length is not a multiple of eight");
+       return {bytes, true};
+     }
+ 
+@@ -38,14 +40,14 @@
+     std::span<std::byte const> bytes() const noexcept { return bytes_; }
+     bool is_little_endian() const noexcept { return little_; }
+     word_view subspan(std::size_t offset, std::size_t count = std::dynamic_extent) const {
+-      if (offset > size()) throw std::out_of_range("word section offset");
++      if (offset > size()) error_detail::raise<std::out_of_range>("word section offset");
+       if (count == std::dynamic_extent) count = size() - offset;
+-      if (count > size() - offset) throw std::out_of_range("word section length");
++      if (count > size() - offset) error_detail::raise<std::out_of_range>("word section length");
+       return {bytes_.subspan(offset * 8, count * 8), little_};
+     }
+ 
+     std::uint64_t operator[](std::size_t index) const {
+-      if (index >= size()) throw std::out_of_range("word section index");
++      if (index >= size()) error_detail::raise<std::out_of_range>("word section index");
+       std::uint64_t value;
+       std::memcpy(&value, bytes_.data() + index * 8, 8);
+       if constexpr (std::endian::native == std::endian::big) {
+@@ -85,7 +87,7 @@
+     }
+ 
+     static sample_view little_endian(std::span<std::byte const> bytes) {
+-      if (bytes.size() % 16) throw std::invalid_argument("sample section length is not a multiple of sixteen");
++      if (bytes.size() % 16) error_detail::raise<std::invalid_argument>("sample section length is not a multiple of sixteen");
+       return sample_view(word_view::little_endian(bytes));
+     }
+ 
+@@ -94,7 +96,7 @@
+     word_view words() const noexcept { return words_; }
+     std::span<std::byte const> bytes() const noexcept { return words_.bytes(); }
+     sample_value operator[](std::size_t index) const {
+-      if (index >= size()) throw std::out_of_range("sample section index");
++      if (index >= size()) error_detail::raise<std::out_of_range>("sample section index");
+       return {words_[2 * index], words_[2 * index + 1]};
+     }
+ 
+--- /dev/null
++++ b/include/everett/error_detail.h
+@@ -0,0 +1,18 @@
++/**
++ * \file
++ * \license
++ * SPDX-FileType: SOURCE
++ * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
++ * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
++ * \endlicense
++ */
++#pragma once
++#include <cstdlib>
++#include <stdexcept>
++namespace everett::error_detail {
++  template <class E> [[noreturn]]
++#if defined(__GNUC__) || defined(__clang__)
++  [[gnu::cold, gnu::noinline]]
++#endif
++  inline void raise(char const *) noexcept { std::abort(); }
++}

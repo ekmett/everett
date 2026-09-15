@@ -1,0 +1,21 @@
+import hashlib,json,subprocess,tarfile,shutil
+from pathlib import Path
+build=Path(__file__).resolve().parent
+root=build.parent.parent
+results=[]
+for name in ['baseline','outlined','production']:
+    command=['clang++','-std=c++20','-O1','-g','-Wall','-Wextra','-Wpedantic','-Werror','-fsanitize=address,undefined','-fno-omit-frame-pointer','-I'+str(root/'include' if name=='production' else root/'build-query-errors/release'/name/'headers/include'),str(build/'errors.cc'),'-o',str(build/('errors-'+name))]
+    subprocess.run(command,check=True)
+    result=subprocess.run([str(build/('errors-'+name))],check=True,text=True,capture_output=True)
+    results.append({'variant':name,'command':command,'stdout':result.stdout,'stderr':result.stderr,'exit_code':result.returncode})
+source=build/'source'
+if source.exists():shutil.rmtree(source)
+source.mkdir()
+archive=build/'source.tar'
+with archive.open('wb') as stream:subprocess.run(['git','-C',str(root),'archive','--format=tar','13c914d'],stdout=stream,check=True)
+with tarfile.open(archive) as stream:stream.extractall(source)
+shutil.copytree(root/'include',source/'include',dirs_exist_ok=True)
+header_hashes={str(p.relative_to(source)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((source/'include').rglob('*.h'))}
+commands=[['cmake','-S',str(source),'-B',str(build/'cmake'),'-DEVERETT_SANITIZERS=ON','-DCMAKE_BUILD_TYPE=Release','-DCMAKE_CXX_FLAGS_RELEASE=-O1 -g -DNDEBUG'],['cmake','--build',str(build/'cmake'),'--target','everett_test_profile','everett_test_groups','everett_test_query','--parallel','2'],['ctest','--test-dir',str(build/'cmake'),'--output-on-failure','-R','^everett\\.(profile|groups|query|package.installed)$']]
+for command in commands:subprocess.run(command,check=True)
+(build/'manifest.json').write_text(json.dumps({'measured_baseline':'fea6afc','production_base':'13c914d','production_headers_sha256':header_hashes,'probe_source_sha256':hashlib.sha256((build/'errors.cc').read_bytes()).hexdigest(),'probes':results,'commands':commands,'ctest_log':(build/'cmake/Testing/Temporary/LastTest.log').read_text()},indent=2)+'\n')

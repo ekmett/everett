@@ -1,0 +1,971 @@
+{
+  "started_utc": "2026-09-15T16:29:32.321442+00:00",
+  "baseline_revision": "fea6afc08668032e5230b8d982dd252c58a2449c",
+  "query_include_closure": [
+    "include/everett/index_builder.h",
+    "include/everett/index_pipeline.h",
+    "include/everett/key_detail.h",
+    "include/everett/policy.h",
+    "include/everett/profile.h",
+    "include/everett/profile_blob.h",
+    "include/everett/query.h",
+    "include/everett/rank15.h",
+    "include/everett/rank_groups.h",
+    "include/everett/sampling.h",
+    "include/everett/select_groups.h",
+    "include/everett/word_view.h"
+  ],
+  "transformed_sites": {
+    "include/everett/index_builder.h": [
+      {
+        "exception": "std::logic_error",
+        "message": "\"cannot mix coded and full index inputs\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"cannot mix coded and full index inputs\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"index input is already closed\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"index builder has no outgoing sample\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"index builder has no outgoing sample\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"index builder is not drained at EOF\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"index samples disagree with target extent\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"index builder is no longer active\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"index builder cannot accept another lookahead\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"index samples must name consecutive target groups\""
+      },
+      {
+        "exception": "std::length_error",
+        "message": "\"index augmented count overflows\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"index sample key disagrees with policy units\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"index samples must be sorted\""
+      }
+    ],
+    "include/everett/index_pipeline.h": [
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"null pipeline native source\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"pipeline is no longer active\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"index pipeline made no progress\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"index pipeline has failed\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"index pipeline still has input\""
+      }
+    ],
+    "include/everett/profile.h": [
+      {
+        "exception": "std::overflow_error",
+        "message": "\"profile addition\""
+      },
+      {
+        "exception": "std::overflow_error",
+        "message": "\"profile multiplication\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"bit view exceeds storage\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"bit position\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"bit subview\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"packed bit-string length\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"nonzero bit-string padding\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"expected binary digits\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"key length does not match profile unit\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"anchor unit mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"query unit mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"query prefix is incomplete\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"query unit mismatch\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"comparison context has no query\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"boundary key unit mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"comparison anchor is too short\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"invalid cut predecessor comparison\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"cut predecessor exceeds query\""
+      },
+      {
+        "exception": "std::length_error",
+        "message": "\"profile bit string too large\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"profile copy exceeds destination\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"unaligned byte profile writer\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"profile fixed field exceeds destination\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"truncated backspace remainder\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "truncated"
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "overflow"
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"truncated profile count\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"overflowing profile count\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"noncanonical profile count\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"overflowing profile count\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"truncated exponential-Golomb count\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"overflowing exponential-Golomb count\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"overflowing exponential-Golomb backspace\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"overflowing Golomb backspace\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"nonzero profile padding\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile offset units or extent mismatch\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"profile record ordinal\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"profile predecessor ordinal\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"profile comparison window exceeds cascade group\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"profile window exceeds the policy group size\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile anchor units\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile predecessor length mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"trailing profile data\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile terminal length mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile predecessor prefix is too short\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"nonliteral first profile key\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile predecessor length mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile metadata does not match reader policy\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"borrowed profile must have empty values\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"fixed value width metadata mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"nonempty data for empty profile\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile section length mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"first profile predecessor is not empty\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile backspace exceeds predecessor\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"truncated profile payload\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile group offset mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile group predecessor mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile anchor is too short\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile anchor prefix is incomplete\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"profile cursor at end\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"profile cursor at end\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"trailing profile data\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile terminal length mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"one profile prefix ceiling is required per record\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"LPFC factor must be at least three\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"record length does not match profile unit\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"borrowed profile cannot carry values\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"value does not match fixed policy width\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile keys must be sorted\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"borrowed profile writer is finished\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"key length does not match profile unit\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile keys must be sorted\""
+      },
+      {
+        "exception": "std::length_error",
+        "message": "\"profile bit string too large\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"borrowed profile writer is finished\""
+      }
+    ],
+    "include/everett/profile_blob.h": [
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile blob section shape mismatch\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"profile blob borrowed ordinal\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"profile blob virtual group\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"invalid profile blob rank projection\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"invalid profile blob native projection\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"query precedes its routed boundary\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"false borrow has no native predecessor\""
+      },
+      {
+        "exception": "std::overflow_error",
+        "message": "\"borrowed target ordinal overflows\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile blob native keys must be strictly sorted\""
+      },
+      {
+        "exception": "std::length_error",
+        "message": "\"native index is too large\""
+      },
+      {
+        "exception": "std::length_error",
+        "message": "\"profile blob virtual count overflows\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"profile blob borrowed keys must be sorted\""
+      }
+    ],
+    "include/everett/query.h": [
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"query root head exceeds one cascade group\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"null query root\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"cyclic query chain\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"query catalog size mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"query catalog group count mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"query chain sample count or target mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"query chain cut LCP count mismatch\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"query root preparation has no source\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"query root preparation is finished\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"query root preparation has no source\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"query root preparation still has input\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"query root has no head\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"query cursor has failed\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"query descent has no valid target context\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"query cursor has failed\""
+      },
+      {
+        "exception": "std::logic_error",
+        "message": "\"query cursor has no pending match\""
+      }
+    ],
+    "include/everett/rank15.h": [
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"invalid rank15 spans\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"rank15 class\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"rank15 group\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"invalid rank15 checkpoint or prefix\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"rank15 class length\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"rank15 class population\""
+      }
+    ],
+    "include/everett/rank_groups.h": [
+      {
+        "exception": "std::overflow_error",
+        "message": "\"rank groups packed size\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"invalid rank groups spans\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"rank groups class\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"rank groups boundary\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"invalid rank groups checkpoint or prefix\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"rank groups class length\""
+      },
+      {
+        "exception": "std::overflow_error",
+        "message": "\"rank groups packed size\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"rank groups population\""
+      }
+    ],
+    "include/everett/sampling.h": [
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"sample ordinals must be consecutive policy groups\""
+      },
+      {
+        "exception": "std::length_error",
+        "message": "\"sample key is too large\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"sample key unit mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"sample keys must be sorted\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"sample suffix unit mismatch\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"sample backspace exceeds previous key\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"sample keys must be sorted\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"sample cursor at end\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"sample cursor at end\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"sample cursor requires a pinned target\""
+      }
+    ],
+    "include/everett/select_groups.h": [
+      {
+        "exception": "std::overflow_error",
+        "message": "\"select_groups addition\""
+      },
+      {
+        "exception": "std::overflow_error",
+        "message": "\"select_groups multiplication\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"select_groups low width\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"select_groups low output size\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"select_groups low width\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"invalid select_groups spans\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"select_groups group\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"invalid select_groups high value\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"select_groups high overflow\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"select_groups value exceeds universe\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"invalid select_groups exception\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"invalid select_groups sparse position\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"invalid select_groups sample\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"select_groups dense span\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"select_groups missing high bit\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"select_groups residual count\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"select_groups nonmonotone offsets\""
+      }
+    ],
+    "include/everett/word_view.h": [
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"word section length is not a multiple of eight\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"word section offset\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"word section length\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"word section index\""
+      },
+      {
+        "exception": "std::invalid_argument",
+        "message": "\"sample section length is not a multiple of sixteen\""
+      },
+      {
+        "exception": "std::out_of_range",
+        "message": "\"sample section index\""
+      }
+    ]
+  },
+  "source_sha256": "5200a36f81c194c854443a3e031db7eb6158062df88f77829fb9e8049269df18",
+  "runner_sha256": "2f20f015affcec26394eec2a0b1b2cbabd6f81ab70d70eac602c3094156239ae",
+  "queries": 128,
+  "records": 128,
+  "larger_records": 1024,
+  "trials": 1,
+  "sanitize": true,
+  "variants": {
+    "baseline": {
+      "headers_sha256": {
+        "include/everett/crc32c.h": "740a6442f1cefcb065d22a373ad8e4b70e8cd6438bea2301a4587a1653c10e04",
+        "include/everett/detail/crc32c_arm_eor3.inc": "f6069a361b564fa36b763fec76699675ed571e9a922412fb890ed601eaed6a85",
+        "include/everett/detail/crc32c_arm_pmull.inc": "55cffa304d884666af1372a760e8eee7ca6f8c605af28d37fd8a5044c6776593",
+        "include/everett/detail/crc32c_arm_scalar.inc": "d6bfed1c65412e6a29d53e6876e19a12506d2df6adfa32408c69beaade6fa187",
+        "include/everett/detail/crc32c_portable.inc": "96ebe1bc021a670581861ed94a9f51977e7dfec4acad3303a44b333c035db052",
+        "include/everett/detail/crc32c_x86_avx512.inc": "31c1158ae79dccdcae02434f34745133dba08e9314df8811c4dc8a5c4a59809e",
+        "include/everett/detail/crc32c_x86_pclmul.inc": "5b7d069c593a9faa355c3163ac1a52b1881f907b0fa5634a73976256b26b389b",
+        "include/everett/detail/crc32c_x86_scalar.inc": "1747da0787353e39ede476b77d11a5687c852f387b102e877b2e4fc4ae57da51",
+        "include/everett/detail/crc32c_x86_vpclmul.inc": "ee8584be0aacfe204f5f9c516a1cd4658d3baddac4c0a48234ba5a806733c486",
+        "include/everett/durability.h": "b6d3e6ae5bb9c226ba1ac13398a5ae128214994a673451e94438035e20976a99",
+        "include/everett/file.h": "b5d7c39f278d0123f689770e576adff514ac9b72260257cb18ded43188a82ba2",
+        "include/everett/fingerprint.h": "e3f9c99c464c7c230fbb5aebdb03481e51a74ce8ff205ca3ffb68cace096e884",
+        "include/everett/index_builder.h": "bb578982c78d383fb9e2fed1d01869949ba06dbd7f465f47a0f109b24b2acc80",
+        "include/everett/index_pipeline.h": "280c3627702b59f2e6131cd833a925acf30fdaef82d6885fd1f9d964738425b7",
+        "include/everett/key_detail.h": "27ace4335bc66a513adb0f54784fde464fce02025ea9fdc0caf62918a3fcb51d",
+        "include/everett/mapped_blob.h": "05cd856e5eea2fbfb1500f239d58195aa8c88503edf1052bcf66c5bed8f909cc",
+        "include/everett/mapped_file.h": "3c23b931da21a9ae1eb4eea738a33b04557f81854a9207501082152eaa62cb4d",
+        "include/everett/multiverse.h": "24ba99b865d5d7a1c87638700dfc184da36476315d40bc49d4a4aa06c1610c0a",
+        "include/everett/native_merge.h": "c2f29ab6895770243ae692cdf80024ad79f2fe8eac308a4fe2fdf50cbe8df14a",
+        "include/everett/native_writer.h": "8a6b4c07a4eb2b835245a0eae97c5d8f10d77d6d60872dbf5d930c4ff8fc669c",
+        "include/everett/object_path.h": "5bd65b01d5b0ca5fca95cfac433ab87006c832281769e9ced662517a2767f5a0",
+        "include/everett/object_writer.h": "48d3b1708c1e690d68305a64da36c78ff44e5bfd62280fa2549deecf9d2939ba",
+        "include/everett/pins.h": "21dc90f2a270d240805fa11076a25dcfc77bca069203d799b2a4a69457db9987",
+        "include/everett/policy.h": "5961933465be9d60bbb71f155b685877ff79e6437ff97f7d1fed63c704d1d1fe",
+        "include/everett/profile.h": "344d5d8840f979421711fc1d8fca63eab3560f62599582cc6b8392e7062aff3e",
+        "include/everett/profile_blob.h": "f04d577b44475bb68463288cdc771a3806b871fb1b6ff272e429048c0553b35f",
+        "include/everett/query.h": "b608d2fe7ce3aa79360cdb1fb1e5be4933dc7e6513b344f101cf1b206dabd334",
+        "include/everett/rank.h": "7743e3091acbdcaedaeb61a48498a14f15423d1d37ba3e91a5481a20be4135a2",
+        "include/everett/rank15.h": "28b1e329245bdc2c0de05dcd7ce9d346db913384e1db4dfb8c559a635dfb7aae",
+        "include/everett/rank_groups.h": "0820706e955ba90ae37eddab72558fbd462904b7153c1fb40d418e3677c5847e",
+        "include/everett/sampling.h": "d16e801270c516767eeeee6f0e34031c7aba6beb11a9b515b60b37ce0aaa9875",
+        "include/everett/sections.h": "a4730638d2614fd2391f5e6ca751633cba977a598b3eb3bdeca9667790747a90",
+        "include/everett/select15.h": "1f58d7b0efe7182ebf50d3adf3f2e03709c41edbc47ba4271e82b550a9194b5e",
+        "include/everett/select_groups.h": "e9e223dde602868f2d2fb6573f2f2152f6364f7935d6b027a1ad2344de5cedd9",
+        "include/everett/sqlite_catalog.h": "22990c1fdb44a630efd797ff8d77898f20bbfd1886baaa5f8ddc79a067718a59",
+        "include/everett/word_view.h": "6c4c43c3329256428ec38733c207cc37911e293815060dcca3ade8527ee7d0f8",
+        "include/everett/world.h": "2b983903738943b21cdca407bd98950c373db0a4434c010560ab590982a9fabe"
+      },
+      "command": [
+        "clang++",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Werror",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-I/Users/ekmett/cult/ai/worktrees/everett-query-errors/build-query-errors/sanitize/baseline/headers/include",
+        "/Users/ekmett/cult/ai/worktrees/everett-query-errors/build-query-errors/sanitize/query_compare.cc",
+        "-o",
+        "/Users/ekmett/cult/ai/worktrees/everett-query-errors/build-query-errors/sanitize/baseline/query_compare"
+      ],
+      "executable_sha256": "8c9c7e6586d322a30d4de6c5fa1b18f0f24ff8cb91b160e1fa21b91eb6241f67",
+      "file_bytes": 2631984,
+      "section_bytes": {
+        "__text": 1494684,
+        "__gcc_except_tab": 26768,
+        "__unwind_info": 15520,
+        "__eh_frame": 100472
+      },
+      "size_output": "Segment __PAGEZERO: 4294967296 (zero fill) \nSegment __TEXT: 1769472\n\tSection __text: 1494684\n\tSection __stubs: 972\n\tSection __init_offsets: 4\n\tSection __gcc_except_tab: 26768\n\tSection __const: 96100\n\tSection __asan_cstring: 10048\n\tSection __cstring: 14803\n\tSection __unwind_info: 15520\n\tSection __eh_frame: 100472\n\ttotal 1759371\nSegment __DATA_CONST: 16384\n\tSection __got: 1384\n\tSection __mod_term_func: 8\n\tSection __const: 912\n\ttotal 2304\nSegment __DATA: 409600\n\tSection __data: 392400\n\tSection __asan_globals: 8320\n\tSection __asan_liveness: 2080\n\tSection __common: 8 (zerofill)\n\ttotal 402808\nSegment __LINKEDIT: 442368\ntotal 4297605120\n"
+    },
+    "outlined": {
+      "headers_sha256": {
+        "include/everett/crc32c.h": "740a6442f1cefcb065d22a373ad8e4b70e8cd6438bea2301a4587a1653c10e04",
+        "include/everett/detail/crc32c_arm_eor3.inc": "f6069a361b564fa36b763fec76699675ed571e9a922412fb890ed601eaed6a85",
+        "include/everett/detail/crc32c_arm_pmull.inc": "55cffa304d884666af1372a760e8eee7ca6f8c605af28d37fd8a5044c6776593",
+        "include/everett/detail/crc32c_arm_scalar.inc": "d6bfed1c65412e6a29d53e6876e19a12506d2df6adfa32408c69beaade6fa187",
+        "include/everett/detail/crc32c_portable.inc": "96ebe1bc021a670581861ed94a9f51977e7dfec4acad3303a44b333c035db052",
+        "include/everett/detail/crc32c_x86_avx512.inc": "31c1158ae79dccdcae02434f34745133dba08e9314df8811c4dc8a5c4a59809e",
+        "include/everett/detail/crc32c_x86_pclmul.inc": "5b7d069c593a9faa355c3163ac1a52b1881f907b0fa5634a73976256b26b389b",
+        "include/everett/detail/crc32c_x86_scalar.inc": "1747da0787353e39ede476b77d11a5687c852f387b102e877b2e4fc4ae57da51",
+        "include/everett/detail/crc32c_x86_vpclmul.inc": "ee8584be0aacfe204f5f9c516a1cd4658d3baddac4c0a48234ba5a806733c486",
+        "include/everett/durability.h": "b6d3e6ae5bb9c226ba1ac13398a5ae128214994a673451e94438035e20976a99",
+        "include/everett/file.h": "b5d7c39f278d0123f689770e576adff514ac9b72260257cb18ded43188a82ba2",
+        "include/everett/fingerprint.h": "e3f9c99c464c7c230fbb5aebdb03481e51a74ce8ff205ca3ffb68cace096e884",
+        "include/everett/index_builder.h": "84a23a11070e1352e3c66d2689eba4f77475735c97d43bc2933e12a232cc84e2",
+        "include/everett/index_pipeline.h": "336a3eeff95d54c19ada8d23cd3117435cee78d6f4d8f346b1722002a5a4050c",
+        "include/everett/key_detail.h": "27ace4335bc66a513adb0f54784fde464fce02025ea9fdc0caf62918a3fcb51d",
+        "include/everett/mapped_blob.h": "05cd856e5eea2fbfb1500f239d58195aa8c88503edf1052bcf66c5bed8f909cc",
+        "include/everett/mapped_file.h": "3c23b931da21a9ae1eb4eea738a33b04557f81854a9207501082152eaa62cb4d",
+        "include/everett/multiverse.h": "24ba99b865d5d7a1c87638700dfc184da36476315d40bc49d4a4aa06c1610c0a",
+        "include/everett/native_merge.h": "c2f29ab6895770243ae692cdf80024ad79f2fe8eac308a4fe2fdf50cbe8df14a",
+        "include/everett/native_writer.h": "8a6b4c07a4eb2b835245a0eae97c5d8f10d77d6d60872dbf5d930c4ff8fc669c",
+        "include/everett/object_path.h": "5bd65b01d5b0ca5fca95cfac433ab87006c832281769e9ced662517a2767f5a0",
+        "include/everett/object_writer.h": "48d3b1708c1e690d68305a64da36c78ff44e5bfd62280fa2549deecf9d2939ba",
+        "include/everett/pins.h": "21dc90f2a270d240805fa11076a25dcfc77bca069203d799b2a4a69457db9987",
+        "include/everett/policy.h": "5961933465be9d60bbb71f155b685877ff79e6437ff97f7d1fed63c704d1d1fe",
+        "include/everett/profile.h": "a68131b211a2b19d7a3ce7bf50e43d7451f7efe500587cd07bed9ff75d5299fd",
+        "include/everett/profile_blob.h": "a195023c09ced7bb2bcfc4a105f801324f3d5259a5d55f8b2e91d271496ea325",
+        "include/everett/query.h": "025fb12b33971ecac7b73f7ca9ad8d8551790d7082020c369a34d46d719b2f7d",
+        "include/everett/rank.h": "7743e3091acbdcaedaeb61a48498a14f15423d1d37ba3e91a5481a20be4135a2",
+        "include/everett/rank15.h": "fc37e34b626cb3edc38d7fe891097f0de3daad91085ada1643536925fd8743bf",
+        "include/everett/rank_groups.h": "b87010657a1fc737346f68735e6cac7da1015337310bdfd032305ca3984d617f",
+        "include/everett/sampling.h": "02f1b351de703742fc5c2aa72d03a29aebe1c0548a7ffcf735780ac52092073a",
+        "include/everett/sections.h": "a4730638d2614fd2391f5e6ca751633cba977a598b3eb3bdeca9667790747a90",
+        "include/everett/select15.h": "1f58d7b0efe7182ebf50d3adf3f2e03709c41edbc47ba4271e82b550a9194b5e",
+        "include/everett/select_groups.h": "539411a1d3bb969aad70f1cfac403df3c043bbfc84b89597d1c808547f93d04f",
+        "include/everett/sqlite_catalog.h": "22990c1fdb44a630efd797ff8d77898f20bbfd1886baaa5f8ddc79a067718a59",
+        "include/everett/word_view.h": "a043b13fa26a54d7f64222253fa2791fc20512e428dea71ad21bdf6dc9e82b52",
+        "include/everett/world.h": "2b983903738943b21cdca407bd98950c373db0a4434c010560ab590982a9fabe",
+        "include/everett/error_detail.h": "997f372d81702feb2d85453ea15baec17f369d1cdc575b9c16f05a7b6dcafd90"
+      },
+      "command": [
+        "clang++",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Werror",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-I/Users/ekmett/cult/ai/worktrees/everett-query-errors/build-query-errors/sanitize/outlined/headers/include",
+        "/Users/ekmett/cult/ai/worktrees/everett-query-errors/build-query-errors/sanitize/query_compare.cc",
+        "-o",
+        "/Users/ekmett/cult/ai/worktrees/everett-query-errors/build-query-errors/sanitize/outlined/query_compare"
+      ],
+      "executable_sha256": "3c9b53c2974eb7212cd7a6519ec61df54e82620ca7aa76b3bd2105744ebb185b",
+      "file_bytes": 2595840,
+      "section_bytes": {
+        "__text": 1474452,
+        "__gcc_except_tab": 19256,
+        "__unwind_info": 14848,
+        "__eh_frame": 99440
+      },
+      "size_output": "Segment __PAGEZERO: 4294967296 (zero fill) \nSegment __TEXT: 1736704\n\tSection __text: 1474452\n\tSection __stubs: 972\n\tSection __init_offsets: 4\n\tSection __gcc_except_tab: 19256\n\tSection __const: 96100\n\tSection __asan_cstring: 10048\n\tSection __cstring: 14957\n\tSection __unwind_info: 14848\n\tSection __eh_frame: 99440\n\ttotal 1730077\nSegment __DATA_CONST: 16384\n\tSection __got: 1384\n\tSection __mod_term_func: 8\n\tSection __const: 912\n\ttotal 2304\nSegment __DATA: 409600\n\tSection __data: 388576\n\tSection __asan_globals: 8320\n\tSection __asan_liveness: 2080\n\tSection __common: 8 (zerofill)\n\ttotal 398984\nSegment __LINKEDIT: 442368\ntotal 4297572352\n"
+    },
+    "fail_stop": {
+      "headers_sha256": {
+        "include/everett/crc32c.h": "740a6442f1cefcb065d22a373ad8e4b70e8cd6438bea2301a4587a1653c10e04",
+        "include/everett/detail/crc32c_arm_eor3.inc": "f6069a361b564fa36b763fec76699675ed571e9a922412fb890ed601eaed6a85",
+        "include/everett/detail/crc32c_arm_pmull.inc": "55cffa304d884666af1372a760e8eee7ca6f8c605af28d37fd8a5044c6776593",
+        "include/everett/detail/crc32c_arm_scalar.inc": "d6bfed1c65412e6a29d53e6876e19a12506d2df6adfa32408c69beaade6fa187",
+        "include/everett/detail/crc32c_portable.inc": "96ebe1bc021a670581861ed94a9f51977e7dfec4acad3303a44b333c035db052",
+        "include/everett/detail/crc32c_x86_avx512.inc": "31c1158ae79dccdcae02434f34745133dba08e9314df8811c4dc8a5c4a59809e",
+        "include/everett/detail/crc32c_x86_pclmul.inc": "5b7d069c593a9faa355c3163ac1a52b1881f907b0fa5634a73976256b26b389b",
+        "include/everett/detail/crc32c_x86_scalar.inc": "1747da0787353e39ede476b77d11a5687c852f387b102e877b2e4fc4ae57da51",
+        "include/everett/detail/crc32c_x86_vpclmul.inc": "ee8584be0aacfe204f5f9c516a1cd4658d3baddac4c0a48234ba5a806733c486",
+        "include/everett/durability.h": "b6d3e6ae5bb9c226ba1ac13398a5ae128214994a673451e94438035e20976a99",
+        "include/everett/file.h": "b5d7c39f278d0123f689770e576adff514ac9b72260257cb18ded43188a82ba2",
+        "include/everett/fingerprint.h": "e3f9c99c464c7c230fbb5aebdb03481e51a74ce8ff205ca3ffb68cace096e884",
+        "include/everett/index_builder.h": "84a23a11070e1352e3c66d2689eba4f77475735c97d43bc2933e12a232cc84e2",
+        "include/everett/index_pipeline.h": "336a3eeff95d54c19ada8d23cd3117435cee78d6f4d8f346b1722002a5a4050c",
+        "include/everett/key_detail.h": "27ace4335bc66a513adb0f54784fde464fce02025ea9fdc0caf62918a3fcb51d",
+        "include/everett/mapped_blob.h": "05cd856e5eea2fbfb1500f239d58195aa8c88503edf1052bcf66c5bed8f909cc",
+        "include/everett/mapped_file.h": "3c23b931da21a9ae1eb4eea738a33b04557f81854a9207501082152eaa62cb4d",
+        "include/everett/multiverse.h": "24ba99b865d5d7a1c87638700dfc184da36476315d40bc49d4a4aa06c1610c0a",
+        "include/everett/native_merge.h": "c2f29ab6895770243ae692cdf80024ad79f2fe8eac308a4fe2fdf50cbe8df14a",
+        "include/everett/native_writer.h": "8a6b4c07a4eb2b835245a0eae97c5d8f10d77d6d60872dbf5d930c4ff8fc669c",
+        "include/everett/object_path.h": "5bd65b01d5b0ca5fca95cfac433ab87006c832281769e9ced662517a2767f5a0",
+        "include/everett/object_writer.h": "48d3b1708c1e690d68305a64da36c78ff44e5bfd62280fa2549deecf9d2939ba",
+        "include/everett/pins.h": "21dc90f2a270d240805fa11076a25dcfc77bca069203d799b2a4a69457db9987",
+        "include/everett/policy.h": "5961933465be9d60bbb71f155b685877ff79e6437ff97f7d1fed63c704d1d1fe",
+        "include/everett/profile.h": "a68131b211a2b19d7a3ce7bf50e43d7451f7efe500587cd07bed9ff75d5299fd",
+        "include/everett/profile_blob.h": "a195023c09ced7bb2bcfc4a105f801324f3d5259a5d55f8b2e91d271496ea325",
+        "include/everett/query.h": "025fb12b33971ecac7b73f7ca9ad8d8551790d7082020c369a34d46d719b2f7d",
+        "include/everett/rank.h": "7743e3091acbdcaedaeb61a48498a14f15423d1d37ba3e91a5481a20be4135a2",
+        "include/everett/rank15.h": "fc37e34b626cb3edc38d7fe891097f0de3daad91085ada1643536925fd8743bf",
+        "include/everett/rank_groups.h": "b87010657a1fc737346f68735e6cac7da1015337310bdfd032305ca3984d617f",
+        "include/everett/sampling.h": "02f1b351de703742fc5c2aa72d03a29aebe1c0548a7ffcf735780ac52092073a",
+        "include/everett/sections.h": "a4730638d2614fd2391f5e6ca751633cba977a598b3eb3bdeca9667790747a90",
+        "include/everett/select15.h": "1f58d7b0efe7182ebf50d3adf3f2e03709c41edbc47ba4271e82b550a9194b5e",
+        "include/everett/select_groups.h": "539411a1d3bb969aad70f1cfac403df3c043bbfc84b89597d1c808547f93d04f",
+        "include/everett/sqlite_catalog.h": "22990c1fdb44a630efd797ff8d77898f20bbfd1886baaa5f8ddc79a067718a59",
+        "include/everett/word_view.h": "a043b13fa26a54d7f64222253fa2791fc20512e428dea71ad21bdf6dc9e82b52",
+        "include/everett/world.h": "2b983903738943b21cdca407bd98950c373db0a4434c010560ab590982a9fabe",
+        "include/everett/error_detail.h": "5a47ec0d47175826ee035de37a6d64d13fb6a830eb5913688952605bccdf9228"
+      },
+      "command": [
+        "clang++",
+        "-std=c++20",
+        "-Wall",
+        "-Wextra",
+        "-Wpedantic",
+        "-Werror",
+        "-O1",
+        "-g",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-I/Users/ekmett/cult/ai/worktrees/everett-query-errors/build-query-errors/sanitize/fail_stop/headers/include",
+        "/Users/ekmett/cult/ai/worktrees/everett-query-errors/build-query-errors/sanitize/query_compare.cc",
+        "-o",
+        "/Users/ekmett/cult/ai/worktrees/everett-query-errors/build-query-errors/sanitize/fail_stop/query_compare"
+      ],
+      "executable_sha256": "9ba613ca495a5aa2a8851daabd8fcf6d41ba47e2c0c6c0908a1319d5d512c690",
+      "file_bytes": 2593648,
+      "section_bytes": {
+        "__text": 1472500,
+        "__gcc_except_tab": 18132,
+        "__unwind_info": 14736,
+        "__eh_frame": 99096
+      },
+      "size_output": "Segment __PAGEZERO: 4294967296 (zero fill) \nSegment __TEXT: 1736704\n\tSection __text: 1472500\n\tSection __stubs: 960\n\tSection __init_offsets: 4\n\tSection __gcc_except_tab: 18132\n\tSection __const: 95908\n\tSection __asan_cstring: 10048\n\tSection __cstring: 14839\n\tSection __unwind_info: 14736\n\tSection __eh_frame: 99096\n\ttotal 1726223\nSegment __DATA_CONST: 16384\n\tSection __got: 1288\n\tSection __mod_term_func: 8\n\tSection __const: 912\n\ttotal 2208\nSegment __DATA: 409600\n\tSection __data: 388032\n\tSection __asan_globals: 8320\n\tSection __asan_liveness: 2080\n\tSection __common: 8 (zerofill)\n\ttotal 398440\nSegment __LINKEDIT: 442368\ntotal 4297572352\n"
+    }
+  },
+  "execution_order": [
+    {
+      "variant": "baseline",
+      "records": 128,
+      "prefix_bytes": 0,
+      "trial": 0
+    },
+    {
+      "variant": "outlined",
+      "records": 128,
+      "prefix_bytes": 0,
+      "trial": 0
+    },
+    {
+      "variant": "fail_stop",
+      "records": 128,
+      "prefix_bytes": 0,
+      "trial": 0
+    },
+    {
+      "variant": "baseline",
+      "records": 128,
+      "prefix_bytes": 64,
+      "trial": 0
+    },
+    {
+      "variant": "outlined",
+      "records": 128,
+      "prefix_bytes": 64,
+      "trial": 0
+    },
+    {
+      "variant": "fail_stop",
+      "records": 128,
+      "prefix_bytes": 64,
+      "trial": 0
+    },
+    {
+      "variant": "baseline",
+      "records": 1024,
+      "prefix_bytes": 64,
+      "trial": 0
+    },
+    {
+      "variant": "outlined",
+      "records": 1024,
+      "prefix_bytes": 64,
+      "trial": 0
+    },
+    {
+      "variant": "fail_stop",
+      "records": 1024,
+      "prefix_bytes": 64,
+      "trial": 0
+    }
+  ],
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "finished_utc": "2026-09-15T16:30:13.158951+00:00"
+}

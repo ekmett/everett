@@ -1,0 +1,40 @@
+#include <everett/query.h>
+#include <iostream>
+#include <limits>
+#include <string_view>
+#include <typeinfo>
+
+template <class E, class F> void check(F && function, std::string_view message) {
+  bool caught = false;
+  try { function(); }
+  catch (E const & error) {
+    if (typeid(error) != typeid(E) || error.what() != message) throw std::runtime_error("error type/message differs");
+    caught = true;
+  }
+  if (!caught) throw std::runtime_error("missing expected error");
+}
+int main() {
+  using namespace everett;
+  using P = storage_policy<profile_unit::bit>;
+  check<std::overflow_error>([] { (void)profile_detail::add(std::numeric_limits<std::uint64_t>::max(), 1); }, "profile addition");
+  check<std::invalid_argument>([] { (void)bit_view({}, 1); }, "bit view exceeds storage");
+  check<std::out_of_range>([] { (void)bit_view{}.at(0); }, "bit position");
+  check<std::logic_error>([] { profile_query_context<P> context(bit_view{}); auto moved = std::move(context); (void)moved; (void)context.query(); }, "comparison context has no query");
+  check<std::invalid_argument>([] { (void)query_root<P>::build({}); }, "null query root");
+  check<std::length_error>([] {
+#if __has_include(<everett/error_detail.h>)
+    error_detail::raise<std::length_error>("probe length");
+#else
+    throw std::length_error("probe length");
+#endif
+  }, "probe length");
+  auto truncated = bit_string::from_bits("101001");
+  std::uint64_t at = 3;
+  check<std::invalid_argument>([&] { (void)profile_detail::read_count<P>(truncated.view(), at); }, "truncated exponential-Golomb count");
+  if (at != truncated.bit_size) throw std::runtime_error("truncated offset differs");
+  auto overflowing = bit_string::from_bits(std::string(65, '0') + '1');
+  at = 0;
+  check<std::invalid_argument>([&] { (void)profile_detail::read_count<P>(overflowing.view(), at); }, "overflowing exponential-Golomb count");
+  if (at != 65) throw std::runtime_error("overflow offset differs");
+  std::cout << "Exception type, message and decoder error-offset probes passed\n";
+}
