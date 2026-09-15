@@ -89,20 +89,20 @@ namespace everett {
           auto total_records = profile_detail::add(progress_.input_records, consumed);
           if (order < 0) {
             auto item = older_cursor_.peek();
-            writer_.append_impl(item.key.prefix, item.value, older_prefix_);
+            append(item.key.prefix, item.value, older_prefix_);
             newer_prefix_ = comparison.common_bits / P::bits_per_unit;
             older_prefix_ = advance(older_cursor_);
           } else if (order > 0) {
             auto item = newer_cursor_.peek();
-            writer_.append_impl(item.key.prefix, item.value, newer_prefix_);
+            append(item.key.prefix, item.value, newer_prefix_);
             older_prefix_ = comparison.common_bits / P::bits_per_unit;
             newer_prefix_ = advance(newer_cursor_);
           } else {
             auto older = older_cursor_.peek(), newer = newer_cursor_.peek();
             auto value = std::invoke(compose_, older.key.prefix, older.value, newer.value);
             if constexpr (std::is_same_v<decltype(value), bit_view>)
-              writer_.append_impl(older.key.prefix, value, older_prefix_);
-            else writer_.append_impl(older.key.prefix, value.view(), older_prefix_);
+              append(older.key.prefix, value, older_prefix_);
+            else append(older.key.prefix, value.view(), older_prefix_);
             older_prefix_ = advance(older_cursor_);
             newer_prefix_ = advance(newer_cursor_);
           }
@@ -124,6 +124,10 @@ namespace everett {
     }
 
   private:
+    void append(bit_view key, bit_view value, std::uint64_t retained) {
+      auto first = retained * P::bits_per_unit;
+      writer_.append(retained, key.subview(first, key.size() - first), value);
+    }
     // Both heads follow the last emitted key p. The head sharing more of p
     // sorts first. Equal LCPs need only a suffix comparison from that boundary.
     bit_comparison compare_heads() const {
@@ -159,7 +163,7 @@ namespace everett {
     source_pointer newer_;
     profile_cursor<P, stream_role::native> older_cursor_;
     profile_cursor<P, stream_role::native> newer_cursor_;
-    profile_native_writer<P> writer_;
+    profile_detail::native_output<P> writer_;
     Compose compose_;
     native_merge_progress progress_;
     std::uint64_t older_prefix_ = 0;
