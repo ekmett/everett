@@ -825,18 +825,18 @@ ctest --test-dir build-sanitize --output-on-failure
 
 The default component suites cover codecs, native and borrowed writers, index
 construction, queries, world semantics, ownership, durability and mapped files.
-With SQLite enabled, six more suites cover the catalog, adversarial operations,
-forwarded VFS failures, process interruption, timeline publication and streamed
-merge publication. Three package consumers check relocated core and
+With SQLite enabled, seven more suites cover the catalog, adversarial operations,
+forwarded VFS failures, process interruption, timeline publication, streamed
+merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
-Combined verification through `6474321` on 2026-09-15: AppleClang 21, C++20, Release with strict
-warnings and ASan/UBSan passed all **41 runtime and package CTests**. The separate
-Doxygen check passed after fixing a colliding benchmark heading, for **42 checks**
-in total. SQLite headers and runtime were 3.53.4. This run covers
-ordinary-FC comparison, complete owning and mapped query chains, portable
-unaligned navigation, native construction and incremental merges, immutable
-writes, metadata-only opening, and persistent saves and reader pins.
+Combined verification through `ca33a77` on 2026-09-15: AppleClang 21, C++20,
+Release with strict warnings and ASan/UBSan passed all **50 CTests**, including
+three package consumers and Doxygen. SQLite headers and runtime were 3.53.4.
+This run covers ordinary-FC comparison, owning and mapped single/two-route
+queries, carried sampling/build frontiers, portable unaligned navigation,
+native construction, staged local merges and allocation failures, immutable
+writes, metadata-only opening, and persistent saves, timelines and reader pins.
 
 The writer tests cover failure at every syscall position, short/interrupted
 writes, disk-full errors, uncertain installation, close failures and retained
@@ -846,15 +846,17 @@ rows through fresh connections. The 20 process-interruption cases additionally
 check actual writer death, including committed-but-unacknowledged operations.
 These tests do not establish behavior under physical power loss.
 
-Doxygen checked 37 public headers and 36 real declaration associations, with
+Doxygen checked 42 public headers and 41 real declaration associations, with
 clean generation that removes obsolete pages. The proof checkpoint checked
-756 Lean declarations with only standard `propext`, `Quot.sound` and
+858 Lean declarations with only standard `propext`, `Quot.sound` and
 `Classical.choice` axioms.
 
 All seven complete README programs and the native-merge and SQLite guide
 examples passed strict warnings and ASan/UBSan, nine executables in total.
-The eight core examples have no SQLite linkage; only the catalog example links
-it. Installed licenses and generated CRC includes are checked byte for byte
+The COLA index example and the complete mapped save/merge and owning local-job
+examples also passed strict warnings and ASan/UBSan. The mapped save example
+reopens two saved roots and the current timeline after publication. Installed
+licenses and generated CRC includes are checked byte for byte
 against the source bundle, and the pinned generator reproduced all eight
 backends. Windows execution coverage is limited to the recorded rank component
 tests. Network transport and durable merge resumption remain separate work.
