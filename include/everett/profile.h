@@ -601,6 +601,7 @@ namespace everett {
 
   template <class P, stream_role Role = stream_role::native> struct profile_cursor;
   template <class P> struct profile_borrowed_writer;
+  template <class P> struct profile_native_writer;
 
   // A view borrows both sections. Metadata and parsed counts are checked, but
   // complete semantic validation also requires traversing the stream. Physical
@@ -973,6 +974,7 @@ namespace everett {
 
   private:
     friend struct profile_borrowed_writer<P>;
+    friend struct profile_native_writer<P>;
     std::vector<std::byte> bytes_;
     select_groups<P::codec_block_size> offsets_;
     profile_metadata metadata_ = profile_detail::initial_metadata<P, Role>();

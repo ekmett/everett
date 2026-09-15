@@ -156,6 +156,7 @@ namespace everett {
       return result;
     }
 
+
   private:
     native_view native_;
     borrowed_view borrowed_;
@@ -198,6 +199,21 @@ namespace everett {
       return result;
     }
 
+    // Adopt a trusted ordinary-FC native array without decoding or rebuilding
+    // it. Keys must be unique. The all-native index needs only zero rank/cut
+    // directories; profile_native_writer establishes the content precondition.
+    static profile_blob adopt_native(native_array native) {
+      (void)native.view();
+      profile_blob result;
+      result.virtual_count_ = native.size();
+      auto groups = result.group_count();
+      if (groups > result.cut_lcps_.max_size()) throw std::length_error("native index is too large");
+      result.cut_lcps_.resize(static_cast<std::size_t>(groups), 0);
+      result.interleave_ = rank_groups<group_size>::build(result.cut_lcps_, native.size());
+      result.native_ = std::make_shared<native_array const>(std::move(native));
+      return result;
+    }
+
     // Reindexing retains the exact ordinary-FC native allocation and its
     // independent physical directory. Only index-local navigation is rebuilt.
     profile_blob reindex(std::span<bit_string const> borrowed) const {
@@ -220,7 +236,7 @@ namespace everett {
     std::span<std::byte const> false_borrow_bits() const noexcept { return false_borrows_; }
     std::uint64_t virtual_size() const noexcept { return virtual_count_; }
     std::span<std::uint64_t const> cut_lcps() const noexcept { return cut_lcps_; }
-    // Incremental construction binds the exact downstream pair. Legacy batch
+    // Incremental construction binds the exact downstream pair. Batch
     // build/reindex accept unbound sample spans and leave this empty.
     std::shared_ptr<profile_blob const> target() const noexcept { return target_; }
     std::uint64_t group_count() const noexcept {
