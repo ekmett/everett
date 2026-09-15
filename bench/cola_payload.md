@@ -148,11 +148,11 @@ python3 /Users/ekmett/cult/game/tools/resource_run.py --resource cpu-heavy \
 
 The [reproduction runner](cola_payload.py) applies the
 [archived one-header patch](results/cola_payload/candidate.patch) only inside its
-private candidate snapshot, then verifies **every** reconstructed header hash
-against the measured candidate before compiling. No experimental Git ref is
-needed in a fresh clone. The [original measured runner](results/cola_payload/measured_runner.py)
-is preserved byte-for-byte so its recorded hash remains accurate; the current
-runner adds only this patch-snapshot option.
+private candidate snapshot and checks its provenance before compiling.
+No experimental Git ref is needed in a fresh clone. The
+[recorded runner](results/cola_payload/measured_runner.py) retains the measurement
+procedure; the current runner also supports the archived patch and normalizes
+snapshot names, recording the resulting source hashes separately.
 
 The [raw metadata](results/cola_payload/results.json) retains exact source, runner,
 header and binary hashes, compiler commands, execution order and every dumped

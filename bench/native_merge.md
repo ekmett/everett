@@ -195,8 +195,8 @@ python3 bench/native_merge.py --baseline 9c2c3be --candidate 819578c \
   --rounds 3 --trials 5
 ```
 
-To reproduce the first source exactly, use the harness and runner at `13c914d`
-with `--candidate 13c914d`. The metadata files retain every input-header hash.
+The first comparison used the harness and runner at `13c914d`, with candidate
+`13c914d`. The metadata files retain every original input-header hash.
 The [artifact check](results/native_merge_checks.json)
 records executable hashes/sizes, verifies stored source/header hashes and checks
 matching payload sizes and output fingerprints across all 1,800 completed rows.

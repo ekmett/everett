@@ -54,21 +54,16 @@ K=3 / 7 / 15 / 31, and 33,800 bytes for the bitmap. The bitmap's reported
 This bounded run does not measure cold mappings, LLC-exceeding data, construction,
 or `count()` latency.
 
-Reproduce from the measured header revision in a separate worktree. The
-benchmark files were recorded in `e581ad37e5b832b42c872490631b70ea8b10f640`;
-copy those two files into the worktree before running under the host's resource
-gate:
+Reproduce with the measured header revision using the current normalized
+fixture and runner, under the host's resource gate:
 
 ```sh
-git worktree add --detach ../diet-rank-reproduction f02434a94b7c1250c29d6d4e20a1401a0700cd4d
-git show e581ad37e5b832b42c872490631b70ea8b10f640:bench/rank_bounds.py > ../diet-rank-reproduction/bench/rank_bounds.py
-git show e581ad37e5b832b42c872490631b70ea8b10f640:bench/rank_bounds.cc > ../diet-rank-reproduction/bench/rank_bounds.cc
-cd ../diet-rank-reproduction
-python3 bench/rank_bounds.py --build-dir build-rank-bounds --trials 5 --queries 1048576
+python3 bench/rank_bounds.py --candidate f02434a94b7c1250c29d6d4e20a1401a0700cd4d \
+  --build-dir build-rank-bounds --trials 5 --queries 1048576
 ```
 
-The runner uses that worktree for the candidate and Git history for the
-baseline. `rank_compare.sh` and `neon_cult_rank.py` retain their pinned
+The runner normalizes both pinned header snapshots. `rank_compare.sh` and
+`neon_cult_rank.py` retain their pinned
 historical headers and original observations. `other_rank.py` accepts either
 old constructors or the new API without changing its default historical pins.
 

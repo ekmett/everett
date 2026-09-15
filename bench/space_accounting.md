@@ -195,7 +195,7 @@ Reproduction
 ------------
 
 Compile C++20 with `-O2 -I include`, then run `space_accounting.cc`. For the dual
-build, use `-DEVERETT_DUAL` and the include snapshot of `ff0588a`. Capture stdout to
+build, use `-DDIET_DUAL` and the include snapshot of `ff0588a`. Capture stdout to
 CSV. The host resource gate should wrap compilation and execution; no runtime
 benchmark is required. Run the Python calculator with `--measurements PATH` and
 explicit chosen scenario parameters. Raw array figures do not depend on compiler

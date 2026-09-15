@@ -1,16 +1,20 @@
 Benchmark evidence
 ==================
 
-The reports measure the exact Git revisions named in each experiment. I keep
-recorded source snapshots, commands, metadata names and raw results unchanged
-so those measurements remain reproducible. Some snapshots use the historical
-`everett` namespace and include paths; these are recorded inputs, not the
-current Diet API.
+I keep source, fixture, command and result names consistent with the current
+Diet API throughout pre-release development.
 
-Most runners extract their exact headers from Git. For a runner or standalone
-fixture that uses the current checkout, reproduce the report from its recorded
-revision in a separate worktree; use the report's candidate and harness
-arguments. Moving or renaming the repository does not change those Git objects.
+Timing and allocation samples retain their measured values. Recorded measurement
+hashes identify the original source and binary bytes, before name normalization;
+they do not claim that renamed source was remeasured. The
+[artifact manifest](results/artifact_normalization.json) records original and
+normalized artifact hashes separately.
+
+The [snapshot helper](snapshot.py) extracts a pinned revision into the current
+include layout and records both original and normalized source hashes. Use the
+current runners with the revisions named in each report. Reproduction makes new
+measurements with normalized source names; it does not replace the recorded
+observations.
 
 New measurements of Diet should record their own source hashes and results.
 The [implementation ledger](../docs/implementation.md) links the accepted

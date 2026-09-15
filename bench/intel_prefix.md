@@ -211,8 +211,8 @@ Evidence
   and [VPOPCNTDQ assembly](results/intel_prefix_vpopcnt.s.txt).
 * [Artifact hashes and tested/committed header comparison](results/intel_prefix_artifacts.json).
 
-Native execution records preserve the exact submitted source, request and
-response; the CSV files extract every timing row without discarding outliers.
+Native execution records retain the submitted source, request and response
+with names normalized; the CSV files preserve every timing row without discarding outliers.
 The request URLs are `https://godbolt.org/api/compiler/clang2010/compile` and
 `https://godbolt.org/api/compiler/g152/compile`, with user arguments
 `-O3 -std=c++20 -mpopcnt` and execution arguments `5 1048576`.

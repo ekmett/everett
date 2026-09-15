@@ -28,9 +28,8 @@ python3 bench/key_bits.py --candidate d027162 --harness b208f18 \
 
 The runner needs Python's standard library, Git, and a C++20 compiler. It makes
 no network requests. `CXX` selects the compiler. It can compare complete
-header snapshots; its working-tree mode requires a checkout with the historical
-include paths. Use the explicit candidate and harness above from a current Diet
-checkout. The
+header snapshots or the working tree, normalizing their names consistently.
+Use the explicit candidate and harness above for this comparison. The
 explicit `--isolate-key-headers` switch preserves this historical experiment's
 three-header overlay. `--harness` selects the source revision independently and
 is required above to reproduce the recorded fixture. New JSON files record both

@@ -115,8 +115,9 @@ The exact cut arrays occupy 3,128 bytes in the small case and 49,768 bytes in th
 
 The [runner](query_compare.py) snapshots all headers at both resolved revisions
 and one shared harness body. It records SHA256 hashes for the source, runner and
-every header, plus compiler commands, process order and fixture sizes. Existing
-`query_chain` source, reports and raw results are unchanged.
+every header, plus compiler commands, process order and fixture sizes. The earlier
+`query_chain` measurements remain separate; name normalization leaves their
+numeric samples unchanged.
 
 Run under the host's CPU/build-directory resource gate:
 

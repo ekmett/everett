@@ -6,7 +6,7 @@ an AMD Ryzen 9 7950X3D running Windows 11 build 26200. The compiler was MSVC
 executed natively; this run used neither Rosetta nor another emulator.
 
 The benchmark source is [rank_compare.cc](rank_compare.cc) at `ca93a61`.
-Its SHA-256 is
+Its original measured SHA-256 is
 `3bf47da16e69832c8db80e80d6f97d6f3a6cd0c6350930d24c1782ef419e4266`.
 The MSVC changes use `__umulh` for the unsigned product's high half and
 `__declspec(noinline)` for the timed public calls. The NEON-only Poppy adapter
@@ -69,14 +69,14 @@ snapshot from the pinned qword-first header. The scalar baseline is newer than
 the original M2 comparison's `7732b1e` baseline, so those baseline columns should
 not be treated as the same implementation.
 
-After preparing those headers under `baseline/everett`, `sad_rank15.h` and
+After preparing those headers under `baseline/diet`, `sad_rank15.h` and
 `qword_rank15.h`, and initializing the x64 MSVC environment, the essential
 benchmark build was:
 
 ```bat
 cl /nologo /std:c++20 /EHsc /O2 /DNDEBUG /W4 /WX /permissive- /arch:AVX2 ^
-  /Ibaseline /DEVERETT_RANK_CANDIDATE=\"sad_rank15.h\" ^
-  /DEVERETT_RANK_SIMD=\"qword_rank15.h\" rank_compare.cc /Fecompare-avx2.exe
+  /Ibaseline /DDIET_RANK_CANDIDATE=\"sad_rank15.h\" ^
+  /DDIET_RANK_SIMD=\"qword_rank15.h\" rank_compare.cc /Fecompare-avx2.exe
 start "" /b /wait /affinity 1 compare-avx2.exe hot_packed32KiB 7 1048576 core
 ```
 

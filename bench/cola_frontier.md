@@ -136,11 +136,12 @@ python3 bench/cola_frontier.py --baseline d1d74e7 --candidate ac5d4c4 \
   --trials 5 --rounds 3 --build-dir build-cola-builder-frontier
 ```
 
-The exact fixture SHA-256 is
+The original measured fixture SHA-256 is
 `8757aad627c34e9622a07ec5ef420680a477a698abbbd91121570207f4df0a27`;
-the runner SHA-256 is
+the original runner SHA-256 is
 `39811b608c7ddd801cf6fd63db5154e35a5a47e455aa99de4c834c51344cc206`.
-Each run retains all 240 timed observations and its unmodified metadata:
+Each run retains all 240 timed observations and its measurement metadata,
+with source and path names normalized:
 
 - Direct combined result: [CSV](results/cola_frontier_overall_m2max.csv),
   [metadata](results/cola_frontier_overall_m2max.json).
@@ -153,5 +154,5 @@ The metadata records full measured source revisions, every header hash, compile
 commands, compiler/platform, binary hashes, execution order, whole-file hashes
 and start/completion times. Accepted revision spellings in the reproduction
 commands retain every measured header in this fixture's include closure. Their
-`multiverse.h` differs from the recorded tree, but this fixture does not include
+`fridge.h` differs from the recorded tree, but this fixture does not include
 that facade.

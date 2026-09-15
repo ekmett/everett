@@ -20,7 +20,7 @@ Environment and scope
   `UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1`.
 - Default compiler ISA target; no `-march=native`, AVX2 or AVX-512 override.
 
-I copied `include/everett` and the five standalone test sources directly by SCP
+I copied the headers and five standalone test sources directly by SCP
 to a fresh temporary directory. The snapshot contained 55 files and 686,068
 bytes before the oracle correction. Compilation and execution used the host's
 `cpu-heavy` resource gate and a reserved build directory, with at most two
@@ -59,8 +59,8 @@ commands, toolchain output, executable hashes and test output are retained in
 remote source hash against the pinned Git objects; only `tests/cola_index.cc`
 differs between the manifests. The original
 [compiler diagnostic](results/cola_linux/cola_index.compile.txt) is also retained.
-The remote temporary directory was `/tmp/everett-cola-linux-YR37tcNZ`. The host
-check did not edit a checkout; its resource gate wrote the normal run logs.
+Paths in the evidence use the current Diet spelling. The host check did not
+edit a checkout; its resource gate wrote the normal run logs.
 
 Each compiler invocation uses this form, with the full argument arrays recorded
 in the JSON evidence:
@@ -68,19 +68,19 @@ in the JSON evidence:
 ```sh
 /usr/bin/clang++ -std=c++20 -O2 -g -Wall -Wextra -Wpedantic -Werror -UNDEBUG \
   -fsanitize=address,undefined -fno-omit-frame-pointer -pthread \
-  -I/tmp/everett-cola-linux-YR37tcNZ/include \
-  /tmp/everett-cola-linux-YR37tcNZ/tests/cola_index.cc \
-  -o /tmp/everett-cola-linux-YR37tcNZ/build/cola_index
+  -I/tmp/diet-cola-linux-YR37tcNZ/include \
+  /tmp/diet-cola-linux-YR37tcNZ/tests/cola_index.cc \
+  -o /tmp/diet-cola-linux-YR37tcNZ/build/cola_index
 ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
 UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
-  /tmp/everett-cola-linux-YR37tcNZ/build/cola_index
+  /tmp/diet-cola-linux-YR37tcNZ/build/cola_index
 ```
 
 The host lease wrapped compilation and execution:
 
 ```sh
 python3 /home/ekmett/cult/tools/resource_run.py --resource cpu-heavy \
-  --build-dir /tmp/everett-cola-linux-YR37tcNZ/build -- python3 -
+  --build-dir /tmp/diet-cola-linux-YR37tcNZ/build -- python3 -
 ```
 
 The two host logs were

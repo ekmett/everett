@@ -66,7 +66,7 @@ Instruction and size evidence
 
 The benchmark include closure contains only two changed headers between B and C:
 the COLA append call and its borrowed-writer friend declaration. The revision also
-changes `multiverse.h`, which this fixture does not include. `append_known` remains
+changes `fridge.h`, which this fixture does not include. `append_known` remains
 out of line in both builds, and there is no new full-prefix copy.
 
 All four emitted comparator bodies contain the same 209 instructions after
@@ -132,7 +132,7 @@ Reproduction and raw data
 
 [The runner](cola_layout.py) snapshots fresh headers and records every header,
 source, executable and warm-up file hash. The archived candidate patch reconstructs
-all candidate header hashes exactly, so reproduction does not depend on retaining
+the candidate with normalized names, so reproduction does not depend on retaining
 the experimental Git branch:
 
 ```sh
@@ -141,13 +141,14 @@ python3 bench/cola_layout.py --baseline 111a2d6 \
   --build-dir build-cola-layout --trials 5 --rounds 3
 ```
 
-Run under the host's exclusive CPU/build-directory lease. The measured runner is
-also preserved byte-for-byte with the hash recorded in its metadata; the reusable
-runner additionally accepts the archived header patch.
+Run under the host's exclusive CPU/build-directory lease. The recorded runner
+also uses current names; its metadata retains the original measured hash.
+The reusable runner accepts the archived header patch and records normalized
+source hashes separately.
 
 * Final control: [480 CSV rows](results/cola_layout_m2max.csv),
   [metadata and commands](results/cola_layout_m2max.json),
-  [exact measured runner](results/cola_layout_measured.py),
+  [recorded runner](results/cola_layout_measured.py),
   [instruction excerpts and section sizes](results/cola_layout_codegen.json).
 * Query collateral: [40 CSV rows](results/cola_layout_query_m2max.csv),
   [metadata and commands](results/cola_layout_query_m2max.json).

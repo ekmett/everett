@@ -12,6 +12,11 @@ Follow the approachable,
 example-led style of my Haskell packages: setext headings, useful documentation
 links, Contact Information and the final -Edward Kmett signoff. Demonstrate
 tested features; keep detailed implementation tracking in docs/implementation.md.
+Until the first release, keep names consistent across APIs, file signatures,
+fixtures, benchmark labels and documentation. Update them together rather than
+retaining aliases or compatibility for discarded development names. Preserve
+measured results honestly: distinguish original measurement hashes from hashes
+of artifacts whose names have been normalized.
 Use `$...$` for inline Markdown math and `$$...$$` for display math. Include
 the README and design Markdown in Doxygen, and verify that equations render.
 
