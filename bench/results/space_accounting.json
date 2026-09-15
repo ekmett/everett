@@ -9,5 +9,6 @@
   "harness_sha256": "24a7d5a7e7d8993ee0551eae9f348b909dfea7ecdb8bb39a348a4800cac7012c",
   "scope": "occupied encoded arrays only; not timing or allocated file space",
   "single_rows": 24,
-  "dual_rows": 24
+  "dual_rows": 24,
+  "harness_revision": "fc02351409d09f13e8deadfbfdfc9046830dc22b"
 }

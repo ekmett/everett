@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  */
 #include <everett/query.h>
-#ifdef DIET_DUAL
+#ifdef EVERETT_DUAL
 #include <everett/cola_index.h>
 #endif
 #include <algorithm>
@@ -23,7 +23,7 @@ namespace {
   template<class P> void run(unsigned count, unsigned prefix, unsigned value_bytes, bool random) {
     using blob = everett::profile_blob<P>;
     using pair = std::shared_ptr<blob const>;
-    #ifdef DIET_DUAL
+    #ifdef EVERETT_DUAL
     using native_array = everett::profile_array<P>;
     using index = everett::cola_index<P>;
     std::array<std::shared_ptr<native_array const>,8> sources;
@@ -45,14 +45,14 @@ namespace {
         ++records; raw_keys+=key.size(); raw_values+=value.size();
       }
       std::sort(data.begin(),data.end(),[](auto const&a,auto const&b){return everett::compare_bits(a.key.view(),b.key.view())<0;});
-      #ifdef DIET_DUAL
+      #ifdef EVERETT_DUAL
       sources[level]=std::make_shared<native_array const>(native_array::build(data));
 #else
       sources[level]=std::make_shared<blob const>(blob::build(data));
 #endif
     }
     std::uint64_t native=0,borrowed=0,offsets=0,rank=0,lcp=0,flags=0,bcount=0,catalogs=0;
-#ifdef DIET_DUAL
+#ifdef EVERETT_DUAL
     typename index::pair_type head;
     typename index::native_pointer secondary;
     for(unsigned level=0;level<4;++level) {

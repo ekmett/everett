@@ -31,10 +31,13 @@ set(everett_test_names crc32c rank groups rank_groups_builder elias_fano profile
 if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # These suites seal real mapped inputs through posix_object_ops throughout.
   # Model-ops writer tests above retain their platform-independent coverage.
-  list(APPEND everett_test_names mapped_index_builder file_index_builder file_index_pipeline)
+  list(APPEND everett_test_names mapped_index_builder file_index_builder file_index_pipeline mapped_cola)
 endif()
 if(EVERETT_ENABLE_SQLITE)
   list(APPEND everett_test_names sqlite_catalog sqlite_catalog_adversarial sqlite_catalog_vfs sqlite_catalog_restart sqlite_catalog_timeline sqlite_catalog_streamed)
+  if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(APPEND everett_test_names sqlite_catalog_cola)
+  endif()
 endif()
 foreach(everett_test IN LISTS everett_test_names)
   add_executable(everett_test_${everett_test} "${PROJECT_SOURCE_DIR}/tests/${everett_test}.cc")

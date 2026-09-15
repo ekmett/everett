@@ -49,9 +49,11 @@ preserves matching native contributions from both roles.
 `open_mapped_cola_query` implement IX03 encoding and metadata-only mapped
 opening with exact main/secondary pins. Explicit `scan` validates payloads and
 target samples. The [COLA guide](cola-indexes.md) describes the layout and API.
-The independent eight-policy core tests passed strict O3 ASan/UBSan; the mapped
-format has passed a two-policy seal/reopen/scan/query smoke check, with broader
-independent mapped validation in progress.
+The independent eight-policy core and mapped suites passed strict O3
+ASan/UBSan. The mapped suite independently assembles IX03 bytes, checks exact
+source/ordinal/value query results, mutates valid-CRC files, verifies target
+identities and mapping lifetimes, and protects both borrowed payloads during
+metadata-only opening.
 
 The separate [scheduler model](cola-scheduling.md) executes fixed-admission
 main/secondary/shadow transitions with immutable identities and explicit work
@@ -558,7 +560,12 @@ admission verifies the pinned chain before taking the SQL writer lock. All
 mutations record exact request and outcome bytes under an operation ID in the
 same transaction. Replays compare the complete request, including binary IDs.
 
-New catalogs use schema 2. `create_timeline`, `fork_timeline` and
+`create` selects schema 2; `create_cola` selects schema 3, which admits both
+linear IX02 and dual-route IX03 graphs. COLA registration records the main pair
+and terminal secondary native edge with separate counts and requires every
+seal receipt. Schema 3 tests cover exact replay, missing-secondary rollback,
+mixed layouts, saves, timelines, reopen and registration COMMIT failures.
+`create_timeline`, `fork_timeline` and
 `publish_timeline` append immutable generations under the SQLite writer lock.
 Publication compares the complete expected name, generation, head and owner;
 stale requests record their observed head as a stable replay outcome. Forks

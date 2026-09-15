@@ -196,13 +196,37 @@ independent. This is conservative retention, **not** pin retirement or garbage
 collection; an unbounded publication history retains an unbounded union of
 physical objects. [SQLite foreign-key contracts](https://sqlite.org/foreignkeys.html).
 
-New catalogs use schema version 2. Version 1 catalogs still open and support
+`create` selects schema version 2; `create_cola` selects version 3 for
+two-route IX03 graphs as well as linear IX02 chains. Both support timelines.
+Version 1 catalogs still open and support
 reservations, seals, graph registration, immutable saves and reader acquisition.
 Their timeline methods explicitly reject the unsupported capability.
 `schema_version()` exposes the distinction. Opening never migrates an old
-catalog, and the old version-1 implementation rejects a version-2 catalog.
+catalog. Unsupported versions are rejected.
 The catalog schema version is independent of the immutable file envelope and
 section-codec versions.
+
+## Registering COLA roots
+
+For a two-route store, create the catalog with `create_cola`. Reserve and seal
+the main native/index pairs and all terminal secondary native files, then open
+the prepared head with `open_mapped_cola_query`. The `register_chain` overload
+accepts that root. Its default admission reads fixed metadata; explicit
+`catalog_admission::scan` verifies the samples and encoded contents.
+
+Schema 3 records each pair's layout, exact main pair, exact secondary native
+identity, and separate main/secondary borrowed counts. Registration requires a
+successful seal receipt for every referenced object, including secondaries.
+Its operation record includes both target identities and counts, so replay
+cannot silently substitute another dependency. A schema-1 or schema-2 catalog
+rejects COLA admission before opening the supplied files.
+
+Saves, reader acquisition, timeline creation, forks and conditional publication
+use the same root identities for both layouts. Open a retained IX03 root with
+`open_mapped_cola_query`; open IX02 with `open_mapped_query`. The pair row's
+`layout` records the distinction. A secondary has no separate `.index` to seal
+or retain. The [COLA guide](cola-indexes.md) describes the query topology and
+file representation.
 
 ## Transactions and operation identities
 
