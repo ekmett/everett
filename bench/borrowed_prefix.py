@@ -18,6 +18,7 @@ import os
 from pathlib import Path
 import platform
 import shlex
+import shutil
 import statistics
 import subprocess
 
@@ -63,6 +64,8 @@ def main():
         paths = subprocess.check_output(["git", "-C", str(repo), "ls-tree", "-r", "--name-only",
             revision, "include/everett"], text=True).splitlines()
         headers = build / name / "headers"
+        if headers.exists():
+            shutil.rmtree(headers)
         hashes = {}
         for path in paths:
             data = subprocess.check_output(["git", "-C", str(repo), "show", revision + ":" + path])

@@ -45,6 +45,9 @@ candidate is `2b71fd2`. The [shared harness](borrowed_prefix.cc) and
 [runner](borrowed_prefix.py) snapshot both header trees, then compile one
 identical harness source against each. The runner records resolved revisions,
 source and header hashes, compiler commands and execution order.
+The measured run used a fresh build directory. The runner now also clears each
+header snapshot before reuse, preventing stale deleted headers from surviving
+between experiments; this does not change the recorded measurement.
 
 The change is available on main at `f2b92af`; reproduction uses that reachable
 revision. The benchmark harness is available on main at `fdcad44`.
@@ -68,7 +71,7 @@ not a cryptographic commitment.
 Each case uses 16,384 records, five alternating baseline/candidate process
 trials, and three timed rounds per process. Both profiles use `K=W=15` and zero
 borrowed value width. Native M2 Max, AppleClang 21, C++20, `-O3 -DNDEBUG`,
-user-initiated QoS. Compilation and timing hold the exclusive CPU/build-directory
+requested user-initiated QoS. Compilation and timing hold the exclusive CPU/build-directory
 resource lease. Core assignment and frequency are controlled by the OS.
 
 ## Results
