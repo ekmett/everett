@@ -13,12 +13,14 @@
 
 #include <everett/rank15.h>
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstdint>
 #include <limits>
 #include <span>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace everett {
@@ -266,6 +268,80 @@ namespace everett {
     std::vector<std::uint64_t> classes;
     std::vector<std::uint64_t> checkpoints;
     std::uint64_t virtual_count = 0;
+  };
+
+  // Pack complete population classes as they arrive. Only the final group may
+  // have fewer than K occurrences. Prefix population is construction scratch;
+  // the finished rank structure stores no cached total or endpoint entry.
+  // Failed allocation or validation leaves accepted classes unchanged.
+  template <std::uint64_t K> struct rank_groups_builder {
+    static constexpr auto group_size = K;
+    static constexpr auto class_bits = rank_groups<K>::class_bits;
+
+    rank_groups_builder() = default;
+    rank_groups_builder(rank_groups_builder const &) = delete;
+    rank_groups_builder & operator=(rank_groups_builder const &) = delete;
+    rank_groups_builder(rank_groups_builder && other) noexcept
+      : data_(std::move(other.data_)), groups_(other.groups_), population_(other.population_),
+        partial_(other.partial_), finished_(std::exchange(other.finished_, true)) {}
+    rank_groups_builder & operator=(rank_groups_builder && other) noexcept {
+      if (this != &other) {
+        data_ = std::move(other.data_); groups_ = other.groups_; population_ = other.population_;
+        partial_ = other.partial_; finished_ = std::exchange(other.finished_, true);
+      }
+      return *this;
+    }
+
+    std::uint64_t size() const noexcept { return data_.virtual_count; }
+    std::uint64_t group_count() const noexcept { return groups_; }
+    bool finished() const noexcept { return finished_; }
+
+    void append(std::uint64_t population, std::uint64_t width = K) {
+      require_active();
+      constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
+      if (partial_ || !width || width > K || population > width)
+        error_detail::raise<std::invalid_argument>("invalid incremental rank group");
+      if (width > maximum - data_.virtual_count || groups_ >= (maximum - 63) / class_bits)
+        error_detail::raise<std::length_error>("incremental rank groups are too large");
+      auto bits = (groups_ + 1) * class_bits;
+      auto words = (bits + 63) >> 6;
+      auto checkpoint = (groups_ & 127) == 0;
+      reserve(data_.classes, words);
+      if (checkpoint) reserve(data_.checkpoints, (groups_ >> 7) + 1);
+      // All potentially failing growth precedes the first logical mutation.
+      data_.classes.resize(static_cast<std::size_t>(words), 0);
+      if (checkpoint) data_.checkpoints.push_back(population_);
+      auto bit = groups_ * class_bits;
+      auto shift = unsigned(bit & 63);
+      data_.classes[bit >> 6] |= population << shift;
+      if (shift + class_bits > 64) data_.classes[(bit >> 6) + 1] |= population >> (64 - shift);
+      data_.virtual_count += width;
+      population_ += population;
+      ++groups_;
+      partial_ = width != K;
+    }
+
+    rank_groups<K> finish() {
+      require_active();
+      finished_ = true;
+      return std::move(data_);
+    }
+
+  private:
+    rank_groups<K> data_;
+    std::uint64_t groups_ = 0, population_ = 0;
+    bool partial_ = false, finished_ = false;
+
+    void require_active() const {
+      if (finished_) error_detail::raise<std::logic_error>("incremental rank groups are finished");
+    }
+    static void reserve(std::vector<std::uint64_t> & data, std::uint64_t count) {
+      if (count <= data.capacity()) return;
+      if (count > data.max_size()) error_detail::raise<std::length_error>("incremental rank groups are too large");
+      auto capacity = data.capacity();
+      auto grown = capacity > (data.max_size() >> 1) ? data.max_size() : capacity << 1;
+      data.reserve(std::max(static_cast<std::size_t>(count), grown));
+    }
   };
 }
 
