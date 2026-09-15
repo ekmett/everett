@@ -90,14 +90,25 @@ namespace diet {
     std::array<std::optional<profile_blob_borrowed_predecessor<P>>, 2> predecessors;
   };
 
+  template <class P> struct profile_stream_family {
+    using native_view = profile_view<P, stream_role::native>;
+    using borrowed_view = profile_view<P, stream_role::borrowed>;
+    using borrowed_array = profile_array<P, stream_role::borrowed>;
+    using borrowed_writer = profile_borrowed_writer<P>;
+  };
+  template <class P, class Native, class = void> struct cola_stream_family { using type = profile_stream_family<P>; };
+  template <class P, class Native> struct cola_stream_family<P, Native, std::void_t<typename Native::stream_family>> {
+    using type = typename Native::stream_family;
+  };
+
   // Both population directories refer to the same three-way augmented order.
   // Native keys win ties, followed by main borrows, then secondary borrows.
   // Shapes are checked without scanning payload. Contents, flags and cut LCPs
   // must come from this builder or an independently validated reader.
-  template <class P> struct cola_index_view {
+  template <class P, class Family = profile_stream_family<P>> struct cola_index_view {
     using policy_type = P;
-    using native_view = profile_view<P, stream_role::native>;
-    using borrowed_view = profile_view<P, stream_role::borrowed>;
+    using native_view = typename Family::native_view;
+    using borrowed_view = typename Family::borrowed_view;
     using rank_view = rank_groups_view<P::group_size>;
     static constexpr auto group_size = P::group_size;
     cola_index_view(native_view native, std::array<borrowed_view, 2> borrowed,
@@ -198,8 +209,8 @@ namespace diet {
 
   // A secondary is a native-only leaf. Its sampled ordinal directly names a
   // native K-window; it has no onward index route.
-  template <class P> std::optional<profile_blob_native_match<P>> cola_search_secondary(
-      profile_view<P, stream_role::native> leaf, profile_blob_borrowed_predecessor<P> const & predecessor,
+  template <class P, class View> std::optional<profile_blob_native_match<P>> cola_search_secondary(
+      View leaf, profile_blob_borrowed_predecessor<P> const & predecessor,
       profile_comparison_work * work = nullptr) {
     auto first = predecessor.target_ordinal;
     if (first >= leaf.size() || first % P::group_size || predecessor.comparison.order() > 0)
@@ -233,7 +244,9 @@ namespace diet {
     using policy_type = P;
     using native_array = Native;
     using target_type = std::conditional_t<std::is_void_v<Main>, cola_index, Main>;
-    using borrowed_array = profile_array<P, stream_role::borrowed>;
+    using stream_family = typename cola_stream_family<P, Native>::type;
+    using view_type = cola_index_view<P, stream_family>;
+    using borrowed_array = typename stream_family::borrowed_array;
     using native_pointer = std::shared_ptr<native_array const>;
     using pair_type = std::shared_ptr<cola_index const>;
     using main_pointer = std::shared_ptr<target_type const>;
@@ -273,13 +286,13 @@ namespace diet {
     native_pointer secondary_target() const noexcept { return secondary_; }
     std::uint64_t virtual_size() const noexcept { return native_ ? count_ : 0; }
     std::uint64_t group_count() const noexcept { auto n = virtual_size(); return n / group_size + (n % group_size != 0); }
-    cola_index_view<P> view() const & {
+    view_type view() const & {
       require_active();
       return {native_->view(), {borrowed_[0].view(), borrowed_[1].view()}, {ranks_[0].view(), ranks_[1].view()},
         {flags_[0], flags_[1]}, {word_view(std::span<std::uint64_t const>(cuts_[0])),
           word_view(std::span<std::uint64_t const>(cuts_[1]))}, count_};
     }
-    cola_index_view<P> view() const && = delete;
+    view_type view() const && = delete;
     cola_window project(std::uint64_t group) const { return view().project(group); }
     cola_window_result<P> search_window(std::uint64_t group, profile_query_context<P> const & lower,
         profile_comparison_work * native_work = nullptr,
@@ -352,10 +365,12 @@ namespace diet {
           selected.common[selected.origin] == first_length ? 0 : -1};
       return std::nullopt;
     }
-    using borrowed_cursor = profile_cursor<P, stream_role::borrowed>;
-    struct binding { std::shared_ptr<Target const> target; cola_index_view<P> view; };
+    using view_type = decltype(std::declval<Target const &>().view());
+    using native_cursor = decltype(std::declval<typename view_type::native_view>().cursor());
+    using borrowed_cursor = decltype(std::declval<typename view_type::borrowed_view>().cursor());
+    struct binding { std::shared_ptr<Target const> target; view_type view; };
     std::shared_ptr<Target const> target_;
-    profile_cursor<P> native_;
+    native_cursor native_;
     std::array<borrowed_cursor, 2> borrowed_;
     std::array<std::uint64_t, 3> prefixes_{};
     std::uint64_t count_, ordinal_ = 0;
@@ -480,10 +495,11 @@ namespace diet {
     native_pointer native_;
     main_pointer main_;
     native_pointer secondary_;
-    std::optional<profile_cursor<P>> native_cursor_;
+    using native_cursor_type = decltype(std::declval<Native const &>().view().cursor());
+    std::optional<native_cursor_type> native_cursor_;
     std::optional<cola_sample_cursor<P, target_type>> primary_cursor_;
-    std::optional<profile_cursor<P>> secondary_cursor_;
-    std::array<profile_borrowed_writer<P>, 2> writers_;
+    std::optional<native_cursor_type> secondary_cursor_;
+    std::array<typename index_type::stream_family::borrowed_writer, 2> writers_;
     std::array<rank_groups_builder<P::group_size>, 2> ranks_;
     std::array<std::vector<std::byte>, 2> flags_;
     std::array<std::vector<std::uint64_t>, 2> cuts_;
@@ -508,7 +524,7 @@ namespace diet {
       if (origin == 1) return primary_cursor_->peek().key;
       return secondary_cursor_->peek().key.prefix;
     }
-    static std::uint64_t advance_native(profile_cursor<P> & cursor) {
+    static std::uint64_t advance_native(native_cursor_type & cursor) {
       auto next = cursor.advance_comparison();
       if (next && next->order >= 0)
         error_detail::raise<std::invalid_argument>("COLA native source order mismatch");

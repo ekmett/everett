@@ -339,6 +339,37 @@ namespace diet {
     }
     int order() const noexcept { return order_; }
 
+    // A heterogeneous record grammar can expose its logical suffix as a few
+    // borrowed spans. Comparisons retain only order, length and agreement with
+    // the query; inherited key bytes need not be reconstructed.
+    std::uint64_t advance_parts(std::uint64_t retained_bits, std::uint64_t full_bits,
+                               std::span<bit_view const> literal) {
+      if ((full_bits & (P::bits_per_unit - 1)) || retained_bits > full_bits ||
+          (length_known_ && retained_bits > (full_units_ << P::unit_shift)))
+        error_detail::raise<std::invalid_argument>("invalid inherited comparison frame");
+      std::uint64_t total = retained_bits;
+      for (auto part : literal) total = profile_detail::add(total, part.size());
+      if (total != full_bits) error_detail::raise<std::invalid_argument>("incomplete comparison literal");
+      std::uint64_t compared = 0;
+      if (common_bits_ >= retained_bits) {
+        auto at = retained_bits;
+        order_ = 0;
+        for (auto part : literal) {
+          auto available = query().size() - at;
+          auto other = query().subview(at, available);
+          auto result = compare_common_bits(part, other.prefix(std::min(part.size(), available)));
+          compared += result.common_bits + (result.common_bits < std::min(part.size(), available));
+          at += result.common_bits;
+          if (result.order) { order_ = result.order; break; }
+        }
+        common_bits_ = at;
+        if (!order_) order_ = full_bits < query().size() ? -1 : full_bits > query().size() ? 1 : 0;
+      }
+      full_units_ = full_bits >> P::unit_shift;
+      length_known_ = true;
+      return compared;
+    }
+
     profile_query_context with_key(bit_view key) const {
       if (key.size() & (P::bits_per_unit - 1)) error_detail::raise<std::invalid_argument>("boundary key unit mismatch");
       auto result = *this;
@@ -354,7 +385,7 @@ namespace diet {
     template <class, stream_role> friend struct profile_view;
     template <class> friend struct profile_blob;
     template <class> friend struct profile_blob_view;
-    template <class> friend struct cola_index_view;
+    template <class, class> friend struct cola_index_view;
     std::shared_ptr<bit_string const> query_;
     std::uint64_t common_bits_ = 0;
     std::uint64_t full_units_ = 0;
