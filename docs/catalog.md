@@ -1,7 +1,7 @@
-# SQLite catalog for worlds, pins and background work
+# SQLite catalog for colas, pins and background work
 
 Chosen architecture, 2026-09-15. Most of the bytes belong in immutable `.kv` and
-`.index` files. The metadata is comparatively small: which worlds exist, which
+`.index` files. The metadata is comparatively small: which colas exist, which
 representations they use, who retains them, and how far each merge or index
 build has progressed. SQLite gives us transactions over that metadata and a
 journal for recovering it. We need no additional custom manifest, transaction-log
@@ -10,7 +10,7 @@ or checkpoint-file format.
 This document specifies the backend's architecture and acceptance contract.
 The [optional SQLite adapter](sqlite-catalog.md) implements reservations, sealed
 objects, exact prepared chains, immutable saved roots, timeline generations and durable reader pins.
-The broader schema below specifies logical world metadata, ownership retirement and
+The broader schema below specifies logical cola metadata, ownership retirement and
 merge continuations. The in-memory pin owner and durability state machine give
 us executable models for those transitions.
 
@@ -20,28 +20,28 @@ SQLite records which exact immutable objects are reachable and which transitions
 have committed. It does not contain the bulk key/value table, and a committed
 catalog row does not itself make an external file durable.
 
-We need to distinguish the world we mean from the objects we use to read it:
+We need to distinguish the cola we mean from the objects we use to read it:
 
-- A **world** identifies an admitted logical cut, with its schema context, live
+- A **cola** identifies an admitted logical cut, with its schema context, live
   count and weak composite fingerprint. The fingerprint is not a unique ID.
 - A **representation** is an immutable manifest of the exact blob/index versions
-  used to read that world. Pure compaction makes a new representation of the
-  same world. It does not change an old representation in place.
-- A **timeline** selects a current world and representation, with a monotonically
+  used to read that cola. Pure compaction makes a new representation of the
+  same cola. It does not change an old representation in place.
+- A **timeline** selects a current cola and representation, with a monotonically
   advancing revision used for conditional publication.
 - A **branch point** retains one exact representation. Readers, saved branch
   points, jobs and caches likewise have explicit retention owners.
 
-A description of a historical world can outlive the files needed to read it.
+A description of a historical cola can outlive the files needed to read it.
 Retention therefore follows the designated roots below. Keeping a descriptive
 row alone does not keep those files. A branch point intended to remain readable
 must have a root.
 
 The catalog records the canonical policy P: byte/bit unit, group size, value
 layout and interpretation versions. The optional `sqlite_catalog<P>::open`
-validates that policy; `multiverse<P>` separately owns file access. Changing P
+validates that policy; `fridge<P>` separately owns file access. Changing P
 is an explicit format migration. Sort and category schema versions are pinned
-by each world and by the jobs interpreting it.
+by each cola and by the jobs interpreting it.
 
 ## 2. Proposed relational schema
 
@@ -55,18 +55,18 @@ rows carry an expected revision/generation for conditional updates.
 | Table | Essential columns | Required relationships and constraints |
 | --- | --- | --- |
 | `catalog_info` | singleton ID, schema version, canonical P, catalog identity, allocator state | exactly one identity/policy; reject unsupported versions |
-| `schema_contexts` | schema ID, sort/codec/hash/category resolver versions | immutable canonical descriptor; worlds and recipes refer to exact versions |
+| `schema_contexts` | schema ID, sort/codec/hash/category resolver versions | immutable canonical descriptor; colas and recipes refer to exact versions |
 | `objects` | allocation/object ID, kind, generation, final content identity, relative path, lifecycle state, byte extent, integrity digest, optional native fingerprint | kind is `kv` or `index`; unique ID/path; generation and IDs never reused; final identity/extent are fixed at sealing |
 | `object_edges` | source object, target object, dependency role | composite primary key; both ends foreign keys; exact immutable dependency graph |
 | `blob_versions` | blob ID, native object, optional index object, layout, optional main target blob, optional secondary native object, native/borrowed/augmented counts | native and secondary kinds are `kv`; index kind is `index`; exact role-specific targets and policy validation; immutable |
-| `worlds` | world ID, admitted cut ID, schema ID, live count, composite fingerprint | immutable; signature has no uniqueness constraint |
-| `representations` | representation ID, world ID, layout version, cached contribution sum | immutable; composite unique key `(representation_id, world_id)` |
+| `colas` | cola ID, admitted cut ID, schema ID, live count, composite fingerprint | immutable; signature has no uniqueness constraint |
+| `representations` | representation ID, cola ID, layout version, cached contribution sum | immutable; composite unique key `(representation_id, cola_id)` |
 | `representation_entries` | representation ID, position, logical factor ID, blob ID, contribution role, contribution | primary key `(representation_id, position)`; unique factor within one representation; exact semantic ordering |
 
 Construction identities and generations are reserved before output exists.
 A final content identity is established only after the bytes and its defined
 hash input have been verified. The catalog distinguishes these roles; the weak
-world fingerprint is never a file content address. A private construction can
+cola fingerprint is never a file content address. A private construction can
 acquire its final name at sealing, before durable publication. Sealed identity,
 path and content descriptors are immutable.
 
@@ -92,13 +92,13 @@ filesystem path.
 | `sessions` | session ID, boot/process-start identity, liveness state, observed heartbeat | nonreused session identity; heartbeats are diagnostic, not sole reclamation authority |
 | `owners` | owner ID, kind, optional session ID, lifecycle state | kinds include timeline, branch point, reader, job, cache and recovery; durable owners do not expire with a process |
 | `owner_representations` | owner ID, representation ID | composite primary key and foreign keys; retains that exact manifest |
-| `owner_blobs` | owner ID, blob ID | direct roots for jobs/cached results before a world adopts them |
+| `owner_blobs` | owner ID, blob ID | direct roots for jobs/cached results before a cola adopts them |
 | `owner_objects` | owner ID, object ID | roots for unfinished outputs, sealed ranges and quarantined generations |
-| `timelines` | timeline ID/name, owner ID, head world, head representation, revision | unique name; head representation belongs to head world and is retained by that owner |
-| `branch_points` | branch ID/name, owner ID, world ID, representation ID | exact world/representation pair retained by that owner |
+| `timelines` | timeline ID/name, owner ID, head cola, head representation, revision | unique name; head representation belongs to head cola and is retained by that owner |
+| `branch_points` | branch ID/name, owner ID, cola ID, representation ID | exact cola/representation pair retained by that owner |
 
 Composite foreign keys can express some of this contract directly. For example,
-`(head_representation_id, head_world_id)` references the corresponding unique
+`(head_representation_id, head_cola_id)` references the corresponding unique
 pair in `representations`, and `(owner_id, head_representation_id)` references
 `owner_representations`. The latter can be deferrable during an atomic head
 change. A branch point uses the equivalent constraints. Index the reverse
@@ -113,7 +113,7 @@ against the graph. They are not an independent authority to delete files.
 | Table | Essential columns | Required relationships and constraints |
 | --- | --- | --- |
 | `operations` | operation ID, operation kind, canonical request digest, expected revision, outcome IDs, status | duplicate ID with different contents is rejected; committed outcome is discoverable after acknowledgment loss |
-| `rounds` | round ID, base world/representation, partition rule version, admission/completion state | retain the exact shared read base; distinguish round completion from representation work |
+| `rounds` | round ID, base cola/representation, partition rule version, admission/completion state | retain the exact shared read base; distinguish round completion from representation work |
 | `accepted_batches` | round ID, batch ID, partition owner, exact update blob, request digest, advertised delta, accepted cut | unique `(round_id, batch_id)`; independent validation before first admission |
 | `jobs` | job ID, recipe ID, owner ID, state, attempt generation, latest checkpoint, work budget/progress | stable job identity; fresh attempt/output generations; checked state transitions |
 | `job_inputs` | job ID, input position, nullable blob ID, nullable representation ID, semantic role | exactly one typed input reference is present, with its own foreign key; ordered immutable recipe inputs include older-coverage context when required |
@@ -141,7 +141,7 @@ batch identities and their retained update files.
 
 ### Value encodings and constraints
 
-Object/world/job identities and algebra elements use canonical BLOB encodings
+Object/cola/job identities and algebra elements use canonical BLOB encodings
 when their full range is not a checked SQLite integer range. Never truncate an
 unsigned ID, reinterpret a wrapping fingerprint as a signed sum, or store an
 algebra element as floating point. Checked nonnegative integer counters need
@@ -157,20 +157,20 @@ enforcement on every connection before beginning transactions.
 
 ## 3. Contributions are not retention counts
 
-Only `representation_entries` contribute to a representation's world sum:
+Only `representation_entries` contribute to a representation's cola sum:
 
 - An initial base contributes its logical table fingerprint.
 - An update contributes its validated old-to-new delta.
 - A merged entry contributes the sum of the logical factors it replaces.
 
-We compute the sum with the pinned algebra policy and compare it with the world's
+We compute the sum with the pinned algebra policy and compare it with the cola's
 fingerprint. A file's own-native-record hash is a different optional diagnostic.
 A tombstone can have zero native hash and a nonzero negative contribution.
 
 Owner roots, borrowed keys, index dependencies, cached completed merges and
 unfinished candidates add **retention**, not extra terms in that sum. Retaining
 both an input representation and its replacement temporarily does not represent
-twice the world. Two representations with equal sums can still have different
+twice the cola. Two representations with equal sums can still have different
 contents through collisions or a bug; the sum is a lint check, not the merge
 correctness proof.
 
@@ -230,8 +230,8 @@ following order.
    expected head/revision, exact inputs, candidate readiness and semantic checks.
    Insert the immutable representation/entries, add its selected owner root,
    change the timeline's head, and record the operation outcome in one commit.
-   A logical update also creates its new world/cut; pure compaction keeps the
-   world ID. Remove only this timeline owner's superseded selection.
+   A logical update also creates its new cola/cut; pure compaction keeps the
+   cola ID. Remove only this timeline owner's superseded selection.
 6. **Acknowledge, then retire auxiliary retention.** After successful commit,
    report the durable outcome. A later transaction can release the job/recovery
    owner's old inputs. Branch points, readers, other jobs and caches retain their
@@ -343,7 +343,7 @@ would still leave us with the same space and work to charge.
 A global rebuild additionally records the frozen source, current foreground and
 candidate representations, admission/replay cuts and counters b, u, n_s and h.
 Replayed mutations remain part of the candidate's weak-update debt. Foreground
-and candidate roots have separate contributions; summing both is not a world
+and candidate roots have separate contributions; summing both is not a cola
 fingerprint. The [rebuilding schedule](rebuild.md) remains responsible for
 bounded catch-up and byte/work accounting.
 
@@ -362,11 +362,11 @@ sqlite3 -readonly catalog.sqlite
 .mode box
 SELECT sqlite_version(), sqlite_source_id();
 
-SELECT t.name, t.revision, hex(t.head_world_id) AS world,
+SELECT t.name, t.revision, hex(t.head_cola_id) AS cola,
        hex(t.head_representation_id) AS representation,
        w.live_count, hex(w.composite_fingerprint) AS fingerprint
 FROM timelines AS t
-JOIN worlds AS w ON w.world_id = t.head_world_id;
+JOIN colas AS w ON w.cola_id = t.head_cola_id;
 
 SELECT e.position, hex(e.blob_id) AS blob, e.contribution_role,
        hex(e.contribution) AS contribution,
@@ -415,7 +415,7 @@ is not authority to unlink them. Actual collection rechecks and claims them in
 a write transaction. Read-only SQL browsing likewise does not acquire permission
 to hold external file views. CLI parameter values must be bound with the correct
 ID encoding; display hex is not automatically a BLOB parameter. A complete
-multiverse backup must retain and copy the referenced external objects as well;
+fridge backup must retain and copy the referenced external objects as well;
 a catalog-only copy is a metadata backup.
 
 ## 9. Acceptance before the backend is called durable
@@ -423,7 +423,7 @@ a catalog-only copy is a metadata backup.
 Before calling this backend durable, we need tests covering:
 
 - Schema/version/policy mismatch, foreign-key enforcement, invalid dependencies,
-  wrong file kinds and cycles; equal fingerprints with distinct world/object IDs.
+  wrong file kinds and cycles; equal fingerprints with distinct cola/object IDs.
 - Concurrent reader acquisition versus GC claims, including a paused live reader,
   a dead process, PID reuse and an acquisition abandoned after commit.
 - Logical updates, pure compaction and reindexing with old branch points still

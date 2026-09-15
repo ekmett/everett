@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/profile.h>
+#include <diet/profile.h>
 
 #include <algorithm>
 #include <array>
@@ -26,7 +26,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using byte_policy = storage_policy<profile_unit::byte>;
   using bit_policy = storage_policy<profile_unit::bit>;
 
@@ -1431,5 +1431,5 @@ int main() {
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Everett's profile behavior.
+ * \brief Tests Diet's profile behavior.
  */

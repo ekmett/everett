@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/object_writer.h>
+#include <diet/object_writer.h>
 
 #include <array>
 #include <cstdio>
@@ -24,7 +24,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using policy = storage_policy<profile_unit::byte, variable_values, 3>;
   using bit_policy = storage_policy<profile_unit::bit, fixed_values<0>, 7>;
 
@@ -288,7 +288,7 @@ namespace {
   struct temporary_directory {
     std::filesystem::path path;
     temporary_directory() {
-      auto pattern = (std::filesystem::temp_directory_path() / "everett-object-writer-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "diet-object-writer-XXXXXX").string();
       auto name = ::mkdtemp(pattern.data());
       if (!name) throw std::system_error(errno, std::generic_category(), "mkdtemp");
       path = name;

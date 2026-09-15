@@ -1,11 +1,11 @@
-# Everett implementation status
+# Diet implementation status
 
-Updated 2026-09-15. Specification: [Everett design](design.md).
+Updated 2026-09-15. Specification: [Diet design](design.md).
 
 This ledger records what works, what the tests establish, and what remains to
-be built. The C++20 foundations live in `include/everett/`, in
-namespace `everett`. Immutable files, mmap queries and saved catalog roots work;
-the mutable world runtime and bounded redundant-level scheduler remain
+be built. The C++20 foundations live in `include/diet/`, in
+namespace `diet`. Immutable files, mmap queries and saved catalog roots work;
+the mutable cola runtime and bounded redundant-level scheduler remain
 implementation work.
 
 ## Ownership and acceptance
@@ -23,11 +23,11 @@ for integration. These are development responsibilities.
 | Immutable object sealing | `object_writer.h`; `tests/object_writer.cc` | streamed CRC, exclusive creation, no-clobber installation, OS barrier ordering, failure identities and retained outputs |
 | Checksums | `crc32c.h`, generated backends, pinned generator and package notices; `tests/crc32c.cc` | independent CRC oracle, bounded loads, reproducible generation, target guards and multi-translation-unit installed consumption |
 | Key primitives | `key_detail.h`, `profile.h`; `tests/profile.cc`; [key policies](keys.md) | bounded comparisons, bit movement, count framing and independent bit-level oracles |
-| Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `multiverse.h`; profile/blob/multiverse tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
+| Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `fridge.h`; profile/blob/fridge tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
 | Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
 | Native construction and merging | `native_writer.h`, `native_merge.h`; native writer/merge tests | streaming record acceptance, preserved FC/EF bytes, chronological composition, input pins and failure state |
 | Persistent catalog | `sqlite_catalog.h`; focused, adversarial, VFS and process-interruption tests; optional package consumer | reserved IDs, exact prepared graphs, close/reopen saves, binary operation replay, uncertain commits and conservative pins |
-| World semantics and ownership | `fingerprint.h`, `pins.h`, `world.h`; `tests/world.cc`, `tests/pins.cc` | disjoint batch permutations, snapshots, old-value validation, contributions, replay and reference export |
+| Cola semantics and ownership | `fingerprint.h`, `pins.h`, `cola.h`; `tests/cola.cc`, `tests/pins.cc` | disjoint batch permutations, snapshots, old-value validation, contributions, replay and reference export |
 | Design documentation | [design](design.md), [arrows](arrows.md), [rebuilding](rebuild.md), [durability](durability.md), this ledger | consistent contracts, cited derivations, implementation limits and independently usable terminology |
 
 As components change, we update this ledger with the reviewed revision, actual
@@ -71,6 +71,12 @@ ASan/UBSan. The mapped suite independently assembles IX03 bytes, checks exact
 source/ordinal/value query results, mutates valid-CRC files, verifies target
 identities and mapping lifetimes, and protects both borrowed payloads during
 metadata-only opening.
+The focused sampler tests check exact endpoint comparisons against original
+bit strings, including redundant front coding and LP restarts in every stream.
+The route-stability tests independently encode FC and EF, verifying unchanged
+route bytes while the other target, local natives, ranks and cuts change.
+Five COLA suites also passed strict Linux Clang 20 ASan/UBSan and leak checks;
+the [Linux report](../bench/cola_linux.md) records the exact scope and sources.
 
 The separate [scheduler model](cola-scheduling.md) executes fixed-admission
 main/secondary/shadow transitions with immutable identities and explicit work
@@ -384,16 +390,16 @@ processors.
 
 Canonical sharded paths split the current experimental 128-bit opaque object
 ID into `ab/cd/<remaining-id>.<extension>`. Cryptographic content-ID calculation
-and verification are still pending; CRC32C and the weak world fingerprint are
+and verification are still pending; CRC32C and the weak cola fingerprint are
 not substitutes. The intended network path copies received native object bytes
 unchanged, then builds receiver-specific fractional indexes as detailed in
 [network admission](network-admission.md).
 
-`multiverse<P>` owns an existing object-directory path. It opens objects,
+`fridge<P>` owns an existing object-directory path. It opens objects,
 forwards `seal_object` to the same-policy writer, and opens prepared mmap query
 chains with `open_query`. It exposes same-policy aliases for `sort`, `blob`,
 `file`, `object_writer`, `mapped_native`, `mapped_index`, `mapped_blob` and
-`mapped_query_root`, plus forward-declared `world`, `timeline` and `branch_point`
+`mapped_query_root`, plus forward-declared `cola`, `timeline` and `branch_point`
 types. `sort<P>` validates one code's packing and unit
 alignment; it does not establish prefix freedom of an entire registry. Mapped
 files and slices outlive the reader object. There is no SQLite connection or
@@ -481,7 +487,7 @@ targets and mismatched sample counts, but does not authenticate manually pushed
 sample keys. The existing exact-sampler precondition and immutable-alias contract
 remain in force. The shared query machinery retrieves entries from owning
 encoded pairs or mapped pairs; it does not evaluate arrows or publish durable
-worlds. `adopt_prepared` checks an existing bounded chain without sampling it.
+colas. `adopt_prepared` checks an existing bounded chain without sampling it.
 
 The [whole-query comparison](../bench/query_compare.md) includes query
 creation, five- or six-catalog traversal and owned values. On this M2 Max,
@@ -628,7 +634,7 @@ They cover real seal/save/close/reopen/query operations, concurrent connections,
 exact replay, binary names, before/after-COMMIT acknowledgment failures, policy
 and schema rejection, path aliases and retained input/output ownership. The
 adversarial suite also passed Release, and a separate link rejected the older
-system SQLite 3.51.0. Relocated `everett::sqlite` consumption and a core consumer
+system SQLite 3.51.0. Relocated `diet::sqlite` consumption and a core consumer
 with SQLite discovery disabled both passed. The [component guide](sqlite-catalog.md)
 states the distinction between these checks and physical power-loss recovery.
 A separate POSIX process-interruption suite passes 20 `SIGKILL` cuts: before
@@ -637,10 +643,10 @@ whose receipts have not been recorded. Fresh connections check the exact
 operation prefix, individual pins and targets, old saved queries and replay
 without duplicating ownership. No inherited SQLite connection is used.
 
-### World semantics and algebra
+### Cola semantics and algebra
 
-- `reference_world` pins immutable sorted runs. Snapshots and forks share them;
-  eager reference compaction produces a new run while retained worlds keep the
+- `reference_cola` pins immutable sorted runs. Snapshots and forks share them;
+  eager reference compaction produces a new run while retained colas keep the
   old runs.
 - `partition_round` holds one immutable base throughout the round, checks
   arbitrary key ownership functions and old values, and accepts disjoint
@@ -657,7 +663,7 @@ without duplicating ownership. No inherited SQLite connection is used.
   the intended small manifest of pinned objects and does not establish crash
   durability.
 
-The world layer supplies a semantic oracle for attaching encoded blobs. Its eager
+The cola layer supplies a semantic oracle for attaching encoded blobs. Its eager
 ordered-map resolution is not the intended merge/query algorithm, and it has no
 logarithmic active-run-count guarantee. Batch generation may share an immutable
 base, while applying batches to one accumulator is serialized.
@@ -670,9 +676,9 @@ remains a policy-interface extension.
 
 ### Pin ownership
 
-`pin_set` is the actual `reference_world` state owner. Entries hold exact object
+`pin_set` is the actual `reference_cola` state owner. Entries hold exact object
 identities, immutable pins, additive contributions and optional own-record
-fingerprints. The world signature comes from the owner's cached aggregate.
+fingerprints. The cola signature comes from the owner's cached aggregate.
 Replacement validates expected identities and contribution preservation before
 publishing a new owner; previous owners retain their objects. Object identity
 is distinct from its weak fingerprint.
@@ -755,10 +761,10 @@ fingerprint sums.
 
 ### Aggregate API and key policies
 
-The read-side `multiverse<P>` and associated type family are implemented as
-described above. Persistent `world<P>`, `timeline<P>` and `branch_point<P>`
+The read-side `fridge<P>` and associated type family are implemented as
+described above. Persistent `cola<P>`, `timeline<P>` and `branch_point<P>`
 runtimes remain to be attached to the selected SQLite catalog.
-`reference_world` provides the executable in-memory semantics.
+`reference_cola` provides the executable in-memory semantics.
 
 [Sorts and key policies](keys.md) describes sort-qualified keys, key units,
 prefix-free coding and hash selection. The category may depend on the full key,
@@ -767,7 +773,7 @@ replacement oracle do not yet implement a heterogeneous sort registry.
 
 ### SQLite catalog and network admission
 
-SQLite is the selected home for logical worlds, immutable representations,
+SQLite is the selected home for logical colas, immutable representations,
 exact pins, contributions, index dependencies and small merge continuations.
 The [catalog design](catalog.md) specifies publication, operation identities,
 reader/GC synchronization and SQL diagnostics. The [implemented adapter](sqlite-catalog.md)
@@ -799,7 +805,7 @@ exercise its schedule, bounded catch-up or durable publication.
 
 The [per-key category design](arrows.md) extends the semantics to composable
 diffs. It specifies composition, partition independence, exact endpoint deltas,
-query costs and dependency retention. `reference_world` resolves replacements
+query costs and dependency retention. `reference_cola` resolves replacements
 using optional values, and `profile_blob<P>` carries opaque value payloads.
 There is no generic arrow executor, category-dependent wire format or general
 normalization bound. A second concrete instance should test noncommuting changes
@@ -810,7 +816,7 @@ before broadening the executor interface.
 Configure, build and run the standalone component suites with CMake/CTest:
 
 ```sh
-cmake -S . -B build -DEVERETT_BUILD_TESTS=ON
+cmake -S . -B build -DDIET_BUILD_TESTS=ON
 cmake --build build --parallel 4
 ctest --test-dir build --output-on-failure
 ```
@@ -818,13 +824,13 @@ ctest --test-dir build --output-on-failure
 For ASan/UBSan on a supported toolchain, use a separate build directory:
 
 ```sh
-cmake -S . -B build-sanitize -DEVERETT_BUILD_TESTS=ON -DEVERETT_SANITIZERS=ON
+cmake -S . -B build-sanitize -DDIET_BUILD_TESTS=ON -DDIET_SANITIZERS=ON
 cmake --build build-sanitize --parallel 4
 ctest --test-dir build-sanitize --output-on-failure
 ```
 
 The default component suites cover codecs, native and borrowed writers, index
-construction, queries, world semantics, ownership, durability and mapped files.
+construction, queries, cola semantics, ownership, durability and mapped files.
 With SQLite enabled, seven more suites cover the catalog, adversarial operations,
 forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
@@ -861,7 +867,7 @@ against the source bundle, and the pinned generator reproduced all eight
 backends. Windows execution coverage is limited to the recorded rank component
 tests. Network transport and durable merge resumption remain separate work.
 
-The optional `EVERETT_BUILD_DOCS` configuration generates Doxygen HTML/XML and
+The optional `DIET_BUILD_DOCS` configuration generates Doxygen HTML/XML and
 checks all file footers plus representative function/member ownership. A
 two-file fixture compares top, bottom and split file documentation across namespaces,
 same-name classes and overloaded functions. The license aliases render
@@ -876,7 +882,7 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 | Per-key arrow policy and second instance | categorical specification and replacement oracle | noncommuting diffs, heterogeneous keys, source validation, associative semantic composition, disjoint permutations, endpoint deltas, checkpoint observations and explicit work/dependency accounting |
 | Comparison block encoding | ordinary FC, exact cut LCP and scalar comparison transfers | transposed count/literal layouts, ordered SIMD transfer scans, bounded tails and independently measured time/space tradeoffs |
 | Object identity and integrity | portable sections, mmap queries and immutable writer | cryptographic content addressing, durable catalog publication and lazy block-integrity strategy |
-| Attach encoded runs to world semantics | blob reader and query | batch/snapshot/export oracle tests using actual encoded immutable runs |
+| Attach encoded runs to cola semantics | blob reader and query | batch/snapshot/export oracle tests using actual encoded immutable runs |
 | COLA scheduler and durable merge continuations | incremental native merge and index builder | byte/work-budgeted continuations, bounded active levels and shared-result adoption under interleaved forks |
 | Catalog pin retirement | conditional timeline publication, immutable saves, reservations and exact file graph | reader/generation retirement, reclaim only after final pin, schema migration and interruption tests |
 | Direct batch adoption | native file reader, prefix index builder and scheduler | preserve received ordinary-FC bytes, bound visible catalogs and work debt, preserve causal order and charge actual key bytes |

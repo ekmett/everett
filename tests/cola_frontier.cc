@@ -6,7 +6,7 @@
  * \endlicense
  */
 
-#include <everett/cola_index.h>
+#include <diet/cola_index.h>
 
 #include <algorithm>
 #include <array>
@@ -20,7 +20,7 @@
 #include <vector>
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using lanes = std::array<std::vector<std::string>, 3>;
   void check(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);

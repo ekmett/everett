@@ -13,8 +13,8 @@ simple deterministic identity allocator. An application supplies its own
 allocator and retains its operation identities for retry.
 
 ```cpp
-#include <everett/native_file_merge.h>
-#include <everett/sqlite_catalog.h>
+#include <diet/native_file_merge.h>
+#include <diet/sqlite_catalog.h>
 
 #include <algorithm>
 #include <array>
@@ -27,7 +27,7 @@ allocator and retains its operation identities for retry.
 #include <utility>
 #include <vector>
 
-using namespace everett;
+using namespace diet;
 using P = storage_policy<profile_unit::byte>;
 using catalog = sqlite_catalog<P>;
 using pair_type = mapped_cola_blob<P>::pair_type;
@@ -139,7 +139,7 @@ int main(int argc, char ** argv) {
 }
 ```
 
-Link with `everett::sqlite`. The example's native writer streams its payload;
+Link with `diet::sqlite`. The example's native writer streams its payload;
 the COLA builder reads mapped native inputs and retains the two encoded borrowed
 outputs and compact directories in memory until sealing. It never rewrites the
 input `.kv` files. The small tables fit one root group. Larger roots need a

@@ -41,7 +41,7 @@ def adapt(source, name, isa, algorithm):
         raise RuntimeError("unhandled generated scalar load")
     macros = sorted(set(re.findall(r"^#define (\w+)", source, re.MULTILINE)))
     for macro in macros:
-        source = re.sub(r"\b" + macro + r"\b", "EVERETT_GENERATED_" + macro, source)
+        source = re.sub(r"\b" + macro + r"\b", "DIET_GENERATED_" + macro, source)
     notice = (
         "/*\n"
         " * SPDX-FileCopyrightText: 2023 Peter Cawley\n"
@@ -50,11 +50,11 @@ def adapt(source, name, isa, algorithm):
         " * Parameters: -i " + isa + " -p crc32c -a " + algorithm + ".\n"
         " * C++ adaptation: tools/generate_crc32c.py; do not edit by hand.\n"
         " * The upstream notices are in third_party/fast-crc32/LICENSE*.md\n"
-        " * and the installed share/everett/third_party/fast-crc32 directory.\n"
+        " * and the installed share/diet/third_party/fast-crc32 directory.\n"
         " */\n\n"
     )
-    return notice + "namespace everett::crc32c_detail::" + name + " {\n" + source.strip() + (
-        "\n\n" + "".join("#undef EVERETT_GENERATED_" + macro + "\n" for macro in macros) + "}\n"
+    return notice + "namespace diet::crc32c_detail::" + name + " {\n" + source.strip() + (
+        "\n\n" + "".join("#undef DIET_GENERATED_" + macro + "\n" for macro in macros) + "}\n"
     )
 
 
@@ -69,9 +69,9 @@ def main():
     source = args.source or root / "third_party/fast-crc32/generate.c"
     if hashlib.sha256(source.read_bytes()).hexdigest() != SOURCE_SHA256:
         raise SystemExit("generator does not match the pinned upstream source")
-    target = root / "include/everett/detail"
+    target = root / "include/diet/detail"
     target.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="everett-crc32c-") as directory:
+    with tempfile.TemporaryDirectory(prefix="diet-crc32c-") as directory:
         executable = pathlib.Path(directory) / "generate"
         subprocess.run([args.cc, "-O2", str(source), "-o", str(executable)], check=True)
         for name, (isa, algorithm) in VARIANTS.items():
@@ -91,4 +91,4 @@ if __name__ == "__main__":
 
 # \file
 # \author Edward Kmett <ekmett@gmail.com>
-# \brief Regenerates Everett's pinned CRC32C backends.
+# \brief Regenerates Diet's pinned CRC32C backends.

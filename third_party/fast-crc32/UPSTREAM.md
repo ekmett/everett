@@ -19,13 +19,13 @@ These four files are unchanged from that revision:
 
 The generator explicitly applies its MIT-or-zlib choice to both the program and
 its output. I preserve those terms in the generated files; they are not
-relicensed as Everett-authored code. I do not vendor the upstream benchmark
+relicensed as Diet-authored code. I do not vendor the upstream benchmark
 harness or its separate `third_party` collection.
 
 Regeneration
 ------------
 
-From an Everett source checkout, with Python 3 and a host C compiler available:
+From an Diet source checkout, with Python 3 and a host C compiler available:
 
 ```sh
 python3 tools/generate_crc32c.py
@@ -39,7 +39,7 @@ adjust C literals, and scope helper macros. Each generated file records its
 exact ISA and algorithm arguments. Regeneration is a developer operation; it is
 not part of configuration, compilation, installation or ordinary consumption.
 
-I check in all generated backends under `include/everett/detail/` and install
+I check in all generated backends under `include/diet/detail/` and install
 them with the headers. The generator and script remain in the source checkout;
 the installed package needs neither. This provenance document and all three
 upstream license files are installed together so their relative links remain

@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/native_merge.h>
+#include <diet/native_merge.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -27,7 +27,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }

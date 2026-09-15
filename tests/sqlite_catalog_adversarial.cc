@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/sqlite_catalog.h>
+#include <diet/sqlite_catalog.h>
 
 #include <sqlite3.h>
 
@@ -35,7 +35,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -50,13 +50,13 @@ namespace {
     std::filesystem::path path;
     temporary_directory() {
 #if defined(__unix__) || defined(__APPLE__)
-      auto pattern = (std::filesystem::temp_directory_path() / "everett-sqlite-adversarial-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "diet-sqlite-adversarial-XXXXXX").string();
       auto result = ::mkdtemp(pattern.data());
       if (!result) throw std::system_error(errno, std::generic_category(), "create catalog fixture");
       path = result;
 #else
       for (unsigned i = 0; i < 10000; ++i) {
-        auto candidate = std::filesystem::temp_directory_path() / ("everett-sqlite-adversarial-" + std::to_string(i));
+        auto candidate = std::filesystem::temp_directory_path() / ("diet-sqlite-adversarial-" + std::to_string(i));
         if (std::filesystem::create_directory(candidate)) { path = std::move(candidate); return; }
       }
       throw std::runtime_error("cannot reserve catalog fixture directory");

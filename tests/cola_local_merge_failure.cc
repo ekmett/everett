@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/cola_local_merge.h>
+#include <diet/cola_local_merge.h>
 
 #include <array>
 #include <cstddef>
@@ -47,7 +47,7 @@ void operator delete(void * pointer, std::size_t) noexcept { std::free(pointer);
 void operator delete[](void * pointer, std::size_t) noexcept { std::free(pointer); }
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   void check(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }

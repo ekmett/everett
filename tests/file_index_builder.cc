@@ -7,9 +7,9 @@
  * \endlicense
  */
 
-#include <everett/file_index_builder.h>
-#include <everett/mapped_blob.h>
-#include <everett/profile_index.h>
+#include <diet/file_index_builder.h>
+#include <diet/mapped_blob.h>
+#include <diet/profile_index.h>
 
 #include <algorithm>
 #include <array>
@@ -34,7 +34,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -53,7 +53,7 @@ namespace {
   }
 
   // The oracle reads original bits directly and sorts their 0/1 strings.
-  // It does not use Everett's key comparison, rank, FC or sampling routines.
+  // It does not use Diet's key comparison, rank, FC or sampling routines.
   std::string bits(bit_view value) {
     std::string result;
     for (std::uint64_t i = 0; i < value.size(); ++i) {
@@ -114,13 +114,13 @@ namespace {
     std::filesystem::path path;
     temporary_directory() {
 #if defined(__unix__) || defined(__APPLE__)
-      auto pattern = (std::filesystem::temp_directory_path() / "everett-file-index-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "diet-file-index-XXXXXX").string();
       auto result = ::mkdtemp(pattern.data());
       if (!result) throw std::system_error(errno, std::generic_category(), "create mapped index fixture");
       path = result;
 #else
       for (unsigned i = 0; i < 10000; ++i) {
-        auto candidate = std::filesystem::temp_directory_path() / ("everett-file-index-" + std::to_string(i));
+        auto candidate = std::filesystem::temp_directory_path() / ("diet-file-index-" + std::to_string(i));
         if (std::filesystem::create_directory(candidate)) { path = std::move(candidate); return; }
       }
       throw std::runtime_error("cannot reserve mapped index fixture directory");

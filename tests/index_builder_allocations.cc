@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/index_builder.h>
+#include <diet/index_builder.h>
 
 #include <array>
 #include <cstdlib>
@@ -39,7 +39,7 @@ void operator delete[](void * pointer, std::size_t) noexcept { std::free(pointer
 
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   void require(bool value, char const * message) {
     if (!value) throw std::runtime_error(message);
   }

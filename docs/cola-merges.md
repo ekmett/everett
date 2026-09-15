@@ -54,8 +54,8 @@ using it as a published head.
 This complete program runs both destination plans and checks the old snapshot:
 
 ```cpp
-#include <everett/cola_local_merge.h>
-#include <everett/cola_query.h>
+#include <diet/cola_local_merge.h>
+#include <diet/cola_query.h>
 
 #include <array>
 #include <cassert>
@@ -63,7 +63,7 @@ This complete program runs both destination plans and checks the old snapshot:
 #include <vector>
 
 int main() {
-  using namespace everett;
+  using namespace diet;
   using P = storage_policy<profile_unit::byte>;
   using node = cola_index<P>;
   auto record = [](char const * key, char const * value) {

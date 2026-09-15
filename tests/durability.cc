@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/durability.h>
+#include <diet/durability.h>
 
 #include <iostream>
 #include <limits>
@@ -15,7 +15,7 @@
 #include <string>
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   constexpr auto durable = persistence_result::durable_verified;
   constexpr auto failed = persistence_result::failure;
   constexpr auto verified = recovery_evidence::durable_state_verified;
@@ -217,5 +217,5 @@ int main() {
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Everett's storage durability behavior.
+ * \brief Tests Diet's storage durability behavior.
  */

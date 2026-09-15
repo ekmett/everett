@@ -53,7 +53,7 @@ def run_doxygen(executable, source, inputs, output, aliases, html=False, markdow
     warnings = output / "warnings.log"
     warnings.write_text("", encoding="utf-8")
     config = [
-        "PROJECT_NAME = Everett",
+        "PROJECT_NAME = Diet",
         "OUTPUT_DIRECTORY = " + quote(output),
         "INPUT = " + " ".join(quote(path) for path in inputs),
         "STRIP_FROM_PATH = " + quote(source),
@@ -195,47 +195,47 @@ def named_compound(items, kind, name):
 
 def check_actual_members(items, source):
     cases = [
-        ("struct", "everett::multiverse", "open_object", "multiverse.h", None, "no"),
-        ("struct", "everett::mapped_file", "open", "mapped_file.h", None, "yes"),
-        ("struct", "everett::mapped_slice", "bytes", "mapped_file.h", "lvalue", "no"),
-        ("struct", "everett::mapped_slice", "bytes", "mapped_file.h", "rvalue", "no"),
-        ("struct", "everett::profile_view", "reconstruct_at", "profile.h", None, "no"),
-        ("namespace", "everett::file_detail", "get", "file.h", None, "no"),
-        ("namespace", "everett", "crc32c", "crc32c.h", None, "no"),
-        ("struct", "everett::query_root", "build", "query.h", None, "yes"),
-        ("struct", "everett::query_root_builder", "finish", "query.h", None, "no"),
-        ("struct", "everett::query_cursor", "step", "query.h", None, "no"),
-        ("struct", "everett::query_cursor", "take_match", "query.h", None, "no"),
-        ("struct", "everett::query_root", "adopt_prepared", "query.h", None, "yes"),
-        ("struct", "everett::profile_view", "from_sections", "profile.h", None, "yes"),
-        ("struct", "everett::mapped_blob", "bind", "mapped_blob.h", None, "yes"),
-        ("struct", "everett::mapped_profile", "scan", "sections.h", None, "no"),
-        ("struct", "everett::encoded_sections", "materialize", "sections.h", None, "no"),
-        ("namespace", "everett", "encode_file_header", "file.h", None, "no"),
-        ("struct", "everett::profile_native_writer", "finish", "native_writer.h", None, "no"),
-        ("struct", "everett::native_merge_builder", "step", "native_merge.h", None, "no"),
-        ("struct", "everett::object_stream", "append", "object_stream.h", None, "no"),
-        ("struct", "everett::native_file_writer", "finish", "native_file_writer.h", None, "no"),
-        ("struct", "everett::native_file_merge", "step", "native_file_merge.h", None, "no"),
-        ("struct", "everett::profile_index", "native_only", "profile_index.h", None, "yes"),
-        ("struct", "everett::index_builder", "finish_index", "index_builder.h", None, "no"),
-        ("struct", "everett::file_index_builder", "finish", "file_index_builder.h", None, "no"),
-        ("struct", "everett::file_index_pipeline", "seal_next", "file_index_pipeline.h", None, "no"),
-        ("struct", "everett::rank_groups_builder", "append", "rank_groups.h", None, "no"),
-        ("struct", "everett::cola_index_builder", "step", "cola_index.h", None, "no"),
-        ("struct", "everett::cola_local_merge_job", "finish_stage", "cola_local_merge.h", None, "no"),
-        ("struct", "everett::cola_query_cursor", "step", "cola_query.h", None, "no"),
-        ("struct", "everett::mapped_cola_index", "scan", "cola_sections.h", None, "no"),
-        ("struct", "everett::mapped_cola_blob", "bind", "mapped_cola.h", None, "yes"),
-        ("struct", "everett::index_detail::pipeline_driver", "step", "index_pipeline_detail.h", None, "no"),
-        ("struct", "everett::sample_cursor", "advance", "sampling.h", None, "no"),
-        ("struct", "everett::elias_fano_view", "select", "elias_fano.h", None, "no"),
-        ("struct", "everett::profile_view", "block_offset", "profile.h", None, "no"),
-        ("struct", "everett::profile_cursor", "advance_comparison", "profile.h", None, "no"),
-        ("struct", "everett::profile_blob", "adopt_native", "profile_blob.h", None, "yes"),
-        ("struct", "everett::sqlite_catalog", "reserve", "sqlite_catalog.h", None, "no"),
-        ("struct", "everett::sqlite_catalog", "save", "sqlite_catalog.h", None, "no"),
-        ("struct", "everett::sqlite_catalog", "acquire_save", "sqlite_catalog.h", None, "no"),
+        ("struct", "diet::fridge", "open_object", "fridge.h", None, "no"),
+        ("struct", "diet::mapped_file", "open", "mapped_file.h", None, "yes"),
+        ("struct", "diet::mapped_slice", "bytes", "mapped_file.h", "lvalue", "no"),
+        ("struct", "diet::mapped_slice", "bytes", "mapped_file.h", "rvalue", "no"),
+        ("struct", "diet::profile_view", "reconstruct_at", "profile.h", None, "no"),
+        ("namespace", "diet::file_detail", "get", "file.h", None, "no"),
+        ("namespace", "diet", "crc32c", "crc32c.h", None, "no"),
+        ("struct", "diet::query_root", "build", "query.h", None, "yes"),
+        ("struct", "diet::query_root_builder", "finish", "query.h", None, "no"),
+        ("struct", "diet::query_cursor", "step", "query.h", None, "no"),
+        ("struct", "diet::query_cursor", "take_match", "query.h", None, "no"),
+        ("struct", "diet::query_root", "adopt_prepared", "query.h", None, "yes"),
+        ("struct", "diet::profile_view", "from_sections", "profile.h", None, "yes"),
+        ("struct", "diet::mapped_blob", "bind", "mapped_blob.h", None, "yes"),
+        ("struct", "diet::mapped_profile", "scan", "sections.h", None, "no"),
+        ("struct", "diet::encoded_sections", "materialize", "sections.h", None, "no"),
+        ("namespace", "diet", "encode_file_header", "file.h", None, "no"),
+        ("struct", "diet::profile_native_writer", "finish", "native_writer.h", None, "no"),
+        ("struct", "diet::native_merge_builder", "step", "native_merge.h", None, "no"),
+        ("struct", "diet::object_stream", "append", "object_stream.h", None, "no"),
+        ("struct", "diet::native_file_writer", "finish", "native_file_writer.h", None, "no"),
+        ("struct", "diet::native_file_merge", "step", "native_file_merge.h", None, "no"),
+        ("struct", "diet::profile_index", "native_only", "profile_index.h", None, "yes"),
+        ("struct", "diet::index_builder", "finish_index", "index_builder.h", None, "no"),
+        ("struct", "diet::file_index_builder", "finish", "file_index_builder.h", None, "no"),
+        ("struct", "diet::file_index_pipeline", "seal_next", "file_index_pipeline.h", None, "no"),
+        ("struct", "diet::rank_groups_builder", "append", "rank_groups.h", None, "no"),
+        ("struct", "diet::cola_index_builder", "step", "cola_index.h", None, "no"),
+        ("struct", "diet::cola_local_merge_job", "finish_stage", "cola_local_merge.h", None, "no"),
+        ("struct", "diet::cola_query_cursor", "step", "cola_query.h", None, "no"),
+        ("struct", "diet::mapped_cola_index", "scan", "cola_sections.h", None, "no"),
+        ("struct", "diet::mapped_cola_blob", "bind", "mapped_cola.h", None, "yes"),
+        ("struct", "diet::index_detail::pipeline_driver", "step", "index_pipeline_detail.h", None, "no"),
+        ("struct", "diet::sample_cursor", "advance", "sampling.h", None, "no"),
+        ("struct", "diet::elias_fano_view", "select", "elias_fano.h", None, "no"),
+        ("struct", "diet::profile_view", "block_offset", "profile.h", None, "no"),
+        ("struct", "diet::profile_cursor", "advance_comparison", "profile.h", None, "no"),
+        ("struct", "diet::profile_blob", "adopt_native", "profile_blob.h", None, "yes"),
+        ("struct", "diet::sqlite_catalog", "reserve", "sqlite_catalog.h", None, "no"),
+        ("struct", "diet::sqlite_catalog", "save", "sqlite_catalog.h", None, "no"),
+        ("struct", "diet::sqlite_catalog", "acquire_save", "sqlite_catalog.h", None, "no"),
     ]
     for kind, owner, name, filename, qualifier, static in cases:
         compound = named_compound(items, kind, owner)
@@ -249,30 +249,30 @@ def check_actual_members(items, source):
         require(member.get("static") == static, f"Wrong static association: {owner}::{name}")
         location = member.find("location")
         require(location is not None, f"Missing source location for {owner}::{name}")
-        require(location.get("file", "").endswith("include/everett/" + filename),
+        require(location.get("file", "").endswith("include/diet/" + filename),
                 f"Wrong source file for {owner}::{name}")
-        lines = (source / "include/everett" / filename).read_text(encoding="utf-8").splitlines()
+        lines = (source / "include/diet" / filename).read_text(encoding="utf-8").splitlines()
         line = int(location.attrib["line"])
         require(0 < line <= len(lines) and re.search(r"\b" + name + r"\s*\(", lines[line - 1]),
                 f"Wrong source line for {owner}::{name}: {line}")
         if qualifier == "rvalue":
             require("=delete" in member.findtext("argsstring", "").replace(" ", ""),
                     "Deleted rvalue overload was merged with lvalue overload")
-    for owner, parameters in (("everett::multiverse", ["P"]), ("everett::profile_view", ["P", "Role"]),
-                              ("everett::query_root", ["P", "Blob"]), ("everett::query_root_builder", ["P"]),
-                              ("everett::query_cursor", ["P", "Blob"]), ("everett::mapped_blob", ["P"]),
-                              ("everett::mapped_profile", ["P", "Role"]), ("everett::encoded_sections", ["P"]),
-                              ("everett::profile_native_writer", ["P"]),
-                              ("everett::native_merge_builder", ["P", "Native", "Compose", "Output"]),
-                              ("everett::object_stream", ["P", "Ops"]),
-                              ("everett::native_file_writer", ["P", "Ops"]),
-                              ("everett::native_file_merge", ["P", "Native", "Compose", "Ops"]),
-                              ("everett::profile_index", ["P"]),
-                              ("everett::index_builder", ["P", "Native", "Output"]),
-                              ("everett::file_index_builder", ["P", "Native", "Ops"]),
-                              ("everett::file_index_pipeline", ["P", "Ops"]),
-                              ("everett::sample_cursor", ["P", "Target"]),
-                              ("everett::sqlite_catalog", ["P", "Ops"])):
+    for owner, parameters in (("diet::fridge", ["P"]), ("diet::profile_view", ["P", "Role"]),
+                              ("diet::query_root", ["P", "Blob"]), ("diet::query_root_builder", ["P"]),
+                              ("diet::query_cursor", ["P", "Blob"]), ("diet::mapped_blob", ["P"]),
+                              ("diet::mapped_profile", ["P", "Role"]), ("diet::encoded_sections", ["P"]),
+                              ("diet::profile_native_writer", ["P"]),
+                              ("diet::native_merge_builder", ["P", "Native", "Compose", "Output"]),
+                              ("diet::object_stream", ["P", "Ops"]),
+                              ("diet::native_file_writer", ["P", "Ops"]),
+                              ("diet::native_file_merge", ["P", "Native", "Compose", "Ops"]),
+                              ("diet::profile_index", ["P"]),
+                              ("diet::index_builder", ["P", "Native", "Output"]),
+                              ("diet::file_index_builder", ["P", "Native", "Ops"]),
+                              ("diet::file_index_pipeline", ["P", "Ops"]),
+                              ("diet::sample_cursor", ["P", "Target"]),
+                              ("diet::sqlite_catalog", ["P", "Ops"])):
         item = named_compound(items, "struct", owner)
         names = []
         for param in item.findall("./templateparamlist/param"):
@@ -670,8 +670,8 @@ def main():
     parser.add_argument("--output", required=True, type=Path)
     args = parser.parse_args()
     source, output = args.source.resolve(), args.output.resolve()
-    headers = sorted((source / "include/everett").glob("*.h"))
-    require(bool(headers), "No Everett headers found")
+    headers = sorted((source / "include/diet").glob("*.h"))
+    require(bool(headers), "No Diet headers found")
     baseline = output / "baseline"
     diagnostics = run_doxygen(args.doxygen, source, headers, baseline, aliases=False)
     lines = diagnostics.splitlines()
@@ -727,4 +727,4 @@ if __name__ == "__main__":
 ##
 # \file
 # \author Edward Kmett <ekmett@gmail.com>
-# \brief Tests Everett's Doxygen metadata and declaration associations.
+# \brief Tests Diet's Doxygen metadata and declaration associations.

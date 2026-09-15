@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/profile.h>
+#include <diet/profile.h>
 
 #include <array>
 #include <cstdlib>
@@ -38,7 +38,7 @@ void operator delete(void * pointer, std::size_t) noexcept { std::free(pointer);
 void operator delete[](void * pointer, std::size_t) noexcept { std::free(pointer); }
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }

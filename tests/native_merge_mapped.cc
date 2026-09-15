@@ -7,9 +7,9 @@
  * \endlicense
  */
 
-#include <everett/mapped_blob.h>
-#include <everett/native_merge.h>
-#include <everett/sections.h>
+#include <diet/mapped_blob.h>
+#include <diet/native_merge.h>
+#include <diet/sections.h>
 
 #include <algorithm>
 #include <array>
@@ -33,7 +33,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using table = std::map<std::string, std::string>;
 
   void require(bool condition, char const * message) {
@@ -90,13 +90,13 @@ namespace {
     std::filesystem::path path;
     temporary_directory() {
 #if defined(__unix__) || defined(__APPLE__)
-      auto pattern = (std::filesystem::temp_directory_path() / "everett-native-merge-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "diet-native-merge-XXXXXX").string();
       auto result = ::mkdtemp(pattern.data());
       if (!result) throw std::system_error(errno, std::generic_category(), "create mapped merge fixture");
       path = result;
 #else
       for (unsigned i = 0; i < 10000; ++i) {
-        auto candidate = std::filesystem::temp_directory_path() / ("everett-native-merge-" + std::to_string(i));
+        auto candidate = std::filesystem::temp_directory_path() / ("diet-native-merge-" + std::to_string(i));
         if (std::filesystem::create_directory(candidate)) { path = std::move(candidate); return; }
       }
       throw std::runtime_error("cannot reserve mapped merge fixture directory");

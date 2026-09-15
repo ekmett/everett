@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <everett/elias_fano.h>
+#include <diet/elias_fano.h>
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -21,7 +21,7 @@
 #include <unistd.h>
 #endif
 namespace {
-  using namespace everett;
+  using namespace diet;
   void require(bool condition, char const * text) { if (!condition) throw std::runtime_error(text); }
   template <class F> void rejects(F action) {
     bool failed = false;

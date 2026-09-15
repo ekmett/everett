@@ -1,7 +1,7 @@
 # Admitting sorted blobs from peers
 
 Suppose a peer sends us an immutable sorted blob. We can retain its native bytes,
-chain it onto an existing world, and build fractional indexes back over the new
+chain it onto an existing cola, and build fractional indexes back over the new
 prefix. Local cascading allows arbitrary incoming sizes. The harder questions
 are when that index work finishes and how much space and string work it costs.
 The entry-count argument, counterexample and remaining scheduling obligations
@@ -188,7 +188,7 @@ The old and new generations have comparable live cardinalities during the
 [rebuild horizon](rebuild.md), so they use the same $h$ up to an additive constant.
 This is a conditional budget for exact retained index versions, including
 replacement outputs occupying the redundant working slots. It requires the
-[closure and retirement invariant](cola-scheduling.md#current-world-object-closure):
+[closure and retirement invariant](cola-scheduling.md#current-cola-object-closure):
 live jobs and private carriers must not retain dependencies outside those slots.
 The executable scheduler model checks that invariant on its tested histories;
 it is not yet an all-histories proof or a production scheduler guarantee.
@@ -248,7 +248,7 @@ all other keys distinct, short and greater. Each upstream index samples ordinal 
 repeats that long minimum. This respects level occupancy and can retain
 $\Theta(T\log(N+1))$ first-literal units.
 
-Other saved snapshots retain their own exact dependency sets. Total multiverse
+Other saved snapshots retain their own exact dependency sets. Total fridge
 space counts the union of those sets, sharing each physical object once.
 Pending received objects, failed attempts and unfinished outputs outside the
 working slots need their own storage budget. Native payloads, framing, rank,
@@ -264,14 +264,14 @@ enforcing the bounded live index set.
 ## 5. Ingestion state and published state
 
 Pending received files and unfinished index/merge work may exist in an ingestion
-state. A published world needs a completed exact-target dependency chain with
+state. A published cola needs a completed exact-target dependency chain with
 the promised depth and its prepared query root, or a separately justified bounded
 fallback query path.
 Unbounded independent searches over pending files are not that fallback.
 
 The completion rule must preserve the previous readable root while work is
 unfinished, account for both index and native merges, and retain replay/progress
-metadata. Immutable `.kv`/`.index` objects and planned SQLite world/pin/progress
+metadata. Immutable `.kv`/`.index` objects and planned SQLite cola/pin/progress
 metadata supply the intended boundaries; the network admission scheduler and
 its byte-budget proof remain implementation work.
 
@@ -284,5 +284,5 @@ introduces levels and cascading;
 gives Lemma 21's level-zero admission and unsafe-level scheduling argument;
 [p. 10](https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=10)
 completes index-linked visibility. The arbitrary-prefix equations and string
-counterexample above are derived here for Everett; they are not claims from
+counterexample above are derived here for Diet; they are not claims from
 that paper.

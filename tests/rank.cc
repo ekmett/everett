@@ -7,10 +7,10 @@
  * \endlicense
  */
 
-#include <everett/rank.h>
-#include <everett/rank15.h>
-#include <everett/rank_groups.h>
-#include <everett/elias_fano.h>
+#include <diet/rank.h>
+#include <diet/rank15.h>
+#include <diet/rank_groups.h>
+#include <diet/elias_fano.h>
 
 #include <algorithm>
 #include <array>
@@ -43,8 +43,8 @@ namespace {
   void test_popcount512() {
     std::array<std::uint64_t, 8> words{};
     for (unsigned count = 0; count <= 512; ++count) {
-      require(everett::rank_detail::popcount512(words.data()) == count, "512-bit population");
-      require(everett::rank_detail::popcount512_portable(words.data()) == count, "portable 512-bit population");
+      require(diet::rank_detail::popcount512(words.data()) == count, "512-bit population");
+      require(diet::rank_detail::popcount512_portable(words.data()) == count, "portable 512-bit population");
       if (count != 512) words[count / 64] |= std::uint64_t{1} << (count % 64);
     }
     // Alignment is only that of uint64_t, not a SIMD register or cache line.
@@ -55,9 +55,9 @@ namespace {
       unsigned expected = 0;
       for (unsigned bit = 0; bit < 512; ++bit)
         expected += unsigned((shifted[offset + bit / 64] >> (bit % 64)) & 1);
-      require(everett::rank_detail::popcount512(shifted.data() + offset) == expected,
+      require(diet::rank_detail::popcount512(shifted.data() + offset) == expected,
               "unaligned 512-bit population");
-      require(everett::rank_detail::popcount512_portable(shifted.data() + offset) == expected,
+      require(diet::rank_detail::popcount512_portable(shifted.data() + offset) == expected,
               "unaligned portable 512-bit population");
     }
   }
@@ -70,22 +70,22 @@ namespace {
       for (unsigned offset = 0; offset < 8; ++offset) {
         unsigned expected = 0;
         for (unsigned bit = 0; bit <= 512; ++bit) {
-          require(everett::rank_detail::prefix512_portable(words.data() + offset, bit) == expected,
+          require(diet::rank_detail::prefix512_portable(words.data() + offset, bit) == expected,
                   "portable 512-bit prefix oracle");
 #if defined(__aarch64__) && defined(__ARM_NEON)
-          require(everett::rank_detail::prefix512_neon(words.data() + offset, bit) == expected,
+          require(diet::rank_detail::prefix512_neon(words.data() + offset, bit) == expected,
                   "NEON 512-bit prefix oracle");
 #endif
 #if defined(__AVX2__)
-          require(everett::rank_detail::prefix512_avx2(words.data() + offset, bit) == expected,
+          require(diet::rank_detail::prefix512_avx2(words.data() + offset, bit) == expected,
                   "AVX2 512-bit prefix oracle");
 #endif
 #if defined(__AVX512F__) && defined(__AVX512VPOPCNTDQ__)
-          require(everett::rank_detail::prefix512_avx512_vpopcnt(words.data() + offset, bit) == expected,
+          require(diet::rank_detail::prefix512_avx512_vpopcnt(words.data() + offset, bit) == expected,
                   "AVX512 VPOPCNTDQ 512-bit prefix oracle");
 #endif
 #if defined(__AVX512F__) && defined(__AVX512BW__)
-          require(everett::rank_detail::prefix512_avx512bw(words.data() + offset, bit) == expected,
+          require(diet::rank_detail::prefix512_avx512bw(words.data() + offset, bit) == expected,
                   "AVX512BW 512-bit prefix oracle");
 #endif
           if (bit != 512) expected += unsigned((words[offset + bit / 64] >> (bit % 64)) & 1);
@@ -96,13 +96,13 @@ namespace {
 
   template <unsigned K> void check_group_prefixes(std::span<std::uint64_t const> words,
       std::span<std::uint64_t const> populations, std::uint64_t virtual_count) {
-    constexpr unsigned bits = everett::rank_groups<K>::class_bits;
+    constexpr unsigned bits = diet::rank_groups<K>::class_bits;
     std::vector<std::uint64_t> oracle(populations.size() + 1), checkpoints;
     for (std::size_t i = 0; i < populations.size(); ++i) {
       if (i % 128 == 0) checkpoints.push_back(oracle[i]);
       oracle[i + 1] = oracle[i] + populations[i];
     }
-    everett::rank_groups_view<K> view(words, checkpoints, virtual_count);
+    diet::rank_groups_view<K> view(words, checkpoints, virtual_count);
     require(view.count() == oracle.back(), "group derived count oracle");
     rejects([&] { (void)view.rank(populations.size()); });
     for (std::size_t i = 0; i < populations.size(); ++i) {
@@ -113,11 +113,11 @@ namespace {
           auto begin = (i / 128) * (2 * bits);
           // count=0 reads no words, including an empty span's protected address.
           auto expected = unsigned(oracle[i] - oracle[(i / 128) * 128]);
-          require(everett::rank_groups_detail::prefix_portable<bits>(words.data() + begin, unsigned(i % 128)) == expected,
+          require(diet::rank_groups_detail::prefix_portable<bits>(words.data() + begin, unsigned(i % 128)) == expected,
                   "portable grouped prefix oracle");
 #if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
           if (words.size() - begin >= 2 * bits)
-            require(everett::rank_groups_detail::prefix_neon<bits>(words.data() + begin, unsigned(i % 128)) == expected,
+            require(diet::rank_groups_detail::prefix_neon<bits>(words.data() + begin, unsigned(i % 128)) == expected,
                     "NEON grouped prefix oracle");
 #endif
         }
@@ -127,7 +127,7 @@ namespace {
 
   template <unsigned K> void test_group_prefixes() {
     std::mt19937_64 random(0x345);
-    constexpr unsigned bits = everett::rank_groups<K>::class_bits;
+    constexpr unsigned bits = diet::rank_groups<K>::class_bits;
     // Short final virtual groups, short checkpoints, crossings of packed word
     // boundaries, and every word alignment within a cache line.
     for (unsigned groups = 0; groups <= 260; ++groups) {
@@ -138,7 +138,7 @@ namespace {
           auto limit = i + 1 == groups ? count - i * K : K;
           populations[i] = pattern == 0 ? 0 : pattern == 1 ? limit : random() % (limit + 1);
         }
-        auto index = everett::rank_groups<K>::build(populations, count);
+        auto index = diet::rank_groups<K>::build(populations, count);
         // Padding is not a population and must not contribute to a prefix.
         if (groups * bits % 64) index.classes.back() |= ~std::uint64_t{0} << (groups * bits % 64);
         for (unsigned offset = 0; offset < 8; ++offset) {
@@ -156,7 +156,7 @@ namespace {
           std::array<std::uint64_t, 128> populations{};
           populations.fill(complement ? K : 0);
           populations[lane] ^= std::uint64_t{1} << bit;
-          auto index = everett::rank_groups<K>::build(populations, 128 * K);
+          auto index = diet::rank_groups<K>::build(populations, 128 * K);
           check_group_prefixes<K>(index.classes, populations, 128 * K);
         }
   }
@@ -171,7 +171,7 @@ namespace {
       std::vector<std::uint64_t> oracle(bits + 1);
       for (std::uint64_t bit = 0; bit < bits; ++bit)
         oracle[bit + 1] = oracle[bit] + ((source[bit / 64] >> (bit % 64)) & 1);
-      auto index = everett::rank_index::build(source, bits);
+      auto index = diet::rank_index::build(source, bits);
       require(index.view().count() == oracle.back(), "partial block total");
       require(index.supers == std::vector<std::uint64_t>{0}, "partial block epoch directory");
       for (std::uint64_t block = 0; block < index.blocks.size(); ++block) {
@@ -201,7 +201,7 @@ namespace {
           auto packed = counts[0] | (counts[1] << 11) | (counts[2] << 22);
           unsigned expected = 0;
           for (unsigned run = 0; run < 4; ++run) {
-            require(everett::rank_detail::run_prefix(packed, run) == expected,
+            require(diet::rank_detail::run_prefix(packed, run) == expected,
                     "SWAR spaced prefix mismatch");
             if (run < 3) expected += counts[run];
           }
@@ -212,7 +212,7 @@ namespace {
     // Synthetic counts for an all-one source at real block positions. This
     // checks the actual builder's epoch state without allocating a fake span
     // or a 512 MiB payload merely to reach the first 64-bit absolute count.
-    everett::rank_detail::directory_cursor cursor;
+    diet::rank_detail::directory_cursor cursor;
     constexpr std::uint64_t epoch_blocks = std::uint64_t{1} << 21;
     constexpr std::uint64_t epoch_bits = std::uint64_t{1} << 32;
     require(cursor.before(0, 0) == 0, "initial rank epoch");
@@ -243,7 +243,7 @@ namespace {
         }
         // Garbage padding must not contribute to the last block or total.
         if (bits % 64) source.back() |= ~std::uint64_t{0} << (bits % 64);
-        auto index = everett::rank_index::build(source, bits);
+        auto index = diet::rank_index::build(source, bits);
         auto view = index.view();
         require(view.count() == oracle.back(), "rank total");
         for (std::uint64_t i = 0; i < bits; ++i)
@@ -254,16 +254,16 @@ namespace {
                   "packed runs must hold independent populations of 512");
       }
     }
-    rejects([] { everett::rank_index::build({}, 1); });
-    rejects([] { everett::rank_index::build({}, std::numeric_limits<std::uint64_t>::max()); });
-    everett::rank_index empty;
+    rejects([] { diet::rank_index::build({}, 1); });
+    rejects([] { diet::rank_index::build({}, std::numeric_limits<std::uint64_t>::max()); });
+    diet::rank_index empty;
     require(empty.view().count() == 0, "default rank");
     rejects([&] { (void)empty.view().rank(0); });
   }
 
   void test_rank15_malformed_tail() {
     std::array<std::uint64_t, 1> classes{15}, checkpoints{0};
-    everett::rank15_view partial(classes, checkpoints, 1);
+    diet::rank15_view partial(classes, checkpoints, 1);
     require(partial.rank(0) == 0, "rank15 partial first boundary");
     rejects([&] { (void)partial.count(); });
     rejects([&] { (void)partial.rank(1); });
@@ -277,7 +277,7 @@ namespace {
       oracle[i + 1] = oracle[i] + unsigned((value >> (4 * i)) & 15);
     // The extra group makes rank(16) an existing group boundary.
     // Earlier queries mask every tail.
-    everett::rank15_view view(words, checkpoints, 17 * 15);
+    diet::rank15_view view(words, checkpoints, 17 * 15);
     for (unsigned i = 0; i <= 16; ++i)
       require(view.rank(i) == oracle[i], "rank15 packed-word sum");
   }
@@ -306,7 +306,7 @@ namespace {
       for (unsigned i = 0; i < 129; ++i)
         oracle[i + 1] = oracle[i] + ((words[i / 16] >> (4 * (i % 16))) & 15);
       std::array<std::uint64_t, 2> checkpoints{0, oracle[128]};
-      everett::rank15_view view(words, checkpoints, 129 * 15);
+      diet::rank15_view view(words, checkpoints, 129 * 15);
       for (unsigned i = 0; i < 129; ++i)
         require(view.rank(i) == oracle[i], "rank15 checkpoint accumulation");
     }
@@ -319,7 +319,7 @@ namespace {
         classes[i] = random() & 15;
         oracle[i + 1] = oracle[i] + classes[i];
       }
-      auto index = everett::rank15_index::build(classes, groups * 15);
+      auto index = diet::rank15_index::build(classes, groups * 15);
       auto view = index.view();
       for (unsigned i = 0; i < groups; ++i)
         require(view.rank(i) == oracle[i], "rank15 short checkpoint");
@@ -332,7 +332,7 @@ namespace {
       for (unsigned i = 0; i < 128; ++i)
         oracle[i + 1] = oracle[i] + ((shifted[offset + i / 16] >> (4 * (i % 16))) & 15);
       std::array<std::uint64_t, 1> checkpoints{0};
-      everett::rank15_view view(std::span(shifted).subspan(offset, 8), checkpoints, 128 * 15);
+      diet::rank15_view view(std::span(shifted).subspan(offset, 8), checkpoints, 128 * 15);
       for (unsigned i = 0; i < 128; ++i)
         require(view.rank(i) == oracle[i], "rank15 unaligned checkpoint");
     }
@@ -348,7 +348,7 @@ namespace {
       if (i % 128 == 0) checkpoints.push_back(oracle[i]);
       oracle[i + 1] = oracle[i] + populations[i];
     }
-    everett::rank15_view view(words, checkpoints, populations.size() * 15);
+    diet::rank15_view view(words, checkpoints, populations.size() * 15);
     require(view.count() == oracle.back(), "rank15 derived count oracle");
     rejects([&] { (void)view.rank(populations.size()); });
     for (std::size_t i = 0; i < populations.size(); ++i)
@@ -401,8 +401,8 @@ namespace {
       std::vector<std::uint64_t> populations(groups);
       for (unsigned i = 0; i < groups; ++i)
         populations[i] = i + 1 == groups ? count - i * K : K;
-      auto index = everett::rank_groups<K>::build(populations, count);
-      constexpr auto width = everett::rank_groups<K>::class_bits;
+      auto index = diet::rank_groups<K>::build(populations, count);
+      constexpr auto width = diet::rank_groups<K>::class_bits;
       if (groups * width % 64) index.classes.back() |= ~std::uint64_t{0} << (groups * width % 64);
       auto bytes = index.classes.size() * 8;
       auto destination = memory.end() - bytes;
@@ -417,7 +417,7 @@ namespace {
     guarded_rank15_page memory;
     for (unsigned bits = 0; bits <= 1088; ++bits) {
       std::vector<std::uint64_t> source((bits + 63) / 64, ~std::uint64_t{0});
-      auto index = everett::rank_index::build(source, bits);
+      auto index = diet::rank_index::build(source, bits);
       // Keep all-one padding in the borrowed final word.
       auto bytes = source.size() * 8;
       auto destination = memory.end() - bytes;
@@ -425,7 +425,7 @@ namespace {
       if (bytes) std::memcpy(destination, source.data(), bytes);
       memory.protect(PROT_READ);
       std::span words{reinterpret_cast<std::uint64_t const *>(destination), source.size()};
-      everett::rank_view view(words, index.blocks, index.supers, bits);
+      diet::rank_view view(words, index.blocks, index.supers, bits);
       require(view.count() == bits, "guarded bitmap derived count");
       rejects([&] { (void)view.rank(bits); });
       for (unsigned bit = 0; bit < bits; ++bit)
@@ -435,12 +435,12 @@ namespace {
     // not resident/readable. This catches accidental speculative full-run loads.
     std::array<std::uint64_t, 32> source;
     source.fill(~std::uint64_t{0});
-    auto index = everett::rank_index::build(source, 2048);
+    auto index = diet::rank_index::build(source, 2048);
     auto destination = memory.end() - sizeof(source);
     memory.protect(PROT_READ | PROT_WRITE);
     std::memcpy(destination, source.data(), sizeof(source));
     memory.protect(PROT_NONE);
-    everett::rank_view view({reinterpret_cast<std::uint64_t const *>(destination), source.size()},
+    diet::rank_view view({reinterpret_cast<std::uint64_t const *>(destination), source.size()},
                            index.blocks, index.supers, 2048);
     for (unsigned bit = 0; bit < 2048; bit += 512)
       require(view.rank(bit) == bit, "directory-only guarded boundary");
@@ -488,7 +488,7 @@ namespace {
         for (std::uint64_t i = 0; i < bits; ++i)
           if (pattern == 1 || (pattern == 2 && (random() & 1))) ++classes[i / 15];
         for (std::uint64_t i = 0; i < groups; ++i) oracle[i + 1] = oracle[i] + classes[i];
-        auto index = everett::rank15_index::build(classes, bits);
+        auto index = diet::rank15_index::build(classes, bits);
         auto view = index.view();
         require(view.group_count() == groups && view.count() == oracle.back(), "rank15 shape");
         for (std::uint64_t i = 0; i < groups; ++i)
@@ -499,16 +499,16 @@ namespace {
         rejects([&] { view.class_at(groups); });
       }
     }
-    rejects([] { everett::rank15_index::build({}, 15); });
-    rejects([] { everett::rank15_index::build(std::array<std::uint8_t, 1>{16}, 15); });
-    rejects([] { everett::rank15_index::build(std::array<std::uint8_t, 1>{2}, 1); });
-    everett::rank15_index empty;
+    rejects([] { diet::rank15_index::build({}, 15); });
+    rejects([] { diet::rank15_index::build(std::array<std::uint8_t, 1>{16}, 15); });
+    rejects([] { diet::rank15_index::build(std::array<std::uint8_t, 1>{2}, 1); });
+    diet::rank15_index empty;
     require(empty.view().count() == 0, "default rank15");
     rejects([&] { (void)empty.view().rank(0); });
   }
 
-  everett::elias_fano check_select(std::vector<std::uint64_t> const & source) {
-    auto index = everett::elias_fano::build(source);
+  diet::elias_fano check_select(std::vector<std::uint64_t> const & source) {
+    auto index = diet::elias_fano::build(source);
     auto view = index.view();
     require(view.size() == source.size(), "Elias-Fano entry count");
     for (std::uint64_t i = 0; i < source.size(); ++i)
@@ -544,16 +544,16 @@ namespace {
     check_select({0, maximum});
     check_select({maximum - 1, maximum});
     check_select({0, 7});
-    everett::elias_fano empty_index;
+    diet::elias_fano empty_index;
     auto empty = empty_index.view();
     require(empty.size() == 0, "default Elias-Fano");
     rejects([&] { empty.select(0); });
-    rejects([] { everett::elias_fano::build(std::array<std::uint64_t, 2>{10, 0}); });
+    rejects([] { diet::elias_fano::build(std::array<std::uint64_t, 2>{10, 0}); });
 
-    auto broken = everett::elias_fano::build(std::array<std::uint64_t, 2>{0, 1});
+    auto broken = diet::elias_fano::build(std::array<std::uint64_t, 2>{0, 1});
     broken.high[0] = 0;
     rejects([&] { broken.view().select(0); });
-    broken = everett::elias_fano::build(std::array<std::uint64_t, 2>{0, 1});
+    broken = diet::elias_fano::build(std::array<std::uint64_t, 2>{0, 1});
     broken.samples[0].sparse = 0;
     rejects([&] { broken.view().select(0); });
     broken.samples[0].sparse = maximum;
@@ -597,5 +597,5 @@ int main() {
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Everett's storage rank behavior.
+ * \brief Tests Diet's storage rank behavior.
  */

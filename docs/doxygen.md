@@ -46,7 +46,7 @@ ALIASES += "endlicense=@endcode"
 ```
 
 These aliases preserve the three SPDX notice lines as a code block. The author
-and file brief remain separate metadata. The public-header notices record Everett's
+and file brief remain separate metadata. The public-header notices record Diet's
 `BSD-2-Clause OR Apache-2.0` license choice. Generated CRC kernels retain their
 upstream notices; see [third-party components](../THIRD_PARTY.md).
 Our fixture comparison checks both end-of-file placement and the split layout.
@@ -58,23 +58,23 @@ Python 3.9 or newer. It is not an installed-package dependency. Graphviz is not
 required by this configuration.
 
 ```sh
-cmake -S . -B build-docs -DEVERETT_BUILD_DOCS=ON
-cmake --build build-docs --target everett_docs --parallel 4
-ctest --test-dir build-docs -R '^everett[.]doxygen$' --output-on-failure
+cmake -S . -B build-docs -DDIET_BUILD_DOCS=ON
+cmake --build build-docs --target diet_docs --parallel 4
+ctest --test-dir build-docs -R '^diet[.]doxygen$' --output-on-failure
 ```
 
 Open `build-docs/docs/reference/html/index.html` for the reference documentation.
 Generated Doxyfiles, XML and diagnostic logs remain alongside it. The CTest
-check uses a separate `docs-test` directory. With `EVERETT_BUILD_TESTS=OFF`, the
+check uses a separate `docs-test` directory. With `DIET_BUILD_TESTS=OFF`, the
 documentation target remains available but the CTest check is not registered.
 
 ## Publishing
 
 I publish the checked HTML directly to the `gh-pages` branch. The site is
-[ekmett.github.io/everett](https://ekmett.github.io/everett/). GitHub Pages uses
+[ekmett.github.io/diet](https://ekmett.github.io/diet/). GitHub Pages uses
 that branch's root directory; no Actions workflow generates the documentation.
 
-Build `everett_docs`, then copy the contents of
+Build `diet_docs`, then copy the contents of
 `build-docs/docs/reference/html/` into a separate `gh-pages` worktree. Keep its
 Git metadata, replace the previous generated site, and add an empty `.nojekyll`
 file so GitHub serves Doxygen's underscored files unchanged. Commit with the
@@ -94,7 +94,7 @@ before each run so removed declarations cannot leave stale published pages.
   not appear in namespace, structure or member descriptions.
 - Namespace functions and class members have the expected qualified owners,
   source files and declaration lines. Concrete cases include
-  `multiverse<P>::open_object`, `mapped_file::open`, both `mapped_slice::bytes`
+  `fridge<P>::open_object`, `mapped_file::open`, both `mapped_slice::bytes`
   ref-qualified overloads, `profile_view<P, Role>::reconstruct_at`,
   `file_detail::get`, `crc32c`, `query_root<P>::build`,
   `query_root_builder<P>::finish`, the query cursor's `step` and `take_match`,

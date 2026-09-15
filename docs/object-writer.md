@@ -2,7 +2,7 @@ Immutable object sealing
 ========================
 
 `object_writer<P>` writes an already encoded body under a reserved physical
-`object_id`. I keep this operation separate from publishing a world: sealing
+`object_id`. I keep this operation separate from publishing a cola: sealing
 does not reserve identities, retain inputs, adopt objects in SQLite, select a
 recovery root, or authorize reclamation. CRC32C checks accidental corruption;
 it does not turn an opaque object identity into a content address.
@@ -13,17 +13,17 @@ be reserved and must never identify different work. The caller also retains the
 verified source inputs and owns reconciliation after an uncertain result.
 
 ```cpp
-using P = everett::storage_policy<everett::profile_unit::byte>;
-everett::file_header<P> header{
-  everett::file_kind::native_blob, encoded_body.size(), record_count, std::nullopt};
+using P = diet::storage_policy<diet::profile_unit::byte>;
+diet::file_header<P> header{
+  diet::file_kind::native_blob, encoded_body.size(), record_count, std::nullopt};
 
-auto sealed = everett::object_writer<P>::seal(
+auto sealed = diet::object_writer<P>::seal(
   object_directory, reserved_object_id, reserved_attempt_id, header,
   std::span<std::byte const>(encoded_body));
 ```
 
-`multiverse<P>::seal_object` forwards the same operation through its existing
-root; `multiverse<P>::object_writer` names the policy-bound writer type.
+`fridge<P>::seal_object` forwards the same operation through its existing
+root; `fridge<P>::object_writer` names the policy-bound writer type.
 
 The body can instead be a span of borrowed byte spans, including empty spans.
 Their bytes must remain readable and immutable for the whole call. A retained
@@ -45,8 +45,8 @@ Appending an unfinished body
 when the final extent and header are not known until construction finishes:
 
 ```cpp
-everett::object_stream<P> output(object_directory, reserved_object_id,
-  reserved_attempt_id, everett::file_kind::native_blob);
+diet::object_stream<P> output(object_directory, reserved_object_id,
+  reserved_attempt_id, diet::file_kind::native_blob);
 output.append(first_chunk);
 output.append(second_chunk);
 auto sealed = output.finish(completed_header);
@@ -68,7 +68,7 @@ before finalization, `body_crc32c()` includes its provisional zero contents.
 
 The stream is neither copyable nor movable. It owns its attempt and descriptors;
 the borrowed-operations constructor additionally requires the supplied operation
-object to outlive it. `multiverse<P>::object_stream` names the same policy-bound
+object to outlive it. `fridge<P>::object_stream` names the same policy-bound
 type. Metadata rejection before final I/O leaves the stream active. An I/O error
 poisons it: later `append` and `finish` calls fail without issuing more writes.
 Destruction closes handles and preserves surviving names for reconciliation.

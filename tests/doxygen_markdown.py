@@ -134,4 +134,4 @@ if __name__ == "__main__":
 ##
 # \file
 # \author Edward Kmett <ekmett@gmail.com>
-# \brief Adapts Markdown dollar math for Everett's Doxygen build.
+# \brief Adapts Markdown dollar math for Diet's Doxygen build.

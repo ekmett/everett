@@ -10,7 +10,7 @@ describes navigation, so its position alone does not establish an update's age.
 
 `query_root<P>`, `query_root_builder<P>` and `query_cursor<P>` share the same
 storage policy as their blobs. They are also available through the corresponding
-aliases in `multiverse<P>`. The [README example](../README.md#query-the-whole-chain)
+aliases in `fridge<P>`. The [README example](../README.md#query-the-whole-chain)
 builds a chain, prepares its root and retrieves two entries for the same key.
 
 ## Preparing the first window
@@ -165,7 +165,7 @@ to const supplies read-only access through that handle; it cannot stop a caller
 from changing the same object through some other mutable handle.
 
 This query root is a physical navigation owner. It does not publish a durable
-world, resolve replacements, infer chronology or evaluate arrows. Keeping those
+cola, resolve replacements, infer chronology or evaluate arrows. Keeping those
 choices with the caller lets the same query machinery retrieve fragments for
 different per-key categories.
 

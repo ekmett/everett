@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/sampling.h>
+#include <diet/sampling.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -22,7 +22,7 @@
 #include <vector>
 
 namespace {
-  using namespace everett;
+  using namespace diet;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -425,5 +425,5 @@ int main() {
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Everett's sequential sampling of pinned encoded blob pairs.
+ * \brief Tests Diet's sequential sampling of pinned encoded blob pairs.
  */

@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/index_pipeline.h>
+#include <diet/index_pipeline.h>
 
 #include <algorithm>
 #include <array>
@@ -27,45 +27,45 @@ namespace {
     try { action(); } catch (std::exception const &) { rejected = true; }
     require(rejected, "invalid pipeline operation accepted");
   }
-  template <class P> everett::bit_string key(unsigned n) {
+  template <class P> diet::bit_string key(unsigned n) {
     auto text = std::string(80, 'p') + std::to_string(10000 + n);
-    auto result = everett::bit_string::from_bytes(text);
-    if constexpr (P::unit == everett::profile_unit::bit)
-      everett::profile_detail::append_bit(result, (n & 1) != 0);
+    auto result = diet::bit_string::from_bytes(text);
+    if constexpr (P::unit == diet::profile_unit::bit)
+      diet::profile_detail::append_bit(result, (n & 1) != 0);
     return result;
   }
   template <class P>
-  std::shared_ptr<everett::profile_blob<P> const> make_pair(unsigned first, unsigned count,
+  std::shared_ptr<diet::profile_blob<P> const> make_pair(unsigned first, unsigned count,
                                                          unsigned stride, bool borrowed) {
-    std::vector<everett::profile_record> records;
+    std::vector<diet::profile_record> records;
     for (unsigned i = 0; i != count; ++i)
-      records.push_back({key<P>(first + i * stride), everett::bit_string::from_bytes(std::string(i % 7, 'v'))});
-    std::vector<everett::bit_string> samples;
+      records.push_back({key<P>(first + i * stride), diet::bit_string::from_bytes(std::string(i % 7, 'v'))});
+    std::vector<diet::bit_string> samples;
     if (borrowed) {
       for (unsigned i = 0; i != count; ++i) {
         samples.push_back(key<P>(first + i * stride));
         if (i % 3 == 0) samples.push_back(samples.back());
       }
     }
-    return std::make_shared<everett::profile_blob<P> const>(everett::profile_blob<P>::build(records, samples));
+    return std::make_shared<diet::profile_blob<P> const>(diet::profile_blob<P>::build(records, samples));
   }
-  template <class P> std::vector<everett::bit_string> oracle_samples(everett::profile_blob<P> const & pair) {
-    std::vector<everett::bit_string> keys;
+  template <class P> std::vector<diet::bit_string> oracle_samples(diet::profile_blob<P> const & pair) {
+    std::vector<diet::bit_string> keys;
     auto append = [&](auto item) {
-      keys.push_back(everett::bit_string::copy(item.key.prefix));
+      keys.push_back(diet::bit_string::copy(item.key.prefix));
       return true;
     };
     pair.native().view().visit_all(append);
     pair.borrowed().view().visit_all(append);
     std::stable_sort(keys.begin(), keys.end(), [](auto const & a, auto const & b) {
-      return everett::compare_bits(a.view(), b.view()) < 0;
+      return diet::compare_bits(a.view(), b.view()) < 0;
     });
-    std::vector<everett::bit_string> samples;
+    std::vector<diet::bit_string> samples;
     for (std::size_t i = 0; i < keys.size(); i += P::group_size) samples.push_back(keys[i]);
     return samples;
   }
-  template <class P> void equal_pair(everett::profile_blob<P> const & a,
-                                     everett::profile_blob<P> const & b) {
+  template <class P> void equal_pair(diet::profile_blob<P> const & a,
+                                     diet::profile_blob<P> const & b) {
     require(a.virtual_size() == b.virtual_size(), "pipeline virtual size");
     require(std::ranges::equal(a.borrowed().bytes(), b.borrowed().bytes()), "pipeline borrowed encoding");
     require(std::ranges::equal(a.false_borrow_bits(), b.false_borrow_bits()), "pipeline false borrows");
@@ -82,7 +82,7 @@ namespace {
               "pipeline select samples");
   }
   template <class P> void exercise() {
-    using blob = everett::profile_blob<P>;
+    using blob = diet::profile_blob<P>;
     using pair = std::shared_ptr<blob const>;
     for (auto empty : {false, true}) {
       auto target = make_pair<P>(0, empty ? 0 : 73, 4, true);
@@ -100,7 +100,7 @@ namespace {
         expected.push_back(next);
       }
       for (std::uint64_t budget : {1, 2, 7, 64}) {
-        everett::index_pipeline<P> pipeline(target, native);
+        diet::index_pipeline<P> pipeline(target, native);
         require(pipeline.step(0) == 0, "zero pipeline budget");
         rejects([&] { pipeline.finish(); });
         std::uint64_t calls = 0;
@@ -137,15 +137,15 @@ namespace {
           require(pipeline.source_suffix_units() < literal_units / 2, "shared prefixes crossed handoff repeatedly");
       }
       {
-        everett::index_pipeline<P> identity(target, {});
+        diet::index_pipeline<P> identity(target, {});
         require(identity.done() && identity.finish() == target, "empty pipeline identity");
       }
-      rejects([&] { everett::index_pipeline<P> invalid({}, native); });
-      rejects([&] { everett::index_pipeline<P> invalid(target, {pair{}}); });
+      rejects([&] { diet::index_pipeline<P> invalid({}, native); });
+      rejects([&] { diet::index_pipeline<P> invalid(target, {pair{}}); });
       std::weak_ptr<blob const> retained = target;
       pair head;
       {
-        everett::index_pipeline<P> pipeline(target, native);
+        diet::index_pipeline<P> pipeline(target, native);
         target.reset();
         native.clear();
         expected.clear();
@@ -162,18 +162,18 @@ namespace {
 
 int main() {
   try {
-    exercise<everett::storage_policy<everett::profile_unit::byte, everett::variable_values, 3>>();
-    exercise<everett::storage_policy<everett::profile_unit::byte, everett::variable_values, 7>>();
-    exercise<everett::storage_policy<everett::profile_unit::byte, everett::variable_values, 15>>();
-    exercise<everett::storage_policy<everett::profile_unit::byte, everett::variable_values, 31>>();
-    exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 3>>();
-    exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 7>>();
-    exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 15>>();
-    exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 31>>();
-    exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 3, everett::golomb<3>>>();
-    exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 7, everett::golomb<5>>>();
-    exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 15, everett::exponential_golomb<2>>>();
-    exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 31, everett::exponential_golomb<63>>>();
+    exercise<diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 3>>();
+    exercise<diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 7>>();
+    exercise<diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 15>>();
+    exercise<diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 31>>();
+    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 3>>();
+    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 7>>();
+    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 15>>();
+    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 31>>();
+    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 3, diet::golomb<3>>>();
+    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 7, diet::golomb<5>>>();
+    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 15, diet::exponential_golomb<2>>>();
+    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 31, diet::exponential_golomb<63>>>();
     std::cout << "Streaming index pipeline checks passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';

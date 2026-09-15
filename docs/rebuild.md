@@ -3,8 +3,8 @@
 Design checkpoint, 2026-09-15. Tombstones remove bindings from query results,
 but leave their old records behind. To keep the active representation proportional
 to live state, we need to rebuild before too much of it becomes history. This
-is the rebuilding executor planned above the [Everett design](design.md).
-The existing reference world tests eager compaction, live counts and fingerprints;
+is the rebuilding executor planned above the [Diet design](design.md).
+The existing reference cola tests eager compaction, live counts and fingerprints;
 it does not implement this schedule or its disk publication protocol.
 
 The concrete elision and clean-image rules below apply to replacement-valued
@@ -80,7 +80,7 @@ with the redundant-level scheme's constant factors. Concurrent updates can creat
 new obsolete versions immediately after cleanup. The schedule must bound their
 accumulation; it need not eliminate every tombstone at every instant.
 
-“Half-size” refers to a world with half as many live bindings. Its byte size may
+“Half-size” refers to a cola with half as many live bindings. Its byte size may
 change quite differently: key lengths, prefix compression and retained snapshots
 can differ substantially.
 The record-count result alone does not establish a byte-space bound relative to
@@ -156,7 +156,7 @@ copy just to protect that source.
 
 Every subsequently accepted change has two effects:
 
-1. It updates the foreground world through the ordinary validated update path.
+1. It updates the foreground cola through the ordinary validated update path.
 2. Its exact operation identity and old/new bindings enter a replay queue for
    the candidate, with a reserved bound on its replay/maintenance work.
 
@@ -165,7 +165,7 @@ foreground mutation absent from the recorded rebuilding continuation.
 
 ### Build the clean base
 
-We merge the **entire resolved frozen world** into fresh immutable native data.
+We merge the **entire resolved frozen cola** into fresh immutable native data.
 For each key, we retain its newest visible live value and emit nothing if its
 resolved value is a tombstone. This removes every version obsolete at the freeze
 cut, including the deletion markers that hid them.
@@ -287,14 +287,14 @@ retaining all physical versions.
 This bound includes the current query dependency closure and unfinished current
 rebuilds. We charge objects retained solely by old saves, readers, other
 timeline forks or their checkpoints separately as retained history. We cannot
-require a snapshot of an old large world to occupy space proportional to today's
-small world.
+require a snapshot of an old large cola to occupy space proportional to today's
+small cola.
 
 ## 7. Coverage, contributions and durable continuation
 
 ### Elision coverage
 
-A frozen-world rebuild knows every older contribution relevant to that world,
+A frozen-cola rebuild knows every older contribution relevant to that cola,
 so it can omit both a winning tombstone and every value that tombstone hides.
 An unrelated historical snapshot does not prevent this omission in the new
 root; that snapshot retains its own old files. A partial compaction may elide a
@@ -316,7 +316,7 @@ N(\text{candidate}_t)=n_s+\sum_{i\le t}
 $$
 
 We check each root independently. Adding the foreground root's signature to the
-candidate root's signature would count the same logical world twice during
+candidate root's signature would count the same logical cola twice during
 rebuilding. The candidate clean base contributes $C_s$;
 its replayed update entries contribute their validated deltas. Index-only
 dependencies contribute zero. The old owner is replaced, not algebraically
@@ -379,7 +379,7 @@ weighted rebuilding policy when implementing the executor.
 Test the executor's schedule against a simple resolved-table oracle:
 
 - Pure deletion, insertion and overwrite streams, including a fixed one-key
-  live world with arbitrarily many overwrites.
+  live cola with arbitrarily many overwrites.
 - Adversarial updates immediately before a key is copied, immediately after it
   is copied, and while queued replay has not reached it yet.
 - Repeated delete/reinsert cycles; absent deletes and duplicate deliveries must
@@ -389,7 +389,7 @@ Test the executor's schedule against a simple resolved-table oracle:
 - Handoff exactly at a queue-empty cut, followed immediately by another update;
   replay debt persists and the next trigger still has the promised slack.
 - Complete tombstone elision versus partial coverage, including snapshots that
-  continue reading values deleted from the current world.
+  continue reading values deleted from the current cola.
 - Replacement indexes that do not retain unwanted old query dependencies.
 - Foreground/candidate fingerprints and live counts at matched cuts, without
   double-counting temporary copies.

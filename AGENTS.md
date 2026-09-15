@@ -1,4 +1,4 @@
-# Everett
+# Diet
 
 Read README.md, docs/design.md and docs/implementation.md before changing the
 architecture. Keep the design and implementation status distinct and current.
@@ -25,7 +25,7 @@ the README and design Markdown in Doxygen, and verify that equations render.
   variables and files. Short uppercase template parameters are welcome.
 - Use struct with explicit private/protected sections, two-space indentation,
   .h headers with `#pragma once`, .cc implementations, and T const & spelling.
-- Include public headers through everett/foo.h. Keep helpers with their sole
+- Include public headers through diet/foo.h. Keep helpers with their sole
   consumer and extract them only for actual sharing.
 - Prefer templates, CRTP and associated type families for policy specialization.
   Avoid virtual dispatch, PImpl and type-erased backend payloads.
@@ -53,6 +53,6 @@ initial compile concurrency to four jobs. Build and test with CMake/CTest;
 exercise ASan/UBSan where supported. Keep generated outputs in ignored build
 folders. Validate the installed CMake package from a separate consumer.
 
-Keep the library independent of application policy. A multiverse owns backing
-storage, a world is a logical state, and a timeline is an ordered progression.
+Keep the library independent of application policy. A fridge owns backing
+storage, a cola is a logical state, and a timeline is an ordered progression.
 Do not label design-only codecs, schedulers or persistence as implemented.

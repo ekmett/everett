@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <everett/mapped_cola.h>
+#include <diet/mapped_cola.h>
 
 #include <algorithm>
 #include <array>
@@ -25,7 +25,7 @@
 #if defined(__APPLE__) || defined(__linux__)
 #include <unistd.h>
 namespace {
-  using namespace everett;
+  using namespace diet;
   void require(bool value, char const * message) { if (!value) throw std::runtime_error(message); }
   template <class F> void rejects(F && action) {
     bool rejected = false;
@@ -40,7 +40,7 @@ namespace {
     unsigned next = 1;
     object_attempt_id attempt{std::string(32, 'f')};
     temporary() {
-      auto text = (std::filesystem::temp_directory_path() / "everett-mapped-cola-builder-XXXXXX").string();
+      auto text = (std::filesystem::temp_directory_path() / "diet-mapped-cola-builder-XXXXXX").string();
       auto result = ::mkdtemp(text.data());
       if (!result) throw std::runtime_error("mkdtemp"); root = result;
     }
@@ -112,7 +112,7 @@ namespace {
     auto native_path = files.root / object_path(native_id, file_kind::native_blob);
     auto original = file_bytes(native_path);
     auto native_address = mapped_native.second->view().bytes().data();
-    std::weak_ptr<everett::mapped_native<P> const> native_pin = mapped_native.second, side_pin = mapped_side.second;
+    std::weak_ptr<diet::mapped_native<P> const> native_pin = mapped_native.second, side_pin = mapped_side.second;
     std::weak_ptr<mapped_cola_blob<P> const> main_pin = mapped_main;
     mapped_cola_index_builder<P> builder(mapped_native.second, mapped_main, mapped_side.second);
     require(builder.step(0) == 0 && builder.size() == 0, "zero budget changed mapped builder");
@@ -188,10 +188,10 @@ namespace {
 int main() {
 #if defined(__APPLE__) || defined(__linux__)
   try {
-    run<everett::storage_policy<everett::profile_unit::byte, everett::variable_values, 3, everett::exponential_golomb<0>, 16>>();
-    run<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 7, everett::exponential_golomb<0>, 15>>();
-    run<everett::storage_policy<everett::profile_unit::byte, everett::fixed_values<0>, 15, everett::exponential_golomb<0>, 16>>();
-    run<everett::storage_policy<everett::profile_unit::bit, everett::fixed_values<0>, 31, everett::exponential_golomb<0>, 15>>();
+    run<diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 3, diet::exponential_golomb<0>, 16>>();
+    run<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 7, diet::exponential_golomb<0>, 15>>();
+    run<diet::storage_policy<diet::profile_unit::byte, diet::fixed_values<0>, 15, diet::exponential_golomb<0>, 16>>();
+    run<diet::storage_policy<diet::profile_unit::bit, diet::fixed_values<0>, 31, diet::exponential_golomb<0>, 15>>();
     std::cout << "Mapped COLA construction checks passed\n";
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 #endif

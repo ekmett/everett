@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/file.h>
+#include <diet/file.h>
 
 #include <algorithm>
 #include <fstream>
@@ -22,7 +22,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }
@@ -37,7 +37,7 @@ namespace {
       std::random_device random;
       for (unsigned attempt = 0; attempt < 64; ++attempt) {
         auto candidate = std::filesystem::temp_directory_path() /
-                         ("everett-file-test-" + std::to_string(random()) + "-" + std::to_string(random()));
+                         ("diet-file-test-" + std::to_string(random()) + "-" + std::to_string(random()));
         if (std::filesystem::create_directory(candidate)) { path = std::move(candidate); return; }
       }
       throw std::runtime_error("cannot create file test directory");
@@ -558,7 +558,7 @@ namespace {
     rejects([] { object_id::from_hex("ABCDEF0123456789abcdef0123456789"); });
     rejects([] { object_id::from_hex("abcdef0123456789abcdef012345678"); });
     rejects([] { object_id::from_hex("tenant/document/field"); });
-    rejects([] { parse_object_path("ab/cd/ef0123456789abcdef0123456789.world"); });
+    rejects([] { parse_object_path("ab/cd/ef0123456789abcdef0123456789.cola"); });
     rejects([] { parse_object_path("ab/cd/ef0123456789abcdef0123456789.merge"); });
     require(crc32c(std::as_bytes(std::span("123456789", std::size_t{9}))) == 0xe3069283u, "CRC32C check vector");
     require(crc32c({}) == 0, "empty CRC32C");
@@ -612,5 +612,5 @@ int main() {
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Everett's files behavior.
+ * \brief Tests Diet's files behavior.
  */

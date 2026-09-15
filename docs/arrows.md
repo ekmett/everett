@@ -1,12 +1,12 @@
 # Updates in a category chosen per key
 
 Design extension, 2026-09-15. A replacement tells us the new value of a key.
-A patch tells us how to get there. To extend the [Everett design](design.md)
+A patch tells us how to get there. To extend the [Diet design](design.md)
 to patches and other composable changes, we need to say when two changes can
 compose and what their composition means. Ordinary category theory gives us
 just those laws.
 
-`reference_world` implements replacement-valued updates. The
+`reference_cola` implements replacement-valued updates. The
 [native merge builder](native-merges.md) also accepts a composition callback
 over encoded values; typed per-key categories and endpoint validation remain
 the design developed here. The [implementation ledger](implementation.md)
@@ -33,7 +33,7 @@ a document edited by splices, and a large structured value edited by patches can
 outer store. Describing an arrow's endpoints mathematically does not require
 serializing two full configurations with every change.
 
-We choose baseline objects $o_k$ and define a sparse world as a family
+We choose baseline objects $o_k$ and define a sparse cola as a family
 $X=(X_k)_k$, with $X_k=o_k$ outside finitely many keys. An update $f:X\to Y$ is a family
 $f_k:X_k\to Y_k$, with identity arrows outside finite support. These form
 the **category of finite-support sections**, or restricted product
@@ -44,17 +44,17 @@ $$
 
 Composition and identities are componentwise. For a finite key space this is
 the ordinary product of the per-key categories. A baseline may be an absent
-binding, or an initial configuration supplied by the world definition.
+binding, or an initial configuration supplied by the cola definition.
 
 Omitting a key from an update means $1_{X_k}$. This differs from deleting the
 key. Where supported, deletion is an arrow to a distinguished absent object;
 the category determines which such arrows exist. No invertibility is required.
 
 The key-to-category rule and its interpretation version belong in the pinned
-world/schema context. Changing them requires explicit migration or transport.
+cola/schema context. Changing them requires explicit migration or transport.
 An old arrow cannot silently acquire a different meaning when loaded by a newer
 program. Exact source compatibility also needs its own validation: the weak
-world fingerprint is not a proof that an arrow is applicable.
+cola fingerprint is not a proof that an arrow is applicable.
 
 ### Logical key identity and multiplicity
 
@@ -167,7 +167,7 @@ admitted in either order, even when their keys use different categories.
 Within each partition, same-key changes retain their causal order.
 
 This describes the store's update law. Application-level cross-key constraints
-must also permit the intermediate worlds, or define visibility/admission at the completed
+must also permit the intermediate colas, or define visibility/admission at the completed
 round. Reading the same pinned round base still matters when workers calculate
 their arrows from other keys' state. The algebra does not make independently
 computed overlapping writes commute.
@@ -205,7 +205,7 @@ $\mathcal W\to B(R,+)$, where $B(R,+)$ is the one-object category with
 elements of $R$ as arrows and addition as composition. On the nerve this is
 the exact additive 1-cocycle $dC$.
 
-Exactness expresses our choice to fingerprint the endpoint world. An arbitrary
+Exactness expresses our choice to fingerprint the endpoint cola. An arbitrary
 additive functor can instead assign a nonzero value to a loop and thereby
 record history. Our endpoint difference assigns zero to every loop. In
 particular, **zero delta does not imply an identity arrow**: a category can have

@@ -7,9 +7,9 @@
  * \endlicense
  */
 
-#include <everett/cola_local_merge.h>
-#include <everett/cola_query.h>
-#include <everett/cola_sections.h>
+#include <diet/cola_local_merge.h>
+#include <diet/cola_query.h>
+#include <diet/cola_sections.h>
 
 #include <array>
 #include <cstdint>
@@ -24,7 +24,7 @@
 #include <vector>
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using table = std::map<std::string, std::string>;
   void check(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);

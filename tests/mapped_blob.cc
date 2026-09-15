@@ -7,9 +7,9 @@
  * \endlicense
  */
 
-#include <everett/mapped_blob.h>
-#include <everett/native_writer.h>
-#include <everett/sections.h>
+#include <diet/mapped_blob.h>
+#include <diet/native_writer.h>
+#include <diet/sections.h>
 
 #include <algorithm>
 #include <array>
@@ -34,7 +34,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
 
   template <class T> concept temporary_chunks = requires(T && value) { std::move(value).chunks(); };
   template <class T> concept temporary_view = requires(T && value) { std::move(value).view(); };
@@ -49,7 +49,7 @@ namespace {
   }
 
   // Read original key bits directly. Expected ordering, LCPs, matches and
-  // merged origins do not depend on Everett's optimized comparison or codecs.
+  // merged origins do not depend on Diet's optimized comparison or codecs.
   bool original_bit(bit_view value, std::uint64_t i) {
     require(i < value.size(), "oracle bit outside input");
     auto at = value.offset() + i;
@@ -227,13 +227,13 @@ namespace {
     std::filesystem::path path;
     temporary_directory() {
 #if defined(__unix__) || defined(__APPLE__)
-      auto pattern = (std::filesystem::temp_directory_path() / "everett-mapped-blob-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "diet-mapped-blob-XXXXXX").string();
       auto result = ::mkdtemp(pattern.data());
       if (!result) throw std::system_error(errno, std::generic_category(), "create mapped blob fixture");
       path = result;
 #else
       for (unsigned i = 0; i < 10000; ++i) {
-        auto candidate = std::filesystem::temp_directory_path() / ("everett-mapped-blob-" + std::to_string(i));
+        auto candidate = std::filesystem::temp_directory_path() / ("diet-mapped-blob-" + std::to_string(i));
         if (std::filesystem::create_directory(candidate)) { path = std::move(candidate); return; }
       }
       throw std::runtime_error("cannot reserve mapped blob fixture directory");

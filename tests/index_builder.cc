@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/index_builder.h>
+#include <diet/index_builder.h>
 
 #include <algorithm>
 #include <array>
@@ -22,7 +22,7 @@
 #include <vector>
 
 namespace {
-  using namespace everett;
+  using namespace diet;
 
   void require(bool condition, char const * reason) {
     if (!condition) throw std::runtime_error(reason);
@@ -469,5 +469,5 @@ int main() {
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Everett's incremental fractional-index builder.
+ * \brief Tests Diet's incremental fractional-index builder.
  */

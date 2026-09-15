@@ -1,6 +1,6 @@
 # Sorts and stringlike keys
 
-Represent a logical key in Everett as a pair
+Represent a logical key in Diet as a pair
 
 $$
 \kappa=(s,x),
@@ -63,16 +63,16 @@ likewise need not appear in numeric order unless their code assignment promises 
 The storage policy belongs in the type:
 
 ```cpp
-using bytes = everett::storage_policy<
-  everett::profile_unit::byte, everett::fixed_values<8>, 15,
-  everett::exponential_golomb<0>, 16>;
-using bits = everett::storage_policy<
-  everett::profile_unit::bit, everett::variable_values, 7, everett::golomb<3>>;
+using bytes = diet::storage_policy<
+  diet::profile_unit::byte, diet::fixed_values<8>, 15,
+  diet::exponential_golomb<0>, 16>;
+using bits = diet::storage_policy<
+  diet::profile_unit::bit, diet::variable_values, 7, diet::golomb<3>>;
 ```
 
 `fixed_values<N>` measures `N` in the selected profile's units; zero is valid.
-The same policy type belongs to the multiverse and its associated sorts,
-worlds, timelines and blobs. A sort cannot silently select a conflicting unit
+The same policy type belongs to the fridge and its associated sorts,
+colas, timelines and blobs. A sort cannot silently select a conflicting unit
 or value-layout policy. A variable-value policy can discover that all values
 in one stream have equal width and exploit that encoding optimization; it does
 not thereby make a type-level fixed-width promise. The `borrowed` stream role
@@ -104,7 +104,7 @@ sampling interval `P::group_size`.
 The fourth policy parameter defaults to `exponential_golomb<0>`.
 `golomb<M>` requires $M>0$; `exponential_golomb<Order>` accepts orders 0 through
 63. Byte policies retain the default parameter and encode counts with varints.
-All associated types retain the same choice as the multiverse.
+All associated types retain the same choice as the fridge.
 
 For a backspace of $b$ bits, `golomb<M>` encodes the quotient $\lfloor b/M\rfloor$
 as that many zero bits followed by one, then encodes $b\bmod M$ in truncated
@@ -278,7 +278,7 @@ $$
 \phi_{s,x}(\mathrm{absent})=0.
 $$
 
-The world fingerprint is the finite sum of these potentials, and an update
+The cola fingerprint is the finite sum of these potentials, and an update
 from $v$ to $v'$ contributes
 $\phi_{s,x}(v')-\phi_{s,x}(v)$. The [arrow design](arrows.md) states the
 more general potential law and composition requirements. Absence has zero
@@ -317,7 +317,7 @@ establish the quality of every hash construction over that field.
 
 ## 8. Pin interpretation with the data
 
-A world must pin the sort registry and interpretation versions its blobs need.
+A cola must pin the sort registry and interpretation versions its blobs need.
 The registry records the shared storage policy and determines sort codes,
 canonical encoding and comparison, hashing strategies, and how the category
 is selected from `(s,x)`.
@@ -390,10 +390,10 @@ the named target. The high-level pipeline retains the exact pair that produced
 its samples. Query preparation checks navigation shape once; content provenance
 remains an explicit trusted-construction or validation requirement.
 
-`multiverse<P>` holds an existing object directory, opens checked `file<P>`
+`fridge<P>` holds an existing object directory, opens checked `file<P>`
 envelopes under canonical object-ID paths, seals immutable objects and reopens
 prepared mmap query chains. Its component aliases retain the same policy.
-Its `world`, `timeline` and `branch_point` aliases name forward-declared
+Its `cola`, `timeline` and `branch_point` aliases name forward-declared
 aggregate types. The separate [SQLite catalog](sqlite-catalog.md) owns durable
 reservations, immutable saved roots, conditional timeline publication and reader pins.
 Pin retirement and durable merge progress remain extensions.
@@ -403,7 +403,7 @@ validate a whole prefix-free registry. Object access validates headers by
 default; `file_open_mode::trusted` defers that validation until an explicit
 metadata request or scan.
 
-The reference world currently takes one value type and one hashing-policy object
+The reference cola currently takes one value type and one hashing-policy object
 per instantiation. Its existing `hash.value(value)` call does not receive the
 key or sort. Generic per-key value potentials and sort-dependent dispatch
 therefore remain design work. Supplying caller-encoded composite bytes can

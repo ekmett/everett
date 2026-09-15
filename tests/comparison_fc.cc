@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/profile_blob.h>
+#include <diet/profile_blob.h>
 
 #include <algorithm>
 #include <array>
@@ -29,7 +29,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);

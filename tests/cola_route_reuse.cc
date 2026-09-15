@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/cola_index.h>
+#include <diet/cola_index.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -21,7 +21,7 @@
 #include <vector>
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using keys = std::vector<std::string>; // Original logical bits, independent of codec/navigation.
 
   void require(bool ok, char const * message) {

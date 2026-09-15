@@ -7,8 +7,8 @@
  * \endlicense
  */
 
-#include <everett/sqlite_catalog.h>
-#include <everett/native_file_merge.h>
+#include <diet/sqlite_catalog.h>
+#include <diet/native_file_merge.h>
 
 #include <algorithm>
 #include <array>
@@ -35,7 +35,7 @@
 #include <unistd.h>
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using clock_type = std::chrono::steady_clock;
   void require(bool okay, char const * message) { if (!okay) throw std::runtime_error(message); }
   object_id id(unsigned value) {
@@ -51,7 +51,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "everett-streamed-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "diet-streamed-XXXXXX").string();
       auto made = ::mkdtemp(name.data());
       if (!made) throw std::runtime_error("mkdtemp restart fixture");
       root = made;

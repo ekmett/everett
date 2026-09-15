@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/native_file_merge.h>
+#include <diet/native_file_merge.h>
 
 #include <array>
 #include <cstdio>
@@ -38,7 +38,7 @@ void operator delete(void * p, std::size_t) noexcept { std::free(p); }
 void operator delete[](void * p, std::size_t) noexcept { std::free(p); }
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using byte_policy = storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>;
   using bit_policy = storage_policy<profile_unit::bit, variable_values, 7, golomb<1>, 3>;
   void require(bool condition, char const * message) {
@@ -377,7 +377,7 @@ namespace {
   struct temporary_directory {
     std::filesystem::path path;
     temporary_directory() {
-      auto pattern = (std::filesystem::temp_directory_path() / "everett-native-file-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "diet-native-file-XXXXXX").string();
       auto result = ::mkdtemp(pattern.data());
       if (!result) throw std::runtime_error("native file temp directory");
       path = result;

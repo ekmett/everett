@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <everett/sqlite_catalog.h>
+#include <diet/sqlite_catalog.h>
 
 #include <array>
 #include <cstdio>
@@ -19,7 +19,7 @@
 #if defined(__APPLE__) || defined(__linux__)
 #include <unistd.h>
 namespace {
-  using namespace everett;
+  using namespace diet;
   void require(bool value, char const * message) { if (!value) throw std::runtime_error(message); }
   template <class F> void rejects(F && action) {
     bool rejected = false;
@@ -33,7 +33,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "everett-catalog-cola-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "diet-catalog-cola-XXXXXX").string();
       auto result = ::mkdtemp(name.data());
       if (!result) throw std::runtime_error("mkdtemp");
       root = result;
@@ -301,7 +301,7 @@ int main() {
 #if defined(__APPLE__) || defined(__linux__)
   try {
     lifecycle<policy>();
-    lifecycle<everett::storage_policy<everett::profile_unit::bit, everett::fixed_values<0>, 7, everett::exponential_golomb<0>, 15>>();
+    lifecycle<diet::storage_policy<diet::profile_unit::bit, diet::fixed_values<0>, 7, diet::exponential_golomb<0>, 15>>();
     commit_faults(); old_versions(); layout_mismatch();
     std::cout << "SQLite COLA catalog checks passed\n";
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }

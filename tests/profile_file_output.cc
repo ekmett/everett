@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/profile_file_output.h>
+#include <diet/profile_file_output.h>
 
 #include <algorithm>
 #include <array>
@@ -25,7 +25,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }
@@ -362,7 +362,7 @@ namespace {
   }
   void real_file() {
     using P = storage_policy<profile_unit::byte, fixed_values<11>, 15, exponential_golomb<0>, 16>;
-    auto pattern = (std::filesystem::temp_directory_path() / "everett-borrowed-file-XXXXXX").string();
+    auto pattern = (std::filesystem::temp_directory_path() / "diet-borrowed-file-XXXXXX").string();
     auto created = ::mkdtemp(pattern.data()); require(created, "borrowed file temporary directory");
     std::filesystem::path root(created);
     auto input = keys<P>(37); auto pair = pair_for<P>(input, 11); auto native = id(2);

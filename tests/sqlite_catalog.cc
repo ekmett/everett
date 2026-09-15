@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/sqlite_catalog.h>
+#include <diet/sqlite_catalog.h>
 
 #include <cassert>
 #include <cstdio>
@@ -18,7 +18,7 @@
 
 #if defined(__APPLE__) || defined(__linux__)
 namespace {
-  using namespace everett;
+  using namespace diet;
   using policy = storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 4>;
   object_id id(unsigned n) {
     char text[33]; std::snprintf(text, sizeof text, "%032x", n); return object_id(text);
@@ -27,7 +27,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto base = std::filesystem::temp_directory_path() / "everett-catalog-XXXXXX";
+      auto base = std::filesystem::temp_directory_path() / "diet-catalog-XXXXXX";
       auto text = base.string();
       auto result = ::mkdtemp(text.data());
       if (!result) throw std::runtime_error("mkdtemp");
@@ -191,8 +191,8 @@ int main() {
   normal(); failures();
   {
     temporary directory;
-    using bits = everett::storage_policy<everett::profile_unit::bit, everett::fixed_values<0>, 7, everett::golomb<3>, 16>;
-    auto catalog = everett::sqlite_catalog<bits>::create(directory.root, id(1));
+    using bits = diet::storage_policy<diet::profile_unit::bit, diet::fixed_values<0>, 7, diet::golomb<3>, 16>;
+    auto catalog = diet::sqlite_catalog<bits>::create(directory.root, id(1));
     (void)persist(catalog);
   }
   std::cout << "SQLite catalog: " << sqlite_catalog<policy>::runtime_version() << '\n';

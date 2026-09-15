@@ -7,8 +7,8 @@
  * \endlicense
  */
 
-#include <everett/native_writer.h>
-#include <everett/query.h>
+#include <diet/native_writer.h>
+#include <diet/query.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -21,7 +21,7 @@
 #include <vector>
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }

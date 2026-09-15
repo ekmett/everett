@@ -7,14 +7,14 @@
  * \endlicense
  */
 
-#include "everett/pins.h"
+#include "diet/pins.h"
 
 #include <array>
 #include <iostream>
 #include <stdexcept>
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using owner = pin_set<int>;
 
   void require(bool condition, char const * message) {
@@ -109,5 +109,5 @@ int main() {
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Everett's storage pins behavior.
+ * \brief Tests Diet's storage pins behavior.
  */
