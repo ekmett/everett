@@ -161,7 +161,7 @@ never used as a substitute for an exact snapshot or file identity.
 Work and transport boundaries
 -----------------------------
 
-The runtime retains one pending carry chain. `admission_ready()` exposes that
+The default binary runtime retains one pending carry chain. `admission_ready()` exposes that
 backpressure; the tap services existing work before claiming another queued
 contribution. Direct synchronous `contribute` drains prior work before admission.
 A multi-record batch can also drain carries between its records.
@@ -175,6 +175,30 @@ $2K + 128 + D + 32$ ready-admission units, with at most 64 runtime runs and root
 depth at most D. Before admission, the engine checks the actual metadata-derived
 charge and depth against those limits. This is an enforced bound for that
 operation, not a proof of a complete deamortized COLA schedule or a latency bound.
+
+The fourth engine parameter selects a runtime family. To use the redundant
+schedule:
+
+```cpp
+#include <diet/redundant_runtime.h>
+#include <diet/typed_cola.h>
+using engine = diet::typed_engine<diet::string_policy,
+  diet::wrapping_fingerprint_algebra, 256,
+  diet::redundant_runtime_family<diet::string_policy>>;
+```
+
+This path waits for admission readiness, rather than settling every higher
+merge. Each admitted record offers the current logarithmic service allowance.
+The final batch checkpoint captures hidden completed outputs as well as the
+visible query graph. Before admitting another record, the runtime enforces its
+remaining service obligation. Reopened partial workers receive recovery service
+before admitting new changes.
+
+The queue reservation includes a conservative ready-admission bound plus the
+largest service allowance over 64 levels. Actual service uses the current
+admission count. This gives a state-independent quote that submission threads
+can compute safely; it is larger than the work normally executed by a small
+table. See the [redundant executor](redundant-runtime.md) for its cost model.
 
 A conditional contribution also pins its base snapshot. The byte reservation
 counts its new encoded records, not the transitive old files kept alive by that

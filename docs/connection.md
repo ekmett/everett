@@ -62,6 +62,9 @@ readable after further writes or after the connection closes. Each snapshot also
 has `signature()` and `live_count()`. Equivalent background merges preserve
 both; the signature is an algebraic sanity check, not cryptographic identity.
 
+The [streaming scan](typed-scan.md) walks the live rows of a captured snapshot
+in key order, resolving older contributions without collecting the whole table.
+
 Deleting an absent key fails. The connection stays usable after that rejected
 command: we do not manufacture a deletion credit for something that was never
 present.

@@ -266,7 +266,18 @@ namespace diet {
     using metadata_type = typed_cola_metadata<A>;
     using runtime_family = Family;
     using runtime_type = typename Family::template runtime_type<typed_detail::compose<P>>;
-    static constexpr std::uint64_t admission_allowance = 2 * P::group_size + 128 + DepthLimit + 32;
+    static constexpr bool charged_service = requires { runtime_type::service_budget(std::uint64_t{}); };
+    static constexpr std::uint64_t ready_admission_allowance = [] {
+      if constexpr (charged_service) return 2 * runtime_type::local_charge_bound + 16 * DepthLimit + 512;
+      else return 2 * P::group_size + 128 + DepthLimit + 32;
+    }();
+    // Reservation cannot inspect a concurrently changing executor. Reserve a
+    // conservative 64-level service ceiling; actual service uses current h.
+    static constexpr std::uint64_t admission_allowance = [] {
+      if constexpr (charged_service)
+        return ready_admission_allowance + runtime_type::local_charge_bound * 8 * (runtime_type::maximum_levels + 2);
+      else return ready_admission_allowance;
+    }();
     static_assert(DepthLimit && DepthLimit < (std::uint64_t{1} << 32) && P::group_size < (std::uint64_t{1} << 32));
 
     explicit typed_engine(std::string schema_id = default_schema())
@@ -335,13 +346,21 @@ namespace diet {
       }
       try {
         for (auto const & record : input.records()) {
-          while (runtime_.pending()) runtime_.advance(std::max<std::uint64_t>(runtime_.next_service_cost(), 1));
+          while (!runtime_.admission_ready()) runtime_.advance(std::max<std::uint64_t>(runtime_.next_service_cost(), 1));
           auto ready = runtime_.snapshot();
-          if (ready.query_root().head()->depth() > DepthLimit || runtime_.admission_cost() > admission_allowance)
+          if (ready.query_root().head()->depth() > DepthLimit || runtime_.admission_cost() > ready_admission_allowance)
             throw std::length_error("typed runtime exceeds ready-admission depth allowance");
-          if (!runtime_.try_contribute(record)) throw std::logic_error("typed ready admission unexpectedly blocked");
+          auto service = [&] {
+            if constexpr (charged_service) return runtime_type::service_budget(profile_detail::add(ready.admissions(), 1));
+            else return std::uint64_t{0};
+          }();
+          if (!runtime_.try_contribute(record, service)) throw std::logic_error("typed ready admission unexpectedly blocked");
         }
-        current_ = cola_type(runtime_.snapshot(), std::move(metadata));
+        auto state = [&] {
+          if constexpr (requires { runtime_.checkpoint(); }) return runtime_.checkpoint();
+          else return runtime_.snapshot();
+        }();
+        current_ = cola_type(std::move(state), std::move(metadata));
         return current_;
       } catch (...) { failed_ = true; throw; }
     }
