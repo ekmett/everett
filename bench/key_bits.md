@@ -7,7 +7,7 @@ bytes; these are not SIMD kernels.
 
 ## Reproduce
 
-The runner compiles the same [fixture](key_bits.cc) twice. Its baseline is
+The [runner](key_bits.py) compiles the same [fixture](key_bits.cc) twice. Its baseline is
 `62ead3fab9d0ee5bda1b47780b7905a45aae1182`; the measured candidate headers come
 from `d027162`. Only `profile.h`, `front.h`, and `key_detail.h` are overlaid.
 Every dependency remains at the baseline revision, so this comparison excludes

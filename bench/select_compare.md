@@ -7,7 +7,8 @@ The encoded arrays and public interfaces are unchanged.
 
 The baseline is `62ead3fab9d0ee5bda1b47780b7905a45aae1182`.
 The integrated candidate is `bc24f443cdee7d12492ac8a6f48e8587de0fc147`.
-The runner pins both revisions;
+The [runner](select_compare.py) pins both revisions and builds the same
+[benchmark source](select_compare.cc);
 [the environment record](results/select_environment.json) records the exact
 header, benchmark, and prototype hashes used for these measurements.
 
