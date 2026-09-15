@@ -75,6 +75,15 @@ event replay checked intermediate roots, chronological coverage, slot reuse,
 snapshot unions and budget splitting. This is an executable count model;
 production scheduling, byte/I/O service and durable continuation remain work.
 
+`cola_local_merge_job<P, Compose>` executes one owning native/index/carrier job
+with exact main or secondary destination plans. `step` counts work in the
+current stage; `finish_stage` explicitly performs finalization and advances to
+the next stage. It retains source and plan owners on failure and exposes only a
+completed result. Six-policy tests cover noncommutative composition, both plans,
+pauses and moves, exact batch index bytes, retained old roots and full queries.
+The [local merge guide](cola-merges.md) demonstrates the API. Slot assignment,
+root publication and durable continuation remain separate.
+
 ### Rank and sparse offsets
 
 `rank_groups<K>` stores one borrowed-entry population per virtual group of

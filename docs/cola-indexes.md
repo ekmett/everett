@@ -76,6 +76,10 @@ It builds an empty-native routing parent where needed, then adds main-only
 parents until the first augmented catalog fits in one group. An existing
 prepared head can instead use `adopt_prepared`.
 
+[`cola_local_merge_job`](cola-merges.md) runs native merging, destination
+indexing and replacement routing as explicit stages. The old root remains
+readable until its owner chooses to publish the completed replacement.
+
 This complete program finds both contributions to one key:
 
 ```cpp

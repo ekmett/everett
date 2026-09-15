@@ -48,6 +48,7 @@ I call the backing store and its relationships the **multiverse**.
 | `file_index_builder`, `file_index_pipeline` | Streaming those index links to files while retaining the original mapped native data. |
 | `query_root`, `query_root_builder`, `query_cursor` | Preparing a bounded search head and visiting matching native entries through an exact index chain. |
 | `cola_index`, `cola_index_builder`, `cola_query_root` | Two-route main/secondary catalogs, incremental construction and all matching native contributions. |
+| `cola_local_merge_job` | A native merge, its destination index and replacement routing, with explicit stage boundaries and retained inputs. |
 | `mapped_file`, `file`, `multiverse` | Retained read-only mappings and policy-checked object access. |
 | `encode_native_sections`, `encode_index_sections`, `mapped_blob`, `mapped_query_root` | Portable blob files and queries over exact pinned mmap chains. |
 | `encode_cola_sections`, `mapped_cola_blob`, `mapped_cola_query_root` | IX03 indexes over unchanged native files, with one recursive main route and one terminal secondary route. |
@@ -109,6 +110,8 @@ two-target example and the mapped file layout; the
 [scheduling design](docs/cola-scheduling.md) explains visibility and work.
 The [mapped save and merge example](docs/cola-store.md) writes files, retains
 both input contributions, publishes their merge and reopens the saved states.
+The [local merge example](docs/cola-merges.md) drives both main and secondary
+destination plans while retaining the old query root.
 The [space report](bench/space_accounting.md) measures the resulting arrays.
 
 ### String compression and offsets
