@@ -656,8 +656,8 @@ ctest --test-dir build-sanitize --output-on-failure
 
 The default component suites cover codecs, native and borrowed writers, index
 construction, queries, world semantics, ownership, durability and mapped files.
-With SQLite enabled, three more suites cover the catalog, adversarial operations
-and forwarded VFS failures. Three package consumers check relocated core and
+With SQLite enabled, four more suites cover the catalog, adversarial operations,
+forwarded VFS failures and process interruption. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
 Combined verification on 2026-09-15: AppleClang 21, C++20, Release with strict

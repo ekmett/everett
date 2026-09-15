@@ -6,8 +6,11 @@ to patches and other composable changes, we need to say when two changes can
 compose and what their composition means. Ordinary category theory gives us
 just those laws.
 
-The current implementation remains the replacement-valued reference model;
-the [implementation ledger](implementation.md) tracks that boundary.
+`reference_world` implements replacement-valued updates. The
+[native merge builder](native-merges.md) also accepts a composition callback
+over encoded values; typed per-key categories and endpoint validation remain
+the design developed here. The [implementation ledger](implementation.md)
+records the tested contracts.
 The [Lean proof core](../proof/README.md) checks typed composition, disjoint
 updates and adjacent-merge adoption in an abstract model.
 

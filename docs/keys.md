@@ -350,8 +350,8 @@ profile the policy selects the backspace code; other counts use order-zero
 exponential-Golomb. Payloads concatenate without inter-record padding, and
 physical offsets count bits. Bits are most significant first; unused low bits
 of the final storage byte must be zero. Metadata records and checks the profile,
-policy, role, K and W. It is a logical descriptor, not a finalized portable
-serialization of all codec sections.
+policy, role, K and W. The [portable file sections](mapped-blobs.md) encode
+these fields explicitly alongside the stream and its navigation arrays.
 
 `profile_query_context<P>` owns the query and carries exact bit agreement,
 full key length and comparison direction. `with_key` establishes the comparison
@@ -385,16 +385,18 @@ the named target. The high-level pipeline retains the exact pair that produced
 its samples. Query preparation checks navigation shape once; content provenance
 remains an explicit trusted-construction or validation requirement.
 
-`multiverse<P>` supplies the current read side of the backing store: it holds
-an existing object directory and opens checked `file<P>` envelopes under
-canonical object-ID paths. Its `sort`, `blob` and `file` aliases retain the same
-policy. Its `world`, `timeline` and `branch_point` aliases name forward-declared
-aggregate types, not working persistent runtimes. `sort<P>` checks an individual
-code's packing and policy alignment; it does not validate a whole prefix-free
-registry. Object access validates headers by default; `file_open_mode::trusted`
-defers that validation until an explicit metadata request or scan. The reader
-performs no directory creation or durable writes. SQLite
-integration for worlds, pins and progress remains separate implementation work.
+`multiverse<P>` holds an existing object directory, opens checked `file<P>`
+envelopes under canonical object-ID paths, seals immutable objects and reopens
+prepared mmap query chains. Its component aliases retain the same policy.
+Its `world`, `timeline` and `branch_point` aliases name forward-declared
+aggregate types. The separate [SQLite catalog](sqlite-catalog.md) owns durable
+reservations, immutable saved roots and reader pins. Mutable timeline heads,
+pin retirement and durable merge progress remain extensions.
+
+`sort<P>` checks an individual code's packing and policy alignment; it does not
+validate a whole prefix-free registry. Object access validates headers by
+default; `file_open_mode::trusted` defers that validation until an explicit
+metadata request or scan.
 
 The reference world currently takes one value type and one hashing-policy object
 per instantiation. Its existing `hash.value(value)` call does not receive the
