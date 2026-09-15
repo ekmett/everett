@@ -9,11 +9,16 @@
 
 #pragma once
 
+#include <algorithm>
+#include <array>
 #include <bit>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <numeric>
 #include <span>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace everett {
@@ -30,6 +35,95 @@ namespace everett {
     }
     inline std::uint64_t words(std::uint64_t bits) noexcept {
       return bits / 64 + (bits % 64 != 0);
+    }
+
+    template <unsigned W, std::size_t O, std::size_t I>
+    inline std::uint64_t low_component(std::uint64_t const * source) noexcept {
+      constexpr auto mask = (std::uint64_t{1} << W) - 1;
+      constexpr auto bit = I * W;
+      constexpr auto first = O * 64;
+      if constexpr (bit < first) return (source[I] & mask) >> (first - bit);
+      else return (source[I] & mask) << (bit - first);
+    }
+
+    template <unsigned W, std::size_t O, std::size_t... I>
+    inline std::uint64_t low_word(std::uint64_t const * source, std::index_sequence<I...>) noexcept {
+      constexpr auto first = O * 64 / W;
+      return (low_component<W, O, first + I>(source) | ...);
+    }
+
+    template <unsigned W, std::size_t... O>
+    inline void low_tile(std::uint64_t const * source, std::uint64_t * out,
+                         std::index_sequence<O...>) noexcept {
+      ((out[O] = low_word<W, O>(source,
+          std::make_index_sequence<(O * 64 + 63) / W - O * 64 / W + 1>{})), ...);
+    }
+
+    // W-bit fields return to a word boundary after 64/gcd(W,64) values.
+    // Each tile assigns its output words once, rather than repeatedly loading
+    // and updating them for each input field. All shifts are compile-time
+    // constants below 64; the final incomplete tile uses bounded scalar work.
+    template <unsigned W>
+    inline void pack_low_fixed(std::span<std::uint64_t const> source,
+                               std::span<std::uint64_t> out) noexcept {
+      static_assert(W <= 63);
+      if constexpr (W) {
+        constexpr auto divisor = std::gcd(W, 64u);
+        constexpr auto inputs = 64 / divisor;
+        constexpr auto outputs = W / divisor;
+        std::size_t at = 0;
+        for (; source.size() - at >= inputs; at += inputs)
+          low_tile<W>(source.data() + at, out.data() + (at / inputs) * outputs,
+                      std::make_index_sequence<outputs>{});
+        auto tail = out.subspan((at / inputs) * outputs);
+        std::fill(tail.begin(), tail.end(), 0);
+        constexpr auto mask = (std::uint64_t{1} << W) - 1;
+        for (std::size_t i = 0; i != source.size() - at; ++i) {
+          auto bit = i * W;
+          unsigned shift = unsigned(bit % 64);
+          auto value = source[at + i] & mask;
+          tail[bit / 64] |= value << shift;
+          if (shift + W > 64) tail[bit / 64 + 1] |= value >> (64 - shift);
+        }
+      }
+    }
+
+    template <std::size_t... W>
+    constexpr auto low_packers(std::index_sequence<W...>) noexcept {
+      using packer = void (*)(std::span<std::uint64_t const>, std::span<std::uint64_t>) noexcept;
+      return std::array<packer, sizeof...(W)>{&pack_low_fixed<W>...};
+    }
+
+    // This dispatch occurs once per complete low section, not per value. The
+    // destination may contain old data: both complete and tail words are set,
+    // including zero tail padding. Source and destination must not overlap.
+    inline void pack_low(std::span<std::uint64_t const> source,
+                         std::span<std::uint64_t> out, unsigned width) {
+      if (width > 63) throw std::invalid_argument("select_groups low width");
+      if (out.size() != words(multiply(source.size(), width)))
+        throw std::invalid_argument("select_groups low output size");
+      static constexpr auto packers = low_packers(std::make_index_sequence<64>{});
+      packers[width](source, out);
+    }
+
+    // The owner has checked monotonicity, width and extent and zeroed out.
+    // (source[i] >> width) + i is strictly increasing, even for equal values.
+    // Accumulating a word locally removes repeated dependent memory updates;
+    // gaps remain zero. This preserves the exact existing high-bit ordering.
+    inline void write_high(std::span<std::uint64_t const> source,
+                           std::span<std::uint64_t> out, unsigned width) noexcept {
+      std::uint64_t word = 0, value = 0;
+      for (std::uint64_t i = 0; i != source.size(); ++i) {
+        auto position = (source[i] >> width) + i;
+        auto next = position / 64;
+        if (next != word) {
+          out[word] = value;
+          word = next;
+          value = 0;
+        }
+        value |= std::uint64_t{1} << (position % 64);
+      }
+      if (!source.empty()) out[word] = value;
     }
   }
 
@@ -171,19 +265,8 @@ namespace everett {
       result.low.assign(select_groups_detail::words(low_bits), 0);
       result.high.assign(select_groups_detail::words(high_bits), 0);
       result.samples.clear();
-      std::uint64_t low_mask = result.low_width ? (std::uint64_t{1} << result.low_width) - 1 : 0;
-      for (std::uint64_t i = 0; i < residuals.size(); ++i) {
-        auto value = residuals[i];
-        if (result.low_width) {
-          auto bit = i * result.low_width;
-          unsigned shift = unsigned(bit % 64);
-          result.low[bit / 64] |= (value & low_mask) << shift;
-          if (shift + result.low_width > 64)
-            result.low[bit / 64 + 1] |= (value & low_mask) >> (64 - shift);
-        }
-        auto position = (value >> result.low_width) + i;
-        result.high[position / 64] |= std::uint64_t{1} << (position % 64);
-      }
+      select_groups_detail::pack_low(residuals, result.low, result.low_width);
+      select_groups_detail::write_high(residuals, result.high, result.low_width);
       for (std::uint64_t begin = 0; begin < residuals.size(); begin += 256) {
         auto end = residuals.size() - begin < 256 ? residuals.size() : begin + 256;
         auto first = (residuals[begin] >> result.low_width) + begin;
