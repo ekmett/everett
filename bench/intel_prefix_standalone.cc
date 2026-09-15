@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Standalone CPUID-gated Intel prefix benchmark with synthetic inputs.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -183,9 +185,3 @@ int main(int argc, char ** argv) try {
   }
   return 0;
 } catch (std::exception const & e) { std::fprintf(stderr,"%s\n",e.what()); return 1; }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Standalone CPUID-gated Intel prefix benchmark with synthetic inputs.
- */

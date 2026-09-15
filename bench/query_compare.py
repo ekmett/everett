@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Compares pinned complete query implementations with one shared oracle.
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -162,7 +164,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Compares pinned complete query implementations with one shared oracle.

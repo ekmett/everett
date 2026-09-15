@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Compares NEON rank15 reductions with an externally supplied Cult bitmap rank.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -205,9 +207,3 @@ int main(int argc, char ** argv) try {
   if (selected != "hot" && selected != "large" && selected != "all" && !check_only) throw std::invalid_argument("unknown case");
   std::cerr << "observed=" << observed << '\n';
 } catch (std::exception const & e) { std::cerr << e.what() << '\n'; return 1; }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Compares NEON rank15 reductions with an externally supplied Cult bitmap rank.
- */

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Reproduces bounded-rank measurements with a pinned cached-total baseline.
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -56,6 +58,3 @@ metadata = {'baseline': base, 'current_revision': candidate_revision, 'selection
 with (build/'results.csv').open('w') as output:
     subprocess.run([str(exe), str(args.trials), str(args.queries)], stdout=output, check=True)
 print((build/'results.csv').read_text(), end='')
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Reproduces bounded-rank measurements with a pinned cached-total baseline.

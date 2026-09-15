@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Runs alternating shared-harness native-writer comparisons.
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -116,7 +118,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Runs alternating shared-harness native-writer comparisons.

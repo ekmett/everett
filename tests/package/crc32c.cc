@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Tests CRC32C linkage across standalone consumer translation units.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -18,9 +20,3 @@
 std::uint32_t crc32c_from_other_translation_unit(std::span<std::byte const> bytes) {
   return diet::crc32c(bytes);
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests CRC32C linkage across standalone consumer translation units.
- */

@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Compares complete queries and backing arrays with an independent integer oracle.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -222,9 +224,3 @@ int main(int argc, char ** argv) try {
   std::cerr << error.what() << '\n';
   return 1;
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Compares complete queries and backing arrays with an independent integer oracle.
- */

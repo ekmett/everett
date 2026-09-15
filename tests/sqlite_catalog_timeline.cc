@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Tests durable timeline generation selection, exact CAS, historical replay and old catalogs.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -493,9 +495,3 @@ int main() {
 #else
 int main() { std::cout << "SQLite timeline fixtures require POSIX directory barriers\n"; }
 #endif
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests durable timeline generation selection, exact CAS, historical replay and old catalogs.
- */

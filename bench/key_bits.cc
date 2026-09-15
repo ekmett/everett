@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Measures bounded key and bit primitives against identical profile fixtures.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -239,8 +241,3 @@ int main(int argc, char ** argv) {
     for (unsigned prefix : {8u,128u}) { profiles<byte_policy>("byte_profile", prefix, work); profiles<bit_policy>("bit_profile", prefix, work); }
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Measures bounded key and bit primitives against identical profile fixtures.
- */

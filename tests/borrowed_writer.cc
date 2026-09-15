@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Checks incremental borrowed writer ownership and rejected-append guarantees.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -159,9 +161,3 @@ int main() {
     return 1;
   }
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Checks incremental borrowed writer ownership and rejected-append guarantees.
- */

@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Measures encoded blob construction, index pipelines and known-window searches.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -284,9 +286,3 @@ int main(int argc, char ** argv) try {
   std::cerr << error.what() << '\n';
   return 1;
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Measures encoded blob construction, index pipelines and known-window searches.
- */

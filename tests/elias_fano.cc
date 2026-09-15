@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Tests generic Elias-Fano independently of record sampling and stride.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -210,8 +212,3 @@ int main() {
     std::cout << "Generic Elias-Fano encoding, empty sequences, and guarded selection checks passed\n";
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests generic Elias-Fano independently of record sampling and stride.
- */

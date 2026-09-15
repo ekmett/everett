@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Compares cached-total rank with bounded rank on identical inputs.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -123,8 +125,3 @@ int main(int argc, char ** argv) {
     full(trials, queries);
   } catch (std::exception const & e) { std::cerr << e.what() << '\n'; return 1; }
 }
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Compares cached-total rank with bounded rank on identical inputs.
- */

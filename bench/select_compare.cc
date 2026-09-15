@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Compares pinned Elias-Fano query and construction paths.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -200,8 +202,3 @@ int main(int argc,char**argv)try {
   exercise(entries,trials,queries,8,pattern);
   std::cerr<<"observed="<<observed<<'\n';
 }catch(std::exception const&e){std::cerr<<e.what()<<'\n';return 1;}
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Compares pinned Elias-Fano query and construction paths.
- */

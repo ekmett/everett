@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Reproduces packed group and bitmap rank comparisons from pinned headers.
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -74,7 +76,3 @@ metadata = {
 }
 (build / 'other_rank_metadata.json').write_text(json.dumps(metadata, indent=2) + '\n')
 subprocess.run([str(exe), args.mode, str(args.trials), str(args.queries)], check=True)
-
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Reproduces packed group and bitmap rank comparisons from pinned headers.

@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Measures complete bitmap rank before and after stored spacer lanes.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -138,9 +140,3 @@ int main(int argc, char ** argv) try {
   bitmap(queries, trials, check);
   std::cerr << "verified; observed=" << observed << '\n';
 } catch (std::exception const & e) { std::cerr << e.what() << '\n'; return 1; }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Measures complete bitmap rank before and after stored spacer lanes.
- */

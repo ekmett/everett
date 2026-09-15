@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Checks incremental packed rank construction and retry without expanded classes.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -149,9 +151,3 @@ int main() try {
 } catch (std::exception const & error) {
   std::cerr << error.what() << '\n'; return 1;
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Checks incremental packed rank construction and retry without expanded classes.
- */

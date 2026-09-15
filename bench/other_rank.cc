@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Measures packed group and full bitmap rank against a pinned baseline.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -242,9 +244,3 @@ int main(int argc, char ** argv) try {
   }
   std::cerr << "verified; observed=" << observed << '\n';
 } catch (std::exception const & e) { std::cerr << e.what() << '\n'; return 1; }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Measures packed group and full bitmap rank against a pinned baseline.
- */

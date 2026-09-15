@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Exercises reservation-to-save publication, reopening and ambiguous commit outcomes.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -201,9 +203,3 @@ int main() {
 #else
 int main() { std::cout << "SQLite catalog creation requires POSIX directory barriers\n"; }
 #endif
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Exercises reservation-to-save publication, reopening and ambiguous commit outcomes.
- */

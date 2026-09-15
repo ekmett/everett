@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Measures encoded native merges, fragment stacks and requested allocation sizes.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -244,9 +246,3 @@ int main(int argc, char ** argv) {
     std::cerr << error.what() << '\n'; return 1;
   }
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Measures encoded native merges, fragment stacks and requested allocation sizes.
- */

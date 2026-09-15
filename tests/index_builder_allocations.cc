@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Tests index input replacement rollback under allocation failure.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -92,9 +94,3 @@ int main() try {
   std::cout << "Index decoder allocation rollback checks passed\n";
   return 0;
 } catch (std::exception const & error) { fail_after = -1; std::cerr << error.what() << '\n'; return 1; }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests index input replacement rollback under allocation failure.
- */

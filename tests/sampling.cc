@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Tests Diet's sequential sampling of pinned encoded blob pairs.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -421,9 +423,3 @@ int main() {
     return 1;
   }
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Diet's sequential sampling of pinned encoded blob pairs.
- */

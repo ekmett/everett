@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Tests incremental mapped COLA construction without native rewriting.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -196,8 +198,3 @@ int main() {
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 #endif
 }
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests incremental mapped COLA construction without native rewriting.
- */

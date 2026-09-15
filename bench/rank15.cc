@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Benchmarks Diet's packed rank15 summation and lookup.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -128,9 +130,3 @@ int main(int argc, char ** argv) {
   }
   std::cerr << "observed=" << observed << '\n';
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Benchmarks Diet's packed rank15 summation and lookup.
- */

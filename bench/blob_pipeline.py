@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # \file
+# \author Edward Kmett
+# \brief Reproduces whole-blob and pipeline comparisons using pinned header snapshots.
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -123,7 +125,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# \file
-# \author Edward Kmett
-# \brief Reproduces whole-blob and pipeline comparisons using pinned header snapshots.

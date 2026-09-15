@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Measures tagged sample traversal and complete index pipelines with independent integer-key oracles.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -247,9 +249,3 @@ int main(int argc, char ** argv) try {
     run<storage_policy<profile_unit::bit>>("bit", count, prefix, rounds, duplicates);
   }
 } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Measures tagged sample traversal and complete index pipelines with independent integer-key oracles.
- */

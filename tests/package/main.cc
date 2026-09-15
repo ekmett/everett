@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Tests Diet's standalone package consumption.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -107,9 +109,3 @@ int main() {
   if (merged.native().size() != 1 || merged.borrowed().size() != 0) return 13;
   return 0;
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Diet's standalone package consumption.
- */

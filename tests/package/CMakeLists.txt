@@ -1,5 +1,7 @@
 ##
 # \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Configures a separate Diet package consumer.
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -43,8 +45,3 @@ target_link_libraries(diet_consumer PRIVATE diet::diet)
 set_target_properties(diet_consumer PROPERTIES CXX_EXTENSIONS OFF)
 enable_testing()
 add_test(NAME diet.consumer COMMAND diet_consumer)
-
-##
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Configures a separate Diet package consumer.

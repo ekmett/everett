@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Checks streamed merge publication and retained roots across bounded process interruptions.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -478,9 +480,3 @@ int main() {
 #else
 int main() { std::cout << "SQLite streamed restart tests require POSIX fork and signals\n"; }
 #endif
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Checks streamed merge publication and retained roots across bounded process interruptions.
- */

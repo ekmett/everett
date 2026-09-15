@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 ##
 # \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Adapts Markdown dollar math for Diet's Doxygen build.
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -129,9 +131,3 @@ if __name__ == "__main__":
     except (OSError, ValueError) as error:
         print(f"Doxygen Markdown filter failed: {error}", file=sys.stderr)
         sys.exit(1)
-
-
-##
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Adapts Markdown dollar math for Diet's Doxygen build.

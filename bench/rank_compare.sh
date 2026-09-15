@@ -1,5 +1,7 @@
 #!/bin/sh
 # \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Reproduces the historical full-vector and packed-rank comparison.
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -18,7 +20,3 @@ python3 "$repo/bench/snapshot.py" "$candidate" "$build/candidate" include/diet/r
   -I"$build/baseline/include" "-DDIET_RANK_SIMD=\"$build/candidate/include/diet/rank15.h\"" \
   "$repo/bench/rank_compare.cc" -o "$build/rank_compare"
 exec "$build/rank_compare" "$@"
-
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Reproduces the historical full-vector and packed-rank comparison.

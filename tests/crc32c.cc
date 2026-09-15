@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Tests Diet's CRC32C behavior.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -258,9 +260,3 @@ int main() {
 #endif
   std::cout << "CRC32C vectors, generated backends, alignments and bounded tails passed\n";
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Diet's CRC32C behavior.
- */

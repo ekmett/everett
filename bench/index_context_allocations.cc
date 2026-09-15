@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Counts requested C++ allocations for one complete borrowed-only index stage.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -132,9 +134,3 @@ int main() try {
   }
   return 0;
 } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Counts requested C++ allocations for one complete borrowed-only index stage.
- */

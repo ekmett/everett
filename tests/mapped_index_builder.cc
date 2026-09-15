@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Tests direct mapped-native indexing against exact files and original-key oracles.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -495,9 +497,3 @@ int main() try {
   std::cerr << error.what() << '\n';
   return 1;
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests direct mapped-native indexing against exact files and original-key oracles.
- */

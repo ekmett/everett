@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Reproduces pinned Elias-Fano query and construction comparisons.
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -65,7 +67,3 @@ if a.output:
  a.output.parent.mkdir(parents=True,exist_ok=True)
  with a.output.open('w') as out:subprocess.run(run,stdout=out,check=True)
 else:subprocess.run(run,check=True)
-
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Reproduces pinned Elias-Fano query and construction comparisons.
