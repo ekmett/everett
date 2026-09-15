@@ -17,6 +17,9 @@
 #if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #include <arm_neon.h>
 #endif
+#if defined(__AVX2__) || (defined(__AVX512F__) && defined(__AVX512BW__))
+#include <immintrin.h>
+#endif
 
 namespace everett {
   // Separate packed-class codec: 15-entry groups do not align with the
@@ -57,7 +60,13 @@ namespace everett {
       auto result = checkpoints_[group / 128];
       if (group % 128 == 0) return result;
       auto word = (group / 128) * 8;
-#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#if defined(__AVX512F__) && defined(__AVX512BW__)
+      if (classes_.size() - word >= 8)
+        return result + prefix128_avx512(classes_.data() + word, unsigned(group % 128));
+#elif defined(__AVX2__)
+      if (classes_.size() - word >= 8)
+        return result + prefix128_avx2(classes_.data() + word, unsigned(group % 128));
+#elif defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       if (classes_.size() - word >= 8)
         return result + prefix128_neon(classes_.data() + word, unsigned(group % 128));
 #endif
@@ -68,13 +77,59 @@ namespace everett {
       auto tail = unsigned(group % 16);
       // The endpoint returned above, so this word exists even for tail=0.
       pairs += pair_nibbles(classes_[word] & ((std::uint64_t{1} << (4 * tail)) - 1));
-      // Widen before reducing: four 16-bit lanes and their total (at most
-      // 1920) fit without carries into the product's high 16 bits.
-      pairs = (pairs & 0x00ff00ff00ff00ffull) + ((pairs >> 8) & 0x00ff00ff00ff00ffull);
-      return result + ((pairs * 0x0001000100010001ull) >> 48);
+      return result + sum_bytes(pairs);
     }
 
   private:
+#if defined(__AVX512F__) && defined(__AVX512BW__)
+    static unsigned prefix128_avx512(std::uint64_t const * words, unsigned count) noexcept {
+      auto positions = _mm512_set_epi8(
+        126, 124, 122, 120, 118, 116, 114, 112, 110, 108, 106, 104, 102, 100, 98, 96,
+        94, 92, 90, 88, 86, 84, 82, 80, 78, 76, 74, 72, 70, 68, 66, 64,
+        62, 60, 58, 56, 54, 52, 50, 48, 46, 44, 42, 40, 38, 36, 34, 32,
+        30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 2, 0);
+      auto boundary = _mm512_set1_epi8(char(count));
+      auto mask = _mm512_set1_epi8(15);
+      auto packed = _mm512_loadu_si512(words);
+      auto low = _mm512_and_si512(packed, mask);
+      // The word shift moves neighboring-byte bits too; the mask removes them.
+      auto high = _mm512_and_si512(_mm512_srli_epi16(packed, 4), mask);
+      auto selected_low = _mm512_cmplt_epu8_mask(positions, boundary);
+      auto selected_high = _mm512_cmplt_epu8_mask(_mm512_add_epi8(positions, _mm512_set1_epi8(1)), boundary);
+      auto pairs = _mm512_add_epi8(_mm512_maskz_mov_epi8(selected_low, low),
+                                   _mm512_maskz_mov_epi8(selected_high, high));
+      // Reduce eight qwords first: byte lanes total at most 240, so they
+      // cannot carry into each other. Exactly 64 bytes are readable.
+      return sum_bytes(std::uint64_t(_mm512_reduce_add_epi64(pairs)));
+    }
+#elif defined(__AVX2__)
+    static unsigned prefix128_avx2(std::uint64_t const * words, unsigned count) noexcept {
+      auto positions = _mm256_setr_epi8(
+        0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30,
+        32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62);
+      auto boundary = _mm256_set1_epi8(char(count));
+      auto mask = _mm256_set1_epi8(15);
+      auto selected_pairs = [&](auto packed, unsigned base) {
+        auto low_positions = _mm256_add_epi8(positions, _mm256_set1_epi8(char(base)));
+        auto high_positions = _mm256_add_epi8(low_positions, _mm256_set1_epi8(1));
+        auto low = _mm256_and_si256(packed, mask);
+        auto high = _mm256_and_si256(_mm256_srli_epi16(packed, 4), mask);
+        // Positions and count are in [0,127], so signed byte comparisons suffice.
+        return _mm256_add_epi8(_mm256_and_si256(low, _mm256_cmpgt_epi8(boundary, low_positions)),
+                              _mm256_and_si256(high, _mm256_cmpgt_epi8(boundary, high_positions)));
+      };
+      auto a = selected_pairs(_mm256_loadu_si256(reinterpret_cast<__m256i const *>(words)), 0);
+      auto b = selected_pairs(_mm256_loadu_si256(reinterpret_cast<__m256i const *>(words + 4)), 64);
+      // Two vectors contribute at most 60 per byte. Reduce four qwords first;
+      // byte lanes total at most 240. Exactly 64 bytes are readable.
+      auto totals = _mm256_add_epi8(a, b);
+      auto halves = _mm_add_epi64(_mm256_castsi256_si128(totals), _mm256_extracti128_si256(totals, 1));
+      std::uint64_t value;
+      _mm_storel_epi64(reinterpret_cast<__m128i *>(&value), _mm_add_epi64(halves, _mm_srli_si128(halves, 8)));
+      return sum_bytes(value);
+    }
+#endif
+
 #if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     static unsigned prefix128_neon(std::uint64_t const * words, unsigned count) noexcept {
       uint8x16_t const positions{0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30};
@@ -100,6 +155,13 @@ namespace everett {
 
     static std::uint64_t pair_nibbles(std::uint64_t value) noexcept {
       return (value & 0x0f0f0f0f0f0f0f0full) + ((value >> 4) & 0x0f0f0f0f0f0f0f0full);
+    }
+
+    static unsigned sum_bytes(std::uint64_t value) noexcept {
+      // Byte lanes are at most 240. Widen before the horizontal sum: four
+      // 16-bit lanes and their total (at most 1920) fit without carries.
+      value = (value & 0x00ff00ff00ff00ffull) + ((value >> 8) & 0x00ff00ff00ff00ffull);
+      return unsigned((value * 0x0001000100010001ull) >> 48);
     }
 
     std::span<std::uint64_t const> classes_;
