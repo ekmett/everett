@@ -31,12 +31,19 @@ namespace diet {
   template <class C> struct sort_profile_key<fc_string_key<C>> {
     static constexpr bool front_coded = true;
     static bit_string order(std::string const & key) { return bit_string::copy(sort_codec_detail::string_bits(key)); }
+    static std::string decode_order(bit_view key) {
+      if (key.size() & 7) throw std::invalid_argument("string order key ends inside byte");
+      std::string result(static_cast<std::size_t>(key.size() >> 3), '\0');
+      profile_detail::copy_bits(reinterpret_cast<std::byte *>(result.data()), 0, key);
+      return result;
+    }
     static fc_key_frame read(sort_bit_reader & in, std::uint64_t retained) {
       auto literal = in.take_bits(in.template read_count<C>());
       if ((retained + literal.size()) & 7) throw std::invalid_argument("string key ends inside byte");
       return {retained, literal};
     }
-    static void header(sort_bit_writer & out, std::uint64_t, std::uint64_t suffix_bits) {
+    static void header(sort_bit_writer & out, std::uint64_t retained, std::uint64_t suffix_bits) {
+      if ((retained + suffix_bits) & 7) throw std::invalid_argument("string key ends inside byte");
       out.template write_count<C>(suffix_bits);
     }
     static void write(sort_bit_writer & out, std::uint64_t retained, bit_view suffix) {
@@ -46,6 +53,7 @@ namespace diet {
   template <class C> struct sort_profile_key<fc_bit_key<C>> {
     static constexpr bool front_coded = true;
     static bit_string order(bit_string const & key) { return key; }
+    static bit_string decode_order(bit_view key) { return bit_string::copy(key); }
     static fc_key_frame read(sort_bit_reader & in, std::uint64_t retained) {
       return {retained, in.take_bits(in.template read_count<C>())};
     }
@@ -61,6 +69,10 @@ namespace diet {
     static bit_string order(std::uint64_t key) {
       bit_string result; sort_bit_writer out(result); out.write_bits(key, N); return result;
     }
+    static std::uint64_t decode_order(bit_view key) {
+      if (key.size() != N) throw std::invalid_argument("integer order key width");
+      sort_bit_reader input(key); return input.read_bits(N);
+    }
     static fc_key_frame read(sort_bit_reader & in, std::uint64_t retained) {
       if (retained) throw std::invalid_argument("raw integer has an inherited prefix");
       return {0, in.take_bits(N)};
@@ -75,6 +87,12 @@ namespace diet {
   template <class C> struct sort_profile_key<raw_string_key<C>> {
     static constexpr bool front_coded = false;
     static bit_string order(std::string const & key) { return bit_string::copy(sort_codec_detail::string_bits(key)); }
+    static std::string decode_order(bit_view key) {
+      if (key.size() & 7) throw std::invalid_argument("string order key ends inside byte");
+      std::string result(static_cast<std::size_t>(key.size() >> 3), '\0');
+      profile_detail::copy_bits(reinterpret_cast<std::byte *>(result.data()), 0, key);
+      return result;
+    }
     static fc_key_frame read(sort_bit_reader & in, std::uint64_t retained) {
       if (retained) throw std::invalid_argument("raw string has an inherited prefix");
       return {0, in.take_bits(profile_detail::multiply(in.template read_count<C>(), 8))};

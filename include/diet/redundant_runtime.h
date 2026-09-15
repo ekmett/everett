@@ -16,19 +16,34 @@
 #include <unordered_map>
 
 namespace diet {
-  template <class P> struct redundant_node {
-    using policy_type = P;
+  // A storage family changes native framing without changing the scheduler.
+  // Borrowed streams and query navigation follow native_type::stream_family.
+  template <class P> struct profile_runtime_storage {
     using native_type = cola_runtime_native<P>;
+    using mapped_pair_type = mapped_cola_blob<P>;
+    using mapped_native_type = mapped_native<P>;
+    static auto encode_native(profile_array<P> const & value) { return encode_native_sections(value); }
+    template <class Compose> using merge_type = native_merge_builder<P, native_type, Compose>;
+    static auto empty() { return native_type::from_owned(profile_array<P>::build({})); }
+    static auto singleton(profile_record const & record) {
+      profile_native_writer<P> writer; writer.append(record); return native_type::from_owned(writer.finish());
+    }
+  };
+
+  template <class P, class Storage = profile_runtime_storage<P>> struct redundant_node {
+    using policy_type = P;
+    using storage_type = Storage;
+    using native_type = typename Storage::native_type;
     using native_pointer = std::shared_ptr<native_type const>;
     using pair_type = std::shared_ptr<redundant_node const>;
     using built_type = cola_index<P, native_type, redundant_node>;
     static pair_type from_built(built_type value) {
       return pair_type(new redundant_node(std::make_shared<built_type const>(std::move(value))));
     }
-    static pair_type from_mapped(std::shared_ptr<mapped_cola_blob<P> const> head) {
+    static pair_type from_mapped(std::shared_ptr<typename Storage::mapped_pair_type const> head) {
       if (!head) error_detail::raise<std::invalid_argument>("null redundant mapped head");
-      std::vector<std::shared_ptr<mapped_cola_blob<P> const>> chain;
-      std::unordered_set<mapped_cola_blob<P> const *> seen;
+      std::vector<std::shared_ptr<typename Storage::mapped_pair_type const>> chain;
+      std::unordered_set<typename Storage::mapped_pair_type const *> seen;
       for (auto p = head; p; p = p->main_target()) {
         if (!seen.insert(p.get()).second) error_detail::raise<std::invalid_argument>("cyclic redundant main chain");
         chain.push_back(p);
@@ -39,7 +54,7 @@ namespace diet {
     }
     // The loader interns mapped identities and passes the corresponding
     // facades, preserving exact target/native sharing across hidden roots.
-    static pair_type from_mapped_parts(std::shared_ptr<mapped_cola_blob<P> const> value,
+    static pair_type from_mapped_parts(std::shared_ptr<typename Storage::mapped_pair_type const> value,
         native_pointer native, pair_type main = {}, native_pointer secondary = {}) {
       if (!value || !native || native->mapped() != value->native_object() ||
           bool(main) != bool(value->main_target()) || (main && main->mapped() != value->main_target()) ||
@@ -47,7 +62,7 @@ namespace diet {
         error_detail::raise<std::invalid_argument>("inexact mapped redundant parts");
       return pair_type(new redundant_node(std::move(value), std::move(native), std::move(main), std::move(secondary)));
     }
-    cola_index_view<P> view() const { return built_ ? built_->view() : mapped_->view(); }
+    typename built_type::view_type view() const { return built_ ? built_->view() : mapped_->view(); }
     native_pointer native_owner() const noexcept { return native_; }
     native_pointer secondary_target() const noexcept { return secondary_; }
     pair_type main_target() const noexcept { return main_; }
@@ -55,74 +70,74 @@ namespace diet {
     std::uint64_t group_count() const { return view().group_count(); }
     std::uint64_t depth() const noexcept { return depth_; }
     std::shared_ptr<built_type const> built() const noexcept { return built_; }
-    std::shared_ptr<mapped_cola_blob<P> const> mapped() const noexcept { return mapped_; }
+    std::shared_ptr<typename Storage::mapped_pair_type const> mapped() const noexcept { return mapped_; }
   private:
     native_pointer native_, secondary_;
     pair_type main_;
     std::shared_ptr<built_type const> built_;
-    std::shared_ptr<mapped_cola_blob<P> const> mapped_;
+    std::shared_ptr<typename Storage::mapped_pair_type const> mapped_;
     std::uint64_t depth_;
     explicit redundant_node(std::shared_ptr<built_type const> value)
       : native_(value->native_owner()), secondary_(value->secondary_target()), main_(value->main_target()), built_(std::move(value)),
         depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)) {}
-    redundant_node(std::shared_ptr<mapped_cola_blob<P> const> value, native_pointer native, pair_type main, native_pointer secondary)
+    redundant_node(std::shared_ptr<typename Storage::mapped_pair_type const> value, native_pointer native, pair_type main, native_pointer secondary)
       : native_(std::move(native)), secondary_(std::move(secondary)), main_(std::move(main)), mapped_(std::move(value)),
         depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)) {}
-    redundant_node(std::shared_ptr<mapped_cola_blob<P> const> value, pair_type main)
+    redundant_node(std::shared_ptr<typename Storage::mapped_pair_type const> value, pair_type main)
       : native_(native_type::from_mapped(value->native_object())),
         secondary_(value->secondary_target() ? native_type::from_mapped(value->secondary_target()) : native_pointer{}),
         main_(std::move(main)), mapped_(std::move(value)),
         depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)) {}
   };
 
-  template <class P> struct redundant_object;
-  template <class P> struct redundant_routes {
-    std::shared_ptr<redundant_object<P> const> main, secondary;
+  template <class P, class Storage = profile_runtime_storage<P>> struct redundant_object;
+  template <class P, class Storage = profile_runtime_storage<P>> struct redundant_routes {
+    std::shared_ptr<redundant_object<P, Storage> const> main, secondary;
   };
-  template <class P> struct redundant_object {
-    using native_pointer = typename redundant_node<P>::native_pointer;
-    using pair_type = typename redundant_node<P>::pair_type;
+  template <class P, class Storage> struct redundant_object {
+    using native_pointer = typename redundant_node<P, Storage>::native_pointer;
+    using pair_type = typename redundant_node<P, Storage>::pair_type;
     std::uint64_t identity = 0, first = 0, last = 0;
     unsigned level = 0;
     native_pointer native;
     pair_type pair; // Absent only for a terminal secondary.
-    redundant_routes<P> next;
+    redundant_routes<P, Storage> next;
     bool secondary() const noexcept { return !pair; }
     std::uint64_t mass() const noexcept { return last - first; }
     std::uint64_t augmented() const { return pair ? pair->virtual_size() : native->size(); }
   };
   enum class redundant_slot_state { empty, active, consumed, reserved, carrier_building, carrier_ready, root_carrier };
   enum class redundant_stage { native_merge, destination_index, carrier_index, commit };
-  template <class P> struct redundant_slot {
+  template <class P, class Storage = profile_runtime_storage<P>> struct redundant_slot {
     redundant_slot_state state = redundant_slot_state::empty;
-    std::shared_ptr<redundant_object<P> const> object;
-    redundant_routes<P> route;
-    typename redundant_node<P>::pair_type carrier;
+    std::shared_ptr<redundant_object<P, Storage> const> object;
+    redundant_routes<P, Storage> route;
+    typename redundant_node<P, Storage>::pair_type carrier;
     bool ever_visible = false;
   };
   // A restart recipe owns completed artifacts and exact targets, never a
   // partially written stream or mutable cursor. Replaying partial work costs
   // new service and puts the restored executor behind a recovery barrier.
-  template <class P> struct redundant_job_recipe {
+  template <class P, class Storage = profile_runtime_storage<P>> struct redundant_job_recipe {
     std::array<unsigned, 2> inputs{};
     unsigned destination = 0, carrier_slot = 0;
     bool new_main = false;
-    redundant_routes<P> destination_route;
-    std::shared_ptr<redundant_object<P> const> existing_main, output;
-    typename redundant_node<P>::native_pointer merged;
-    typename redundant_node<P>::pair_type carrier;
+    redundant_routes<P, Storage> destination_route;
+    std::shared_ptr<redundant_object<P, Storage> const> existing_main, output;
+    typename redundant_node<P, Storage>::native_pointer merged;
+    typename redundant_node<P, Storage>::pair_type carrier;
     redundant_stage stage = redundant_stage::native_merge;
   };
-  template <class P> struct redundant_level {
-    std::array<redundant_slot<P>, 3> slots{};
-    std::optional<redundant_job_recipe<P>> job;
+  template <class P, class Storage = profile_runtime_storage<P>> struct redundant_level {
+    std::array<redundant_slot<P, Storage>, 3> slots{};
+    std::optional<redundant_job_recipe<P, Storage>> job;
     std::uint64_t last_destination = 0;
     bool last_destination_visible = false;
   };
-  template <class P> struct redundant_frontier {
+  template <class P, class Storage = profile_runtime_storage<P>> struct redundant_frontier {
     std::uint64_t admissions = 0, next_identity = 1, service_due = 0;
-    redundant_routes<P> root;
-    std::vector<redundant_level<P>> levels;
+    redundant_routes<P, Storage> root;
+    std::vector<redundant_level<P, Storage>> levels;
   };
   struct redundant_work {
     std::uint64_t granted = 0, charged = 0;
@@ -132,14 +147,15 @@ namespace diet {
     std::uint64_t admissions = 0, merges = 0, indexes = 0, carriers = 0, checkpoints = 0;
     std::uint64_t max_job_charge_per_mass = 0;
   };
-  template <class P, class Compose> struct redundant_runtime;
-  template <class P> struct redundant_snapshot {
+  template <class P, class Compose, class Storage> struct redundant_runtime;
+  template <class P, class Storage = profile_runtime_storage<P>> struct redundant_snapshot {
     using policy_type = P;
-    using query_type = cola_query_root<P, redundant_node<P>>;
-    using object_pointer = std::shared_ptr<redundant_object<P> const>;
+    using storage_type = Storage;
+    using query_type = cola_query_root<P, redundant_node<P, Storage>>;
+    using object_pointer = std::shared_ptr<redundant_object<P, Storage> const>;
     std::uint64_t admissions() const noexcept { return state_->frontier.admissions; }
-    redundant_frontier<P> const & frontier() const & noexcept { return state_->frontier; }
-    redundant_frontier<P> const & frontier() const && = delete;
+    redundant_frontier<P, Storage> const & frontier() const & noexcept { return state_->frontier; }
+    redundant_frontier<P, Storage> const & frontier() const && = delete;
     std::span<object_pointer const> runs() const & noexcept { return state_->runs; }
     std::span<object_pointer const> runs() const && = delete;
     query_type const & query_root() const & noexcept { return state_->query; }
@@ -149,20 +165,20 @@ namespace diet {
     // Metadata admission only. The native/index payloads must separately be
     // admitted or trusted. Exact pointer relationships are deliberate: a
     // persistent loader interns each immutable identity before calling this.
-    static redundant_snapshot restore(redundant_frontier<P> frontier, typename redundant_node<P>::pair_type head) {
+    static redundant_snapshot restore(redundant_frontier<P, Storage> frontier, typename redundant_node<P, Storage>::pair_type head) {
       auto reject = [](bool value, char const * why) { if (!value) error_detail::raise<std::invalid_argument>(why); };
       auto height = frontier.levels.size();
       reject(height && height <= 64 && frontier.next_identity, "invalid redundant frontier header");
       std::unordered_map<std::uint64_t, object_pointer> objects;
-      auto target = [&](redundant_routes<P> const & route, unsigned level) {
+      auto target = [&](redundant_routes<P, Storage> const & route, unsigned level) {
         reject(!route.secondary || bool(route.main), "secondary without main");
         if (route.main) reject(route.main->level == level && bool(route.main->pair) && bool(route.main->native), "invalid main level/role");
         if (route.secondary) reject(route.secondary->level == level && route.secondary->secondary() && bool(route.secondary->native), "invalid secondary level/role");
       };
-      auto pair_targets = [&](auto const & pair, redundant_routes<P> const & route) {
+      auto pair_targets = [&](auto const & pair, redundant_routes<P, Storage> const & route) {
         reject(bool(pair), "missing redundant pair");
-        reject(pair->main_target() == (route.main ? route.main->pair : typename redundant_node<P>::pair_type{}) &&
-          pair->secondary_target() == (route.secondary ? route.secondary->native : typename redundant_node<P>::native_pointer{}), "inexact redundant pair targets");
+        reject(pair->main_target() == (route.main ? route.main->pair : typename redundant_node<P, Storage>::pair_type{}) &&
+          pair->secondary_target() == (route.secondary ? route.secondary->native : typename redundant_node<P, Storage>::native_pointer{}), "inexact redundant pair targets");
         auto view = pair->view();
         auto count = route.secondary ? route.secondary->native->size() : 0;
         reject(view.borrowed(0).size() == (route.main ? route.main->pair->group_count() : 0) &&
@@ -237,7 +253,7 @@ namespace diet {
               job.output->native == job.merged && job.output->first == a.object->first && job.output->last == b.object->last &&
               job.output->secondary() != job.new_main, "invalid destination artifact");
             if (job.stage == redundant_stage::commit) {
-              auto route = job.new_main ? redundant_routes<P>{job.output, {}} : redundant_routes<P>{job.existing_main, job.output};
+              auto route = job.new_main ? redundant_routes<P, Storage>{job.output, {}} : redundant_routes<P, Storage>{job.existing_main, job.output};
               pair_targets(job.carrier, route); reject(!job.carrier->native_owner()->size(), "nonempty lookahead carrier");
             } else reject(job.stage == redundant_stage::carrier_index && !job.carrier, "invalid job phase");
           }
@@ -284,9 +300,9 @@ namespace diet {
       return redundant_snapshot(std::make_shared<state const>(state{std::move(frontier), std::move(query), std::move(runs)}));
     }
   private:
-    template <class, class> friend struct redundant_runtime;
+    template <class, class, class> friend struct redundant_runtime;
     struct state {
-      redundant_frontier<P> frontier;
+      redundant_frontier<P, Storage> frontier;
       query_type query;
       std::vector<object_pointer> runs;
     };
@@ -300,18 +316,19 @@ namespace diet {
   // Service charges record/directory/metadata operations, not key bytes or
   // elapsed time. Existing EF finalizers remain atomic after their allowance
   // has been funded. This is not a hard per-call latency or I/O bound.
-  template <class P, class Compose = replace_native_value> struct redundant_runtime {
+  template <class P, class Compose = replace_native_value, class Storage = profile_runtime_storage<P>> struct redundant_runtime {
     using policy_type = P;
-    using node_type = redundant_node<P>;
+    using storage_type = Storage;
+    using node_type = redundant_node<P, Storage>;
     using native_type = typename node_type::native_type;
     using native_pointer = typename node_type::native_pointer;
     using pair_type = typename node_type::pair_type;
-    using snapshot_type = redundant_snapshot<P>;
+    using snapshot_type = redundant_snapshot<P, Storage>;
     using query_type = typename snapshot_type::query_type;
-    using object_type = redundant_object<P>;
+    using object_type = redundant_object<P, Storage>;
     using object_pointer = std::shared_ptr<object_type const>;
-    using routes = redundant_routes<P>;
-    using level_type = redundant_level<P>;
+    using routes = redundant_routes<P, Storage>;
+    using level_type = redundant_level<P, Storage>;
     static constexpr unsigned maximum_levels = 64;
     static_assert(P::group_size <= (std::numeric_limits<std::uint64_t>::max() - 2240) / 32, "redundant policy charge is not representable");
     static constexpr std::uint64_t local_charge_bound = 32 * (P::group_size + 6) + 2048;
@@ -379,7 +396,7 @@ namespace diet {
         error_detail::raise<std::invalid_argument>("invalid encoded redundant contribution");
     }
     using merge_compose = std::conditional_t<std::is_same_v<Compose, replace_native_value>, Compose, std::reference_wrapper<Compose>>;
-    using merge_type = native_merge_builder<P, native_type, merge_compose>;
+    using merge_type = typename Storage::template merge_type<merge_compose>;
     using index_type = cola_index_builder<P, native_type, node_type>;
     enum class action { native_start, native_step, native_finish, index_start, index_step, index_finish, commit };
     enum class category { native, index, carrier, metadata, root };
@@ -402,10 +419,10 @@ namespace diet {
       snapshot_type published;
       redundant_work work;
       bool failed = false, recovery = false, checkpoint_pending = false, changed = false;
-      static native_pointer make_empty() { return native_type::from_owned(profile_array<P>::build({})); }
+      static native_pointer make_empty() { return Storage::empty(); }
       static pair_type make_empty_pair(native_pointer native) { index_type builder(std::move(native)); return node_type::from_built(builder.finish()); }
       static snapshot_type initial(pair_type pair) {
-        redundant_frontier<P> f; f.levels.resize(1);
+        redundant_frontier<P, Storage> f; f.levels.resize(1);
         return snapshot_type(std::make_shared<typename snapshot_type::state const>(typename snapshot_type::state{
           std::move(f), query_type::adopt_prepared(std::move(pair)), {}}));
       }
@@ -530,7 +547,7 @@ namespace diet {
       }
       void checkpoint() {
         if (!unsafe) service_due = 0;
-        redundant_frontier<P> f; f.admissions = admissions; f.next_identity = next_identity; f.root = root; f.service_due = service_due;
+        redundant_frontier<P, Storage> f; f.admissions = admissions; f.next_identity = next_identity; f.root = root; f.service_due = service_due;
         f.levels.assign(levels.begin(), levels.begin() + height);
         std::vector<object_pointer> runs;
         auto walk = [&](auto && self, object_pointer const & value) -> void {
@@ -558,7 +575,7 @@ namespace diet {
       }
       void admit(profile_record const & record) {
         require_ready(); direct(admission_price(), category::root);
-        profile_native_writer<P> writer; writer.append(record); auto native = native_type::from_owned(writer.finish());
+        auto native = Storage::singleton(record);
         work.native_outputs = add(work.native_outputs, 1);
         auto entries = active(0); unsigned pos; routes route; pair_type pair;
         if (entries.count) pos = vacant(0);
@@ -623,7 +640,7 @@ namespace diet {
         auto older = levels[i].slots[input.positions[0]].object, newer = levels[i].slots[input.positions[1]].object;
         auto mass = std::uint64_t{1} << i;
         require(older->last == newer->first && older->mass() == mass && newer->mass() == mass, "nonadjacent redundant merge history");
-        redundant_job_recipe<P> recipe;
+        redundant_job_recipe<P, Storage> recipe;
         recipe.inputs = input.positions; recipe.destination = dest; recipe.carrier_slot = vacant(i);
         recipe.destination_route = carrier ? destination.slots[dest].route : routes{};
         recipe.new_main = bool(carrier) || !present.count;
@@ -729,11 +746,18 @@ namespace diet {
   };
   // Select this executor through the same typed/storage family seam as the
   // conservative binary backend, without changing the encoded policy.
-  template <class P> struct redundant_runtime_family {
+  template <class P, class Storage = profile_runtime_storage<P>> struct redundant_runtime_family {
     using policy_type = P;
-    using snapshot_type = redundant_snapshot<P>;
-    using node_type = redundant_node<P>;
-    using native_type = cola_runtime_native<P>;
-    template <class Compose> using runtime_type = redundant_runtime<P, Compose>;
+    using storage_type = Storage;
+    using snapshot_type = redundant_snapshot<P, Storage>;
+    using frontier_type = redundant_frontier<P, Storage>;
+    using object_type = redundant_object<P, Storage>;
+    using routes_type = redundant_routes<P, Storage>;
+    using slot_type = redundant_slot<P, Storage>;
+    using level_type = redundant_level<P, Storage>;
+    using job_recipe_type = redundant_job_recipe<P, Storage>;
+    using node_type = redundant_node<P, Storage>;
+    using native_type = typename Storage::native_type;
+    template <class Compose> using runtime_type = redundant_runtime<P, Compose, Storage>;
   };
 }

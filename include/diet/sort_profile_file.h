@@ -185,6 +185,8 @@ namespace diet {
     using policy_type = P;
     using native_type = mapped_sort_profile<P, Selector>;
     using native_pointer = std::shared_ptr<native_type const>;
+    using index_type = mapped_cola_index<P>;
+    using index_pointer = std::shared_ptr<index_type const>;
     using pair_type = std::shared_ptr<mapped_sort_cola const>;
     using view_type = cola_index_view<P, sort_profile_family<P, Selector>>;
     mapped_sort_cola(mapped_sort_cola const &) = delete;
@@ -201,11 +203,15 @@ namespace diet {
       if (index->borrowed(0).size() != (main ? main->group_count() : 0) ||
           index->borrowed(1).size() != (secondary ? secondary->size() / P::group_size + (secondary->size() % P::group_size != 0) : 0))
         throw std::invalid_argument("sort COLA sample count mismatch");
-      return pair_type(new mapped_sort_cola(identity, std::move(native), std::move(index), std::move(main), std::move(secondary)));
+      auto result = pair_type(new mapped_sort_cola(identity, std::move(native), std::move(index), std::move(main), std::move(secondary)));
+      (void)result->view(); // Validate the combined shape without touching payload.
+      return result;
     }
     auto const & identity() const & noexcept { return identity_; }
+    auto const & identity() const && = delete;
     native_pointer native_owner() const noexcept { return native_; }
     native_pointer native_object() const noexcept { return native_; }
+    index_pointer index_object() const noexcept { return index_; }
     pair_type main_target() const noexcept { return main_; }
     native_pointer secondary_target() const noexcept { return secondary_; }
     std::uint64_t virtual_size() const { return index_->virtual_size(); }

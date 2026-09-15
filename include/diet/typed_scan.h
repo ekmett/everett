@@ -32,10 +32,10 @@ namespace diet {
     using row_type = typed_row<S>;
     using semantics = sort_semantics<S>;
     using native_type = typename Cola::runtime_family::native_type;
+    using key_transport = typename Cola::key_transport;
 
     explicit typed_scan(Cola snapshot) : snapshot_(std::move(snapshot)) {
-      sort_bit_writer code(prefix_);
-      write_sort_code<typename policy_type::registry_type, S>(code);
+      prefix_ = key_transport::template prefix<S>();
       auto runs = snapshot_.runtime().runs();
       sources_.reserve(runs.size()); heap_.reserve(runs.size());
       for (auto const & run : runs) {
@@ -83,10 +83,8 @@ namespace diet {
             if (order > 0) { finished_ = true; break; }
             if (order < 0) { consume(); ++used; continue; }
             group_key_ = bit_string::copy(current.key.prefix);
-            sort_bit_reader input(group_key_.view().subview(prefix_.bit_size,
+            auto key = key_transport::template decode<S>(group_key_.view().subview(prefix_.bit_size,
               group_key_.bit_size - prefix_.bit_size));
-            auto key = sort_codec<S>::key_codec::read_ordered(input);
-            if (!input.empty()) throw std::invalid_argument("trailing scanned key bits");
             auto value = semantics::initial(key);
             group_.emplace(row_type{std::move(key), std::move(value)});
           }
@@ -105,7 +103,7 @@ namespace diet {
   private:
     struct source {
       std::shared_ptr<native_type const> native;
-      profile_cursor<policy_type> cursor;
+      decltype(std::declval<native_type const &>().view().cursor()) cursor;
       explicit source(std::shared_ptr<native_type const> value)
         : native(std::move(value)), cursor(native->view()) {}
     };

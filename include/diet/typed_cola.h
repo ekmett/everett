@@ -54,6 +54,10 @@ namespace diet {
       else return false;
     }();
 
+    template <class Leaves> struct all_replacements;
+    template <class... S> struct all_replacements<registry_detail::sorts<S...>>
+      : std::bool_constant<(replacement<S> && ...)> {};
+
     template <class P, class S> bit_string key(key_t<S> const & value) {
       bit_string result;
       sort_bit_writer out(result);
@@ -90,9 +94,27 @@ namespace diet {
         return std::invoke(std::forward<F>(action), tag, decoded);
       });
     }
-    template <class P> struct compose {
+    template <class P> struct profile_key_transport {
+      template <class S> static bit_string encode(key_t<S> const & value) { return key<P, S>(value); }
+      template <class S> static bit_string prefix() { return sort_code<typename P::registry_type, S>(); }
+      template <class S> static key_t<S> decode(bit_view bits) {
+        sort_bit_reader input(bits);
+        auto result = sort_codec<S>::key_codec::read_ordered(input);
+        if (!input.empty()) throw std::invalid_argument("trailing typed key bits");
+        return result;
+      }
+      template <class F> static decltype(auto) dispatch(bit_view bits, F && fn) {
+        return dispatch_key<P>(bits, std::forward<F>(fn));
+      }
+    };
+    template <class P, class Family, class = void> struct transport { using type = profile_key_transport<P>; };
+    template <class P, class Family> struct transport<P, Family, std::void_t<typename Family::key_transport>> {
+      using type = typename Family::key_transport;
+    };
+    template <class P, class Family> using transport_t = typename transport<P, Family>::type;
+    template <class P, class Transport = profile_key_transport<P>> struct compose {
       bit_string operator()(bit_view key, bit_view older, bit_view newer) const {
-        return dispatch_key<P>(key, [&]<class S>(std::type_identity<S>, auto const & decoded) {
+        return Transport::dispatch(key, [&]<class S>(std::type_identity<S>, auto const & decoded) {
           auto before = value<P, S>(older), after = value<P, S>(newer);
           return value<P, S>(sort_semantics<S>::compose(decoded, std::move(before), std::move(after)));
         });
@@ -140,6 +162,7 @@ namespace diet {
     using policy_type = P;
     using metadata_type = typed_cola_metadata<A>;
     using runtime_family = Family;
+    using key_transport = typed_detail::transport_t<P, Family>;
     using runtime_snapshot = typename Family::snapshot_type;
     using contribution_type = typed_contribution<P, A, Family>;
     using batch_type = typed_batch<P, A, Family>;
@@ -159,7 +182,7 @@ namespace diet {
     template <class S = typed_detail::default_sort_t<P>> typed_detail::state_t<S>
     get(typed_detail::key_t<S> const & key) const {
       using semantics = sort_semantics<S>;
-      auto encoded = typed_detail::key<P, S>(key);
+      auto encoded = key_transport::template encode<S>(key);
       auto cursor = runtime_.cursor(encoded.view());
       if constexpr (typed_detail::replacement<S>) {
         while (!cursor.done()) {
@@ -215,7 +238,7 @@ namespace diet {
     explicit typed_batch(typed_cola<P, A, Family> base) : base_(std::move(base)) {}
     template <class S = typed_detail::default_sort_t<P>> typed_batch &
     change(typed_detail::key_t<S> const & key, typed_detail::arrow_t<S> const & arrow) {
-      records_.push_back({typed_detail::key<P, S>(key), typed_detail::value<P, S>(arrow)});
+      records_.push_back({typed_detail::transport_t<P, Family>::template encode<S>(key), typed_detail::value<P, S>(arrow)});
       return *this;
     }
     template <class S = typed_detail::default_sort_t<P>> typed_batch &
@@ -265,7 +288,11 @@ namespace diet {
     using contribution_type = typed_contribution<P, A, Family>;
     using metadata_type = typed_cola_metadata<A>;
     using runtime_family = Family;
-    using runtime_type = typename Family::template runtime_type<typed_detail::compose<P>>;
+    using key_transport = typed_detail::transport_t<P, Family>;
+    using compose_type = std::conditional_t<typed_detail::all_replacements<
+      typename registry_detail::info<typename P::registry_type>::leaves>::value,
+      replace_native_value, typed_detail::compose<P, key_transport>>;
+    using runtime_type = typename Family::template runtime_type<compose_type>;
     static constexpr bool charged_service = requires { runtime_type::service_budget(std::uint64_t{}); };
     static constexpr std::uint64_t ready_admission_allowance = [] {
       if constexpr (charged_service) return 2 * runtime_type::local_charge_bound + 16 * DepthLimit + 512;
@@ -323,7 +350,7 @@ namespace diet {
       // Validate every old state and compute every delta before changing the
       // executor. Disjoint batches from one immutable base therefore commute.
       for (auto const & record : input.records()) {
-        typed_detail::dispatch_key<P>(record.key.view(), [&]<class S>(std::type_identity<S>, auto const & key) {
+        key_transport::dispatch(record.key.view(), [&]<class S>(std::type_identity<S>, auto const & key) {
           using semantics = sort_semantics<S>;
           auto old = current_.template get<S>(key);
           if (input.base() && old != input.base()->template get<S>(key))
@@ -371,7 +398,8 @@ namespace diet {
     explicit typed_engine(cola_type state)
       : runtime_(runtime_type::from_snapshot(state.runtime())), current_(std::move(state)) {}
     static std::string default_schema() {
-      if constexpr (std::same_as<typename P::registry_type, string_registry>)
+      if constexpr (requires { Family::default_schema(); }) return Family::default_schema();
+      else if constexpr (std::same_as<typename P::registry_type, string_registry>)
         return "diet.optional-string/code0/v1";
       else if constexpr (std::same_as<typename P::registry_type, unsorted<std::optional<std::string>>>)
         return "diet.optional-string/tagless/v1";
