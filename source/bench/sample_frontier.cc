@@ -1,5 +1,8 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Measures tagged sample traversal and complete index pipelines with independent integer-key oracles.
+ *
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -7,7 +10,7 @@
  * \endlicense
  */
 
-#include <everett/index_pipeline.h>
+#include <diet/index_pipeline.h>
 
 #include <algorithm>
 #include <array>
@@ -24,7 +27,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using clock_type = std::chrono::steady_clock;
   void require(bool ok, char const * message) { if (!ok) throw std::runtime_error(message); }
   double elapsed(clock_type::time_point start) {
@@ -247,9 +250,3 @@ int main(int argc, char ** argv) try {
     run<storage_policy<profile_unit::bit>>("bit", count, prefix, rounds, duplicates);
   }
 } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Measures tagged sample traversal and complete index pipelines with independent integer-key oracles.
- */

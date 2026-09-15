@@ -99,7 +99,7 @@ Sources and reductions</h1>
 <td class="markdownTableBodyNone"><code>bitmap_rank</code>   </td><td class="markdownTableBodyNone">Full bit-vector rank directory from <code>9f68e4d</code>, retained as a reference in the CSV.   </td></tr>
 </table>
 <p>Both AVX2 implementations load two 32-byte vectors for a readable full checkpoint, select the low and high nybbles before the requested boundary, and add the byte populations. Each resulting byte is at most 60. SAD-first uses <code>vpsadbw</code> to sum groups of eight bytes into qwords, then reduces those qwords. Qword-first reduces four qwords while the eight independent byte lanes remain at most 240, then widens and horizontally sums those bytes in scalar code. Both retain a bounded scalar path for short final checkpoints.</p>
-<p>The reconstruction patch preserves the exact measured SAD header, including its scalar reduction being written inline instead of in a shared helper. Its SHA-256 is <code>ed125be1898573ec2b926df930c96b909921fc506536d9c2e1c8b0363e0fb686</code>. The benchmark source is Git blob <code>506524722923b7aac1af17cc3f29173af9f5fb01</code>, committed by the compiler portability change <code>ca93a619a45f1a7ab3a923e2f5793fa9211678d5</code>. Pinning these sources avoids silently changing either prototype when the installed headers change.</p>
+<p>The reconstruction patch preserves the measured SAD implementation, including its scalar reduction being written inline instead of in a shared helper. Its original measured SHA-256 is <code>ed125be1898573ec2b926df930c96b909921fc506536d9c2e1c8b0363e0fb686</code>. The benchmark source is Git blob <code>506524722923b7aac1af17cc3f29173af9f5fb01</code>, committed by the compiler portability change <code>ca93a619a45f1a7ab3a923e2f5793fa9211678d5</code>. Pinning these sources avoids silently changing either prototype when the installed headers change.</p>
 <h1><a class="anchor" id="host-and-method"></a>
 Host and method</h1>
 <ul>
@@ -112,7 +112,7 @@ Host and method</h1>
 </ul>
 <p>Each row contains five trials of 1,048,576 queries. The five variants run in one process, with their order rotated each trial so each runs first once. Source bits use deterministic SplitMix64 output; query positions are also deterministic and shared between variants. Construction, allocation, oracle checking and file I/O are outside the timed region. Timed calls include query indexing and indirect function dispatch. Inspection of native assembly confirmed query loads and indirect calls remain inside the timing loops.</p>
 <p><code>pair_two_ranks</code> computes <code>rank(g) + rank(g+1)</code>. The equivalent <code>pair_rank_plus_class</code> computes <code>2*rank(g) + class_at(g)</code>. Dependent rank uses the previous answer to choose the next group; it includes the common XOR/multiply/query-selection work and limits overlap between queries. It is not an isolated hardware memory-latency measurement.</p>
-<p>Every generated query, including each complete dependent chain, was checked against an independent raw-word population-prefix oracle before timing. Timed checksums agree across all variants. The public <code>everett.rank</code> and <code>everett.groups</code> tests from <code>aeaaa9d</code> passed both Release and ASan/UBSan builds on this host with AVX2 enabled. Those tests include every nybble position and protected-page tails. Oracle tests retained assertions with <code>-UNDEBUG</code> and also used <code>-Wpedantic</code>. The sanitizer build used <code>-O2 -g -fsanitize=address,undefined -fno-omit-frame-pointer</code>.</p>
+<p>Every generated query, including each complete dependent chain, was checked against an independent raw-word population-prefix oracle before timing. Timed checksums agree across all variants. The public <code>diet.rank</code> and <code>diet.groups</code> tests from <code>aeaaa9d</code> passed both Release and ASan/UBSan builds on this host with AVX2 enabled. Those tests include every nybble position and protected-page tails. Oracle tests retained assertions with <code>-UNDEBUG</code> and also used <code>-Wpedantic</code>. The sanitizer build used <code>-O2 -g -fsanitize=address,undefined -fno-omit-frame-pointer</code>.</p>
 <h1><a class="anchor" id="storage-1"></a>
 Storage</h1>
 <table class="markdownTable">
@@ -157,28 +157,24 @@ Reproduction</h1>
 <p>Run the following on an AVX2 Linux machine, through its configured resource gate. CPU 12 was suitable on this host; choose a permitted performance-core thread on another host. The source extraction and compilation use only an ignored build directory. The general <code>rank_compare.sh</code> runner pins the earlier Apple comparison and therefore does not select these three snapshots.</p>
 <div class="fragment"><div class="line">repo=$(git rev-parse --show-toplevel)</div>
 <div class="line">build=&quot;$repo/build-rank-quartus-repro&quot;</div>
-<div class="line">mkdir -p &quot;$build/baseline/everett&quot;</div>
-<div class="line">for header in rank rank15 rank_groups; do</div>
-<div class="line">  git show &quot;9f68e4d0fdecae73b7d28b748a0d062cc072fbfa:include/everett/$header.h&quot; \</div>
-<div class="line">    &gt; &quot;$build/baseline/everett/$header.h&quot;</div>
-<div class="line">done</div>
-<div class="line">git show aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06:include/everett/rank15.h \</div>
-<div class="line">  &gt; &quot;$build/qword_rank15.h&quot;</div>
+<div class="line">python3 bench/snapshot.py 9f68e4d0fdecae73b7d28b748a0d062cc072fbfa &quot;$build/baseline&quot;</div>
+<div class="line">python3 bench/snapshot.py aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06 &quot;$build/qword&quot; include/diet/rank15.h</div>
+<div class="line">cp &quot;$build/qword/include/diet/rank15.h&quot; &quot;$build/qword_rank15.h&quot;</div>
 <div class="line">cp &quot;$build/qword_rank15.h&quot; &quot;$build/sad_rank15.h&quot;</div>
 <div class="line">patch &quot;$build/sad_rank15.h&quot; &lt; &quot;$repo/bench/rank15_sad_prototype.patch&quot;</div>
-<div class="line">git cat-file blob 506524722923b7aac1af17cc3f29173af9f5fb01 \</div>
-<div class="line">  &gt; &quot;$build/rank_compare.cc&quot;</div>
+<div class="line">python3 bench/snapshot.py ca93a619a45f1a7ab3a923e2f5793fa9211678d5 &quot;$build/fixture&quot; bench/rank_compare.cc</div>
+<div class="line">cp &quot;$build/fixture/bench/rank_compare.cc&quot; &quot;$build/rank_compare.cc&quot;</div>
 <div class="line">clang++ -std=c++20 -O3 -DNDEBUG -mavx2 -mpopcnt -mno-avx512f \</div>
-<div class="line">  -Wall -Wextra -Werror -I&quot;$build/baseline&quot; \</div>
-<div class="line">  &quot;-DEVERETT_RANK_CANDIDATE=\&quot;$build/sad_rank15.h\&quot;&quot; \</div>
-<div class="line">  &quot;-DEVERETT_RANK_SIMD=\&quot;$build/qword_rank15.h\&quot;&quot; \</div>
+<div class="line">  -Wall -Wextra -Werror -I&quot;$build/baseline/include&quot; \</div>
+<div class="line">  &quot;-DDIET_RANK_CANDIDATE=\&quot;$build/sad_rank15.h\&quot;&quot; \</div>
+<div class="line">  &quot;-DDIET_RANK_SIMD=\&quot;$build/qword_rank15.h\&quot;&quot; \</div>
 <div class="line">  &quot;$build/rank_compare.cc&quot; -o &quot;$build/rank_compare&quot;</div>
 <div class="line">taskset -c 12 &quot;$build/rank_compare&quot; check 1 32768 core</div>
 <div class="line">taskset -c 12 &quot;$build/rank_compare&quot; hot_packed32KiB 5 1048576 core \</div>
 <div class="line">  &gt; &quot;$build/hot.csv&quot;</div>
 <div class="line">taskset -c 12 &quot;$build/rank_compare&quot; large_packed96MiB 5 1048576 core \</div>
 <div class="line">  &gt; &quot;$build/large.csv&quot;</div>
-</div><!-- fragment --><p>The exact source SHA-256 values in the environment record allow checking the extracted inputs before running. Record new alignment, frequency policy and cache details with any new timings; allocation addresses are not fixed by the deterministic input seed. </p>
+</div><!-- fragment --><p>The environment record identifies original measured bytes; each snapshot's manifest also identifies the normalized inputs. Record new alignment, frequency policy and cache details with any new timings; allocation addresses are not fixed by the deterministic input seed. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->

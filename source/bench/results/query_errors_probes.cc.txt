@@ -1,4 +1,4 @@
-#include <everett/query.h>
+#include <diet/query.h>
 #include <iostream>
 #include <limits>
 #include <string_view>
@@ -14,7 +14,7 @@ template <class E, class F> void check(F && function, std::string_view message) 
   if (!caught) throw std::runtime_error("missing expected error");
 }
 int main() {
-  using namespace everett;
+  using namespace diet;
   using P = storage_policy<profile_unit::bit>;
   check<std::overflow_error>([] { (void)profile_detail::add(std::numeric_limits<std::uint64_t>::max(), 1); }, "profile addition");
   check<std::invalid_argument>([] { (void)bit_view({}, 1); }, "bit view exceeds storage");
@@ -22,7 +22,7 @@ int main() {
   check<std::logic_error>([] { profile_query_context<P> context(bit_view{}); auto moved = std::move(context); (void)moved; (void)context.query(); }, "comparison context has no query");
   check<std::invalid_argument>([] { (void)query_root<P>::build({}); }, "null query root");
   check<std::length_error>([] {
-#if __has_include(<everett/error_detail.h>)
+#if __has_include(<diet/error_detail.h>)
     error_detail::raise<std::length_error>("probe length");
 #else
     throw std::length_error("probe length");

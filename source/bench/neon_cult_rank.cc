@@ -1,5 +1,8 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Compares NEON rank15 reductions with an externally supplied Cult bitmap rank.
+ *
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -7,13 +10,13 @@
  * \endlicense
  */
 
-// The runner supplies a pinned Everett header and an unchanged external Cult
+// The runner supplies a pinned Diet header and an unchanged external Cult
 // header. No Cult source is copied into this repository or uploaded anywhere.
-#include <everett/rank15.h>
-#define everett everett_neon_qword
-#include EVERETT_NEON_QWORD_HEADER
-#undef everett
-#include EVERETT_EXTERNAL_CULT_RANK_HEADER
+#include <diet/rank15.h>
+#define diet diet_neon_qword
+#include DIET_NEON_QWORD_HEADER
+#undef diet
+#include DIET_EXTERNAL_CULT_RANK_HEADER
 
 #include <algorithm>
 #include <array>
@@ -123,11 +126,11 @@ namespace {
     cult::sim::build_rank(*cult);
     std::vector<std::uint8_t> classes(groups);
     for (std::uint64_t g = 0; g != groups; ++g) classes[g] = std::uint8_t(population(words, g * 15, 15));
-    auto packed = everett::rank15_index::build(classes, N);
+    auto packed = diet::rank15_index::build(classes, N);
     classes.clear(); classes.shrink_to_fit();
     packed.classes.shrink_to_fit(); packed.checkpoints.shrink_to_fit();
     auto byte_first = packed.view();
-    everett_neon_qword::rank15_view qword_first{packed.classes, packed.checkpoints, N, packed.total};
+    diet_neon_qword::rank15_view qword_first{packed.classes, packed.checkpoints, N, packed.total};
     cult_adapter<N> cult_view{{cult.get()}};
     auto data_bytes = packed.classes.size() * 8, metadata_bytes = packed.checkpoints.size() * 8;
     static_assert(sizeof(*cult) == sizeof(cult->raw) + sizeof(cult->directory) + sizeof(cult->total));
@@ -205,9 +208,3 @@ int main(int argc, char ** argv) try {
   if (selected != "hot" && selected != "large" && selected != "all" && !check_only) throw std::invalid_argument("unknown case");
   std::cerr << "observed=" << observed << '\n';
 } catch (std::exception const & e) { std::cerr << e.what() << '\n'; return 1; }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Compares NEON rank15 reductions with an externally supplied Cult bitmap rank.
- */

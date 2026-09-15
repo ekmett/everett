@@ -3,10 +3,10 @@
   "current_revision": "c31f339321eebd68aa9319db8c31f788572f2538",
   "hashes": {
     "bench/rank_bounds.cc": "2da5cfb9b7d7d53de00dd02d91b6094f56a83c9773060e4a9417cb15cdd79a7d",
-    "include/everett/rank.h": "174563c5998bf279bb65e5ebdf4b37c0c67467eb4fd53f8bf3069cb37e085df6",
-    "include/everett/rank15.h": "f5e236ff721536471f81e55ffdeb4807f217c7139cc87d78e7ba64d8ac105bad",
-    "include/everett/rank_groups.h": "844575100d28bc1696091f30e374f196000a6017e6a2a2e556a9c790206e0d6c",
-    "include/everett/word_view.h": "6c4c43c3329256428ec38733c207cc37911e293815060dcca3ade8527ee7d0f8"
+    "include/diet/rank.h": "174563c5998bf279bb65e5ebdf4b37c0c67467eb4fd53f8bf3069cb37e085df6",
+    "include/diet/rank15.h": "f5e236ff721536471f81e55ffdeb4807f217c7139cc87d78e7ba64d8ac105bad",
+    "include/diet/rank_groups.h": "844575100d28bc1696091f30e374f196000a6017e6a2a2e556a9c790206e0d6c",
+    "include/diet/word_view.h": "6c4c43c3329256428ec38733c207cc37911e293815060dcca3ade8527ee7d0f8"
   },
   "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
   "flags": [

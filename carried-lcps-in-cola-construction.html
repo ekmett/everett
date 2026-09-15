@@ -167,13 +167,13 @@ Reproduction and raw evidence</h1>
 <div class="line">  --trials 5 --rounds 3 --build-dir build-cola-sampler-frontier</div>
 <div class="line">python3 bench/cola_frontier.py --baseline d1d74e7 --candidate ac5d4c4 \</div>
 <div class="line">  --trials 5 --rounds 3 --build-dir build-cola-builder-frontier</div>
-</div><!-- fragment --><p>The exact fixture SHA-256 is <code>8757aad627c34e9622a07ec5ef420680a477a698abbbd91121570207f4df0a27</code>; the runner SHA-256 is <code>39811b608c7ddd801cf6fd63db5154e35a5a47e455aa99de4c834c51344cc206</code>. Each run retains all 240 timed observations and its unmodified metadata:</p>
+</div><!-- fragment --><p>The original measured fixture SHA-256 is <code>8757aad627c34e9622a07ec5ef420680a477a698abbbd91121570207f4df0a27</code>; the original runner SHA-256 is <code>39811b608c7ddd801cf6fd63db5154e35a5a47e455aa99de4c834c51344cc206</code>. Each run retains all 240 timed observations and its measurement metadata, with source and path names normalized:</p>
 <ul>
 <li>Direct combined result: <a href="source/bench/results/cola_frontier_overall_m2max.csv">CSV</a>, <a href="source/bench/results/cola_frontier_overall_m2max.json">metadata</a>.</li>
 <li>Sampler stage: <a href="source/bench/results/cola_sampler_frontier_m2max.csv">CSV</a>, <a href="source/bench/results/cola_sampler_frontier_m2max.json">metadata</a>.</li>
 <li>Builder stage: <a href="source/bench/results/cola_builder_frontier_m2max.csv">CSV</a>, <a href="source/bench/results/cola_builder_frontier_m2max.json">metadata</a>.</li>
 </ul>
-<p>The metadata records full measured source revisions, every header hash, compile commands, compiler/platform, binary hashes, execution order, whole-file hashes and start/completion times. Accepted revision spellings in the reproduction commands retain every measured header in this fixture's include closure. Their <code>multiverse.h</code> differs from the recorded tree, but this fixture does not include that facade. </p>
+<p>The metadata records full measured source revisions, every header hash, compile commands, compiler/platform, binary hashes, execution order, whole-file hashes and start/completion times. Accepted revision spellings in the reproduction commands retain every measured header in this fixture's include closure. Their <code><a class="el" href="fridge_8h.html" title="Declares Diet&#39;s fridge support.">fridge.h</a></code> differs from the recorded tree, but this fixture does not include that facade. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->

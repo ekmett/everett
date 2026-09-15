@@ -116,7 +116,7 @@ Whole-build control</h1>
 <p>Without alignment, C is 26.8–33.7% slower on long prefixes and all four range pairs are disjoint. Alignment removes those regressions. C+A medians are 2.4–7.3% below B+A on long prefixes, but their ranges overlap; short-prefix comparisons overlap too. The useful demonstrated result is removal of this compiler-layout regression.</p>
 <h1><a class="anchor" id="instruction-and-size-evidence"></a>
 Instruction and size evidence</h1>
-<p>The benchmark include closure contains only two changed headers between B and C: the COLA append call and its borrowed-writer friend declaration. The revision also changes <code>multiverse.h</code>, which this fixture does not include. <code>append_known</code> remains out of line in both builds, and there is no new full-prefix copy.</p>
+<p>The benchmark include closure contains only two changed headers between B and C: the COLA append call and its borrowed-writer friend declaration. The revision also changes <code><a class="el" href="fridge_8h.html" title="Declares Diet&#39;s fridge support.">fridge.h</a></code>, which this fixture does not include. <code>append_known</code> remains out of line in both builds, and there is no new full-prefix copy.</p>
 <p>All four emitted comparator bodies contain the same 209 instructions after expressing branch addresses relative to the function entry. The normalized bodies have the same SHA-256: <code>c5f83f67e218e9f94b53e415234c3c8f8e8ad26e727d1ab01a3c56cf8560a346</code>. The aligned bodies have another four unreachable padding instructions afterward.</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -164,13 +164,13 @@ Query collateral and correctness</h1>
 <p>All query ranges overlap. Preparation medians increase 3.3–28.5%, but those short single preparations also have wide overlapping ranges; the raw data retains them. There is no demonstrated query or preparation speedup. The existing profile suite passes with <code>-O3 -Wall -Wextra -Wpedantic -Werror -fsanitize=address,undefined</code>; <a href="source/bench/results/cola_layout_validation.json">validation metadata</a> records the source, header, compiler and command.</p>
 <h1><a class="anchor" id="reproduction-and-raw-data"></a>
 Reproduction and raw data</h1>
-<p><a href="source/bench/cola_layout.py">The runner</a> snapshots fresh headers and records every header, source, executable and warm-up file hash. The archived candidate patch reconstructs all candidate header hashes exactly, so reproduction does not depend on retaining the experimental Git branch:</p>
+<p><a href="source/bench/cola_layout.py">The runner</a> snapshots fresh headers and records every header, source, executable and warm-up file hash. The archived candidate patch reconstructs the candidate with normalized names, so reproduction does not depend on retaining the experimental Git branch:</p>
 <div class="fragment"><div class="line">python3 bench/cola_layout.py --baseline 111a2d6 \</div>
 <div class="line">  --candidate-patch bench/results/cola_layout_candidate.patch \</div>
 <div class="line">  --build-dir build-cola-layout --trials 5 --rounds 3</div>
-</div><!-- fragment --><p>Run under the host's exclusive CPU/build-directory lease. The measured runner is also preserved byte-for-byte with the hash recorded in its metadata; the reusable runner additionally accepts the archived header patch.</p>
+</div><!-- fragment --><p>Run under the host's exclusive CPU/build-directory lease. The recorded runner also uses current names; its metadata retains the original measured hash. The reusable runner accepts the archived header patch and records normalized source hashes separately.</p>
 <ul>
-<li>Final control: <a href="source/bench/results/cola_layout_m2max.csv">480 CSV rows</a>, <a href="source/bench/results/cola_layout_m2max.json">metadata and commands</a>, <a href="source/bench/results/cola_layout_measured.py">exact measured runner</a>, <a href="source/bench/results/cola_layout_codegen.json">instruction excerpts and section sizes</a>.</li>
+<li>Final control: <a href="source/bench/results/cola_layout_m2max.csv">480 CSV rows</a>, <a href="source/bench/results/cola_layout_m2max.json">metadata and commands</a>, <a href="source/bench/results/cola_layout_measured.py">recorded runner</a>, <a href="source/bench/results/cola_layout_codegen.json">instruction excerpts and section sizes</a>.</li>
 <li>Query collateral: <a href="source/bench/results/cola_layout_query_m2max.csv">40 CSV rows</a>, <a href="source/bench/results/cola_layout_query_m2max.json">metadata and commands</a>.</li>
 <li>Earlier measurements, retained separately rather than pooled into these tables: <a href="source/bench/results/cola_layout_original_m2max.csv">original 240 rows</a>, <a href="source/bench/results/cola_layout_original_m2max.json">original metadata</a>, <a href="source/bench/results/cola_layout_initial_m2max.csv">initial four-way 288 rows</a>, <a href="source/bench/results/cola_layout_initial_m2max.json">initial metadata</a>. </li>
 </ul>

@@ -19,11 +19,11 @@ for r in csv.DictReader(open(a.measurements)):
     n=int(r['native_count']); value=int(r['raw_value_bytes'])/n
     # Proxy input only: the paper's particular FC framing is unspecified.
     fc=(int(r['native_bytes'])-int(r['raw_value_bytes']))/n
-    everett=int(r['total_array_bytes'])/n
+    diet=int(r['total_array_bytes'])/n
     key_upper=(1+a.epsilon)*fc+1/8
     cosb=key_upper+value+8*a.hash_words+a.top_bytes_per_key
     result={k:r[k] for k in ('unit','prefix_bytes','value_bytes','random','base_count')}
-    result.update(everett_array_bytes_per_native=everett,fc_proxy_bytes_per_native=fc,
+    result.update(diet_array_bytes_per_native=diet,fc_proxy_bytes_per_native=fc,
                   cosb_scenario_occupied=cosb,cosb_scenario_capacity=cosb/a.occupancy)
     if int(r['prefix_bytes'])==0 and int(r['value_bytes'])==8:
         result.update(cola_experiment_native_slot_floor=32,

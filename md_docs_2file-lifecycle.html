@@ -92,6 +92,11 @@ Objects and names</h1>
 </table>
 <p>Separating a fractional index from its native file lets several index versions share the same native bytes. We select compatible objects, their precedence and additive contributions through SQLite's immutable representation rows. A logical cola can have several representations, and a saved branch point retains one exact representation. Jobs and checkpoints also live in SQLite; their owners retain unfinished work without adding its fingerprint a second time.</p>
 <p>Here <b>manifest</b> means a representation recorded in the catalog, and <b>root publication</b> means an atomic catalog transaction selecting it. SQLite owns the database and journaling files; Diet adds no custom manifest file, root-selector file or metadata journal.</p>
+<h2><a class="anchor" id="debug-dumps"></a>
+Debug dumps</h2>
+<p><code>reference_cola::export_rc</code> and <code>import_rc</code> provide a <code>.rc</code> debug dump: a fully resolved table with full keys in sorted order and codec-encoded values. Its eight-byte magic is <code>DIET.RC</code> followed by zero. Separate 64-bit little-endian fields carry the export version, value-codec tag and live-entry count. Each entry contains its 64-bit key byte length, key bytes and encoded value.</p>
+<p>This is a debugging feature, not an intended access pattern. It materializes all live entries. Catalog saves retain object roots; reference snapshots share their immutable state. These debug files are outside the fridge's <code>.kv</code> and <code>.index</code> object graph.</p>
+<p>I reserve <code>.fc</code> and <code>export_fc</code>/<code>import_fc</code> for a front-coded table dump. That encoding is a separate future format; <code>.rc</code> stores complete keys without front coding.</p>
 <h2><a class="anchor" id="path-spelling-and-content-identity"></a>
 Path spelling and content identity</h2>
 <p>Within an object directory, a canonical 128-bit physical identity is spelled as 32 lowercase hexadecimal digits, split without repeating its prefix:</p>
@@ -108,11 +113,11 @@ Object envelope</h1>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Kind   </th><th class="markdownTableHeadNone">Eight magic bytes    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Native   </td><td class="markdownTableBodyNone"><code>EVRT.KV</code> followed by zero    </td></tr>
+<td class="markdownTableBodyNone">Native   </td><td class="markdownTableBodyNone"><code>DIET.KV</code> followed by zero    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Fractional index   </td><td class="markdownTableBodyNone"><code>EVRT.IX</code> followed by zero   </td></tr>
+<td class="markdownTableBodyNone">Fractional index   </td><td class="markdownTableBodyNone"><code>DIET.IX</code> followed by zero   </td></tr>
 </table>
-<p>These format signatures stay fixed across the project rename to Diet, so existing objects remain readable.</p>
+<p>Only these signatures identify Diet objects; checked readers reject every other magic value, even when the rest of the header and its CRC are valid.</p>
 <p>The extension helps people; the header establishes the object's actual kind. By default, <code>file&lt;P&gt;::open</code> and <code>from_slice</code> check the 96-byte header and exact file extent: magic, version, reserved fields, policy unit, K, W, fixed-width descriptor, backspace code and parameter, and header CRC32C. They do not read body pages or inspect the final padding byte. CRC32C detects accidental corruption; it is not authentication and is separate from the algebraic cola fingerprint.</p>
 <p>When an object is already trusted, <code>file_open_mode::trusted</code> skips all header reads during <code>open</code> or <code>from_slice</code>. It also skips the filename/header kind comparison. The only envelope check at this point is that the physical mapping has at least 96 bytes, so slicing off the header remains well-defined. <code>fridge&lt;P&gt;::open_object</code> forwards the same option without inspecting the header. This is useful when the caller already knows the type and policy and wants to avoid faulting in the header page on every open.</p>
 <p><code>body()</code> obtains the physical slice after the header without reading either region. For bit profiles this includes the final storage byte and its padding. An explicit <code>header()</code> call returns metadata by value; a trusted handle then reads and validates the header and exact extent. There is no mutable lazy cache shared between readers. <code>scan()</code> validates the header, extent and entire body, including for trusted handles. It validates the object bytes rather than its external filename.</p>

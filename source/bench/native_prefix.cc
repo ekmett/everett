@@ -1,5 +1,8 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Measures complete incremental native-profile construction with exact wire and key oracles.
+ *
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -7,7 +10,7 @@
  * \endlicense
  */
 
-#include <everett/native_writer.h>
+#include <diet/native_writer.h>
 
 #include <algorithm>
 #include <chrono>
@@ -22,7 +25,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using clock_type = std::chrono::steady_clock;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -138,9 +141,3 @@ int main(int argc, char ** argv) {
     std::cerr << error.what() << '\n'; return 1;
   }
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Measures complete incremental native-profile construction with exact wire and key oracles.
- */

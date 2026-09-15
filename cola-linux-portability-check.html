@@ -90,7 +90,7 @@ Environment and scope</h1>
 <li>Runtime: <code>ASAN_OPTIONS=detect_leaks=1:halt_on_error=1</code> and <code>UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1</code>.</li>
 <li>Default compiler ISA target; no <code>-march=native</code>, AVX2 or AVX-512 override.</li>
 </ul>
-<p>I copied <code>include/everett</code> and the five standalone test sources directly by SCP to a fresh temporary directory. The snapshot contained 55 files and 686,068 bytes before the oracle correction. Compilation and execution used the host's <code>cpu-heavy</code> resource gate and a reserved build directory, with at most two concurrent compiler processes. The test programs ran sequentially.</p>
+<p>I copied the headers and five standalone test sources directly by SCP to a fresh temporary directory. The snapshot contained 55 files and 686,068 bytes before the oracle correction. Compilation and execution used the host's <code>cpu-heavy</code> resource gate and a reserved build directory, with at most two concurrent compiler processes. The test programs ran sequentially.</p>
 <h1><a class="anchor" id="results-1"></a>
 Results</h1>
 <table class="markdownTable">
@@ -111,19 +111,19 @@ Results</h1>
 <p>The suites exercise owning and mapped dual-route indexes, exact targets, metadata-only terminal construction, malformed sections, query results and local merge stages. This check does not cover SQLite, the complete package or Doxygen build, every Diet component, or every x86 SIMD target.</p>
 <h1><a class="anchor" id="reproduction-and-evidence"></a>
 Reproduction and evidence</h1>
-<p>The original and corrected source manifests, exact compiler commands, toolchain output, executable hashes and test output are retained in <a href="source/bench/results/cola_linux/results.json">original results</a> and <a href="source/bench/results/cola_linux/results-patched.json">corrected results</a>. I verified every remote source hash against the pinned Git objects; only <code>tests/cola_index.cc</code> differs between the manifests. The original <a href="source/bench/results/cola_linux/cola_index.compile.txt">compiler diagnostic</a> is also retained. The remote temporary directory was <code>/tmp/everett-cola-linux-YR37tcNZ</code>. The host check did not edit a checkout; its resource gate wrote the normal run logs.</p>
+<p>The original and corrected source manifests, exact compiler commands, toolchain output, executable hashes and test output are retained in <a href="source/bench/results/cola_linux/results.json">original results</a> and <a href="source/bench/results/cola_linux/results-patched.json">corrected results</a>. I verified every remote source hash against the pinned Git objects; only <code>tests/cola_index.cc</code> differs between the manifests. The original <a href="source/bench/results/cola_linux/cola_index.compile.txt">compiler diagnostic</a> is also retained. Paths in the evidence use the current Diet spelling. The host check did not edit a checkout; its resource gate wrote the normal run logs.</p>
 <p>Each compiler invocation uses this form, with the full argument arrays recorded in the JSON evidence:</p>
 <div class="fragment"><div class="line">/usr/bin/clang++ -std=c++20 -O2 -g -Wall -Wextra -Wpedantic -Werror -UNDEBUG \</div>
 <div class="line">  -fsanitize=address,undefined -fno-omit-frame-pointer -pthread \</div>
-<div class="line">  -I/tmp/everett-cola-linux-YR37tcNZ/include \</div>
-<div class="line">  /tmp/everett-cola-linux-YR37tcNZ/tests/cola_index.cc \</div>
-<div class="line">  -o /tmp/everett-cola-linux-YR37tcNZ/build/cola_index</div>
+<div class="line">  -I/tmp/diet-cola-linux-YR37tcNZ/include \</div>
+<div class="line">  /tmp/diet-cola-linux-YR37tcNZ/tests/cola_index.cc \</div>
+<div class="line">  -o /tmp/diet-cola-linux-YR37tcNZ/build/cola_index</div>
 <div class="line">ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \</div>
 <div class="line">UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \</div>
-<div class="line">  /tmp/everett-cola-linux-YR37tcNZ/build/cola_index</div>
+<div class="line">  /tmp/diet-cola-linux-YR37tcNZ/build/cola_index</div>
 </div><!-- fragment --><p>The host lease wrapped compilation and execution:</p>
 <div class="fragment"><div class="line">python3 /home/ekmett/cult/tools/resource_run.py --resource cpu-heavy \</div>
-<div class="line">  --build-dir /tmp/everett-cola-linux-YR37tcNZ/build -- python3 -</div>
+<div class="line">  --build-dir /tmp/diet-cola-linux-YR37tcNZ/build -- python3 -</div>
 </div><!-- fragment --><p>The two host logs were <code>20260915-164154-psa10pzj/output.log</code> and <code>20260915-164356-n87dlnhm/output.log</code> under <code>/home/ekmett/cult/build-agent-logs/</code>. Test runtimes in the raw records are verification metadata and are not comparisons with another implementation. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->

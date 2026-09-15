@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/query.h>
+#include <diet/query.h>
 
 #include <algorithm>
 #include <array>
@@ -35,46 +35,46 @@ namespace {
     x = (x ^ (x >> 27)) * 0x94d049bb133111ebull;
     return x ^ (x >> 31);
   }
-  template <class P> std::uint64_t match_checksum(everett::query_match<P> const & match) {
+  template <class P> std::uint64_t match_checksum(diet::query_match<P> const & match) {
     auto value = match.ordinal + match.value.bit_size + 1;
     for (auto byte : match.value.bytes) value = value * 37 + std::to_integer<unsigned>(byte);
     return value;
   }
-  template <class P> everett::bit_string key_for(std::uint64_t id, unsigned prefix) {
+  template <class P> diet::bit_string key_for(std::uint64_t id, unsigned prefix) {
     std::string key(prefix, 'p');
     for (unsigned i = 8; i; --i) key.push_back(char((id >> (8 * (i - 1))) & 255));
-    auto result = everett::bit_string::from_bytes(key);
-    if constexpr (P::unit == everett::profile_unit::bit) {
+    auto result = diet::bit_string::from_bytes(key);
+    if constexpr (P::unit == diet::profile_unit::bit) {
       result.bytes.push_back((id & 1) ? std::byte{128} : std::byte{0});
       ++result.bit_size;
     }
     return result;
   }
   template <class P> struct fixture {
-    using blob = everett::profile_blob<P>;
+    using blob = diet::profile_blob<P>;
     using pair = std::shared_ptr<blob const>;
     struct lookup {
-      everett::bit_string key;
-      std::vector<everett::query_match<P>> expected;
+      diet::bit_string key;
+      std::vector<diet::query_match<P>> expected;
     };
     pair head;
     std::vector<lookup> queries;
 
     fixture(unsigned count, unsigned prefix, unsigned query_count) {
       std::array<std::vector<std::uint64_t>, 4> ids;
-      std::array<std::vector<everett::profile_record>, 4> records;
+      std::array<std::vector<diet::profile_record>, 4> records;
       std::array<pair, 4> source;
       for (unsigned level = 0; level != 4; ++level) {
         auto stride = std::uint64_t{1} << (2 * level);
         for (unsigned i = 0; i != count / stride; ++i) {
           auto id = i * stride * 4 + (i % 7 ? level : 0);
           ids[level].push_back(id);
-          auto value = everett::bit_string::from_bytes(std::to_string(level) + ":" + std::to_string(id));
+          auto value = diet::bit_string::from_bytes(std::to_string(level) + ":" + std::to_string(id));
           records[level].push_back({key_for<P>(id, prefix), std::move(value)});
         }
         source[level] = std::make_shared<blob const>(blob::build(records[level]));
       }
-      everett::index_pipeline<P> pipeline(source[0], {source[1], source[2], source[3]});
+      diet::index_pipeline<P> pipeline(source[0], {source[1], source[2], source[3]});
       while (!pipeline.done()) pipeline.step(4096);
       head = pipeline.finish();
       auto current = head;
@@ -98,7 +98,7 @@ namespace {
         queries.push_back(std::move(q));
       }
     }
-    void verify(everett::query_root<P> const & root) const {
+    void verify(diet::query_root<P> const & root) const {
       for (auto const & q : queries) {
         auto cursor = root.cursor(q.key.view());
         std::size_t at = 0;
@@ -118,13 +118,13 @@ namespace {
 
   template<class P> void audit(char const* label, unsigned count, unsigned prefix, unsigned queries) {
     fixture<P> input(count, prefix, queries);
-    auto root = everett::query_root<P>::build(input.head);
+    auto root = diet::query_root<P>::build(input.head);
     input.verify(root);
-    everett::profile_comparison_work native, borrowed;
+    diet::profile_comparison_work native, borrowed;
     std::uint64_t catalogs = 0, matches = 0, checksum = 0, unknown = 0, extra_values = 0;
     for (auto const& query : input.queries) {
       auto current = root.head();
-      auto context = everett::profile_query_context<P>(query.key.view());
+      auto context = diet::profile_query_context<P>(query.key.view());
       std::uint64_t group = 0;
       std::size_t expected_at = 0;
       while (current) {
@@ -133,7 +133,7 @@ namespace {
         ++catalogs;
         if (result.native) {
           require(expected_at < query.expected.size(), "work audit extra match");
-          everett::query_match<P> actual{current, result.native->ordinal, std::move(result.native->value)};
+          diet::query_match<P> actual{current, result.native->ordinal, std::move(result.native->value)};
           auto const& expected = query.expected[expected_at++];
           require(actual.source == expected.source && actual.ordinal == expected.ordinal &&
                   actual.value == expected.value, "work audit differs from full integer oracle");
@@ -164,12 +164,12 @@ int main(int argc, char** argv) try {
   auto queries = argc > 3 ? unsigned(std::stoul(argv[3])) : 4096;
   require(count >= 64 && count <= 1048576 && prefix <= 4096 && queries, "work dimensions");
   std::cout << "profile,base_records,prefix_bytes,queries,K,W,catalogs,matches,checksum,native_skipped,native_visited,native_compared_bits,borrowed_skipped,borrowed_visited,borrowed_compared_bits,unknown_routes,extra_value_probes\n";
-#if defined(EVERETT_QUERY_COMPARE_W16)
-  using B = everett::storage_policy<everett::profile_unit::byte, everett::variable_values, 15, everett::exponential_golomb<0>, 16>;
-  using I = everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 15, everett::exponential_golomb<0>, 16>;
+#if defined(DIET_QUERY_COMPARE_W16)
+  using B = diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 15, diet::exponential_golomb<0>, 16>;
+  using I = diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 15, diet::exponential_golomb<0>, 16>;
 #else
-  using B = everett::storage_policy<everett::profile_unit::byte>;
-  using I = everett::storage_policy<everett::profile_unit::bit>;
+  using B = diet::storage_policy<diet::profile_unit::byte>;
+  using I = diet::storage_policy<diet::profile_unit::bit>;
 #endif
   audit<B>("byte", count, prefix, queries); audit<I>("bit", count, prefix, queries);
   return 0;

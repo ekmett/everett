@@ -6,6 +6,8 @@
 Run under the host CPU/build-directory resource gate. Header snapshots are
 fresh, and only the aligned variants receive the recorded declaration patch.
 """
+from snapshot import Snapshot
+
 import argparse
 import csv
 import datetime
@@ -67,20 +69,21 @@ def main():
         headers = build / name / "headers"
         if headers.exists():
             shutil.rmtree(headers)
-        for path in git("ls-tree", "-r", "--name-only", revision, "include/everett").decode().splitlines():
+        snapshot = Snapshot(repo, revision)
+        for path in snapshot.paths:
             output = headers / path
             output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_bytes(git("show", revision + ":" + path))
+            output.write_bytes(snapshot.read(path))
         if is_candidate and args.candidate_patch:
             patch_file = args.candidate_patch.resolve()
             subprocess.run(["git", "apply", "--unsafe-paths", "--directory=" + str(headers), str(patch_file)],
                            check=True, cwd=repo)
         if name.endswith("_aligned"):
-            profile = headers / "include/everett/profile.h"
+            profile = headers / "include/diet/profile.h"
             text = profile.read_text()
             assert text.count(declaration) == 1
             profile.write_text(text.replace(declaration, patch))
-        metadata["inputs"][name] = {"revision": revision, "alignment64": name.endswith("_aligned"),
+        metadata["inputs"][name] = {"revision": revision, "normalization": snapshot.metadata(), "alignment64": name.endswith("_aligned"),
             "headers_sha256": {str(p.relative_to(headers)): sha(p.read_bytes())
                 for p in sorted((headers / "include").rglob("*.h"))}}
         if is_candidate and args.candidate_patch:
@@ -109,7 +112,7 @@ def main():
         if trial & 1:
             order.reverse()
         for name in order:
-            with tempfile.TemporaryDirectory(prefix="everett-cola-layout-") as directory:
+            with tempfile.TemporaryDirectory(prefix="diet-cola-layout-") as directory:
                 command = [str(build / name / "run"), str(args.rounds), directory]
                 output = subprocess.check_output(command, text=True)
                 files = {p.name: p.read_bytes() for p in Path(directory).glob("*.index")}

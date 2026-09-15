@@ -140,14 +140,14 @@ Constructing and searching</h1>
 <div class="line">  assert(matches == 2);</div>
 <div class="line">}</div>
 <div class="ttc" id="acola__query_8h_html"><div class="ttname"><a href="cola__query_8h.html">cola_query.h</a></div><div class="ttdoc">Enumerates native matches along a COLA main chain and its terminal secondaries.</div></div>
-<div class="ttc" id="anamespacediet_html"><div class="ttname"><a href="namespacediet.html">diet</a></div><div class="ttdef"><b>Definition</b> cola.h:32</div></div>
+<div class="ttc" id="anamespacediet_html"><div class="ttname"><a href="namespacediet.html">diet</a></div><div class="ttdef"><b>Definition</b> cola.h:35</div></div>
 <div class="ttc" id="anamespacediet_html_a1a5d3241775b3d0e477ebe7efc33c384a1f7ba58706f9d405023da32864d059c8"><div class="ttname"><a href="namespacediet.html#a1a5d3241775b3d0e477ebe7efc33c384a1f7ba58706f9d405023da32864d059c8">diet::cola_target::secondary</a></div><div class="ttdeci">@ secondary</div></div>
 <div class="ttc" id="anamespacediet_html_a1a5d3241775b3d0e477ebe7efc33c384afad58de7366495db4650cfefac2fcd61"><div class="ttname"><a href="namespacediet.html#a1a5d3241775b3d0e477ebe7efc33c384afad58de7366495db4650cfefac2fcd61">diet::cola_target::main</a></div><div class="ttdeci">@ main</div></div>
-<div class="ttc" id="astructdiet_1_1cola__index_html"><div class="ttname"><a href="structdiet_1_1cola__index.html">diet::cola_index</a></div><div class="ttdef"><b>Definition</b> cola_index.h:229</div></div>
-<div class="ttc" id="astructdiet_1_1cola__query__root_html"><div class="ttname"><a href="structdiet_1_1cola__query__root.html">diet::cola_query_root</a></div><div class="ttdef"><b>Definition</b> cola_query.h:34</div></div>
-<div class="ttc" id="astructdiet_1_1profile__array_html"><div class="ttname"><a href="structdiet_1_1profile__array.html">diet::profile_array</a></div><div class="ttdef"><b>Definition</b> profile.h:1068</div></div>
-<div class="ttc" id="astructdiet_1_1profile__record_html"><div class="ttname"><a href="structdiet_1_1profile__record.html">diet::profile_record</a></div><div class="ttdef"><b>Definition</b> profile.h:291</div></div>
-<div class="ttc" id="astructdiet_1_1storage__policy_html"><div class="ttname"><a href="structdiet_1_1storage__policy.html">diet::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:62</div></div>
+<div class="ttc" id="astructdiet_1_1cola__index_html"><div class="ttname"><a href="structdiet_1_1cola__index.html">diet::cola_index</a></div><div class="ttdef"><b>Definition</b> cola_index.h:232</div></div>
+<div class="ttc" id="astructdiet_1_1cola__query__root_html"><div class="ttname"><a href="structdiet_1_1cola__query__root.html">diet::cola_query_root</a></div><div class="ttdef"><b>Definition</b> cola_query.h:37</div></div>
+<div class="ttc" id="astructdiet_1_1profile__array_html"><div class="ttname"><a href="structdiet_1_1profile__array.html">diet::profile_array</a></div><div class="ttdef"><b>Definition</b> profile.h:1071</div></div>
+<div class="ttc" id="astructdiet_1_1profile__record_html"><div class="ttname"><a href="structdiet_1_1profile__record.html">diet::profile_record</a></div><div class="ttdef"><b>Definition</b> profile.h:294</div></div>
+<div class="ttc" id="astructdiet_1_1storage__policy_html"><div class="ttname"><a href="structdiet_1_1storage__policy.html">diet::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:65</div></div>
 </div><!-- fragment --><p>A cursor visit searches one main window and at most one terminal secondary window. It can produce two pending matches. Consume them before asking for more work; each result owns its value and pins the node that identified its source. A secondary result belongs to <code>source-&gt;secondary_target()</code>.</p>
 <p>The cursor enumerates contributions. Its encounter order is not chronological precedence. A store combines them using the history attached to those arrays. Snapshots can share every immutable node while their query cursors advance independently.</p>
 <h1><a class="anchor" id="portable-ix03-files"></a>

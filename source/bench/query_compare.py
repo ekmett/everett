@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Compares pinned complete query implementations with one shared oracle.
+#
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -12,6 +15,8 @@ Invoke under the host's exclusive CPU/build-directory resource gate. The runner
 never acquires another gate. Every fresh process performs its own warm oracle
 pass before one measured trial, followed by another exact result verification.
 """
+
+from snapshot import Snapshot
 
 import argparse
 import csv
@@ -60,18 +65,21 @@ def main():
                  for name, ref in (("baseline", args.baseline), ("candidate", args.candidate))}
     headers = {}
     header_hashes = {}
+    normalizations = {}
     for name, revision in revisions.items():
         headers[name] = build / (name + "-headers")
         if headers[name].exists():
             shutil.rmtree(headers[name])
         hashes = {}
-        for path in git("ls-tree", "-r", "--name-only", revision, "include/everett").decode().splitlines():
-            data = git("show", revision + ":" + path)
+        snapshot = Snapshot(repo, revision)
+        for path in snapshot.paths:
+            data = snapshot.read(path)
             destination = headers[name] / path
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(data)
             hashes[path] = digest(data)
         header_hashes[name] = hashes
+        normalizations[name] = snapshot.metadata()
     source = build / "query_compare.cc"
     source.write_bytes((repo / "bench/query_compare.cc").read_bytes())
     compiler = shlex.split(os.environ.get("CXX", "clang++"))
@@ -80,7 +88,7 @@ def main():
               if args.sanitize else ["-O3", "-DNDEBUG"])
     variants = [("baseline_w15", "baseline", []), ("candidate_w15", "candidate", [])]
     if args.w16:
-        variants.append(("candidate_w16", "candidate", ["-DEVERETT_QUERY_COMPARE_W16=1"]))
+        variants.append(("candidate_w16", "candidate", ["-DDIET_QUERY_COMPARE_W16=1"]))
     commands = {}
     executables = {}
     for name, revision, definitions in variants:
@@ -94,7 +102,7 @@ def main():
         cases.append((args.larger_records, args.larger_prefix, args.queries))
     metadata = {
         "started_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "revisions": revisions, "headers_sha256": header_hashes,
+        "revisions": revisions, "headers_sha256": header_hashes, "normalization": normalizations,
         "source_sha256": digest(source.read_bytes()),
         "runner_sha256": digest(Path(__file__).read_bytes()),
         "platform": platform.platform(), "machine": platform.machine(),
@@ -157,7 +165,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Compares pinned complete query implementations with one shared oracle.

@@ -137,17 +137,17 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a01bdd34c093c656e082e29cc97e0f694"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa313d03b74a7fe23a450e6cb96f677b0" id="r_aa313d03b74a7fe23a450e6cb96f677b0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structdiet_1_1reference__cola.html">reference_cola</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1reference__cola.html#aa313d03b74a7fe23a450e6cb96f677b0">compact</a> () const</td></tr>
 <tr class="separator:aa313d03b74a7fe23a450e6cb96f677b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1ec1b20501d9b14175cdd200cf25d7c8" id="r_a1ec1b20501d9b14175cdd200cf25d7c8"><td class="memTemplParams" colspan="2">template&lt;class C  = u64_cola_codec&gt; </td></tr>
-<tr class="memitem:a1ec1b20501d9b14175cdd200cf25d7c8"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structdiet_1_1reference__cola.html#a1ec1b20501d9b14175cdd200cf25d7c8">save</a> (std::ostream &amp;out, C codec={}) const</td></tr>
-<tr class="separator:a1ec1b20501d9b14175cdd200cf25d7c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76132f69e3e8ccbe1402178ab736fdc2" id="r_a76132f69e3e8ccbe1402178ab736fdc2"><td class="memTemplParams" colspan="2">template&lt;class C  = u64_cola_codec&gt; </td></tr>
+<tr class="memitem:a76132f69e3e8ccbe1402178ab736fdc2"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structdiet_1_1reference__cola.html#a76132f69e3e8ccbe1402178ab736fdc2">export_rc</a> (std::ostream &amp;out, C codec={}) const</td></tr>
+<tr class="separator:a76132f69e3e8ccbe1402178ab736fdc2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a8004503aa0996e8a08ec30f807e14fb5" id="r_a8004503aa0996e8a08ec30f807e14fb5"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="structdiet_1_1reference__cola.html">reference_cola</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1reference__cola.html#a8004503aa0996e8a08ec30f807e14fb5">from_records</a> (std::vector&lt; <a class="el" href="structdiet_1_1reference__cola.html#a12ecdf75cdbee3ef118387a95f369cfa">record</a> &gt; records, H hash={})</td></tr>
 <tr class="separator:a8004503aa0996e8a08ec30f807e14fb5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9fd9eb719bb447de33e98f26278f4cde" id="r_a9fd9eb719bb447de33e98f26278f4cde"><td class="memTemplParams" colspan="2">template&lt;class C  = u64_cola_codec&gt; </td></tr>
-<tr class="memitem:a9fd9eb719bb447de33e98f26278f4cde"><td class="memTemplItemLeft" align="right" valign="top">static <a class="el" href="structdiet_1_1reference__cola.html">reference_cola</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structdiet_1_1reference__cola.html#a9fd9eb719bb447de33e98f26278f4cde">restore</a> (std::istream &amp;in, C codec={}, H hash={}, <a class="el" href="structdiet_1_1cola__import__limits.html">cola_import_limits</a> limits={})</td></tr>
-<tr class="separator:a9fd9eb719bb447de33e98f26278f4cde"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19d2cb35018239e8a6a6ec889b9de017" id="r_a19d2cb35018239e8a6a6ec889b9de017"><td class="memTemplParams" colspan="2">template&lt;class C  = u64_cola_codec&gt; </td></tr>
+<tr class="memitem:a19d2cb35018239e8a6a6ec889b9de017"><td class="memTemplItemLeft" align="right" valign="top">static <a class="el" href="structdiet_1_1reference__cola.html">reference_cola</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structdiet_1_1reference__cola.html#a19d2cb35018239e8a6a6ec889b9de017">import_rc</a> (std::istream &amp;in, C codec={}, H hash={}, <a class="el" href="structdiet_1_1cola__import__limits.html">cola_import_limits</a> limits={})</td></tr>
+<tr class="separator:a19d2cb35018239e8a6a6ec889b9de017"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
@@ -349,6 +349,46 @@ template&lt;class V  = std::uint64_t, class A  = wrapping_fingerprint_algebra, c
 
 </div>
 </div>
+<a id="a76132f69e3e8ccbe1402178ab736fdc2" name="a76132f69e3e8ccbe1402178ab736fdc2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a76132f69e3e8ccbe1402178ab736fdc2">&#9670;&#160;</a></span>export_rc()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class V  = std::uint64_t, class A  = wrapping_fingerprint_algebra, class H  = u64_table_hash&gt; </div>
+<div class="memtemplate">
+template&lt;class C  = u64_cola_codec&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="structdiet_1_1reference__cola.html">diet::reference_cola</a>&lt; V, A, H &gt;::export_rc </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>out</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">C&#160;</td>
+          <td class="paramname"><em>codec</em> = <code>{}</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a8004503aa0996e8a08ec30f807e14fb5" name="a8004503aa0996e8a08ec30f807e14fb5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8004503aa0996e8a08ec30f807e14fb5">&#9670;&#160;</a></span>from_records()</h2>
 
@@ -409,6 +449,58 @@ template&lt;class V  = std::uint64_t, class A  = wrapping_fingerprint_algebra, c
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a19d2cb35018239e8a6a6ec889b9de017" name="a19d2cb35018239e8a6a6ec889b9de017"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19d2cb35018239e8a6a6ec889b9de017">&#9670;&#160;</a></span>import_rc()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class V  = std::uint64_t, class A  = wrapping_fingerprint_algebra, class H  = u64_table_hash&gt; </div>
+<div class="memtemplate">
+template&lt;class C  = u64_cola_codec&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static <a class="el" href="structdiet_1_1reference__cola.html">reference_cola</a> <a class="el" href="structdiet_1_1reference__cola.html">diet::reference_cola</a>&lt; V, A, H &gt;::import_rc </td>
+          <td>(</td>
+          <td class="paramtype">std::istream &amp;&#160;</td>
+          <td class="paramname"><em>in</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">C&#160;</td>
+          <td class="paramname"><em>codec</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">H&#160;</td>
+          <td class="paramname"><em>hash</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structdiet_1_1cola__import__limits.html">cola_import_limits</a>&#160;</td>
+          <td class="paramname"><em>limits</em> = <code>{}</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -539,98 +631,6 @@ template&lt;class V  = std::uint64_t, class A  = wrapping_fingerprint_algebra, c
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a9fd9eb719bb447de33e98f26278f4cde" name="a9fd9eb719bb447de33e98f26278f4cde"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9fd9eb719bb447de33e98f26278f4cde">&#9670;&#160;</a></span>restore()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class V  = std::uint64_t, class A  = wrapping_fingerprint_algebra, class H  = u64_table_hash&gt; </div>
-<div class="memtemplate">
-template&lt;class C  = u64_cola_codec&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">static <a class="el" href="structdiet_1_1reference__cola.html">reference_cola</a> <a class="el" href="structdiet_1_1reference__cola.html">diet::reference_cola</a>&lt; V, A, H &gt;::restore </td>
-          <td>(</td>
-          <td class="paramtype">std::istream &amp;&#160;</td>
-          <td class="paramname"><em>in</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">C&#160;</td>
-          <td class="paramname"><em>codec</em> = <code>{}</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">H&#160;</td>
-          <td class="paramname"><em>hash</em> = <code>{}</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="structdiet_1_1cola__import__limits.html">cola_import_limits</a>&#160;</td>
-          <td class="paramname"><em>limits</em> = <code>{}</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a1ec1b20501d9b14175cdd200cf25d7c8" name="a1ec1b20501d9b14175cdd200cf25d7c8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1ec1b20501d9b14175cdd200cf25d7c8">&#9670;&#160;</a></span>save()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class V  = std::uint64_t, class A  = wrapping_fingerprint_algebra, class H  = u64_table_hash&gt; </div>
-<div class="memtemplate">
-template&lt;class C  = u64_cola_codec&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="structdiet_1_1reference__cola.html">diet::reference_cola</a>&lt; V, A, H &gt;::save </td>
-          <td>(</td>
-          <td class="paramtype">std::ostream &amp;&#160;</td>
-          <td class="paramname"><em>out</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">C&#160;</td>
-          <td class="paramname"><em>codec</em> = <code>{}</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> const</td>
         </tr>
       </table>
   </td>

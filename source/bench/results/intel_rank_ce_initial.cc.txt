@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-// Standalone public rank arithmetic and synthetic benchmark; no Everett includes.
+// Standalone public rank arithmetic and synthetic benchmark; no Diet includes.
 // Generic x86-64 compile: -O3 -std=c++20 -mpopcnt (do not use -march=native).
 #include <immintrin.h>
 #include <cpuid.h>

@@ -164,7 +164,7 @@ Storage accounting</h1>
 <p>The exact cut arrays occupy 3,128 bytes in the small case and 49,768 bytes in the larger case. Ordinary native encoding saves enough payload here that the counted totals stay within +0.60% to −0.97% of baseline. The nearly equal small-case totals should not be described as total-memory savings: fixed metadata and object overhead are outside this accounting.</p>
 <h1><a class="anchor" id="reproduction-and-verification"></a>
 Reproduction and verification</h1>
-<p>The <a href="source/bench/query_compare.py">runner</a> snapshots all headers at both resolved revisions and one shared harness body. It records SHA256 hashes for the source, runner and every header, plus compiler commands, process order and fixture sizes. Existing <code>query_chain</code> source, reports and raw results are unchanged.</p>
+<p>The <a href="source/bench/query_compare.py">runner</a> snapshots all headers at both resolved revisions and one shared harness body. It records SHA256 hashes for the source, runner and every header, plus compiler commands, process order and fixture sizes. The earlier <code>query_chain</code> measurements remain separate; name normalization leaves their numeric samples unchanged.</p>
 <p>Run under the host's CPU/build-directory resource gate:</p>
 <div class="fragment"><div class="line">python3 bench/query_compare.py --build-dir build-query-compare-m2max \</div>
 <div class="line">  --records 4096 --queries 4096 --prefix 0 64 \</div>

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Reproduces whole-chain query measurements with pinned headers and independent oracles.
+#
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -7,6 +10,8 @@
 # \endlicense
 
 """Measure complete chain queries against pinned headers under the caller's resource gate."""
+
+from snapshot import Snapshot
 
 import argparse
 import csv
@@ -36,13 +41,14 @@ def main():
     build = args.build_dir.resolve()
     build.mkdir(parents=True, exist_ok=True)
     revision = subprocess.check_output(["git", "-C", str(repo), "rev-parse", args.revision], text=True).strip()
-    paths = subprocess.check_output(["git", "-C", str(repo), "ls-tree", "-r", "--name-only", revision, "include/everett"], text=True)
+    snapshot = Snapshot(repo, revision)
+    paths = snapshot.paths
     headers = build / "headers"
     if headers.exists():
         shutil.rmtree(headers)
     hashes = {}
-    for path in paths.splitlines():
-        data = subprocess.check_output(["git", "-C", str(repo), "show", revision + ":" + path])
+    for path in paths:
+        data = snapshot.read(path)
         target = headers / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
@@ -57,7 +63,7 @@ def main():
     command = [*compiler, *flags, "-I" + str(headers / "include"), str(source), "-o", str(executable)]
     subprocess.run(command, check=True)
     metadata = {
-        "revision": revision, "headers_sha256": hashes,
+        "revision": revision, "headers_sha256": hashes, "normalization": snapshot.metadata(),
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "platform": platform.platform(),
@@ -86,7 +92,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Reproduces whole-chain query measurements with pinned headers and independent oracles.

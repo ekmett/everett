@@ -1,5 +1,8 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Measures complete bitmap rank before and after stored spacer lanes.
+ *
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -8,7 +11,7 @@
  */
 
 // Derived from other_rank.cc's hot bitmap workload; use rank_spacers.py.
-#include <everett/rank.h>
+#include <diet/rank.h>
 #include "baseline_rank.h"
 #include <algorithm>
 #include <array>
@@ -104,7 +107,7 @@ namespace {
     for (std::uint64_t i = 0; i < bits; ++i)
       oracle[i + 1] = oracle[i] + ((words[i / 64] >> (i % 64)) & 1);
     // Each revision builds its own directory: the packed run positions differ.
-    auto index = everett::rank_index::build(words, bits);
+    auto index = diet::rank_index::build(words, bits);
     auto old_index = baseline::rank_index::build(words, bits);
     auto candidate = index.view();
     auto old = old_index.view();
@@ -138,9 +141,3 @@ int main(int argc, char ** argv) try {
   bitmap(queries, trials, check);
   std::cerr << "verified; observed=" << observed << '\n';
 } catch (std::exception const & e) { std::cerr << e.what() << '\n'; return 1; }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Measures complete bitmap rank before and after stored spacer lanes.
- */

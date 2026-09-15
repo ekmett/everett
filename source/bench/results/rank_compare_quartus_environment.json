@@ -97,15 +97,15 @@
     "revision": "aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06",
     "scalar_revision": "9f68e4d0fdecae73b7d28b748a0d062cc072fbfa",
     "files": {
-      "baseline/everett/rank.h": "b36560f7eb35dfb933b2c68a1af64bbc1f1bbbf786a45ecee6f765739be92cec",
-      "baseline/everett/rank15.h": "f11fbcfa831d1b617ede57d09bd009ba35a24fe09eee3d84a839a393553a1de4",
-      "baseline/everett/rank_groups.h": "25cd54c51435941fcc230cc7bc34b6b33e3c1a2b47ee926aedc0efad7fb404de",
+      "baseline/diet/rank.h": "b36560f7eb35dfb933b2c68a1af64bbc1f1bbbf786a45ecee6f765739be92cec",
+      "baseline/diet/rank15.h": "f11fbcfa831d1b617ede57d09bd009ba35a24fe09eee3d84a839a393553a1de4",
+      "baseline/diet/rank_groups.h": "25cd54c51435941fcc230cc7bc34b6b33e3c1a2b47ee926aedc0efad7fb404de",
       "bench/rank_compare.cc": "3bf47da16e69832c8db80e80d6f97d6f3a6cd0c6350930d24c1782ef419e4266",
-      "include/everett/rank.h": "b36560f7eb35dfb933b2c68a1af64bbc1f1bbbf786a45ecee6f765739be92cec",
-      "include/everett/rank15.h": "80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c",
-      "include/everett/rank_groups.h": "25cd54c51435941fcc230cc7bc34b6b33e3c1a2b47ee926aedc0efad7fb404de",
-      "include/everett/select15.h": "1df8bd4b5c0d177da5dc13545af553a4c1c4d4841fed8d70d2e7dcf1667148c3",
-      "include/everett/select_groups.h": "fc041a779d9c4eee69b9ed2285e87cc3260241bb52d443de4e48f07652b8eff9",
+      "include/diet/rank.h": "b36560f7eb35dfb933b2c68a1af64bbc1f1bbbf786a45ecee6f765739be92cec",
+      "include/diet/rank15.h": "80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c",
+      "include/diet/rank_groups.h": "25cd54c51435941fcc230cc7bc34b6b33e3c1a2b47ee926aedc0efad7fb404de",
+      "include/diet/select15.h": "1df8bd4b5c0d177da5dc13545af553a4c1c4d4841fed8d70d2e7dcf1667148c3",
+      "include/diet/select_groups.h": "fc041a779d9c4eee69b9ed2285e87cc3260241bb52d443de4e48f07652b8eff9",
       "qword_rank15.h": "80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c",
       "sad_rank15.h": "ed125be1898573ec2b926df930c96b909921fc506536d9c2e1c8b0363e0fb686",
       "tests/groups.cc": "4f998d56bd0c6f62b9b87c11463d7d32af04b07022f71daa153728fb457de82b",
@@ -113,7 +113,7 @@
     },
     "benchmark_note": "Exact portability source committed as ca93a619a45f1a7ab3a923e2f5793fa9211678d5: MSVC intrinsics/noinline support and NEON-only Poppy declarations guarded; query/data behavior unchanged."
   },
-  "benchmark_compile_command": "/usr/bin/clang++ -DEVERETT_RANK_CANDIDATE=\\\"/tmp/everett-rank-avx2-aeaaa9d.xPs4g3/sad_rank15.h\\\" -DEVERETT_RANK_SIMD=\\\"/tmp/everett-rank-avx2-aeaaa9d.xPs4g3/qword_rank15.h\\\" -I/tmp/everett-rank-avx2-aeaaa9d.xPs4g3/baseline -O3 -DNDEBUG -std=c++20 -mavx2 -mpopcnt -mno-avx512f -Wall -Wextra -Werror -o CMakeFiles/rank_compare.dir/bench/rank_compare.cc.o -c /tmp/everett-rank-avx2-aeaaa9d.xPs4g3/bench/rank_compare.cc",
+  "benchmark_compile_command": "/usr/bin/clang++ -DDIET_RANK_CANDIDATE=\\\"/tmp/diet-rank-avx2-aeaaa9d.xPs4g3/sad_rank15.h\\\" -DDIET_RANK_SIMD=\\\"/tmp/diet-rank-avx2-aeaaa9d.xPs4g3/qword_rank15.h\\\" -I/tmp/diet-rank-avx2-aeaaa9d.xPs4g3/baseline -O3 -DNDEBUG -std=c++20 -mavx2 -mpopcnt -mno-avx512f -Wall -Wextra -Werror -o CMakeFiles/rank_compare.dir/bench/rank_compare.cc.o -c /tmp/diet-rank-avx2-aeaaa9d.xPs4g3/bench/rank_compare.cc",
   "benchmark_source_blob": "506524722923b7aac1af17cc3f29173af9f5fb01",
   "benchmark_source_portability_commit": "ca93a619a45f1a7ab3a923e2f5793fa9211678d5",
   "runs": [
@@ -131,12 +131,12 @@
   "validation": {
     "source_revision": "aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06",
     "release_ctest": [
-      "everett.rank",
-      "everett.groups"
+      "diet.rank",
+      "diet.groups"
     ],
     "asan_ubsan_ctest": [
-      "everett.rank",
-      "everett.groups"
+      "diet.rank",
+      "diet.groups"
     ],
     "sanitizer_flags": "-O2 -g -DNDEBUG -mavx2 -mpopcnt -mno-avx512f -fsanitize=address,undefined -fno-omit-frame-pointer",
     "shared_query_oracles": "passed for every generated random/dependent query and all variants; timed checksums agree",

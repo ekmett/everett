@@ -2,9 +2,11 @@
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 """Run under cpu-heavy; snapshot exact Diet revisions and preserve full wire oracles."""
+from snapshot import Snapshot
+
 import argparse, concurrent.futures, csv, datetime, hashlib, io, json, os
 from pathlib import Path
-import platform, shlex, statistics, subprocess, tarfile
+import platform, shlex, statistics, subprocess, shutil
 
 def sha(data): return hashlib.sha256(data).hexdigest()
 def main():
@@ -22,7 +24,8 @@ def main():
     commands=[]
     for name,ref in [('baseline',a.baseline),('candidate',a.candidate or a.baseline)]:
         rev=git('rev-parse',ref).decode().strip();dest=b/name;dest.mkdir(exist_ok=True)
-        with tarfile.open(fileobj=io.BytesIO(git('archive',rev,'include/diet'))) as archive:archive.extractall(dest,filter='data')
+        if (dest/'include').exists(): shutil.rmtree(dest/'include')
+        snapshot=Snapshot(repo,rev);snapshot.write(dest)
         if name=='candidate' and a.candidate_patch:
             patch=a.candidate_patch.resolve()
             subprocess.run(['git','apply','--unsafe-paths','--directory='+str(dest),str(patch)],cwd=repo,check=True)
@@ -30,10 +33,17 @@ def main():
         hashes={str(f.relative_to(dest)):sha(f.read_bytes()) for f in sorted((dest/'include').rglob('*')) if f.is_file()}
         if name=='candidate' and a.candidate_patch:
             recorded=json.loads((repo/'bench/results/cola_payload/results.json').read_text())
-            if hashes!=recorded['variants']['candidate']['headers_sha256']:
-                raise RuntimeError('reconstructed candidate headers differ from measured source')
+            expected=recorded['variants']['candidate']['headers_sha256']
+            # Unchanged headers may acquire current names/signatures. Changed
+            # headers still require the recorded original hash: this patch edits
+            # an already normalized source, not its package or wire labels.
+            expected={path:(snapshot.files[path]['normalized_sha256']
+                      if path in snapshot.files and value==snapshot.files[path]['original_sha256']
+                      else value) for path,value in expected.items()}
+            if hashes!=expected:
+                raise RuntimeError('reconstructed candidate headers differ from measured source or normalization')
             rev='patch applied to '+rev
-        meta['variants'][name]={'revision':rev,'headers_sha256':hashes,'commands':[]}
+        meta['variants'][name]={'revision':rev,'headers_sha256':hashes,'normalization':snapshot.metadata(),'commands':[]}
         for suffix,options in [('',[]),('-alloc',['-DDIET_BENCH_ALLOCATIONS'])]:
             command=[*compiler,'-std=c++20','-O3','-DNDEBUG','-Wall','-Wextra','-Wpedantic','-Werror','-I'+str(dest/'include'),str(source),'-o',str(dest/('run'+suffix)),*options]
             if name=='candidate':command+=['-DDIET_REUSE']
