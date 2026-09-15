@@ -190,6 +190,16 @@ A typed active handle needs the complete registry to select that handler,
 compute hash deltas and perform merges over all sorts. The dumb cola does not
 acquire those operations merely because one caller supplied `put<S>`.
 
+A sort need not have a value concept at all. A self-cancelling toggle can store
+only its key: a record denotes the toggle, while no record denotes identity.
+Its composition law is $\tau\circ\tau=\mathrm{id}$, so merging two such
+occurrences removes the resulting identity contribution. There is no value
+payload, tag or length field. An operation with no payload is distinct from
+no operation; it is not implicitly a tombstone. Such a handler supplies a
+key-associated operation rather than a mandatory `(key, value)` pair. Its query
+must account for all relevant toggle occurrences, and its fingerprint follows
+the interpreted state rather than a fictional stored value slot.
+
 The following count-code parameters describe the implemented FC profile. Mixed
 sorts will select each leaf's own key/value grammar through the active handle.
 

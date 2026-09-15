@@ -46,8 +46,10 @@ save pins an exact collection and the dependencies needed to query it. A save
 adds durable retention to that logical snapshot; it does not define a separate
 kind of application state.
 
-The sort owns its key and value packing. FC strings are one key codec; a
-fixed-width integer key can occupy its known bits without string controls.
+The sort owns the entire record grammar, including whether it has a value at
+all. FC strings are one key codec; a fixed-width integer key can occupy its known
+bits without string controls. A key-only toggle can denote an operation with no
+payload, with two occurrences composing to identity.
 The registry dispatches to the record handler, while the store owns navigation,
 pins and scheduling. The current profile implementation supplies the FC-string
 case; connecting other record grammars is active-handle work.
