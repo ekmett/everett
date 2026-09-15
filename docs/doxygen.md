@@ -95,7 +95,9 @@ search assets and bundled source files.
   source files and declaration lines. Concrete cases include
   `multiverse<P>::open_object`, `mapped_file::open`, both `mapped_slice::bytes`
   ref-qualified overloads, `profile_view<P, Role>::reconstruct_at`,
-  `file_detail::get` and `crc32c`. Template parameters are checked as well.
+  `file_detail::get`, `crc32c`, `query_root<P>::build`,
+  `query_root_builder<P>::finish`, and the query cursor's `step` and `take_match`.
+  Template parameters are checked as well.
 - Two files with same-named functions, same-named classes in distinct namespaces,
   overloads and distinct documentation markers retain identical ownership and
   descriptions with combined file blocks before or after the declarations, and
@@ -104,9 +106,9 @@ search assets and bundled source files.
 - A baseline without the aliases emits exactly the two expected unknown-command
   warnings per header. The configured run must emit no warnings.
 
-On 2026-09-15, Doxygen 1.9.8 passed these checks for all 22 public headers,
-seven real function/overload cases and twelve fixture symbols in all three
-metadata layouts. The unconfigured baseline had 44 warnings, exclusively for
+On 2026-09-15, Doxygen 1.9.8 passed these checks for all 24 public headers,
+eleven real function/overload cases and twelve fixture symbols in all three
+metadata layouts. The unconfigured baseline had 48 warnings, exclusively for
 `\license` and `\endlicense`.
 
 These checks verify file metadata and the tested lexical associations. Some

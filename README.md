@@ -41,6 +41,7 @@ I call the backing store and its relationships the **multiverse**.
 | `profile_array`, `profile_view`, `profile_cursor` | Encoded records, borrowed views, and sequential decoding. |
 | `profile_blob` | Native records, a separate borrowed stream, group navigation, and false-borrow flags. |
 | `sample_cursor`, `index_builder`, `index_pipeline` | Sampling an existing pair and building new index links incrementally. |
+| `query_root`, `query_root_builder`, `query_cursor` | Preparing a bounded search head and visiting matching native entries through an exact index chain. |
 | `mapped_file`, `file`, `multiverse` | Retained read-only mappings and policy-checked object access. |
 | `reference_world`, `partition_round`, `pin_set` | Executable snapshot, update, fingerprint, and ownership semantics. |
 
@@ -349,6 +350,65 @@ supplied for the final stage. Intermediate sampled catalogs are passed through
 the pipeline as bounded queues. Finalized pairs own their exact downstream
 relationships, allowing older and newer chains to coexist.
 
+### Query the whole chain
+
+A query starts from a prepared root. If the head already fits in one group,
+preparation retains it as-is. Otherwise, I add empty-native routing catalogs
+above it until the new head fits. Those catalogs contain successively sparser
+samples and retain the existing chain. Preparation scans the original head;
+we do that once and reuse the root for subsequent queries.
+
+```cpp
+#include <everett/query.h>
+#include <initializer_list>
+#include <memory>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+int main() {
+  using namespace everett;
+  using policy = storage_policy<profile_unit::byte, variable_values, 3>;
+  using blob = profile_blob<policy>;
+  using pair = std::shared_ptr<blob const>;
+  auto make = [](std::initializer_list<std::pair<std::string_view, std::string_view>> rows) {
+    std::vector<profile_record> records;
+    for (auto const & [key, value] : rows)
+      records.push_back({bit_string::from_bytes(key), bit_string::from_bytes(value)});
+    return std::make_shared<blob const>(blob::build(records));
+  };
+  auto base = make({{"alpha", "a"}, {"beta", "lower"}, {"gamma", "g"}, {"omega", "o"}});
+  auto upper = make({{"beta", "upper"}, {"delta", "d"}, {"theta", "t"}});
+  index_pipeline<policy> indexes(base, std::vector<pair>{upper});
+  while (!indexes.done()) indexes.step(64);
+
+  query_root_builder<policy> prepare(indexes.finish());
+  while (!prepare.done()) prepare.step(64);
+  auto root = prepare.finish();
+  auto key = bit_string::from_bytes("beta");
+  auto query = root.cursor(key.view());
+  std::vector<bit_string> values;
+  while (!query.done()) {
+    query.step(1);
+    if (query.has_match()) values.push_back(query.take_match().value);
+  }
+  return values.size() == 2 && values[0] == bit_string::from_bytes("upper") &&
+    values[1] == bit_string::from_bytes("lower") ? 0 : 1;
+}
+```
+
+`query_root<policy>::build(head)` is the eager preparation convenience. A cursor
+owns its query key and pins the unvisited chain, so it can outlive the original
+handles. `step(budget)` visits at most that many catalogs and stops when a match
+is ready. `take_match()` returns an owned value, native ordinal and exact source
+pair; a pending match pauses further traversal until it is taken.
+
+Matches arrive from head toward target. That order describes the index chain;
+the caller supplies any replacement or arrow-composition semantics. A native
+match does not suppress routing to later matches. Query steps bound catalog
+visits, not reconstructed bytes or value-copy cost. The
+[query contract](docs/query.md) describes preparation, trust and work bounds.
+
 ### Fork a world and apply disjoint updates
 
 Use `reference_world` to exercise the update semantics with byte-string keys and
@@ -452,7 +512,9 @@ an independent catalog oracle. The component reports cover
 [Elias–Fano](bench/select_compare.md),
 [grouped and bitmap rank](bench/other_rank.md), and
 [rank15](bench/rank_compare.md), with source, raw trials and reproduction
-commands. Disk faults and a complete multi-catalog search are separate costs.
+commands. The [complete-query measurements](bench/query_chain.md) include root
+preparation and traversal through every catalog, with owned results. These are
+resident-memory measurements; disk faults remain a separate cost.
 
 Proofs
 ------

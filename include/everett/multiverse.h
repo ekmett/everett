@@ -10,7 +10,7 @@
 #pragma once
 
 #include <everett/file.h>
-#include <everett/profile_blob.h>
+#include <everett/query.h>
 
 #include <filesystem>
 #include <stdexcept>
@@ -53,6 +53,9 @@ namespace everett {
     using policy_type = P;
     using sort = everett::sort<P>;
     using blob = everett::profile_blob<P>;
+    using query_root = everett::query_root<P>;
+    using query_root_builder = everett::query_root_builder<P>;
+    using query_cursor = everett::query_cursor<P>;
     using file = everett::file<P>;
     using world = everett::world<P>;
     using timeline = everett::timeline<P>;

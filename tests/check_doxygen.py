@@ -197,6 +197,10 @@ def check_actual_members(items, source):
         ("struct", "everett::profile_view", "reconstruct_at", "profile.h", None, "no"),
         ("namespace", "everett::file_detail", "get", "file.h", None, "no"),
         ("namespace", "everett", "crc32c", "crc32c.h", None, "no"),
+        ("struct", "everett::query_root", "build", "query.h", None, "yes"),
+        ("struct", "everett::query_root_builder", "finish", "query.h", None, "no"),
+        ("struct", "everett::query_cursor", "step", "query.h", None, "no"),
+        ("struct", "everett::query_cursor", "take_match", "query.h", None, "no"),
     ]
     for kind, owner, name, filename, qualifier, static in cases:
         compound = named_compound(items, kind, owner)
@@ -219,7 +223,9 @@ def check_actual_members(items, source):
         if qualifier == "rvalue":
             require("=delete" in member.findtext("argsstring", "").replace(" ", ""),
                     "Deleted rvalue overload was merged with lvalue overload")
-    for owner, parameters in (("everett::multiverse", ["P"]), ("everett::profile_view", ["P", "Role"])):
+    for owner, parameters in (("everett::multiverse", ["P"]), ("everett::profile_view", ["P", "Role"]),
+                              ("everett::query_root", ["P"]), ("everett::query_root_builder", ["P"]),
+                              ("everett::query_cursor", ["P"])):
         item = named_compound(items, "struct", owner)
         names = []
         for param in item.findall("./templateparamlist/param"):
@@ -229,6 +235,7 @@ def check_actual_members(items, source):
                 name = declaration.group(1) if declaration else None
             names.append(name)
         require(names == parameters, f"Wrong template association: {owner}: {names}")
+    return len(cases)
 
 
 def make_fixtures(directory, placement):
@@ -636,7 +643,7 @@ def main():
                 markdown_main=source / "README.md")
     items = compounds(reference)
     check_file_metadata(items, headers, split=True, markdown=markdown)
-    check_actual_members(items, source)
+    member_count = check_actual_members(items, source)
     repaired_links = repair_markdown_links(items, source, reference)
     items = compounds(reference)
     source_files = bundle_source_links(items, source, reference)
@@ -654,7 +661,7 @@ def main():
         fixture_results.append(check_fixtures(items, expected))
     require(all(result == fixture_results[0] for result in fixture_results[1:]),
             "Moving or splitting file metadata changed symbol documentation")
-    print(f"Checked {len(headers)} headers, seven real function/overload associations, "
+    print(f"Checked {len(headers)} headers, {member_count} real function/overload associations, "
           "and twelve fixture symbols with file metadata before/after/split around declarations.")
     print(f"Checked {len(markdown)} Markdown pages and {formula_count} dollar formulas with MathJax HTML, "
           f"cross-page links ({repaired_links} repaired links), and protected-code/currency fixtures.")

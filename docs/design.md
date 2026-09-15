@@ -301,7 +301,13 @@ predecessor may be just before the window. Its ordinal is known, but its prefix
 need not equal the incoming anchor. A cascade must retain or repair that
 borrowed-frontier context, not silently decode from the beginning of the file.
 
-We can bootstrap with a single-entry literal root, or use LPFC in the first catalog.
+We can bootstrap with a small root, or use LPFC in the first catalog. The working
+`query_root<P>` adds empty-native routing catalogs until its head fits in one
+policy group. That first window starts from the literal first record of each
+physical stream; later windows carry the sampled context forward. Preparation
+retains the existing chain and is paid once when building the root. The
+[complete-query contract](query.md) gives its work bounds and ownership rules.
+
 The original LPFC construction is in
 [Bender, Farach-Colton, and Kuszmaul, §3.2](https://people.csail.mit.edu/bradley/papers/BenderFaKu06.pdf#page=6).
 It provides independent local reconstruction through selective full-key copies.

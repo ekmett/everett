@@ -21,6 +21,7 @@ for integration. These are development responsibilities.
 | Checksums | `crc32c.h`, generated backends, pinned generator and package notices; `tests/crc32c.cc` | independent CRC oracle, bounded loads, reproducible generation, target guards and multi-translation-unit installed consumption |
 | Key codecs and blobs | `key_detail.h`, `front.h`, `blob.h`; `tests/front.cc`; [key policies](keys.md) | bounded comparison, partial-prefix lookup, false borrows, independent reindexing, conservative boundary contexts and sort contracts |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `multiverse.h`; profile/blob/multiverse tests | byte/bit and value-layout matrix, LPFC, modified borrowed FC, same-policy aliases and unchanged native allocation on reindex |
+| Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
 | World semantics and ownership | `fingerprint.h`, `pins.h`, `world.h`; `tests/world.cc`, `tests/pins.cc` | disjoint batch permutations, snapshots, old-value validation, contributions, replay and reference export |
 | Design documentation | [design](design.md), [arrows](arrows.md), [rebuilding](rebuild.md), [durability](durability.md), this ledger | consistent contracts, cited derivations, implementation limits and independently usable terminology |
 
@@ -535,6 +536,44 @@ prefix-free coding and hash selection. The category may depend on the full key,
 even when a sort supplies default policies. The typed codecs and homogeneous
 replacement oracle do not yet implement a heterogeneous sort registry.
 
+### Complete encoded-chain queries
+
+`query_root<P>` prepares an arbitrary exact-linked head for search. If it already
+fits in one policy group, the shared pointer is unchanged. Otherwise,
+`query_root_builder<P>` constructs an empty-native routing prefix through one
+streaming pipeline until its head fits. Preparation visits existing chain
+metadata once, samples the original head once and streams diminishing sample
+sets. It preserves all existing native/index bytes and exact target pins.
+
+`query_cursor<P>` owns its query and unvisited target suffix. Each step visits
+at most the caller's catalog budget and pauses at a native match. Taking the
+match returns its owned value, ordinal and exact source pair. Equality continues
+to route downstream, and full boundary lengths are retained alongside the
+query-limited prefixes. Independent copies can progress separately. Decoding
+failure makes the cursor unusable rather than resuming partial work.
+
+The [query contract](query.md) separates entry/header bounds from string bytes,
+preparation and scheduler costs. Shape validation rejects cycles, missing
+targets and mismatched sample counts, but does not authenticate manually pushed
+sample keys. The existing exact-sampler precondition and immutable-alias contract
+remain in force. These queries retrieve entries from in-memory encoded pairs;
+they do not evaluate arrows or publish durable worlds.
+
+The [whole-chain benchmark](../bench/query_chain.md) includes query creation,
+five-catalog traversal and owned values. The default byte/bit fixtures return
+the same 2,796 native matches for 4,096 queries. The runner pins headers and
+captures every raw trial. This is a new API measurement, not a comparison with
+an older complete-query implementation.
+
+The implementation was reviewed and integrated at `4285e6b`, with moved-from
+preparation guards at `79fca75`. Independent tests at `3a95552` check 14 policies
+against native-array oracles for exact source, ordinal, value and match order.
+They exercise large and empty roots, zero budgets, pauses, copied cursors,
+truncated long boundary contexts, native/borrowed equality across a cut, source
+reclamation and malformed chain shapes. Both native restart factors zero and
+18 are covered without changing the codec. The independent optimized and final
+ASan/UBSan runs passed before integration.
+
 ### SQLite catalog and network admission
 
 SQLite is the selected home for logical worlds, immutable representations,
@@ -589,22 +628,24 @@ cmake --build build-sanitize --parallel 4
 ctest --test-dir build-sanitize --output-on-failure
 ```
 
-The fifteen component suites are `rank`, `groups`, `front`, `profile`,
-`profile_blob`, `sampling`, `index_builder`, `index_pipeline`, `world`, `pins`,
+The sixteen component suites are `rank`, `groups`, `front`, `profile`,
+`profile_blob`, `sampling`, `index_builder`, `index_pipeline`, `query`, `world`, `pins`,
 `durability`, `mapped_file`, `files`, `multiverse` and `crc32c`. Two additional CTests
 validate relocated installation and embedded CMake consumption, including
 typed headers and CRC calls across translation units. We record combined
 verification here after these commands run.
 
 Combined verification on 2026-09-15: AppleClang 21, C++20, Release with strict
-warnings and ASan/UBSan passed all **18 CTests**, including both package consumers
-and the optional Doxygen check, with the key/bit, grouped/bitmap rank and
-Elias–Fano changes integrated. The tested public headers match `d027162`.
-The documentation includes the benchmark method and bundles its runner, source
-and measurements. Installed licenses and generated CRC includes were checked
+warnings and ASan/UBSan passed all **19 CTests**, including both package consumers
+and the optional Doxygen check. These checks include the complete query API,
+its `multiverse<P>` aliases and the independent query suite at `3a95552`, alongside
+the key/bit, grouped/bitmap rank and Elias–Fano changes. Doxygen checked 24 public
+headers, eleven real function/overload associations and 29 Markdown pages.
+The documentation includes the benchmark methods and bundles their runners,
+sources and measurements. Installed licenses and generated CRC includes were checked
 byte for byte against the source bundle; regenerating from the pinned generator
 also reproduced all eight backends.
-All five complete README examples also compiled and ran with strict warnings
+All six complete README examples also compiled and ran with strict warnings
 and ASan/UBSan. Local Markdown links were checked, including heading anchors.
 Windows execution coverage is limited to the recorded rank component tests.
 A persistent SQLite backend, network transport, filesystem writer fault injection
@@ -623,7 +664,6 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 | --- | --- | --- |
 | Sort registry | typed byte/bit policies and canonical key contracts | prefix-free framing and order, cross-sort boundaries, domain-separated hashes and stable policy versions |
 | Per-key arrow policy and second instance | categorical specification and replacement oracle | noncommuting diffs, heterogeneous keys, source validation, associative semantic composition, disjoint permutations, endpoint deltas, checkpoint observations and explicit work/dependency accounting |
-| Complete multi-catalog query | front/rank primitives | oracle-equivalent root-to-leaf queries; both frontier contexts; equality at cuts; recorded bounds on entries and bytes visited |
 | Conservative fractional-index codec tuning | native LPFC and tested shared-cut policy | streaming reindex against changed downstream layout without changing native bytes; measured replayed-prefix bytes; empty projected streams and scratch-space costs |
 | Portable blob sections and writer | checked envelope, typed codecs and retained mappings | serialize/validate codec sections, content addressing and durable publication, lazy block-integrity strategy; no full offset per key |
 | Attach encoded runs to world semantics | blob reader and query | batch/snapshot/export oracle tests using actual encoded immutable runs |

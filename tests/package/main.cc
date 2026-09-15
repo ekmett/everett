@@ -21,6 +21,7 @@
 #include <everett/policy.h>
 #include <everett/profile.h>
 #include <everett/profile_blob.h>
+#include <everett/query.h>
 #include <everett/rank.h>
 #include <everett/rank_groups.h>
 #include <everett/rank15.h>
@@ -38,6 +39,8 @@ using policy = everett::storage_policy<everett::profile_unit::bit, everett::fixe
 using store = everett::multiverse<policy>;
 static_assert(std::is_same_v<store::sort, everett::sort<policy>>);
 static_assert(std::is_same_v<store::blob::policy_type, policy>);
+static_assert(std::is_same_v<store::query_root, everett::query_root<policy>>);
+static_assert(std::is_same_v<store::query_cursor, everett::query_cursor<policy>>);
 
 std::uint32_t crc32c_from_other_translation_unit(std::span<std::byte const> bytes);
 
@@ -66,6 +69,19 @@ int main() {
   if (everett::crc32c(check) != 0xe3069283u || crc32c_from_other_translation_unit(check) != 0xe3069283u)
     return 5;
   if (everett::crc32c({}) != 0 || crc32c_from_other_translation_unit({}) != 0) return 6;
+  auto root = store::query_root::build(head);
+  if (root.head() != head) return 7;
+  auto query = root.cursor(records[0].key.view());
+  std::size_t matches = 0;
+  while (!query.done()) {
+    query.step(1);
+    if (!query.has_match()) continue;
+    auto match = query.take_match();
+    if (matches >= 2 || match.source != (matches ? target : head) || match.ordinal ||
+        everett::compare_bits(match.value.view(), records[0].value.view())) return 8;
+    ++matches;
+  }
+  if (matches != 2) return 9;
   return 0;
 }
 
