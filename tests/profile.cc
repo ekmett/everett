@@ -19,6 +19,10 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#if defined(__unix__) || defined(__APPLE__)
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
 
 namespace {
   using namespace everett;
@@ -46,6 +50,174 @@ namespace {
     }
     return result;
   }
+
+  unsigned slow_bit(std::span<std::byte const> bytes, std::uint64_t at) {
+    return (std::to_integer<unsigned>(bytes[at / 8]) >> (7 - at % 8)) & 1;
+  }
+  void slow_store(std::span<std::byte> bytes, std::uint64_t at, unsigned value) {
+    auto mask = std::byte(1u << (7 - at % 8));
+    if (value) bytes[at / 8] |= mask; else bytes[at / 8] &= ~mask;
+  }
+  bit_comparison slow_compare(bit_view a, bit_view b) {
+    std::uint64_t i = 0;
+    while (i < a.size() && i < b.size() && a.at(i) == b.at(i)) ++i;
+    if (i < a.size() && i < b.size()) return {i, a.at(i) ? 1 : -1};
+    return {i, a.size() < b.size() ? -1 : a.size() > b.size() ? 1 : 0};
+  }
+  void check_comparison(bit_view a, bit_view b) {
+    auto want = slow_compare(a, b), got = compare_common_bits(a, b);
+    require(got.common_bits == want.common_bits && got.order == want.order, "word comparison oracle");
+    require(compare_bits(a, b) == want.order, "comparison order wrapper");
+    require(common_prefix_units<bit_policy>(a, b) == want.common_bits, "bit common-prefix oracle");
+    if (a.size() % 8 == 0 && b.size() % 8 == 0)
+      require(common_prefix_units<byte_policy>(a, b) == want.common_bits / 8, "byte common-prefix oracle");
+  }
+  void bit_primitives() {
+    constexpr std::array<unsigned, 22> lengths{0,1,2,7,8,9,15,16,17,31,32,33,63,64,65,127,128,129,255,256,257,1023};
+    for (unsigned source_offset = 0; source_offset != 8; ++source_offset)
+      for (unsigned target_offset = 0; target_offset != 8; ++target_offset)
+        for (auto length : lengths) {
+          auto original = binary(length + source_offset + 13, 0x981235u + length);
+          auto source = original.view().subview(source_offset, length);
+          auto target = binary(length + target_offset + 13, 0xaef351u + length);
+          auto expected = target;
+          for (unsigned i = 0; i != length; ++i) slow_store(expected.bytes, target_offset + i, source.at(i));
+          profile_detail::copy_into(target, target_offset, source);
+          require(target == expected, "bit copy changed edge bits or contents");
+          auto copied = bit_string::copy(source);
+          copied.validate();
+          for (unsigned i = 0; i != length; ++i) require(copied.view().at(i) == source.at(i), "bit-string copy oracle");
+          auto other = target.view().subview(target_offset, length);
+          check_comparison(source, other); check_comparison(other, source);
+          if (length) {
+            check_comparison(source.prefix(length - 1), other);
+            check_comparison(other, source.prefix(length - 1));
+            for (auto position : {0u, length / 2, length - 1}) {
+              auto changed = target;
+              auto at = target_offset + position;
+              slow_store(changed.bytes, at, 1 - slow_bit(changed.bytes, at));
+              auto changed_view = changed.view().subview(target_offset, length);
+              check_comparison(source, changed_view); check_comparison(changed_view, source);
+            }
+          }
+        }
+    // Every differing bit, including byte/word/vector boundaries and unused tails.
+    auto original = binary(513, 0x15931);
+    for (unsigned i = 0; i != 513; ++i) {
+      auto changed = original;
+      slow_store(changed.bytes, i, 1 - slow_bit(changed.bytes, i));
+      check_comparison(original.view(), changed.view());
+      check_comparison(changed.view(), original.view());
+    }
+    for (unsigned source : {0u,1u,7u,8u,9u,63u,64u})
+      for (unsigned destination : {0u,1u,7u,8u,9u,63u,64u}) {
+        auto target = binary(512, 55), expected = target, before = target;
+        for (unsigned i = 0; i != 257; ++i) slow_store(expected.bytes, destination + i, slow_bit(before.bytes, source + i));
+        profile_detail::copy_into(target, destination, target.view().subview(source, 257));
+        require(target == expected, "overlapping bit copy");
+      }
+    for (unsigned offset = 0; offset != 8; ++offset) {
+      auto target = binary(129, offset + 1), before = target;
+      target.bytes.shrink_to_fit();
+      profile_detail::append(target, target.view().subview(offset, 117));
+      target.validate();
+      require(target.bit_size == 246, "self-append size");
+      for (unsigned i = 0; i != 129; ++i) require(target.view().at(i) == before.view().at(i), "self-append original prefix");
+      for (unsigned i = 0; i != 117; ++i) require(target.view().at(129 + i) == before.view().at(offset + i), "self-append source lifetime");
+      for (unsigned width = 0; width <= 64; ++width) {
+        auto mask = width == 64 ? ~std::uint64_t{0} : (std::uint64_t{1} << width) - 1;
+        for (auto value : {std::uint64_t{0}, mask, std::uint64_t{0x9135a2fedc6748bb}}) {
+          auto field = binary(offset + width + 13, 619), expected = field;
+          for (unsigned i = 0; i != width; ++i) slow_store(expected.bytes, offset + i, unsigned((value >> (width - 1 - i)) & 1));
+          std::uint64_t at = offset;
+          profile_detail::put_fixed(field, at, value, width);
+          require(at == offset + width && field == expected, "fixed field store oracle");
+          at = offset;
+          require(profile_detail::read_fixed(field.view(), at, width) == (value & mask) && at == offset + width, "fixed field load oracle");
+        }
+      }
+    }
+  }
+  std::string slow_count(std::uint64_t value) {
+    if (value == ~std::uint64_t{0}) return std::string(64, '0') + '1' + std::string(64, '0');
+    auto code = value + 1;
+    unsigned width = 0;
+    for (auto n = code; n; n >>= 1) ++width;
+    std::string result(width - 1, '0');
+    for (unsigned i = width; i; --i) result += ((code >> (i - 1)) & 1) ? '1' : '0';
+    return result;
+  }
+  void count_primitives() {
+    std::vector<std::uint64_t> values{0,1,~std::uint64_t{0}};
+    for (unsigned bit = 1; bit != 64; ++bit) {
+      auto value = std::uint64_t{1} << bit;
+      values.insert(values.end(), {value - 1, value, value + 1});
+    }
+    for (unsigned offset = 0; offset != 8; ++offset) for (auto value : values) {
+      auto word = slow_count(value);
+      auto expected = bit_string::from_bits(std::string(offset, '1') + word);
+      auto actual = bit_string::from_bits(std::string(offset, '1'));
+      profile_detail::write_count<bit_policy>(actual, value);
+      require(actual == expected, "count encoding independent oracle");
+      auto encoded = expected.view().subview(offset, word.size());
+      std::uint64_t at = 0;
+      require(profile_detail::read_count<bit_policy>(encoded, at) == value && at == word.size(), "shifted count decode");
+      if (value == ~std::uint64_t{0}) for (unsigned length = 0; length != 129; ++length) {
+        at = 0; rejects([&] { profile_detail::read_count<bit_policy>(encoded.prefix(length), at); });
+        require(at == length, "truncated count consumes the available prefix");
+      }
+      if (value == ~std::uint64_t{0}) {
+        for (unsigned suffix = 0; suffix != 64; ++suffix) {
+          auto malformed = expected;
+          slow_store(malformed.bytes, offset + 65 + suffix, 1);
+          at = 0;
+          rejects([&] { profile_detail::read_count<bit_policy>(malformed.view().subview(offset,129), at); });
+          require(at == 129, "overflowing max count consumes its complete field");
+        }
+        auto overflow = bit_string::from_bits(std::string(offset + 65, '0'));
+        at = 0;
+        rejects([&] { profile_detail::read_count<bit_policy>(overflow.view().subview(offset,65), at); });
+        require(at == 65, "unary overflow rejects at the first excessive zero");
+      }
+    }
+  }
+
+#if defined(__unix__) || defined(__APPLE__)
+  void guarded_primitives() {
+    auto page = static_cast<std::size_t>(sysconf(_SC_PAGESIZE));
+    auto mapping = static_cast<std::byte *>(mmap(nullptr, 3 * page, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+    require(mapping != MAP_FAILED, "guard allocation");
+    try {
+      require(mprotect(mapping + page, page, PROT_READ | PROT_WRITE) == 0, "guard protection");
+      for (unsigned offset = 0; offset != 8; ++offset)
+        for (unsigned length : {0u,1u,7u,8u,9u,63u,64u,65u,127u,128u,129u,255u,256u,257u,1023u}) {
+          auto bytes = (offset + length + 7) / 8;
+          auto data = mapping + 2 * page - bytes;
+          for (unsigned i = 0; i != bytes; ++i) data[i] = std::byte((i * 19 + 137) & 255);
+          bit_view source({data, bytes}, length, offset);
+          auto copied = bit_string::copy(source);
+          check_comparison(source, copied.view()); check_comparison(copied.view(), source);
+          auto target = binary(length + 7, 147);
+          profile_detail::copy_into(target, 7, source);
+          for (unsigned i = 0; i != length; ++i) require(target.view().at(7 + i) == source.at(i), "guarded bit copy");
+          std::uint64_t at = 0;
+          auto width = std::min(length, 64u);
+          auto expected = std::uint64_t{0};
+          for (unsigned i = 0; i != width; ++i) expected = (expected << 1) | unsigned(source.at(i));
+          require(profile_detail::read_fixed(source, at, width) == expected, "guarded fixed field");
+        }
+      for (unsigned offset = 0; offset != 8; ++offset) {
+        auto word = std::string(offset, '0') + slow_count(~std::uint64_t{0});
+        auto encoded = bit_string::from_bits(word);
+        auto data = mapping + 2 * page - encoded.bytes.size();
+        std::copy(encoded.bytes.begin(), encoded.bytes.end(), data);
+        std::uint64_t at = 0;
+        require(profile_detail::read_count<bit_policy>(bit_view({data, encoded.bytes.size()},129,offset),at) == ~std::uint64_t{0}, "guarded max count");
+      }
+    } catch (...) { munmap(mapping, 3 * page); throw; }
+    munmap(mapping, 3 * page);
+  }
+#endif
 
   template <class P> std::vector<profile_record> fixture(bool uniform = false) {
     std::vector<bit_string> keys;
@@ -691,6 +863,11 @@ namespace {
 
 int main() {
   try {
+    bit_primitives();
+    count_primitives();
+#if defined(__unix__) || defined(__APPLE__)
+    guarded_primitives();
+#endif
     counts();
     backspace_codes();
     default_profile_bytes();

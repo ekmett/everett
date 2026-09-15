@@ -41,6 +41,26 @@ namespace {
     return "shared-prefix/" + std::string(5 - number.size(), '0') + number;
   }
 
+  void comparison_oracle() {
+    for (std::size_t length : {0u,1u,7u,8u,9u,15u,16u,17u,31u,32u,33u,127u,128u,129u,1024u}) {
+      std::string a(length, '\0');
+      for (std::size_t i = 0; i != length; ++i) a[i] = char((i * 19 + 137) & 255);
+      require(compare_keys(a, a) == 0 && common_prefix(a, a) == length, "equal byte keys");
+      for (std::size_t i = 0; i != length; ++i) {
+        auto b = a; b[i] ^= 1;
+        auto order = static_cast<unsigned char>(a[i]) < static_cast<unsigned char>(b[i]) ? -1 : 1;
+        auto both = compare_common_keys(a, b);
+        require(both.common == i && both.order == order, "combined comparison oracle");
+        require(compare_keys(a, b) == order && compare_keys(b, a) == -order, "byte order oracle");
+        require(common_prefix(a, b) == i, "byte prefix oracle");
+      }
+      if (length) {
+        require(compare_keys(a, std::string_view(a).substr(0, length - 1)) > 0, "strict prefix order");
+        require(common_prefix(a, std::string_view(a).substr(0, length - 1)) == length - 1, "strict common prefix");
+      }
+    }
+  }
+
   void front_roundtrip() {
     std::vector<front_record<9>> records;
     std::vector<std::string> keys{"", std::string(1, '\0'), std::string("\0x", 2), "a", "aa", "ab",
@@ -487,6 +507,7 @@ namespace {
 
 int main() {
   try {
+    comparison_oracle();
     front_roundtrip();
     surrogate_anchor_and_redundant_prefix();
     fixed_slots_and_long_prefixes();

@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <everett/key_detail.h>
+
 #include <everett/select15.h>
 
 #include <algorithm>
@@ -25,20 +27,22 @@
 
 namespace everett {
   // Keys are byte strings ordered lexicographically by unsigned byte value.
-  inline int compare_keys(std::string_view a, std::string_view b) noexcept {
-    auto n = std::min(a.size(), b.size());
-    for (std::size_t i = 0; i != n; ++i) {
-      auto x = static_cast<unsigned char>(a[i]);
-      auto y = static_cast<unsigned char>(b[i]);
-      if (x != y) return x < y ? -1 : 1;
-    }
-    return a.size() < b.size() ? -1 : a.size() > b.size() ? 1 : 0;
+  struct key_comparison {
+    std::size_t common = 0;
+    int order = 0;
+  };
+  inline key_comparison compare_common_keys(std::string_view a, std::string_view b) noexcept {
+    auto count = std::min(a.size(), b.size());
+    auto common = key_detail::common_bytes(a.data(), b.data(), count);
+    if (common != count)
+      return {common, static_cast<unsigned char>(a[common]) < static_cast<unsigned char>(b[common]) ? -1 : 1};
+    return {common, a.size() < b.size() ? -1 : a.size() > b.size() ? 1 : 0};
   }
-
+  inline int compare_keys(std::string_view a, std::string_view b) noexcept {
+    return compare_common_keys(a, b).order;
+  }
   inline std::size_t common_prefix(std::string_view a, std::string_view b) noexcept {
-    std::size_t n = 0;
-    while (n < a.size() && n < b.size() && a[n] == b[n]) ++n;
-    return n;
+    return compare_common_keys(a, b).common;
   }
 
   // prefix contains the leading min(full_size, requested_limit) bytes.
@@ -270,11 +274,12 @@ namespace everett {
       std::uint64_t anchor = 0;
       for (std::size_t i = 0; i != records.size(); ++i) {
         auto const & record = records[i];
-        if (i && compare_keys(previous, record.key) > 0) {
+        auto comparison = compare_common_keys(previous, record.key);
+        if (i && comparison.order > 0) {
           throw std::invalid_argument("front-coded input must be sorted");
         }
         if (i % 15 == 0) offsets.push_back(result.bytes_.size() - fixed);
-        auto shared = common_prefix(previous, record.key);
+        auto shared = comparison.common;
         if (!prefix_ceilings.empty()) shared = std::min<std::uint64_t>(shared, prefix_ceilings[i]);
         // Count actual encoded bytes, including framing and fixed slots, to
         // bound traversal span. The paper's key-only compression-space theorem

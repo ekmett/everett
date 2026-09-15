@@ -10,12 +10,14 @@
 #pragma once
 
 #include <everett/policy.h>
+#include <everett/key_detail.h>
 #include <everett/select_groups.h>
 
 #include <algorithm>
 #include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 #include <optional>
 #include <span>
@@ -71,6 +73,79 @@ namespace everett {
     std::uint64_t size_ = 0;
   };
 
+  namespace profile_detail {
+    inline std::uint64_t low_mask(unsigned width) noexcept {
+      return width == 64 ? ~std::uint64_t{0} : (std::uint64_t{1} << width) - 1;
+    }
+    // A bounded MSB-first field, returned in the low width bits. Width <= 64.
+    inline std::uint64_t load_bits(bit_view data, std::uint64_t first, unsigned width) noexcept {
+      if (!width) return 0;
+      auto offset = data.offset() + first;
+      auto source = data.storage().data() + offset / 8;
+      unsigned shift = unsigned(offset % 8), bytes = (shift + width + 7) / 8;
+      if (bytes >= 8) {
+        auto value = key_detail::load_big(source);
+        if (shift) {
+          value <<= shift;
+          if (bytes == 9) value |= std::uint64_t(std::to_integer<unsigned>(source[8])) >> (8 - shift);
+        }
+        return width == 64 ? value : value >> (64 - width);
+      }
+      std::uint64_t value = 0;
+      for (unsigned i = 0; i != bytes; ++i) value = (value << 8) | std::to_integer<unsigned>(source[i]);
+      return (value >> (8 * bytes - shift - width)) & low_mask(width);
+    }
+    // Preserve both edge bytes outside the field. The caller provides capacity.
+    inline void store_bits(std::byte * target, std::uint64_t at, std::uint64_t value, unsigned width) noexcept {
+      if (!width) return;
+      if (width == 64 && at % 8 == 0) { key_detail::store_big(target + at / 8, value); return; }
+      while (width) {
+        auto take = std::min(width, 8u - unsigned(at % 8));
+        auto shift = 8u - unsigned(at % 8) - take;
+        auto mask = unsigned(low_mask(take)) << shift;
+        auto bits = unsigned((value >> (width - take)) & low_mask(take)) << shift;
+        target[at / 8] = std::byte((std::to_integer<unsigned>(target[at / 8]) & ~mask) | bits);
+        at += take; width -= take;
+      }
+    }
+    inline void copy_bits(std::byte * target, std::uint64_t first, bit_view source) noexcept {
+      auto count = source.size();
+      if (!count) return;
+      // Detect overlapping storage without ordering unrelated C++ pointers.
+      auto destination = reinterpret_cast<std::uintptr_t>(target + first / 8);
+      auto origin = reinterpret_cast<std::uintptr_t>(source.storage().data() + source.offset() / 8);
+      auto source_bytes = byte_count(source.offset() % 8 + count);
+      bool backwards = (destination > origin || (destination == origin && first % 8 > source.offset() % 8)) &&
+        destination - origin < source_bytes;
+      if (backwards) {
+        while (count) {
+          auto width = unsigned(std::min<std::uint64_t>(count, 64));
+          count -= width;
+          store_bits(target, first + count, load_bits(source, count, width), width);
+        }
+        return;
+      }
+      std::uint64_t at = 0;
+      if (first % 8) {
+        auto width = unsigned(std::min<std::uint64_t>(count, 8 - first % 8));
+        store_bits(target, first, load_bits(source, 0, width), width); at += width;
+      }
+      if ((source.offset() + at) % 8 == 0) {
+        auto bytes = (count - at) / 8;
+        if (bytes) std::memmove(target + (first + at) / 8,
+          source.storage().data() + (source.offset() + at) / 8, static_cast<std::size_t>(bytes));
+        at += bytes * 8;
+      } else {
+        for (; count - at >= 64; at += 64)
+          key_detail::store_big(target + (first + at) / 8, load_bits(source, at, 64));
+      }
+      while (at != count) {
+        auto width = unsigned(std::min<std::uint64_t>(count - at, 8));
+        store_bits(target, first + at, load_bits(source, at, width), width); at += width;
+      }
+    }
+  }
+
   struct bit_string {
     std::vector<std::byte> bytes;
     std::uint64_t bit_size = 0;
@@ -89,14 +164,7 @@ namespace everett {
       bit_string result;
       result.bit_size = source.size();
       result.bytes.resize(static_cast<std::size_t>(profile_detail::byte_count(source.size())));
-      if (!source.size()) return result;
-      if (source.offset() % 8 == 0 && source.size() % 8 == 0) {
-        std::copy_n(source.storage().begin() + static_cast<std::ptrdiff_t>(source.offset() / 8),
-                    static_cast<std::size_t>(source.size() / 8), result.bytes.begin());
-      } else {
-        for (std::uint64_t i = 0; i != source.size(); ++i)
-          if (source.at(i)) result.bytes[i / 8] |= static_cast<std::byte>(1u << (7 - i % 8));
-      }
+      profile_detail::copy_bits(result.bytes.data(), 0, source);
       return result;
     }
     static bit_string from_bytes(std::span<std::byte const> source) {
@@ -118,34 +186,35 @@ namespace everett {
     bool operator==(bit_string const &) const = default;
   };
 
-  inline int compare_bits(bit_view a, bit_view b) {
+  struct bit_comparison {
+    std::uint64_t common_bits = 0;
+    int order = 0;
+  };
+  inline bit_comparison compare_common_bits(bit_view a, bit_view b) {
     auto count = std::min(a.size(), b.size());
     std::uint64_t at = 0;
-    if (a.offset() % 8 == 0 && b.offset() % 8 == 0) {
-      for (; at + 8 <= count; at += 8) {
-        auto x = std::to_integer<unsigned>(a.storage()[(a.offset() + at) / 8]);
-        auto y = std::to_integer<unsigned>(b.storage()[(b.offset() + at) / 8]);
-        if (x != y) return x < y ? -1 : 1;
+    if (count >= 8 && a.offset() % 8 == 0 && b.offset() % 8 == 0) {
+      at = 8 * key_detail::common_bytes(a.storage().data() + a.offset() / 8,
+                                       b.storage().data() + b.offset() / 8, static_cast<std::size_t>(count / 8));
+      if (count - at >= 8) {
+        auto x = profile_detail::load_bits(a, at, 8), y = profile_detail::load_bits(b, at, 8);
+        return {at + std::countl_zero(x ^ y) - 56, x < y ? -1 : 1};
       }
     }
-    for (; at != count; ++at) if (a.at(at) != b.at(at)) return a.at(at) ? 1 : -1;
-    return a.size() < b.size() ? -1 : a.size() > b.size() ? 1 : 0;
+    while (at != count) {
+      auto width = unsigned(std::min<std::uint64_t>(count - at, 64));
+      auto x = profile_detail::load_bits(a, at, width), y = profile_detail::load_bits(b, at, width);
+      if (auto different = x ^ y)
+        return {at + std::countl_zero(different) - (64 - width), x < y ? -1 : 1};
+      at += width;
+    }
+    return {count, a.size() < b.size() ? -1 : a.size() > b.size() ? 1 : 0};
   }
-
+  inline int compare_bits(bit_view a, bit_view b) { return compare_common_bits(a, b).order; }
   template <class P> std::uint64_t common_prefix_units(bit_view a, bit_view b) {
     if (a.size() % P::bits_per_unit || b.size() % P::bits_per_unit)
       throw std::invalid_argument("key length does not match profile unit");
-    auto count = std::min(a.size(), b.size());
-    std::uint64_t bits = 0;
-    if (a.offset() % 8 == 0 && b.offset() % 8 == 0) {
-      for (; bits + 8 <= count; bits += 8) {
-        auto x = std::to_integer<unsigned>(a.storage()[(a.offset() + bits) / 8]);
-        auto y = std::to_integer<unsigned>(b.storage()[(b.offset() + bits) / 8]);
-        if (x != y) break;
-      }
-    }
-    while (bits != count && a.at(bits) == b.at(bits)) ++bits;
-    return bits / P::bits_per_unit;
+    return compare_common_bits(a, b).common_bits / P::bits_per_unit;
   }
 
   template <class P> struct profile_anchor {
@@ -231,24 +300,21 @@ namespace everett {
     inline void copy_into(bit_string & target, std::uint64_t first, bit_view source) {
       if (first > target.bit_size || source.size() > target.bit_size - first)
         throw std::out_of_range("profile copy exceeds destination");
-      if (!source.size()) return;
-      if (first % 8 == 0 && source.offset() % 8 == 0 && source.size() % 8 == 0) {
-        std::copy_n(source.storage().begin() + static_cast<std::ptrdiff_t>(source.offset() / 8),
-                    static_cast<std::size_t>(source.size() / 8),
-                    target.bytes.begin() + static_cast<std::ptrdiff_t>(first / 8));
-      } else {
-        for (std::uint64_t i = 0; i != source.size(); ++i) {
-          auto bit = first + i;
-          auto mask = static_cast<std::byte>(1u << (7 - bit % 8));
-          if (source.at(i)) target.bytes[bit / 8] |= mask;
-          else target.bytes[bit / 8] &= ~mask;
-        }
-      }
+      copy_bits(target.bytes.data(), first, source);
     }
+
     inline void append(bit_string & target, bit_view source) {
       auto at = target.bit_size;
-      resize(target, add(at, source.size()));
-      copy_into(target, at, source);
+      auto begin = reinterpret_cast<std::uintptr_t>(target.bytes.data());
+      auto input = reinterpret_cast<std::uintptr_t>(source.storage().data());
+      if (source.size() && input >= begin && input - begin < target.bytes.size()) {
+        auto saved = bit_string::copy(source);
+        resize(target, add(at, saved.bit_size));
+        copy_into(target, at, saved.view());
+      } else {
+        resize(target, add(at, source.size()));
+        copy_into(target, at, source);
+      }
     }
     inline void append_bit(bit_string & target, bool bit) {
       auto at = target.bit_size;
@@ -260,23 +326,50 @@ namespace everett {
       target.bytes.push_back(static_cast<std::byte>(value));
       target.bit_size = add(target.bit_size, 8);
     }
+    // Fixed-width fields are MSB-first. Width 64 is valid; no shift uses 64.
+    inline void put_fixed(bit_string & target, std::uint64_t & at, std::uint64_t value, unsigned width) {
+      if (width > 64 || at > target.bit_size || width > target.bit_size - at)
+        throw std::out_of_range("profile fixed field exceeds destination");
+      store_bits(target.bytes.data(), at, value, width);
+      at += width;
+    }
+    inline std::uint64_t read_fixed(bit_view data, std::uint64_t & at, unsigned width) {
+      if (width > 64 || at > data.size() || width > data.size() - at)
+        throw std::invalid_argument("truncated backspace remainder");
+      auto value = load_bits(data, at, width);
+      at += width;
+      return value;
+    }
+    inline std::uint64_t read_zero_run(bit_view data, std::uint64_t & at, std::uint64_t limit,
+        char const * truncated, char const * overflow) {
+      std::uint64_t zeros = 0;
+      for (;;) {
+        if (at >= data.size()) throw std::invalid_argument(truncated);
+        auto width = unsigned(std::min<std::uint64_t>(data.size() - at, 64));
+        auto word = load_bits(data, at, width);
+        auto leading = unsigned(std::countl_zero(word)) - (64 - width);
+        if (leading > limit - zeros) {
+          at += limit - zeros + 1;
+          throw std::invalid_argument(overflow);
+        }
+        zeros += leading; at += leading;
+        if (leading != width) { ++at; return zeros; }
+      }
+    }
     template <class P> void write_count(bit_string & target, std::uint64_t value) {
       if constexpr (P::unit == profile_unit::byte) {
         while (value >= 128) { append_byte(target, unsigned(value & 127) | 128); value >>= 7; }
         append_byte(target, unsigned(value));
       } else {
-        if (value == std::numeric_limits<std::uint64_t>::max()) {
-          for (unsigned i = 0; i != 64; ++i) append_bit(target, false);
-          append_bit(target, true);
-          for (unsigned i = 0; i != 64; ++i) append_bit(target, false);
-        } else {
-          auto code = value + 1;
-          auto zeros = unsigned(std::bit_width(code) - 1);
-          for (unsigned i = 0; i != zeros; ++i) append_bit(target, false);
-          for (unsigned i = zeros + 1; i != 0; --i) append_bit(target, (code >> (i - 1)) & 1);
-        }
+        auto maximum = value == std::numeric_limits<std::uint64_t>::max();
+        auto width = maximum ? 65u : unsigned(std::bit_width(value + 1));
+        auto at = target.bit_size;
+        resize(target, add(at, 2 * width - 1));
+        if (maximum) { at += 64; put_fixed(target, at, 1, 1); put_fixed(target, at, 0, 64); }
+        else { at += width - 1; put_fixed(target, at, value + 1, width); }
       }
     }
+
     template <class P> std::uint64_t read_count(bit_view data, std::uint64_t & offset) {
       if constexpr (P::unit == profile_unit::byte) {
         std::uint64_t value = 0;
@@ -292,35 +385,19 @@ namespace everett {
         }
         throw std::invalid_argument("overflowing profile count");
       } else {
-        auto next = [&] {
-          if (offset >= data.size()) throw std::invalid_argument("truncated exponential-Golomb count");
-          return data.at(offset++);
-        };
-        unsigned zeros = 0;
-        while (!next()) if (++zeros > 64) throw std::invalid_argument("overflowing exponential-Golomb count");
-        std::uint64_t suffix = 0;
-        for (unsigned i = 0; i != zeros; ++i) suffix = (suffix << 1) | unsigned(next());
+        auto zeros = unsigned(read_zero_run(data, offset, 64,
+          "truncated exponential-Golomb count", "overflowing exponential-Golomb count"));
+        if (zeros > data.size() - offset) {
+          offset = data.size();
+          throw std::invalid_argument("truncated exponential-Golomb count");
+        }
+        auto suffix = read_fixed(data, offset, zeros);
         if (zeros == 64) {
           if (suffix) throw std::invalid_argument("overflowing exponential-Golomb count");
           return std::numeric_limits<std::uint64_t>::max();
         }
         return ((std::uint64_t{1} << zeros) - 1) + suffix;
       }
-    }
-    // Fixed-width suffixes are MSB-first. Width 64 is valid; no shift uses 64.
-    inline void put_fixed(bit_string & target, std::uint64_t & at, std::uint64_t value, unsigned width) {
-      for (unsigned remaining = width; remaining != 0; --remaining, ++at) {
-        auto mask = static_cast<std::byte>(1u << (7 - at % 8));
-        if ((value >> (remaining - 1)) & 1) target.bytes[at / 8] |= mask;
-        else target.bytes[at / 8] &= ~mask;
-      }
-    }
-    inline std::uint64_t read_fixed(bit_view data, std::uint64_t & at, unsigned width) {
-      if (at > data.size() || width > data.size() - at)
-        throw std::invalid_argument("truncated backspace remainder");
-      std::uint64_t value = 0;
-      for (unsigned i = 0; i != width; ++i) value = (value << 1) | unsigned(data.at(at++));
-      return value;
     }
     template <class P> constexpr std::uint64_t golomb_cutoff() {
       constexpr auto width = std::bit_width(P::backspace_parameter - 1);
@@ -389,11 +466,8 @@ namespace everett {
         constexpr auto width = unsigned(std::bit_width(modulus - 1));
         constexpr auto cutoff = golomb_cutoff<P>();
         constexpr auto limit = std::numeric_limits<std::uint64_t>::max() / modulus;
-        std::uint64_t quotient = 0;
-        while (!read_fixed(data, offset, 1)) {
-          if (quotient == limit) throw std::invalid_argument("overflowing Golomb quotient");
-          ++quotient;
-        }
+        auto quotient = read_zero_run(data, offset, limit,
+          "truncated backspace remainder", "overflowing Golomb quotient");
         std::uint64_t remainder = 0;
         if constexpr (width != 0) {
           remainder = read_fixed(data, offset, width - 1);
@@ -683,14 +757,15 @@ namespace everett {
       for (std::size_t i = 0; i != records.size(); ++i) {
         auto key = records[i].key.view();
         auto value = records[i].value.view();
-        if (i && compare_bits(previous, key) > 0) throw std::invalid_argument("profile keys must be sorted");
+        auto comparison = compare_common_bits(previous, key);
+        if (i && comparison.order > 0) throw std::invalid_argument("profile keys must be sorted");
         auto position = data.bit_size / P::bits_per_unit;
         if (i % P::group_size == 0) {
           offsets.push_back(position - profile_detail::multiply(i, common.value_or(0)));
           profile_detail::write_count<P>(data, previous_units);
         }
         auto key_units = key.size() / P::bits_per_unit;
-        auto retained = common_prefix_units<P>(previous, key);
+        auto retained = comparison.common_bits / P::bits_per_unit;
         if (!prefix_ceilings.empty()) retained = std::min(retained, prefix_ceilings[i]);
         auto start = data.bit_size / P::bits_per_unit;
         if (retained && restart_factor && key_units <= std::numeric_limits<std::uint64_t>::max() / restart_factor &&
@@ -742,9 +817,10 @@ namespace everett {
       if (finished_) throw std::logic_error("borrowed profile writer is finished");
       if (key.size() % P::bits_per_unit) throw std::invalid_argument("key length does not match profile unit");
       auto previous = previous_.view();
-      if (count_ && compare_bits(previous, key) > 0) throw std::invalid_argument("profile keys must be sorted");
+      auto comparison = compare_common_bits(previous, key);
+      if (count_ && comparison.order > 0) throw std::invalid_argument("profile keys must be sorted");
       auto next_count = profile_detail::add(count_, 1);
-      auto retained = std::min(common_prefix_units<P>(previous, key), prefix_ceiling);
+      auto retained = std::min(comparison.common_bits / P::bits_per_unit, prefix_ceiling);
       auto previous_units = previous.size() / P::bits_per_unit;
       auto key_units = key.size() / P::bits_per_unit;
       auto saved_bits = data_.bit_size;
