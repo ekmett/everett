@@ -1,0 +1,368 @@
+/**
+ * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Connects sort-owned semantics to encoded COLA updates and immutable typed snapshots.
+ *
+ * \license
+ * SPDX-FileType: SOURCE
+ * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+ * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+ * \endlicense
+ */
+#pragma once
+
+#include <diet/cola_runtime.h>
+#include <diet/fingerprint.h>
+#include <diet/sort_codec.h>
+#include <diet/tap.h>
+
+#include <algorithm>
+#include <concepts>
+#include <string_view>
+
+namespace diet {
+  using string_registry = bin<tip<unsorted<std::optional<std::string>>>, sort_undefined>;
+  using string_policy = storage_policy<string_registry>;
+
+  // A custom sort supplies state_type, initial(key), apply(key,state,arrow),
+  // compose(key,older,newer), present(key,state), hash_key(key), and
+  // hash_value(key,state). Its value codec encodes arrows, not necessarily
+  // states. replacement=true permits first-hit reads and put/erase helpers.
+  template <class S> struct sort_semantics : S {};
+
+  template <> struct sort_semantics<unsorted<std::optional<std::string>>> {
+    using state_type = std::optional<std::string>;
+    static constexpr bool replacement = true;
+    static state_type initial(std::string const &) { return std::nullopt; }
+    static state_type apply(std::string const &, state_type const &, state_type value) { return value; }
+    static state_type compose(std::string const &, state_type const &, state_type newer) { return newer; }
+    static state_type erase(std::string const &) { return std::nullopt; }
+    static bool present(std::string const &, state_type const & value) noexcept { return value.has_value(); }
+    static std::uint64_t hash_key(std::string const & key) noexcept { return u64_table_hash{}.key(key); }
+    static std::uint64_t hash_value(std::string const &, state_type const & value) noexcept {
+      return value ? u64_table_hash::mix(u64_table_hash{}.key(*value) ^ 0xd6e8feb86659fd93ULL) : 0;
+    }
+  };
+
+  namespace typed_detail {
+    template <class Leaves> struct default_sort { using type = void; };
+    template <class S> struct default_sort<registry_detail::sorts<S>> { using type = S; };
+    template <class P> using default_sort_t = typename default_sort<
+      typename registry_detail::info<typename P::registry_type>::leaves>::type;
+    template <class S> using key_t = typename sort_codec<S>::key_codec::value_type;
+    template <class S> using arrow_t = typename sort_codec<S>::value_codec::value_type;
+    template <class S> using state_t = typename sort_semantics<S>::state_type;
+    template <class S> constexpr bool replacement = [] {
+      if constexpr (requires { sort_semantics<S>::replacement; }) return bool(sort_semantics<S>::replacement);
+      else return false;
+    }();
+
+    template <class P, class S> bit_string key(key_t<S> const & value) {
+      bit_string result;
+      sort_bit_writer out(result);
+      write_sort_code<typename P::registry_type, S>(out);
+      sort_codec<S>::key_codec::write_ordered(out, value);
+      if (result.bit_size & (P::bits_per_unit - 1))
+        throw std::invalid_argument("sort key is not aligned for its profile policy");
+      return result;
+    }
+    template <class P, class S> bit_string value(arrow_t<S> const & value) {
+      bit_string result;
+      sort_bit_writer out(result);
+      sort_codec<S>::value_codec::write(out, value);
+      if constexpr (P::unit == profile_unit::byte)
+        if (auto tail = result.bit_size & 7) out.write_bits(0, unsigned(8 - tail));
+      if (P::value_width && (result.bit_size >> P::unit_shift) != *P::value_width)
+        throw std::invalid_argument("sort arrow differs from the policy's fixed value width");
+      return result;
+    }
+    template <class P, class S> arrow_t<S> value(bit_view encoded) {
+      sort_bit_reader in(encoded);
+      auto result = sort_codec<S>::value_codec::read(in);
+      if constexpr (P::unit == profile_unit::byte) {
+        if (in.remaining() > 7 || (in.remaining() && in.read_bits(unsigned(in.remaining()))))
+          throw std::invalid_argument("noncanonical typed value padding");
+      } else if (!in.empty()) throw std::invalid_argument("trailing typed arrow bits");
+      return result;
+    }
+    template <class P, class F> decltype(auto) dispatch_key(bit_view encoded, F && action) {
+      sort_bit_reader in(encoded);
+      return dispatch_sort<typename P::registry_type>(in, [&]<class S>(std::type_identity<S> tag, auto & source) {
+        auto decoded = sort_codec<S>::key_codec::read_ordered(source);
+        if (!source.empty()) throw std::invalid_argument("trailing typed key bits");
+        return std::invoke(std::forward<F>(action), tag, decoded);
+      });
+    }
+    template <class P> struct compose {
+      bit_string operator()(bit_view key, bit_view older, bit_view newer) const {
+        return dispatch_key<P>(key, [&]<class S>(std::type_identity<S>, auto const & decoded) {
+          auto before = value<P, S>(older), after = value<P, S>(newer);
+          return value<P, S>(sort_semantics<S>::compose(decoded, std::move(before), std::move(after)));
+        });
+      }
+    };
+  }
+
+  template <class A = wrapping_fingerprint_algebra> struct typed_cola_metadata {
+    typename A::element signature = A::zero();
+    std::uint64_t live_count = 0;
+    std::string schema_id;
+
+    // Compact trusted checkpoint payload: signature, live count, then the
+    // nonempty schema ID. Runtime frontier intervals are stored separately.
+    std::vector<std::byte> encode() const requires std::same_as<typename A::element, std::uint64_t> {
+      if (schema_id.empty()) throw std::invalid_argument("empty typed schema identity");
+      std::vector<std::byte> result(16 + schema_id.size());
+      for (unsigned i = 0; i != 8; ++i) {
+        result[i] = std::byte(signature >> (i << 3));
+        result[8 + i] = std::byte(live_count >> (i << 3));
+      }
+      std::copy(std::as_bytes(std::span(schema_id)).begin(), std::as_bytes(std::span(schema_id)).end(), result.begin() + 16);
+      return result;
+    }
+    static typed_cola_metadata decode(std::span<std::byte const> data)
+      requires std::same_as<typename A::element, std::uint64_t> {
+      if (data.size() <= 16) throw std::invalid_argument("truncated typed metadata");
+      typed_cola_metadata result;
+      for (unsigned i = 0; i != 8; ++i) {
+        result.signature |= std::uint64_t(std::to_integer<unsigned char>(data[i])) << (i << 3);
+        result.live_count |= std::uint64_t(std::to_integer<unsigned char>(data[8 + i])) << (i << 3);
+      }
+      result.schema_id.assign(reinterpret_cast<char const *>(data.data() + 16), data.size() - 16);
+      return result;
+    }
+    bool operator==(typed_cola_metadata const &) const = default;
+  };
+
+  template <class P, class A> struct typed_contribution;
+  template <class P, class A> struct typed_batch;
+  template <class P, class A, std::uint64_t DepthLimit> struct typed_engine;
+
+  template <class P = string_policy, class A = wrapping_fingerprint_algebra> struct typed_cola {
+    using policy_type = P;
+    using metadata_type = typed_cola_metadata<A>;
+    using runtime_snapshot = cola_runtime_snapshot<P>;
+    using contribution_type = typed_contribution<P, A>;
+    using batch_type = typed_batch<P, A>;
+    runtime_snapshot const & runtime() const & noexcept { return runtime_; }
+    runtime_snapshot const & runtime() const && = delete;
+    metadata_type const & metadata() const & noexcept { return metadata_; }
+    auto signature() const { return metadata_.signature; }
+    std::uint64_t live_count() const noexcept { return metadata_.live_count; }
+
+    // Metadata and the exact graph must have been admitted together. This
+    // checks schema identity and counts; it deliberately does not scan hashes.
+    static typed_cola restore(runtime_snapshot data, metadata_type metadata, std::string_view expected_schema) {
+      if (expected_schema.empty() || metadata.schema_id != expected_schema || metadata.live_count > data.admissions())
+        throw std::invalid_argument("typed snapshot metadata or schema mismatch");
+      return {std::move(data), std::move(metadata)};
+    }
+    template <class S = typed_detail::default_sort_t<P>> typed_detail::state_t<S>
+    get(typed_detail::key_t<S> const & key) const {
+      using semantics = sort_semantics<S>;
+      auto encoded = typed_detail::key<P, S>(key);
+      auto cursor = runtime_.cursor(encoded.view());
+      if constexpr (typed_detail::replacement<S>) {
+        while (!cursor.done()) {
+          cursor.step(1);
+          if (cursor.has_match()) {
+            auto match = cursor.take_match();
+            return semantics::apply(key, semantics::initial(key), typed_detail::value<P, S>(match.value.view()));
+          }
+        }
+        return semantics::initial(key);
+      } else {
+        std::vector<typed_detail::arrow_t<S>> arrows;
+        while (!cursor.done()) {
+          cursor.step(1);
+          while (cursor.has_match()) {
+            auto match = cursor.take_match();
+            arrows.push_back(typed_detail::value<P, S>(match.value.view()));
+          }
+        }
+        auto state = semantics::initial(key);
+        for (auto i = arrows.rbegin(); i != arrows.rend(); ++i) state = semantics::apply(key, std::move(state), *i);
+        return state;
+      }
+    }
+    batch_type batch() const;
+    template <class S = typed_detail::default_sort_t<P>> contribution_type
+    change(typed_detail::key_t<S> const & key, typed_detail::arrow_t<S> const & arrow) const;
+    template <class S = typed_detail::default_sort_t<P>> contribution_type
+    put(typed_detail::key_t<S> const & key, typed_detail::state_t<S> const & value) const
+      requires typed_detail::replacement<S>;
+    template <class S = typed_detail::default_sort_t<P>> contribution_type
+    erase(typed_detail::key_t<S> const & key) const requires typed_detail::replacement<S>;
+  private:
+    template <class, class, std::uint64_t> friend struct typed_engine;
+    runtime_snapshot runtime_;
+    metadata_type metadata_;
+    typed_cola(runtime_snapshot data, metadata_type metadata) : runtime_(std::move(data)), metadata_(std::move(metadata)) {}
+  };
+
+  template <class P, class A> struct typed_contribution {
+    std::optional<typed_cola<P, A>> const & base() const noexcept { return base_; }
+    std::span<profile_record const> records() const noexcept { return records_; }
+  private:
+    friend struct typed_batch<P, A>;
+    std::optional<typed_cola<P, A>> base_;
+    std::vector<profile_record> records_;
+    typed_contribution(std::optional<typed_cola<P, A>> base, std::vector<profile_record> records)
+      : base_(std::move(base)), records_(std::move(records)) {}
+  };
+
+  template <class P, class A> struct typed_batch {
+    typed_batch() = default;
+    explicit typed_batch(typed_cola<P, A> base) : base_(std::move(base)) {}
+    template <class S = typed_detail::default_sort_t<P>> typed_batch &
+    change(typed_detail::key_t<S> const & key, typed_detail::arrow_t<S> const & arrow) {
+      records_.push_back({typed_detail::key<P, S>(key), typed_detail::value<P, S>(arrow)});
+      return *this;
+    }
+    template <class S = typed_detail::default_sort_t<P>> typed_batch &
+    put(typed_detail::key_t<S> const & key, typed_detail::state_t<S> const & value)
+      requires typed_detail::replacement<S> { return change<S>(key, value); }
+    template <class S = typed_detail::default_sort_t<P>> typed_batch &
+    erase(typed_detail::key_t<S> const & key) requires typed_detail::replacement<S> {
+      if (base_ && !sort_semantics<S>::present(key, base_->template get<S>(key)))
+        throw std::invalid_argument("deleting absent typed key");
+      return change<S>(key, sort_semantics<S>::erase(key));
+    }
+    typed_contribution<P, A> finish() && {
+      std::sort(records_.begin(), records_.end(), [](auto const & a, auto const & b) {
+        return compare_bits(a.key.view(), b.key.view()) < 0;
+      });
+      for (std::size_t i = 1; i < records_.size(); ++i)
+        if (compare_bits(records_[i - 1].key.view(), records_[i].key.view()) == 0)
+          throw std::invalid_argument("duplicate key in typed batch");
+      return {std::move(base_), std::move(records_)};
+    }
+  private:
+    std::optional<typed_cola<P, A>> base_;
+    std::vector<profile_record> records_;
+  };
+
+  template <class P, class A> auto typed_cola<P, A>::batch() const -> batch_type { return batch_type(*this); }
+  template <class P, class A> template <class S>
+  auto typed_cola<P, A>::change(typed_detail::key_t<S> const & key, typed_detail::arrow_t<S> const & arrow) const -> contribution_type {
+    auto result = batch(); result.template change<S>(key, arrow); return std::move(result).finish();
+  }
+  template <class P, class A> template <class S>
+  auto typed_cola<P, A>::put(typed_detail::key_t<S> const & key, typed_detail::state_t<S> const & value) const -> contribution_type
+    requires typed_detail::replacement<S> { return change<S>(key, value); }
+  template <class P, class A> template <class S>
+  auto typed_cola<P, A>::erase(typed_detail::key_t<S> const & key) const -> contribution_type
+    requires typed_detail::replacement<S> {
+    auto result = batch(); result.template erase<S>(key); return std::move(result).finish();
+  }
+
+  // The depth limit is enforced support, not an inferred COLA theorem. It gives
+  // an input-only conservative allowance for ready singleton admissions.
+  template <class P = string_policy, class A = wrapping_fingerprint_algebra, std::uint64_t DepthLimit = 256>
+  struct typed_engine {
+    using policy_type = P;
+    using cola_type = typed_cola<P, A>;
+    using contribution_type = typed_contribution<P, A>;
+    using metadata_type = typed_cola_metadata<A>;
+    using runtime_type = cola_runtime<P, typed_detail::compose<P>>;
+    static constexpr std::uint64_t admission_allowance = 2 * P::group_size + 128 + DepthLimit + 32;
+    static_assert(DepthLimit && DepthLimit < (std::uint64_t{1} << 32) && P::group_size < (std::uint64_t{1} << 32));
+
+    explicit typed_engine(std::string schema_id = default_schema())
+      : runtime_(), current_(runtime_.snapshot(), metadata_type{A::zero(), 0, checked_schema(std::move(schema_id))}) {}
+    static typed_engine from_snapshot(cola_type state) { return typed_engine(std::move(state)); }
+    cola_type snapshot() const { return current_; }
+    bool pending() const noexcept { return runtime_.pending(); }
+    bool failed() const noexcept { return failed_ || runtime_.failed(); }
+    bool admission_ready() const noexcept { return runtime_.admission_ready(); }
+    auto work() const { return runtime_.work(); }
+    static typed_batch<P, A> batch() { return {}; }
+    template <class S = typed_detail::default_sort_t<P>> static contribution_type
+    change(typed_detail::key_t<S> const & key, typed_detail::arrow_t<S> const & arrow) {
+      auto result = batch(); result.template change<S>(key, arrow); return std::move(result).finish();
+    }
+    template <class S = typed_detail::default_sort_t<P>> static contribution_type
+    put(typed_detail::key_t<S> const & key, typed_detail::state_t<S> const & value)
+      requires typed_detail::replacement<S> { return change<S>(key, value); }
+    template <class S = typed_detail::default_sort_t<P>> static contribution_type
+    erase(typed_detail::key_t<S> const & key) requires typed_detail::replacement<S> {
+      auto result = batch(); result.template erase<S>(key); return std::move(result).finish();
+    }
+    static tap_reservation reservation(contribution_type const & input) {
+      tap_reservation result{profile_detail::multiply(input.records().size(), admission_allowance), 0};
+      for (auto const & record : input.records())
+        result.bytes = profile_detail::add(result.bytes, profile_detail::add(record.key.bytes.size(), record.value.bytes.size()));
+      return result;
+    }
+    std::optional<cola_type> advance(std::uint64_t budget) {
+      require_active();
+      try {
+        auto updated = runtime_.advance(budget);
+        if (updated.same_layout(current_.runtime())) return std::nullopt;
+        current_ = cola_type(std::move(updated), current_.metadata());
+        return current_;
+      } catch (...) { failed_ = true; throw; }
+    }
+    cola_type contribute(contribution_type input) {
+      require_active();
+      if (input.base() && input.base()->metadata().schema_id != current_.metadata().schema_id)
+        throw std::invalid_argument("typed contribution uses another schema");
+      auto metadata = current_.metadata();
+      // Validate every old state and compute every delta before changing the
+      // executor. Disjoint batches from one immutable base therefore commute.
+      for (auto const & record : input.records()) {
+        typed_detail::dispatch_key<P>(record.key.view(), [&]<class S>(std::type_identity<S>, auto const & key) {
+          using semantics = sort_semantics<S>;
+          auto old = current_.template get<S>(key);
+          if (input.base() && old != input.base()->template get<S>(key))
+            throw std::invalid_argument("stale typed key value");
+          auto arrow = typed_detail::value<P, S>(record.value.view());
+          auto next = semantics::apply(key, old, std::move(arrow));
+          bool was = semantics::present(key, old), now = semantics::present(key, next);
+          if constexpr (typed_detail::replacement<S>)
+            if (!was && !now) throw std::invalid_argument("deleting absent typed key");
+          auto before_hash = was ? A::lift(semantics::hash_value(key, old)) : A::zero();
+          auto after_hash = now ? A::lift(semantics::hash_value(key, next)) : A::zero();
+          metadata.signature = A::add(metadata.signature,
+            A::multiply(A::lift(semantics::hash_key(key)), A::subtract(after_hash, before_hash)));
+          if (now && !was) metadata.live_count = profile_detail::add(metadata.live_count, 1);
+          if (was && !now) {
+            if (!metadata.live_count) throw std::invalid_argument("inconsistent typed live count");
+            --metadata.live_count;
+          }
+        });
+      }
+      try {
+        for (auto const & record : input.records()) {
+          while (runtime_.pending()) runtime_.advance(std::max<std::uint64_t>(runtime_.next_service_cost(), 1));
+          auto ready = runtime_.snapshot();
+          if (ready.query_root().head()->depth() > DepthLimit || runtime_.admission_cost() > admission_allowance)
+            throw std::length_error("typed runtime exceeds ready-admission depth allowance");
+          if (!runtime_.try_contribute(record)) throw std::logic_error("typed ready admission unexpectedly blocked");
+        }
+        current_ = cola_type(runtime_.snapshot(), std::move(metadata));
+        return current_;
+      } catch (...) { failed_ = true; throw; }
+    }
+  private:
+    runtime_type runtime_;
+    cola_type current_;
+    bool failed_ = false;
+    explicit typed_engine(cola_type state)
+      : runtime_(runtime_type::from_snapshot(state.runtime())), current_(std::move(state)) {}
+    static std::string default_schema() {
+      if constexpr (std::same_as<typename P::registry_type, string_registry>)
+        return "diet.optional-string/code0/v1";
+      else if constexpr (std::same_as<typename P::registry_type, unsorted<std::optional<std::string>>>)
+        return "diet.optional-string/tagless/v1";
+      else return {};
+    }
+    static std::string checked_schema(std::string value) {
+      if (value.empty()) throw std::invalid_argument("typed engine requires a schema identity");
+      return value;
+    }
+    void require_active() const {
+      if (failed_) throw std::logic_error("failed typed engine");
+    }
+  };
+}
