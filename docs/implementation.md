@@ -2,15 +2,15 @@
 
 Updated 2026-09-15. Specification: [Everett design](design.md).
 
-I use this ledger to track what works, what the tests establish, and what I
-still need to build. The C++20 foundations live in `include/everett/`, in
+This ledger records what works, what the tests establish, and what remains to
+be built. The C++20 foundations live in `include/everett/`, in
 namespace `everett`. The complete disk store, SQLite catalog runtime and
 bounded redundant-level scheduler remain implementation work.
 
 ## Ownership and acceptance
 
-I keep the main checkout, build/package integration and combined verification
-under one integration owner. Component work happens in isolated worktrees from
+One integration owner handles the main checkout, build/package integration and
+combined verification. Component work happens in isolated worktrees from
 a committed revision, preserving unrelated work and leaving reviewed checkpoints
 for integration. These are development responsibilities.
 
@@ -24,7 +24,7 @@ for integration. These are development responsibilities.
 | Design documentation | [design](design.md), [arrows](arrows.md), [rebuilding](rebuild.md), [durability](durability.md), this ledger | consistent contracts, cited derivations, implementation limits and independently usable terminology |
 
 As components change, we update this ledger with the reviewed revision, actual
-checks and remaining limits. I keep host-specific resource coordination outside
+checks and remaining limits. Host-specific resource coordination stays outside
 this package.
 
 ## Implemented foundations
@@ -97,17 +97,15 @@ of code in a minimal consumer and increased its median compile/link time from
   ordinary mode uses an explicit slow fallback when predecessor context is
   missing. Native LPFC remains independent of changing index cuts.
 
-I retain the original byte-only `front.h`/`blob.h` primitives as an independent
-baseline. They are owned encoded streams and borrowed views, not a
-finalized on-disk ABI.
-
 ### Typed byte and bit profiles
 
-`storage_policy<Unit, Values, GroupSize>` carries the unit, fixed/variable value
-layout and sampling group size through the codec types. `fixed_values<N>` counts
+`storage_policy<Unit, Values, GroupSize, BackspaceCode>` carries the unit,
+fixed/variable value layout, sampling group size and bit-backspace code through
+the codec types. `fixed_values<N>` counts
 policy units, including the valid width zero. `profile_array<P, Role>` uses
-canonical byte varints or bit-level exponential-Golomb0 counts, actual backspace
-counts, meaningful bit extents and canonical padding. One predecessor-length
+canonical byte varints and policy-selected Golomb or exponential-Golomb bit
+backspaces. Other bit counts use order-zero exponential-Golomb. Streams retain
+meaningful bit extents and canonical padding. One predecessor-length
 checkpoint per physical group supports surrogate-anchor decoding. Common fixed
 value width is subtracted from the Elias–Fano residual positions.
 
@@ -133,8 +131,12 @@ Final metadata construction is a separate linear phase. See the
 Codec fixtures cover 24 combinations: byte/bit × variable/fixed3/fixed0 values
 × groups 3/7/15/31. Blob fixtures cover 16 byte/bit × fixed/variable × group
 combinations, including repeated equal borrows, partial contexts, cascades and
-changed index boundaries. These test record/prefix behavior, not the full
-string-store I/O theorem. Sixteen-bit units, sort-qualified framing, a prefix-free
+changed index boundaries. Selected Golomb moduli and exponential-Golomb orders
+also exercise native LPFC, borrowed writers and index pipelines. Count-code
+fixtures check known bit patterns, truncation, overflow, unaligned appends,
+metadata mismatch and unchanged default encodings. Invalid policy parameters
+are rejected at compile time. These test record/prefix behavior, not the full
+string-store I/O theorem. Sort-qualified framing, a prefix-free
 registry and per-sort hash/category dispatch remain extensions.
 
 ### Object envelopes, mappings and type family
@@ -143,12 +145,27 @@ registry and per-sort hash/category dispatch remain extensions.
 slices. POSIX mapping and unlink-while-pinned behavior are tested. A native
 Windows branch exists but has not been validated on Windows in this checkpoint.
 
-`file<P>` validates a 96-byte little-endian envelope: kind magic, version,
-policy metadata, exact lengths, canonical padding, and header/body CRC32C.
-Only `.kv` and `.index` kinds exist. Validation scans the whole body on open;
-lazy block-level integrity checking is not implemented. The body is presently
-opaque: portable rank/select/profile section serialization remains work.
+`file<P>` checks a 96-byte little-endian envelope: kind magic, version,
+policy metadata, exact lengths and header CRC32C. Only `.kv` and `.index` kinds
+exist. By default, opening and `from_slice` read the header and check the exact extent;
+they do not read the body or inspect its final padding. The explicit
+`file_open_mode::trusted` option additionally skips all header reads and
+filename/header kind comparison. It checks only that the mapping can contain
+the 96-byte envelope; `body()` slices the remaining physical bytes without
+reading them. `header()` returns metadata by value and validates it on explicit
+access for trusted handles, without a mutable lazy cache.
+`file<P>::scan()` checks the header, whole-body CRC32C and canonical bit padding for recovery
+or scrubbing, and `validate_file` retains whole-object validation. Recovery can
+select uncertain objects for scanning without scanning every file on restart.
+Opening alone does not establish payload integrity; lazy block-level integrity
+checking is not implemented. The body is presently opaque: portable
+rank/select/profile section serialization remains work.
 `encode_file` is pure serialization, not a durable object writer.
+
+POSIX tests protect every payload page while exercising checked opening, and
+the entire mapping while exercising trusted construction and body slicing.
+Other fixtures verify deferred rejection of corrupt headers, wrong policies,
+invalid extents and padding, plus retained mappings after unlinking.
 
 Canonical sharded paths split the current experimental 128-bit opaque object
 ID into `ab/cd/<remaining-id>.<extension>`. Cryptographic content-ID calculation
@@ -184,7 +201,7 @@ persistent aggregate implementation behind these forward declarations.
   the intended small manifest of pinned objects and does not establish crash
   durability.
 
-I use the world layer as a semantic oracle for attaching encoded blobs. Its eager
+The world layer supplies a semantic oracle for attaching encoded blobs. Its eager
 ordered-map resolution is not the intended merge/query algorithm, and it has no
 logarithmic active-run-count guarantee. Batch generation may share an immutable
 base, while applying batches to one accumulator is serialized.
@@ -229,6 +246,36 @@ context checks, and both outcomes of uncertain manifest publication. The
 [durability protocol](durability.md) specifies the required future backend.
 No physical power-loss or process-restart validation is implied by model tests.
 
+### Abstract Lean model
+
+The independent [proof project](../proof/README.md) pins Lean 4.19.0 and uses
+core/Std without mathlib. Its theorems cover dependent per-key
+categories, source-checked updates, chronological merging and reassociation,
+disjoint-update commutativity, integer endpoint potentials, exact-target pin
+closure, snapshot adoption, eligible reclamation and allocation without ID reuse.
+`adopt_adjacent_merge` supplies the semantic adoption premise from the proved
+history-composition law.
+
+The fractional-index layer models sorted tagged occurrences, stable merging,
+every-$K$th sampling, endpoint rank projection, and executable window lookup
+equivalent to full predecessor lookup. False-borrow flags certify a matching
+native occurrence; native-key uniqueness within a run makes its recovery a
+single rank-derived probe, even before the routed window. Mathematical rank
+inside the window is derived from a boundary rank and a local scan, without
+assuming arbitrary-position constant-time rank. Abstract sampled indexes name
+their exact catalog targets and preserve correspondence across extension and
+eligible reclamation.
+
+The default `lake --wfail build` checks the proofs, examples and a transitive
+axiom audit. The interpreted examples cover duplicate keys across cuts, empty
+projections, missing predecessors, and partial tails for $K=3$ and $K=15$.
+Keys in this proof layer are natural numbers representing order; it does not
+decode string keys or the catalog's physical target graph. Compressed rank,
+Elias–Fano, front coding, full cascade execution, C++ refinement, scheduling
+and crash recovery remain outside its scope. The proof README records the assumptions
+and the distinctions between endpoint projection, full arrows and finite-key
+fingerprint sums.
+
 ## Specified extensions
 
 ### Aggregate API and key policies
@@ -236,7 +283,7 @@ No physical power-loss or process-restart validation is implied by model tests.
 The read-side `multiverse<P>` and associated type family are implemented as
 described above. Persistent `world<P>`, `timeline<P>` and `branch_point<P>`
 runtimes remain to be attached to the selected SQLite catalog.
-`reference_world` remains the semantic prototype.
+`reference_world` provides the executable in-memory semantics.
 
 [Sorts and key policies](keys.md) describes sort-qualified keys, key units,
 prefix-free coding and hash selection. The category may depend on the full key,
@@ -245,7 +292,7 @@ replacement oracle do not yet implement a heterogeneous sort registry.
 
 ### SQLite catalog and network admission
 
-I've chosen SQLite for logical worlds, immutable representations,
+SQLite is the selected home for logical worlds, immutable representations,
 exact pins, contributions, index dependencies and small merge continuations.
 The [catalog design](catalog.md) specifies publication, operation identities,
 reader/GC synchronization and SQL diagnostics. No SQLite schema migration or
@@ -271,9 +318,9 @@ exercise its schedule, bounded catch-up or durable publication.
 
 ### Categorical updates
 
-In the [per-key category design](arrows.md), I extend the semantics to
-composable diffs and specify composition, partition independence, exact
-endpoint deltas, query costs and dependency retention. `reference_world` still
+The [per-key category design](arrows.md) extends the semantics to composable
+diffs. It specifies composition, partition independence, exact endpoint deltas,
+query costs and dependency retention. `reference_world` still
 resolves replacements, and `blob` still uses its fixed value/tombstone payload.
 There is no generic arrow executor, category-dependent wire format or general
 normalization bound. A second concrete instance should test noncommuting changes
@@ -308,16 +355,14 @@ warnings and ASan/UBSan passed **17/17 CTests**, including both package consumer
 and the optional Doxygen check. Installed license notices were checked byte for
 byte against the source bundle.
 All five complete README examples also compiled and ran with strict warnings
-and ASan/UBSan. Its 24 local Markdown links resolved, including heading anchors.
-The initial build could not write the host's default ccache directory;
-using a cache inside the build tree resolved that environmental failure.
+and ASan/UBSan. Local Markdown links were checked, including heading anchors.
 We haven't yet tested Windows execution, a persistent SQLite backend, network
 transport, filesystem writer fault injection or physical power loss.
 
 The optional `EVERETT_BUILD_DOCS` configuration generates Doxygen HTML/XML and
 checks all file footers plus representative function/member ownership. A
 two-file fixture compares top, bottom and split file documentation across namespaces,
-same-name classes and overloaded functions. The original `ein` aliases render
+same-name classes and overloaded functions. The license aliases render
 SPDX as a code block and remove the unconfigured unknown-command warnings.
 See [the documentation check](doxygen.md) for the exact assertions and limits.
 
@@ -325,7 +370,7 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 
 | Work item | Dependencies | Concrete acceptance |
 | --- | --- | --- |
-| Sort registry and remaining units | typed byte/bit policies and canonical key contracts | prefix-free framing and order, cross-sort boundaries, domain-separated hashes, stable policy versions and eventual 16-bit-word codec |
+| Sort registry | typed byte/bit policies and canonical key contracts | prefix-free framing and order, cross-sort boundaries, domain-separated hashes and stable policy versions |
 | Per-key arrow policy and second instance | categorical specification and replacement oracle | noncommuting diffs, heterogeneous keys, source validation, associative semantic composition, disjoint permutations, endpoint deltas, checkpoint observations and explicit work/dependency accounting |
 | Complete multi-catalog query | front/rank primitives | oracle-equivalent root-to-leaf queries; both frontier contexts; equality at cuts; recorded bounds on entries and bytes visited |
 | Conservative fractional-index codec tuning | native LPFC and tested shared-cut policy | streaming reindex against changed downstream layout without changing native bytes; measured replayed-prefix bytes; empty projected streams and scratch-space costs |

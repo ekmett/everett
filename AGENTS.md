@@ -6,7 +6,9 @@ Keep the README an extensive introduction to the motivation and working APIs as
 the library grows. Write the documents in my voice: first person for my design
 choices, and "we" when walking through an argument with the reader. Do not
 describe me or my ideas from a distant third-person perspective. Keep factual
-bibliographic attribution and copyright notices intact. Follow the approachable,
+bibliographic attribution and copyright notices intact. Describe the current
+API directly; omit internal prototype history and incidental development provenance.
+Follow the approachable,
 example-led style of my Haskell packages: setext headings, useful documentation
 links, Contact Information and the final -Edward Kmett signoff. Demonstrate
 tested features; keep detailed implementation tracking in docs/implementation.md.
@@ -22,7 +24,7 @@ the README and design Markdown in Doxygen, and verify that equations render.
 - Use lowercase/snake_case names for concrete types, functions, namespaces,
   variables and files. Short uppercase template parameters are welcome.
 - Use struct with explicit private/protected sections, two-space indentation,
-  .h headers with #pragma once, .cc implementations, and T const & spelling.
+  .h headers with `#pragma once`, .cc implementations, and T const & spelling.
 - Include public headers through everett/foo.h. Keep helpers with their sole
   consumer and extract them only for actual sharing.
 - Prefer templates, CRTP and associated type families for policy specialization.
@@ -35,7 +37,7 @@ the README and design Markdown in Doxygen, and verify that equations render.
   choice; both complete texts are in LICENSES/ and the choice is stated in LICENSE.
   Do not change license terms without an explicit instruction.
 - File documentation stays in the existing footer form. The optional Doxygen
-  build uses the `ein` license aliases and checks declaration ownership; see
+  build uses license aliases and checks declaration ownership; see
   docs/doxygen.md before changing those commands or their placement.
 
 ## Work and verification

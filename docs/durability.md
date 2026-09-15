@@ -1,10 +1,9 @@
 # Durable publication and merge resumption
 
-I separate the [file lifecycle](file-lifecycle.md)—immutable `.kv` and `.index`
-objects, checked envelopes and mapping lifetime—from the
-[SQLite catalog](catalog.md), which owns world representations, pins,
-publication outcomes and merge continuations. We need a publication protocol
-that covers both.
+The [file lifecycle](file-lifecycle.md) covers immutable `.kv` and `.index`
+objects, checked envelopes and mapping lifetime. The [SQLite catalog](catalog.md)
+covers world representations, pins, publication outcomes and merge continuations.
+A save needs both: durable bytes and a durable way to find them.
 
 Status: design and executable protocol model, 2026-09-15. We can check ordering
 and retention decisions with injected backend outcomes using
@@ -14,9 +13,8 @@ or power loss.
 
 ## Contract
 
-A merge changes the representation of a logical world. I require us to retain
-its inputs as the recovery source until both the replacement and the manifest
-selecting it are durable:
+A merge changes a world's representation. Until both the replacement and the
+manifest selecting it are durable, its inputs remain our recovery source:
 
 ```text
 retain old recovery root and exact input dependencies
@@ -29,12 +27,12 @@ retain old recovery root and exact input dependencies
 
 By **manifest**, I mean the immutable set of representation rows and exact
 dependencies in SQLite. **Root selection** is a catalog transaction updating a
-timeline or retained owner; I do not introduce a separate custom selector file.
-We use SQLite's transaction and recovery machinery for the catalog. Mmap gives
-us a reading mechanism, not a publication order.
+timeline or retained owner. SQLite's transaction and recovery machinery handles
+this selection, without a separate custom selector file. Mapping makes bytes
+readable; it does not establish when they become durable.
 
-I start with separate immutable files. If we later use a managed-extent
-allocator, it must preserve the same durable identity and retention contract.
+The initial backend uses separate immutable files. A later managed-extent
+allocator must preserve the same durable identity and retention contract.
 
 We retain the manifest's exact fractional-index dependencies as well as its
 native inputs. A merge may finish before dependent indexes are rebuilt. Each
@@ -43,13 +41,13 @@ ready; we cannot release everybody's retention when the first dependent switches
 
 ## Why failure changes the protocol
 
-Rebello et al. observed filesystems marking failed writeback pages clean. A later
-`fsync` can succeed without writing the missing data; cached reads can still show
-the desired contents. Their experiments also found materially different failure
-behavior across filesystems. I take this as evidence that we cannot infer
-recovery from a successful retry, rather than as a universal description of
-every current backend.
-See [Can Applications Recover from fsync Failures?, ATC 2020, §§2–3 and §5](https://www.usenix.org/system/files/atc20-rebello.pdf).
+Rebello et al. observed filesystems marking failed writeback pages clean. A
+later `fsync` can succeed without writing the missing data; cached reads can
+still show the desired contents. Their experiments also found materially
+different failure behavior across filesystems. A successful retry is therefore
+insufficient evidence of recovery. The experiments do not describe every current
+backend, but they rule out relying on that inference in a general protocol. See
+[Can Applications Recover from fsync Failures?, ATC 2020, §§2–3 and §5](https://www.usenix.org/system/files/atc20-rebello.pdf).
 
 **An error leaves the attempted publication uncertain.** The last acknowledged
 durable root and its input retention remain our recovery basis. The candidate
@@ -90,8 +88,8 @@ head. Verifying only old inputs or a checkpoint does not resolve the head's
 state. Starting a fresh generation never authorizes us to reclaim the failed
 generation's extents.
 
-Before attempting the head change, I require an independently committed recovery
-owner retaining both the old representation and candidate outputs. We leave
+Before attempting the head change, independently commit a recovery owner that
+retains both the old representation and candidate outputs. We leave
 that owner in place during the selecting transaction and release it only in a
 later, established retirement transaction. This keeps old-input retention from
 depending on the very commit whose outcome may be uncertain.
@@ -122,8 +120,8 @@ transaction. We must never overwrite an existing sealed object when installing
 a name. If a verified content-identical object already exists, we acquire its
 ownership through the same catalog protocol before reuse. The weak world
 fingerprint does not establish that identity. SQLite cannot synchronize external
-files on our behalf; I specify its own durability settings, supported release
-and transaction handling in [catalog.md](catalog.md).
+files on our behalf; [catalog.md](catalog.md) specifies its own durability
+settings, supported release and transaction handling.
 
 For managed extents, allocation and generation records take the place of file
 names. Do not recycle a candidate extent after uncertain publication: a durable
@@ -132,16 +130,16 @@ the allocator considers it free. Never overwrite already sealed checkpoint
 bytes, even when appending a neighboring logical record would touch the same
 physical update unit.
 
-For macOS, we must choose and verify the power-loss barrier explicitly.
-Apple's archived documentation distinguishes `fsync` from `F_FULLFSYNC`, which
-asks the drive to flush its own buffered data. I do not assume that the Linux
-syscall recipe transfers unchanged to APFS or to managed extents.
+For macOS, we must choose and verify the power-loss barrier explicitly. Apple's
+archived documentation distinguishes `fsync` from `F_FULLFSYNC`, which asks the
+drive to flush its own buffered data. The Linux syscall recipe cannot be assumed
+to transfer unchanged to APFS or to managed extents.
 [Apple fsync manual](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/fsync.2.html)
 
 ## Resumable merge checkpoints
 
-I give the merge recipe an identity separate from the world signature. We bind
-that identity to:
+A merge recipe needs its own identity. The world signature cannot identify its
+physical inputs or encoding choices. Bind the recipe identity to:
 
 - Exact immutable input versions and their order/precedence, comparator and
   encoding versions, sort/schema and hash policies, resolver rules, and
@@ -170,8 +168,8 @@ that identity to:
   checkpoint descriptor itself. The algebraic world signature is not a byte
   checksum and cannot establish physical checkpoint identity.
 
-I store a small checkpoint descriptor as a versioned SQLite BLOB with relational
-links to its inputs and sealed output ranges, without adding a custom checkpoint
+A small checkpoint descriptor lives in a versioned SQLite BLOB, with relational
+links to its inputs and sealed output ranges. This needs no custom checkpoint
 file type. We persist the output ranges first, then commit the descriptor and
 its retention in SQLite. We keep the old checkpoint reachable until the new one
 is durable. Subsequent construction must preserve sealed extents physically;
@@ -194,10 +192,10 @@ regenerate from the pinned inputs.
 
 ### Bounded first implementation
 
-For the first model, I checkpoint only at complete-record boundaries and save
-full predecessor keys for each input plus the previous output key. That gives
-us sufficient context for ordinary front coding and keeps the initial recovery
-protocol clear. The metadata continuation is opaque versioned data; actual
+The first model checkpoints at complete-record boundaries, saving full
+predecessor keys for each input and the previous output key. This supplies
+the context ordinary front coding needs and keeps the initial recovery protocol
+straightforward. The metadata continuation is opaque versioned data; actual
 rank/select/merge codec serialization and its SQLite representation are still
 to be implemented and validated. The model's byte-vector fields are not an
 implementation of typed byte/bit checkpoint encoding.
@@ -210,7 +208,7 @@ checkpoint latency independent of key length.
 
 ## Accounting and backpressure
 
-I keep recovery work separate from the prepaid merge budget. We track output
+Recovery consumes work beyond the prepaid merge budget. We track output
 bytes, prefix reconstruction, index rebuilding, checksum work and descriptor/spool
 serialization. Reconstructing after an I/O failure costs additional work; a
 failed attempt does not restore the credit already spent on it.
@@ -240,8 +238,8 @@ serve as admission records for accepted participant updates. SQLite stores those
 records and their replay horizon. The adapter and durable replay executor remain
 future backend work.
 
-I use the generic pin layer's immutable `replace(exact_inputs, outputs)` operation
-as the in-memory ownership boundary. We obtain output handles before constructing
+The generic pin layer's immutable `replace(exact_inputs, outputs)` operation
+supplies the in-memory ownership boundary. We obtain output handles before constructing
 the replacement, persist the candidate root while keeping the old owner alive,
 and retire only after durable publication. Existing saves and readers retain
 their own owners. Index dependencies, checkpoint ranges and staged candidates
@@ -264,7 +262,7 @@ its old-pin flag grants no authority to delete references held by another owner.
 Our tests inject failure at each publication boundary and reproduce a fake
 writeback failure that clears dirty state while leaving new cache bytes. They
 also check context-preserving checkpoint resumption, stale identities, backward
-cursors, size overflow and uncertain manifest reconciliation. I am not claiming
-filesystem, power-cut, process-restart, allocator or actual mmap durability tests
-here. We still need the backend to durably serialize recovery facts and
-reconstruct the state machine after process restart.
+cursors, size overflow and uncertain manifest reconciliation. Filesystem,
+power-cut, process-restart, allocator and actual mmap durability tests remain
+backend work. That backend must durably serialize recovery facts and reconstruct
+the state machine after process restart.

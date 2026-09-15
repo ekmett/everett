@@ -1,23 +1,24 @@
 Everett: Persistent Storage Through Composable Change
 ====================================================
 
-I'm building Everett, a C++20 library, around immutable sorted blobs,
-small changes, and explicit ownership. I want compressed string
-keys, fractional cascading, shared snapshots, partitioned updates, and
-fingerprints that survive changes in physical representation.
+Suppose we have a large table and a small change to make to it. We'd like to
+store the change as a small object, keep the old table available to readers,
+and combine the two when we have time. A snapshot then amounts to retaining
+the objects we already have.
 
-My starting point is simple: a large table should be able to accept a small
-change as a small object. Readers should keep using the exact objects they
-already own. Compaction should create something new, and a snapshot should be
-cheap enough to take before trying an idea. Once those choices are made,
-searching, compression, reclamation, and scheduling become parts of the same
-design.
+Everett is a C++20 library built around that idea: immutable sorted blobs,
+compressed string keys, and explicit ownership. Fractional cascading lets us
+search across the blobs; partitioned updates let us produce changes
+independently; algebraic fingerprints let us compare the resulting worlds
+even when we've compacted them differently. The interesting part is making
+these pieces agree about what they own, what they can forget, and who pays
+for the work.
 
 Everett 0.1.0 is experimental. The header-only library provides encoded storage
 components, a mapped read side, and an in-memory reference world; the persistent
-runtime is still being integrated. I track the tested contracts in the
-[implementation ledger](docs/implementation.md). APIs and persisted formats may
-change during this work.
+runtime is still being integrated. The
+[implementation ledger](docs/implementation.md) records the tested contracts.
+APIs and persisted formats may change during this work.
 
 Start with the [examples](#examples) to build a blob and an index chain. The
 [field guide](#field-guide) explains how the pieces fit, and the
@@ -36,7 +37,7 @@ I call the backing store and its relationships the **multiverse**.
 
 | Component | What it gives you |
 | --- | --- |
-| `storage_policy` | One choice of byte/bit units, value layout, and group size throughout a type family. |
+| `storage_policy` | One choice of byte/bit units, value layout, group size and backspace code throughout a type family. |
 | `profile_array`, `profile_view`, `profile_cursor` | Encoded records, borrowed views, and sequential decoding. |
 | `profile_blob` | Native records, a separate borrowed stream, group navigation, and false-borrow flags. |
 | `sample_cursor`, `index_builder`, `index_pipeline` | Sampling an existing pair and building new index links incrementally. |
@@ -58,16 +59,18 @@ and [catalog design](docs/catalog.md) describe that transition on disk.
 
 ### Searching through sorted streams
 
-Independent binary searches through many sorted runs repeat work. Fractional
-cascading carries information from one search into the next: selected target
-keys establish a small interval in the following pair.
+Binary search gets us into one sorted run. Repeating it independently in every
+run costs another logarithm. Fractional cascading lets us carry the result of
+one search into the next: selected target keys bound a small interval in the
+following pair.
 
-I represent the virtual merge of native and borrowed keys using grouped
-counts. At a group boundary, rank tells us how many occurrences came from the
-borrowed stream; subtraction gives the native count. The projected ranges
-contain at most `K` occurrences in total. Native entries come first on equality,
-and borrowed duplicates remain distinct. A borrowed key also present natively
-gets a **false-borrow** flag, preserving both its lookup meaning and its position.
+We don't have to store the merged keys to describe that interval. Grouped counts
+suffice to represent the virtual merge of native and borrowed keys. At a group
+boundary, rank tells us how many occurrences came from the borrowed stream;
+subtraction gives the native count. The projected ranges contain at most `K`
+occurrences in total. Native entries come first on equality, and borrowed
+duplicates remain distinct. A borrowed key also present natively gets a
+**false-borrow** flag, preserving both its lookup meaning and its position.
 
 The group size is a policy choice of the form `K = 2^r - 1`:
 
@@ -78,20 +81,20 @@ The group size is a policy choice of the form `K = 2^r - 1`:
 | 15 | 4 | 0, 15, 30, … |
 | 31 | 5 | 0, 31, 62, … |
 
-I've made fifteen the default. Smaller groups spend more index space to narrow
-the next search; larger groups amortize metadata over more records. Group size and
+Fifteen is the default. A smaller group buys a narrower search window with more
+index space; a larger group spreads the metadata over more records. Group size and
 level growth are separate choices. The [sampling analysis](docs/sampling.md)
 explains their interaction, including why sampling counts augmented occurrences
 rather than distinct keys.
 
 ### String compression and offsets
 
-Sorted strings share prefixes. Front coding records how far to backspace from
-the preceding key and which suffix to append. I use locality-preserving front
-coding (LPFC) for native arrays, so a lookup has a controlled starting context.
-I encode borrowed streams separately so they can exploit the context known at
-shared group boundaries. Rebuilding a borrowed stream therefore leaves the
-native bytes intact.
+Sorted strings share prefixes, so we can encode a key by backspacing from its
+predecessor and appending a suffix. The complication is starting a search in
+the middle of that encoding. Locality-preserving front coding (LPFC) gives the
+native array a controlled starting context. For borrowed keys, we can use the
+context already known at shared group boundaries. Keeping that encoding in a
+separate stream lets us rebuild it while retaining the native bytes.
 
 The byte profile counts lengths and offsets in bytes. The bit profile works
 with densely packed, most-significant-bit-first strings and counts in bits.
@@ -100,14 +103,21 @@ units: `fixed_values<3>` means three bytes under a byte policy and three bits
 under a bit policy. Borrowed records carry zero value bits while retaining the
 same policy family.
 
-Each physical stream marks group starts and an end sentinel. Elias–Fano encodes
-those monotone offsets. With fixed-width values, the offset directory subtracts
-the predictable value contribution before encoding it, then adds it back during
-access. If width is `w` and record ordinal is `i`, the contribution is `w * i`
-in the same address units. The fixed payload stride consequently does not inflate
-the residual offset universe; value width can still affect where native LPFC
-chooses to restart. The terminal sample uses the actual record count,
-including a short final group.
+Bit backspaces can use `golomb<M>` or `exponential_golomb<Order>`; the default
+is `exponential_golomb<0>`. The choice belongs to the policy and is checked in
+stream and file metadata. Checkpoint and suffix/value lengths still use
+order-zero exponential-Golomb, while the byte profile uses unsigned varints.
+Golomb's unary quotient can be long for a large backspace, so its decoding
+cost includes the count's encoded length even when the resulting key is short.
+
+We mark each physical stream's group starts and end sentinel, then encode those
+monotone offsets with Elias–Fano. Fixed-width values give us an additional
+saving: their contribution to an offset is predictable, so we subtract it before
+encoding and add it back on access. If width is `w` and record ordinal is `i`,
+the contribution is `w * i` in the same address units. The fixed payload stride
+consequently does not inflate the residual offset universe; value width can
+still affect where native LPFC chooses to restart. The terminal sample uses the
+actual record count, including a short final group.
 
 This is why the blob has two sparse offset structures and a grouped rank
 structure: two physical byte/bit streams, one virtual order. See
@@ -149,16 +159,18 @@ costs, so an entry budget is not a byte or wall-clock deadline.
 
 ### Updates and agreement
 
-A replacement table represents deletion with an absent value. Updates carry
-both the old and new binding, allowing admission to verify that an actual live
-entry is being deleted. That check matters for live-size accounting: an invented
-tombstone cannot earn rebuilding credit. The [strong-deletion protocol](docs/rebuild.md)
-uses that accounting to replace accumulated history with a smaller live table.
+A replacement table represents deletion with an absent value. To count a
+deletion, though, we need to know that something was there. Updates therefore
+carry both the old and new binding, and admission checks the old one. Otherwise
+we could earn rebuilding credit by inventing tombstones for absent keys. The
+[strong-deletion protocol](docs/rebuild.md) uses that accounting to replace
+accumulated history with a smaller live table.
 
-I summarize the reference world's resolved contents with
+Now summarize the reference world's resolved contents with
 `sum(h_key(key) * h_value(value))`, taking the hash of an absent value as zero.
-An update adds the difference between its new and old binding. The result is
-independent of compaction and of the admission order of disjoint changesets.
+An update subtracts the old binding's contribution and adds the new one.
+Compaction leaves this sum alone, and disjoint changesets can contribute their
+deltas in either order.
 A file's native contents and its contribution to a world are separate quantities;
 replacement deltas retain the information needed to subtract older bindings.
 
@@ -176,8 +188,8 @@ the storage mechanism useful beyond one interpretation of a map.
 Examples
 --------
 
-I've kept each C++ example below a complete program. Include the component you
-use and link the CMake interface target described under [building](#building).
+Each C++ example below is a complete program. Include the component you use
+and link the CMake interface target described under [building](#building).
 
 ### Choose byte or bit units
 
@@ -191,12 +203,13 @@ int main() {
   using bytes = everett::storage_policy<
     everett::profile_unit::byte, everett::fixed_values<8>, 15>;
   using bits = everett::storage_policy<
-    everett::profile_unit::bit, everett::fixed_values<3>, 7>;
+    everett::profile_unit::bit, everett::fixed_values<3>, 7, everett::golomb<3>>;
 
   static_assert(bytes::bits_per_unit == 8);
   static_assert(bits::bits_per_unit == 1);
   static_assert(*bytes::value_width == 8);
   static_assert(*bits::value_width == 3);
+  static_assert(bits::backspace_parameter == 3);
 
   auto key = everett::bit_string::from_bits("1011011");
   return key.view().size() == 7 ? 0 : 1;
@@ -393,16 +406,47 @@ from the leaf name. Logical keys never become filesystem paths.
 
 `mapped_file` provides read-only shared ownership of an opened regular file.
 Bounded slices retain the mapping after the original owner is released.
-`file<P>::open(path)` checks the object's magic, version, policy, extents,
-padding, and CRC32C integrity; its current whole-body checksum validation reads
-the entire object on open. `multiverse<P>` opens these objects beneath an
-existing backing directory and exposes their associated policy-bound types.
+`file<P>::open(path)` checks the 96-byte header and exact file extent, including
+magic, version, policy and header CRC32C, without reading the body. An explicit
+`file<P>::scan()` checks the whole body's CRC32C and bit padding when recovery
+or a scrub calls for it. Opening an object does not certify its payload.
+`multiverse<P>` opens these objects beneath an existing backing directory and
+exposes their associated policy-bound types.
 
-I've chosen SQLite for worlds, pins, and merge progress, using ordinary metadata
-tables as described in the [catalog design](docs/catalog.md). That leaves us
-two immutable object kinds to manage. The [durability protocol](docs/durability.md)
+For already trusted objects, pass `file_open_mode::trusted` to `open`,
+`from_slice`, or `multiverse<P>::open_object`. This avoids reading even the
+header page. `body()` returns the physical bytes after the 96-byte envelope;
+requesting `header()` explicitly reads and validates the metadata, returning it
+by value. `scan()` still performs full validation. Trusted opening assumes the
+caller already knows the object's type, policy and format; checked opening is
+the default.
+
+Worlds, pins, and merge progress belong in SQLite's metadata tables, as described
+in the [catalog design](docs/catalog.md). This leaves two immutable object kinds
+for us to manage. The [durability protocol](docs/durability.md)
 orders verified output, durable publication, and old-pin release, with explicit
 recovery states after failed synchronization.
+
+Proofs
+------
+
+The [Lean model](proof/README.md) checks the algebra, ownership and fractional
+indexing rules behind the construction. Its theorems cover chronological composition,
+disjoint updates, endpoint contributions, snapshot adoption and retention of
+exact target dependencies. An adjacent-merge theorem connects the composition
+law to adoption of a new representation.
+
+For fractional indexing, a search over sampled occurrences followed by a local
+window search agrees with a full predecessor search. Endpoint ranks project
+that window into native and borrowed ranges sharing one `K`-entry budget.
+False-borrow recovery finds an equal native key even when it lies before the
+window. Equal borrowed occurrences remain distinct, and indexes retain their
+exact targets across catalog extension and safe reclamation.
+
+These are abstract sequence proofs. Compressed rank, Elias–Fano, front coding,
+complete cascade execution, scheduling and the filesystem protocol still need
+their own refinements. The proof project builds independently of C++ and records
+those boundaries explicitly.
 
 Building
 --------
@@ -461,10 +505,10 @@ overloads, and source locations. See [Doxygen conventions](docs/doxygen.md) and
 Further Reading
 ---------------
 
-I started with my functional
+The functional
 [`Data.Vector.Map`](https://hackage.haskell.org/package/structures-0.2/docs/Data-Vector-Map.html)
-and its deamortized variant in `structures`. For Everett's levels, I use the
-redundant COLA scheme from
+and its deamortized variant in `structures` supply the starting point. Everett's
+levels use the redundant COLA scheme from
 [Cache-Oblivious Streaming B-trees](https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf).
 String locality and LPFC come from
 [Cache-Oblivious String B-trees](https://people.csail.mit.edu/bradley/papers/BenderFaKu06.pdf),

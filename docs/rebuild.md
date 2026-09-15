@@ -1,11 +1,13 @@
 # Strong deletion by incremental rebuilding
 
-Design checkpoint, 2026-09-15. Here I specify the rebuilding executor we still
-need to implement above the [Everett design](design.md). Our existing reference
-world tests eager compaction, live counts and fingerprints; it does not implement
-this schedule or its disk publication protocol.
+Design checkpoint, 2026-09-15. Tombstones remove bindings from query results,
+but leave their old records behind. To keep the active representation proportional
+to live state, we need to rebuild before too much of it becomes history. This
+is the rebuilding executor planned above the [Everett design](design.md).
+The existing reference world tests eager compaction, live counts and fingerprints;
+it does not implement this schedule or its disk publication protocol.
 
-I state the concrete elision and clean-image rules for replacement-valued
+The concrete elision and clean-image rules below apply to replacement-valued
 records. To use the [per-key categorical extension](arrows.md), we additionally
 need a category-specific clean representation: preserve the composite arrow,
 or establish that a materialized endpoint is sufficient for all supported future
@@ -14,9 +16,9 @@ discard arrow semantics or source dependencies.
 
 ## 1. The Overmars–van Leeuwen construction
 
-I base the construction on **Theorem 1 in §2**, printed pages 3–4 of
-Overmars and van Leeuwen, *Worst-case optimal insertion and deletion methods for
-decomposable searching problems*. The
+The starting point is **Theorem 1 in §2**, printed pages 3–4 of Overmars and van
+Leeuwen, *Worst-case optimal insertion and deletion methods for decomposable
+searching problems*. The
 [Utrecht author copy](https://ics-archive.science.uu.nl/research/techreps/repo/CS-1980/1980-10.pdf#page=5)
 contains the same construction. The journal version is associated with
 [DOI 10.1016/0020-0190(81)90093-4](https://doi.org/10.1016/0020-0190(81)90093-4).
@@ -46,9 +48,9 @@ too.
 
 When we accept a tombstone, the binding immediately disappears from logical
 queries. That is a weak deletion: we may still retain the older binding and its
-nominal level weight in the representation. With strong deletion, I want us to
-remove that historical burden often enough to size the active representation
-by current live state.
+nominal level weight in the representation. Strong deletion removes this
+historical burden often enough that current live state determines the active
+representation's size.
 
 Let:
 
@@ -73,14 +75,14 @@ a distinct admitted mutation on the candidate does count toward that candidate
 generation's $u$. A batch of a thousand key changes contains a thousand
 scheduling units.
 
-I am aiming for an active record universe $O(N)$, hence $O(\log(N+1))$ levels,
-with the redundant-level scheme's constant factors. I am **not** requiring every
-current file to be tombstone-free at every instant: concurrent updates can create
-new obsolete versions immediately after we clean up.
+The target is an active record universe $O(N)$, hence $O(\log(N+1))$ levels,
+with the redundant-level scheme's constant factors. Concurrent updates can create
+new obsolete versions immediately after cleanup. The schedule must bound their
+accumulation; it need not eliminate every tombstone at every instant.
 
-By “half-size,” I mean that the representation's scale follows a world with half
-as many live bindings. I do not mean exactly half as many bytes:
-key lengths, prefix compression and retained snapshots can differ substantially.
+“Half-size” refers to a world with half as many live bindings. Its byte size may
+change quite differently: key lengths, prefix compression and retained snapshots
+can differ substantially.
 The record-count result alone does not establish a byte-space bound relative to
 the surviving strings. Section 8 states the additional byte accounting.
 
@@ -130,7 +132,8 @@ created history in the new generation. The next trigger at $\lfloor b'/4\rfloor$
 still has at least $\lfloor b'/8\rfloor$ mutations of slack. A generation can
 therefore finish before another rebuild is needed.
 
-I use an eager bounded-size base case, for example below 64 live bindings.
+Small generations use an eager bounded-size base case, for example below 64 live
+bindings.
 We must give large incoming batches their per-binding work budget while staging
 them. Counting one large batch as one mutation would bypass both the trigger and
 the deadline. An atomic batch
@@ -250,9 +253,9 @@ invalidate the proof. We also need to resume background tasks at the charged
 work granularity, including inside long strings.
 
 If arrivals stop, we can keep the same worker running with an idle-time allocation.
-The mutation-count deadline still requires CPU/I/O service. I am not using it to
-claim that an unbounded filesystem stall or a failed durability barrier becomes
-a successful bounded-time save.
+The mutation-count deadline still requires CPU/I/O service. An unbounded
+filesystem stall or failed durability barrier can prevent a successful save;
+the counting argument supplies no wall-clock bound across such a failure.
 
 ## 6. Why historical updates stop determining the universe
 
@@ -281,8 +284,8 @@ key must eventually replace its old generation even when live cardinality never
 changes. We would not reset the universe by resetting a nominal counter while
 retaining all physical versions.
 
-I include the current query dependency closure and unfinished current rebuilds
-in this bound. We charge objects retained solely by old saves, readers, other
+This bound includes the current query dependency closure and unfinished current
+rebuilds. We charge objects retained solely by old saves, readers, other
 timeline forks or their checkpoints separately as retained history. We cannot
 require a snapshot of an old large world to occupy space proportional to today's
 small world.
@@ -367,13 +370,13 @@ $O(|\text{changed key}|\log N)$ worst-case update time for strings.
 
 Likewise, we need a separate obsolete-byte trigger if we want a space promise
 relative to live encoded byte volume. Deleting one enormous key can halve that
-volume while barely changing $N$. I cannot claim a half-byte-size deadline from
-the quarter-record-count trigger. We still need to measure and bound that
+volume while barely changing $N$. A quarter-record-count trigger therefore
+cannot establish a half-byte-size deadline. We still need to measure and bound that
 weighted rebuilding policy when implementing the executor.
 
 ## 9. Acceptance cases for the executor
 
-I require us to test the executor's schedule against a simple resolved-table oracle:
+Test the executor's schedule against a simple resolved-table oracle:
 
 - Pure deletion, insertion and overwrite streams, including a fixed one-key
   live world with arbitrarily many overwrites.
@@ -393,6 +396,6 @@ I require us to test the executor's schedule against a simple resolved-table ora
 - Failure and restart at every durable barrier, with all checkpoint/pin owners
   retained until the recovery protocol permits reclamation.
 
-I am listing required tests for a future executor, not claiming those results
-here. The record-count schedule and work inequality are the reasoning we must
-preserve when implementing it.
+These are required tests for the future executor. Its implementation must
+preserve the record-count schedule and outstanding-work inequality developed
+above.

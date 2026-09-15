@@ -1,16 +1,16 @@
 # SQLite catalog for worlds, pins and background work
 
-Chosen architecture, 2026-09-15. I chose SQLite for a multiverse's relatively
-small metadata: logical worlds, exact representations, retained roots,
-publication attempts and merge/index continuations. I keep native data and
-fractional indexes in Everett's `.kv` and `.index` files. SQLite owns the catalog
-and its own journaling files, so we need no additional custom manifest,
-transaction-log or checkpoint-file format.
+Chosen architecture, 2026-09-15. Most of the bytes belong in immutable `.kv` and
+`.index` files. The metadata is comparatively small: which worlds exist, which
+representations they use, who retains them, and how far each merge or index
+build has progressed. SQLite gives us transactions over that metadata and a
+journal for recovering it. We need no additional custom manifest, transaction-log
+or checkpoint-file format.
 
-This is the architecture and acceptance contract I want the backend to satisfy.
+This document specifies the backend's architecture and acceptance contract.
 The SQLite adapter, schema migrations and transactional store executor are not
-implemented yet. We have executable models in the existing in-memory pin owner
-and durability state machine.
+implemented yet. The existing in-memory pin owner and durability state machine
+give us executable models of the ownership and publication rules.
 
 ## 1. What the catalog owns
 
@@ -30,10 +30,10 @@ We need to distinguish the world we mean from the objects we use to read it:
 - A **branch point** retains one exact representation. Readers, saved branch
   points, jobs and caches likewise have explicit retention owners.
 
-I want to retain descriptions of historical worlds without necessarily retaining
-their files forever. We therefore derive retention from the designated roots
-below, not merely from the continued existence of descriptive rows. A branch
-point intended to remain readable must have such a root.
+A description of a historical world can outlive the files needed to read it.
+Retention therefore follows the designated roots below. Keeping a descriptive
+row alone does not keep those files. A branch point intended to remain readable
+must have a root.
 
 The catalog records the canonical policy P: byte/bit unit, group size, value
 layout and interpretation versions. Opening it as `multiverse<P>` validates
@@ -42,8 +42,8 @@ schema versions are pinned by each world and by the jobs interpreting it.
 
 ## 2. Proposed relational schema
 
-I use the following names to specify the relationships; final DDL and migrations
-remain implementation work. Immutable rows are inserted once and cannot be
+The following names specify the relationships; final DDL and migrations remain
+implementation work. Immutable rows are inserted once and cannot be
 edited into a different object, manifest, recipe or checkpoint. Mutable lifecycle
 rows carry an expected revision/generation for conditional updates.
 
@@ -73,8 +73,8 @@ must also be explicit edges. Registering a blob validates agreement among those
 edges, the target blob and the external index metadata. Foreign keys establish
 row existence; they do not establish this semantic agreement or graph acyclicity.
 
-I start with a chain representation: we reject cycles and require a target to be
-fully registered before sealing its dependent. Metadata about unfinished work
+The initial representation is a chain. We reject cycles and require each target
+to be fully registered before sealing its dependent. Metadata about unfinished work
 does not become a visible query graph. We obtain paths from the checked
 object-name allocator; a path field is not permission to open an arbitrary
 filesystem path.
@@ -91,12 +91,12 @@ filesystem path.
 | `timelines` | timeline ID/name, owner ID, head world, head representation, revision | unique name; head representation belongs to head world and is retained by that owner |
 | `branch_points` | branch ID/name, owner ID, world ID, representation ID | exact world/representation pair retained by that owner |
 
-I use composite foreign keys where they can express the contract directly. For
-example, `(head_representation_id, head_world_id)` references the corresponding
-unique pair in `representations`, and `(owner_id, head_representation_id)`
-references `owner_representations`. The latter can be deferrable during an
-atomic head change. A branch point uses the equivalent constraints. Index the
-reverse dependency and owner-reference columns used by reachability and cleanup.
+Composite foreign keys can express some of this contract directly. For example,
+`(head_representation_id, head_world_id)` references the corresponding unique
+pair in `representations`, and `(owner_id, head_representation_id)` references
+`owner_representations`. The latter can be deferrable during an atomic head
+change. A branch point uses the equivalent constraints. Index the reverse
+dependency and owner-reference columns used by reachability and cleanup.
 
 A root retains the transitive closure of its objects. We can cache refcounts to
 accelerate this, provided we maintain them transactionally and can audit them
@@ -126,12 +126,12 @@ row alone is not a pin. Publication and checkpoint transactions validate this
 coverage. Build, rebuild and reindex jobs share the mechanism but have distinct
 versioned recipe/context encodings.
 
-I do not want a SQLite row for every logical key merely for replay bookkeeping.
-We can retain an accepted batch's immutable update file and reconstruct a round's
-claimed-key set from admitted files after restart, or use a separately specified
-compact summary. We must budget that reconstruction as real recovery work.
-Completed rounds need an explicit replay horizon or durable rejection watermark
-before we retire old batch identities and their retained update files.
+Replay bookkeeping need not put every logical key in SQLite. Retaining accepted
+batches' immutable update files lets us reconstruct a round's claimed-key set
+after restart; a separately specified compact summary is another option. We must
+budget that reconstruction as real recovery work. Completed rounds need an
+explicit replay horizon or durable rejection watermark before we retire old
+batch identities and their retained update files.
 
 ### Value encodings and constraints
 
@@ -168,16 +168,16 @@ twice the world. Two representations with equal sums can still have different
 contents through collisions or a bug; the sum is a lint check, not the merge
 correctness proof.
 
-I keep the algebra in C++, rather than interpreting SQL `SUM(contribution)` as
-its implementation. We can display canonical values with `hex(...)` and use the
-configured C++ algebra to audit sums, including finite fields and wrapping
-arithmetic. Contributions belong to the logical manifest entries, not to one
-global object refcount.
+The configured C++ algebra computes these sums. SQL `SUM(contribution)` need not
+implement its arithmetic, particularly for finite fields or wrapping integers.
+We can display canonical values with `hex(...)` and audit their sums through the
+configured algebra. Contributions belong to the logical manifest entries, not to
+one global object refcount.
 
 ## 4. Connection and transaction policy
 
-I use one SQLite catalog as the atomic metadata boundary. For the initial local
-backend, I choose WAL mode with `synchronous=FULL` and verified foreign keys.
+One SQLite catalog supplies the atomic metadata boundary. For the initial
+local backend, I choose WAL mode with `synchronous=FULL` and verified foreign keys.
 SQLite documents a commit synchronization in WAL/FULL; the selected VFS and
 storage path must honor its barrier assumptions. Initial catalog installation
 must also persist its directory name.
@@ -188,8 +188,8 @@ later, and record runtime/source version diagnostics. SQLite's WAL documentation
 also restricts participating processes to one host.
 [SQLite WAL requirements and fix](https://www.sqlite.org/wal.html#the_wal_reset_bug).
 
-I use short `BEGIN IMMEDIATE` transactions for root acquisition, head publication
-and GC claims. SQLite permits one writer at a time; obtaining that write
+Root acquisition, head publication and GC claims use short `BEGIN IMMEDIATE`
+transactions. SQLite permits one writer at a time; obtaining that write
 transaction can report `SQLITE_BUSY`. Apply bounded retry/backpressure for
 contention, not a successful acknowledgment. SQLite errors can leave different
 transaction states, which the adapter must inspect explicitly.
@@ -202,9 +202,9 @@ Neither kind of transaction substitutes for external-object ownership.
 
 ## 5. Publish files before adopting their catalog roots
 
-We have to publish across external objects and a transactional catalog. I use
-the following order because SQLite does not atomically flush `.kv` or `.index`
-files on our behalf.
+SQLite's transaction covers the catalog. It does not atomically flush the
+external `.kv` or `.index` files. Publishing across that boundary requires the
+following order.
 
 1. **Reserve and retain.** Commit a job/attempt identity, fresh object identities
    and generation-specific private paths. Its owner retains exact inputs and
@@ -231,9 +231,9 @@ files on our behalf.
    owner's old inputs. Branch points, readers, other jobs and caches retain their
    own independent roots.
 
-I leave the recovery owner in place across the head-swap transaction. If that
-commit's result becomes uncertain, we can still discover both the old
-representation and the candidate through retention committed before the attempt.
+The recovery owner stays in place across the head-swap transaction. If the
+commit's result becomes uncertain, retention committed before the attempt
+still lets us discover both the old representation and the candidate.
 We resolve an acknowledgment lost after success using the operation ID, without
 applying the same changes twice.
 
@@ -276,9 +276,9 @@ rejects the claimed closure and retries from an available representation. We
 must establish that protection before opening files.
 
 Session heartbeats help us identify stalled work, but a timeout does not prove
-that an mmap user stopped. For the first local backend, I require cooperative
-release or verified death of the exact process instance before retiring an
-abandoned reader owner. We distinguish that instance from PID reuse by boot/start
+that an mmap user stopped. For the first local backend, retiring an abandoned
+reader owner requires cooperative release or verified death of the exact
+process instance. We distinguish that instance from PID reuse by boot/start
 identity or an equivalent kernel-backed liveness mechanism. If liveness is
 uncertain, we keep the pins.
 Distributed lease expiry would require a separate fencing protocol that also
@@ -307,8 +307,8 @@ replay requirements and diagnostic retention policy permit it.
 
 ## 7. Checkpoints and rebuilding progress
 
-I store small continuation state directly as versioned SQLite BLOBs, with indexed
-columns for inspection. Each checkpoint must bind at least:
+Small continuations fit directly in versioned SQLite BLOBs, with indexed columns
+for inspection. Each checkpoint must bind at least:
 
 - Job/attempt/checkpoint identities, exact ordered inputs, recipe and schema P.
 - Native/borrowed cursors, record ordinals, full predecessor lengths, available
@@ -330,9 +330,9 @@ format. After uncertain writes, resumption may need a fresh output generation.
 A full predecessor key can be large; putting it in a cursor BLOB does not make
 its space or write cost constant. We budget the actual context bytes and avoid
 checkpointing full contexts after every record. We can reference sufficient
-already sealed context when the codec proves it valid. I require explicit
-limits and backpressure, rather than an unspecified checkpoint file hiding a
-large spill.
+already sealed context when the codec proves it valid. Explicit limits and
+backpressure must account for this storage; moving it into a checkpoint file
+would still leave us with the same space and work to charge.
 
 A global rebuild additionally records the frozen source, current foreground and
 candidate representations, admission/replay cuts and counters b, u, n_s and h.
@@ -343,8 +343,8 @@ bounded catch-up and byte/work accounting.
 
 ## 8. Browse with existing SQL tools
 
-I want us to be able to inspect the catalog with ordinary SQL tools. For example,
-we can open it read-only using SQLite's shell and inspect its rows and views:
+Ordinary SQL tools should make this state inspectable. For example, open the
+catalog read-only with SQLite's shell to inspect its rows and views:
 [SQLite CLI](https://www.sqlite.org/cli.html#opening_database_files).
 
 ```sh
@@ -386,9 +386,9 @@ FROM objects
 GROUP BY state;
 ```
 
-I also want the schema to expose a `live_object_roots(owner_id, object_id)` view
-expanding active direct roots and each retained representation/blob into its
-native/index objects. Exact dependency closure is then easy to inspect:
+A `live_object_roots(owner_id, object_id)` view should expand active direct
+roots and each retained representation/blob into its native/index objects.
+We can then inspect exact dependency closure:
 
 ```sql
 WITH RECURSIVE reachable(object_id) AS (
@@ -414,7 +414,7 @@ a catalog-only copy is a metadata backup.
 
 ## 9. Acceptance before the backend is called durable
 
-Before calling this backend durable, I require tests covering:
+Before calling this backend durable, we need tests covering:
 
 - Schema/version/policy mismatch, foreign-key enforcement, invalid dependencies,
   wrong file kinds and cycles; equal fingerprints with distinct world/object IDs.
@@ -433,5 +433,5 @@ Before calling this backend durable, I require tests covering:
 - Measured catalog/context size, checkpoint work and writer-lock duration;
   large keys must not conceal unbounded cursor serialization.
 
-SQLite lets me reuse a metadata journal and its recovery machinery. We still
-need these cross-file publication, ownership and recovery protocols.
+SQLite supplies the metadata journal and its recovery machinery. The protocols
+above connect those guarantees to our external files and their owners.

@@ -37,9 +37,6 @@ whose current owner has adopted a different exact index/target pair. It also
 shows a sampled search whose native match lies before the routed window and is
 recovered through a false borrow.
 
-An optional native executable target is available through `lake exe proof_examples`.
-Kernel checking does not require the optional executable.
-
 I use `by decide` only where Lean can reduce a concrete proposition in the
 kernel; these examples do not use `native_decide` as a proof shortcut. Executing
 the compiled examples also depends on the compiler and runtime. The theorem
@@ -150,10 +147,10 @@ For example, the K=3 fixture has one native `5` at virtual position 2 and eight
 borrowed copies spanning several cuts. A query for `5` routes to position 9,
 finds its augmented predecessor at 10, and has an empty native projection.
 Native rank is 2, so the extra probe retrieves native ordinal 1. These outcomes
-are checked by reduction and by the general theorems. Native uniqueness is
-local to this key-value pair: the one-probe theorem does not recover an entire
-run of same-key native arrows. Stable merging and predecessor routing still
-retain those repeated native occurrences.
+are checked by reduction and by the general theorems. Native uniqueness is a
+per-blob invariant; matching keys in different blobs remain separate history
+segments. The more general merge and predecessor theorems preserve multiplicity
+without that invariant, but equality recovery requires it.
 
 The mathematical `rank` function is defined at every position. The concrete
 `rank_groups<K>` API stores boundary ranks. `rank_inside_route` connects the
@@ -242,7 +239,7 @@ I have deliberately not claimed:
 - Correct byte/bit encoding, front coding, compressed rank or Elias–Fano
   representation bounds.
 - A refinement from encoded source streams to the list-level sample certificate,
-  an entire cascade search, or recovery of all same-key native arrow occurrences.
+  an entire cascade search, or composition of same-key history across blobs.
 - A bounded COLA scheduler, strong-deletion work accounting, or byte/I/O costs.
 - Physical-file reachability, reader leases, SQLite transactions or crash recovery.
 - C++ memory safety, compiler refinement or correctness of external implementations.

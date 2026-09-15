@@ -1,8 +1,8 @@
 # Sampling groups and the choice of K
 
-Updated 2026-09-15. I keep **K = 15** as the default. The typed byte and bit
+Updated 2026-09-15. **K = 15** is the default. The typed byte and bit
 profiles support **3, 7, 15 and 31** through
-`storage_policy<Unit, Values, K>`. K counts entries; it does not change whether
+`storage_policy<Unit, Values, K, BackspaceCode>`. K counts entries; it does not change whether
 key lengths, backspaces, values and physical offsets count bytes or bits.
 
 K = 3 is sufficient for the local navigation rules and for constant per-level
@@ -17,13 +17,13 @@ Bender et al.'s *Cache-Oblivious Streaming B-trees*, §3, describes power-of-two
 COLA levels. Its lookahead layout samples every eighth entry and also allocates
 duplicate-pointer cells. Its deamortized construction distinguishes visible and
 shadow arrays; completing a data merge alone does not finish the associated
-lookahead work. I take the scheduling and multi-catalog-search precedents from
-this construction; the count-class layout I use here is different.
+lookahead work. This gives us a precedent for scheduling and multi-catalog
+search. Everett uses a different count-class layout.
 [Original paper, §3](https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=8).
 
 **We derive the recurrence and constants below for Everett's separate native
-and borrowed streams.** I am not restating the paper's slot allocation or
-claiming that its deamortization proof applies unchanged.
+and borrowed streams.** The paper's slot allocation and deamortization proof
+need separate adaptation to this representation.
 
 ## 2. Why a local window works for K = 3
 
@@ -32,7 +32,7 @@ records and borrowed keys. We borrow positions `0, K, 2K, ...` from the exact
 **augmented** target catalog, including its borrowed keys. Sampling only native
 target keys would leave the size of a target window unbounded.
 
-We let R(g) count borrowed entries before virtual position Kg. The virtual window
+Let R(g) count borrowed entries before virtual position Kg. The virtual window
 `[Kg, min(K(g+1), size))` projects to one native range and one borrowed range.
 Their lengths sum to at most K. Boundary ranks suffice: native rank is virtual
 position minus borrowed rank. These facts hold for K = 3 just as they do for 15.
@@ -64,11 +64,11 @@ and [categorical update model](arrows.md).
 
 ### Constructing samples from a pinned pair
 
-I pin one exact, immutable `.kv` + `.index` pair as the target. Its augmented
-order is a **tagged occurrence sequence**, not a set union: we preserve all
-borrowed copies, including false borrows, with native entries before equal borrowed entries and
-equal borrowed entries in their original order. Sample positions `0, K, 2K, ...`
-in that sequence. The pair stays pinned; extraction neither compacts it nor
+Start by pinning one exact, immutable `.kv` + `.index` pair. Its augmented order
+is a **tagged occurrence sequence**: we preserve all borrowed copies, including
+false borrows, with native entries before equal borrowed entries and equal
+borrowed entries in their original order. Sample positions `0, K, 2K, ...` in
+that sequence. The pair stays pinned; extraction neither compacts it nor
 requires a physically merged copy or re-encoded target.
 
 At cut $t=jK$, let $r(j)=R(j)$ be the borrowed population before that cut.
@@ -80,14 +80,14 @@ independent decoding context for borrowed FC. That stream has no LPFC restart
 bound: repeatedly calling `reconstruct_at` at successive sample positions can
 walk the same long prefix chain repeatedly.
 
-I use two sequential decoding cursors over the pinned streams, retaining their
-key contexts, advancing in merged order and emitting every Kth occurrence.
-I skip value payloads using their framing lengths. When building the target
-index, I emit samples from its existing merged-order walk while constructing
-rank classes and shared-cut prefix constraints; that avoids a separate pass.
-Charge visited headers, prefix/suffix decoding, key comparisons and emitted
-sample bytes. A separate streaming pass can visit all A augmented entries;
-producing only $\lceil A/K\rceil$ samples does not make it O(A/K) work.
+Two sequential decoding cursors suffice. Keep their key contexts, advance in
+merged order, and emit every Kth occurrence. Value framing lets us skip the
+payloads. If we're building the target index at the same time, its merged-order
+walk can emit these samples while constructing rank classes and shared-cut
+prefix constraints. Otherwise we make a separate pass. In either case, charge
+visited headers, prefix/suffix decoding, key comparisons and emitted sample
+bytes. A separate streaming pass can visit all A augmented entries; producing
+only $\lceil A/K\rceil$ samples does not make it O(A/K) work.
 
 `sample_cursor<P>` implements this scan over an owned pin to the exact pair.
 It keeps two decoding contexts, preserves tagged ordering and decodes each
@@ -113,12 +113,12 @@ an option for measurement; I have not selected or implemented the format extensi
 
 ### Streaming construction pipeline
 
-In `index_pipeline<P>`, I keep a few fingers per index under construction.
-Each stage merges its native keys with incoming samples from its exact target
-pair and passes every Kth augmented occurrence to the next stage. I use
-ordinary front coding for handoffs: a literal first sample, then a backspace
-count in P units and suffix relative to the preceding sample from that producer. Producer and
-consumer retain one coding context each. Final index coding independently
+`index_pipeline<P>` keeps a few fingers per index under construction. Each stage
+merges its native keys with incoming samples from its exact target pair and
+passes every Kth augmented occurrence to the next stage. Ordinary front coding
+is enough for the handoff: a literal first sample, then a backspace count in P
+units and suffix relative to the preceding sample from that producer. Producer
+and consumer retain one coding context each. Final index coding independently
 applies its shared-cut prefix ceilings. Each stage also retains:
 
 - Native and incoming-sample positions, with a next-key lookahead or explicit
@@ -245,12 +245,12 @@ Increasing K usually reduces sample count and class/offset metadata, while
 increasing the number of candidate records and framing headers inspected per
 window. It can also change which borrowed prefixes need repair. Actual encoded
 space, cache behavior, reconstruction work and value access therefore need
-measurement. I cannot choose a fastest K from the count-class table alone.
+measurement. The count-class table alone cannot tell us which K is fastest.
 
 ## 5. Native-preserving index repair
 
-I use LPFC for native keys, with default restart factor 18. The native
-representation is independent of the borrowed index's current shared cuts. For borrowed key
+Native LPFC, with default restart factor 18, makes the native representation
+independent of the borrowed index's current shared cuts. For borrowed key
 $S_j$, ordinary FC retains the adjacent LCP $a_j$. At each applicable virtual cut
 Kg, the modified policy additionally limits the retained prefix of the preceding
 borrowed key to its LCP with that cut's boundary key. Re-emitted units supply
@@ -272,7 +272,7 @@ by the surrounding store.
 
 Changing K changes P and the native physical group checkpoints as well. That is
 a profile/format migration, not the same operation as reindexing against a new
-target under one fixed P. I do not promise native-byte reuse across such a
+target under one fixed P. Native-byte reuse is not guaranteed across such a
 migration.
 
 ## 6. Where the chain proof stops
@@ -294,7 +294,7 @@ separate chains or by a linear ordering that preserves the per-link growth
 bound, but those are explicit structural choices. Array multiplicity alone does
 not establish the chosen query graph or its buffer capacities.
 
-**Scheduling and persistence.** I still need a scheduler that funds native merges,
+**Scheduling and persistence.** We still need a scheduler that funds native merges,
 borrowed-prefix reconstruction, rank/offset construction and publication at the
 selected K's constants. It must preserve bounded active levels while forks may
 adopt shared results at different times. Old snapshots, readers and checkpoints
@@ -312,8 +312,8 @@ query-limited decoding, every matching native segment along a sampled chain,
 values with exact meaningful-bit lengths, many equal borrowed samples spanning
 cuts, the borrowed-suffix bound, and old/new indexes sharing native bytes.
 
-These tests establish local codec and query results. I have not tested a complete
-COLA merge scheduler, disk publication, admission deadlines or crash recovery
-with them. Before claiming a store-wide bound for any K, I need a scheduler
-proof that names its actual active graph, native capacities, index budgets,
-visible/unfinished representations and retained-history charges.
+These tests establish local codec and query results. The complete COLA merge
+scheduler, disk publication, admission deadlines and crash recovery still need
+their own tests. A store-wide bound for any K also needs a scheduler proof that
+names the actual active graph, native capacities, index budgets, visible/unfinished
+representations and retained-history charges.

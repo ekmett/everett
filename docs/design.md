@@ -2,22 +2,25 @@
 
 Updated 2026-09-15.
 
-I am building Everett around immutable blobs, composable updates, shared merge
-work and persistent logical states. Here I describe the intended design of this
-dynamization store. Public prototype headers are under `include/everett/`;
-the [implementation ledger](implementation.md) distinguishes executable
-components from the remaining storage and scheduling work.
+Start with immutable blobs and a way to merge them. Small updates can become
+small blobs, and retained collections can represent persistent worlds. We can
+share completed merges between those worlds, provided each reader keeps the
+exact dependencies its indexes describe. This document develops that design.
+Public headers are under `include/everett/`; the
+[implementation ledger](implementation.md) distinguishes executable components
+from the remaining storage and scheduling work.
 
-I use locality-preserving front coding (LPFC) as the safe native-key baseline.
-The fractional index's known group boundaries let us remove some reconstruction
-redundancy in a separately rebuildable index codec. Ordinary front coding (FC),
-native LPFC and conservative borrowed-prefix policies have different context
-contracts. We still need to measure and justify their combined space and I/O
-costs; one local decoding result does not establish those bounds.
+For string keys, locality-preserving front coding (LPFC) gives us an independently
+searchable native representation. A fractional index knows more: it knows the
+group boundaries at which a search enters. We can exploit that context in a
+separately rebuildable index codec. Ordinary front coding (FC), native LPFC and
+conservative borrowed-prefix policies consequently have different contracts.
+The local decoding arguments below are a start; their combined space and I/O
+costs still need measurement and justification.
 
 ## 1. Purpose and abstraction
 
-I use the following vocabulary for the intended aggregates:
+First, some names for the intended aggregates:
 
 - A **multiverse** owns backing storage and the immutable objects shared by its
   worlds, timelines and retained references.
@@ -33,16 +36,16 @@ their aggregate types are forward declarations. The semantic oracle is
 `reference_world`. The [SQLite catalog](catalog.md) is the selected home for
 worlds, pins and merge/index-rebuild progress.
 
-I represent a world as a small collection of immutable, memory-mappable blobs.
-Updates produce small new blobs; merges produce new larger blobs. A snapshot or
+A world is represented by a small collection of immutable, memory-mappable
+blobs. Updates produce small new blobs; merges produce new larger blobs. A snapshot or
 save pins an exact collection and the dependencies needed to query it. A save
 adds durable retention to that logical snapshot; it does not define a separate
 kind of application state.
 
-I want the outer dynamization mechanism to apply beyond maps. Its reusable
-requirements are a merge operation, a query operation, and rules relating them.
-I am leaving the exact monoid/homomorphism interface open until its consumers
-need one. The typed blob specialization supports byte or bit keys and opaque fixed-
+The outer dynamization mechanism needs a merge operation, a query operation,
+and laws relating them. Maps give us one useful instance. We can leave the
+exact monoid/homomorphism interface open until its consumers tell us which
+laws they need. The typed blob specialization supports byte or bit keys and opaque fixed-
 or variable-width values. The replacement oracle uses fixed-width values and
 tombstones. The intended key space is sort-qualified: each logical
 key combines a sort identity with a key interpreted by that sort's policy.
@@ -55,11 +58,11 @@ arrows, and omission means the identity update.
 model, its nerve interpretation, and the additional cost and retention contracts.
 The replacement-specific rules below remain the implemented first instance.
 
-I started from my
 [Data.Vector.Map](https://hackage.haskell.org/package/structures-0.2/docs/Data-Vector-Map.html)
-and [Data.Vector.Map.Deamortized](https://hackage.haskell.org/package/structures-0.2/docs/Data-Vector-Map-Deamortized.html).
-That functional numeral scheme motivated immutable merges and shared work.
-Here I adopt **COLA-style redundant levels** in place of the initial zeroless,
+and
+[Data.Vector.Map.Deamortized](https://hackage.haskell.org/package/structures-0.2/docs/Data-Vector-Map-Deamortized.html)
+provide a functional numeral scheme for immutable merges and shared work. Here I
+use **COLA-style redundant levels** in place of that initial zeroless,
 mostly-oneless binary presentation.
 
 Logical state and physical representation have different identities. Two peers
@@ -85,8 +88,8 @@ entries. Sampling only its native keys would not establish the stated windows.
 
 ## 2. The blob
 
-I define a blob as the following logical composite; its pieces need not occupy
-one file:
+Putting the pieces together, a blob has the following logical components. They
+need not occupy one file:
 
 1. A front-coded array of native $(K,V)$ records.
 2. A separately front-coded array of borrowed keys and routing information.
@@ -104,8 +107,8 @@ flowchart TD
   S --> T["Exact downstream catalog version"]
 ```
 
-I keep native data shareable across fractional-index versions. We can rebuild an
-index without inherently rewriting the native stream or its sampled offsets.
+Native data remains shareable across fractional-index versions. Rebuilding an
+index need not rewrite the native stream or its sampled offsets.
 Pointers in persisted objects are relative positions or object references, not
 process addresses. File-per-object versus managed extents remains an allocation
 decision below this interface.
@@ -114,9 +117,9 @@ The current byte-key instance has a specified unsigned-byte lexicographic order,
 including empty keys and embedded zero bytes. Encoded records carry lengths;
 zero bytes need not be reserved as terminators. General sort-qualified keys must
 also satisfy the canonical ordering and framing contract in [keys.md](keys.md);
-that interface is not implemented by the byte-string prototype. The initial
-fixed-width-value format retains a value slot for tombstones so record stride
-remains predictable.
+the sort registry and pair encoder remain to be implemented. A fixed-width
+value encoding must retain a slot for tombstones so record stride remains
+predictable.
 
 Native keys are unique within each blob. In the categorical extension, one
 entry holds a composite arrow for a consecutive portion of that key's history;
@@ -130,8 +133,8 @@ distinguishes live keys, multiplicity, and their fingerprints.
 
 ## 3. Navigation
 
-We can work through the navigation equations with the default $K=15$,
-including the original `rank15`/`select15` prototypes. Typed codecs generalize them to policy groups;
+We can work through the navigation equations with the default $K=15$.
+The codecs accept a policy-selected group size;
 [sampling.md](sampling.md) proves the local $K=3$ case and states the separate
 chain-size and scheduler assumptions. Offset units are bytes or bits according
 to the shared policy.
@@ -151,8 +154,8 @@ $[R(g),R(g+1))$, and its native range is
 $[15g-R(g),15(g+1)-R(g+1))$. Substitute the actual final endpoint for a tail.
 The two range lengths add to at most fifteen.
 
-I store each fifteen-entry population count in four bits: its value is in
-$[0,15]$. A prefix directory answers the boundary queries. There is no second
+A fifteen-entry population count lies in $[0,15]$, so four bits suffice.
+A prefix directory then answers the boundary queries. There is no second
 origin rank: native rank is virtual position minus borrowed rank.
 
 The optional exact-position extension is the RRR class/offset idea: a class
@@ -164,7 +167,7 @@ succinct-dictionary machinery.
 
 ### Pragmatic rank-only backend
 
-For general bitvector rank, I use a deliberately pragmatic layout:
+For general bitvector rank, a pragmatic layout suffices:
 
 - One 64-bit absolute count per $2^{32}$ source bits.
 - One 32-bit count relative to that epoch per 2048 source bits.
@@ -176,20 +179,20 @@ For general bitvector rank, I use a deliberately pragmatic layout:
 The three lanes are not cumulative: a cumulative count through three full runs
 could be 1536 and would not fit in ten bits. The 32-bit counter and packed lanes
 fit together in 64 bits, giving 3.125% directory overhead plus the sparse epoch
-counts. We need only rank from this backend, so I do not require select.
-The layout corresponds to the rank portion of
+counts. We only need rank from this backend; select would provide an operation
+we do not use. The layout corresponds to the rank portion of
 [Zhou, Andersen, and Kaminsky's Poppy design](https://www.cs.cmu.edu/~dga/papers/zhou-sea2013.pdf).
 
-I keep this bitvector backend distinct from the packed fifteen-entry class stream:
-15 does not divide 512 or 2048. Its class-prefix directory must specify its own
-aligned units; a class cannot answer an arbitrary cut through its fifteen bits.
-The first implementation makes this distinction explicit rather than storing
-unneeded origin patterns.
+This bitvector backend and the packed fifteen-entry class stream have different
+alignment requirements: 15 does not divide 512 or 2048. Its class-prefix
+directory must specify its own aligned units; a class cannot answer an arbitrary
+cut through its fifteen bits. The first implementation makes this distinction
+explicit rather than storing unneeded origin patterns.
 
 ### select15 and fixed-width values
 
-For each stream independently, I mark physical records $0,15,30,\ldots$, plus
-the end sentinel, and store their normalized byte positions using Elias–Fano.
+For each stream, mark physical records $0,15,30,\ldots$ and the end sentinel.
+We store their normalized byte positions using Elias–Fano.
 For record ordinal $i_g=\min(15g,n)$:
 
 $$
@@ -219,7 +222,7 @@ physical groups. These marks are navigation points, not full-string restarts.
 
 A borrowed key also present in the native array is a **false borrow**. During
 index construction, a merge of the two key streams determines a flag for every
-borrowed entry. I keep that flag attached to its particular index version.
+borrowed entry. The flag belongs to that particular index version.
 
 An equal borrowed key must not make a native value disappear behind a search
 fence. On such a hit, the flag says to account for the local native binding as
@@ -233,35 +236,41 @@ Tests must place the native/borrowed equality pair on both sides of a group cut.
 
 ## 4. Front coding and decoding context
 
-The original byte-only prototype's record format is:
+Each physical group begins with its predecessor's key length. Within a group,
+records have the following fields:
 
 ```text
-retained_prefix_length : unsigned variable-length integer
-suffix_length          : unsigned variable-length integer
-suffix_bytes           : byte[suffix_length]
-value                   : fixed-width slot
+backspace_count : encoded unsigned count
+suffix_length   : encoded unsigned count
+value_length    : encoded unsigned count, omitted for a common fixed width
+suffix          : suffix_length profile units
+value           : value_length profile units
 ```
 
-The typed profiles store the actual **backspace count** instead of the retained
-prefix length. One predecessor-length checkpoint per physical group supports
-decoding from a surrogate anchor without a full-length field on every record.
-Headers use byte varints or bit-level order-zero exponential-Golomb codes.
+The **backspace count** tells us how many units to remove from the physical
+predecessor. The group checkpoint supports decoding from a surrogate anchor
+without a full-length field on every record. Byte counts use unsigned varints.
+Bit backspaces use the policy's Golomb or exponential-Golomb code; other bit
+counts use order-zero exponential-Golomb.
+Golomb's unary quotient can be long when a short key follows a long predecessor,
+including at a literal LPFC restart. Its decoding cost must be charged to the
+encoded count, rather than bounded by the short key's length alone.
 Variable-width streams also encode value lengths; a proven common width removes
 that field and its fixed payload stride from sampled residual offsets.
 `profile_blob<P>` applies native LPFC (default factor 18) and the separately
 modified borrowed FC. These are encoded stream primitives; portable sections
 inside `.kv`/`.index` envelopes are not yet implemented.
 
-In this byte-profile format, retained-prefix and suffix lengths count bytes.
+Lengths count bytes or bits according to the policy.
 For ordinary front coding, the retained length is the LCP with the previous
 physical key. For a redundant representation it may be shorter; the erased
 letters are explicitly re-emitted. Such a retained length must never be
 mislabelled as an exact LCP.
 
 To compare with $q$, we reconstruct at most
-$\min(|q|,|s|)$ bytes of a candidate $s$. If those prefixes agree, stored
-lengths resolve ordering/equality. I retain explicit partial-key state:
-known prefix, full length, and comparison context.
+$\min(|q|,|s|)$ units of a candidate $s$. If those prefixes agree, stored
+lengths resolve ordering/equality. We therefore retain three pieces of partial-key
+state: the known prefix, the full length, and the comparison context.
 
 ### Anchored decoding and its limits
 
@@ -274,7 +283,8 @@ The argument works independently for both projected streams.
 For this local forward window, a lookup need not walk backward to an older
 full-string restart. It visits at most fifteen candidate entries, materializing
 only query-relevant prefixes. I accept an extra factor of the number of levels
-in string work: the target is $O(|q|L)$ key-byte work.
+in string work: the target is $O(|q|L)$ key-unit work, with count parsing charged
+separately. An arbitrary Golomb policy can make that additional cost dominant.
 
 That local argument is not by itself the complete context-transfer protocol.
 If no borrowed key in the window precedes the query, the outgoing borrowed
@@ -315,14 +325,14 @@ The data file may know its initial borrowed-key layout when it is created.
 However, rebuilding an index farther along the chain can change that layout.
 The native encoding must remain usable when these dependent boundaries move.
 
-I split the native and index codecs as follows:
+This gives us a useful division of labor:
 
-- I use full LPFC for the native data, with restart decisions independent of any
-  particular fractional-index version.
-- I use the conservative fifteen-entry common-prefix rule for the fractional
-  index, which can be rewritten when its exact target/index dependencies change.
-- I keep ordinary anchored decoding as the fast path when its context is already
-  available, and as a simple correctness baseline.
+- Full LPFC supplies native restart decisions independent of any particular
+  fractional-index version.
+- The conservative fifteen-entry common-prefix rule supplies fractional-index
+  context. We can rewrite that index when its exact target/index dependencies change.
+- Ordinary anchored decoding remains the fast path when its context is already
+  available, and supplies a simple correctness baseline.
 
 LPFC is the safe fallback. The index rule exploits the known windows to repeat
 only the prefix material required for context transfer. The construction below
@@ -344,11 +354,11 @@ proved exact LCP or a separately established comparison context.
 
 Both frontier contexts matter: the preceding borrowed key may be needed for the
 next descent even when the current projected borrowed slice is empty.
-I want to avoid copying a long prefix every fifteen native entries merely
-because an unchanged, distant borrowed frontier has an unrelated key. We need
-to count actual replay bytes and skip alignment work whose context is not needed.
+Copying a long prefix every fifteen native entries could be expensive if an
+unchanged, distant borrowed frontier has an unrelated key. We need to count the
+actual replay bytes and skip alignment work whose context is not needed.
 
-I require native files to remain independently reusable when an index changes.
+Native files must remain independently reusable when an index changes.
 Full native LPFC is the conservative choice above. A more aggressive alternative
 is an index-local bridge: when $p>c$, we could keep the replayed
 $s[c:p]$ bytes in the new index, followed logically by the unchanged native
@@ -395,12 +405,12 @@ complete persistent-store space or I/O theorem.
 
 ## 5. Redundant levels and merge work
 
-My scheduling reference is
+For scheduling, start with
 [Cache-Oblivious Streaming B-trees, §3](https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf).
 Its deamortized COLA uses redundant arrays and prioritizes small unsafe levels.
-Data merging and lookahead construction both participate in becoming safe and
-in switching visibility. Its exact schedule and bounds are useful starting
-points, not a proof for arbitrary extra compactions or persistent retention.
+Data merging and lookahead construction both participate in becoming safe and in
+switching visibility. Its exact schedule and bounds are useful starting points,
+not a proof for arbitrary extra compactions or persistent retention.
 
 I want the store to keep $O(\log N)$ active blobs, with a bounded number per
 level. Small updates pay for later merging and index construction. Work may be
@@ -417,7 +427,7 @@ bound and identifies the remaining scheduling and variable-key-byte obligations.
 No power-of-two physical-file requirement follows from the query argument;
 the original redundant-counter schedule still requires an admission proof.
 
-I separate the work into these milestones:
+There are several distinct points at which work becomes reusable:
 
 1. A merge recipe identifies exact inputs and resolution semantics.
 2. Its new native stream and sampled offsets finish.
@@ -459,8 +469,8 @@ fractional index describes those exact layouts. It may immediately pin $Z$,
 skip the data merge work it was budgeted to perform, and spend its own schedule
 on index repair. Only then does it adopt $Z$.
 
-I call this **shared completion with independent adoption**. It preserves snapshots
-and avoids making all forks compact in lockstep.
+This is **shared completion with independent adoption**. The merge can be
+shared even while each fork repairs its own index on its own schedule.
 
 Pins cover readers, saved manifests, builders, and cached results in use.
 Lookup-and-retain of a cached merge must be atomic with respect to reclamation.
@@ -469,9 +479,9 @@ Cancellation has a corresponding release path.
 
 ### The pin-set owner
 
-I give the current world one immutable pin-set owner. Each entry records an
-exact object identity, its lifetime pin, its local additive contribution, and optionally its
-own-native-record fingerprint. The owner caches the sum of the contributions;
+The current world has one immutable pin-set owner. Each entry records an exact
+object identity, its lifetime pin, its local additive contribution, and optionally
+its own-native-record fingerprint. The owner caches the sum of the contributions;
 this sum is the world's composite key. A snapshot shares the owner. Updating or
 compacting constructs a replacement owner without changing previous snapshots.
 
@@ -490,19 +500,19 @@ need a persisted root and recovery protocol.
 
 ### Durability and resumption
 
-I require publication to preserve the last acknowledged save through a failed
-durability barrier. A completed merge is first a candidate output. We make its
+A failed durability barrier must leave the last acknowledged save recoverable.
+A completed merge is therefore initially a candidate output. We make its
 contents and object-store metadata durable, then publish a durable manifest that
 references it, and only then retire the old root's pins. Other snapshots,
 readers, index dependencies and resumable jobs can still retain the old inputs.
 
-I keep resumable work separate from published worlds. A merge checkpoint names its
+Resumable work has its own state. A merge checkpoint names its
 exact recipe and immutable inputs, input positions and prefix contexts, a
 verified output prefix, and the state needed to resume output encoding and index
 construction. Checkpoint publication must follow the durable bytes it describes.
 If no trustworthy checkpoint survives, recompute from the retained inputs.
 
-I treat an `fsync` error as a failed durability assertion. We retain the old
+An `fsync` error means the durability assertion failed. We retain the old
 durable root and inputs, quarantine uncertain output, and report the failed save
 or checkpoint. A later successful `fsync` alone does not justify releasing
 those pins or claiming durability.
@@ -519,7 +529,7 @@ Immutable object identities and format versions serve that purpose.
 
 ## 7. Strong deletes and live-universe rebuilding
 
-Here I give the concrete cleanup rule for replacement-valued records.
+For replacement-valued records, we can give a concrete cleanup rule.
 Arbitrary arrows require a category-specific clean representation and work bound;
 materializing an endpoint must preserve every supported future observation and
 update before history can be forgotten. See the
@@ -600,7 +610,7 @@ legitimately and are reported separately from the active universe.
 
 ## 8. Composite key / algebraic fingerprint
 
-I use hash functions into an algebra $R$, and define:
+Let our hash functions take values in an algebra $R$, and define:
 
 $$
 h_V(\operatorname{Nothing})=0,\qquad
@@ -633,7 +643,7 @@ under compaction, reassociation of independent updates, and native/index layout
 changes. It detects differing results without requiring peers to have the same
 physical representation; collisions are possible by design.
 
-I keep three quantities distinct:
+Three quantities now need to be distinguished:
 
 - A physical object's checksum/identity.
 - A fingerprint of a file's own native records.

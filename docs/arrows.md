@@ -1,17 +1,22 @@
 # Updates in a category chosen per key
 
-Design extension, 2026-09-15. Here I extend the
-[Everett design](design.md) from replacements to composable changes.
+Design extension, 2026-09-15. A replacement tells us the new value of a key.
+A patch tells us how to get there. To extend the [Everett design](design.md)
+to patches and other composable changes, we need to say when two changes can
+compose and what their composition means. Ordinary category theory gives us
+just those laws.
+
 The current implementation remains the replacement-valued reference model;
 the [implementation ledger](implementation.md) tracks that boundary.
-We can use ordinary category theory to state the laws this extension needs.
+The [Lean proof core](../proof/README.md) checks typed composition, disjoint
+updates and adjacent-merge adoption in an abstract model.
 
 ## 1. A family of categories
 
 Let $\mathcal K$ be the discrete set of full, sort-qualified logical keys.
 A key includes its sort identity and its canonical local key, as specified in
-[Sorts and key policies](keys.md). I allow a category $\mathcal C_k$ for each
-$k\in\mathcal K$:
+[Sorts and key policies](keys.md). Give each $k\in\mathcal K$ a category
+$\mathcal C_k$:
 
 - Objects are the admissible configurations of that key.
 - An arrow $f:x\to y$ is an allowed change from one configuration to another.
@@ -42,7 +47,7 @@ Omitting a key from an update means $1_{X_k}$. This differs from deleting the
 key. Where supported, deletion is an arrow to a distinguished absent object;
 the category determines which such arrows exist. No invertibility is required.
 
-I include the key-to-category rule and its interpretation version in the pinned
+The key-to-category rule and its interpretation version belong in the pinned
 world/schema context. Changing them requires explicit migration or transport.
 An old arrow cannot silently acquire a different meaning when loaded by a newer
 program. Exact source compatibility also needs its own validation: the weak
@@ -50,9 +55,9 @@ world fingerprint is not a proof that an arrow is applicable.
 
 ### Logical key identity and multiplicity
 
-I keep one logical configuration per key. Repeated native occurrences across
-history files describe changes to that binding; they do not introduce multiple
-independently mutable bindings with the same address.
+There is still one logical configuration per key. A key may occur in several
+history files because it has changed several times. Those occurrences describe
+changes to one binding.
 
 Under our key-addressed update rules, simultaneous bindings $(k,a)$ and
 $(k,b)$ leave `delete k` or `replace k` underspecified. The operation does
@@ -63,8 +68,8 @@ $(k,\text{member identity})$.
 
 Indistinguishable unit-valued occurrences have only multiplicity as state:
 $n_k\in\mathbb N$. Repeating $(k,())$ is effectively a unary encoding
-of the unique binding $(k,n_k)$. I use the count representation, with
-zero represented by absence. A decrement requires establishing $n_k>0$;
+of the unique binding $(k,n_k)$. The count representation stores this directly,
+with zero represented by absence. A decrement requires establishing $n_k>0$;
 it contributes one weak mutation, but removes a live key only on $1\to0$.
 Deleting the whole count binding instead removes all its occurrences; it is a
 different operation from decrementing once. We keep the exact natural count
@@ -99,9 +104,9 @@ functor $[m]\to\mathcal C_k$. An inner face composes two adjacent arrows;
 a degeneracy inserts an identity. These are the ordinary nerve operations in
 [Kerodon, §1.3.1](https://kerodon.net/tag/002M).
 
-I represent a consecutive segment of a key's history by a composite in a blob,
+A blob represents a consecutive segment of a key's history by its composite,
 with **at most one native entry per key per blob**.
-Merging coarsens that factorization. Associativity permits any schedule of
+Merging coarsens this factorization. Associativity permits any schedule of
 adjacent contractions:
 
 $$
@@ -114,14 +119,15 @@ or a separately established commutation/rebase law. Physical file membership
 alone does not establish adjacency. Outer nerve faces discard endpoints and
 are not the operation that preserves a history's full composite.
 
-I require a merge to produce one composite for every overlapping key. If the
-selected inputs leave an intervening same-key segment outside the merge, that merge is
-ineligible under this format. Retaining multiple uncomposable entries for a key
-would require a different duplicate-key search and segment-count bound, and
-would not by itself define deletion/replacement of ambiguous logical duplicates.
+A merge must produce one composite for every overlapping key. This makes the
+adjacency condition concrete: if an intervening same-key segment lies outside
+the selected inputs, the merge is ineligible under this format. Retaining
+multiple uncomposable entries for a key would require a different duplicate-key
+search and segment-count bound, and would not by itself define
+deletion/replacement of ambiguous logical duplicates.
 
-I require encoded arrows to compose correctly in meaning. If $\star$ is the
-encoded composition operation, we need
+The encoding must respect composition. If $\star$ composes encoded arrows,
+we need
 
 $$
 \llbracket b\star a\rrbracket
@@ -133,7 +139,7 @@ arrow. Canonical serialization is an additional property. Shared merge results
 therefore retain exact input identities, ordering, category/codec versions and
 any normalization context in their cache recipes.
 
-The replacement prototype has a stronger, specialized law: a later replacement
+Replacement updates have a stronger, specialized law: a later replacement
 determines the resulting value independently of earlier values. General arrows
 do not permit newest-record-wins resolution. A merge composes the relevant
 changes oldest to newest; it drops earlier effects only when the chosen policy
@@ -142,9 +148,9 @@ lifetime check.
 
 ## 3. Partition independence is componentwise composition
 
-To see why partitions are independent, we take two workers updating distinct
-keys, with $f:x\to x'$ and $g:y\to y'$. Their updates extend by identities to the
-other coordinates. The square commutes:
+Now take two workers updating distinct keys, with $f:x\to x'$ and $g:y\to y'$.
+Their updates extend by identities to the other coordinates. The square
+commutes:
 
 $$
 (1_{x'},g)\circ(f,1_y)
@@ -165,8 +171,8 @@ computed overlapping writes commute.
 
 ## 4. Fingerprints are exact additive changes of state potential
 
-I use a common abelian group, such as the additive group of the selected ring
-$R$. Each key gets a state potential
+Choose a common abelian group, such as the additive group of the selected ring
+$R$. Give each key a state potential
 $\phi_k:\operatorname{Ob}(\mathcal C_k)\to R$, with $\phi_k(o_k)=0$.
 Then
 
@@ -203,9 +209,9 @@ particular, **zero delta does not imply an identity arrow**: a category can have
 nontrivial loops and distinct arrows with the same endpoints, even without
 hash collisions.
 
-I keep the pin owner's existing algebra: an initial base contributes its
-fingerprint, update entries contribute validated deltas, and a merged entry
-contributes their sum. Borrowed keys and index-only dependencies contribute
+The pin owner's existing algebra now applies unchanged: an initial base
+contributes its fingerprint, update entries contribute validated deltas, and
+a merged entry contributes their sum. Borrowed keys and index-only dependencies contribute
 zero. No division is introduced.
 
 We still need a way to compute the delta efficiently. An arbitrary patch and
@@ -241,8 +247,8 @@ that agrees with querying the changed state. The costs depend on fragments,
 dependencies, and requested output; category laws do not make these operations
 constant-time.
 
-I retain the earlier logarithmic claim as the structural navigation baseline.
-For a uniform worst-case query/update bound, we also need bounds on composing,
+The logarithmic claim therefore bounds structural navigation. A uniform
+worst-case query/update bound also needs bounds on composing,
 validating, hashing and observing arrows. Merge scheduling must charge those
 operations in its work units and retain continuations when they are lengthy.
 
@@ -269,8 +275,8 @@ interpreter versions, source dependencies and any suspended composition or
 evaluation state. Publication cannot release these inputs while the output
 still references them.
 
-To support [global rebuilding](rebuild.md), I require an explicit compaction
-contract from each category. A materialized endpoint can replace history when
+To support [global rebuilding](rebuild.md), each category needs an explicit
+compaction contract. A materialized endpoint can replace history when
 it is sufficient for every supported future update and observation and the
 chosen semantics permits forgetting that history. Otherwise we preserve the
 composite arrow, possibly in a normalized representation. A nonidentity loop
@@ -289,10 +295,10 @@ materialization work cannot be charged away solely by counting live keys.
 
 ## 7. Implementation boundary and next contract
 
-I am keeping the replacement store as the first concrete instance. Before
-generalizing its merge/query executor, I want to exercise a second instance
-with noncommuting diffs. We need to specify the following semantic obligations
-without committing to generic runtime dispatch or a file ABI:
+The replacement store gives us the first concrete instance. A second instance
+with noncommuting diffs will exercise the laws that replacement hides. Before
+generalizing the merge/query executor, we need the following semantic contracts;
+they do not yet commit us to generic runtime dispatch or a file ABI:
 
 1. Stable category selection per key and version, with source validation.
 2. Identity and composition, semantic equality laws, and optional normalization.
@@ -300,7 +306,7 @@ without committing to generic runtime dispatch or a file ABI:
 4. Fingerprint and presence deltas, with validation and actual work bounds.
 5. Dependency enumeration and resumable encoding/composition/evaluation.
 
-I want the acceptance tests to cover heterogeneous keys; invalid intermediate
+Acceptance tests should cover heterogeneous keys; invalid intermediate
 states; identity insertion; different parenthesizations of noncommuting changes;
 permutations of disjoint batches; loops with zero endpoint delta; retained
 snapshots; and checkpoints preserving supported observations. We should compare

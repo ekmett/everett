@@ -1,26 +1,26 @@
 # Sorts and stringlike keys
 
-I represent each logical key in Everett as a pair
+Represent a logical key in Everett as a pair
 
 $$
 \kappa=(s,x),
 $$
 
 where the **sort** $s$ chooses how to represent the stringlike component $x$
-and which key/value hashing strategies to use. A sort can select bit strings,
-byte strings, or strings of sixteen-bit code units. The category of allowed
+and which key/value hashing strategies to use. Keys use bit strings or byte
+strings according to the shared storage policy. The category of allowed
 updates may depend on the complete pair $(s,x)$, not just on the sort.
 
-I use the following sort/key contract. I have concrete typed codecs for both
-byte-at-a-time and bit-at-a-time profiles in `profile.h`; I still need the
-sixteen-bit code-unit profile and sort registry. The older `front.h` prototype
-is byte-only. Consult the [implementation ledger](implementation.md)
-for completed codec work, the [store design](design.md) for blobs, and
-[per-key arrows](arrows.md) for update semantics.
+The contract below lets these choices coexist in one key space. Concrete typed
+codecs for byte-at-a-time and bit-at-a-time profiles are in `profile.h`.
+The sort registry remains to be built. Consult the
+[implementation ledger](implementation.md) for completed codec work, the
+[store design](design.md) for blobs, and [per-key arrows](arrows.md) for update
+semantics.
 
 ## 1. One canonical identity and order
 
-I require the following operations to agree on the complete logical key:
+The following operations must agree on the complete logical key:
 
 - Comparison, equality, duplicate detection, and native/borrowed merging.
 - False-borrow flags and fractional-index boundary selection.
@@ -41,12 +41,13 @@ E(s,x)=E_S(s)\,\Vert\,E_s(x).
 $$
 
 The concatenation is also prefix-free. Decoding the sort determines which
-key decoder to use and where its bits begin. **There is no implicit byte
-alignment between the two components.** A three-bit sort code can be followed
-immediately by the first bit of a byte-oriented key code.
+key decoder to use and where its bits begin. Under a bit policy, **there is no
+implicit byte alignment between the two components**: a three-bit sort code
+can be followed immediately by the first bit of a byte-oriented key code.
+A byte policy requires both components to be encoded in whole bytes.
 
-I use lexicographic order on these encoded bits as the canonical comparison
-order, with $0<1$. Prefix freedom makes every sort's range contiguous: different
+Lexicographic order on the encoded bits, with $0<1$, gives us a canonical
+comparison order. Prefix freedom makes every sort's range contiguous: different
 sort codes differ before either code ends, so every extension of one sorts
 entirely before or after every extension of the other.
 
@@ -59,13 +60,13 @@ likewise need not appear in numeric order unless their code assignment promises 
 
 ## 2. Byte and bit profiles
 
-I put the storage policy in the type:
+The storage policy belongs in the type:
 
 ```cpp
 using bytes = everett::storage_policy<
   everett::profile_unit::byte, everett::fixed_values<8>, 15>;
 using bits = everett::storage_policy<
-  everett::profile_unit::bit, everett::variable_values, 7>;
+  everett::profile_unit::bit, everett::variable_values, 7, everett::golomb<3>>;
 ```
 
 `fixed_values<N>` measures `N` in the selected profile's units; zero is valid.
@@ -76,26 +77,48 @@ in one stream have equal width and exploit that encoding optimization; it does
 not thereby make a type-level fixed-width promise. The `borrowed` stream role
 retains the parent policy type while requiring zero value payload.
 
-For the initial **byte profile**, I encode both keys and values byte at a time.
-Prefix and backspace counts are in bytes, and physical offsets are in bytes. Its framed pair encoding must admit the byte-oriented reader; the
-abstract bit-level contract is not permission to feed an unaligned bit format
-to that reader.
+The **byte profile** encodes both keys and values byte at a time. Prefix
+and backspace counts are in bytes, and physical offsets are in bytes. Its framed
+pair encoding must admit the byte-oriented reader; the abstract bit-level
+contract is not permission to feed an unaligned bit format to that reader.
 
 The **bit profile** uses meaningful bits for both keys and values. Backspace
-counts and physical offsets are in bits. Order-zero exponential-Golomb
-encodes the backspace bit count in the implemented bit profile; the byte profile
-uses canonical unsigned base-128 varints. The chosen code and any parameters
-are metadata, not something readers infer from the first few bits. Sixteen-bit code-unit
-handling remains a later profile/codec extension.
+counts and physical offsets are in bits. The policy chooses Golomb or
+exponential-Golomb encoding for the backspace count; other bit-profile counts
+use order-zero exponential-Golomb. The byte profile uses canonical unsigned
+base-128 varints. The chosen code and its parameter are explicit metadata,
+not something readers infer from the first few bits.
 
 A backspace count is the number of units removed from a predecessor, not the
 number retained. If its length is $\ell$ units and the retained prefix is
-$p$, the backspace count is $\ell-p$. The existing `front.h` stores $p$
-as a byte count instead. The typed profiles make the distinction explicit,
-including when a fractional search supplies a different prefix-compatible
-anchor from the physical predecessor.
+$p$, the backspace count is $\ell-p$. It refers to the physical predecessor's
+length, even when a fractional search supplies a different prefix-compatible
+anchor.
 
-I require explicit interpretation metadata with every encoded stream:
+The fourth policy parameter defaults to `exponential_golomb<0>`.
+`golomb<M>` requires $M>0$; `exponential_golomb<Order>` accepts orders 0 through
+63. Byte policies retain the default parameter and encode counts with varints.
+All associated types retain the same choice as the multiverse.
+
+For a backspace of $b$ bits, `golomb<M>` encodes the quotient $\lfloor b/M\rfloor$
+as that many zero bits followed by one, then encodes $b\bmod M$ in truncated
+binary. A power-of-two $M$ makes the remainder a fixed-width Rice code.
+`exponential_golomb<Order>` encodes $b\mathbin{\gg}\mathrm{Order}$ with the
+order-zero code, followed by the low `Order` bits. With order zero, the counts
+0, 1, 2 and 3 encode as `1`, `010`, `011` and `00100`.
+
+A fixed Golomb modulus can be compact for a concentrated backspace distribution,
+but a large backspace costs a long unary quotient. Exponential-Golomb gives
+logarithmic code lengths as the count grows. LPFC restart decisions and sampled
+offsets use the actual encoded extent, including the selected count code.
+In particular, a short key following a long predecessor can spend
+$\Theta(b/M)$ bits just to backspace, even when emitted literally. Under a
+Golomb policy, reconstruction work must include those codeword bits; it cannot
+be bounded solely by the reconstructed key's length.
+Golomb's [Run-Length Encodings](https://compression.ru/download/articles/low_entropy/golomb_1966_run-length-encodings.pdf)
+develops the quotient/remainder construction for geometrically distributed lengths.
+
+Each encoded stream must carry explicit interpretation metadata:
 
 - Profile and format version, key/value units, and count-code parameters.
 - Prefix/backspace units and physical offset units.
@@ -111,24 +134,24 @@ and checkpoints retain the profile metadata with the encoded stream.
 
 ## 3. A framing illustration, not a wire format
 
-For example, the sort codes `0`, `10`, and `11` form a prefix-free set. Suppose
-they select one-bit, eight-bit, and sixteen-bit unsigned units respectively.
-For a sequence of $w$-bit units, one simple key code is
+For example, the sort codes `0`, `10`, and `11` form a prefix-free set. They can
+identify three sorts under one bit profile. Suppose their logical keys are
+byte strings. For a sequence of bytes, one simple key code is
 
 ```text
-for each unit:  1 followed by its w bits, most significant bit first
+for each byte:  1 followed by its 8 bits, most significant bit first
 end of key:    0
 ```
 
-This key-code family is prefix-free and preserves unsigned-unit lexicographic
+This key-code family is prefix-free and preserves unsigned-byte lexicographic
 order. A proper prefix sorts first because its end marker `0` precedes the
-next unit's marker `1`. The empty key is the single end marker. A byte key
+next byte's marker `1`. The empty key is the single end marker. A byte key
 under sort `10` therefore begins two bits into the logical pair encoding.
 
-This illustration spends one marker bit per unit plus a terminator. I use it
-only to show that the required framing and ordering can coexist; I have not
-chosen the final compression, sort IDs, or record layout here. A denser codec
-must establish the same properties and specify a canonical encoding for every supported key.
+This illustration spends one marker bit per byte plus a terminator. It shows
+that the required framing and ordering can coexist. Final compression, sort IDs
+and record layout are still open choices. A denser codec must establish the same
+properties and specify a canonical encoding for every supported key.
 
 ## 4. Bit lengths, units, and padding
 
@@ -143,45 +166,29 @@ For byte strings, bytes are unsigned units. Embedded zero bytes are allowed;
 a terminator-based codec must encode them unambiguously rather than excluding
 them from the key space.
 
-Sixteen-bit units are unsigned code units, not necessarily Unicode characters.
-No normalization, surrogate interpretation, locale collation, or case folding
-is implied. If a sort requires those semantics, it must specify them explicitly.
-For numerical code-unit order, most-significant-bit-first serialization can
-preserve the order; dumping native little-endian words cannot. Any byte-oriented
-container for the units needs a specified byte order independent of the host.
-
 The encoding and hashing contracts must distinguish these units from physical
 storage bytes. A key of seventeen meaningful bits is not a three-byte logical
 key merely because its packed representation occupies three bytes.
 
 ## 5. Front coding across sorts
 
-I front-code the native stream and the borrowed stream separately. Both use
-the canonical encoded-key order. A key decoder must never interpret a predecessor's retained count using the next sort's different unit
-width.
+The native and borrowed streams are front-coded separately, both in canonical
+encoded-key order. Backspaces and suffix lengths count the shared policy's
+units over the complete encoded pair. Changing sorts changes the interpretation
+of a logical key, but never changes those units.
 
-I see two coherent implementation choices:
-
-1. **Encode prefixes in a common bit alphabet.** Retained and suffix lengths
-   count bits of the complete canonical pair encoding. This works across sort
-   changes, including a prefix ending inside a sort code or key code unit.
-   Reconstruct the encoded prefix before interpreting the selected sort.
-2. **Use sort-specific unit counts.** Within one sort, count complete logical
-   units according to that codec. At a sort change, reset the unit context and
-   emit a self-contained sort/key record, or explicitly switch to a common
-   encoded-bit prefix mode. The record or pinned codec must distinguish modes.
-
-I still need to implement these requirements in the mixed-sort codec; the
-existing byte reader does not handle both conventions. With sort-specific
-counts, the codec must translate a unit prefix into its encoded bit extent.
-Multiplication by $w$ is insufficient when framing or escaping adds bits. For the illustration above, a prefix of $m$ complete units occupies
-$m(w+1)$ key-code bits, excluding the final marker and the sort code.
+Under a bit policy, a retained prefix may end inside the sort code or inside
+the encoding of a logical byte. Reconstruct those encoded bits before decoding
+the pair. Under a byte policy, retained prefixes end at byte boundaries and
+the pair codec must preserve that alignment. Framing contributes to the encoded
+length: in the illustration above, $m$ logical bytes occupy $9m$ key-code bits,
+excluding the final marker and sort code.
 
 The conservative boundary rule also needs one declared alphabet. Its retained
 prefix is a copy length, which may be shorter than an exact LCP. The known
 frontier must supply those exact encoded bits, or an equivalent complete-unit
-prefix under the selected codec. Resetting at a codec boundary is safe; silently
-reinterpreting counts is not.
+prefix under the selected policy. Counts retain that interpretation across sort
+boundaries.
 
 A common encoded-bit order preserves the interval argument used by cascading:
 if $a\le b\le c$, the middle encoding shares the common prefix of the outer
@@ -196,8 +203,7 @@ $K\ge3$, including 3, 7, 15 and 31; 15 is the default. The class width is
 $n=\log_2(K+1)$ bits because a full group's borrowed population ranges from
 zero through $K$. `rank_groups<K>` describes the virtual interleaving at
 these boundaries. `select_groups<K>` locates physical records `0, K, 2K, ...`,
-plus the actual-length end sentinel. The older `rank15`/`select15` interfaces
-remain the fixed-15 prototype.
+plus the actual-length end sentinel.
 
 These counts are independent of whether keys use bits or bytes. Increasing
 $K$ lowers class metadata per entry and samples fewer physical offsets;
@@ -210,18 +216,13 @@ and merge-work bounds.
 
 Physical addressing still needs an explicit unit:
 
-- If record starts remain byte-aligned, `select_groups<K>` can encode byte
-  offsets. The sort/key boundary inside a record may nevertheless be unaligned.
-  Encoded bit lengths and any padding belong to that record's framing.
-- If records themselves are packed without byte alignment, locating them needs
-  bit positions, or byte positions with sufficient bit-remainder metadata.
+- The byte profile uses byte-aligned records and `select_groups<K>` byte offsets.
+- The bit profile packs records without inter-record padding and uses bit positions.
   For bit position $p$, the containing byte is $\lfloor p/8\rfloor$ and
   the bit offset is $p\bmod8$. A byte position alone loses information.
 
 Elias–Fano can represent either monotone position sequence, but its universe,
-fixed-stride adjustment, and readers must use the same unit. The present
-`select15`/`front.h` integration uses **byte offsets**. The bit profile instead
-supplies bit positions and bit-width contributions to the integer codec.
+fixed-stride adjustment, and readers must use the same policy unit.
 For unchanged positions, expressing $U$ in bits multiplies it by eight;
 that changes the Elias–Fano encoding, adding about three low bits per marked
 offset in the usual space expression. Actual bit packing may also change the
@@ -294,20 +295,20 @@ would make identical components in different sorts structurally collide. Hash
 any meaningful bit lengths or framing through the declared canonical codec;
 allocation padding must not silently affect the result.
 
-I use wrapping unsigned 64-bit arithmetic in the initial implementation. For a
-default hash design, I want to avoid the literal-unit parity trap of
-characteristic two:
-plain addition there satisfies $a+a=0$, so an unweighted sum of repeated
-units forgets even multiplicities. This does not invalidate binary fields or
+The initial implementation uses wrapping unsigned 64-bit arithmetic. There is
+a trap worth avoiding when choosing a default hash in characteristic two:
+plain addition satisfies $a+a=0$, so an unweighted sum of repeated units forgets
+even multiplicities. This does not invalidate binary fields or
 well-designed position-sensitive hashes. The binary-field test remains a valid
 check that the additive/multiplicative interface needs no division; it does not
 establish the quality of every hash construction over that field.
 
 ## 8. Pin interpretation with the data
 
-I require a world to pin the sort registry and interpretation versions needed
-by its blobs. The registry determines sort codes, accepted key units, canonical
-encoding and comparison, hashing strategies, and how the category is selected from `(s,x)`.
+A world must pin the sort registry and interpretation versions its blobs need.
+The registry records the shared storage policy and determines sort codes,
+canonical encoding and comparison, hashing strategies, and how the category
+is selected from `(s,x)`.
 Hash seeds or domains that affect a state fingerprint are part of that context.
 
 A merge, borrowed index, replay, or checkpoint must retain the exact versions
@@ -319,13 +320,10 @@ established explicitly; merely reusing the same numeric sort ID is insufficient.
 
 ## 9. Implementation boundary and checks
 
-My existing `front.h`/`blob.h` prototype has `std::string`/`std::string_view`
-keys, unsigned-byte comparison, byte-count prefixes and suffixes, and a
-nine-byte native value slot for an optional unsigned 64-bit value. The separate
 `profile_array<P, Role>` and `profile_view<P, Role>` implement both typed byte
 and bit streams. They support fixed/variable values, actual backspace counts,
-partial-prefix windows and native LPFC reconstruction. I still need to supply
-a sort registry, sixteen-bit key-unit codec, and the final prefix-free pair encoder.
+partial-prefix windows and native LPFC reconstruction. A sort registry and
+final prefix-free pair encoder remain to be supplied.
 
 Each physical group starts with one count-coded **actual predecessor key
 length**, followed by up to $K$ records. A record stores its backspace count,
@@ -336,17 +334,19 @@ record-offset array with one machine word per key. Group checkpoints are part
 of the residual Elias–Fano extent.
 
 In the byte profile all counts and payloads use byte positions. In the bit
-profile all counts use order-zero Exp-Golomb, payloads concatenate without
-inter-record padding, and physical offsets count bits. Bits are most significant
+profile the policy selects the backspace code; other counts use order-zero
+exponential-Golomb. Payloads concatenate without inter-record padding, and
+physical offsets count bits. Bits are most significant
 first; unused low bits of the final storage byte must be zero. Metadata records
 and checks the profile, policy, role and group size. It is a logical descriptor,
 not a finalized portable serialization of the header and its sections.
 
 The native builder accepts an LPFC restart factor and emits a literal key when
 the previous literal becomes too distant in encoded profile units. A partial
-query reconstructs only its requested prefix. The separately supplied borrowed
+query reconstructs only its requested prefix; parsing its counts still costs
+the selected codeword lengths. The separately supplied borrowed
 prefix ceilings can shorten a copy prefix and re-emit erased units, without
-changing native bytes. The stored retained prefix is an absolute copy length;
+changing native bytes. The decoded retained prefix is an absolute copy length;
 it is not presumed to equal LCP with an incoming surrogate frontier. Values
 returned by independent reconstruction are copied in full; view callbacks borrow
 their encoded value span and an ephemeral key-prefix scratch buffer.
@@ -362,21 +362,22 @@ canonical object-ID paths. Its `sort`, `blob` and `file` aliases retain the same
 policy. Its `world`, `timeline` and `branch_point` aliases name forward-declared
 aggregate types, not working persistent runtimes. `sort<P>` checks an individual
 code's packing and policy alignment; it does not validate a whole prefix-free
-registry. The reader performs no directory creation or durable writes. SQLite
+registry. Object access validates headers by default; `file_open_mode::trusted`
+defers that validation until an explicit metadata request or scan. The reader
+performs no directory creation or durable writes. SQLite
 integration for worlds, pins and progress remains separate implementation work.
 
-I currently parameterize the reference world by one value type and one
-hashing-policy object per instantiation. Its existing `hash.value(value)` call
-does not receive the key or sort. Generic per-key value potentials and sort-dependent dispatch therefore
-remain design work. Supplying caller-encoded composite bytes can exercise the
-byte interface, but does not implement the broader key contract.
+The reference world currently takes one value type and one hashing-policy object
+per instantiation. Its existing `hash.value(value)` call does not receive the
+key or sort. Generic per-key value potentials and sort-dependent dispatch
+therefore remain design work. Supplying caller-encoded composite bytes can
+exercise the byte interface, but does not implement the broader key contract.
 
-I require codec acceptance to cover:
+Codec acceptance must cover:
 
 - Empty keys and equal components in different sorts; no cross-sort false borrow.
 - Prefix-related unit sequences, exact termination, and prefix-free sort codes.
 - Bit keys of every tail length, including sort/key joins inside a byte.
-- Sixteen-bit code-unit order independent of host byte order.
 - Agreement between semantic comparison and canonical encoded-bit order.
 - Groups and conservative prefix contexts crossing sort boundaries.
 - Meaningful-length and padding rules in comparison, hashing, and checkpoints.
@@ -384,6 +385,6 @@ I require codec acceptance to cover:
 - Heterogeneous hashing strategies with a common additive contribution algebra.
 - Physical byte/bit position conversion and fixed-stride accounting at partial tails.
 
-I track which profiles and integration paths have passed these requirements in
-the implementation ledger. The byte and bit profile tests do not establish a
-working mixed-sort registry or sixteen-bit codec.
+The implementation ledger records which profiles and integration paths have
+passed these requirements. The byte and bit profile tests do not establish a
+working mixed-sort registry.

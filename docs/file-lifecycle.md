@@ -1,7 +1,7 @@
 # Files, mappings and publication
 
-Updated 2026-09-15. I use SQLite for catalog metadata and keep bulk data in two
-custom file kinds: `.kv` and `.index`. We have read-only mapping, checked object
+Updated 2026-09-15. SQLite manages catalog metadata; bulk data lives in two
+custom file kinds, `.kv` and `.index`. We have read-only mapping, checked object
 envelopes and typed codecs as implemented foundations. Serialized codec
 sections, the SQLite adapter, writers and recovery executor remain work. See
 [implementation status](implementation.md), the [catalog design](catalog.md)
@@ -14,22 +14,22 @@ and the [failure and resumption protocol](durability.md).
 | `.kv` | Immutable native LPFC keys, values and native sampled offsets | Any objects required by the value/arrow representation |
 | `.index` | Modified front-coded borrowed keys, borrowed sampled offsets, origin ranks and false-borrow flags | Its native source and exact downstream blob/index versions |
 
-I keep a fractional index independent of its native file so that several index
-versions can share the same native bytes. We select compatible objects, their
+Separating a fractional index from its native file lets several index versions
+share the same native bytes. We select compatible objects, their
 precedence and additive contributions through SQLite's immutable representation
 rows. A logical world can have several representations, and a saved branch point
 retains one exact representation. Jobs and checkpoints also live in SQLite;
 their owners retain unfinished work without adding its fingerprint a second time.
 
-I use **manifest** below to mean a representation recorded in the catalog, and
-**root publication** to mean an atomic catalog transaction selecting it. I leave
-the database and journaling files to SQLite; Everett adds no custom manifest
-file, root-selector file or metadata journal.
+Here **manifest** means a representation recorded in the catalog, and **root
+publication** means an atomic catalog transaction selecting it. SQLite owns the
+database and journaling files; Everett adds no custom manifest file, root-selector
+file or metadata journal.
 
 ### Path spelling and content identity
 
-Within an object directory, I spell a canonical 128-bit physical identity as
-32 lowercase hexadecimal digits and split it without repeating its prefix:
+Within an object directory, a canonical 128-bit physical identity is spelled as
+32 lowercase hexadecimal digits, split without repeating its prefix:
 
 ```text
 objects/ab/cd/ef0123456789abcdef0123456789ab.kv
@@ -41,14 +41,14 @@ objects need not receive the same identity. The current codec accepts an opaque
 128-bit ID. It does not compute a content hash or prove uniqueness. Allocation
 must prevent ID reuse, check collisions and distribute the shard prefixes.
 
-I want content-addressed native files as the sharing contract: the address must
-identify verified encoded bytes under a specified hash algorithm and format,
-not the weak fingerprint of their resolved logical contents. Different merge or
-codec layouts can represent the same world and have different content addresses.
-We reserve a private construction ID before knowing the final content, then
-establish its final content descriptor and name when sealing it, before
-publication. To reuse an existing candidate, we must verify byte identity and
-retain an owner.
+The sharing contract calls for content-addressed native files. Such an address
+must identify verified encoded bytes under a specified hash algorithm and
+format; the weak fingerprint of the resolved logical contents cannot do that
+job. Different merge or codec layouts can represent the same world and have
+different content addresses. We reserve a private construction ID before knowing
+the final content, then establish its final content descriptor and name when
+sealing it, before publication. To reuse an existing candidate, we must verify
+byte identity and retain an owner.
 
 I have not yet chosen or implemented the content-ID algorithm, digest width and
 canonical hash input. We must bind kind, interpretation metadata, meaningful bit
@@ -57,16 +57,16 @@ Including the address itself would make the hash self-referential. A future
 digest may require a wider path format than today's 128-bit primitive. Neither
 CRC32C nor the algebraic world signature supplies this content identity.
 
-I want shard directories created lazily. Sharding bounds the entries in a
-directory; it does not reduce the total inode count. We can eventually pack
+Create shard directories as needed. Sharding bounds the entries in each
+directory, while leaving the total inode count unchanged. We can eventually pack
 physical objects with a managed-extent allocator while retaining the same
 immutable-object interface.
 
 ## Object envelope
 
-For the initial portable envelope, I use a 96-byte explicitly little-endian
-header. We encode its fields individually; copying a C++ struct's memory is not
-the serialization. The header binds kind, format version, length, policy and
+The initial portable envelope has a 96-byte explicitly little-endian header.
+We encode its fields individually, so the representation does not depend on a
+C++ struct's memory layout. The header binds kind, format version, length, policy and
 integrity metadata. Kind-specific magic is:
 
 | Kind | Eight magic bytes |
@@ -75,22 +75,53 @@ integrity metadata. Kind-specific magic is:
 | Fractional index | `EVRT.IX` followed by zero |
 
 The extension helps people; the header establishes the object's actual kind.
-The reader checks magic, version, reserved fields, policy unit, group size,
-fixed-width descriptor, exact extent and CRC32C for the header and body before
-exposing a validated object. CRC32C detects accidental corruption; it is not an
-authentication mechanism and is separate from the algebraic world fingerprint.
+By default, `file<P>::open` and `from_slice` check the 96-byte header and exact file extent:
+magic, version, reserved fields, policy unit, group size, fixed-width descriptor,
+backspace code and parameter, and header CRC32C. They do not read body pages or
+inspect the final padding byte.
+CRC32C detects accidental corruption; it is not authentication and is separate
+from the algebraic world fingerprint.
 
-For now, I require `file<P>::open` and `from_slice` to compute the whole body's
-CRC32C. Opening therefore costs O(physical body bytes) and can fault every mapped
-page. We retain direct byte access after validation, but do not yet have
-logarithmic or lazy opening. To get checked partial reads, we need an explicit
-page/block integrity format; simply skipping validation does not provide one.
+When an object is already trusted, `file_open_mode::trusted` skips all header
+reads during `open` or `from_slice`. It also skips the filename/header kind
+comparison. The only envelope check at this point is that the physical mapping
+has at least 96 bytes, so slicing off the header remains well-defined.
+`multiverse<P>::open_object` forwards the same option without inspecting the
+header. This is useful when the caller already knows the type and policy and
+wants to avoid faulting in the header page on every open.
+
+`body()` obtains the physical slice after the header without reading either
+region. For bit profiles this includes the final storage byte and its padding.
+An explicit `header()` call returns metadata by value; a trusted handle then
+reads and validates the header and exact extent. There is no mutable lazy cache
+shared between readers. `scan()` validates the header, extent and entire body,
+including for trusted handles. It validates the object bytes rather than its
+external filename.
+
+Opening should not scan a large immutable file just to make its bytes addressable.
+An explicit `file<P>::scan()` checks the header, body's CRC32C and canonical bit padding,
+with O(physical body bytes) work. `validate_file` remains the whole-object
+validation helper. Recovery selects the objects that need such a scan, for
+example uncertain outputs; it does not automatically scan the whole database on
+every restart. A scrub can request the same operation.
+
+The header check establishes interpretation and bounds, not payload integrity.
+A writer or receiver can compute the checksum while streaming bytes, without
+reopening them for a second pass; that streaming writer API remains work.
+Checked partial reads will need a separate page/block integrity format, which
+is not implemented yet.
 
 `file<P>` must reject persisted metadata inconsistent with `P`. Byte profiles
 measure their body extent in bytes. Bit profiles measure meaningful bits, with
 MSB-first bytes and zero trailing padding. The physical mapping still has a byte
 length. Conversion and overflow checks occur at that boundary; padding does not
 increase the logical bit universe.
+
+The backspace descriptor uses header byte 18 for the code and bytes 88–95 for
+its little-endian parameter: code 0 selects exponential-Golomb with an order
+from 0 through 63; code 1 selects Golomb with a positive modulus. Byte profiles
+require descriptor `(0, 0)` and use varints. The reader checks the descriptor
+against `P` before interpreting the body. Bytes 19–23 remain reserved zero.
 
 The policy's fixed-value descriptor and a stream's actual common width are
 different metadata. A borrowed-key stream has no value payload, even when the
@@ -115,7 +146,8 @@ use lengths and relative offsets, not unchecked pointer arithmetic. Empty
 files need no zero-length mapping. Never truncate, overwrite or recycle a file
 while a reader can still reach it.
 
-I want navigable LPFC/FC and rank/select sections directly readable from mappings.
+The intended LPFC/FC and rank/select sections should be navigable directly from
+mappings.
 Opaque whole-file compression would require another decompressed allocation
 before those structures can be used. LevelDB similarly avoids a second cached
 copy when an uncompressed block already resides in stable mapped memory; its
@@ -146,8 +178,8 @@ LevelDB separates immutable tables from the metadata selecting them. Table
 construction finishes and synchronizes the file before offering it to the
 version update. Metadata installation appends and synchronizes a version edit;
 a newly created manifest also needs root selection before the in-memory
-version is installed. I take these publication boundaries as a useful model for
-Everett, independent of the compaction schedule we choose.
+version is installed. These publication boundaries apply independently of the
+compaction schedule we choose for Everett.
 [Table builder](https://github.com/google/leveldb/blob/main/db/builder.cc),
 [version installation](https://github.com/google/leveldb/blob/main/db/version_set.cc)
 
@@ -158,15 +190,14 @@ with explicit saves, old fractional targets and shared merge candidates.
 Completing our merge does not release another owner's old index dependency.
 [Live files and pending outputs](https://github.com/google/leveldb/blob/main/db/db_impl.cc)
 
-I record exact dependency edges and explicit owners in Everett's catalog.
-We can cache that graph with runtime reference counts, but must reconstruct its
-durable roots after restart. I use these LevelDB examples for publication
-boundaries and conservative retention, and SQLite for our metadata transactions
-and recovery machinery.
+Everett's catalog records exact dependency edges and explicit owners. Runtime
+reference counts can cache that graph, but recovery must reconstruct its durable
+roots. The LevelDB examples supply useful publication and retention rules;
+SQLite supplies our metadata transactions and recovery machinery.
 
 ## Publication protocol
 
-For a new generation, I use this publication order:
+Publish a new generation in this order:
 
 1. Commit a job/attempt identity, reserved private outputs and ownership of the
    exact input graph. An independent recovery owner must retain the old
@@ -186,8 +217,8 @@ For a new generation, I use this publication order:
    outside it, persist the namespace change, then record deletion's outcome.
    Claimed identities cannot be reused or acquired during this interval.
 
-I leave the recovery owner in place through step 4 so that we preserve both
-possible outcomes if the selecting commit becomes uncertain. We do long writes,
+Keeping the recovery owner through step 4 preserves both possible outcomes if
+the selecting commit becomes uncertain. We do long writes,
 checksums and file synchronization outside the catalog write transaction. Exact
 SQL relationships, retry identities and transitions are in [catalog.md](catalog.md).
 
@@ -204,12 +235,12 @@ flush alone does not prove that we have regenerated failed writeback data.
 
 ## Acknowledgment, checkpoints and recovery
 
-I acknowledge an update as durable only after its complete immutable payload
-and the catalog transaction selecting it are durable. SQLite journals the
-metadata; I do not add a second custom update log. We cannot acknowledge
+A durable acknowledgment requires both the complete immutable payload and the
+catalog transaction selecting it to be durable. SQLite journals the metadata;
+there is no second custom update log. We cannot acknowledge
 in-memory-only payloads under this durability contract.
 
-I keep small versioned merge/index continuations in SQLite BLOBs referring to
+Small versioned merge/index continuations live in SQLite BLOBs referring to
 durable sealed ranges of `.kv` or `.index` outputs. We store exact P, byte/bit
 address units, group size K, record counts, input identities and sufficient
 prefix contexts. Counts of records are not byte or bit offsets. Commit a
@@ -241,7 +272,7 @@ a complete backup must retain and transfer a consistent dependency closure.
 
 ## Verification still required for the writer
 
-Before treating the writer as durable, I require us to check:
+Before treating the writer as durable, we need to check:
 
 - Short writes, interruptions, disk-full errors, close errors and failure at
   each synchronization/rename boundary.

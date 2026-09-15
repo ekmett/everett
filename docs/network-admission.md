@@ -1,25 +1,25 @@
 # Admitting sorted blobs from peers
 
-I want to retain received immutable native blobs, chain them onto an existing
-world, build fractional indexes back over the new prefix, and spend merge work
-as admission proceeds. Arbitrary incoming sizes are compatible with local
-cascading. Their scheduling, publication latency and byte costs require
-separate bounds. We derive those distinctions below; I have not implemented
-an admission scheduler.
+Suppose a peer sends us an immutable sorted blob. We can retain its native bytes,
+chain it onto an existing world, and build fractional indexes back over the new
+prefix. Local cascading allows arbitrary incoming sizes. The harder questions
+are when that index work finishes and how much space and string work it costs.
+The entry-count argument, counterexample and remaining scheduling obligations
+follow below; an admission scheduler is not yet implemented.
 
 ## 1. What can be adopted directly
 
-I can retain a received native blob's content-addressed identity and bytes;
-its receiver-specific fractional index is a separate immutable object. Reusing
+A received native blob can keep its content-addressed identity and bytes.
+Its receiver-specific fractional index is a separate immutable object. Reusing
 an existing index also requires its exact downstream augmented catalog version,
 including sampled ordinals and duplicate ordering. An equal logical-state
-fingerprint does not establish that routing layout. I keep the exact dependencies
+fingerprint does not establish that routing layout. The exact dependencies stay
 pinned until a replacement index is complete.
 
-A standalone base has no downstream catalog to sample, but I still need its
-native navigation structures and a terminal index representation. In the
+A standalone base has no downstream catalog to sample. It still needs native
+navigation structures and a terminal index representation. In the
 intended format, a complete `.kv` already includes its native LPFC stream,
-decoding checkpoints and Elias–Fano sampled-offset directory. I can receive
+decoding checkpoints and Elias–Fano sampled-offset directory. We can receive
 and reuse those structures together. Receiving only the record stream instead
 requires scanning its framing, collecting sampled offsets and constructing EF;
 validation does not supply missing navigation metadata.
@@ -33,17 +33,17 @@ requires packed zero classes and checkpoints, using $O(n/K)$ directory work and
 space for $n$ native entries at fixed $K$. The general `profile_blob<P>` index
 builder also walks those $n$ entries; it has no terminal fast path yet.
 
-To adopt a blob directly after validation, I need a complete terminal
-representation, including navigation metadata, or I must finish the missing
-construction first. Validation itself may scan the received bytes. The current
+Direct adoption after validation needs a complete terminal representation,
+including navigation metadata. If anything is missing, construction must
+finish first. Validation itself may scan the received bytes. The current
 file envelope still has an opaque body: validating it alone does not produce a
 searchable typed blob. A preindexed prefix can likewise be adopted only when
 its complete dependency chain and policy match. Neither case implies that a
 new tiny batch can cheaply build an index against an arbitrary large existing
 head.
 
-I preserve per-key chronology during admission. Disjoint partition updates
-from one shared base commute; arbitrary same-key arrows need their original composition
+Admission preserves per-key chronology. Disjoint partition updates from one
+shared base commute; arbitrary same-key arrows need their original composition
 order. Assigning files size classes is not permission to sort history by size.
 Merges must preserve that order, for example by combining contiguous history
 intervals. See [categorical updates](arrows.md).
@@ -91,7 +91,7 @@ $c/K,c/K^2,\ldots$, up to rounding: the aggregate bill is $O(c/(K-1)+q)$,
 not $c/K$ anew for every prepend. That conclusion assumes the old suffix
 stays fixed. Rebuilding against changed targets needs its own repair charge.
 
-I can reserve credit when the large head arrives to fund this aggregate work.
+We can reserve credit when the large head arrives to fund this aggregate work.
 That does not make the first large dependency finish within a tiny arrival's
 worst-case work allowance. We need to distinguish prepayment from completion time.
 
@@ -123,9 +123,10 @@ relative to the downstream merge that changed their target.
 
 I am considering comparable-size merges and classes such as
 $\lfloor\log_2 b\rfloor$ as scheduling tools. Direct admission at arbitrary
-classes still needs an admission/repair proof; it does not inherit the original COLA schedule's
-worst-case theorem. I must declare whether $b$ measures records, encoded bytes
-or another work weight. Those choices do not establish interchangeable bounds.
+classes still needs an admission/repair proof; it does not inherit the original
+COLA schedule's worst-case theorem. We must specify whether $b$ measures
+records, encoded bytes or another work weight. Those choices do not establish
+interchangeable bounds.
 
 ## 4. Entry accounting is not a byte bound
 
@@ -143,10 +144,10 @@ compression within each independent stream cannot remove its first literal.
 Neither native LPFC nor fixed-value stride subtraction resolves this example.
 
 We therefore have no bound on actual index bytes or string reconstruction work
-from the entry recurrence alone. I must charge emitted key/framing units and
-their reads explicitly. Shared immutable key spans, externally supplied
-first-key contexts, or distinguishing separators are possible directions, each requiring its own
-codec, query and pin-lifetime proof. **I have not selected a fix here.**
+from the entry recurrence alone. Emitted key/framing units and their reads need
+explicit charges. Shared immutable key spans, externally supplied first-key
+contexts, or distinguishing separators are possible directions, each requiring
+its own codec, query and pin-lifetime proof. **The choice remains open.**
 
 ## 5. Ingestion state and published state
 
@@ -155,8 +156,8 @@ state. A published world needs a completed exact-target dependency chain with
 the promised depth, or a separately justified bounded fallback query path.
 Unbounded independent searches over pending files are not that fallback.
 
-I require the completion rule to preserve the previous readable root while work
-is unfinished, account for both index and native merges, and retain replay/progress
+The completion rule must preserve the previous readable root while work is
+unfinished, account for both index and native merges, and retain replay/progress
 metadata. Immutable `.kv`/`.index` objects and planned SQLite world/pin/progress
 metadata supply the intended boundaries; the network admission scheduler and
 its byte-budget proof remain implementation work.
@@ -170,5 +171,5 @@ introduces levels and cascading;
 gives Lemma 21's level-zero admission and unsafe-level scheduling argument;
 [p. 10](https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=10)
 completes index-linked visibility. The arbitrary-prefix equations and string
-counterexample above are my analysis for Everett; I do not attribute them to
+counterexample above are derived here for Everett; they are not claims from
 that paper.
