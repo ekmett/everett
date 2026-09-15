@@ -73,6 +73,14 @@ namespace {
       std::vector<std::byte> body(static_cast<std::size_t>(file_detail::body_bytes<P>(25)), std::byte{0xab});
       if constexpr (P::unit == profile_unit::bit) body.back() &= std::byte{0x80};
       auto encoded = encode_file(header, body);
+      auto split = body.size() / 2;
+      auto accumulated = crc32c(std::span<std::byte const>(body).first(split));
+      accumulated = crc32c(std::span<std::byte const>(body).subspan(split), accumulated);
+      auto prefix = encode_file_header(header, accumulated);
+      static_assert(std::is_same_v<decltype(prefix), std::array<std::byte, 96>>);
+      require(std::ranges::equal(prefix, std::span<std::byte const>(encoded).first(96)),
+              "streamed header differs from whole-file encoding");
+      require(decode_file_header<P>(prefix) == header, "standalone header roundtrip");
       require(validate_file<P>(encoded) == header, "typed file roundtrip");
       require(encoded[8] == std::byte{1} && encoded[9] == std::byte{0} &&
               encoded[10] == std::byte{96} && encoded[11] == std::byte{0}, "header little-endian version");
@@ -137,6 +145,45 @@ namespace {
       changed = encoded; changed[68] ^= std::byte{1};
       rejects_open<P>(corrupt_path, changed);
     }
+  }
+
+  void header_only_encoding() {
+    using policy = storage_policy<profile_unit::byte, fixed_values<3>, 7, exponential_golomb<0>, 16>;
+    file_header<policy> header{file_kind::native_blob, 9, 2, 3};
+    std::array<std::byte, 9> body{std::byte{0x00}, std::byte{0x11}, std::byte{0x22},
+      std::byte{0x33}, std::byte{0x44}, std::byte{0x55}, std::byte{0x66}, std::byte{0x77}, std::byte{0x88}};
+    // Fixed golden bytes from independent little-endian packing and bitwise CRC.
+    constexpr std::string_view expected =
+      "455652542e4b5600010060000300000000010000100000000700000000000000"
+      "0300000000000000030000000000000009000000000000000200000000000000"
+      "54798ce3f68aeb51600000000000000069000000000000000000000000000000";
+    auto prefix = encode_file_header(header, crc32c(body));
+    constexpr std::string_view digits = "0123456789abcdef";
+    for (std::size_t i = 0; i != prefix.size(); ++i) {
+      auto byte = std::to_integer<unsigned>(prefix[i]);
+      require(expected[2 * i] == digits[byte >> 4] && expected[2 * i + 1] == digits[byte & 15],
+              "canonical header golden bytes changed");
+    }
+    // Supplying the checksum does not claim that the body was validated here.
+    auto supplied = encode_file_header(header, 0x12345678u);
+    require(file_detail::get(supplied, 64, 4) == 0x12345678u, "supplied body checksum changed");
+    require(decode_file_header<policy>(supplied) == header, "supplied checksum broke header CRC");
+    std::vector<std::byte> object(supplied.begin(), supplied.end());
+    object.insert(object.end(), body.begin(), body.end());
+    rejects([&] { validate_file<policy>(object); });
+
+    using variable = storage_policy<profile_unit::byte>;
+    file_header<variable> large{file_kind::native_blob, std::uint64_t{1} << 40, 7, std::nullopt};
+    auto small = encode_file_header(large, 0x91a713d0u);
+    require(small.size() == 96 && decode_file_header<variable>(small) == large,
+            "header-only encoding depends on body allocation");
+    require(file_detail::get(small, 80, 8) == large.extent + 96, "large physical extent changed");
+    rejects([] { encode_file_header(file_header<variable>{file_kind::native_blob,
+      std::numeric_limits<std::uint64_t>::max(), 0, std::nullopt}, 0); });
+    rejects([] { encode_file_header(file_header<policy>{file_kind::native_blob, 5, 2, 3}, 0); });
+    rejects([] { encode_file_header(file_header<policy>{file_kind::native_blob, 9, 2, 4}, 0); });
+    rejects([] { encode_file_header(file_header<policy>{file_kind::fractional_index, 0, 0, std::nullopt}, 0); });
+    rejects([] { encode_file_header(file_header<policy>{static_cast<file_kind>(2), 0, 0, 0}, 0); });
   }
 
   template <std::uint64_t K> void policy_matrix(std::filesystem::path const & directory) {
@@ -502,6 +549,7 @@ namespace {
 
 int main() {
   try {
+    header_only_encoding();
     temporary_directory directory;
     policy_matrix<3>(directory.path); policy_matrix<7>(directory.path);
     policy_matrix<15>(directory.path); policy_matrix<31>(directory.path);

@@ -69,7 +69,8 @@ namespace {
 #endif
 #endif
 #endif
-    if (initial == 0) require(everett::crc32c(input) == expected, "public CRC mismatch");
+    require(everett::crc32c(input, initial) == expected, "seeded public CRC mismatch");
+    if (initial == 0) require(everett::crc32c(input) == expected, "default public CRC mismatch");
   }
 
   void known_vectors() {
@@ -107,9 +108,45 @@ namespace {
     for (std::size_t split = 0; split < 2048; split += 17) {
       auto first = everett::crc32c(bytes(input).first(split));
       check(bytes(input).subspan(split, 2048 - split), first);
-      auto second = everett::crc32c_detail::portable::crc32_impl(
-        first, reinterpret_cast<char const *>(input.data() + split), 2048 - split);
+      auto second = everett::crc32c(bytes(input).subspan(split, 2048 - split), first);
       require(second == everett::crc32c(bytes(input).first(2048)), "incremental CRC mismatch");
+    }
+  }
+
+  void incremental_streams() {
+    std::mt19937_64 random(0x73adc032);
+    std::vector<std::byte> storage(196608 + 31);
+    for (auto & byte : storage) byte = std::byte(random());
+    constexpr std::array<std::uint32_t, 4> seeds{0, 0xffffffffu, 0x12345678u, 0x80000000u};
+    constexpr std::array<std::size_t, 12> chunks{0, 1, 7, 96, 127, 128, 255, 256, 4096, 65535, 65536, 65537};
+    for (std::size_t offset : {0u, 1u, 7u, 15u, 31u}) {
+      auto input = bytes(storage).subspan(offset, 196608);
+      for (auto seed : seeds) {
+        auto expected = oracle(input, seed);
+        require(everett::crc32c(input, seed) == expected, "large seeded public CRC mismatch");
+        std::size_t at = 0;
+        auto incremental = seed;
+        for (auto size : chunks) {
+          size = std::min(size, input.size() - at);
+          incremental = everett::crc32c(input.subspan(at, size), incremental);
+          at += size;
+          require(everett::crc32c({}, incremental) == incremental, "empty chunk changed CRC state");
+        }
+        incremental = everett::crc32c(input.subspan(at), incremental);
+        require(incremental == expected, "mixed-backend streaming CRC mismatch");
+      }
+    }
+    // Every two-part split, including both empty endpoints, uses the public
+    // finalized-state API and an independently seeded concatenation oracle.
+    auto small = bytes(storage).subspan(3, 513);
+    for (auto seed : seeds) {
+      auto expected = oracle(small, seed);
+      require(everett::crc32c({}, seed) == seed, "empty seeded CRC mismatch");
+      for (std::size_t split = 0; split <= small.size(); ++split) {
+        auto first = everett::crc32c(small.first(split), seed);
+        auto second = everett::crc32c(small.subspan(split), first);
+        require(second == expected, "all-split seeded CRC mismatch");
+      }
     }
   }
 
@@ -143,7 +180,7 @@ namespace {
     // Direct calls to every available backend expose any hidden prefix/tail load.
     for (std::size_t size = 0; size < 768; ++size) {
       check(body.first(size));
-      check(body.last(size));
+      check(body.last(size), 0x91ba713du);
     }
     for (std::size_t size = 768; size <= body.size(); size += 193) check(body.last(size));
     check(body);
@@ -154,6 +191,7 @@ namespace {
 int main() {
   known_vectors();
   boundaries();
+  incremental_streams();
 #if defined(__unix__) || defined(__APPLE__)
   protected_tails();
 #endif

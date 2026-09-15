@@ -175,14 +175,14 @@ namespace everett {
     return header;
   }
 
-  // Pure serialization of an already encoded body; no file writes or durability.
-  template <class P> std::vector<std::byte> encode_file(file_header<P> const & header,
-                                                      std::span<std::byte const> body) {
+  // Serialize only the canonical envelope. The caller supplies the finalized
+  // CRC of the physical body bytes and remains responsible for checking the
+  // body's extent and bit padding before publication. No body is read here.
+  template <class P> std::array<std::byte, file_detail::header_bytes>
+  encode_file_header(file_header<P> const & header, std::uint32_t body_crc) {
     file_detail::validate_metadata(header);
-    file_detail::validate_body(header, body);
     auto total = file_detail::total_bytes<P>(header.extent);
-    if (total > std::numeric_limits<std::size_t>::max()) throw std::length_error("Everett file is too large");
-    std::vector<std::byte> result(static_cast<std::size_t>(total));
+    std::array<std::byte, file_detail::header_bytes> result{};
     auto magic = file_detail::magic(header.kind);
     for (std::size_t i = 0; i < 8; ++i) result[i] = std::byte(static_cast<unsigned char>(magic[i]));
     file_detail::put(result, 8, 2, file_detail::version);
@@ -197,11 +197,24 @@ namespace everett {
     file_detail::put(result, 40, 8, header.common_value_width.value_or(0));
     file_detail::put(result, 48, 8, header.extent);
     file_detail::put(result, 56, 8, header.record_count);
-    file_detail::put(result, 64, 4, crc32c(body));
+    file_detail::put(result, 64, 4, body_crc);
     file_detail::put(result, 72, 8, file_detail::header_bytes);
     file_detail::put(result, 80, 8, total);
     file_detail::put(result, 88, 8, P::backspace_parameter);
     file_detail::put(result, 68, 4, file_detail::header_checksum(result));
+    return result;
+  }
+
+  // Pure serialization of an already encoded body; no file writes or durability.
+  template <class P> std::vector<std::byte> encode_file(file_header<P> const & header,
+                                                      std::span<std::byte const> body) {
+    file_detail::validate_metadata(header);
+    file_detail::validate_body(header, body);
+    auto total = file_detail::total_bytes<P>(header.extent);
+    if (total > std::numeric_limits<std::size_t>::max()) throw std::length_error("Everett file is too large");
+    auto prefix = encode_file_header(header, crc32c(body));
+    std::vector<std::byte> result(static_cast<std::size_t>(total));
+    for (std::size_t i = 0; i < prefix.size(); ++i) result[i] = prefix[i];
     for (std::size_t i = 0; i < body.size(); ++i) result[file_detail::header_bytes + i] = body[i];
     return result;
   }
