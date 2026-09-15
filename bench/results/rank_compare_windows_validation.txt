@@ -1,0 +1,237 @@
+Native Windows correctness and benchmark transcript
+
+AMD Ryzen 9 7950X3D, Windows 11 build 26200, MSVC 19.44.35228.
+The controller set affinity to logical CPU 0 before child creation.
+Only task source, compiler outputs and results were written to a unique handoff directory.
+
+features-build.log
+==================
+cl /nologo /std:c++20 /EHsc /O2 /W4 /WX features.cc /Fefeatures.exe /Fofeatures.obj
+features.cc
+
+
+features-run.log
+================
+features.exe
+msvc_full_ver=194435228 cpu=0 affinity=0x1 leaf1_ecx=0xfed8320b leaf7_ebx=0xf1bf97a9 xcr0=0xe7 usable_avx2=1 usable_avx512f_bw=1
+cache_level=1 type=1 bytes=32768 sharing=2
+cache_level=1 type=2 bytes=32768 sharing=2
+cache_level=2 type=3 bytes=1048576 sharing=2
+cache_level=3 type=3 bytes=100663296 sharing=16
+
+
+rank-avx2-build.log
+===================
+cl /nologo /std:c++20 /EHsc /O2 /DNDEBUG /UNDEBUG /W4 /WX /permissive- /arch:AVX2 /Icurrent tests/rank.cc /Ferank-avx2.exe /Forank-avx2.obj
+cl : Command line warning D9025 : overriding '/DNDEBUG' with '/UNDEBUG'
+rank.cc
+
+
+rank-avx2-run.log
+=================
+rank-avx2.exe
+Storage rank, packed rank15, and Elias-Fano select15 oracle checks passed
+
+
+groups-avx2-build.log
+=====================
+cl /nologo /std:c++20 /EHsc /O2 /DNDEBUG /UNDEBUG /W4 /WX /permissive- /arch:AVX2 /Icurrent tests/groups.cc /Fegroups-avx2.exe /Fogroups-avx2.obj
+cl : Command line warning D9025 : overriding '/DNDEBUG' with '/UNDEBUG'
+groups.cc
+
+
+groups-avx2-run.log
+===================
+groups-avx2.exe
+Policy groups 3/7/15/31, packed classes, and residual-address select checks passed
+
+
+rank-avx512-build.log
+=====================
+cl /nologo /std:c++20 /EHsc /O2 /DNDEBUG /UNDEBUG /W4 /WX /permissive- /arch:AVX512 /Icurrent tests/rank.cc /Ferank-avx512.exe /Forank-avx512.obj
+cl : Command line warning D9025 : overriding '/DNDEBUG' with '/UNDEBUG'
+rank.cc
+
+
+rank-avx512-run.log
+===================
+rank-avx512.exe
+Storage rank, packed rank15, and Elias-Fano select15 oracle checks passed
+
+
+groups-avx512-build.log
+=======================
+cl /nologo /std:c++20 /EHsc /O2 /DNDEBUG /UNDEBUG /W4 /WX /permissive- /arch:AVX512 /Icurrent tests/groups.cc /Fegroups-avx512.exe /Fogroups-avx512.obj
+cl : Command line warning D9025 : overriding '/DNDEBUG' with '/UNDEBUG'
+groups.cc
+
+
+groups-avx512-run.log
+=====================
+groups-avx512.exe
+Policy groups 3/7/15/31, packed classes, and residual-address select checks passed
+
+
+sad-rank-avx2.log
+=================
+cl /nologo /std:c++20 /EHsc /O2 /UNDEBUG /W4 /WX /permissive- /arch:AVX2 /FI"target_check.h" /I. /Isad /Icurrent tests/rank.cc /Fesad-rank-avx2.exe /Fosad-rank-avx2.obj
+if errorlevel 1 exit /b %errorlevel%
+sad-rank-avx2.exe
+
+rank.cc
+Storage rank, packed rank15, and Elias-Fano select15 oracle checks passed
+
+
+sad-groups-avx2.log
+===================
+cl /nologo /std:c++20 /EHsc /O2 /UNDEBUG /W4 /WX /permissive- /arch:AVX2 /FI"target_check.h" /I. /Isad /Icurrent tests/groups.cc /Fesad-groups-avx2.exe /Fosad-groups-avx2.obj
+if errorlevel 1 exit /b %errorlevel%
+sad-groups-avx2.exe
+
+groups.cc
+Policy groups 3/7/15/31, packed classes, and residual-address select checks passed
+
+
+sad-rank-avx512.log
+===================
+cl /nologo /std:c++20 /EHsc /O2 /UNDEBUG /W4 /WX /permissive- /arch:AVX512 /DEXPECT_AVX512 /FI"target_check.h" /I. /Isad /Icurrent tests/rank.cc /Fesad-rank-avx512.exe /Fosad-rank-avx512.obj
+if errorlevel 1 exit /b %errorlevel%
+sad-rank-avx512.exe
+
+rank.cc
+Storage rank, packed rank15, and Elias-Fano select15 oracle checks passed
+
+
+sad-groups-avx512.log
+=====================
+cl /nologo /std:c++20 /EHsc /O2 /UNDEBUG /W4 /WX /permissive- /arch:AVX512 /DEXPECT_AVX512 /FI"target_check.h" /I. /Isad /Icurrent tests/groups.cc /Fesad-groups-avx512.exe /Fosad-groups-avx512.obj
+if errorlevel 1 exit /b %errorlevel%
+sad-groups-avx512.exe
+
+groups.cc
+Policy groups 3/7/15/31, packed classes, and residual-address select checks passed
+
+
+compare-avx2-build.log
+======================
+cl /nologo /std:c++20 /EHsc /O2 /DNDEBUG /W4 /WX /permissive- /arch:AVX2 /FI"target_check.h" /Ibaseline /DEVERETT_RANK_CANDIDATE=\"sad_rank15.h\" /DEVERETT_RANK_SIMD=\"qword_rank15.h\" rank_compare.cc /Fecompare-avx2.exe /Focompare-avx2.obj
+rank_compare.cc
+
+
+
+compare-avx2-check.log
+======================
+compare-avx2.exe check 1 32768 core
+case,logical_bits,groups,pattern,operation,variant,data_bytes,metadata_bytes,total_bytes,capacity_bytes,data_mod64,metadata_mod64,query_bytes,queries,trials,median_ns,min_ns,max_ns,checksum
+
+building hot_full32KiB, 16896 groups
+verified hot_full32KiB
+building hot_packed32KiB, 58240 groups
+verified hot_packed32KiB
+observed=0
+
+
+compare-avx2-hot.cmd
+====================
+@echo off
+call "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Auxiliary/Build/vcvars64.bat" >nul
+if errorlevel 1 exit /b %errorlevel%
+compare-avx2.exe hot_packed32KiB 7 1048576 core
+
+
+compare-avx512-build.log
+========================
+cl /nologo /std:c++20 /EHsc /O2 /DNDEBUG /W4 /WX /permissive- /arch:AVX512 /DEXPECT_AVX512 /FI"target_check.h" /Ibaseline /DEVERETT_RANK_CANDIDATE=\"sad_rank15.h\" /DEVERETT_RANK_SIMD=\"qword_rank15.h\" rank_compare.cc /Fecompare-avx512.exe /Focompare-avx512.obj
+rank_compare.cc
+
+
+
+compare-avx512-check.log
+========================
+compare-avx512.exe check 1 32768 core
+case,logical_bits,groups,pattern,operation,variant,data_bytes,metadata_bytes,total_bytes,capacity_bytes,data_mod64,metadata_mod64,query_bytes,queries,trials,median_ns,min_ns,max_ns,checksum
+
+building hot_full32KiB, 16896 groups
+verified hot_full32KiB
+building hot_packed32KiB, 58240 groups
+verified hot_packed32KiB
+observed=0
+
+
+compare-avx512-hot.cmd
+======================
+@echo off
+call "C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Auxiliary/Build/vcvars64.bat" >nul
+if errorlevel 1 exit /b %errorlevel%
+compare-avx512.exe hot_packed32KiB 7 1048576 core
+
+
+target_check.h
+==============
+#if !defined(__AVX2__)
+#error Native benchmark requires the AVX2 compilation path
+#endif
+#if defined(EXPECT_AVX512) && (!defined(__AVX512F__) || !defined(__AVX512BW__))
+#error AVX512 benchmark requires both F and BW compilation paths
+#endif
+#if !defined(EXPECT_AVX512) && defined(__AVX512F__)
+#error AVX2 benchmark must not select AVX512
+#endif
+
+
+sha256.json
+===========
+{
+  "current/everett/rank.h": "b36560f7eb35dfb933b2c68a1af64bbc1f1bbbf786a45ecee6f765739be92cec",
+  "current/everett/rank15.h": "80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c",
+  "current/everett/rank_groups.h": "25cd54c51435941fcc230cc7bc34b6b33e3c1a2b47ee926aedc0efad7fb404de",
+  "current/everett/select15.h": "1df8bd4b5c0d177da5dc13545af553a4c1c4d4841fed8d70d2e7dcf1667148c3",
+  "current/everett/select_groups.h": "fc041a779d9c4eee69b9ed2285e87cc3260241bb52d443de4e48f07652b8eff9",
+  "baseline/everett/rank.h": "b36560f7eb35dfb933b2c68a1af64bbc1f1bbbf786a45ecee6f765739be92cec",
+  "baseline/everett/rank15.h": "f11fbcfa831d1b617ede57d09bd009ba35a24fe09eee3d84a839a393553a1de4",
+  "baseline/everett/rank_groups.h": "25cd54c51435941fcc230cc7bc34b6b33e3c1a2b47ee926aedc0efad7fb404de",
+  "tests/rank.cc": "cbafa834d84a8f0ed3974ec33d5f2486d0e8180f7ec74fe51cb5a3bde85eb08c",
+  "tests/groups.cc": "4f998d56bd0c6f62b9b87c11463d7d32af04b07022f71daa153728fb457de82b",
+  "sad_rank15.h": "ed125be1898573ec2b926df930c96b909921fc506536d9c2e1c8b0363e0fb686",
+  "qword_rank15.h": "80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c",
+  "rank_compare.cc": "3bf47da16e69832c8db80e80d6f97d6f3a6cd0c6350930d24c1782ef419e4266",
+  "features.cc": "234017935f3ce01a48c36335314ad0885bb7bf886cccabf574ec1b406da4e989"
+}
+
+CPUID/XGETBV probe source
+========================
+#define NOMINMAX
+#include <windows.h>
+#include <intrin.h>
+#include <cstdint>
+#include <iostream>
+
+int main() {
+  int leaves[4]{};
+  __cpuidex(leaves, 1, 0);
+  auto leaf1 = static_cast<unsigned>(leaves[2]);
+  __cpuidex(leaves, 7, 0);
+  auto leaf7 = static_cast<unsigned>(leaves[1]);
+  auto xcr0 = (leaf1 & (1u << 27)) ? _xgetbv(0) : 0;
+  bool avx2 = (leaf1 & (1u << 28)) && (leaf7 & (1u << 5)) && (xcr0 & 6) == 6;
+  bool avx512 = avx2 && (leaf7 & (1u << 16)) && (leaf7 & (1u << 30)) && (xcr0 & 0xe6) == 0xe6;
+  DWORD_PTR process_mask = 0, system_mask = 0;
+  if (!GetProcessAffinityMask(GetCurrentProcess(), &process_mask, &system_mask)) return 2;
+  std::cout << "msvc_full_ver=" << _MSC_FULL_VER << " cpu=" << GetCurrentProcessorNumber()
+            << " affinity=0x" << std::hex << process_mask << " leaf1_ecx=0x" << leaf1
+            << " leaf7_ebx=0x" << leaf7 << " xcr0=0x" << xcr0 << std::dec
+            << " usable_avx2=" << avx2 << " usable_avx512f_bw=" << avx512 << '\n';
+  __cpuidex(leaves, static_cast<int>(0x80000000u), 0);
+  if (static_cast<unsigned>(leaves[0]) >= 0x8000001du) {
+    for (int index = 0; index < 8; ++index) {
+      __cpuidex(leaves, static_cast<int>(0x8000001du), index);
+      auto a = static_cast<unsigned>(leaves[0]), b = static_cast<unsigned>(leaves[1]);
+      if (!(a & 31)) break;
+      auto bytes = std::uint64_t((b & 4095) + 1) * (((b >> 12) & 1023) + 1) *
+                   (((b >> 22) & 1023) + 1) * (std::uint64_t(static_cast<unsigned>(leaves[2])) + 1);
+      std::cout << "cache_level=" << ((a >> 5) & 7) << " type=" << (a & 31)
+                << " bytes=" << bytes << " sharing=" << (((a >> 14) & 4095) + 1) << '\n';
+    }
+  }
+  return avx2 && avx512 ? 0 : 3;
+}
