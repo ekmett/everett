@@ -1,0 +1,67 @@
+diff --git a/include/everett/cola_index.h b/include/everett/cola_index.h
+index 0c8cf48..eccac01 100644
+--- a/include/everett/cola_index.h
++++ b/include/everett/cola_index.h
+@@ -360,7 +360,10 @@ namespace everett {
+           native_equal_ = !origin || (!adjacent.order && native_equal_);
+           if (origin) {
+             auto route = origin - 1;
+-            writers_[route].append(key);
++            // Along a sorted walk the minimum adjacent LCP since the preceding
++            // borrow is its exact LCP with this key. Reuse that same frontier
++            // for FC output instead of comparing the inherited prefix again.
++            writers_[route].append_known(key, borrowed_count_[route] ? cut_common_[route] : 0);
+             auto ordinal = borrowed_count_[route]++;
+             if (!(ordinal & 7)) flags_[route].push_back(std::byte{0});
+             if (native_equal_) flags_[route].back() |= std::byte(1u << (ordinal & 7));
+diff --git a/include/everett/multiverse.h b/include/everett/multiverse.h
+index b22fc41..93abe41 100644
+--- a/include/everett/multiverse.h
++++ b/include/everett/multiverse.h
+@@ -12,6 +12,7 @@
+ #include <everett/file.h>
+ #include <everett/file_index_pipeline.h>
+ #include <everett/mapped_blob.h>
++#include <everett/mapped_cola.h>
+ #include <everett/native_merge.h>
+ #include <everett/native_file_merge.h>
+ #include <everett/object_writer.h>
+@@ -86,6 +87,13 @@ namespace everett {
+     using mapped_index = everett::mapped_index<P>;
+     using mapped_blob = everett::mapped_blob<P>;
+     using mapped_query_root = everett::mapped_query_root<P>;
++    using cola_index = everett::cola_index<P>;
++    using cola_index_builder = everett::cola_index_builder<P>;
++    using cola_query_root = everett::cola_query_root<P>;
++    using cola_query_cursor = everett::cola_query_cursor<P>;
++    using mapped_cola_index = everett::mapped_cola_index<P>;
++    using mapped_cola_blob = everett::mapped_cola_blob<P>;
++    using mapped_cola_query_root = everett::mapped_cola_query_root<P>;
+     using world = everett::world<P>;
+     using timeline = everett::timeline<P>;
+     using branch_point = everett::branch_point<P>;
+@@ -105,6 +113,9 @@ namespace everett {
+     mapped_query_root open_query(blob_identity const & head) const {
+       return everett::open_mapped_query<P>(root_, head);
+     }
++    mapped_cola_query_root open_cola_query(blob_identity const & head) const {
++      return everett::open_mapped_cola_query<P>(root_, head);
++    }
+ 
+     // The caller establishes root durability and reserves both identities.
+     // Sealing acknowledges object persistence operations, not world adoption.
+diff --git a/include/everett/profile.h b/include/everett/profile.h
+index 30cb7dc..702a41f 100644
+--- a/include/everett/profile.h
++++ b/include/everett/profile.h
+@@ -1198,8 +1198,9 @@ namespace everett {
+ 
+   private:
+     template <class, class, class> friend struct index_builder;
++    template <class> friend struct cola_index_builder;
+     friend struct profile_detail::index_output<P>;
+-    // Only the index builder bypasses the public comparison, using the exact
++    // The index builders bypass the public comparison, using the exact
+     // LCP already obtained when this borrowed key was accepted. Framing and
+     // allocation rollback are shared with the public checked writer.
+     void append_known(bit_view key, std::uint64_t exact_common_bits,
