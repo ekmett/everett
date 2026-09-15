@@ -45,7 +45,7 @@ namespace everett {
   };
 
   // The working read side of the backing store. It holds a canonical existing
-  // root and opens policy-checked immutable object envelopes; it does not make
+  // root and opens immutable object envelopes, checked by default; it does not make
   // directories, allocate IDs, update a metadata catalog, publish worlds or reclaim data.
   // SQLite world/pin/progress metadata integration remains separate work.
   // Files/slices retain their mappings independently of this path holder.
@@ -63,9 +63,10 @@ namespace everett {
     std::filesystem::path const & root() const & noexcept { return root_; }
     std::filesystem::path const & root() const && = delete;
 
-    file open_object(object_id const & id, file_kind kind) const {
-      auto result = file::open(root_ / object_path(id, kind));
-      if (result.header().kind != kind) throw std::invalid_argument("unexpected Everett object kind");
+    file open_object(object_id const & id, file_kind kind, file_open_mode mode = file_open_mode::checked) const {
+      auto result = file::open(root_ / object_path(id, kind), mode);
+      if (mode == file_open_mode::checked && result.header().kind != kind)
+        throw std::invalid_argument("unexpected Everett object kind");
       return result;
     }
 

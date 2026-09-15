@@ -14,6 +14,7 @@
 #include <iostream>
 #include <random>
 #include <string>
+#include <type_traits>
 
 #if defined(__unix__) || defined(__APPLE__)
 #include <sys/mman.h>
@@ -142,6 +143,79 @@ namespace {
     roundtrip<storage_policy<profile_unit::bit, variable_values, K>>(directory);
     roundtrip<storage_policy<profile_unit::byte, fixed_values<5>, K>>(directory);
     roundtrip<storage_policy<profile_unit::bit, fixed_values<5>, K>>(directory);
+  }
+
+  template <class P> void test_trusted_validation(std::filesystem::path const & directory) {
+    static_assert(std::is_same_v<decltype(std::declval<file<P> const &>().header()), file_header<P>>);
+    for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
+      file_header<P> header{kind, 25, 1, std::nullopt};
+      if (kind == file_kind::fractional_index) header.common_value_width = 0;
+      std::vector<std::byte> payload(static_cast<std::size_t>(file_detail::body_bytes<P>(25)), std::byte{0xa8});
+      if constexpr (P::unit == profile_unit::bit) payload.back() &= std::byte{0x80};
+      auto encoded = encode_file(header, payload);
+      auto path = directory / ("trusted" + std::string(file_extension(kind)));
+      auto check = [&](std::span<std::byte const> data, bool valid_header, bool valid_body) {
+        write(path, data);
+        if (!valid_header) rejects([&] { file<P>::open(path); });
+        auto opened = file<P>::open(path, file_open_mode::trusted);
+        auto mapping = mapped_file::open(path);
+        auto sliced = file<P>::from_slice(mapping.slice(0, mapping.size()), file_open_mode::trusted);
+        for (auto const * object : {&opened, &sliced}) {
+          require(object->body().size() == data.size() - 96, "trusted body did not use physical extent");
+          if (valid_header) {
+            require(object->header() == header && object->header() == header, "explicit trusted header mismatch");
+            auto copy = object->header();
+            copy.extent = 0;
+            require(copy.extent == 0 && object->header().extent == header.extent, "header copy changed the reader");
+          } else rejects([&] { object->header(); });
+          if (valid_body) object->scan();
+          else rejects([&] { object->scan(); });
+        }
+      };
+      check(encoded, true, true);
+      auto bad = encoded;
+      bad[0] ^= std::byte{1};
+      check(bad, false, false);
+      bad = encoded; bad[68] ^= std::byte{1};
+      check(bad, false, false);
+      bad = encoded; file_detail::put(bad, 24, 8, P::group_size == 15 ? 7 : 15);
+      rehash_header(bad);
+      check(bad, false, false); // Valid CRC, incompatible policy.
+      bad = encoded; bad.push_back(std::byte{0});
+      check(bad, false, false); // Physical body includes the trailing byte.
+      bad = encoded; bad.pop_back();
+      check(bad, false, false);
+      check(std::span<std::byte const>(encoded).first(96), false, false);
+      bad = encoded; bad[96] ^= std::byte{0x80};
+      check(bad, true, false);
+      if constexpr (P::unit == profile_unit::bit) {
+        bad = encoded; bad.back() |= std::byte{1};
+        file_detail::put(bad, 64, 4, crc32c(std::span<std::byte const>(bad).subspan(96)));
+        rehash_header(bad);
+        check(bad, true, false); // Explicit scanning checks canonical padding too.
+      }
+      for (std::size_t length = 0; length < 96; ++length) {
+        write(path, std::span<std::byte const>(encoded).first(length));
+        rejects([&] { file<P>::open(path, file_open_mode::trusted); });
+      }
+      write(path, encoded);
+      rejects([&] { file<P>::open(path, static_cast<file_open_mode>(2)); });
+      using wrong_policy = storage_policy<P::unit, typename P::value_layout, P::group_size == 15 ? 7 : 15,
+                                          typename P::backspace_encoding>;
+      auto wrong = file<wrong_policy>::open(path, file_open_mode::trusted);
+      require(wrong.body().size() == payload.size(), "wrong-policy trusted open inspected metadata");
+      rejects([&] { wrong.header(); });
+      rejects([&] { wrong.scan(); });
+
+      // Trusted opening accepts the caller's filename assertion. Explicit
+      // validation concerns the retained object bytes, not its external name.
+      auto other_path = directory / "trusted.other-extension";
+      write(other_path, encoded);
+      rejects([&] { file<P>::open(other_path); });
+      auto other = file<P>::open(other_path, file_open_mode::trusted);
+      require(other.header() == header, "trusted filename assumption changed header");
+      other.scan();
+    }
   }
 
   template <profile_unit Unit> void test_default_headers(std::array<std::uint32_t, 2> expected_crc) {
@@ -331,6 +405,44 @@ namespace {
     auto body = stored->body();
     require(std::ranges::equal(body.bytes(), payload), "guard restoration changed payload");
   }
+
+  template <class P> void test_inaccessible_mapping(std::filesystem::path const & directory, file_kind kind) {
+    auto page_size = ::sysconf(_SC_PAGESIZE);
+    require(page_size > 0, "invalid test page size");
+    std::vector<std::byte> payload(static_cast<std::size_t>(page_size) + 1, std::byte{0xa8});
+    std::uint64_t extent = payload.size();
+    if constexpr (P::unit == profile_unit::bit) extent = extent * 8 - 3;
+    file_header<P> header{kind, extent, 1, std::nullopt};
+    if (kind == file_kind::fractional_index) header.common_value_width = 0;
+    auto encoded = encode_file(header, payload);
+    auto path = directory / ("inaccessible" + std::string(file_extension(kind)));
+    write(path, encoded);
+    mapped_slice retained;
+    {
+      auto mapping = mapped_file::open(path);
+      auto whole = mapping.slice(0, mapping.size());
+      std::optional<file<P>> stored;
+      {
+        // Unlike the checked-open test above, this protects every byte of the
+        // mapping, including the header. open() delegates to this same helper.
+        inaccessible_pages guard(whole.bytes());
+        stored.emplace(file<P>::from_slice(whole, file_open_mode::trusted));
+        retained = stored->body();
+        require(retained.size() == payload.size() && retained.bytes().data() == whole.bytes().data() + 96,
+                "trusted opening or body slicing touched or changed mapped bytes");
+        auto copied = *stored;
+        require(copied.body().size() == payload.size(), "trusted copy did not preserve mapping");
+        auto header_only = file<P>::from_slice(whole.slice(0, 96), file_open_mode::trusted);
+        require(header_only.body().empty(), "trusted minimum extent did not give an empty body");
+        for (std::uint64_t size = 0; size < 96; ++size)
+          rejects([&] { file<P>::from_slice(whole.slice(0, size), file_open_mode::trusted); });
+        rejects([&] { file<P>::from_slice(whole, static_cast<file_open_mode>(2)); });
+      }
+      require(stored->header() == header, "trusted metadata failed after access restored");
+      stored->scan();
+    }
+    require(std::ranges::equal(retained.bytes(), payload), "trusted body pin did not retain mapping");
+  }
 #endif
 
   void test_paths() {
@@ -375,12 +487,18 @@ int main() {
     test_backspace_policy<golomb<256>>(directory.path);
     test_backspace_policy<golomb<std::numeric_limits<std::uint64_t>::max()>>(directory.path);
     test_descriptors(directory.path);
+    test_trusted_validation<storage_policy<profile_unit::byte>>(directory.path);
+    test_trusted_validation<storage_policy<profile_unit::bit>>(directory.path);
+    test_trusted_validation<storage_policy<profile_unit::bit, variable_values, 15, golomb<3>>>(directory.path);
 #if defined(__unix__) || defined(__APPLE__)
     for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
       test_inaccessible_body<storage_policy<profile_unit::byte>>(directory.path, kind);
       test_inaccessible_body<storage_policy<profile_unit::bit>>(directory.path, kind);
       test_inaccessible_body<storage_policy<profile_unit::bit, variable_values, 15, exponential_golomb<3>>>(directory.path, kind);
       test_inaccessible_body<storage_policy<profile_unit::bit, variable_values, 15, golomb<3>>>(directory.path, kind);
+      test_inaccessible_mapping<storage_policy<profile_unit::byte>>(directory.path, kind);
+      test_inaccessible_mapping<storage_policy<profile_unit::bit>>(directory.path, kind);
+      test_inaccessible_mapping<storage_policy<profile_unit::bit, variable_values, 15, golomb<3>>>(directory.path, kind);
     }
 #endif
     test_paths();

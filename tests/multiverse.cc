@@ -175,6 +175,54 @@ namespace {
     auto wrong_kind = encode_file<bytes>(wrong, byte_body.bytes);
     write_bytes(temporary.path / object_path(id, file_kind::native_blob), wrong_kind);
     rejects([&] { store.open_object(id, file_kind::native_blob); });
+    auto trusted_kind = store.open_object(id, file_kind::native_blob, file_open_mode::trusted);
+    require(trusted_kind.header().kind == file_kind::fractional_index,
+            "trusted open unexpectedly enforced filename/header agreement");
+    trusted_kind.scan(); // Object bytes are valid; the trusted filename assertion was wrong.
+  }
+
+  template <class P> void trusted_objects() {
+    temporary_directory temporary;
+    auto id = object_id("0123456789abcdef0123456789abcdef");
+    auto payload = bit_string::from_bytes("retained object body");
+    multiverse<P> store(temporary.path);
+    for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
+      fixture<P>(temporary.path, id, kind, payload);
+      mapped_slice retained;
+      {
+        auto object = store.open_object(id, kind, file_open_mode::trusted);
+        require(object.header().kind == kind, "trusted object kind on explicit access");
+        object.scan();
+        retained = object.body();
+      }
+      auto path = temporary.path / object_path(id, kind);
+      std::filesystem::remove(path);
+      require(std::ranges::equal(retained.bytes(), payload.bytes), "trusted object pin failed after unlink");
+
+      // A malformed header must reach the caller intact in trusted mode.
+      // This catches accidental header() calls inside open_object itself.
+      std::vector<std::byte> malformed(128, std::byte{0xab});
+      write_bytes(path, malformed);
+      rejects([&] { store.open_object(id, kind); });
+      {
+        auto object = store.open_object(id, kind, file_open_mode::trusted);
+        require(object.body().size() == malformed.size() - 96, "trusted object decoded a physical extent");
+        rejects([&] { object.header(); });
+        rejects([&] { object.scan(); });
+      }
+      malformed.resize(95);
+      write_bytes(path, malformed);
+      rejects([&] { store.open_object(id, kind, file_open_mode::trusted); });
+      fixture<P>(temporary.path, id, kind, payload);
+      using wrong_policy = storage_policy<P::unit, typename P::value_layout, P::group_size == 15 ? 7 : 15,
+                                          typename P::backspace_encoding>;
+      multiverse<wrong_policy> wrong_store(temporary.path);
+      rejects([&] { wrong_store.open_object(id, kind); });
+      auto object = wrong_store.open_object(id, kind, file_open_mode::trusted);
+      require(object.body().size() == payload.bytes.size(), "trusted object checked its policy implicitly");
+      rejects([&] { object.header(); });
+      rejects([&] { object.scan(); });
+    }
   }
 }
 
@@ -183,6 +231,9 @@ int main() {
     sort_codes();
     roots_are_read_only();
     read_objects();
+    trusted_objects<bytes>();
+    trusted_objects<bits>();
+    trusted_objects<storage_policy<profile_unit::bit, variable_values, 15, golomb<3>>>();
     std::cout << "multiverse tests passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';

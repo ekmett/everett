@@ -25,6 +25,8 @@
 #include <vector>
 
 namespace everett {
+  enum class file_open_mode : std::uint8_t { checked, trusted };
+
   // CRC32C (Castagnoli), reflected polynomial, initial/final complement. This
   // byte-integrity check is independent of the algebraic logical-state hash.
   inline std::uint32_t crc32c(std::span<std::byte const> bytes) noexcept {
@@ -213,39 +215,53 @@ namespace everett {
     return result;
   }
 
-  // Typed single-object reader. Opening validates the header and exact file
-  // extent without reading payload bytes. The retained body slice keeps the
-  // read-only mapping alive; obtaining it does not verify the body's integrity.
-  // Call scan() explicitly when admission, recovery, or scrubbing needs the
-  // whole-body CRC32C and canonical padding checked: O(physical body bytes).
+  // Typed single-object reader. Checked opening validates the header and exact
+  // file extent without reading payload bytes. Trusted opening reads no mapped
+  // bytes: the caller vouches for the immutable object's format and policy.
+  // Both modes retain a mapping and require at least the fixed 96-byte header.
+  // body() takes the physical remainder without decoding metadata. header()
+  // returns a value, checking trusted metadata on explicit access without a
+  // mutable lazy cache. scan() always validates the entire object, including
+  // its header: O(physical body bytes). It does not validate the external name.
   template <class P> struct file {
     using policy_type = P;
-    static file from_slice(mapped_slice bytes) {
-      auto header = decode_file_header<P>(bytes.bytes());
-      if (file_detail::total_bytes<P>(header.extent) != bytes.size())
-        throw std::invalid_argument("truncated or trailing Everett object bytes");
-      return {std::move(bytes), std::move(header)};
+    static file from_slice(mapped_slice bytes, file_open_mode mode = file_open_mode::checked) {
+      switch (mode) {
+        case file_open_mode::checked: {
+          auto header = checked_header(bytes);
+          return {std::move(bytes), std::move(header)};
+        }
+        case file_open_mode::trusted:
+          if (bytes.size() < file_detail::header_bytes)
+            throw std::invalid_argument("truncated Everett header");
+          return {std::move(bytes), std::nullopt};
+      }
+      throw std::invalid_argument("unsupported Everett file open mode");
     }
-    static file open(std::filesystem::path const & path) {
+    static file open(std::filesystem::path const & path, file_open_mode mode = file_open_mode::checked) {
       auto mapping = mapped_file::open(path);
-      auto result = from_slice(mapping.slice(0, mapping.size()));
-      if (path.extension().generic_string() != file_extension(result.header_.kind))
+      // All mapped-byte access is in the same helper exercised by from_slice.
+      auto result = from_slice(mapping.slice(0, mapping.size()), mode);
+      // Trusted callers also vouch for the filename; checking its agreement
+      // would require decoding the header that this mode deliberately skips.
+      if (mode == file_open_mode::checked &&
+          path.extension().generic_string() != file_extension(result.header_->kind))
         throw std::invalid_argument("Everett extension disagrees with file magic");
       return result;
     }
-    file_header<P> const & header() const & noexcept { return header_; }
-    file_header<P> const & header() const && = delete;
-    mapped_slice body() const { return bytes_.slice(file_detail::header_bytes, file_detail::body_bytes<P>(header_.extent)); }
-    void scan() const {
-      auto payload = body();
-      file_detail::validate_body(header_, payload.bytes());
-      if (file_detail::get(bytes_.bytes(), 64, 4) != crc32c(payload.bytes()))
-        throw std::invalid_argument("Everett body CRC32C mismatch");
-    }
+    file_header<P> header() const { return header_ ? *header_ : checked_header(bytes_); }
+    mapped_slice body() const { return bytes_.slice(file_detail::header_bytes, bytes_.size() - file_detail::header_bytes); }
+    void scan() const { (void)validate_file<P>(bytes_.bytes()); }
   private:
-    file(mapped_slice bytes, file_header<P> header) : bytes_(std::move(bytes)), header_(std::move(header)) {}
+    static file_header<P> checked_header(mapped_slice const & bytes) {
+      auto header = decode_file_header<P>(bytes.bytes());
+      if (file_detail::total_bytes<P>(header.extent) != bytes.size())
+        throw std::invalid_argument("truncated or trailing Everett object bytes");
+      return header;
+    }
+    file(mapped_slice bytes, std::optional<file_header<P>> header) : bytes_(std::move(bytes)), header_(std::move(header)) {}
     mapped_slice bytes_;
-    file_header<P> header_;
+    std::optional<file_header<P>> header_;
   };
 }
 
