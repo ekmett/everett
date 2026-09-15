@@ -45,6 +45,12 @@ cache entries can remain until that cursor reaches them.
 Mapped inputs must have been opened by this adapter; an unrelated mapped owner
 cannot silently substitute an object under a known identity.
 
+I register a checkpoint's roots together. They often share a long suffix, so
+the registration walks and records each distinct pair once. Root identities
+are sorted and deduplicated before recording the operation; passing the same
+set in a different order replays the same registration. This does not change
+which roots and hidden artifacts the checkpoint pins.
+
 The default physical identity allocator uses OS randomness. These are opaque
 reserved names, separate from semantic signatures; this adapter does not yet
 deduplicate independently constructed equal files by content. Exclusive file
@@ -109,3 +115,48 @@ builders are restarted after recovery; their unfinished output is not treated
 as durable. The restored scheduler admits no new contribution until recovery
 service has made its frontier safe. The same capture and mapping path works
 for `persistent_engine` through the typed core's runtime family.
+
+Sort-owned native files
+-----------------------
+
+`sort_runtime_store` uses the same catalog and checkpoint machinery for KV03
+native files. Each registered sort supplies the key and value grammar; integer
+keys need not acquire the framing of a front-coded string. The fractional
+indexes retain their IX03 representation.
+
+```cpp
+#include <diet/connection.h>
+#include <cassert>
+
+using family = diet::sort_runtime_family<>;
+using engine = diet::typed_engine<diet::string_policy,
+  diet::wrapping_fingerprint_algebra, 256, family>;
+
+void update(std::filesystem::path const & existing_directory) {
+  auto live = diet::connect<engine>(existing_directory, "earth-616");
+  live.put("alpha", "one");
+  auto before = live.snapshot();
+  live.save("before", before);
+  live.put("alpha", "two");
+  assert(before.get("alpha") == "one");
+}
+```
+
+For lower-level frontier work, include `diet/sort_runtime_store.h` and use
+`sort_runtime_store<P, Selector>`. The selector defaults to the policy's sort
+registry. Both storage paths intern mapped owners across the complete visible
+and hidden graph, preserve native identities when only an index changes, and
+check the exact durable pin closure on recovery.
+
+The default string schema for this family is
+`diet.optional-string/code0/sort-profile-v1`. A custom registry requires its
+application schema identity. The physical native format is also checked: an
+opaque-profile connection cannot reinterpret KV03 records merely because its
+sampling policy happens to match.
+
+Ordinary reopen reads directory and checkpoint metadata. It does not decode
+the native FC stream or its borrowed samples. `mapped_sort_cola::scan()` is the
+explicit recovery operation: it checks file checksums, native ordering, the
+interleave rank metadata, false-borrow flags, and the actual keys selected from
+both downstream routes. A `mapped_cola_scan<Mapped>` context can scan several
+hidden roots without repeatedly checking their shared suffixes.

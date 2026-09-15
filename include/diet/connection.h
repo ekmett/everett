@@ -14,6 +14,7 @@
 #include <diet/fridge.h>
 #include <diet/runtime_store.h>
 #include <diet/redundant_checkpoint.h>
+#include <diet/sort_runtime_store.h>
 #include <diet/typed_cola.h>
 
 #include <concepts>

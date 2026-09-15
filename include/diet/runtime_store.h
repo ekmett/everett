@@ -116,6 +116,9 @@ namespace diet {
     using native_type = typename Family::native_type;
     using pair_type = typename node_type::pair_type;
     using native_pointer = typename node_type::native_pointer;
+    using mapped_pointer = decltype(std::declval<node_type const &>().mapped());
+    using mapped_type = std::remove_const_t<typename mapped_pointer::element_type>;
+    using mapped_resolver = mapped_cola_resolver<P, mapped_type>;
     using catalog_type = sqlite_catalog<P, Ops>;
     static_assert(std::is_same_v<P, typename Family::policy_type>);
 
@@ -203,7 +206,7 @@ namespace diet {
     // every visible and hidden root, preserving exact immutable dependencies.
     struct resolver {
       runtime_store & store;
-      mapped_cola_resolver<P> mapped;
+      mapped_resolver mapped;
       std::unordered_map<std::string, native_pointer> natives;
       std::unordered_map<std::string, pair_type> pairs;
       bool restricted = false;
@@ -226,7 +229,7 @@ namespace diet {
           return found->second;
         }
         auto physical = mapped.pair(id);
-        std::vector<typename mapped_cola_blob<P>::pair_type> pending;
+        std::vector<mapped_pointer> pending;
         pair_type result;
         for (auto p = physical; p; p = p->main_target()) {
           if (auto known = pairs.find(p->identity().index.hex()); known != pairs.end()) { result = known->second; break; }
@@ -297,7 +300,10 @@ namespace diet {
         inputs.erase(std::unique(inputs.begin(), inputs.end()), inputs.end());
         auto op = operation(); catalog_.reserve(op, attempt, owner, inputs, reservations);
         for (auto const & native : native_outputs) {
-          auto encoded = encode_native_sections(*native->owned());
+          auto encoded = [&] {
+            if constexpr (requires { typename Family::storage_type; }) return Family::storage_type::encode_native(*native->owned());
+            else return encode_native_sections(*native->owned());
+          }();
           auto receipt = encoded.seal(root(), planned_natives.at(native), attempt);
           op = operation(); catalog_.record_sealed(op, receipt);
         }
@@ -315,9 +321,11 @@ namespace diet {
           auto receipt = encoded.seal(root(), id.index, attempt);
           op = operation(); catalog_.record_sealed(op, receipt);
         }
-        mapped_cola_resolver<P> loaded(root());
-        for (auto const & pair : roots) {
-          auto graph = loaded.pair(pair_id(pair)); op = operation(); catalog_.register_graph(op, graph);
+        mapped_resolver loaded(root());
+        std::vector<mapped_pointer> graphs;
+        for (auto const & pair : roots) graphs.push_back(loaded.pair(pair_id(pair)));
+        if (!graphs.empty()) {
+          op = operation(); catalog_.template register_graphs<mapped_type>(op, graphs);
         }
         for (auto const & [weak, id] : planned_pairs) nodes_.insert_or_assign(weak, id);
         for (auto const & [weak, id] : planned_natives) natives_.insert_or_assign(weak, id);

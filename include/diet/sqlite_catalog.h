@@ -511,23 +511,51 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
     }
     // A hidden completed artifact can be a large pair without a prepared
     // bounded query head. Register its exact graph without manufacturing one.
-    void register_graph(std::string_view op, typename mapped_cola_blob<P>::pair_type const & source,
+    template <class Mapped> void register_graph(std::string_view op, std::shared_ptr<Mapped const> const & source,
         catalog_admission admission = catalog_admission::trusted) {
+      std::array roots{source}; register_graphs<Mapped>(op, roots, admission);
+    }
+    // A checkpoint can have several hidden roots sharing a long main chain.
+    // Intern and register their union once, with children before their parents.
+    template <class Mapped> void register_graphs(std::string_view op,
+        std::span<std::shared_ptr<Mapped const> const> roots,
+        catalog_admission admission = catalog_admission::trusted) {
+      static_assert(std::is_same_v<P, typename Mapped::policy_type>);
       require_active(); catalog_detail::name(op);
       if (schema_version_ < 3)
         throw std::logic_error("COLA admission requires catalog version 3; no automatic migration");
       if (admission != catalog_admission::trusted && admission != catalog_admission::scan)
         throw std::invalid_argument("unsupported catalog admission mode");
-      auto head = source;
-      if (!head) throw std::invalid_argument("empty COLA catalog query root");
-      mapped_cola_resolver<P> resolver(root_);
-      auto opened = resolver.pair(head->identity());
-      if (admission == catalog_admission::scan) opened->scan();
-      std::vector<typename mapped_cola_blob<P>::pair_type> chain;
+      if (roots.empty()) throw std::invalid_argument("empty COLA graph set");
+      std::vector<std::shared_ptr<Mapped const>> canonical(roots.begin(), roots.end());
+      for (auto const & root : canonical) if (!root) throw std::invalid_argument("empty COLA catalog graph");
+      std::sort(canonical.begin(), canonical.end(), [](auto const & a, auto const & b) {
+        return a->identity().index.hex() < b->identity().index.hex();
+      });
+      for (std::size_t i = 1; i != canonical.size(); ++i)
+        if (canonical[i - 1]->identity().index == canonical[i]->identity().index &&
+            canonical[i - 1]->identity().native != canonical[i]->identity().native)
+          throw std::invalid_argument("conflicting COLA graph root identities");
+      canonical.erase(std::unique(canonical.begin(), canonical.end(), [](auto const & a, auto const & b) {
+        return a->identity() == b->identity();
+      }), canonical.end());
+      mapped_cola_resolver<P, Mapped> resolver(root_);
+      mapped_cola_scan<Mapped> scan;
+      std::vector<std::shared_ptr<Mapped const>> chain;
+      std::unordered_set<std::string> seen;
       catalog_detail::bytes request;
       catalog_detail::number(request, static_cast<unsigned>(admission));
-      for (auto current = opened; current; current = current->main_target()) {
-        chain.push_back(current);
+      catalog_detail::number(request, canonical.size());
+      for (auto const & root : canonical) {
+        catalog_detail::pair(request, root->identity());
+        auto opened = resolver.pair(root->identity());
+        if (admission == catalog_admission::scan) scan(*opened);
+        std::vector<std::shared_ptr<Mapped const>> pending;
+        for (auto current = opened; current && seen.insert(current->identity().index.hex()).second;
+             current = current->main_target()) pending.push_back(current);
+        chain.insert(chain.end(), pending.rbegin(), pending.rend());
+      }
+      for (auto const & current : chain) {
         auto view = current->view();
         auto main = current->main_target();
         auto secondary = current->secondary_target();
@@ -540,9 +568,9 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
                           secondary ? secondary->size() : 0, view.virtual_size()})
           catalog_detail::number(request, count);
       }
-      transaction(op, "register_cola_chain", request, [&] {
-        for (auto entry = chain.rbegin(); entry != chain.rend(); ++entry) {
-          auto const & pair = **entry;
+      transaction(op, "register_cola_graphs", request, [&] {
+        for (auto const & entry : chain) {
+          auto const & pair = *entry;
           auto view = pair.view();
           auto main = pair.main_target();
           auto secondary = pair.secondary_target();
@@ -577,7 +605,10 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
           insert.integer(9, catalog_detail::integer(secondary_count));
           insert.integer(10, catalog_detail::integer(view.borrowed(1).size())); insert.done();
         }
-        catalog_detail::bytes result; catalog_detail::pair(result, opened->identity()); return result;
+        catalog_detail::bytes result;
+        catalog_detail::number(result, canonical.size());
+        for (auto const & root : canonical) catalog_detail::pair(result, root->identity());
+        return result;
       });
     }
 

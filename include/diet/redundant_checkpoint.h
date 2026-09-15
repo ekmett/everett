@@ -15,12 +15,15 @@
 #include <diet/runtime_checkpoint.h>
 
 namespace diet {
-  template <class P> struct runtime_storage_codec<redundant_runtime_family<P>> {
-    using snapshot_type = redundant_snapshot<P>;
-    using frontier_type = redundant_frontier<P>;
+  template <class P, class Storage> struct runtime_storage_codec<redundant_runtime_family<P, Storage>> {
+    using family_type = redundant_runtime_family<P, Storage>;
+    using snapshot_type = typename family_type::snapshot_type;
+    using frontier_type = typename family_type::frontier_type;
+    using object_type = typename family_type::object_type;
+    using routes_type = typename family_type::routes_type;
     using object_pointer = typename snapshot_type::object_pointer;
-    using pair_type = typename redundant_node<P>::pair_type;
-    using native_pointer = typename redundant_node<P>::native_pointer;
+    using pair_type = typename family_type::node_type::pair_type;
+    using native_pointer = typename family_type::node_type::native_pointer;
     inline static constexpr std::array<std::byte, 8> magic{
       std::byte{'D'}, std::byte{'I'}, std::byte{'E'}, std::byte{'T'},
       std::byte{'R'}, std::byte{'F'}, std::byte{0}, std::byte{1}};
@@ -119,17 +122,17 @@ namespace diet {
         if (found == objects.end()) throw std::invalid_argument("checkpoint route is not a preceding object");
         return found->second;
       };
-      auto routes = [&] { auto main = object(), secondary = object(); return redundant_routes<P>{std::move(main), std::move(secondary)}; };
+      auto routes = [&] { auto main = object(), secondary = object(); return routes_type{std::move(main), std::move(secondary)}; };
       frontier_type f;
       f.admissions = input.number(); f.next_identity = input.number(); f.service_due = input.number();
       auto count = input.number();
       if (count > input.data.size() / 64) throw std::invalid_argument("invalid checkpoint object count");
       for (std::uint64_t i = 0; i != count; ++i) {
-        redundant_object<P> value;
+        object_type value;
         value.identity = input.number(); value.first = input.number(); value.last = input.number(); value.level = small(63);
         value.native = native(); value.pair = pair(); value.next = routes();
         auto id = value.identity;
-        if (!id || !objects.emplace(id, std::make_shared<redundant_object<P> const>(std::move(value))).second)
+        if (!id || !objects.emplace(id, std::make_shared<object_type const>(std::move(value))).second)
           throw std::invalid_argument("duplicate checkpoint object identity");
       }
       f.root = routes();

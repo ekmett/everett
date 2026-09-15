@@ -14,6 +14,7 @@
 #include <diet/sort_profile.h>
 #include <diet/cola_sections.h>
 #include <diet/cola_query.h>
+#include <diet/mapped_cola.h>
 
 namespace diet {
   namespace sort_profile_file_detail {
@@ -221,7 +222,7 @@ namespace diet {
         {index_->false_borrow_bits(0), index_->false_borrow_bits(1)}, {index_->cut_lcps(0), index_->cut_lcps(1)}, virtual_size()};
     }
     view_type view() const && = delete;
-    void scan() const { native_->scan(); index_->scan(); if (secondary_) secondary_->scan(); }
+    void scan() const { scan_mapped_cola(*this); }
   private:
     blob_identity identity_;
     native_pointer native_;

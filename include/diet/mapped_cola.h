@@ -21,10 +21,12 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <set>
 #include <utility>
 #include <vector>
 
 namespace diet {
+  template <class Blob> void scan_mapped_cola(Blob const & source);
   // Each main node pins its own KV02/IX03 pair, the exact next main pair, and
   // the next secondary's native file. Secondary search ends there. Identities
   // are caller-authenticated declarations; binding checks them and shapes.
@@ -69,18 +71,7 @@ namespace diet {
 
     // Explicit recovery/validation walk. Rebuilds compact rank/EF metadata and
     // reconstructs sequential key frontiers, never an array of every full key.
-    void scan() const {
-      std::unordered_set<mapped_cola_blob const *> seen;
-      std::unordered_set<native_type const *> native_seen;
-      for (auto current = this; current; current = current->main_.get()) {
-        if (!seen.insert(current).second) error_detail::raise<std::invalid_argument>("cyclic COLA mapped chain");
-        if (native_seen.insert(current->native_.get()).second) current->native_->scan();
-        if (current->secondary_ && native_seen.insert(current->secondary_.get()).second) current->secondary_->scan();
-        current->index_->scan();
-        current->scan_pair();
-        current->scan_samples();
-      }
-    }
+    void scan() const { scan_mapped_cola(*this); }
   private:
     blob_identity identity_;
     native_pointer native_;
@@ -93,29 +84,60 @@ namespace diet {
       : identity_(std::move(identity)), native_(std::move(native)), index_(std::move(index)),
         main_(std::move(main)), secondary_(std::move(secondary)), view_(std::move(view)) {}
 
-    struct merged_cursor {
-      profile_cursor<P> native;
-      std::array<profile_cursor<P, stream_role::borrowed>, 2> borrowed;
-      explicit merged_cursor(cola_index_view<P> source)
-        : native(source.native()), borrowed{profile_cursor<P, stream_role::borrowed>(source.borrowed(0)),
-          profile_cursor<P, stream_role::borrowed>(source.borrowed(1))} {}
-      bool done() const noexcept { return native.done() && borrowed[0].done() && borrowed[1].done(); }
-      unsigned origin() const {
-        unsigned result = 3;
-        bit_view best;
-        if (!native.done()) { result = 0; best = native.peek().key.prefix; }
-        for (unsigned i = 0; i != 2; ++i)
-          if (!borrowed[i].done() && (result == 3 || compare_bits(borrowed[i].peek().key.prefix, best) < 0)) {
-            result = i + 1; best = borrowed[i].peek().key.prefix;
-          }
-        if (result == 3) error_detail::raise<std::out_of_range>("COLA merged cursor at end");
-        return result;
+  };
+
+  // Explicit shared recovery context. Each mapped native and index is scanned
+  // once even when several checkpoint roots share their downstream suffix.
+  template <class Blob> struct mapped_cola_scan {
+    using P = typename Blob::policy_type;
+    using native_type = typename Blob::native_type;
+    using index_type = typename Blob::index_type;
+    void operator()(Blob const & head) {
+      if (failed_) throw std::logic_error("failed COLA recovery context");
+      try { scan(head); } catch (...) { failed_ = true; throw; }
+    }
+  private:
+    bool failed_ = false;
+    // Keep control-block identities even after the caller releases a mapping.
+    // A later allocation at the same address must still be scanned.
+    std::set<std::weak_ptr<index_type const>, std::owner_less<>> indexes_;
+    std::set<std::weak_ptr<native_type const>, std::owner_less<>> natives_;
+    void scan(Blob const & head) {
+      std::unordered_set<Blob const *> path;
+      for (auto current = &head; current; current = current->main_target().get()) {
+        if (!path.insert(current).second) throw std::invalid_argument("cyclic COLA recovery graph");
+        auto index = current->index_object();
+        if (!indexes_.insert(index).second) break;
+        auto native = current->native_object(), secondary = current->secondary_target();
+        if (natives_.insert(native).second) native->scan();
+        if (secondary && natives_.insert(secondary).second) secondary->scan();
+        index->scan();
+        scan_routes(*current);
       }
-      bit_view key(unsigned origin) const { return origin ? borrowed[origin - 1].peek().key.prefix : native.peek().key.prefix; }
-      void advance(unsigned origin) { if (origin) borrowed[origin - 1].advance(); else native.advance(); }
-    };
-    void scan_pair() const {
-      merged_cursor cursor(view_);
+    }
+    static void scan_routes(Blob const & source) {
+      auto view = source.view();
+      auto native = view.native().cursor();
+      std::array borrowed{view.borrowed(0).cursor(), view.borrowed(1).cursor()};
+      using native_cursor = decltype(native);
+      using borrowed_cursors = decltype(borrowed);
+      struct merged {
+        native_cursor & native;
+        borrowed_cursors & borrowed;
+        bool done() const noexcept { return native.done() && borrowed[0].done() && borrowed[1].done(); }
+        unsigned origin() const {
+          unsigned result = 3; bit_view best;
+          if (!native.done()) { result = 0; best = native.peek().key.prefix; }
+          for (unsigned i = 0; i != 2; ++i)
+            if (!borrowed[i].done() && (result == 3 || compare_bits(borrowed[i].peek().key.prefix, best) < 0)) {
+              result = i + 1; best = borrowed[i].peek().key.prefix;
+            }
+          if (result == 3) throw std::out_of_range("COLA recovery cursor at end");
+          return result;
+        }
+        bit_view key(unsigned origin) const { return origin ? borrowed[origin - 1].peek().key.prefix : native.peek().key.prefix; }
+        void advance(unsigned origin) { if (origin) borrowed[origin - 1].advance(); else native.advance(); }
+      } cursor{native, borrowed};
       bit_string previous_native;
       std::array<bit_string, 2> previous_borrowed;
       std::array<std::uint64_t, 2> borrowed_count{}, population{};
@@ -128,7 +150,7 @@ namespace diet {
         if (ordinal % P::group_size == 0) {
           for (unsigned route = 0; route != 2; ++route) {
             auto lcp = borrowed_count[route] ? compare_common_bits(previous_borrowed[route].view(), key).common_bits : 0;
-            if (view_.cut_lcps(route)[group] != lcp || view_.interleave(route).rank(group) != borrowed_count[route])
+            if (view.cut_lcps(route)[group] != lcp || view.interleave(route).rank(group) != borrowed_count[route])
               error_detail::raise<std::invalid_argument>("COLA cut or rank disagrees with keys");
           }
           population = {};
@@ -136,7 +158,7 @@ namespace diet {
         if (origin) {
           auto route = origin - 1;
           bool expected = had_native && compare_bits(previous_native.view(), key) == 0;
-          if (view_.false_borrow(route, borrowed_count[route]) != expected)
+          if (view.false_borrow(route, borrowed_count[route]) != expected)
             error_detail::raise<std::invalid_argument>("COLA false-borrow flag disagrees with keys");
           previous_borrowed[route] = bit_string::copy(key);
           ++borrowed_count[route]; ++population[route];
@@ -145,17 +167,15 @@ namespace diet {
         ++ordinal;
         if (ordinal % P::group_size == 0 || cursor.done())
           for (unsigned route = 0; route != 2; ++route)
-            if (view_.interleave(route).class_at(group) != population[route])
+            if (view.interleave(route).class_at(group) != population[route])
               error_detail::raise<std::invalid_argument>("COLA population disagrees with keys");
       }
-      if (ordinal != virtual_size() || borrowed_count[0] != view_.borrowed(0).size() ||
-          borrowed_count[1] != view_.borrowed(1).size())
+      if (ordinal != source.virtual_size() || borrowed_count[0] != view.borrowed(0).size() ||
+          borrowed_count[1] != view.borrowed(1).size())
         error_detail::raise<std::invalid_argument>("COLA merged stream count mismatch");
-    }
-    void scan_samples() const {
-      auto samples = view_.borrowed(0).cursor();
-      if (main_) {
-        cola_sample_cursor<P, mapped_cola_blob> target(main_);
+      auto samples = view.borrowed(0).cursor();
+      if (auto main = source.main_target()) {
+        cola_sample_cursor<P, Blob> target(main);
         while (!target.done()) {
           if (samples.done() || compare_bits(samples.peek().key.prefix, target.peek().key) != 0)
             error_detail::raise<std::invalid_argument>("COLA main sample differs from target");
@@ -163,9 +183,9 @@ namespace diet {
         }
       }
       if (!samples.done()) error_detail::raise<std::invalid_argument>("COLA trailing main samples");
-      auto side_samples = view_.borrowed(1).cursor();
-      if (secondary_) {
-        auto target = secondary_->view().cursor();
+      auto side_samples = view.borrowed(1).cursor();
+      if (auto secondary = source.secondary_target()) {
+        auto target = secondary->view().cursor();
         std::uint64_t ordinal = 0;
         while (!target.done()) {
           if (ordinal % P::group_size == 0) {
@@ -179,6 +199,7 @@ namespace diet {
       if (!side_samples.done()) error_detail::raise<std::invalid_argument>("COLA trailing secondary samples");
     }
   };
+  template <class Blob> void scan_mapped_cola(Blob const & source) { mapped_cola_scan<Blob>{}(source); }
 
   // Build only new borrowed payload/navigation while retaining received native
   // bytes and exact mapped targets. Seal this artifact's IX03 sections, then
@@ -190,15 +211,17 @@ namespace diet {
 
   // Interns exact immutable targets across every root of a checkpoint. Opening
   // reads directories only; payload scans remain explicit recovery operations.
-  template <class P> struct mapped_cola_resolver {
-    using blob = mapped_cola_blob<P>;
+  template <class P, class Blob = mapped_cola_blob<P>> struct mapped_cola_resolver {
+    using blob = Blob;
+    using native_type = typename blob::native_type;
+    using index_type = typename blob::index_type;
     using native_pointer = typename blob::native_pointer;
     using pair_type = typename blob::pair_type;
     explicit mapped_cola_resolver(std::filesystem::path root) : root_(std::move(root)) {}
     native_pointer native(object_id const & id) {
       auto found = natives_.find(id.hex());
-      if (found == natives_.end()) found = natives_.emplace(id.hex(), std::make_shared<mapped_native<P> const>(
-        mapped_native<P>::open(root_ / object_path(id, file_kind::native_blob)))).first;
+      if (found == natives_.end()) found = natives_.emplace(id.hex(), std::make_shared<native_type const>(
+        native_type::open(root_ / object_path(id, file_kind::native_blob)))).first;
       return found->second;
     }
     pair_type pair(blob_identity const & head) {
@@ -215,8 +238,8 @@ namespace diet {
         }
         if (!seen.insert(current->index.hex()).second)
           error_detail::raise<std::invalid_argument>("cyclic COLA object identities");
-        auto index = std::make_shared<mapped_cola_index<P> const>(
-          mapped_cola_index<P>::open(root_ / object_path(current->index, file_kind::fractional_index)));
+        auto index = std::make_shared<index_type const>(
+          index_type::open(root_ / object_path(current->index, file_kind::fractional_index)));
         if (index->native_id() != current->native)
           error_detail::raise<std::invalid_argument>("COLA chain native identity mismatch");
         chain.push_back({*current, native(current->native), index->secondary_id() ? native(*index->secondary_id()) : native_pointer{}, index});
