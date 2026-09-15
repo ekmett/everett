@@ -33,8 +33,11 @@ namespace everett {
   // Merge two chronologically ordered native streams. Equal keys call
   // compose(key, older_value, newer_value); default composition is replacement.
   // Each input must have unique sorted keys. Input owners stay pinned,
-  // including after a decoding/composition failure. Construction decodes the
-  // first record from each nonempty source before any step budget is charged.
+  // including after a decoding/composition failure.
+  // Callback keys borrow cursor scratch. A policy retaining a value view must
+  // retain its source owner too; reassignment can release earlier source pins.
+  // Construction decodes the first record from each nonempty source before
+  // any step budget is charged.
   // One step unit handles one distinct key and at most two input records.
   // Key bytes, composition work, output allocation and final EF work are extra.
   template <class P, class Native = profile_array<P>, class Compose = replace_native_value>

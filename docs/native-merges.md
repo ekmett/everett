@@ -83,6 +83,13 @@ intermediate payload allocation. For another per-key category, supply
 or an owned `bit_string`. The key lets that operation choose its interpretation
 per record. Keys occurring in only one input retain their values unchanged.
 
+The key argument borrows cursor scratch and expires when that cursor advances.
+Value arguments borrow the immutable input bytes. I copy the returned view into
+the output before advancing either cursor. A policy that keeps a value view in
+its own state must retain the corresponding source owner too: builder
+reassignment can release the previous inputs before transferring the policy.
+Retaining a key requires a copy because its cursor buffer is reused.
+
 For associative composition, we can merge `(A,B)` then `C`, or `A` then `(B,C)`.
 We still preserve the chronological order `A,B,C`. Associativity permits
 reparenthesizing; it does not permit swapping two updates to the same key.
