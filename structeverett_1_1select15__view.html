@@ -93,8 +93,24 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a9e2df034a51c8ad74c45e4038198c81b" id="r_a9e2df034a51c8ad74c45e4038198c81b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a9e2df034a51c8ad74c45e4038198c81b">select15_view</a> (std::span&lt; std::uint64_t const &gt; low, std::span&lt; std::uint64_t const &gt; high, std::span&lt; <a class="el" href="structeverett_1_1select15__sample.html">select15_sample</a> const &gt; samples, std::span&lt; std::uint64_t const &gt; sparse, std::uint64_t record_count, std::uint64_t universe, unsigned low_width)</td></tr>
+<tr class="memitem:a9e2df034a51c8ad74c45e4038198c81b" id="r_a9e2df034a51c8ad74c45e4038198c81b"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a9e2df034a51c8ad74c45e4038198c81b">select15_view</a> (std::span&lt; std::uint64_t const &gt; low, std::span&lt; std::uint64_t const &gt; high, std::span&lt; <a class="el" href="structeverett_1_1select15__sample.html">select15_sample</a> const &gt; <a class="el" href="structeverett_1_1select15__view.html#a8529a9130666ac11b6d401373f4cb215">samples</a>, std::span&lt; std::uint64_t const &gt; sparse, std::uint64_t record_count, std::uint64_t <a class="el" href="structeverett_1_1select15__view.html#a7cd0fed9cbc798cec746acf6d06bfecf">universe</a>, unsigned <a class="el" href="structeverett_1_1select15__view.html#a1d8afaabd289cbc621e7946b3d4cf2e6">low_width</a>)</td></tr>
 <tr class="separator:a9e2df034a51c8ad74c45e4038198c81b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2b7dfdfeafca92dce26e34444c7f784" id="r_ad2b7dfdfeafca92dce26e34444c7f784"><td class="memTemplParams" colspan="2">template&lt;class Words , class Samples &gt; <br />
+requires (std::is_same_v&lt;Words, <a class="el" href="structeverett_1_1word__view.html">word_view</a>&gt; &amp;&amp; std::is_same_v&lt;Samples, <a class="el" href="structeverett_1_1sample__view.html">sample_view</a>&gt;)</td></tr>
+<tr class="memitem:ad2b7dfdfeafca92dce26e34444c7f784"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#ad2b7dfdfeafca92dce26e34444c7f784">select15_view</a> (Words low, Words high, Samples <a class="el" href="structeverett_1_1select15__view.html#a8529a9130666ac11b6d401373f4cb215">samples</a>, Words sparse, std::uint64_t record_count, std::uint64_t <a class="el" href="structeverett_1_1select15__view.html#a7cd0fed9cbc798cec746acf6d06bfecf">universe</a>, unsigned <a class="el" href="structeverett_1_1select15__view.html#a1d8afaabd289cbc621e7946b3d4cf2e6">low_width</a>)</td></tr>
+<tr class="separator:ad2b7dfdfeafca92dce26e34444c7f784"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a488b115c092b62f9cef99ade3c99380d" id="r_a488b115c092b62f9cef99ade3c99380d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1word__view.html">word_view</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a488b115c092b62f9cef99ade3c99380d">low_words</a> () const noexcept</td></tr>
+<tr class="separator:a488b115c092b62f9cef99ade3c99380d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8a30dfb4b25994f443136478982bdf95" id="r_a8a30dfb4b25994f443136478982bdf95"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1word__view.html">word_view</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a8a30dfb4b25994f443136478982bdf95">high_words</a> () const noexcept</td></tr>
+<tr class="separator:a8a30dfb4b25994f443136478982bdf95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8529a9130666ac11b6d401373f4cb215" id="r_a8529a9130666ac11b6d401373f4cb215"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1sample__view.html">sample_view</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a8529a9130666ac11b6d401373f4cb215">samples</a> () const noexcept</td></tr>
+<tr class="separator:a8529a9130666ac11b6d401373f4cb215"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a238a695cdc2ed62d079b662731763b67" id="r_a238a695cdc2ed62d079b662731763b67"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1word__view.html">word_view</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a238a695cdc2ed62d079b662731763b67">sparse_words</a> () const noexcept</td></tr>
+<tr class="separator:a238a695cdc2ed62d079b662731763b67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7cd0fed9cbc798cec746acf6d06bfecf" id="r_a7cd0fed9cbc798cec746acf6d06bfecf"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a7cd0fed9cbc798cec746acf6d06bfecf">universe</a> () const noexcept</td></tr>
+<tr class="separator:a7cd0fed9cbc798cec746acf6d06bfecf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d8afaabd289cbc621e7946b3d4cf2e6" id="r_a1d8afaabd289cbc621e7946b3d4cf2e6"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a1d8afaabd289cbc621e7946b3d4cf2e6">low_width</a> () const noexcept</td></tr>
+<tr class="separator:a1d8afaabd289cbc621e7946b3d4cf2e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1feafc5277d35065531cd525b8ac87c2" id="r_a1feafc5277d35065531cd525b8ac87c2"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a1feafc5277d35065531cd525b8ac87c2">size</a> () const noexcept</td></tr>
 <tr class="separator:a1feafc5277d35065531cd525b8ac87c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afd0582e6f8c6f2934d4dce7afefac065" id="r_afd0582e6f8c6f2934d4dce7afefac065"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#afd0582e6f8c6f2934d4dce7afefac065">group_count</a> () const noexcept</td></tr>
@@ -111,14 +127,14 @@ Private Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
-<tr class="memitem:af3882f2b58b2b9ca85676ea9b1d6e959" id="r_af3882f2b58b2b9ca85676ea9b1d6e959"><td class="memItemLeft" align="right" valign="top">std::span&lt; std::uint64_t const  &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#af3882f2b58b2b9ca85676ea9b1d6e959">low_</a></td></tr>
-<tr class="separator:af3882f2b58b2b9ca85676ea9b1d6e959"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4a70a78a62585a89ed4df8a0eac4db2a" id="r_a4a70a78a62585a89ed4df8a0eac4db2a"><td class="memItemLeft" align="right" valign="top">std::span&lt; std::uint64_t const  &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a4a70a78a62585a89ed4df8a0eac4db2a">high_</a></td></tr>
-<tr class="separator:a4a70a78a62585a89ed4df8a0eac4db2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9fc858a6fbd8abe3cdef819c4f37dd35" id="r_a9fc858a6fbd8abe3cdef819c4f37dd35"><td class="memItemLeft" align="right" valign="top">std::span&lt; <a class="el" href="structeverett_1_1select15__sample.html">select15_sample</a> const  &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a9fc858a6fbd8abe3cdef819c4f37dd35">samples_</a></td></tr>
-<tr class="separator:a9fc858a6fbd8abe3cdef819c4f37dd35"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a01a83b309547a425e750665a8c191e26" id="r_a01a83b309547a425e750665a8c191e26"><td class="memItemLeft" align="right" valign="top">std::span&lt; std::uint64_t const  &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a01a83b309547a425e750665a8c191e26">sparse_</a></td></tr>
-<tr class="separator:a01a83b309547a425e750665a8c191e26"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f3cbb16555311f4acc7176c4e8d891a" id="r_a2f3cbb16555311f4acc7176c4e8d891a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1word__view.html">word_view</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a2f3cbb16555311f4acc7176c4e8d891a">low_</a></td></tr>
+<tr class="separator:a2f3cbb16555311f4acc7176c4e8d891a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb0c3bd2f3afe4ba75df67838bf6a0b1" id="r_afb0c3bd2f3afe4ba75df67838bf6a0b1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1word__view.html">word_view</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#afb0c3bd2f3afe4ba75df67838bf6a0b1">high_</a></td></tr>
+<tr class="separator:afb0c3bd2f3afe4ba75df67838bf6a0b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a30d90bf0f4362bd25a75b5dab7d2cba9" id="r_a30d90bf0f4362bd25a75b5dab7d2cba9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1sample__view.html">sample_view</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a30d90bf0f4362bd25a75b5dab7d2cba9">samples_</a></td></tr>
+<tr class="separator:a30d90bf0f4362bd25a75b5dab7d2cba9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5950294df12b9a43ca0f518131cb9032" id="r_a5950294df12b9a43ca0f518131cb9032"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1word__view.html">word_view</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a5950294df12b9a43ca0f518131cb9032">sparse_</a></td></tr>
+<tr class="separator:a5950294df12b9a43ca0f518131cb9032"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a735d44614b6aac70196c60214ef64cb6" id="r_a735d44614b6aac70196c60214ef64cb6"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#a735d44614b6aac70196c60214ef64cb6">record_count_</a></td></tr>
 <tr class="separator:a735d44614b6aac70196c60214ef64cb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad743a990f0f9b6195b367c67bfbd1b2d" id="r_ad743a990f0f9b6195b367c67bfbd1b2d"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1select15__view.html#ad743a990f0f9b6195b367c67bfbd1b2d">universe_</a></td></tr>
@@ -130,7 +146,7 @@ Private Attributes</h2></td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a9e2df034a51c8ad74c45e4038198c81b" name="a9e2df034a51c8ad74c45e4038198c81b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9e2df034a51c8ad74c45e4038198c81b">&#9670;&#160;</a></span>select15_view()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a9e2df034a51c8ad74c45e4038198c81b">&#9670;&#160;</a></span>select15_view() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -195,6 +211,75 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="ad2b7dfdfeafca92dce26e34444c7f784" name="ad2b7dfdfeafca92dce26e34444c7f784"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad2b7dfdfeafca92dce26e34444c7f784">&#9670;&#160;</a></span>select15_view() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Words , class Samples &gt; <br />
+requires (std::is_same_v&lt;Words, <a class="el" href="structeverett_1_1word__view.html">word_view</a>&gt; &amp;&amp; std::is_same_v&lt;Samples, <a class="el" href="structeverett_1_1sample__view.html">sample_view</a>&gt;)</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">everett::select15_view::select15_view </td>
+          <td>(</td>
+          <td class="paramtype">Words&#160;</td>
+          <td class="paramname"><em>low</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Words&#160;</td>
+          <td class="paramname"><em>high</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Samples&#160;</td>
+          <td class="paramname"><em>samples</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Words&#160;</td>
+          <td class="paramname"><em>sparse</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>record_count</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>universe</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>low_width</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="afd0582e6f8c6f2934d4dce7afefac065" name="afd0582e6f8c6f2934d4dce7afefac065"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afd0582e6f8c6f2934d4dce7afefac065">&#9670;&#160;</a></span>group_count()</h2>
@@ -207,6 +292,81 @@ Private Attributes</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">std::uint64_t everett::select15_view::group_count </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8a30dfb4b25994f443136478982bdf95" name="a8a30dfb4b25994f443136478982bdf95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8a30dfb4b25994f443136478982bdf95">&#9670;&#160;</a></span>high_words()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structeverett_1_1word__view.html">word_view</a> everett::select15_view::high_words </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1d8afaabd289cbc621e7946b3d4cf2e6" name="a1d8afaabd289cbc621e7946b3d4cf2e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d8afaabd289cbc621e7946b3d4cf2e6">&#9670;&#160;</a></span>low_width()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned everett::select15_view::low_width </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a488b115c092b62f9cef99ade3c99380d" name="a488b115c092b62f9cef99ade3c99380d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a488b115c092b62f9cef99ade3c99380d">&#9670;&#160;</a></span>low_words()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structeverett_1_1word__view.html">word_view</a> everett::select15_view::low_words </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -283,6 +443,31 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a8529a9130666ac11b6d401373f4cb215" name="a8529a9130666ac11b6d401373f4cb215"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8529a9130666ac11b6d401373f4cb215">&#9670;&#160;</a></span>samples()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structeverett_1_1sample__view.html">sample_view</a> everett::select15_view::samples </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a3ae4b7018d77ce20e4c7c8d144ad54f6" name="a3ae4b7018d77ce20e4c7c8d144ad54f6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3ae4b7018d77ce20e4c7c8d144ad54f6">&#9670;&#160;</a></span>select_high()</h2>
 
@@ -334,9 +519,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<h2 class="groupheader">Member Data Documentation</h2>
-<a id="a4a70a78a62585a89ed4df8a0eac4db2a" name="a4a70a78a62585a89ed4df8a0eac4db2a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4a70a78a62585a89ed4df8a0eac4db2a">&#9670;&#160;</a></span>high_</h2>
+<a id="a238a695cdc2ed62d079b662731763b67" name="a238a695cdc2ed62d079b662731763b67"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a238a695cdc2ed62d079b662731763b67">&#9670;&#160;</a></span>sparse_words()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -345,7 +529,58 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::span&lt;std::uint64_t const&gt; everett::select15_view::high_</td>
+          <td class="memname"><a class="el" href="structeverett_1_1word__view.html">word_view</a> everett::select15_view::sparse_words </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7cd0fed9cbc798cec746acf6d06bfecf" name="a7cd0fed9cbc798cec746acf6d06bfecf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7cd0fed9cbc798cec746acf6d06bfecf">&#9670;&#160;</a></span>universe()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t everett::select15_view::universe </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<h2 class="groupheader">Member Data Documentation</h2>
+<a id="afb0c3bd2f3afe4ba75df67838bf6a0b1" name="afb0c3bd2f3afe4ba75df67838bf6a0b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afb0c3bd2f3afe4ba75df67838bf6a0b1">&#9670;&#160;</a></span>high_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structeverett_1_1word__view.html">word_view</a> everett::select15_view::high_</td>
         </tr>
       </table>
   </td>
@@ -379,8 +614,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="af3882f2b58b2b9ca85676ea9b1d6e959" name="af3882f2b58b2b9ca85676ea9b1d6e959"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af3882f2b58b2b9ca85676ea9b1d6e959">&#9670;&#160;</a></span>low_</h2>
+<a id="a2f3cbb16555311f4acc7176c4e8d891a" name="a2f3cbb16555311f4acc7176c4e8d891a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f3cbb16555311f4acc7176c4e8d891a">&#9670;&#160;</a></span>low_</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -389,7 +624,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::span&lt;std::uint64_t const&gt; everett::select15_view::low_</td>
+          <td class="memname"><a class="el" href="structeverett_1_1word__view.html">word_view</a> everett::select15_view::low_</td>
         </tr>
       </table>
   </td>
@@ -445,8 +680,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a9fc858a6fbd8abe3cdef819c4f37dd35" name="a9fc858a6fbd8abe3cdef819c4f37dd35"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9fc858a6fbd8abe3cdef819c4f37dd35">&#9670;&#160;</a></span>samples_</h2>
+<a id="a30d90bf0f4362bd25a75b5dab7d2cba9" name="a30d90bf0f4362bd25a75b5dab7d2cba9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30d90bf0f4362bd25a75b5dab7d2cba9">&#9670;&#160;</a></span>samples_</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -455,7 +690,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::span&lt;<a class="el" href="structeverett_1_1select15__sample.html">select15_sample</a> const&gt; everett::select15_view::samples_</td>
+          <td class="memname"><a class="el" href="structeverett_1_1sample__view.html">sample_view</a> everett::select15_view::samples_</td>
         </tr>
       </table>
   </td>
@@ -467,8 +702,8 @@ Private Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a01a83b309547a425e750665a8c191e26" name="a01a83b309547a425e750665a8c191e26"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a01a83b309547a425e750665a8c191e26">&#9670;&#160;</a></span>sparse_</h2>
+<a id="a5950294df12b9a43ca0f518131cb9032" name="a5950294df12b9a43ca0f518131cb9032"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5950294df12b9a43ca0f518131cb9032">&#9670;&#160;</a></span>sparse_</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -477,7 +712,7 @@ Private Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::span&lt;std::uint64_t const&gt; everett::select15_view::sparse_</td>
+          <td class="memname"><a class="el" href="structeverett_1_1word__view.html">word_view</a> everett::select15_view::sparse_</td>
         </tr>
       </table>
   </td>

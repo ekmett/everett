@@ -9,13 +9,14 @@ var searchData=
   ['and_20bitmap_20rank_20reductions_6',['Packed group and bitmap rank reductions',['../packed-group-and-bitmap-rank-reductions.html',1,'']]],
   ['and_20construction_7',['Elias–Fano Selection and Construction',['../eliasfano-selection-and-construction.html',1,'']]],
   ['and_20declaration_20ownership_8',['Doxygen metadata and declaration ownership',['../md_docs_2doxygen.html',1,'']]],
-  ['and_20framing_9',['Key prefixes, bit copies, and framing',['../md_bench_2key__bits.html',1,'']]],
-  ['and_20merge_20resumption_10',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]],
-  ['and_20packed_20rank_20comparison_11',['Full-vector and packed-rank comparison',['../md_bench_2rank__compare.html',1,'']]],
-  ['and_20pipeline_20performance_12',['Blob and pipeline performance',['../blob-and-pipeline-performance.html',1,'']]],
-  ['and_20publication_13',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
-  ['and_20stringlike_20keys_14',['Sorts and stringlike keys',['../md_docs_2keys.html',1,'']]],
-  ['and_20the_20choice_20of_20k_15',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]],
-  ['and_20the_20cult_20bitmap_20rank_16',['NEON reductions and the Cult bitmap rank',['../md_bench_2neon__cult__rank.html',1,'']]],
-  ['avx2_20packed_20rank_20comparison_17',['Native AVX2 packed-rank comparison',['../native-avx2-packed-rank-comparison.html',1,'']]]
+  ['and_20exact_20query_20roots_9',['Mapped blobs and exact query roots',['../mapped-blobs-and-exact-query-roots.html',1,'']]],
+  ['and_20framing_10',['Key prefixes, bit copies, and framing',['../md_bench_2key__bits.html',1,'']]],
+  ['and_20merge_20resumption_11',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]],
+  ['and_20packed_20rank_20comparison_12',['Full-vector and packed-rank comparison',['../md_bench_2rank__compare.html',1,'']]],
+  ['and_20pipeline_20performance_13',['Blob and pipeline performance',['../blob-and-pipeline-performance.html',1,'']]],
+  ['and_20publication_14',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
+  ['and_20stringlike_20keys_15',['Sorts and stringlike keys',['../md_docs_2keys.html',1,'']]],
+  ['and_20the_20choice_20of_20k_16',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]],
+  ['and_20the_20cult_20bitmap_20rank_17',['NEON reductions and the Cult bitmap rank',['../md_bench_2neon__cult__rank.html',1,'']]],
+  ['avx2_20packed_20rank_20comparison_18',['Native AVX2 packed-rank comparison',['../native-avx2-packed-rank-comparison.html',1,'']]]
 ];

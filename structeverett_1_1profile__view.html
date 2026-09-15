@@ -81,8 +81,10 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pub-static-methods">Static Public Member Functions</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-static-methods">Static Private Member Functions</a> &#124;
@@ -95,6 +97,11 @@ $(function() {
 
 <p><code>#include &lt;<a class="el" href="profile_8h_source.html">profile.h</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view_1_1shape__only.html">shape_only</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
 <tr class="memitem:ad451ffb2969fbd67c275efe8fcefaf65" id="r_ad451ffb2969fbd67c275efe8fcefaf65"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#ad451ffb2969fbd67c275efe8fcefaf65">policy_type</a> = P</td></tr>
@@ -104,6 +111,8 @@ Public Types</h2></td></tr>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a72cee14852d820096d6bcd83429c5bc0" id="r_a72cee14852d820096d6bcd83429c5bc0"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#a72cee14852d820096d6bcd83429c5bc0">profile_view</a> (std::span&lt; std::byte const &gt; <a class="el" href="structeverett_1_1profile__view.html#a05076bbd6ca21828ef64670d37e03cee">bytes</a>, <a class="el" href="structeverett_1_1select__groups__view.html">select_groups_view</a>&lt; P::codec_block_size &gt; offsets, <a class="el" href="structeverett_1_1profile__metadata.html">profile_metadata</a> <a class="el" href="structeverett_1_1profile__view.html#ae9bee3acd7ffd9774c667d49cee7868e">metadata</a>)</td></tr>
 <tr class="separator:a72cee14852d820096d6bcd83429c5bc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ba2c2d712ab833066d18243bd065647" id="r_a3ba2c2d712ab833066d18243bd065647"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#a3ba2c2d712ab833066d18243bd065647">validate_contents</a> () const</td></tr>
+<tr class="separator:a3ba2c2d712ab833066d18243bd065647"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a714fd27e3092ddee2438f7a5ffb4c148" id="r_a714fd27e3092ddee2438f7a5ffb4c148"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#a714fd27e3092ddee2438f7a5ffb4c148">size</a> () const noexcept</td></tr>
 <tr class="separator:a714fd27e3092ddee2438f7a5ffb4c148"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a05076bbd6ca21828ef64670d37e03cee" id="r_a05076bbd6ca21828ef64670d37e03cee"><td class="memItemLeft" align="right" valign="top">std::span&lt; std::byte const &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#a05076bbd6ca21828ef64670d37e03cee">bytes</a> () const noexcept</td></tr>
@@ -130,6 +139,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a260a81ad2456a29d4481f831b5a4a27a" id="r_a260a81ad2456a29d4481f831b5a4a27a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1profile__decoded__record.html">profile_decoded_record</a>&lt; P &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#a260a81ad2456a29d4481f831b5a4a27a">reconstruct_at</a> (std::uint64_t ordinal, std::uint64_t prefix_limit=std::numeric_limits&lt; std::uint64_t &gt;::max()) const</td></tr>
 <tr class="separator:a260a81ad2456a29d4481f831b5a4a27a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
+Static Public Member Functions</h2></td></tr>
+<tr class="memitem:a27427d9925e51972911939d0885cec14" id="r_a27427d9925e51972911939d0885cec14"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="structeverett_1_1profile__view.html">profile_view</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#a27427d9925e51972911939d0885cec14">from_sections</a> (std::span&lt; std::byte const &gt; <a class="el" href="structeverett_1_1profile__view.html#a05076bbd6ca21828ef64670d37e03cee">bytes</a>, <a class="el" href="structeverett_1_1select__groups__view.html">select_groups_view</a>&lt; P::codec_block_size &gt; offsets, <a class="el" href="structeverett_1_1profile__metadata.html">profile_metadata</a> <a class="el" href="structeverett_1_1profile__view.html#ae9bee3acd7ffd9774c667d49cee7868e">metadata</a>)</td></tr>
+<tr class="separator:a27427d9925e51972911939d0885cec14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
 <tr class="memitem:a1be8c24567b7e09dfa3a29cb0ddc0bf1" id="r_a1be8c24567b7e09dfa3a29cb0ddc0bf1"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="namespaceeverett.html#a374f546e980dc1c516a6bca9073270d3">stream_role</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#a1be8c24567b7e09dfa3a29cb0ddc0bf1">role</a> = Role</td></tr>
@@ -137,6 +151,8 @@ Static Public Attributes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
+<tr class="memitem:a67bc6e90e7ef6667c76fbb3e64ee7ea5" id="r_a67bc6e90e7ef6667c76fbb3e64ee7ea5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#a67bc6e90e7ef6667c76fbb3e64ee7ea5">profile_view</a> (std::span&lt; std::byte const &gt; <a class="el" href="structeverett_1_1profile__view.html#a05076bbd6ca21828ef64670d37e03cee">bytes</a>, <a class="el" href="structeverett_1_1select__groups__view.html">select_groups_view</a>&lt; P::codec_block_size &gt; offsets, <a class="el" href="structeverett_1_1profile__metadata.html">profile_metadata</a> <a class="el" href="structeverett_1_1profile__view.html#ae9bee3acd7ffd9774c667d49cee7868e">metadata</a>, <a class="el" href="structeverett_1_1profile__view_1_1shape__only.html">shape_only</a>)</td></tr>
+<tr class="separator:a67bc6e90e7ef6667c76fbb3e64ee7ea5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb7fe2bdc57120e913fb125776298a2a" id="r_aeb7fe2bdc57120e913fb125776298a2a"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::uint64_t, std::uint64_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#aeb7fe2bdc57120e913fb125776298a2a">locate</a> (std::uint64_t ordinal, <a class="el" href="structeverett_1_1profile__comparison__work.html">profile_comparison_work</a> *work) const</td></tr>
 <tr class="separator:aeb7fe2bdc57120e913fb125776298a2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8c0ad10328ec77b8c8c5f2365891137e" id="r_a8c0ad10328ec77b8c8c5f2365891137e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1profile__encoded__record.html">profile_encoded_record</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#a8c0ad10328ec77b8c8c5f2365891137e">parse</a> (std::uint64_t at, std::uint64_t previous) const</td></tr>
@@ -184,7 +200,7 @@ template&lt;class P , <a class="el" href="namespaceeverett.html#a374f546e980dc1c
 </div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a72cee14852d820096d6bcd83429c5bc0" name="a72cee14852d820096d6bcd83429c5bc0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a72cee14852d820096d6bcd83429c5bc0">&#9670;&#160;</a></span>profile_view()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a72cee14852d820096d6bcd83429c5bc0">&#9670;&#160;</a></span>profile_view() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -221,6 +237,56 @@ template&lt;class P , <a class="el" href="namespaceeverett.html#a374f546e980dc1c
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a67bc6e90e7ef6667c76fbb3e64ee7ea5" name="a67bc6e90e7ef6667c76fbb3e64ee7ea5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a67bc6e90e7ef6667c76fbb3e64ee7ea5">&#9670;&#160;</a></span>profile_view() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class P , <a class="el" href="namespaceeverett.html#a374f546e980dc1c516a6bca9073270d3">stream_role</a> Role = stream_role::native&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structeverett_1_1profile__view.html">everett::profile_view</a>&lt; P, Role &gt;::profile_view </td>
+          <td>(</td>
+          <td class="paramtype">std::span&lt; std::byte const &gt;&#160;</td>
+          <td class="paramname"><em>bytes</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1select__groups__view.html">select_groups_view</a>&lt; P::codec_block_size &gt;&#160;</td>
+          <td class="paramname"><em>offsets</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1profile__metadata.html">profile_metadata</a>&#160;</td>
+          <td class="paramname"><em>metadata</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1profile__view_1_1shape__only.html">shape_only</a>&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -410,6 +476,50 @@ template&lt;class P , <a class="el" href="namespaceeverett.html#a374f546e980dc1c
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a27427d9925e51972911939d0885cec14" name="a27427d9925e51972911939d0885cec14"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a27427d9925e51972911939d0885cec14">&#9670;&#160;</a></span>from_sections()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class P , <a class="el" href="namespaceeverett.html#a374f546e980dc1c516a6bca9073270d3">stream_role</a> Role = stream_role::native&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static <a class="el" href="structeverett_1_1profile__view.html">profile_view</a> <a class="el" href="structeverett_1_1profile__view.html">everett::profile_view</a>&lt; P, Role &gt;::from_sections </td>
+          <td>(</td>
+          <td class="paramtype">std::span&lt; std::byte const &gt;&#160;</td>
+          <td class="paramname"><em>bytes</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1select__groups__view.html">select_groups_view</a>&lt; P::codec_block_size &gt;&#160;</td>
+          <td class="paramname"><em>offsets</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1profile__metadata.html">profile_metadata</a>&#160;</td>
+          <td class="paramname"><em>metadata</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -681,6 +791,33 @@ template&lt;class P , <a class="el" href="namespaceeverett.html#a374f546e980dc1c
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3ba2c2d712ab833066d18243bd065647" name="a3ba2c2d712ab833066d18243bd065647"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ba2c2d712ab833066d18243bd065647">&#9670;&#160;</a></span>validate_contents()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class P , <a class="el" href="namespaceeverett.html#a374f546e980dc1c516a6bca9073270d3">stream_role</a> Role = stream_role::native&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="structeverett_1_1profile__view.html">everett::profile_view</a>&lt; P, Role &gt;::validate_contents </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">

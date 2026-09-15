@@ -6,5 +6,6 @@ var searchData=
   ['rebuilding_3',['Strong deletion by incremental rebuilding',['../md_docs_2rebuild.html',1,'']]],
   ['reductions_4',['Packed group and bitmap rank reductions',['../packed-group-and-bitmap-rank-reductions.html',1,'']]],
   ['reductions_20and_20the_20cult_20bitmap_20rank_5',['NEON reductions and the Cult bitmap rank',['../md_bench_2neon__cult__rank.html',1,'']]],
-  ['resumption_6',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]]
+  ['resumption_6',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]],
+  ['roots_7',['Mapped blobs and exact query roots',['../mapped-blobs-and-exact-query-roots.html',1,'']]]
 ];

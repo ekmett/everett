@@ -10,7 +10,8 @@ var searchData=
   ['everett_3a_3arank_5fdetail_7',['rank_detail',['../namespaceeverett_1_1rank__detail.html',1,'everett']]],
   ['everett_3a_3arank_5fgroups_5fdetail_8',['rank_groups_detail',['../namespaceeverett_1_1rank__groups__detail.html',1,'everett']]],
   ['everett_3a_3asampling_5fdetail_9',['sampling_detail',['../namespaceeverett_1_1sampling__detail.html',1,'everett']]],
-  ['everett_3a_3aselect15_5fdetail_10',['select15_detail',['../namespaceeverett_1_1select15__detail.html',1,'everett']]],
-  ['everett_3a_3aselect_5fgroups_5fdetail_11',['select_groups_detail',['../namespaceeverett_1_1select__groups__detail.html',1,'everett']]],
-  ['everett_3a_3aworld_5fdetail_12',['world_detail',['../namespaceeverett_1_1world__detail.html',1,'everett']]]
+  ['everett_3a_3asection_5fdetail_10',['section_detail',['../namespaceeverett_1_1section__detail.html',1,'everett']]],
+  ['everett_3a_3aselect15_5fdetail_11',['select15_detail',['../namespaceeverett_1_1select15__detail.html',1,'everett']]],
+  ['everett_3a_3aselect_5fgroups_5fdetail_12',['select_groups_detail',['../namespaceeverett_1_1select__groups__detail.html',1,'everett']]],
+  ['everett_3a_3aworld_5fdetail_13',['world_detail',['../namespaceeverett_1_1world__detail.html',1,'everett']]]
 ];

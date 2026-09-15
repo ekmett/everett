@@ -6,5 +6,6 @@ var searchData=
   ['bit_5fcomparison_3',['bit_comparison',['../structeverett_1_1bit__comparison.html',1,'everett']]],
   ['bit_5fstring_4',['bit_string',['../structeverett_1_1bit__string.html',1,'everett']]],
   ['bit_5fview_5',['bit_view',['../structeverett_1_1bit__view.html',1,'everett']]],
-  ['branch_5fpoint_6',['branch_point',['../structeverett_1_1branch__point.html',1,'everett']]]
+  ['blob_5fidentity_6',['blob_identity',['../structeverett_1_1blob__identity.html',1,'everett']]],
+  ['branch_5fpoint_7',['branch_point',['../structeverett_1_1branch__point.html',1,'everett']]]
 ];

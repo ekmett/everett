@@ -10,7 +10,8 @@ var searchData=
   ['pipeline_20performance_7',['Blob and pipeline performance',['../blob-and-pipeline-performance.html',1,'']]],
   ['prefixes_20bit_20copies_20and_20framing_8',['Key prefixes, bit copies, and framing',['../md_bench_2key__bits.html',1,'']]],
   ['prepared_20chain_20queries_9',['Complete prepared-chain queries',['../md_bench_2query__chain.html',1,'']]],
-  ['proof_20core_10',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
-  ['publication_11',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
-  ['publication_20and_20merge_20resumption_12',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]]
+  ['profile_20count_20decoding_10',['Small bit-profile count decoding',['../md_bench_2small__count.html',1,'']]],
+  ['proof_20core_11',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
+  ['publication_12',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
+  ['publication_20and_20merge_20resumption_13',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]]
 ];

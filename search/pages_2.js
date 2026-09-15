@@ -17,5 +17,6 @@ var searchData=
   ['construction_14',['Elias–Fano Selection and Construction',['../eliasfano-selection-and-construction.html',1,'']]],
   ['copies_20and_20framing_15',['Key prefixes, bit copies, and framing',['../md_bench_2key__bits.html',1,'']]],
   ['core_16',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
-  ['cult_20bitmap_20rank_17',['NEON reductions and the Cult bitmap rank',['../md_bench_2neon__cult__rank.html',1,'']]]
+  ['count_20decoding_17',['Small bit-profile count decoding',['../md_bench_2small__count.html',1,'']]],
+  ['cult_20bitmap_20rank_18',['NEON reductions and the Cult bitmap rank',['../md_bench_2neon__cult__rank.html',1,'']]]
 ];

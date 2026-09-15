@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['index_5fbuilder_3c_20p_20_3e_0',['index_builder&lt; P &gt;',['../structeverett_1_1profile__blob.html#a66cfd51913f990b9213d9dcf763400e8',1,'everett::profile_blob']]]
+  ['encode_5findex_5fsections_0',['encode_index_sections',['../structeverett_1_1encoded__sections.html#a7f3928b9286fdae73843a8d7f8f46532',1,'everett::encoded_sections']]],
+  ['encode_5fnative_5fsections_1',['encode_native_sections',['../structeverett_1_1encoded__sections.html#a39805b4c3db32c0647e77c3b14c1cd67',1,'everett::encoded_sections']]]
 ];

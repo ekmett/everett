@@ -91,6 +91,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a14f37f76f8c2276bf94efb6bcf0094ba" id="r_a14f37f76f8c2276bf94efb6bcf0094ba"><td class="memTemplParams" colspan="2">template&lt;unsigned Bits, unsigned Word, unsigned Plane&gt; </td></tr>
 <tr class="memitem:a14f37f76f8c2276bf94efb6bcf0094ba"><td class="memTemplItemLeft" align="right" valign="top">constexpr std::uint64_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__groups__detail.html#a14f37f76f8c2276bf94efb6bcf0094ba">plane_mask</a> () noexcept</td></tr>
 <tr class="separator:a14f37f76f8c2276bf94efb6bcf0094ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2242c55acec5ec1a24f38012e11be19e" id="r_a2242c55acec5ec1a24f38012e11be19e"><td class="memTemplParams" colspan="2">template&lt;unsigned Bits&gt; </td></tr>
+<tr class="memitem:a2242c55acec5ec1a24f38012e11be19e"><td class="memTemplItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__groups__detail.html#a2242c55acec5ec1a24f38012e11be19e">prefix_portable</a> (<a class="el" href="structeverett_1_1word__view.html">word_view</a> words, unsigned count) noexcept</td></tr>
+<tr class="separator:a2242c55acec5ec1a24f38012e11be19e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adfe4b1751fc56c049565aeba70e6269f" id="r_adfe4b1751fc56c049565aeba70e6269f"><td class="memTemplParams" colspan="2">template&lt;unsigned Bits&gt; </td></tr>
 <tr class="memitem:adfe4b1751fc56c049565aeba70e6269f"><td class="memTemplItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__groups__detail.html#adfe4b1751fc56c049565aeba70e6269f">prefix_portable</a> (std::uint64_t const *words, unsigned count) noexcept</td></tr>
 <tr class="separator:adfe4b1751fc56c049565aeba70e6269f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -124,7 +127,7 @@ template&lt;unsigned Bits, unsigned Word, unsigned Plane&gt; </div>
 </div>
 </div>
 <a id="adfe4b1751fc56c049565aeba70e6269f" name="adfe4b1751fc56c049565aeba70e6269f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adfe4b1751fc56c049565aeba70e6269f">&#9670;&#160;</a></span>prefix_portable()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#adfe4b1751fc56c049565aeba70e6269f">&#9670;&#160;</a></span>prefix_portable() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -138,6 +141,44 @@ template&lt;unsigned Bits&gt; </div>
           <td class="memname">unsigned everett::rank_groups_detail::prefix_portable </td>
           <td>(</td>
           <td class="paramtype">std::uint64_t const *&#160;</td>
+          <td class="paramname"><em>words</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2242c55acec5ec1a24f38012e11be19e" name="a2242c55acec5ec1a24f38012e11be19e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2242c55acec5ec1a24f38012e11be19e">&#9670;&#160;</a></span>prefix_portable() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;unsigned Bits&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned everett::rank_groups_detail::prefix_portable </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1word__view.html">word_view</a>&#160;</td>
           <td class="paramname"><em>words</em>, </td>
         </tr>
         <tr>
