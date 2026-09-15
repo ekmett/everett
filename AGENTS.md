@@ -2,6 +2,16 @@
 
 Read README.md, docs/design.md and docs/implementation.md before changing the
 architecture. Keep the design and implementation status distinct and current.
+Keep the README an extensive introduction to the motivation and working APIs as
+the library grows. Write the documents in my voice: first person for my design
+choices, and "we" when walking through an argument with the reader. Do not
+describe me or my ideas from a distant third-person perspective. Keep factual
+bibliographic attribution and copyright notices intact. Follow the approachable,
+example-led style of my Haskell packages: setext headings, useful documentation
+links, Contact Information and the final -Edward Kmett signoff. Demonstrate
+tested features; keep detailed implementation tracking in docs/implementation.md.
+Use `$...$` for inline Markdown math and `$$...$$` for display math. Include
+the README and design Markdown in Doxygen, and verify that equations render.
 
 ## Coding style
 
@@ -33,7 +43,7 @@ architecture. Keep the design and implementation status distinct and current.
 The main checkout belongs to the integration owner. Workers use isolated Git
 worktrees from a committed revision; record ownership and acceptance in the
 implementation ledger. Preserve unrelated edits and retained worker branches.
-Make reviewed local checkpoints. Publish only within the user's authorization.
+Make reviewed local checkpoints. Publish only within my authorization.
 
 Use the configured host resource gate for heavy builds when one is available;
 host-specific paths and coordination tools stay outside this package. Limit

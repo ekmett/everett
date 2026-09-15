@@ -2,17 +2,17 @@
 
 Updated 2026-09-15. Specification: [Everett design](design.md).
 
-Everett currently provides independently testable C++20 foundations for the
-intended store. Public headers live in `include/everett/`, in namespace
-`everett`. The complete disk store, SQLite catalog runtime and bounded
-redundant-level scheduler remain implementation work.
+I use this ledger to track what works, what the tests establish, and what I
+still need to build. The C++20 foundations live in `include/everett/`, in
+namespace `everett`. The complete disk store, SQLite catalog runtime and
+bounded redundant-level scheduler remain implementation work.
 
 ## Ownership and acceptance
 
-The integration owner maintains the main checkout, build/package integration
-and combined verification. Component workers use isolated worktrees from a
-committed revision, preserve unrelated work, and leave reviewed checkpoints for
-integration. These are implementation roles, not runtime components.
+I keep the main checkout, build/package integration and combined verification
+under one integration owner. Component work happens in isolated worktrees from
+a committed revision, preserving unrelated work and leaving reviewed checkpoints
+for integration. These are development responsibilities.
 
 | Role | Owned components | Acceptance |
 | --- | --- | --- |
@@ -23,9 +23,9 @@ integration. These are implementation roles, not runtime components.
 | World semantics and ownership | `fingerprint.h`, `pins.h`, `world.h`; `tests/world.cc`, `tests/pins.cc` | disjoint batch permutations, snapshots, old-value validation, contributions, replay and reference export |
 | Design documentation | [design](design.md), [arrows](arrows.md), [rebuilding](rebuild.md), [durability](durability.md), this ledger | consistent contracts, cited derivations, implementation limits and independently usable terminology |
 
-Future component changes should update this ledger with their reviewed revision,
-actual checks and remaining limits. Host-specific resource coordination belongs
-outside this package.
+As components change, we update this ledger with the reviewed revision, actual
+checks and remaining limits. I keep host-specific resource coordination outside
+this package.
 
 ## Implemented foundations
 
@@ -56,6 +56,25 @@ is not a substitute for complete validation of a serialized rank/select section.
 The [sampling analysis](sampling.md) distinguishes local correctness from
 per-level capacity and whole-chain storage bounds.
 
+Rank construction now separates complete 2048-bit blocks from the bounded tail.
+A full block uses four 512-bit popcounts; AArch64 NEON sums four byte-popcount
+vectors with a widened final reduction, and other targets use eight portable
+word popcounts per run. Stored counts and directory layout are unchanged.
+The tests cover all 513 populations, word-aligned SIMD offsets and every
+partial-block length. On an M2 Max with AppleClang 21 `-O3`, owning builds over
+32 KiB, 8 MiB and 64 MiB inputs measured about 1.7–2.0 times faster than the
+previous builder. These are medians of seven warm-input rounds, including
+allocation and copying but excluding I/O; they are not cross-platform results.
+
+Elias–Fano construction packs low fields in width-specialized tiles of
+64/gcd(width,64) values and assigns each high word once. All encoded words,
+select samples and sparse exceptions remain identical. M2 Max / AppleClang 21
+`-O3 -DNDEBUG` measurements against the earlier writer show 2.01–3.03 times
+faster complete construction; 64 MiB source arrays at widths 8 and 12 retain
+2.35 and 2.01 times improvement. The all-width specializations add about 49 KiB
+of code in a minimal consumer and increased its median compile/link time from
+0.50 to 1.57 seconds. This is portable word packing, without handwritten SIMD.
+
 ### Front-coded blobs
 
 - Encoded byte-string arrays with configurable native LPFC, partial-key decoding,
@@ -78,8 +97,8 @@ per-level capacity and whole-chain storage bounds.
   ordinary mode uses an explicit slow fallback when predecessor context is
   missing. Native LPFC remains independent of changing index cuts.
 
-Those are the original byte-only `front.h`/`blob.h` primitives, retained as an
-independent baseline. They are owned encoded streams and borrowed views, not a
+I retain the original byte-only `front.h`/`blob.h` primitives as an independent
+baseline. They are owned encoded streams and borrowed views, not a
 finalized on-disk ABI.
 
 ### Typed byte and bit profiles
@@ -98,6 +117,18 @@ sampled offset structures, one grouped origin rank and false-borrow flags.
 Reindexing shares the exact native allocation. Search returns both a native
 value and downstream routing on equality; it does not resolve same-key arrows.
 The builder still materializes decoded native keys as scratch during reindex.
+`profile_cursor<P, Role>` supplies sequential decoding with borrowed values;
+`profile_borrowed_writer<P>` incrementally encodes borrowed keys. Their output
+matches the batch encoder across the full policy matrix. `sample_cursor<P>`
+pins and samples an exact encoded pair without materializing its catalog.
+`index_builder<P>` retains one incoming/outgoing sample, delays the preceding
+borrowed record until its shared-cut ceiling is known, and preserves native
+allocations. `index_pipeline<P>` feeds samples directly between those stages,
+supports bounded cursor-event stepping and returns a chain with exact target
+pins. Inter-stage samples carry a policy-unit backspace and suffix; the first
+sample is literal and later samples refer to that producer's preceding sample.
+Final metadata construction is a separate linear phase. See the
+[construction implementation](sampling.md#streaming-construction-pipeline).
 
 Codec fixtures cover 24 combinations: byte/bit × variable/fixed3/fixed0 values
 × groups 3/7/15/31. Blob fixtures cover 16 byte/bit × fixed/variable × group
@@ -153,7 +184,7 @@ persistent aggregate implementation behind these forward declarations.
   the intended small manifest of pinned objects and does not establish crash
   durability.
 
-The world layer is a semantic oracle for attaching encoded blobs. Its eager
+I use the world layer as a semantic oracle for attaching encoded blobs. Its eager
 ordered-map resolution is not the intended merge/query algorithm, and it has no
 logarithmic active-run-count guarantee. Batch generation may share an immutable
 base, while applying batches to one accumulator is serialized.
@@ -214,7 +245,7 @@ replacement oracle do not yet implement a heterogeneous sort registry.
 
 ### SQLite catalog and network admission
 
-SQLite is the selected backend for logical worlds, immutable representations,
+I've chosen SQLite for logical worlds, immutable representations,
 exact pins, contributions, index dependencies and small merge continuations.
 The [catalog design](catalog.md) specifies publication, operation identities,
 reader/GC synchronization and SQL diagnostics. No SQLite schema migration or
@@ -240,8 +271,8 @@ exercise its schedule, bounded catch-up or durable publication.
 
 ### Categorical updates
 
-The [per-key category design](arrows.md) extends the intended semantics to
-composable diffs. It specifies composition, partition independence, exact
+In the [per-key category design](arrows.md), I extend the semantics to
+composable diffs and specify composition, partition independence, exact
 endpoint deltas, query costs and dependency retention. `reference_world` still
 resolves replacements, and `blob` still uses its fixed value/tombstone payload.
 There is no generic arrow executor, category-dependent wire format or general
@@ -266,21 +297,22 @@ cmake --build build-sanitize --parallel 4
 ctest --test-dir build-sanitize --output-on-failure
 ```
 
-The eleven component suites are `rank`, `groups`, `front`, `profile`,
-`profile_blob`, `world`, `pins`, `durability`, `mapped_file`, `files` and
-`multiverse`. Two additional CTests validate relocated installation and embedded
-CMake consumption, including typed headers. Combined verification is recorded
-by the integration owner after these commands run.
+The fourteen component suites are `rank`, `groups`, `front`, `profile`,
+`profile_blob`, `sampling`, `index_builder`, `index_pipeline`, `world`, `pins`,
+`durability`, `mapped_file`, `files` and `multiverse`. Two additional CTests
+validate relocated installation and embedded CMake consumption, including
+typed headers. We record combined verification here after these commands run.
 
 Combined verification on 2026-09-15: AppleClang 21, C++20, Release with strict
-warnings and ASan/UBSan passed **14/14 CTests**, including both package consumers
+warnings and ASan/UBSan passed **17/17 CTests**, including both package consumers
 and the optional Doxygen check. Installed license notices were checked byte for
 byte against the source bundle.
-The README reference example also compiled and ran with the same warnings and
-sanitizers. The initial build could not write the host's default ccache directory;
+All five complete README examples also compiled and ran with strict warnings
+and ASan/UBSan. Its 24 local Markdown links resolved, including heading anchors.
+The initial build could not write the host's default ccache directory;
 using a cache inside the build tree resolved that environmental failure.
-No Windows execution, persistent SQLite backend, network transport, filesystem
-writer fault injection or physical power-loss test is claimed.
+We haven't yet tested Windows execution, a persistent SQLite backend, network
+transport, filesystem writer fault injection or physical power loss.
 
 The optional `EVERETT_BUILD_DOCS` configuration generates Doxygen HTML/XML and
 checks all file footers plus representative function/member ownership. A

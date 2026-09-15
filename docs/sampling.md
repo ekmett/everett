@@ -1,6 +1,6 @@
 # Sampling groups and the choice of K
 
-Updated 2026-09-15. The default remains **K = 15**. The typed byte and bit
+Updated 2026-09-15. I keep **K = 15** as the default. The typed byte and bit
 profiles support **3, 7, 15 and 31** through
 `storage_policy<Unit, Values, K>`. K counts entries; it does not change whether
 key lengths, backspaces, values and physical offsets count bytes or bits.
@@ -8,8 +8,8 @@ key lengths, backspaces, values and physical offsets count bytes or bits.
 K = 3 is sufficient for the local navigation rules and for constant per-level
 augmentation along a single chain whose capacities grow by at most two per
 link. It increases sampling space while reducing the number of records examined
-in each window. This document derives that statement and states its assumptions.
-It does not establish a complete redundant-level scheduler.
+in each window. Below, we derive that statement under explicit assumptions.
+I still need a complete redundant-level scheduler proof.
 
 ## 1. Relationship to the COLA reference
 
@@ -17,27 +17,27 @@ Bender et al.'s *Cache-Oblivious Streaming B-trees*, §3, describes power-of-two
 COLA levels. Its lookahead layout samples every eighth entry and also allocates
 duplicate-pointer cells. Its deamortized construction distinguishes visible and
 shadow arrays; completing a data merge alone does not finish the associated
-lookahead work. These are the scheduling and multi-catalog-search precedents,
-not the count-class layout used here.
+lookahead work. I take the scheduling and multi-catalog-search precedents from
+this construction; the count-class layout I use here is different.
 [Original paper, §3](https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=8).
 
-**The recurrence and constants below are our derivation for Everett's separate
-native and borrowed streams.** They are not a restatement of the paper's slot
-allocation or a claim that its deamortization proof applies unchanged.
+**We derive the recurrence and constants below for Everett's separate native
+and borrowed streams.** I am not restating the paper's slot allocation or
+claiming that its deamortization proof applies unchanged.
 
 ## 2. Why a local window works for K = 3
 
 A catalog's augmented order is the virtual sorted interleaving of its native
-records and borrowed keys. Borrow positions `0, K, 2K, ...` from the exact
+records and borrowed keys. We borrow positions `0, K, 2K, ...` from the exact
 **augmented** target catalog, including its borrowed keys. Sampling only native
 target keys would leave the size of a target window unbounded.
 
-Let R(g) count borrowed entries before virtual position Kg. The virtual window
+We let R(g) count borrowed entries before virtual position Kg. The virtual window
 `[Kg, min(K(g+1), size))` projects to one native range and one borrowed range.
 Their lengths sum to at most K. Boundary ranks suffice: native rank is virtual
 position minus borrowed rank. These facts hold for K = 3 just as they do for 15.
 
-The remaining navigation rules also survive:
+We retain the remaining navigation rules as well:
 
 - Each projected physical range touches at most two physical sampling groups.
   Reaching its first record inspects at most K − 1 preceding record headers.
@@ -64,36 +64,41 @@ and [categorical update model](arrows.md).
 
 ### Constructing samples from a pinned pair
 
-The target is one exact, immutable `.kv` + `.index` pair. Its augmented order is
-a **tagged occurrence sequence**, not a set union: preserve all borrowed copies,
-including false borrows, with native entries before equal borrowed entries and
+I pin one exact, immutable `.kv` + `.index` pair as the target. Its augmented
+order is a **tagged occurrence sequence**, not a set union: we preserve all
+borrowed copies, including false borrows, with native entries before equal borrowed entries and
 equal borrowed entries in their original order. Sample positions `0, K, 2K, ...`
 in that sequence. The pair stays pinned; extraction neither compacts it nor
 requires a physically merged copy or re-encoded target.
 
-At cut \(t=jK\), let \(r(j)=R(j)\) be the borrowed population before that cut.
+At cut $t=jK$, let $r(j)=R(j)$ be the borrowed population before that cut.
 The next native and borrowed ordinals are respectively
-\(jK-r(j)\) and \(r(j)\). The lesser available next key, using the same tie rule,
+$jK-r(j)$ and $r(j)$. The lesser available next key, using the same tie rule,
 is the sample. The two physical Elias–Fano indexes locate the containing groups;
 bounded header scans locate those records. They provide **locations**, not
 independent decoding context for borrowed FC. That stream has no LPFC restart
 bound: repeatedly calling `reconstruct_at` at successive sample positions can
 walk the same long prefix chain repeatedly.
 
-Prefer two sequential decoding cursors over the pinned streams, retaining their
+I use two sequential decoding cursors over the pinned streams, retaining their
 key contexts, advancing in merged order and emitting every Kth occurrence.
-Skip value payloads using their framing lengths. If the target index is being
-built, emit the samples from its existing merged-order walk while constructing
+I skip value payloads using their framing lengths. When building the target
+index, I emit samples from its existing merged-order walk while constructing
 rank classes and shared-cut prefix constraints; that avoids a separate pass.
 Charge visited headers, prefix/suffix decoding, key comparisons and emitted
 sample bytes. A separate streaming pass can visit all A augmented entries;
-producing only \(\lceil A/K\rceil\) samples does not make it O(A/K) work.
+producing only $\lceil A/K\rceil$ samples does not make it O(A/K) work.
 
-Currently `profile_blob<P>::build` and `reindex` accept caller-supplied samples.
-The test helper `samples_for` materializes and sorts the augmented order only
-as an oracle. An encoded-pair sampler, streaming sample sink and validation
-binding each sample sequence to the exact target pair, P, K and target ordinals
-remain production work. Sorted sample keys alone do not establish that binding.
+`sample_cursor<P>` implements this scan over an owned pin to the exact pair.
+It keeps two decoding contexts, preserves tagged ordering and decodes each
+record once over a full traversal. Values remain views of their source payloads.
+`index_builder<P>` consumes consecutive samples with one incoming lookahead and
+one outgoing slot. `index_pipeline<P>` connects the stages and binds each
+completed pair to the exact target that supplied its samples. The batch
+`profile_blob<P>::build`/`reindex` interfaces still accept supplied samples;
+tests use a separately materialized ordering as their independent oracle.
+Low-level builders trust their sampler's provenance and check order, ordinals
+and count; these checks do not authenticate arbitrary externally supplied keys.
 
 **Unselected space/time option.** An ephemeral outgoing-sample sink avoids the
 second key-encoding pass only when a fresh target index and its upstream samples
@@ -103,14 +108,18 @@ let later forks reuse the export. That adds space beyond the original minimal
 blob, and sampling every Kth occurrence does not guarantee retaining only 1/K of
 the key bytes. Reusing that export requires the exact containing native/index pair and its
 sampling policy. A downstream-index change creates a new pair whose export must
-be rebuilt or validated anew; the native bytes stay unchanged. This is an option
-for measurement, not a selected format extension or implemented feature.
+be rebuilt or validated anew; the native bytes stay unchanged. I leave this as
+an option for measurement; I have not selected or implemented the format extension.
 
 ### Streaming construction pipeline
 
-A proposed builder pipeline keeps a few fingers per index under construction.
+In `index_pipeline<P>`, I keep a few fingers per index under construction.
 Each stage merges its native keys with incoming samples from its exact target
-pair and passes every Kth augmented occurrence to the next stage. It retains:
+pair and passes every Kth augmented occurrence to the next stage. I use
+ordinary front coding for handoffs: a literal first sample, then a backspace
+count in P units and suffix relative to the preceding sample from that producer. Producer and
+consumer retain one coding context each. Final index coding independently
+applies its shared-cut prefix ceilings. Each stage also retains:
 
 - Native and incoming-sample positions, with a next-key lookahead or explicit
   end-of-stream for each input. A temporarily empty queue is not end-of-stream.
@@ -122,7 +131,7 @@ pair and passes every Kth augmented occurrence to the next stage. It retains:
   final extent determines the Elias–Fano encoding.
 
 If a stage has n native entries and receives s samples, it emits
-\(\lceil(n+s)/K\rceil\) samples. Thus the contribution from one original source
+$\lceil(n+s)/K\rceil$ samples. Thus the contribution from one original source
 shrinks by roughly K per edge, but every stage adds its own native entries.
 Bounded queues and backpressure let stages advance at different rates; they
 must retain enough lookahead to establish the next merged key. Key lengths,
@@ -132,50 +141,53 @@ by K along with the sampled occurrence count.
 A sample key and target ordinal can become stable before the corresponding
 front-coded record is finalized or its output file is sealed. Construction may
 forward those samples immediately under the reserved target-pair generation.
-Readers adopt only a complete, validated and durable paired dependency graph;
-until that publication, old representations retain their existing pins. This
-pipeline is a concrete construction proposal, not an implemented runtime or a
-proof of the redundant-level scheduler's deadlines.
+The implemented pipeline produces encoded in-memory pairs. Its step budget
+counts cursor events; source advances consume at most K records, while key
+bytes and allocations have their own costs. `finish()` separately constructs
+the remaining Elias–Fano/rank metadata and attaches exact target pins. It can
+perform linear work in staged metadata and is not a worst-case scheduler bound.
+The completed graph is the input to the [durable publication protocol](durability.md);
+old representations keep their pins throughout construction.
 
 ## 3. Per-level augmentation along one chain
 
-Index a nonempty chain of catalogs from small to large by \(i=0,\ldots,L-1\).
+We index a nonempty chain of catalogs from small to large by $i=0,\ldots,L-1$.
 Let:
 
-- \(n_i\) be the number of native records in catalog \(i\).
-- \(A_i\) be its augmented record count, including borrowed records.
-- \(B_i\) be its nominal native capacity, with \(n_i\le B_i\).
+- $n_i$ be the number of native records in catalog $i$.
+- $A_i$ be its augmented record count, including borrowed records.
+- $B_i$ be its nominal native capacity, with $n_i\le B_i$.
 
-Assume one exact downstream target per catalog and terminal
-\(A_{L-1}=n_{L-1}\).
+We assume one exact downstream target per catalog and terminal
+$A_{L-1}=n_{L-1}$.
 Sampling position zero and then every Kth position gives
 
-\[
+$$
 A_i=n_i+\left\lceil\frac{A_{i+1}}K\right\rceil.
-\]
+$$
 
 Every retained sample counts in this recurrence, including a false borrow or
 an equal key sampled more than once. For nominal capacities satisfying
-\(B_{i+j}\le 2^j B_i\), write each ceiling error as \(\varepsilon_i\) in
-\([0,1)\). Unrolling gives
+$B_{i+j}\le 2^j B_i$, write each ceiling error as $\varepsilon_i$ in
+$[0,1)$. Unrolling gives
 
-\[
+$$
 A_i=\sum_{j=0}^{L-1-i}\frac{n_{i+j}}{K^j}
   +\sum_{j=0}^{L-2-i}\frac{\varepsilon_{i+j}}{K^j}.
-\]
+$$
 
 Therefore, for K > 2,
 
-\[
+$$
 A_i\le B_i\sum_{j\ge0}\left(\frac2K\right)^j
        +\sum_{j\ge0}\frac1{K^j}
    =B_i\frac K{K-2}+\frac K{K-1}.
-\]
+$$
 
 The final additive constant covers ceiling effects. With fully occupied levels
-that double in native size, the leading **per-level amplification** is
-\(K/(K-2)\); the borrowed/native ratio is \(2/(K-2)\). For sparse levels the bound is
-against nominal capacity, not the actual \(n_i\), which can be zero.
+that double in native size, we obtain a leading **per-level amplification** of
+$K/(K-2)$; the borrowed/native ratio is $2/(K-2)$. For sparse levels the bound is
+against nominal capacity, not the actual $n_i$, which can be zero.
 
 | K | Count bits per group | Count bits per augmented entry, ignoring tail/directory | Leading total/native ratio at a full level | Leading borrowed/native ratio |
 | --- | --- | --- | --- | --- |
@@ -191,28 +203,28 @@ assuming the K = 15 capacity constants.
 ### What the critical value means
 
 At K = 2 the geometric ratio is one. In the exact doubling example, every
-remaining depth contributes another \(n_i\) to \(A_i\), so \(A_i/n_i\) grows with the
+remaining depth contributes another $n_i$ to $A_i$, so $A_i/n_i$ grows with the
 remaining chain length. This breaks a constant per-level capacity argument.
 It does not prove that every possible K = 2 data structure is impossible.
 For a general per-link capacity growth bound g, the same argument requires
-\(K>g\) and gives leading factor \(K/(K-g)\).
+$K>g$ and gives leading factor $K/(K-g)$.
 
 Nor is the table a multiplier on the entire store's byte size. For one finite
 chain, summing its recurrence yields the separate bound
 
-\[
+$$
 \sum_i A_i
 \le\frac K{K-1}\left(\sum_i n_i+L-1\right).
-\]
+$$
 
 This weaker global entry-count bound holds for K > 1 without a growth
 assumption. The stronger per-level bound is what controls small catalogs and
-their reserved capacities. Neither expression measures encoded string bytes,
-unfinished outputs or retained historical worlds.
+their reserved capacities. We have not counted encoded string bytes, unfinished
+outputs or retained historical worlds in either expression.
 
 ## 4. Space and scan work
 
-For \(K=2^b-1\), a group population ranges from 0 to K and occupies exactly b
+For $K=2^b-1$, a group population ranges from 0 to K and occupies exactly b
 bits. `rank_groups<K>` stores those classes and prefix checkpoints; it does
 not store the full origin pattern or require arbitrary within-group rank.
 The table omits checkpoint overhead and the final partial group's padding.
@@ -233,19 +245,19 @@ Increasing K usually reduces sample count and class/offset metadata, while
 increasing the number of candidate records and framing headers inspected per
 window. It can also change which borrowed prefixes need repair. Actual encoded
 space, cache behavior, reconstruction work and value access therefore need
-measurement; the count-class table alone does not select a fastest K.
+measurement. I cannot choose a fastest K from the count-class table alone.
 
 ## 5. Native-preserving index repair
 
-Native keys use LPFC, with default restart factor 18. The native representation
-is independent of the borrowed index's current shared cuts. For borrowed key
-\(S_j\), ordinary FC retains the adjacent LCP \(a_j\). At each applicable virtual cut
+I use LPFC for native keys, with default restart factor 18. The native
+representation is independent of the borrowed index's current shared cuts. For borrowed key
+$S_j$, ordinary FC retains the adjacent LCP $a_j$. At each applicable virtual cut
 Kg, the modified policy additionally limits the retained prefix of the preceding
 borrowed key to its LCP with that cut's boundary key. Re-emitted units supply
 the context needed to decode from the upper anchor.
 
 Changing K moves these cuts, but does not invalidate the argument. The
-bidirectional reference policy retains \(\min(a_j,a_{j+1})\), with zero endpoint
+bidirectional reference policy retains $\min(a_j,a_{j+1})$, with zero endpoint
 LCPs. Its extra suffix units are the positive falls of the adjacent-LCP sequence;
 these equal the positive rises, bounded by ordinary FC's suffix units. The
 actual-cut policy is no more redundant. Consequently its borrowed suffix units
@@ -260,20 +272,20 @@ by the surrounding store.
 
 Changing K changes P and the native physical group checkpoints as well. That is
 a profile/format migration, not the same operation as reindexing against a new
-target under one fixed P; this document does not promise native-byte reuse
-across such a migration.
+target under one fixed P. I do not promise native-byte reuse across such a
+migration.
 
 ## 6. Where the chain proof stops
 
 **Skipped levels.** A shortcut over d nominal levels can increase capacity by
-\(2^d\) in one sampled edge. The twofold-per-link premise no longer holds. Keep
+$2^d$ in one sampled edge. The twofold-per-link premise no longer holds. Keep
 intermediate index catalogs, including catalogs with no native entries, or prove
 and reserve the shortcut's larger augmentation separately. A large sample
 stream cannot be charged to a source catalog's zero native occupancy.
 
 **Several augmented children.** If one catalog samples d children whose nominal
 capacities are each at most g times its own, the corresponding uniform bound
-needs \(dg/K<1\). For example, two children each twice as large give a \(4/K\)
+needs $dg/K<1$. For example, two children each twice as large give a $4/K$
 coefficient; the single-chain K = 3 argument does not cover that topology.
 An actual dependency graph needs its own recurrence and accounting.
 
@@ -282,7 +294,7 @@ separate chains or by a linear ordering that preserves the per-link growth
 bound, but those are explicit structural choices. Array multiplicity alone does
 not establish the chosen query graph or its buffer capacities.
 
-**Scheduling and persistence.** The future scheduler must fund native merges,
+**Scheduling and persistence.** I still need a scheduler that funds native merges,
 borrowed-prefix reconstruction, rank/offset construction and publication at the
 selected K's constants. It must preserve bounded active levels while forks may
 adopt shared results at different times. Old snapshots, readers and checkpoints
@@ -300,8 +312,8 @@ query-limited decoding, every matching native segment along a sampled chain,
 values with exact meaningful-bit lengths, many equal borrowed samples spanning
 cuts, the borrowed-suffix bound, and old/new indexes sharing native bytes.
 
-These are local codec and query results. They do not test a complete COLA merge
-scheduler, disk publication, admission deadlines or crash recovery. The next
-scheduler proof must name its actual active graph, native capacities, index
-budgets, visible/unfinished representations and retained-history charges before
-claiming a store-wide bound for any K.
+These tests establish local codec and query results. I have not tested a complete
+COLA merge scheduler, disk publication, admission deadlines or crash recovery
+with them. Before claiming a store-wide bound for any K, I need a scheduler
+proof that names its actual active graph, native capacities, index budgets,
+visible/unfinished representations and retained-history charges.
