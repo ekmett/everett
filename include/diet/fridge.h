@@ -24,11 +24,15 @@
 #include <diet/object_stream.h>
 #include <diet/query.h>
 
+#include <cerrno>
 #include <filesystem>
 #include <span>
 #include <stdexcept>
+#include <string>
 #include <string_view>
+#include <system_error>
 #include <utility>
+#include <vector>
 
 namespace diet {
   // Aggregate state/progression runtimes are intentionally incomplete. These
@@ -42,9 +46,8 @@ namespace diet {
   struct connection_options;
 
   // An individual policy-bound sort code. Construction validates its packed
-  // representation and unit alignment only. The owner of a sort-code family
-  // must additionally establish uniqueness and prefix freedom, and pin its
-  // interpretation version. No hash/category registry is implemented here.
+  // representation and unit alignment only. The registry establishes the
+  // family's prefix freedom and selects its record and semantic handlers.
   template <class P> struct sort {
     using policy_type = P;
     using registry_type = typename P::registry_type;
@@ -118,6 +121,47 @@ namespace diet {
     using tap = diet::connection<active_engine>;
 
     explicit fridge(std::filesystem::path root) : root_(checked_root(std::move(root))) {}
+
+    // Establish missing directory names with a barrier on each new directory
+    // and its parent. Existing ancestors must already be durable and trusted.
+    // A failed barrier leaves the names in place for explicit recovery.
+    static fridge create(std::filesystem::path root) {
+      if (root.empty()) throw std::invalid_argument("fridge root must name a directory");
+#if defined(__APPLE__) || defined(__linux__)
+      auto path = std::filesystem::weakly_canonical(std::filesystem::absolute(root));
+      auto ancestor = path;
+      std::vector<std::string> missing;
+      while (!std::filesystem::exists(ancestor)) {
+        missing.push_back(ancestor.filename().string());
+        ancestor = ancestor.parent_path();
+      }
+      ancestor = checked_root(ancestor);
+      posix_object_ops ops;
+      struct descriptor {
+        int fd;
+        explicit descriptor(int value) : fd(value) {
+          if (fd < 0) throw std::system_error(errno, std::generic_category(), "open fridge directory");
+        }
+        descriptor(descriptor const &) = delete;
+        ~descriptor() { if (fd >= 0) ::close(fd); }
+      } parent(ops.open_root(ancestor));
+      for (auto name = missing.rbegin(); name != missing.rend(); ++name) {
+        if (ops.make_directory(parent.fd, name->c_str()) && errno != EEXIST)
+          throw std::system_error(errno, std::generic_category(), "create fridge directory");
+        descriptor child(ops.open_directory(parent.fd, name->c_str()));
+        if (ops.sync_directory(child.fd) || ops.sync_directory(parent.fd))
+          throw std::system_error(errno, std::generic_category(), "sync fridge directory; creation outcome unknown");
+        if (ops.close(std::exchange(parent.fd, -1)))
+          throw std::system_error(errno, std::generic_category(), "close fridge directory; creation outcome unknown");
+        parent.fd = std::exchange(child.fd, -1);
+      }
+      if (ops.close(std::exchange(parent.fd, -1)))
+        throw std::system_error(errno, std::generic_category(), "close fridge directory; creation outcome unknown");
+      return fridge(path);
+#else
+      throw std::system_error(std::make_error_code(std::errc::operation_not_supported), "create fridge directory");
+#endif
+    }
 
     std::filesystem::path const & root() const & noexcept { return root_; }
     std::filesystem::path const & root() const && = delete;

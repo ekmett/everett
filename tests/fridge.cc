@@ -134,6 +134,27 @@ namespace {
     require(!std::filesystem::exists(temporary.path / "01"), "missing object open must not create shards");
   }
 
+  void create_roots() {
+#if defined(__APPLE__) || defined(__linux__)
+    temporary_directory temporary;
+    auto root = temporary.path / "new" / "nested";
+    auto store = fridge<>::create(root);
+    static_assert(std::same_as<decltype(store)::policy_type, string_policy>);
+    require(store.root() == std::filesystem::canonical(root), "created root is not canonical");
+    auto payload = bit_string::from_bytes("keep this");
+    write_bytes(root / "retained", payload.bytes);
+    auto reopened = fridge<>::create(root);
+    require(reopened.root() == store.root(), "existing root cannot be reused");
+    require(std::filesystem::file_size(root / "retained") == payload.bytes.size(), "existing contents changed");
+    rejects([&] { (void)fridge<>::create(root / "retained"); });
+    rejects([&] { (void)fridge<>::create(root / "retained" / "child"); });
+    rejects([&] { (void)fridge<>::create({}); });
+    std::filesystem::create_directory_symlink(root, temporary.path / "alias");
+    auto linked = fridge<>::create(temporary.path / "alias" / "more");
+    require(linked.root() == store.root() / "more", "existing symlink ancestor was not canonicalized");
+#endif
+  }
+
   void read_objects() {
     temporary_directory temporary;
     auto id = object_id("00112233445566778899aabbccddeeff");
@@ -266,6 +287,7 @@ int main() {
   try {
     sort_codes();
     roots_are_read_only();
+    create_roots();
     read_objects();
     seal_objects<bytes>();
     seal_objects<bits>();
