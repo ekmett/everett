@@ -1,5 +1,10 @@
 # Streaming a fractional-index chain to disk
 
+This pipeline writes the supported single-route IX02 layout.
+[COLA construction](cola-indexes.md) instead builds IX03 with two borrowed
+streams; its current builder retains those encoded streams in memory until
+sealing. Both paths preserve their input native files.
+
 We can build several `.index` files together while keeping their native `.kv`
 files unchanged. `file_index_pipeline<P>` samples the exact mapped target pair
 once. Each stage merges those samples with its own native keys and passes a

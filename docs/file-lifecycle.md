@@ -141,9 +141,12 @@ includes variable key data and physical block framing.
 
 The generic envelope accepts arbitrary bodies. The [mapped blob format](mapped-blobs.md)
 encodes native FC, borrowed FC, rank, Elias–Fano, false-borrow flags and exact
-cut LCPs in checked, versioned sections. Its index directory records the native
-identity and exact downstream pair. Section descriptors count physical bytes;
-the inner FC extent and residual offsets retain the byte/bit policy units.
+cut LCPs in checked, versioned sections. The IX02 directory records the native
+identity and one exact downstream pair. The [IX03 COLA directory](cola-indexes.md)
+records a main pair and a terminal secondary native identity, with separate
+borrowed streams for those routes. Both use the same KV02 native layout.
+Section descriptors count physical bytes; the inner FC extent and residual
+offsets retain the byte/bit policy units.
 World manifests and merge continuations belong in SQLite rows and versioned BLOBs.
 
 ## Mapped lifetime

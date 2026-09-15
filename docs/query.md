@@ -1,6 +1,9 @@
 # Querying an immutable catalog chain
 
-The query layer connects the encoded window operations into a complete search.
+The single-route query layer connects the encoded window operations into a
+complete search. The [COLA query layer](cola-indexes.md) separately follows a
+recursive main route and a terminal secondary route, including both level-zero
+arrays. This guide covers the supported `profile_blob`/IX02 chain APIs.
 It returns every matching native entry, together with its exact source pair and
 native ordinal. The caller decides how those entries compose. An index link
 describes navigation, so its position alone does not establish an update's age.

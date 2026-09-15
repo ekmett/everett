@@ -88,13 +88,16 @@ files, index versions, and completed compactions.
 | $U$ | Residual extent in policy units used by an Elias–Fano encoding |
 | $v$ | Fixed value width in policy units, common across the indexed stream |
 
-An index targets the next catalog's **augmented** ordering, including borrowed
-entries. Sampling only its native keys would not establish the stated windows.
+For the single-route primitive below, an index targets the next catalog's
+**augmented** ordering, including borrowed entries. Sampling only its native
+keys would not establish the stated windows. The COLA main route follows the
+same rule; its secondary route targets a native-only leaf, which has no borrowed
+entries.
 
 ## 2. The blob
 
-Putting the pieces together, a blob has the following logical components. They
-need not occupy one file:
+I first describe the single-route blob, retained by the IX02 APIs. Its logical
+components need not occupy one file:
 
 1. A front-coded array of native $(K,V)$ records.
 2. A separately front-coded array of borrowed keys and routing information.
@@ -103,6 +106,9 @@ need not occupy one file:
 5. One false-borrow flag per borrowed record.
 6. One exact bit-LCP count per virtual cut, describing its preceding borrowed key.
 7. Exact immutable target identities, physical block framing, and format information.
+
+The [COLA extension](cola-indexes.md) adds a second borrowed stream with its own
+rank, offsets, flags and cut LCPs, while sharing the same native component.
 
 ```mermaid
 flowchart TD

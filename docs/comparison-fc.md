@@ -1,9 +1,11 @@
 # Front coding with comparison state
 
-I use ordinary front coding in both physical streams, with enough navigation
+I use ordinary front coding in each physical stream, with enough navigation
 state to compare keys without reconstructing their inherited prefixes. The
 [query API](query.md) connects these comparisons into complete chain traversal.
-Each index carries exact cut LCPs alongside its origin rank and borrowed stream.
+Each borrowed route carries exact cut LCPs alongside its origin rank and FC
+stream. I derive the transfer below for one borrowed route; the
+[COLA index](cola-indexes.md) applies it independently to its two routes.
 
 ## Entering a projected stream
 
@@ -128,12 +130,14 @@ comparisons are available.
 
 ## Two physical offset directories
 
-Keep exactly one Elias–Fano directory for native records and one for borrowed
-records, together with interleaving rank. There is no offset directory for an
-imaginary third, physically merged stream.
+For the single-route layout, keep one Elias–Fano directory for native records and
+one for borrowed records, together with interleaving rank. A two-route COLA
+index adds the second borrowed stream's directory and rank; its native
+directory is shared by both projections. Neither layout stores an offset
+directory for the virtual merged order.
 
 The cascade stride $K$ and codec block width $W$ serve different purposes.
-At virtual cut $q=Kk$, half-open borrowed rank gives
+For the single-route projection at virtual cut $q=Kk$, half-open borrowed rank gives
 
 $$
 i=\mathrm{rank}_{\mathrm{borrowed}}(q),\qquad d=q-i.

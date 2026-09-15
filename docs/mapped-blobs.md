@@ -1,6 +1,11 @@
 Mapped blobs and exact query roots
 =================================
 
+This guide describes the supported single-route IX02 layout and its
+`mapped_blob` APIs. The [COLA guide](cola-indexes.md) describes IX03, whose two
+borrowed streams route to a main pair and a terminal secondary native file.
+Both layouts share the same KV02 native objects.
+
 An encoded blob can be written as a native `.kv` object and an independent
 `.index` object, then reopened for querying without copying its payload or
 navigation arrays. The index records its native identity and its exact

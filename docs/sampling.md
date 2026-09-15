@@ -13,6 +13,12 @@ link. It increases sampling space while reducing the number of records examined
 in each window. Below, we derive that statement under explicit assumptions.
 I still need a complete redundant-level scheduler proof.
 
+The single-route APIs and recurrence below remain supported as IX02. The
+[COLA representation](cola-indexes.md) uses IX03 with a recursive main target
+and a terminal native-only secondary target. Its separate
+[capacity bound](cola-scheduling.md#main-and-secondary-capacities) also permits
+K = 3; the secondary contributes samples without adding another recursive route.
+
 ## 1. Relationship to the COLA reference
 
 Bender et al.'s *Cache-Oblivious Streaming B-trees*, §3, describes power-of-two
@@ -336,10 +342,12 @@ needs $dg/K<1$. For example, two children each twice as large give a $4/K$
 coefficient; the single-chain K = 3 argument does not cover that topology.
 An actual dependency graph needs its own recurrence and accounting.
 
-**Redundant arrays.** A bounded number of arrays per level can be handled by
-separate chains or by a linear ordering that preserves the per-link growth
-bound, but those are explicit structural choices. Array multiplicity alone does
-not establish the chosen query graph or its buffer capacities.
+**Redundant arrays.** I use a main index with two routes: the next main
+catalog's augmented stream and the next secondary's native-only stream. Only
+the main route recurses, so the several-augmented-children example above is not
+its recurrence. The [COLA model](cola-scheduling.md) derives the corresponding
+capacity and total-entry bounds. Array multiplicity alone still does not
+establish the retained dependency closure or its byte budget.
 
 **Scheduling and persistence.** We still need a scheduler that funds native merges,
 borrowed-stream construction, cut LCPs, rank/offset construction and publication

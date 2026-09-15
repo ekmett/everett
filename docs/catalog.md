@@ -38,9 +38,10 @@ row alone does not keep those files. A branch point intended to remain readable
 must have a root.
 
 The catalog records the canonical policy P: byte/bit unit, group size, value
-layout and interpretation versions. Opening it as `multiverse<P>` validates
-that policy. Changing P is an explicit format migration. Sort and category
-schema versions are pinned by each world and by the jobs interpreting it.
+layout and interpretation versions. The optional `sqlite_catalog<P>::open`
+validates that policy; `multiverse<P>` separately owns file access. Changing P
+is an explicit format migration. Sort and category schema versions are pinned
+by each world and by the jobs interpreting it.
 
 ## 2. Proposed relational schema
 
@@ -57,7 +58,7 @@ rows carry an expected revision/generation for conditional updates.
 | `schema_contexts` | schema ID, sort/codec/hash/category resolver versions | immutable canonical descriptor; worlds and recipes refer to exact versions |
 | `objects` | allocation/object ID, kind, generation, final content identity, relative path, lifecycle state, byte extent, integrity digest, optional native fingerprint | kind is `kv` or `index`; unique ID/path; generation and IDs never reused; final identity/extent are fixed at sealing |
 | `object_edges` | source object, target object, dependency role | composite primary key; both ends foreign keys; exact immutable dependency graph |
-| `blob_versions` | blob ID, native object, optional index object, optional target blob, native/augmented counts | native kind is `kv`; index kind is `index`; exact target and policy validation; immutable |
+| `blob_versions` | blob ID, native object, optional index object, layout, optional main target blob, optional secondary native object, native/borrowed/augmented counts | native and secondary kinds are `kv`; index kind is `index`; exact role-specific targets and policy validation; immutable |
 | `worlds` | world ID, admitted cut ID, schema ID, live count, composite fingerprint | immutable; signature has no uniqueness constraint |
 | `representations` | representation ID, world ID, layout version, cached contribution sum | immutable; composite unique key `(representation_id, world_id)` |
 | `representation_entries` | representation ID, position, logical factor ID, blob ID, contribution role, contribution | primary key `(representation_id, position)`; unique factor within one representation; exact semantic ordering |
@@ -70,14 +71,17 @@ acquire its final name at sealing, before durable publication. Sealed identity,
 path and content descriptors are immutable.
 
 An index's dependency edges include its own native object and the native/index
-objects of its exact target blob. Additional retained value/arrow dependencies
-must also be explicit edges. Registering a blob validates agreement among those
-edges, the target blob and the external index metadata. Foreign keys establish
-row existence; they do not establish this semantic agreement or graph acyclicity.
+objects of its exact main target. IX03 also retains its terminal secondary's
+native object directly; IX02 has only the single target pair. Additional retained
+value/arrow dependencies must also be explicit edges. Registering a blob validates
+agreement among those edges, the targets and the external index metadata. Foreign
+keys establish row existence; they do not establish this semantic agreement or
+graph acyclicity.
 
-The initial representation is a chain. We reject cycles and require each target
-to be fully registered before sealing its dependent. Metadata about unfinished work
-does not become a visible query graph. We obtain paths from the checked
+IX02 follows a single chain; IX03 follows a main chain with terminal secondary
+native edges. We reject cycles and register each target before its dependent,
+possibly within one transaction. All required files must already be sealed.
+Metadata about unfinished work does not become a visible query graph. We obtain paths from the checked
 object-name allocator; a path field is not permission to open an arbitrary
 filesystem path.
 
