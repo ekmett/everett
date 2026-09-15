@@ -30,7 +30,7 @@ file or metadata journal.
 
 ### Debug dumps
 
-`reference_cola::debug_export` and `debug_import` provide a `.rc` debug dump:
+`reference_cola::export_rc` and `import_rc` provide a `.rc` debug dump:
 a fully resolved table with full keys in sorted order and codec-encoded values. Its eight-byte
 magic is `DIET.RC` followed by zero. Separate 64-bit little-endian fields carry
 the export version, value-codec tag and live-entry count. Each entry contains
@@ -41,8 +41,9 @@ all live entries. Catalog saves retain object roots; reference snapshots share
 their immutable state. These debug files are outside the fridge's `.kv` and
 `.index` object graph.
 
-I reserve `.fc` for a front-coded table dump. That encoding is a separate future
-format; `.rc` stores complete keys without front coding.
+I reserve `.fc` and `export_fc`/`import_fc` for a front-coded table dump. That
+encoding is a separate future format; `.rc` stores complete keys without front
+coding.
 
 ### Path spelling and content identity
 

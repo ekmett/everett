@@ -90,7 +90,7 @@ namespace diet {
     static std::uint64_t read(std::istream & in) { return cola_detail::read_u64(in); }
   };
 
-  // Allocation bounds for debug_import of a resolved-table dump.
+  // Allocation bounds for import_rc of a resolved-table dump.
   struct cola_import_limits {
     std::uint64_t max_records = 1'000'000;
     std::uint64_t max_key_bytes = 64 * 1024 * 1024;
@@ -193,7 +193,7 @@ namespace diet {
     // intended access pattern; catalog saves retain object roots separately.
     // Callers own atomic file replacement, durability and codec/hash agreement.
     template <class C = u64_cola_codec>
-    void debug_export(std::ostream & out, C codec = {}) const {
+    void export_rc(std::ostream & out, C codec = {}) const {
       constexpr std::string_view magic{"DIET.RC\0", 8};
       out.write(magic.data(), magic.size());
       cola_detail::write_u64(out, 1);
@@ -210,7 +210,7 @@ namespace diet {
     // Materializes a fresh reference table from a debug dump, rather than
     // reopening pinned object roots.
     template <class C = u64_cola_codec>
-    static reference_cola debug_import(std::istream & in, C codec = {}, H hash = {},
+    static reference_cola import_rc(std::istream & in, C codec = {}, H hash = {},
       cola_import_limits limits = {}) {
       std::array<char, 8> magic;
       in.read(magic.data(), magic.size());

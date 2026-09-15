@@ -101,11 +101,11 @@ namespace {
         "compacted entry owns the complete replaced contribution");
 
       std::ostringstream bytes(std::ios::binary);
-      result.debug_export(bytes);
+      result.export_rc(bytes);
       if (canonical_export.empty()) canonical_export = bytes.str();
       require(bytes.str() == canonical_export, "debug export ignores physical merge history");
       std::istringstream input(bytes.str(), std::ios::binary);
-      auto imported = cola::debug_import(input);
+      auto imported = cola::import_rc(input);
       require(imported.resolved() == result.resolved() && imported.signature() == result.signature(),
         "debug import preserves strings, fixed values and logical signature");
     } while (std::next_permutation(order.begin(), order.end()));
@@ -214,45 +214,45 @@ namespace {
     require(old_run.expired(), "old run reclaimed after its last save pin goes away");
   }
 
-  void debug_exports() {
+  void export_rcs() {
     using cola = reference_cola<>;
     auto base = cola::from_records({{"", 0}, {std::string("a\0b", 3), 255}, {"z", UINT64_MAX}});
     std::ostringstream output(std::ios::binary);
-    base.debug_export(output);
+    base.export_rc(output);
     auto bytes = output.str();
     require(bytes.size() >= 32 && std::string_view(bytes.data(), 8) == std::string_view{"DIET.RC\0", 8},
       "Diet debug dump signature differs from golden bytes");
     for (std::size_t size = 0; size < bytes.size(); ++size) {
       std::istringstream in(bytes.substr(0, size), std::ios::binary);
-      rejects([&] { cola::debug_import(in); }, "truncated debug export rejected at every byte boundary");
+      rejects([&] { cola::import_rc(in); }, "truncated debug export rejected at every byte boundary");
     }
     auto invalid = bytes;
     invalid[0] = 'X';
     std::istringstream bad_magic(invalid, std::ios::binary);
-    rejects([&] { cola::debug_import(bad_magic); }, "wrong file magic rejected");
+    rejects([&] { cola::import_rc(bad_magic); }, "wrong file magic rejected");
     invalid = bytes;
     invalid[0] ^= 0x01; invalid[1] ^= 0x1f; invalid[2] ^= 0x17;
     std::istringstream incompatible_magic(invalid, std::ios::binary);
-    rejects([&] { cola::debug_import(incompatible_magic); }, "incompatible debug export identifier rejected");
+    rejects([&] { cola::import_rc(incompatible_magic); }, "incompatible debug export identifier rejected");
     invalid = bytes;
     invalid[7] = 1;
     std::istringstream bad_terminator(invalid, std::ios::binary);
-    rejects([&] { cola::debug_import(bad_terminator); }, "signature terminating zero is required");
+    rejects([&] { cola::import_rc(bad_terminator); }, "signature terminating zero is required");
     for (auto offset : {8, 15}) {
       invalid = bytes;
       invalid[std::size_t(offset)] = 2;
       std::istringstream bad_version(invalid, std::ios::binary);
-      rejects([&] { cola::debug_import(bad_version); }, "unsupported debug export format version rejected");
+      rejects([&] { cola::import_rc(bad_version); }, "unsupported debug export format version rejected");
     }
     invalid = bytes;
     invalid[16] = 2;
     std::istringstream bad_codec(invalid, std::ios::binary);
-    rejects([&] { cola::debug_import(bad_codec); }, "wrong fixed-value codec rejected");
+    rejects([&] { cola::import_rc(bad_codec); }, "wrong fixed-value codec rejected");
     std::istringstream record_limit(bytes, std::ios::binary);
-    rejects([&] { cola::debug_import(record_limit, u64_cola_codec{}, u64_table_hash{}, {2, 100}); },
+    rejects([&] { cola::import_rc(record_limit, u64_cola_codec{}, u64_table_hash{}, {2, 100}); },
       "untrusted record allocation bounded");
     std::istringstream byte_limit(bytes, std::ios::binary);
-    rejects([&] { cola::debug_import(byte_limit, u64_cola_codec{}, u64_table_hash{}, {10, 2}); },
+    rejects([&] { cola::import_rc(byte_limit, u64_cola_codec{}, u64_table_hash{}, {10, 2}); },
       "untrusted key allocation bounded");
 
     // Exercise actual file streams in a unique temporary directory. This does
@@ -266,16 +266,16 @@ namespace {
     } guard{directory};
     {
       std::ofstream file(directory / "dump.rc", std::ios::binary);
-      base.debug_export(file);
+      base.export_rc(file);
     }
     std::ifstream file(directory / "dump.rc", std::ios::binary);
-    auto imported = cola::debug_import(file);
+    auto imported = cola::import_rc(file);
     require(imported.resolved() == base.resolved(), "debug dump round trip preserves embedded NUL and extreme values");
     require(imported.signature() == base.signature(), "debug import recomputes signature");
 
     auto empty = cola{};
     std::ostringstream empty_bytes;
-    empty.debug_export(empty_bytes);
+    empty.export_rc(empty_bytes);
     constexpr std::array<unsigned char, 32> empty_golden{
       'D', 'I', 'E', 'T', '.', 'R', 'C', 0, // eight-byte signature
       1, 0, 0, 0, 0, 0, 0, 0, // debug dump format version
@@ -286,7 +286,7 @@ namespace {
       std::equal(empty_golden.begin(), empty_golden.end(), encoded_empty.begin()),
       "empty debug export golden bytes changed");
     std::istringstream empty_input(encoded_empty);
-    auto empty_imported = cola::debug_import(empty_input);
+    auto empty_imported = cola::import_rc(empty_input);
     require(empty_imported.live_size() == 0 && empty_imported.signature() == 0 &&
       empty_imported.pins().empty(), "empty debug dump round trip");
   }
@@ -298,7 +298,7 @@ int main() {
     commuting_partitions<binary_field>();
     validation();
     pin_lifetime();
-    debug_exports();
+    export_rcs();
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';
     return 1;

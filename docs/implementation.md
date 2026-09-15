@@ -658,14 +658,14 @@ without duplicating ownership. No inherited SQLite connection is used.
   it before publication; tests reject tampered first delivery and replay.
 - Fingerprint policies use addition, subtraction and multiplication, without
   division. Wrapping 64-bit arithmetic and GF(2^8) are exercised policies.
-- `debug_export`/`debug_import` provide a **debug resolved-table dump**,
+- `export_rc`/`import_rc` provide a **debug resolved-table dump**,
   conventionally a `.rc` file. This is not an intended access pattern; normal persisted access
   uses catalog object roots. The dump has
   magic `DIET.RC` with a terminating zero (eight bytes), then little-endian
   64-bit fields for format version 1, the value codec tag and record count.
   The fixed header is 32 bytes. Each live entry then contributes its key byte
   length, full binary-safe key and codec value in sorted order, without front
-  coding. `debug_import` constructs a fresh reference table; callers own dump
+  coding. `import_rc` constructs a fresh reference table; callers own dump
   durability.
 
 `snapshot()` shares the reference model's existing state and run owners without
@@ -880,11 +880,11 @@ terminating zero; debug resolved-table dumps use the same eight-byte
 shape, `DIET.RC` plus a terminating zero, with a separate format version.
 Independent golden checks cover these bytes, the complete 32-byte empty
 reference header and the envelope CRC. Header validation and
-`debug_import` reject incompatible signatures even with otherwise valid
+`import_rc` reject incompatible signatures even with otherwise valid
 fields and checksums.
 
 The optional `DIET_BUILD_DOCS` configuration generates Doxygen HTML/XML and
-checks all file footers plus representative function/member ownership. A
+checks leading file metadata plus representative function/member ownership. A
 two-file fixture compares top, bottom and split file documentation across namespaces,
 same-name classes and overloaded functions. The license aliases render
 SPDX as a code block and remove the unconfigured unknown-command warnings.
