@@ -118,8 +118,8 @@ namespace everett {
             pending_false_ = incoming_false_;
             incoming_false_ = false;
             auto ordinal = borrowed_count_++;
-            if (ordinal % 8 == 0) false_borrows_.push_back(std::byte{0});
-            if (pending_false_) false_borrows_.back() |= std::byte(1u << (ordinal % 8));
+            if ((ordinal & 7) == 0) false_borrows_.push_back(std::byte{0});
+            if (pending_false_) false_borrows_.back() |= std::byte(1u << (ordinal & 7));
             ++classes_.back();
           } else {
             native_cursor_.advance();
@@ -220,7 +220,7 @@ namespace everett {
     }
     void push_key(bit_view key, std::uint64_t target_ordinal) {
       check_input_slot(target_ordinal);
-      if (key.size() % P::bits_per_unit)
+      if (key.size() & (P::bits_per_unit - 1))
         error_detail::raise<std::invalid_argument>("index sample key disagrees with policy units");
       auto order = pending_ ? compare_bits(pending_->view(), key) : -1;
       if (order > 0) error_detail::raise<std::invalid_argument>("index samples must be sorted");

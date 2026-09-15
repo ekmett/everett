@@ -180,7 +180,7 @@ namespace everett {
         }
         if (supplied != body_size) throw std::invalid_argument("Everett body extent mismatch");
         if constexpr (P::unit == profile_unit::bit)
-          if (header.extent % 8 && (std::to_integer<unsigned>(last) & ((1u << (8 - header.extent % 8)) - 1)))
+          if ((header.extent & 7) && (std::to_integer<unsigned>(last) & ((1u << (8 - (header.extent & 7))) - 1)))
             throw std::invalid_argument("noncanonical bit-profile tail padding");
 
         operation run{root, id, attempt, header.kind, ops};

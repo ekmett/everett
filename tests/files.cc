@@ -65,6 +65,24 @@ namespace {
     file_detail::put(bytes, 68, 4, crc32c(std::span<std::byte const>(bytes).first(96)));
   }
 
+  void rounded_file_extents() {
+    using P = storage_policy<profile_unit::bit>;
+    constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
+    file_header<P> header{file_kind::native_blob, maximum - 7, 0, std::nullopt};
+    auto encoded = encode_file_header(header, 0);
+    require(decode_file_header<P>(encoded) == header, "largest rounded file extent");
+    require(file_detail::total_bytes<P>(header.extent) == (maximum >> 3) + 96,
+            "largest rounded physical file size");
+    for (std::uint64_t tail = 0; tail != 7; ++tail) {
+      header.extent = maximum - tail;
+      rejects([&] { (void)encode_file_header(header, 0); });
+      auto malformed = std::vector<std::byte>(encoded.begin(), encoded.end());
+      file_detail::put(malformed, 48, 8, header.extent);
+      rehash_header(malformed);
+      rejects([&] { (void)decode_file_header<P>(malformed); });
+    }
+  }
+
   template <class P> void roundtrip(std::filesystem::path const & directory) {
     for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
       file_header<P> header{kind, 25, 3, std::nullopt};
@@ -549,6 +567,7 @@ namespace {
 
 int main() {
   try {
+    rounded_file_extents();
     header_only_encoding();
     temporary_directory directory;
     policy_matrix<3>(directory.path); policy_matrix<7>(directory.path);

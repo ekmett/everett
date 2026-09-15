@@ -39,8 +39,8 @@ namespace everett::key_detail {
       std::uint64_t x, y;
       std::memcpy(&x, a + at, 8); std::memcpy(&y, b + at, 8);
       if (auto different = x ^ y) {
-        if constexpr (std::endian::native == std::endian::little) return at + std::countr_zero(different) / 8;
-        else if constexpr (std::endian::native == std::endian::big) return at + std::countl_zero(different) / 8;
+        if constexpr (std::endian::native == std::endian::little) return at + (std::countr_zero(different) >> 3);
+        else if constexpr (std::endian::native == std::endian::big) return at + (std::countl_zero(different) >> 3);
         else break;
       }
     }
@@ -71,7 +71,7 @@ namespace everett::key_detail {
     } else if constexpr (std::endian::native == std::endian::big) std::memcpy(target, &value, 8);
     else {
       auto bytes = static_cast<unsigned char *>(target);
-      for (unsigned i = 0; i != 8; ++i) bytes[i] = static_cast<unsigned char>(value >> (56 - 8 * i));
+      for (unsigned i = 0; i != 8; ++i) bytes[i] = static_cast<unsigned char>(value >> (56 - (i << 3)));
     }
   }
 }

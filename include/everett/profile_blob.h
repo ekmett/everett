@@ -76,10 +76,11 @@ namespace everett {
         word_view cut_lcps, std::uint64_t virtual_count)
       : native_(native), borrowed_(borrowed), interleave_(interleave),
         false_borrows_(false_borrows), cut_lcps_(cut_lcps), virtual_count_(virtual_count) {
-      if (native.size() > std::numeric_limits<std::uint64_t>::max() - borrowed.size() ||
+      if (borrowed.size() > std::numeric_limits<std::uint64_t>::max() - 7 ||
+          native.size() > std::numeric_limits<std::uint64_t>::max() - borrowed.size() ||
           native.size() + borrowed.size() != virtual_count ||
           interleave.size() != virtual_count ||
-          false_borrows.size() != borrowed.size() / 8 + (borrowed.size() % 8 != 0) ||
+          false_borrows.size() != ((borrowed.size() + 7) >> 3) ||
           cut_lcps.size() != group_count())
         error_detail::raise<std::invalid_argument>("profile blob section shape mismatch");
     }
@@ -96,7 +97,7 @@ namespace everett {
 
     bool false_borrow(std::uint64_t ordinal) const {
       if (ordinal >= borrowed_.size()) error_detail::raise<std::out_of_range>("profile blob borrowed ordinal");
-      return (std::to_integer<unsigned>(false_borrows_[ordinal / 8]) >> (ordinal % 8)) & 1;
+      return (std::to_integer<unsigned>(false_borrows_[ordinal >> 3]) >> (ordinal & 7)) & 1;
     }
 
     profile_blob_window project(std::uint64_t group) const {
@@ -273,7 +274,8 @@ namespace everett {
     std::shared_ptr<profile_blob const> target_;
 
     static void check_count(std::uint64_t native, std::uint64_t borrowed) {
-      if (native > std::numeric_limits<std::uint64_t>::max() - borrowed) {
+      if (borrowed > std::numeric_limits<std::uint64_t>::max() - 7 ||
+          native > std::numeric_limits<std::uint64_t>::max() - borrowed) {
         error_detail::raise<std::length_error>("profile blob virtual count overflows");
       }
     }
@@ -283,7 +285,7 @@ namespace everett {
                             std::span<bit_string const> borrowed) {
       std::vector<profile_record> borrowed_records;
       borrowed_records.reserve(borrowed.size());
-      result.false_borrows_.resize(borrowed.size() / 8 + (borrowed.size() % 8 != 0));
+      result.false_borrows_.resize((borrowed.size() + 7) >> 3);
       std::size_t native_at = 0;
       for (std::size_t i = 0; i != borrowed.size(); ++i) {
         if (i && compare_bits(borrowed[i - 1].view(), borrowed[i].view()) > 0) {
@@ -295,7 +297,7 @@ namespace everett {
         }
         if (native_at != native.size() &&
             compare_bits(native[native_at].key.view(), borrowed[i].view()) == 0) {
-          result.false_borrows_[i / 8] |= static_cast<std::byte>(1u << (i % 8));
+          result.false_borrows_[i >> 3] |= static_cast<std::byte>(1u << (i & 7));
         }
         borrowed_records.push_back({borrowed[i], {}});
       }

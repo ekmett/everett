@@ -75,7 +75,8 @@ namespace everett {
     static constexpr std::uint64_t codec_block_size = CodecBlockSize;
     static constexpr unsigned class_bits = static_cast<unsigned>(std::bit_width(GroupSize));
     static constexpr profile_unit unit = Unit;
-    static constexpr unsigned bits_per_unit = Unit == profile_unit::byte ? 8 : 1;
+    static constexpr unsigned unit_shift = Unit == profile_unit::byte ? 3 : 0;
+    static constexpr unsigned bits_per_unit = 1u << unit_shift;
     static constexpr bool fixed_width = policy_detail::value_traits<Values>::fixed;
     static constexpr std::optional<std::uint64_t> value_width = policy_detail::value_traits<Values>::width;
   };

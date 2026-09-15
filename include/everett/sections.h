@@ -61,8 +61,8 @@ namespace everett {
       std::optional<blob_identity> target_id;
     };
 
-    inline std::uint64_t align(std::uint64_t value) {
-      return profile_detail::add(value, (8 - value % 8) % 8);
+    inline std::uint64_t align(std::uint64_t value) noexcept {
+      return (value + 7) & ~std::uint64_t{7};
     }
     inline void zero(std::span<std::byte const> bytes, char const * message) {
       for (auto byte : bytes) if (byte != std::byte{0}) throw std::invalid_argument(message);
@@ -101,8 +101,10 @@ namespace everett {
       result.count = index ? 9 : 5;
       result.bytes = index ? index_directory_bytes : native_directory_bytes;
       auto descriptors = index ? index_descriptor_offset : native_descriptor_offset;
+      if (body.size() > std::numeric_limits<std::uint64_t>::max() - 7)
+        throw std::invalid_argument("Everett section container extent overflows");
       if (body.size() < result.bytes) throw std::invalid_argument("truncated Everett section directory");
-      if (header.extent != profile_detail::multiply(body.size(), 8 / P::bits_per_unit))
+      if (header.extent != profile_detail::multiply(body.size(), 1u << (3 - P::unit_shift)))
         throw std::invalid_argument("Everett section container must occupy complete bytes");
       auto magic = index ? "IX01" : "KV01";
       for (unsigned i = 0; i != 4; ++i)
@@ -310,8 +312,8 @@ namespace everett {
     void words(std::span<std::uint64_t const> values) {
       if constexpr (std::endian::native == std::endian::little) sections_.push_back(std::as_bytes(values));
       else {
-        auto & bytes = converted_.emplace_back(values.size() * 8);
-        for (std::size_t i = 0; i != values.size(); ++i) file_detail::put(bytes, 8 * i, 8, values[i]);
+        auto & bytes = converted_.emplace_back(values.size() << 3);
+        for (std::size_t i = 0; i != values.size(); ++i) file_detail::put(bytes, (i << 3), 8, values[i]);
         sections_.push_back(bytes);
       }
     }
@@ -320,10 +322,10 @@ namespace everett {
                     offsetof(elias_fano_sample, sparse) == 8);
       if constexpr (std::endian::native == std::endian::little) sections_.push_back(std::as_bytes(values));
       else {
-        auto & bytes = converted_.emplace_back(values.size() * 16);
+        auto & bytes = converted_.emplace_back(values.size() << 4);
         for (std::size_t i = 0; i != values.size(); ++i) {
-          file_detail::put(bytes, 16 * i, 8, values[i].first);
-          file_detail::put(bytes, 16 * i + 8, 8, values[i].sparse);
+          file_detail::put(bytes, (i << 4), 8, values[i].first);
+          file_detail::put(bytes, (i << 4) + 8, 8, values[i].sparse);
         }
         sections_.push_back(bytes);
       }
@@ -351,12 +353,14 @@ namespace everett {
       file_detail::put(directory_, 6, 2, sections_.size());
       std::uint64_t end = directory_size_;
       for (std::size_t i = 0; i != sections_.size(); ++i) {
+        if (end > std::numeric_limits<std::uint64_t>::max() - 7)
+          throw std::overflow_error("Everett section alignment overflows");
         auto start = section_detail::align(end);
         end = profile_detail::add(start, sections_[i].size());
-        file_detail::put(directory_, descriptors + 16 * i, 8, start);
-        file_detail::put(directory_, descriptors + 16 * i + 8, 8, sections_[i].size());
+        file_detail::put(directory_, descriptors + (i << 4), 8, start);
+        file_detail::put(directory_, descriptors + (i << 4) + 8, 8, sections_[i].size());
       }
-      header_.extent = profile_detail::multiply(end, 8 / P::bits_per_unit);
+      header_.extent = profile_detail::multiply(end, 1u << (3 - P::unit_shift));
       file_detail::validate_metadata(header_);
     }
   };
@@ -450,8 +454,9 @@ namespace everett {
                                            layout.virtual_count);
       auto cuts = words(section_detail::cut_lcps);
       auto groups = layout.virtual_count / P::group_size + (layout.virtual_count % P::group_size != 0);
-      if (cuts.size() != groups || profile.section(section_detail::false_borrows).size() !=
-          profile.size() / 8 + (profile.size() % 8 != 0))
+      if (profile.size() > std::numeric_limits<std::uint64_t>::max() - 7 ||
+          cuts.size() != groups || profile.section(section_detail::false_borrows).size() !=
+          ((profile.size() + 7) >> 3))
         throw std::invalid_argument("Everett index navigation shape mismatch");
       return {std::move(profile), std::move(ranks), cuts};
     }
@@ -490,7 +495,7 @@ namespace everett {
       section_detail::equal_words(ranks_.class_words(), expected.classes, "Everett rank class words mismatch");
       section_detail::equal_words(ranks_.checkpoint_words(), expected.checkpoints, "Everett rank checkpoint mismatch");
       auto flags = false_borrow_bits();
-      if (auto tail = borrowed().size() % 8)
+      if (auto tail = (borrowed().size() & 7))
         if ((std::to_integer<unsigned>(flags.back()) >> tail) != 0)
           throw std::invalid_argument("nonzero Everett false-borrow padding");
     }

@@ -58,11 +58,11 @@ namespace everett {
     // the virtual cascade stride K and is part of the exact stored policy.
     inline std::uint64_t get(std::span<std::byte const> bytes, std::size_t at, unsigned width) noexcept {
       std::uint64_t value = 0;
-      for (unsigned i = 0; i < width; ++i) value |= std::uint64_t(std::to_integer<unsigned>(bytes[at + i])) << (8 * i);
+      for (unsigned i = 0; i < width; ++i) value |= std::uint64_t(std::to_integer<unsigned>(bytes[at + i])) << (i << 3);
       return value;
     }
     inline void put(std::span<std::byte> bytes, std::size_t at, unsigned width, std::uint64_t value) noexcept {
-      for (unsigned i = 0; i < width; ++i) bytes[at + i] = std::byte((value >> (8 * i)) & 255u);
+      for (unsigned i = 0; i < width; ++i) bytes[at + i] = std::byte((value >> (i << 3)) & 255u);
     }
     inline std::string_view magic(file_kind kind) {
       switch (kind) {
@@ -73,9 +73,12 @@ namespace everett {
     }
     template <class P> std::uint64_t body_bytes(std::uint64_t extent) noexcept {
       if constexpr (P::unit == profile_unit::byte) return extent;
-      else return extent / 8 + (extent % 8 != 0);
+      else return (extent + 7) >> 3;
     }
     template <class P> std::uint64_t total_bytes(std::uint64_t extent) {
+      if constexpr (P::unit == profile_unit::bit)
+        if (extent > std::numeric_limits<std::uint64_t>::max() - 7)
+          throw std::overflow_error("Everett file extent overflow");
       auto bytes = body_bytes<P>(extent);
       if (bytes > std::numeric_limits<std::uint64_t>::max() - header_bytes)
         throw std::overflow_error("Everett file extent overflow");
@@ -101,8 +104,8 @@ namespace everett {
       if (body_bytes<P>(header.extent) != body.size())
         throw std::invalid_argument("Everett body extent mismatch");
       if constexpr (P::unit == profile_unit::bit) {
-        if (header.extent % 8) {
-          unsigned unused = 8 - unsigned(header.extent % 8);
+        if (header.extent & 7) {
+          unsigned unused = 8 - unsigned(header.extent & 7);
           if (std::to_integer<unsigned>(body.back()) & ((1u << unused) - 1))
             throw std::invalid_argument("noncanonical bit-profile tail padding");
         }

@@ -1133,6 +1133,23 @@ namespace {
     rejects([&] { (void)profile_view<P>::from_sections({}, empty.view(), empty_profile.metadata()); });
   }
 
+  void rounded_bit_extents() {
+    constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
+    require(profile_detail::byte_count(maximum - 7) == (maximum >> 3),
+            "largest rounded bit extent");
+    for (std::uint64_t bits = 0; bits != 130; ++bits)
+      require(profile_detail::byte_count(bits) == bits / 8 + (bits % 8 != 0),
+              "rounded bit extent differs from quotient/remainder oracle");
+    auto saved = bit_string::from_bits("10101");
+    for (std::uint64_t tail = 0; tail != 7; ++tail) {
+      bit_string malformed{{}, maximum - tail};
+      rejects([&] { malformed.validate(); });
+      auto target = saved;
+      rejects([&] { profile_detail::resize(target, maximum - tail); });
+      require(target == saved, "unrepresentable rounded resize changed destination");
+    }
+  }
+
   template <std::uint64_t K> void policies() {
     roundtrip<storage_policy<profile_unit::byte, variable_values, K>>();
     roundtrip<storage_policy<profile_unit::byte, fixed_values<3>, K>>();
@@ -1147,6 +1164,7 @@ namespace {
 
 int main() {
   try {
+    rounded_bit_extents();
     byte_comparison_oracle();
     offset_metadata<storage_policy<profile_unit::byte, variable_values, 7, exponential_golomb<0>, 16>>();
     offset_metadata<storage_policy<profile_unit::bit, variable_values, 3, golomb<3>, 7>>();
