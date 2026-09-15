@@ -22,7 +22,7 @@
 #if defined(__APPLE__) || defined(__linux__)
 namespace {
   using namespace diet;
-  using policy = storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 4>;
+  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 4>;
   object_id id(unsigned n) {
     char text[33]; std::snprintf(text, sizeof text, "%032x", n); return object_id(text);
   }
@@ -130,7 +130,7 @@ namespace {
     assert(catalog.lookup_operation("save")->kind == "save");
     assert(!catalog.lookup_operation("missing"));
     rejects([&] { (void)sqlite_catalog<policy>::create(directory.root, id(2)); });
-    using wrong = storage_policy<profile_unit::byte, variable_values, 7>;
+    using wrong = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7>;
     rejects([&] { (void)sqlite_catalog<wrong>::open(directory.root); });
     // An attempted reservation whose input is missing rolls back everything.
     std::array outputs{catalog_object_reservation{id(900), file_kind::native_blob}};
@@ -194,7 +194,7 @@ int main() {
   normal(); failures();
   {
     temporary directory;
-    using bits = diet::storage_policy<diet::profile_unit::bit, diet::fixed_values<0>, 7, diet::golomb<3>, 16>;
+    using bits = diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<diet::fixed_values<0>>>>, 7, diet::golomb<3>, 16>;
     auto catalog = diet::sqlite_catalog<bits>::create(directory.root, id(1));
     (void)persist(catalog);
   }

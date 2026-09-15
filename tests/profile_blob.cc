@@ -349,10 +349,10 @@ namespace {
 int main() {
   try {
     [&]<std::size_t... K>(std::index_sequence<K...>) {
-      (profile_suite<storage_policy<profile_unit::byte, variable_values, K>>(), ...);
-      (profile_suite<storage_policy<profile_unit::byte, fixed_values<3>, K>>(), ...);
-      (profile_suite<storage_policy<profile_unit::bit, variable_values, K>>(), ...);
-      (profile_suite<storage_policy<profile_unit::bit, fixed_values<5>, K>>(), ...);
+      (profile_suite<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, K>>(), ...);
+      (profile_suite<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, K>>(), ...);
+      (profile_suite<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, K>>(), ...);
+      (profile_suite<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<5>>>>, K>>(), ...);
     }(std::index_sequence<3, 7, 15, 31>{});
     std::cout << "Typed byte/bit blob, cascade, false-borrow and index-reuse oracles passed\n";
   } catch (std::exception const & error) {

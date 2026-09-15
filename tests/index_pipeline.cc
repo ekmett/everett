@@ -165,18 +165,18 @@ namespace {
 
 int main() {
   try {
-    exercise<diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 3>>();
-    exercise<diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 7>>();
-    exercise<diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 15>>();
-    exercise<diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 31>>();
-    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 3>>();
-    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 7>>();
-    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 15>>();
-    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 31>>();
-    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 3, diet::golomb<3>>>();
-    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 7, diet::golomb<5>>>();
-    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 15, diet::exponential_golomb<2>>>();
-    exercise<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 31, diet::exponential_golomb<63>>>();
+    exercise<diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>>();
+    exercise<diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7>>();
+    exercise<diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15>>();
+    exercise<diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 31>>();
+    exercise<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3>>();
+    exercise<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7>>();
+    exercise<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15>>();
+    exercise<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31>>();
+    exercise<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, diet::golomb<3>>>();
+    exercise<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, diet::golomb<5>>>();
+    exercise<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, diet::exponential_golomb<2>>>();
+    exercise<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31, diet::exponential_golomb<63>>>();
     std::cout << "Streaming index pipeline checks passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';

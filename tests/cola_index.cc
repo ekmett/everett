@@ -617,17 +617,17 @@ namespace {
 
 int main() {
   try {
-    matrix<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::bit, variable_values, 3, golomb<3>, 16>>();
-    matrix<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<profile_unit::bit, fixed_values<13>, 7, exponential_golomb<2>, 15>>();
-    matrix<storage_policy<profile_unit::byte, fixed_values<7>, 15, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<profile_unit::bit, variable_values, 15, golomb<17>, 15>>();
-    matrix<storage_policy<profile_unit::byte, variable_values, 31, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::bit, fixed_values<0>, 31, exponential_golomb<1>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<3>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<13>>>>, 7, exponential_golomb<2>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<7>>>>, 15, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<17>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 31, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 31, exponential_golomb<1>, 16>>();
 #if defined(__unix__) || defined(__APPLE__)
-    no_old_prefix_reads<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 15>>();
-    no_old_prefix_reads<storage_policy<profile_unit::bit, fixed_values<13>, 3, exponential_golomb<2>, 16>>();
+    no_old_prefix_reads<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 15>>();
+    no_old_prefix_reads<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<13>>>>, 3, exponential_golomb<2>, 16>>();
 #endif
     std::cout << "COLA index tests passed\n";
   } catch (std::exception const & error) {

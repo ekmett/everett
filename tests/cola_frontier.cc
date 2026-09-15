@@ -231,14 +231,14 @@ namespace {
 }
 
 int main() try {
-  policy<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>>();
-  policy<storage_policy<profile_unit::bit, variable_values, 3, golomb<3>, 15>>();
-  policy<storage_policy<profile_unit::byte, variable_values, 7, exponential_golomb<0>, 15>>();
-  policy<storage_policy<profile_unit::bit, variable_values, 7, exponential_golomb<1>, 16>>();
-  policy<storage_policy<profile_unit::byte, variable_values, 15, exponential_golomb<0>, 16>>();
-  policy<storage_policy<profile_unit::bit, variable_values, 15, exponential_golomb<0>, 16>>();
-  policy<storage_policy<profile_unit::byte, variable_values, 31, exponential_golomb<0>, 15>>();
-  policy<storage_policy<profile_unit::bit, variable_values, 31, exponential_golomb<0>, 16>>();
+  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<3>, 15>>();
+  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7, exponential_golomb<0>, 15>>();
+  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, exponential_golomb<1>, 16>>();
+  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15, exponential_golomb<0>, 16>>();
+  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, exponential_golomb<0>, 16>>();
+  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 31, exponential_golomb<0>, 15>>();
+  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31, exponential_golomb<0>, 16>>();
   std::cout << "COLA sampled endpoint frontier tests passed\n";
 } catch (std::exception const & error) {
   std::cerr << error.what() << '\n';

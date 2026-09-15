@@ -150,8 +150,10 @@ zero is invalid, and the reader checks it against `P::codec_block_size`. Virtual
 sampling interval K is checked separately. Both counts describe records, not
 byte or bit lengths.
 
-The policy's fixed-value descriptor and a stream's actual common width are
-different metadata. A borrowed-key stream has no value payload, even when the
+The writer's registry-wide fixed-value descriptor and a stream's actual common
+width are different metadata. The stored descriptor is checked for canonical
+framing, but need not equal the reader's current registry hint. Adding a sort
+with a different width does not change any old record or its code. A borrowed-key stream has no value payload, even when the
 shared policy says native values have fixed width. For a native stream with
 common width `v`, sampled residual positions remove `ordinal * v`; add the same
 stride back when locating the record. A width constant only within each sort

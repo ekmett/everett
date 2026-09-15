@@ -394,7 +394,7 @@ namespace {
     }
   }
   template <class Compose> void composition_failure_test(Compose compose) {
-    using P = storage_policy<profile_unit::bit, fixed_values<8>, 3, exponential_golomb<0>, 16>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<8>>>>, 3, exponential_golomb<0>, 16>;
     storage<P> files;
     table input{{"011", "00110101"}};
     auto a = files.map(input), b = files.map(input);
@@ -414,13 +414,13 @@ namespace {
 int main() {
   try {
 #if defined(__APPLE__) || defined(__linux__)
-    run_policy<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>>();
-    run_policy<storage_policy<profile_unit::bit, variable_values, 7, golomb<3>, 15>>();
-    run_policy<storage_policy<profile_unit::byte, fixed_values<1>, 15, exponential_golomb<0>, 16>>();
-    run_policy<storage_policy<profile_unit::bit, fixed_values<8>, 31, exponential_golomb<2>, 15>>();
-    run_policy<storage_policy<profile_unit::bit, fixed_values<0>, 7, exponential_golomb<0>, 16>>();
-    malformed_input_test<storage_policy<profile_unit::byte, fixed_values<0>, 3, exponential_golomb<0>, 16>>();
-    malformed_input_test<storage_policy<profile_unit::bit, fixed_values<0>, 7, exponential_golomb<0>, 15>>();
+    run_policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+    run_policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, golomb<3>, 15>>();
+    run_policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<1>>>>, 15, exponential_golomb<0>, 16>>();
+    run_policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<8>>>>, 31, exponential_golomb<2>, 15>>();
+    run_policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>();
+    malformed_input_test<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>();
+    malformed_input_test<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>();
     composition_failure_test(throws{});
     composition_failure_test(wrong_width{});
 #endif

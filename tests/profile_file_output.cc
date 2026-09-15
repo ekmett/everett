@@ -239,7 +239,7 @@ namespace {
     oracle<P>(ops.bytes, pair, {}, native, target);
   }
   void rejected_metadata() {
-    using P = storage_policy<profile_unit::byte, fixed_values<7>, 3, exponential_golomb<0>, 16>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<7>>>>, 3, exponential_golomb<0>, 16>;
     auto input = keys<P>(5);
     auto pair = pair_for<P>(input, 4);
     auto native = id(2);
@@ -284,7 +284,7 @@ namespace {
     }
   }
   void final_section_failures() {
-    using P = storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>;
     auto input = keys<P>(101);
     auto pair = pair_for<P>(input, 73);
     auto native = id(2);
@@ -321,7 +321,7 @@ namespace {
     oracle<P>(short_ops.bytes, pair, input, native, target);
   }
   void large_controls() {
-    using P = storage_policy<profile_unit::bit, fixed_values<13>, 7, golomb<1>, 16>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<13>>>>, 7, golomb<1>, 16>;
     std::vector<bit_string> input{bit_string::from_bits(std::string(600001, '0')),
       bit_string::from_bits("1"), bit_string::from_bits("1"), bit_string::from_bits("10")};
     auto pair = pair_for<P>(input);
@@ -361,7 +361,7 @@ namespace {
     oracle<P>(ops.bytes, pair, input, native, target);
   }
   void real_file() {
-    using P = storage_policy<profile_unit::byte, fixed_values<11>, 15, exponential_golomb<0>, 16>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<11>>>>, 15, exponential_golomb<0>, 16>;
     auto pattern = (std::filesystem::temp_directory_path() / "diet-borrowed-file-XXXXXX").string();
     auto created = ::mkdtemp(pattern.data()); require(created, "borrowed file temporary directory");
     std::filesystem::path root(created);
@@ -391,18 +391,18 @@ namespace {
 }
 int main() {
   try {
-    matrix<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::byte, fixed_values<8>, 15, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<profile_unit::byte, fixed_values<3>, 31, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::bit, variable_values, 3, golomb<3>, 16>>();
-    matrix<storage_policy<profile_unit::bit, fixed_values<0>, 7, exponential_golomb<2>, 15>>();
-    matrix<storage_policy<profile_unit::bit, fixed_values<13>, 15, golomb<5>, 16>>();
-    matrix<storage_policy<profile_unit::bit, variable_values, 31, exponential_golomb<0>, 1>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<8>>>>, 15, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 31, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<3>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<2>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<13>>>>, 15, golomb<5>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31, exponential_golomb<0>, 1>>();
     rejected_metadata(); final_section_failures(); large_controls();
 #if defined(__APPLE__) || defined(__linux__)
-    guarded_literal<storage_policy<profile_unit::byte>>();
-    guarded_literal<storage_policy<profile_unit::bit, fixed_values<7>, 7, golomb<3>, 16>>();
+    guarded_literal<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>();
+    guarded_literal<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<7>>>>, 7, golomb<3>, 16>>();
     real_file();
 #endif
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }

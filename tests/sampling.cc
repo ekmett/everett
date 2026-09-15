@@ -401,10 +401,10 @@ namespace {
   }
 
   template <std::uint64_t K> void check_groups() {
-    check_policy<storage_policy<profile_unit::byte, variable_values, K>>();
-    check_policy<storage_policy<profile_unit::byte, fixed_values<3>, K>>();
-    check_policy<storage_policy<profile_unit::bit, variable_values, K>>();
-    check_policy<storage_policy<profile_unit::bit, fixed_values<3>, K>>();
+    check_policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, K>>();
+    check_policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, K>>();
+    check_policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, K>>();
+    check_policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, K>>();
   }
 }
 
@@ -414,10 +414,10 @@ int main() {
     check_groups<7>();
     check_groups<15>();
     check_groups<31>();
-    prefix_and_tie_cases<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>>();
-    prefix_and_tie_cases<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 15>>();
-    prefix_and_tie_cases<storage_policy<profile_unit::bit, variable_values, 15, golomb<3>, 7>>();
-    prefix_and_tie_cases<storage_policy<profile_unit::bit, fixed_values<3>, 31, exponential_golomb<3>, 16>>();
+    prefix_and_tie_cases<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+    prefix_and_tie_cases<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>();
+    prefix_and_tie_cases<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<3>, 7>>();
+    prefix_and_tie_cases<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 31, exponential_golomb<3>, 16>>();
     std::cout << "sampling tests passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';

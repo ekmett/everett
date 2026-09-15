@@ -70,7 +70,7 @@ namespace {
   }
 
   void rounded_file_extents() {
-    using P = storage_policy<profile_unit::bit>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
     constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
     file_header<P> header{file_kind::native_blob, maximum - 7, 0, std::nullopt};
     auto encoded = encode_file_header(header, 0);
@@ -187,7 +187,7 @@ namespace {
   }
 
   void header_only_encoding() {
-    using policy = storage_policy<profile_unit::byte, fixed_values<3>, 7, exponential_golomb<0>, 16>;
+    using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 7, exponential_golomb<0>, 16>;
     file_header<policy> header{file_kind::native_blob, 9, 2, 3};
     std::array<std::byte, 9> body{std::byte{0x00}, std::byte{0x11}, std::byte{0x22},
       std::byte{0x33}, std::byte{0x44}, std::byte{0x55}, std::byte{0x66}, std::byte{0x77}, std::byte{0x88}};
@@ -211,7 +211,7 @@ namespace {
     object.insert(object.end(), body.begin(), body.end());
     rejects([&] { validate_file<policy>(object); });
 
-    using variable = storage_policy<profile_unit::byte>;
+    using variable = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
     file_header<variable> large{file_kind::native_blob, std::uint64_t{1} << 40, 7, std::nullopt};
     auto small = encode_file_header(large, 0x91a713d0u);
     require(small.size() == 96 && decode_file_header<variable>(small) == large,
@@ -226,10 +226,10 @@ namespace {
   }
 
   template <std::uint64_t K> void policy_matrix(std::filesystem::path const & directory) {
-    roundtrip<storage_policy<profile_unit::byte, variable_values, K>>(directory);
-    roundtrip<storage_policy<profile_unit::bit, variable_values, K>>(directory);
-    roundtrip<storage_policy<profile_unit::byte, fixed_values<5>, K>>(directory);
-    roundtrip<storage_policy<profile_unit::bit, fixed_values<5>, K>>(directory);
+    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, K>>(directory);
+    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, K>>(directory);
+    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<5>>>>, K>>(directory);
+    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<5>>>>, K>>(directory);
   }
 
   template <class P> void test_trusted_validation(std::filesystem::path const & directory) {
@@ -291,8 +291,7 @@ namespace {
       }
       write(path, encoded);
       rejects([&] { file<P>::open(path, static_cast<file_open_mode>(2)); });
-      using wrong_policy = storage_policy<P::unit, typename P::value_layout, P::group_size == 15 ? 7 : 15,
-                                          typename P::backspace_encoding>;
+      using wrong_policy = storage_policy<typename P::registry_type, P::group_size == 15 ? 7 : 15, typename P::backspace_encoding>;
       auto wrong = file<wrong_policy>::open(path, file_open_mode::trusted);
       require(wrong.body().size() == payload.size(), "wrong-policy trusted open inspected metadata");
       rejects([&] { wrong.header(); });
@@ -310,7 +309,7 @@ namespace {
   }
 
   template <profile_unit Unit> void test_default_headers(std::array<std::uint32_t, 2> expected_crc) {
-    using policy = storage_policy<Unit>;
+    using policy = storage_policy<diet::tip<diet::encoded_sort<std::conditional_t<Unit == diet::profile_unit::byte, diet::byte_encoding<>, diet::bit_encoding<>>>>>;
     std::size_t i = 0;
     for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
       file_header<policy> header{kind, 0, 0, std::nullopt};
@@ -326,8 +325,8 @@ namespace {
   }
 
   template <profile_unit Unit, std::uint64_t W> void test_codec_width(std::filesystem::path const & directory) {
-    using policy = storage_policy<Unit, variable_values, 15, exponential_golomb<0>, W>;
-    using other = storage_policy<Unit, variable_values, 15, exponential_golomb<0>, W == 16 ? 15 : 16>;
+    using policy = storage_policy<diet::tip<diet::encoded_sort<std::conditional_t<Unit == diet::profile_unit::byte, diet::byte_encoding<>, diet::bit_encoding<>>>>, 15, exponential_golomb<0>, W>;
+    using other = storage_policy<diet::tip<diet::encoded_sort<std::conditional_t<Unit == diet::profile_unit::byte, diet::byte_encoding<>, diet::bit_encoding<>>>>, 15, exponential_golomb<0>, W == 16 ? 15 : 16>;
     roundtrip<policy>(directory);
     for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
       file_header<policy> header{kind, 0, 0, std::nullopt};
@@ -351,10 +350,10 @@ namespace {
   }
 
   template <class Code> void test_backspace_policy(std::filesystem::path const & directory) {
-    using policy = storage_policy<profile_unit::bit, variable_values, 15, Code>;
-    using defaults = storage_policy<profile_unit::bit>;
+    using policy = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, Code>;
+    using defaults = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
     roundtrip<policy>(directory);
-    roundtrip<storage_policy<profile_unit::bit, fixed_values<5>, 7, Code>>(directory);
+    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<5>>>>, 7, Code>>(directory);
     for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
       auto path = directory / ("backspace" + std::string(file_extension(kind)));
       file_header<policy> header{kind, 0, 0, std::nullopt};
@@ -403,18 +402,18 @@ namespace {
 
   void test_descriptors(std::filesystem::path const & directory) {
     auto path = directory / "descriptor.kv";
-    using byte_fixed = storage_policy<profile_unit::byte, fixed_values<5>, 15>;
-    using bit_fixed = storage_policy<profile_unit::bit, fixed_values<5>, 15>;
+    using byte_fixed = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<5>>>>, 15>;
+    using bit_fixed = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<5>>>>, 15>;
     auto encoded = encode_file(file_header<byte_fixed>{file_kind::native_blob, 25, 3, 5},
                                std::vector<std::byte>(25));
     rejects([&] { validate_file<bit_fixed>(encoded); });
     rejects_open<bit_fixed>(path, encoded);
-    rejects_open<storage_policy<profile_unit::byte, fixed_values<6>>>(path, encoded);
-    rejects_open<storage_policy<profile_unit::byte, variable_values>>(path, encoded);
-    rejects_open<storage_policy<profile_unit::byte, fixed_values<5>, 7>>(path, encoded);
-    rejects([&] { validate_file<storage_policy<profile_unit::byte, fixed_values<6>>>(encoded); });
-    rejects([&] { validate_file<storage_policy<profile_unit::byte, variable_values>>(encoded); });
-    rejects([&] { validate_file<storage_policy<profile_unit::byte, fixed_values<5>, 7>>(encoded); });
+    using wider = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<6>>>>>;
+    using variable = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
+    require(validate_file<wider>(encoded).common_value_width == 5, "file owns its fixed width");
+    require(validate_file<variable>(encoded).common_value_width == 5, "broader registry retains old width");
+    rejects_open<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<5>>>>, 7>>(path, encoded);
+    rejects([&] { validate_file<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<5>>>>, 7>>(encoded); });
     for (auto patch : std::array<std::pair<std::size_t, std::uint64_t>, 11>{
            {{8, 2}, {10, 80}, {12, 7}, {16, 2}, {17, 2}, {18, 1},
             {24, 31}, {32, 6}, {40, 4}, {72, 97}, {88, 1}}}) {
@@ -439,7 +438,7 @@ namespace {
     rejects([] { encode_file(file_header<byte_fixed>{file_kind::fractional_index, 0, 0, 5}, {}); });
     rejects([] { encode_file(file_header<byte_fixed>{static_cast<file_kind>(2), 0, 0, 0}, {}); });
 
-    using bits = storage_policy<profile_unit::bit>;
+    using bits = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
     auto bit_header = file_header<bits>{file_kind::native_blob, 3, 1, std::nullopt};
     auto padded = encode_file(bit_header, std::array<std::byte, 1>{std::byte{0xa0}});
     padded.back() |= std::byte{1};
@@ -460,7 +459,7 @@ namespace {
     require(empty.size() == 96 && validate_file<bits>(empty).extent == 0, "empty body file");
     write(path, empty);
     file<bits>::open(path).scan();
-    using zero_fixed = storage_policy<profile_unit::byte, fixed_values<0>>;
+    using zero_fixed = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>>;
     auto zero = encode_file(file_header<zero_fixed>{file_kind::native_blob, 0, 3, 0}, {});
     require(validate_file<zero_fixed>(zero).common_value_width == 0, "zero fixed width lost");
     write(path, zero);
@@ -514,7 +513,7 @@ namespace {
       rejects([&] { file<P>::from_slice(whole.slice(prefix, encoded.size() - 1)); });
       rejects([&] { file<P>::from_slice(whole.slice(prefix, encoded.size() + 1)); });
       if constexpr (P::backspace_code != bit_backspace_code::exponential_golomb || P::backspace_parameter != 0) {
-        using defaults = storage_policy<P::unit, typename P::value_layout, P::group_size>;
+        using defaults = storage_policy<typename P::registry_type, P::group_size>;
         rejects([&] { file<defaults>::from_slice(whole.slice(prefix, encoded.size())); });
       }
     }
@@ -612,18 +611,18 @@ int main() {
     test_backspace_policy<golomb<256>>(directory.path);
     test_backspace_policy<golomb<std::numeric_limits<std::uint64_t>::max()>>(directory.path);
     test_descriptors(directory.path);
-    test_trusted_validation<storage_policy<profile_unit::byte>>(directory.path);
-    test_trusted_validation<storage_policy<profile_unit::bit>>(directory.path);
-    test_trusted_validation<storage_policy<profile_unit::bit, variable_values, 15, golomb<3>>>(directory.path);
+    test_trusted_validation<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>(directory.path);
+    test_trusted_validation<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>>(directory.path);
+    test_trusted_validation<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<3>>>(directory.path);
 #if defined(__unix__) || defined(__APPLE__)
     for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
-      test_inaccessible_body<storage_policy<profile_unit::byte>>(directory.path, kind);
-      test_inaccessible_body<storage_policy<profile_unit::bit>>(directory.path, kind);
-      test_inaccessible_body<storage_policy<profile_unit::bit, variable_values, 15, exponential_golomb<3>>>(directory.path, kind);
-      test_inaccessible_body<storage_policy<profile_unit::bit, variable_values, 15, golomb<3>>>(directory.path, kind);
-      test_inaccessible_mapping<storage_policy<profile_unit::byte>>(directory.path, kind);
-      test_inaccessible_mapping<storage_policy<profile_unit::bit>>(directory.path, kind);
-      test_inaccessible_mapping<storage_policy<profile_unit::bit, variable_values, 15, golomb<3>>>(directory.path, kind);
+      test_inaccessible_body<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>(directory.path, kind);
+      test_inaccessible_body<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>>(directory.path, kind);
+      test_inaccessible_body<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, exponential_golomb<3>>>(directory.path, kind);
+      test_inaccessible_body<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<3>>>(directory.path, kind);
+      test_inaccessible_mapping<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>(directory.path, kind);
+      test_inaccessible_mapping<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>>(directory.path, kind);
+      test_inaccessible_mapping<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<3>>>(directory.path, kind);
     }
 #endif
     test_paths();

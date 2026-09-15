@@ -32,9 +32,9 @@
 
 namespace {
   using namespace diet;
-  using fixed = storage_policy<profile_unit::byte, fixed_values<8>>;
-  using variable = storage_policy<profile_unit::byte>;
-  using zero = storage_policy<profile_unit::byte, fixed_values<0>>;
+  using fixed = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<8>>>>>;
+  using variable = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
+  using zero = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>>;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -125,13 +125,13 @@ namespace {
     require(zero_bytes != absent_bytes && !validate_file<variable>(absent_bytes).common_value_width,
       "zero width and absent width were conflated");
 
-    using bit = storage_policy<profile_unit::bit>;
-    using other_k = storage_policy<profile_unit::byte, variable_values, 7>;
-    using other_w = storage_policy<profile_unit::byte, variable_values, 15, exponential_golomb<0>, 16>;
+    using bit = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
+    using other_k = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7>;
+    using other_w = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15, exponential_golomb<0>, 16>;
     rejects([&] { (void)decode_file_header<bit>(encoded); });
     rejects([&] { (void)decode_file_header<other_k>(encoded); });
     rejects([&] { (void)decode_file_header<other_w>(encoded); });
-    using golomb_bits = storage_policy<profile_unit::bit, fixed_values<8>, 15, golomb<3>>;
+    using golomb_bits = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<8>>>>, 15, golomb<3>>;
     auto bit_header = encode_file_header(file_header<golomb_bits>{}, 0);
     rejects([&] { (void)decode_file_header<bit>(bit_header); });
   }
@@ -218,8 +218,8 @@ namespace {
     auto varied = rows(true);
     auto other = persist<variable>(directory.root, varied, 20);
     check_queries<fixed>(directory.root, other, varied);
-    using bit_fixed = storage_policy<profile_unit::bit, fixed_values<64>>;
-    using bit_variable = storage_policy<profile_unit::bit>;
+    using bit_fixed = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<64>>>>>;
+    using bit_variable = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
     auto bit_head = persist<bit_fixed>(directory.root, original, 40);
     check_queries<bit_variable>(directory.root, bit_head, original);
     auto bit_other = persist<bit_variable>(directory.root, varied, 60);

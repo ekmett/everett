@@ -524,22 +524,22 @@ namespace {
 
 int main() {
   try {
-    matrix<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<profile_unit::bit, fixed_values<0>, 3, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<profile_unit::bit, variable_values, 7, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::byte, variable_values, 15, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<profile_unit::bit, fixed_values<0>, 15, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::byte, fixed_values<0>, 31, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::bit, variable_values, 31, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 15, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 31, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31, exponential_golomb<0>, 16>>();
 #if defined(__unix__) || defined(__APPLE__)
-    no_prefix_replay<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 15>>();
-    no_prefix_replay<storage_policy<profile_unit::bit, fixed_values<0>, 3, exponential_golomb<0>, 16>>();
-    no_terminal_predecessor_replay<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 16>>();
-    no_terminal_predecessor_replay<storage_policy<profile_unit::bit, variable_values, 31, exponential_golomb<0>, 15>>();
-    no_block_predecessor_replay<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 16>>();
-    no_block_predecessor_replay<storage_policy<profile_unit::bit, variable_values, 31, exponential_golomb<0>, 15>>();
+    no_prefix_replay<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 15>>();
+    no_prefix_replay<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>();
+    no_terminal_predecessor_replay<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>();
+    no_terminal_predecessor_replay<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31, exponential_golomb<0>, 15>>();
+    no_block_predecessor_replay<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>();
+    no_block_predecessor_replay<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31, exponential_golomb<0>, 15>>();
 #endif
     std::cout << "comparison FC tests passed\n";
   } catch (std::exception const & error) {

@@ -46,6 +46,12 @@ save pins an exact collection and the dependencies needed to query it. A save
 adds durable retention to that logical snapshot; it does not define a separate
 kind of application state.
 
+The sort owns its key and value packing. FC strings are one key codec; a
+fixed-width integer key can occupy its known bits without string controls.
+The registry dispatches to the record handler, while the store owns navigation,
+pins and scheduling. The current profile implementation supplies the FC-string
+case; connecting other record grammars is active-handle work.
+
 The outer dynamization mechanism needs a merge operation, a query operation,
 and laws relating them. Maps give us one useful instance. We can leave the
 exact monoid/homomorphism interface open until its consumers tell us which
@@ -129,9 +135,9 @@ The byte-key instance has a specified unsigned-byte lexicographic order,
 including empty keys and embedded zero bytes. Encoded records carry lengths;
 zero bytes need not be reserved as terminators. General sort-qualified keys must
 also satisfy the canonical ordering and framing contract in [keys.md](keys.md);
-the sort registry and pair encoder remain to be implemented. A fixed-width
-value encoding must retain a slot for tombstones so record stride remains
-predictable.
+the typed registry is implemented, while semantic pair encoders and active
+read/merge dispatch remain to be connected. A fixed-width value codec can use
+an explicit tombstone tag or reserve a sentinel niche in its representation.
 
 Native keys are unique within each blob. In the categorical extension, one
 entry holds a composite arrow for a consecutive portion of that key's history;
@@ -660,7 +666,7 @@ For characteristic-two fields subtraction is addition. Signed integer overflow
 is not an implementation of integer arithmetic.
 
 We must encode hash inputs consistently and record the algebra/hash scheme in
-the format or session definition. A key hash includes its sort identity. Each sort
+the format or session definition. Sort-code bits are not hashed. Each sort
 can select key and value hash policies, while the value potential may additionally
 depend on the full key's category. All contributions enter the same additive
 algebra, and the pinned schema fixes policy versions; see [keys.md](keys.md).

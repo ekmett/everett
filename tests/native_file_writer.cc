@@ -39,8 +39,8 @@ void operator delete[](void * p, std::size_t) noexcept { std::free(p); }
 
 namespace {
   using namespace diet;
-  using byte_policy = storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>;
-  using bit_policy = storage_policy<profile_unit::bit, variable_values, 7, golomb<1>, 3>;
+  using byte_policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>;
+  using bit_policy = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, golomb<1>, 3>;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }
@@ -226,7 +226,7 @@ namespace {
     }
   }
   void growing_key_capacity() {
-    using P = storage_policy<profile_unit::bit, fixed_values<0>, 3, exponential_golomb<0>, 1024>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 1024>;
     std::vector<profile_record> input;
     for (unsigned length = 1; length != 513; ++length)
       input.push_back({bit_string::from_bits(std::string(length, '1')), {}});
@@ -297,7 +297,7 @@ namespace {
     require(old_pin.expired() && new_pin.expired(), "file merge leaked pins");
   }
   template<class Compose> void failed_composition(Compose compose) {
-    using P = storage_policy<profile_unit::byte, fixed_values<1>, 3, exponential_golomb<0>, 7>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<1>>>>, 3, exponential_golomb<0>, 7>;
     auto rows = records<P>(1, 1);
     profile_native_writer<P> output;
     for (auto const & row : rows) output.append(row);
@@ -508,11 +508,11 @@ int main() {
     static_assert(!std::is_move_constructible_v<native_file_writer<byte_policy, model_ops>>);
     static_assert(!std::is_copy_constructible_v<native_file_merge<byte_policy, profile_array<byte_policy>, replace_native_value, model_ops>>);
     matrix<byte_policy>();
-    matrix<storage_policy<profile_unit::byte, fixed_values<3>, 31, exponential_golomb<0>, 7>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 31, exponential_golomb<0>, 7>>();
     matrix<bit_policy>();
-    matrix<storage_policy<profile_unit::bit, fixed_values<0>, 3, exponential_golomb<3>, 16>>();
-    matrix<storage_policy<profile_unit::bit, fixed_values<3>, 31, golomb<3>, 7>>();
-    matrix<storage_policy<profile_unit::bit, variable_values, 3, exponential_golomb<63>, 7>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, exponential_golomb<3>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 31, golomb<3>, 7>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, exponential_golomb<63>, 7>>();
     growing_key_capacity(); large_frames(); validation_and_failures();
     composition(replace_native_value{}); composition(concatenate{}); composition(keyed_concatenate{});
     failed_composition([](bit_view, bit_view) -> bit_view { throw std::runtime_error("composition fixture"); });
@@ -520,7 +520,7 @@ int main() {
 #if defined(__APPLE__) || defined(__linux__)
     malformed_mapped_inputs(); guarded_sources();
     real_files<byte_policy>();
-    real_files<storage_policy<profile_unit::bit, fixed_values<3>, 3, golomb<3>, 7>>();
+    real_files<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 3, golomb<3>, 7>>();
 #endif
     std::cout << "native file writer/merge: wire, bounded frames, mmap and faults passed\n";
   } catch (std::exception const & error) {

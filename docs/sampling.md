@@ -2,7 +2,7 @@
 
 Updated 2026-09-15. **K = 15** is the default. The typed byte and bit
 profiles support **3, 7, 15 and 31** through
-`storage_policy<Unit, Values, K, BackspaceCode, W>`. K counts virtual entries;
+`storage_policy<Registry, K, BackspaceCode, W>`. K counts virtual entries;
 W counts physical records between offset checkpoints and defaults to K. Neither
 changes whether keys, backspaces, values and offsets count bytes or bits. Exact
 query agreement and cut LCPs always count bits.

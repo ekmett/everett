@@ -187,7 +187,7 @@ $$
 The table specialization is
 $\phi_k(v)=h_K(k)h_{V,k}(v)$, with zero potential at absence. Value hashing
 can depend on the category/schema at that key, with the sort's hash policy
-providing the default. Key hashing includes sort identity, and all policies use
+providing the default. The sort supplies key hashing without hashing its dispatch code, and all policies use
 the common additive group. For a nonzero initial baseline,
 we subtract its local potential when defining $\phi_k$, or carry a separate
 finite initial fingerprint.

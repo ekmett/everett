@@ -107,7 +107,7 @@ This complete program finds both contributions to one key:
 
 int main() {
   using namespace diet;
-  using P = storage_policy<profile_unit::byte>;
+  using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
   using node = cola_index<P>;
   std::array older{profile_record{bit_string::from_bytes("path"),
                                  bit_string::from_bytes("before")}};

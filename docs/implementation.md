@@ -23,6 +23,7 @@ for integration. These are development responsibilities.
 | Immutable object sealing | `object_writer.h`; `tests/object_writer.cc` | streamed CRC, exclusive creation, no-clobber installation, OS barrier ordering, failure identities and retained outputs |
 | Checksums | `crc32c.h`, generated backends, pinned generator and package notices; `tests/crc32c.cc` | independent CRC oracle, bounded loads, reproducible generation, target guards and multi-translation-unit installed consumption |
 | Key primitives | `key_detail.h`, `profile.h`; `tests/profile.cc`; [key policies](keys.md) | bounded comparisons, bit movement, count framing and independent bit-level oracles |
+| Sort registry | `registry.h`, `policy.h`; `tests/registry.cc`, `tests/registry_compat.cc` | typed discriminator dispatch, width/unit inference, stable-code extension, file-local framing and catalog reopen under broader defaults |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `fridge.h`; profile/blob/fridge tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
 | Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
 | Native construction and merging | `native_writer.h`, `native_merge.h`; native writer/merge tests | streaming record acceptance, preserved FC/EF bytes, chronological composition, input pins and failure state |
@@ -223,11 +224,11 @@ profiles. Short byte-key queries have 3–7% slower medians in the same fixture.
 Both runs retain all trials and match encoded-output and result checksums;
 the integer catalog oracle and a separate combined ASan/UBSan run also pass.
 
-`storage_policy<Unit, Values, GroupSize, BackspaceCode, CodecBlockSize>` carries
-the unit, fixed/variable value layout, sampling stride, backspace code and
-independent physical block width through
-the codec types. `fixed_values<N>` counts
-policy units, including the valid width zero. `profile_array<P, Role>` uses
+`storage_policy<Registry, GroupSize, BackspaceCode, CodecBlockSize>` derives
+units and the common fixed-value-width hint from its occupied sorts. Each sort
+exposes an `encoding` with `unit` and optional `fixed_value_bits`.
+`byte_encoding<fixed_values<N>>` counts bytes; `bit_encoding<fixed_values<N>>`
+counts bits, including the valid width zero. `profile_array<P, Role>` uses
 canonical byte varints and policy-selected Golomb or exponential-Golomb bit
 backspaces. Other bit counts use order-zero exponential-Golomb. Streams retain
 meaningful bit extents and canonical padding. Each physical block's first record
@@ -289,8 +290,8 @@ also exercise profile count encoding, borrowed writers and index pipelines. Coun
 fixtures check known bit patterns, truncation, overflow, unaligned appends,
 metadata mismatch and unchanged default encodings. Invalid policy parameters
 are rejected at compile time. These test record/prefix behavior, not the full
-string-store I/O theorem. Sort-qualified framing, a prefix-free
-registry and per-sort hash/category dispatch remain extensions.
+string-store I/O theorem. Semantic pair framing and active per-sort hash/category dispatch remain
+extensions; the prefix-free registry and typed discriminator dispatch are implemented.
 
 ### Object envelopes, mappings and type family
 
@@ -777,8 +778,35 @@ runtimes remain to be attached to the selected SQLite catalog.
 
 [Sorts and key policies](keys.md) describes sort-qualified keys, key units,
 prefix-free coding and hash selection. The category may depend on the full key,
-even when a sort supplies default policies. The typed codecs and homogeneous
-replacement oracle do not yet implement a heterogeneous sort registry.
+even when a sort supplies default policies. `registry.h` implements `tip<S>`,
+`bin<L,R>`, `sort_list<S...>`, `unsorted<T>` and `sort_undefined`, with inferred
+physical units/width hints, duplicate-sort rejection, typed visitor dispatch
+and additive-extension checks. `storage_policy<>` defaults to
+`unsorted<std::optional<std::string>>`; `value_encoding<T>` supplies encoding
+requirements for tagless value types. It does not persist semantic schema
+identity or supply leaf hash/update laws. `registry.cc` exercises code consumption, holes,
+unaligned dispatch, return types and inference. `registry_compat.cc` checks old
+fixed-width files and catalogs against broader registry defaults.
+
+The registry, compatibility and benchmark-adapter workers were integrated from
+`fe40f75`, `ac1acd9`, `e467c33` and `bb713d9`. Combined verification passed all
+54 CTests, with strict O3 ASan/UBSan component builds, installed/embedded/SQLite
+package consumers and Doxygen checks. Eight invalid registry/policy compile
+probes rejected correctly. README and persistent-usage examples passed separate
+sanitized build, reopen and replay checks. Historical benchmark fixtures still
+compile against their pinned pre-registry headers; their measured data remains
+unchanged.
+
+File readers use the width encoded in each stream rather than demanding the
+current registry's global width hint. Physical unit, sampling, block size and
+count-code checks remain exact. The active handle that connects this registry
+to all reads, hash accounting and charged merge execution remains to be built.
+The existing profile grammar is the FC-string case. Per-sort record handlers
+must own key/value packing so fixed-width integer keys can be accessed directly
+without inherited FC controls; this codec dispatch is not implemented yet.
+The [schema-history extension](keys.md#schema-histories-and-migration) describes
+multiple historical registries and forward migration without claiming that
+runtime exists.
 
 ### SQLite catalog and network admission
 
@@ -899,7 +927,7 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 
 | Work item | Dependencies | Concrete acceptance |
 | --- | --- | --- |
-| Sort registry | typed byte/bit policies and canonical key contracts | prefix-free framing and order, cross-sort boundaries, domain-separated hashes and stable policy versions |
+| Sort operations | prefix-free registry, typed discriminator dispatch, extension checks and inferred physical policy | semantic pair codecs, active read/merge/hash dispatch, sort-owned hashing and stable schema identities |
 | Per-key arrow policy and second instance | categorical specification and replacement oracle | noncommuting diffs, heterogeneous keys, source validation, associative semantic composition, disjoint permutations, endpoint deltas, checkpoint observations and explicit work/dependency accounting |
 | Comparison block encoding | ordinary FC, exact cut LCP and scalar comparison transfers | transposed count/literal layouts, ordered SIMD transfer scans, bounded tails and independently measured time/space tradeoffs |
 | Object identity and integrity | portable sections, mmap queries and immutable writer | cryptographic content addressing, durable catalog publication and lazy block-integrity strategy |

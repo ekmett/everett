@@ -6,11 +6,11 @@ query and snapshot APIs. This guide follows those operations through file
 construction, updates and merges, then explains the representation and tuning
 choices. We keep the same policy from input records to mapped queries.
 
-Start with `storage_policy<profile_unit::byte>` for byte strings, or
-`storage_policy<profile_unit::bit>` for packed bits. Both default to variable
-values, sampling every fifteen entries and physical blocks of fifteen records.
-The bit profile uses `exponential_golomb<0>` backspaces; byte counts use varints.
-I recommend leaving those choices alone unless measurements suggest otherwise.
+Start with a sort exposing `using encoding = byte_encoding<>` for byte strings,
+or `bit_encoding<>` for packed bits, then use `storage_policy<tip<YourSort>>`.
+The registry derives the storage units from its sorts. Both encodings default
+to variable values, 15:1 sampling and physical blocks of 15 records; bit
+backspaces use order-zero exponential-Golomb.
 
 - [Persistent tables and saves](#persistent-tables-and-saves) walks through writing and reopening a table.
 - [Examples](#examples) covers policy variations, individual blobs, complete chains and partitioned updates.
@@ -43,7 +43,8 @@ for new work in an application.
 #include <array>
 #include <string_view>
 
-using P = diet::storage_policy<diet::profile_unit::byte>;
+using strings = diet::encoded_sort<diet::byte_encoding<>>;
+using P = diet::storage_policy<diet::tip<strings>>;
 using store_type = diet::fridge<P>;
 using catalog = diet::sqlite_catalog<P>;
 
@@ -124,11 +125,11 @@ and files that share a policy agree on the units used by their metadata.
 #include <diet/profile.h>
 
 int main() {
-  using bytes = diet::storage_policy<
-    diet::profile_unit::byte, diet::fixed_values<8>, 15,
+  using strings = diet::encoded_sort<diet::byte_encoding<diet::fixed_values<8>>>;
+  using packed = diet::encoded_sort<diet::bit_encoding<diet::fixed_values<3>>>;
+  using bytes = diet::storage_policy<diet::tip<strings>, 15,
     diet::exponential_golomb<0>, 16>;
-  using bits = diet::storage_policy<
-    diet::profile_unit::bit, diet::fixed_values<3>, 7, diet::golomb<3>>;
+  using bits = diet::storage_policy<diet::tip<packed>, 7, diet::golomb<3>>;
 
   static_assert(bytes::bits_per_unit == 8);
   static_assert(bytes::group_size == 15 && bytes::codec_block_size == 16);
@@ -142,7 +143,11 @@ int main() {
 }
 ```
 
-`variable_values` selects independently framed values. `bit_string` owns a
+`variable_values` selects independently framed values in a leaf encoding.
+For several sorts, use `bin<L,R>` or `sort_list<S...>` and reserve holes with
+`sort_undefined`; [sort registries](keys.md#extending-a-registry) explains
+dispatch and extension. Existing files retain their own value widths when a
+new sort broadens the registry. `bit_string` owns a
 packed string; `bit_view` borrows one and can describe a range beginning inside
 a byte. Keep the owner alive while using its view.
 
@@ -158,7 +163,7 @@ context for `search_window`.
 
 int main() {
   using namespace diet;
-  using policy = storage_policy<profile_unit::byte, variable_values, 15>;
+  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15>;
   auto text = [](char const * s) { return bit_string::from_bytes(s); };
 
   std::vector<profile_record> records{
@@ -195,7 +200,7 @@ separate occurrences after the native `delta`.
 
 int main() {
   using namespace diet;
-  using policy = storage_policy<profile_unit::byte, variable_values, 3>;
+  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
   using blob = profile_blob<policy>;
   auto text = [](char const * s) { return bit_string::from_bytes(s); };
   std::vector<profile_record> records{
@@ -242,7 +247,7 @@ target.
 
 int main() {
   using namespace diet;
-  using policy = storage_policy<profile_unit::byte, variable_values, 3>;
+  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
   using blob = profile_blob<policy>;
   using pair = std::shared_ptr<blob const>;
   auto make = [](std::initializer_list<std::pair<std::string_view, std::string_view>> rows) {
@@ -293,7 +298,7 @@ we do that once and reuse the root for subsequent queries.
 
 int main() {
   using namespace diet;
-  using policy = storage_policy<profile_unit::byte, variable_values, 3>;
+  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
   using blob = profile_blob<policy>;
   using pair = std::shared_ptr<blob const>;
   auto make = [](std::initializer_list<std::pair<std::string_view, std::string_view>> rows) {
@@ -401,7 +406,8 @@ default equal-key operation takes the newer value:
 #include <string_view>
 
 int main() {
-  using P = diet::storage_policy<diet::profile_unit::byte>;
+  using strings = diet::encoded_sort<diet::byte_encoding<>>;
+  using P = diet::storage_policy<diet::tip<strings>>;
   using array = diet::profile_array<P>;
   auto make = [](std::string_view text) {
     diet::profile_native_writer<P> writer;
@@ -534,7 +540,7 @@ the indexes. The names are short, and a cola belongs in a fridge.
 
 | Component | What it gives you |
 | --- | --- |
-| `storage_policy` | One choice of byte/bit units, value layout, group size and backspace code throughout a type family. |
+| `storage_policy` | A sort registry plus sampling, physical block size and backspace code; units and width hints come from its sorts. |
 | `elias_fano`, `rank_groups` | Monotone offsets and grouped origin counts, independent of the key representation. |
 | `profile_array`, `profile_view`, `profile_cursor` | Encoded records, borrowed views, and sequential decoding. |
 | `profile_native_writer`, `native_merge_builder` | Incremental native encoding and ordered per-key value composition. |
@@ -630,8 +636,9 @@ endpoints and the separate roles of physical and virtual boundaries.
 The byte profile counts lengths and offsets in bytes. The bit profile works
 with densely packed, most-significant-bit-first strings and counts in bits.
 Both use the same policy-bound interfaces. A fixed value width counts the chosen
-units: `fixed_values<3>` means three bytes under a byte policy and three bits
-under a bit policy. Borrowed records carry zero value bits while retaining the
+leaf encoding's units: `byte_encoding<fixed_values<3>>` means three bytes,
+and `bit_encoding<fixed_values<3>>` means three bits. A byte leaf nested in a
+bit registry still has a 24-bit value. Borrowed records carry zero value bits while retaining the
 same policy family.
 
 Bit backspaces can use `golomb<M>` or `exponential_golomb<Order>`; the default

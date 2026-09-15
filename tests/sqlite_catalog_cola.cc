@@ -223,7 +223,7 @@ namespace {
     rejects([&] { mapped_cola_blob<P>::bind(mapped.head()->identity(), mapped.head()->native_object(),
       mapped.head()->index_object(), mapped.head()->main_target(), {}, id(9999)); });
   }
-  using policy = storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>;
+  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>;
   void layout_mismatch() {
     temporary directory;
     auto db = sqlite_catalog<policy>::create_cola(directory.root, id(1));
@@ -304,7 +304,7 @@ int main() {
 #if defined(__APPLE__) || defined(__linux__)
   try {
     lifecycle<policy>();
-    lifecycle<diet::storage_policy<diet::profile_unit::bit, diet::fixed_values<0>, 7, diet::exponential_golomb<0>, 15>>();
+    lifecycle<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<diet::fixed_values<0>>>>, 7, diet::exponential_golomb<0>, 15>>();
     commit_faults(); old_versions(); layout_mismatch();
     std::cout << "SQLite COLA catalog checks passed\n";
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }

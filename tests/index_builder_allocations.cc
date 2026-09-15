@@ -89,8 +89,8 @@ namespace {
 }
 int main() try {
   for (bool coded : {false, true}) {
-    run<storage_policy<profile_unit::byte>>(coded);
-    run<storage_policy<profile_unit::bit>>(coded);
+    run<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>(coded);
+    run<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>>(coded);
   }
   std::cout << "Index decoder allocation rollback checks passed\n";
   return 0;

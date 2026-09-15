@@ -55,7 +55,7 @@ prefix. The mapped reader adopts that already prepared graph.
 #include <diet/sqlite_catalog.h>
 #include <array>
 
-using P = diet::storage_policy<diet::profile_unit::byte>;
+using P = diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
 using catalog = diet::sqlite_catalog<P>;
 
 void make_save(std::filesystem::path const & directory) {
@@ -204,7 +204,11 @@ Their timeline methods explicitly reject the unsupported capability.
 `schema_version()` exposes the distinction. Opening never migrates an old
 catalog. Unsupported versions are rejected.
 The catalog schema version is independent of the immutable file envelope and
-section-codec versions.
+section-codec versions. The catalog's creation-time policy descriptor keeps its
+original value-width annotation, but opening compares the physical units,
+sampling, block size and backspace code. Each file owns its actual value framing;
+a newly admitted sort with a different width does not invalidate older files.
+This physical check does not verify semantic schema compatibility.
 
 ## Registering COLA roots
 

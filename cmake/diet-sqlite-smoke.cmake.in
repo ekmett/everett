@@ -45,13 +45,13 @@ add_test(NAME consumer COMMAND consumer)
 ]=])
 file(WRITE "${root}/source/core.cc" [=[
 #include <diet/policy.h>
-int main() { return diet::storage_policy<diet::profile_unit::byte>::group_size != 15; }
+int main() { return diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>::group_size != 15; }
 ]=])
 file(WRITE "${root}/source/sqlite.cc" [=[
 #include <diet/sqlite_catalog.h>
 #include <cstring>
 int main() {
-  using P = diet::storage_policy<diet::profile_unit::byte>;
+  using P = diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
   return std::strlen(diet::sqlite_catalog<P>::runtime_version()) == 0;
 }
 ]=])

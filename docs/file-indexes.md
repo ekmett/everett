@@ -34,7 +34,7 @@ its catalog before opening the pipeline.
 #include <vector>
 
 using namespace diet;
-using P = storage_policy<profile_unit::byte, fixed_values<1>>;
+using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<1>>>>>;
 
 bit_string key(unsigned i) {
   char text[16];

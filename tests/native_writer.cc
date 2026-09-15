@@ -148,7 +148,7 @@ namespace {
   }
 
   void prefix_keys() {
-    using P = storage_policy<profile_unit::byte>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
     std::vector<profile_record> input;
     for (std::string key : {"", "a", "aa", "ab", "b"})
       input.push_back({bit_string::from_bytes(key), bit_string::from_bytes("value")});
@@ -160,12 +160,12 @@ namespace {
 
 int main() {
   try {
-    exercise<storage_policy<profile_unit::byte>>();
-    exercise<storage_policy<profile_unit::byte, fixed_values<3>, 7, exponential_golomb<0>, 16>>();
-    exercise<storage_policy<profile_unit::byte, fixed_values<0>, 31, exponential_golomb<0>, 1>>();
-    exercise<storage_policy<profile_unit::bit>>();
-    exercise<storage_policy<profile_unit::bit, fixed_values<3>, 3, golomb<3>, 7>>();
-    exercise<storage_policy<profile_unit::bit, fixed_values<0>, 7, exponential_golomb<3>, 16>>();
+    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>();
+    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 7, exponential_golomb<0>, 16>>();
+    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 31, exponential_golomb<0>, 1>>();
+    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>>();
+    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 3, golomb<3>, 7>>();
+    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<3>, 16>>();
     prefix_keys();
     std::cout << "native writer tests passed\n";
   } catch (std::exception const & error) {

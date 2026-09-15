@@ -233,10 +233,10 @@ namespace {
 
 int main() {
   try {
-    exercise<storage_policy<profile_unit::byte, fixed_values<0>, 3, exponential_golomb<0>, 16>>();
-    exercise<storage_policy<profile_unit::bit, fixed_values<0>, 3, exponential_golomb<0>, 16>>();
-    exercise<storage_policy<profile_unit::byte, fixed_values<0>, 15, exponential_golomb<0>, 16>>();
-    exercise<storage_policy<profile_unit::bit, fixed_values<0>, 15, exponential_golomb<0>, 16>>();
+    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>();
+    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>();
+    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 15, exponential_golomb<0>, 16>>();
+    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 15, exponential_golomb<0>, 16>>();
     std::cout << "COLA route reuse tests passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';

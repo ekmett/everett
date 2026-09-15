@@ -16,7 +16,7 @@ variable value widths and verify exact output against batch encoding.
 #include <diet/native_writer.h>
 #include <diet/query.h>
 
-using P = diet::storage_policy<diet::profile_unit::byte>;
+using P = diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
 
 diet::query_root<P> make_table() {
   diet::profile_native_writer<P> writer;

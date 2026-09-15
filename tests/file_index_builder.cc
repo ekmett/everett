@@ -365,7 +365,7 @@ namespace {
   }
 
   void lifetime() {
-    using P = storage_policy<profile_unit::byte, variable_values, 3>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
     storage<P> files;
     std::vector<profile_record> target_rows{{bit_string::from_bytes("a"), bit_string::from_bytes("old-a")},
                                           {bit_string::from_bytes("z"), bit_string::from_bytes("old-z")}};
@@ -433,7 +433,7 @@ namespace {
     }
   };
   void failures_and_partial_output() {
-    using P = storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>;
     storage<P> files;
     auto source = files.native(profile_array<P>::build({}));
     auto target = std::optional(blob_identity{files.fresh(), files.fresh()});
@@ -484,7 +484,7 @@ namespace {
     require(same_range(old, current_slice.bytes()), "existing index was replaced");
   }
 
-  using test_policy = storage_policy<profile_unit::bit, fixed_values<0>, 3>;
+  using test_policy = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3>;
   struct throwing_output {
     using policy_type = test_policy;
     bool fail_append = false, fail_finish = false;
@@ -529,7 +529,7 @@ namespace {
   }
 
   void empty_terminal() {
-    using P = storage_policy<profile_unit::bit, fixed_values<0>, 3, golomb<3>, 1>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 1>;
     storage<P> files;
     auto empty = build_layer<P>(files, {}, nullptr, true);
     auto root = mapped_query_root<P>::adopt_prepared(empty.mapped);
@@ -549,14 +549,14 @@ namespace {
 }
 
 int main() try {
-  matrix<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>>();
-  matrix<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 15>>();
-  matrix<storage_policy<profile_unit::byte, fixed_values<8>, 15, exponential_golomb<0>, 16>>();
-  matrix<storage_policy<profile_unit::byte, variable_values, 31, exponential_golomb<0>, 15>>();
-  matrix<storage_policy<profile_unit::bit, variable_values, 3, golomb<3>, 16>>();
-  matrix<storage_policy<profile_unit::bit, fixed_values<0>, 7, exponential_golomb<2>, 15>>();
-  matrix<storage_policy<profile_unit::bit, fixed_values<13>, 15, golomb<5>, 16>>();
-  matrix<storage_policy<profile_unit::bit, variable_values, 31, exponential_golomb<0>, 15>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<8>>>>, 15, exponential_golomb<0>, 16>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 31, exponential_golomb<0>, 15>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<3>, 16>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<2>, 15>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<13>>>>, 15, golomb<5>, 16>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31, exponential_golomb<0>, 15>>();
   lifetime();
   failures_and_partial_output();
   alternate_output_failures();

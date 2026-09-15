@@ -42,6 +42,7 @@ namespace diet {
   // interpretation version. No hash/category registry is implemented here.
   template <class P> struct sort {
     using policy_type = P;
+    using registry_type = typename P::registry_type;
 
     explicit sort(bit_string code) : code_(std::move(code)) {
       code_.validate();
@@ -62,6 +63,7 @@ namespace diet {
   // Files/slices retain their mappings independently of this path holder.
   template <class P> struct fridge {
     using policy_type = P;
+    using registry_type = typename P::registry_type;
     using sort = diet::sort<P>;
     using blob = diet::profile_blob<P>;
     using native_array = diet::profile_array<P>;

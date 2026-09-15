@@ -13,7 +13,9 @@ updates may depend on the complete pair $(s,x)$, not just on the sort.
 
 The contract below lets these choices coexist in one key space. Concrete typed
 codecs for byte-at-a-time and bit-at-a-time profiles are in `profile.h`.
-The sort registry remains to be built. Consult the
+`registry.h` supplies prefix-free sort registries and typed dispatch. Pair
+encoding and the active handle that applies each sort's read/merge laws remain
+to be connected to these physical codecs. Consult the
 [implementation ledger](implementation.md) for completed codec work, the
 [store design](design.md) for blobs, and [per-key arrows](arrows.md) for update
 semantics.
@@ -46,10 +48,12 @@ implicit byte alignment between the two components**: a three-bit sort code
 can be followed immediately by the first bit of a byte-oriented key code.
 A byte policy requires both components to be encoded in whole bytes.
 
-Lexicographic order on the encoded bits, with $0<1$, gives us a canonical
-comparison order. Prefix freedom makes every sort's range contiguous: different
-sort codes differ before either code ends, so every extension of one sorts
-entirely before or after every extension of the other.
+The prefix-free sort codes determine order between sorts. Within a sort, its
+key handler supplies the agreed logical order. Prefix freedom makes each sort's
+range contiguous: different sort codes differ before either code ends, so every
+key of one sort lies entirely before or after every key of the other. A canonical
+order-preserving key encoding gives a useful comparison model for FC, but its
+bits need not be the codec's physical compressed record bytes.
 
 Prefix freedom and order preservation are separate obligations. Prefix freedom
 makes boundaries unambiguous; it does not make a chosen encoding preserve a
@@ -58,25 +62,136 @@ lexicographic order, its key encoding must preserve that order. A length prefix
 placed before the contents can instead produce length-first order. Sort IDs
 likewise need not appear in numeric order unless their code assignment promises it.
 
+### Key types own their packing
+
+The sort owns the packing of both its key and its value. An FC string key is
+one key-codec choice, not a mandatory envelope around every kind of key.
+Its backspace, suffix-length count and suffix belong to that codec. A fixed
+32-bit integer key can instead occupy the next 32 bits: its handler already
+knows its extent and how to access and compare it. It needs no FC controls or
+string reconstruction. A value codec similarly chooses fixed payloads,
+length-prefixed payloads, explicit tombstones or sentinel niches.
+
+Reaching the prefix-code leaf hands control to the sort's entire key-and-value
+grammar. It determines how both are packed and where each ends. The key may
+be a fixed integer, a raw string, an FC string with exponential-Golomb
+counts, an FC string with Golomb counts, or another representation. The tree
+does not wrap all of these in a common string envelope. An FC key's count code
+belongs to that key codec and need not match another sort or the backspace code
+used for the sort tree.
+
+The registry selects the sort handler. That handler supplies reading, skipping,
+comparison, hashing and writing for its record grammar. The generic store owns
+ordinals, rank, sampled offsets, pins and merge scheduling. Fractional-index
+construction asks for a key-only representation; it does not copy values or
+force native integer records through FC-string framing. Exact codec operations
+and their resumable state remain active-handle implementation work.
+
+A logical key's canonical order is distinct from its compressed record bytes.
+The handler's comparisons and the index builder must agree on that order.
+For example, big-endian unsigned integers admit bytewise comparison, and signed
+integers can flip the sign bit first. A handler can also compare decoded
+integers directly. String keys need their chosen proper-prefix and embedded-zero
+semantics; tuple order determines which predicates form contiguous ranges.
+Floating-point keys need explicit equality and ordering for NaNs and signed
+zero. Text normalization or collation belongs to a text sort, not every binary
+string.
+
+The sort's `encoding::unit` covers both key and value requirements. Whole-byte
+values alone do not make a sort byte-oriented when its keys require bit
+addressing. Current raw profile readers still implement the FC-string grammar,
+including suffix lengths. Registry dispatch is in place, but those readers have
+not yet been replaced by per-sort record handlers.
+
 ## 2. Byte and bit profiles
 
-The storage policy belongs in the type:
+The registry is the first policy parameter. Its occupied sorts choose their
+encodings; the registry determines whether the shared streams need bit or byte
+addressing:
 
 ```cpp
-using bytes = diet::storage_policy<
-  diet::profile_unit::byte, diet::fixed_values<8>, 15,
+struct names { using encoding = diet::byte_encoding<diet::fixed_values<8>>; };
+struct flags { using encoding = diet::bit_encoding<diet::fixed_values<3>>; };
+using bytes = diet::storage_policy<diet::tip<names>, 15,
   diet::exponential_golomb<0>, 16>;
-using bits = diet::storage_policy<
-  diet::profile_unit::bit, diet::variable_values, 7, diet::golomb<3>>;
+using bits = diet::storage_policy<diet::bin<diet::tip<names>, diet::tip<flags>>>;
 ```
 
-`fixed_values<N>` measures `N` in the selected profile's units; zero is valid.
-The same policy type belongs to the fridge and its associated sorts,
-colas, timelines and blobs. A sort cannot silently select a conflicting unit
-or value-layout policy. A variable-value policy can discover that all values
-in one stream have equal width and exploit that encoding optimization; it does
-not thereby make a type-level fixed-width promise. The `borrowed` stream role
-retains the parent policy type while requiring zero value payload.
+`fixed_values<N>` counts the **leaf encoding's** units: eight bytes for `names`,
+three bits for `flags`. A byte-oriented leaf under a bit tree retains its byte
+payload lengths, but its payload may start at an unaligned bit address. The
+codec must support that position. `encoded_sort<Codec>` supplies the same
+`encoding` alias for an already-encoded payload; it does not invent a semantic
+key codec or prove the caller's keys prefix-free.
+
+I use the following registry forms:
+
+- `tip<S>` selects one sort, consuming no discriminator bits.
+- `bin<L,R>` consumes one bit, selecting `L` for zero and `R` for one. The
+  resulting registry requires bit addressing.
+- `sort_list<A,B,...>` consumes one byte: zero selects `A`, one selects `B`,
+  and so on. It admits at most 256 entries and requires byte-oriented leaves.
+- `unsorted<T>` is a single sort without a discriminator, with value type `T`.
+  Keys are still sorted and unique; only the sort tag is absent.
+  `storage_policy<>` defaults to `unsorted<std::optional<std::string>>`.
+  `value_encoding<T>::type` supplies its encoding requirements; strings and
+  optional strings use variable-width byte encoding. User types can expose
+  `T::encoding` or specialize the trait. This trait describes physical encoding
+  requirements; the semantic optional-value codec is part of the active-handle
+  work, not an implicit conversion performed by the raw profile builders.
+- `sort_undefined` reserves an unoccupied code or subtree and imposes no value
+  width. `sort_list<>` is also empty. A standalone hole defaults to byte
+  addressing; a hole inside a bit tree does not impose byte alignment.
+
+Each occupied sort type has exactly one code. Distinct sorts may use identical
+encodings. A custom encoding exposes `unit` and optional `fixed_value_bits`;
+its value width includes whatever representation its own codec actually writes.
+
+`dispatch_sort<Registry>(reader, visitor)` consumes the sort code from a reader
+with `read_bits(unsigned)`, then calls `visitor(std::type_identity<S>{}, reader)`
+at the key payload. The visitor is instantiated for every occupied sort, with
+one common return type. An undefined code or truncated discriminator fails
+before calling a sort handler. There is no implicit byte alignment and no
+rewind on failure.
+
+`P::registry_type` retains the registry, and `registry_traits<Registry>` exposes
+its units, occupied sort count and common value-width hint. The policy infers
+a fixed native value width only when every occupied leaf has the same fixed
+width. Holes do not participate. A stream can also discover a common width
+from its actual contents even when the registry supports other widths. Borrowed
+streams carry zero value payload under the same policy.
+
+### Extending a registry
+
+A reserved tree position can grow into a subtree. A byte list can fill a hole
+or append new sorts on its right. Existing codes keep both their positions and
+their meanings; adding siblings above an occupied `tip` would change its code
+and is not an extension. `registry_extends_v<Old, New>` checks the type-level
+code preservation. The application must also retain each existing codec's
+ordering, hash context and update laws.
+
+A new sort with a different value width does not invalidate old files: its code
+never occurs there. Each file retains its actual common value width and framing.
+The writer's registry-wide width hint is not a reader compatibility requirement.
+Physical units, sampling and count codes still have to match. Extending a
+registry is separate from changing those physical choices.
+
+### Values and deletion
+
+The sort's value codec owns tombstone representation. `tombstoned<T>` is one
+possible semantic wrapper; a type with a spare sentinel representation can
+supply its own tombstone without an additional tag. These are codec contracts,
+not an imposed registry layout. Width inference uses the representation actually
+written, including a tag only when the codec needs one.
+
+No occurrence means the identity update. An explicit tombstone is an occurrence
+that can cancel an older binding; the read/merge handler must distinguish them.
+A typed active handle needs the complete registry to select that handler,
+compute hash deltas and perform merges over all sorts. The dumb cola does not
+acquire those operations merely because one caller supplied `put<S>`.
+
+The following count-code parameters describe the implemented FC profile. Mixed
+sorts will select each leaf's own key/value grammar through the active handle.
 
 The **byte profile** encodes both keys and values byte at a time. Prefix
 and backspace counts are in bytes, and physical offsets are in bytes. Its framed
@@ -96,12 +211,12 @@ $p$, the backspace count is $\ell-p$. It refers to the physical predecessor's
 length, even when a fractional search supplies a different prefix-compatible
 anchor.
 
-The fifth policy parameter is the physical codec block width W and defaults to
-K, the third parameter. `P::codec_block_size` exposes W; its range is 1 through
+The fourth policy parameter is the physical codec block width W and defaults to
+K, the second parameter. `P::codec_block_size` exposes W; its range is 1 through
 the largest unsigned 32-bit value. This count is independent of the virtual
 sampling interval `P::group_size`.
 
-The fourth policy parameter defaults to `exponential_golomb<0>`.
+The third policy parameter defaults to `exponential_golomb<0>`.
 `golomb<M>` requires $M>0$; `exponential_golomb<Order>` accepts orders 0 through
 63. Byte policies retain the default parameter and encode counts with varints.
 All associated types retain the same choice as the fridge.
@@ -138,6 +253,30 @@ A reader rejects mismatched units or unsupported profiles before interpreting
 counts or applying offset arithmetic. Byte and bit readers are separate concrete
 contracts even if they share navigation algorithms. Publication, index rebuilding,
 and checkpoints retain the profile metadata with the encoded stream.
+
+### Files with several key codecs
+
+With prefix-free sort codes, each sort occupies a contiguous range of the
+logical order. A mixed file therefore contains codec runs. An FC string run
+owns its predecessor state; crossing into a fixed-width integer run switches
+handlers rather than interpreting integer bits as FC controls. Starting a new
+FC run requires recoverable initial context.
+
+Rank and sampled physical offsets can still describe the whole stream. Entry
+at a sampled window must recover both the owning sort and its codec's context;
+advancing through a sort boundary must initialize the next handler. Integer
+entries may need only a position, whereas FC entries use the prefix/comparison
+context appropriate to their exact stream. These are requirements for the mixed
+record format, not a decision to repeat a sort descriptor at every record.
+In the bit-tree case, the existing backspace can remove part of the sort-code
+prefix. Resume tree traversal from the retained prefix and consume new code
+bits until a leaf determines the key-and-value handler. The tree identifies the end of
+the sort code without a separate code-length field: there is no exponential-
+Golomb “descend this many bits” count. The backspace retains its count; descent
+ends at the prefix-free code's leaf. A backspace staying within
+a local key retains its current sort. This shares prefix compression with the
+sort path instead of repeating that path literally on every record. Mixed-codec
+sample entry and the byte-list framing still need their concrete contracts.
 
 ## 3. A framing illustration, not a wire format
 
@@ -266,15 +405,16 @@ where needed. $K$ candidates do not bound the lengths of their keys.
 
 ## 7. Hash policies share a composite algebra
 
-Each sort selects its key and value hashing strategies. A strategy can receive
-the complete logical key when the chosen category or value interpretation
-requires it. Different sorts may use different algorithms without changing the
-outer additive state fingerprint.
+Each sort supplies its key and value hashing strategies. The key hash receives
+the sort's logical key, not the prefix code used to dispatch to that sort.
+Different sorts may use different algorithms or seeds without changing the
+outer additive state fingerprint. Sort-code bits are never added to the hash
+by the store.
 
 For the table specialization, we choose a common ring $R$ and write
 
 $$
-\phi_{s,x}(v)=h_K(s,x)\,h_{V,s,x}(v),\qquad
+\phi_{s,x}(v)=h_{K,s}(x)\,h_{V,s,x}(v),\qquad
 \phi_{s,x}(\mathrm{absent})=0.
 $$
 
@@ -300,12 +440,11 @@ not automatically make their precomputed deltas compatible with one scalar sum.
 A hash function itself need not be a homomorphism; the requirement concerns
 transport of already-computed additive contributions.
 
-Domain separation must distinguish the sort. One strategy hashes the complete
-canonical pair encoding. Another supplies an explicit sort/schema domain to a
-sort-specific hash over `x`. Either way, deliberately omitting sort information
-would make identical components in different sorts structurally collide. Hash
-any meaningful bit lengths or framing through the declared canonical codec;
-allocation padding must not silently affect the result.
+The sort owns any hash domains or seeds it needs. Rebalancing a sort tree changes
+its dispatch codes, not its hash functions, so it leaves the composite
+fingerprint unchanged. Hash meaningful contents and lengths according to the
+sort's declared interpretation; allocation padding must not silently affect
+the result.
 
 The initial implementation uses wrapping unsigned 64-bit arithmetic. There is
 a trap worth avoiding when choosing a default hash in characteristic two:
@@ -333,8 +472,9 @@ contribution recomputation. Compatibility may be established explicitly; merely 
 
 `profile_array<P, Role>` and `profile_view<P, Role>` implement typed byte
 and bit streams with fixed/variable values and actual backspace counts. The
-blob uses ordinary FC in both roles. A sort registry and final prefix-free pair
-encoder remain to be supplied.
+blob uses ordinary FC in both roles. The registry and discriminator dispatcher
+are implemented; semantic pair encoding and active-handle integration remain
+to be supplied.
 
 Each physical block contains up to W records. Its first record stores an
 absolute **retained-prefix length**; subsequent records store a relative
@@ -423,5 +563,46 @@ Codec acceptance must cover:
 - Physical byte/bit position conversion and fixed-stride accounting at partial tails.
 
 The implementation ledger records which profiles and integration paths have
-passed these requirements. The byte and bit profile tests do not establish a
-working mixed-sort registry.
+passed these requirements. Registry tests cover typed dispatch, extension and
+inference; the profile tests do not establish end-to-end typed mixed-sort reads
+and writes.
+
+
+## Schema histories and migration
+
+As a future extension, I can give an active handle a list of schema handlers
+and forward migrations between them. A file identifies the schema that wrote
+its sort codes. The handle dispatches through that registry, then migrates its
+records toward a common current schema while merging. This lets a fully occupied
+registry evolve even when it left no reserved code space. Schema identity is
+separate from the physical file-format version and the SQLite catalog schema.
+These file-level schema identities and migration execution are not implemented.
+
+The cost depends on what the migration changes:
+
+- A value-only conversion with unchanged key order can run as a streaming merge
+  transform. It still pays to decode, transform and write the affected values.
+- Tree migration preserves the left-to-right order of occupied sorts and the
+  key order within each sort. It may rebalance the prefix-code tree: shorter
+  or longer codes change the bytes, but preserve the order of complete keys.
+  Decoding the old sort and writing its new code therefore stays streaming.
+  Front coding and fractional indexes are rebuilt over those new encodings.
+- Sorts keep stable logical identities across these trees. This migration does
+  not coalesce distinct logical keys. A value/arrow conversion must preserve
+  the relevant identities and composition, or first materialize the old state.
+
+Reads must cover old schemas before merging reaches them. The query identifies
+its logical sort and key, then uses each file's tree to encode that sort's
+historical prefix. A sort introduced later is simply absent from an older
+schema. Value conversion can run on demand. This translation requires the
+stable sort correspondence, not an inverse for an arbitrary migration function.
+General order-changing key migrations are outside this extension's contract.
+
+Old snapshots keep their original schema and exact files. Resumed merges retain
+the chosen source/destination schema identities and migration version. Hash
+comparison needs one agreed semantic interpretation. The sort supplies the
+key and value hashes; sort-code bits are not hashed. Tree rebalancing therefore
+preserves the fingerprint automatically. A migration that changes hashing or
+interpreted contents must account for the resulting fingerprint change while
+retaining the old snapshot's value. Admission work pays for migration and
+re-encoding instead of hiding them inside a nominal constant-cost record step.

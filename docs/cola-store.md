@@ -28,7 +28,7 @@ allocator and retains its operation identities for retry.
 #include <vector>
 
 using namespace diet;
-using P = storage_policy<profile_unit::byte>;
+using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
 using catalog = sqlite_catalog<P>;
 using pair_type = mapped_cola_blob<P>::pair_type;
 

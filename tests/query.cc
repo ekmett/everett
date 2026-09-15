@@ -584,25 +584,25 @@ namespace {
     borrowed_view_shapes<P>();
   }
   template <std::uint64_t K> void groups() {
-    exercise<storage_policy<profile_unit::byte, variable_values, K>>();
-    exercise<storage_policy<profile_unit::bit, variable_values, K>>();
+    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, K>>();
+    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, K>>();
   }
 }
 
 int main() try {
   groups<3>(); groups<7>(); groups<15>(); groups<31>();
-  exercise<storage_policy<profile_unit::byte, fixed_values<0>, 15>>();
-  exercise<storage_policy<profile_unit::byte, fixed_values<3>, 7>>();
-  exercise<storage_policy<profile_unit::bit, fixed_values<0>, 3>>();
-  exercise<storage_policy<profile_unit::bit, fixed_values<5>, 31>>();
-  exercise<storage_policy<profile_unit::bit, variable_values, 7, golomb<3>>>();
-  exercise<storage_policy<profile_unit::bit, fixed_values<3>, 15, exponential_golomb<3>>>();
-  exercise<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>>();
-  exercise<storage_policy<profile_unit::bit, variable_values, 7, exponential_golomb<0>, 1>>();
-  exercise<storage_policy<profile_unit::byte, fixed_values<3>, 15, exponential_golomb<0>, 16>>();
-  exercise<storage_policy<profile_unit::bit, fixed_values<5>, 31, golomb<3>, 16>>();
-  exercise<storage_policy<profile_unit::byte, variable_values, 7, exponential_golomb<0>, 64>>();
-  exercise<storage_policy<profile_unit::bit, variable_values, 3, exponential_golomb<3>, 64>>();
+  exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 15>>();
+  exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 7>>();
+  exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3>>();
+  exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<5>>>>, 31>>();
+  exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, golomb<3>>>();
+  exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 15, exponential_golomb<3>>>();
+  exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+  exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, exponential_golomb<0>, 1>>();
+  exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 15, exponential_golomb<0>, 16>>();
+  exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<5>>>>, 31, golomb<3>, 16>>();
+  exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7, exponential_golomb<0>, 64>>();
+  exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, exponential_golomb<3>, 64>>();
   std::cout << "Prepared query roots, ordered exact-chain matches, ownership and budgets passed\n";
 } catch (std::exception const & error) {
   std::cerr << error.what() << '\n';

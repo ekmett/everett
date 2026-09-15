@@ -214,8 +214,8 @@ namespace {
 }
 
 int main() try {
-  policy<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>>();
-  policy<storage_policy<profile_unit::bit, variable_values, 3, golomb<3>, 15>>();
+  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<3>, 15>>();
   std::cout << "COLA local finalization and growth allocation failures passed\n";
 } catch (std::exception const & error) {
   watch = false;

@@ -471,8 +471,8 @@ namespace {
 
 int main() {
   try {
-    using byte_policy = storage_policy<profile_unit::byte, variable_values, 15, exponential_golomb<0>, 4>;
-    using bit_policy = storage_policy<profile_unit::bit, variable_values, 15, golomb<3>, 4>;
+    using byte_policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15, exponential_golomb<0>, 4>;
+    using bit_policy = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<3>, 4>;
     auto cases = exercise<byte_policy>() + exercise<bit_policy>();
     std::cout << "SQLite streamed merge: " << cases << " bounded SIGKILL cuts; SQLite "
       << sqlite_catalog<byte_policy>::runtime_version() << '\n';

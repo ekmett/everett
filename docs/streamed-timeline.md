@@ -25,7 +25,7 @@ catalog; an application supplies its own fresh identity allocator.
 #include <utility>
 
 using namespace diet;
-using P = storage_policy<profile_unit::byte>;
+using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
 using catalog = sqlite_catalog<P>;
 
 std::optional<bit_string> lookup(mapped_query_root<P> const & root,

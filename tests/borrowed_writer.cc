@@ -151,8 +151,8 @@ namespace {
 
 int main() {
   try {
-    using bytes = storage_policy<profile_unit::byte>;
-    using bits = storage_policy<profile_unit::bit>;
+    using bytes = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
+    using bits = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
     prefix_reuse<bytes>(); prefix_reuse<bits>();
     allocation_rollback<bytes>(); allocation_rollback<bits>();
     std::cout << "Borrowed predecessor reuse, exact encoding and allocation rollback passed\n";

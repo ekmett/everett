@@ -191,10 +191,10 @@ namespace {
 int main() {
 #if defined(__APPLE__) || defined(__linux__)
   try {
-    run<diet::storage_policy<diet::profile_unit::byte, diet::variable_values, 3, diet::exponential_golomb<0>, 16>>();
-    run<diet::storage_policy<diet::profile_unit::bit, diet::variable_values, 7, diet::exponential_golomb<0>, 15>>();
-    run<diet::storage_policy<diet::profile_unit::byte, diet::fixed_values<0>, 15, diet::exponential_golomb<0>, 16>>();
-    run<diet::storage_policy<diet::profile_unit::bit, diet::fixed_values<0>, 31, diet::exponential_golomb<0>, 15>>();
+    run<diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, diet::exponential_golomb<0>, 16>>();
+    run<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, diet::exponential_golomb<0>, 15>>();
+    run<diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<diet::fixed_values<0>>>>, 15, diet::exponential_golomb<0>, 16>>();
+    run<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<diet::fixed_values<0>>>>, 31, diet::exponential_golomb<0>, 15>>();
     std::cout << "Mapped COLA construction checks passed\n";
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 #endif

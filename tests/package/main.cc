@@ -41,7 +41,7 @@
 #include <span>
 #include <type_traits>
 
-using policy = diet::storage_policy<diet::profile_unit::bit, diet::fixed_values<3>, 7>;
+using policy = diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<diet::fixed_values<3>>>>, 7>;
 using store = diet::fridge<policy>;
 static_assert(std::is_same_v<store::sort, diet::sort<policy>>);
 static_assert(std::is_same_v<store::blob::policy_type, policy>);

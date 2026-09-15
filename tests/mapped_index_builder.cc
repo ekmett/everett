@@ -366,7 +366,7 @@ namespace {
   }
 
   void lifetime() {
-    using P = storage_policy<profile_unit::byte, variable_values, 3>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
     storage<P> files;
     std::vector<profile_record> target_rows{{bit_string::from_bytes("a"), bit_string::from_bytes("old-a")},
                                           {bit_string::from_bytes("z"), bit_string::from_bytes("old-z")}};
@@ -418,7 +418,7 @@ namespace {
 
   void untouched_native_values() {
 #if defined(__unix__) || defined(__APPLE__)
-    using P = storage_policy<profile_unit::byte, variable_values, 7, exponential_golomb<0>, 16>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7, exponential_golomb<0>, 16>;
     auto page_query = ::sysconf(_SC_PAGESIZE);
     require(page_query > 0, "page size");
     auto page = static_cast<std::size_t>(page_query);
@@ -461,7 +461,7 @@ namespace {
   }
 
   void empty_terminal() {
-    using P = storage_policy<profile_unit::bit, fixed_values<0>, 3, golomb<3>, 1>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 1>;
     storage<P> files;
     auto empty = build_layer<P>(files, {}, nullptr, true);
     auto root = mapped_query_root<P>::adopt_prepared(empty.mapped);
@@ -481,14 +481,14 @@ namespace {
 }
 
 int main() try {
-  matrix<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>>();
-  matrix<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 15>>();
-  matrix<storage_policy<profile_unit::byte, fixed_values<8>, 15, exponential_golomb<0>, 16>>();
-  matrix<storage_policy<profile_unit::byte, variable_values, 31, exponential_golomb<0>, 15>>();
-  matrix<storage_policy<profile_unit::bit, variable_values, 3, golomb<3>, 16>>();
-  matrix<storage_policy<profile_unit::bit, fixed_values<0>, 7, exponential_golomb<2>, 15>>();
-  matrix<storage_policy<profile_unit::bit, fixed_values<13>, 15, golomb<5>, 16>>();
-  matrix<storage_policy<profile_unit::bit, variable_values, 31, exponential_golomb<0>, 15>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<8>>>>, 15, exponential_golomb<0>, 16>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 31, exponential_golomb<0>, 15>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<3>, 16>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<2>, 15>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<13>>>>, 15, golomb<5>, 16>>();
+  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31, exponential_golomb<0>, 15>>();
   lifetime();
   untouched_native_values();
   empty_terminal();

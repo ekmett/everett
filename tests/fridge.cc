@@ -30,8 +30,8 @@
 
 namespace {
   using namespace diet;
-  using bytes = storage_policy<profile_unit::byte, variable_values, 15>;
-  using bits = storage_policy<profile_unit::bit, fixed_values<3>, 7>;
+  using bytes = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15>;
+  using bits = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 7>;
 
   static_assert(std::same_as<fridge<bytes>::policy_type, bytes>);
   static_assert(std::same_as<fridge<bytes>::sort, sort<bytes>>);
@@ -159,12 +159,14 @@ namespace {
     rejects([&] { store.open_object(bit_id, file_kind::native_blob); });
     rejects([&] { bit_store.open_object(id, file_kind::native_blob); });
 
-    using wrong_group = storage_policy<profile_unit::byte, variable_values, 7>;
+    using wrong_group = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7>;
     fridge<wrong_group> grouped(temporary.path);
     rejects([&] { grouped.open_object(id, file_kind::native_blob); });
-    using wrong_width = storage_policy<profile_unit::byte, fixed_values<0>, 15>;
-    fridge<wrong_width> fixed(temporary.path);
-    rejects([&] { fixed.open_object(id, file_kind::native_blob); });
+    using fixed_hint = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 15>;
+    fridge<fixed_hint> fixed(temporary.path);
+    require(fixed.open_object(id, file_kind::native_blob).header().extent ==
+            store.open_object(id, file_kind::native_blob).header().extent,
+            "reader width hint changed existing framing");
 
     // Retained body owns its mapping after both reader and typed file die.
     auto retained = [&] {
@@ -249,8 +251,7 @@ namespace {
       write_bytes(path, malformed);
       rejects([&] { store.open_object(id, kind, file_open_mode::trusted); });
       fixture<P>(temporary.path, id, kind, payload);
-      using wrong_policy = storage_policy<P::unit, typename P::value_layout, P::group_size == 15 ? 7 : 15,
-                                          typename P::backspace_encoding>;
+      using wrong_policy = storage_policy<typename P::registry_type, P::group_size == 15 ? 7 : 15, typename P::backspace_encoding>;
       fridge<wrong_policy> wrong_store(temporary.path);
       rejects([&] { wrong_store.open_object(id, kind); });
       auto object = wrong_store.open_object(id, kind, file_open_mode::trusted);
@@ -270,7 +271,7 @@ int main() {
     seal_objects<bits>();
     trusted_objects<bytes>();
     trusted_objects<bits>();
-    trusted_objects<storage_policy<profile_unit::bit, variable_values, 15, golomb<3>>>();
+    trusted_objects<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<3>>>();
     std::cout << "fridge tests passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';

@@ -13,7 +13,7 @@ be reserved and must never identify different work. The caller also retains the
 verified source inputs and owns reconciliation after an uncertain result.
 
 ```cpp
-using P = diet::storage_policy<diet::profile_unit::byte>;
+using P = diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
 diet::file_header<P> header{
   diet::file_kind::native_blob, encoded_body.size(), record_count, std::nullopt};
 

@@ -30,8 +30,8 @@
 
 namespace {
   using namespace diet;
-  using policy = storage_policy<profile_unit::byte, variable_values, 3>;
-  using bit_policy = storage_policy<profile_unit::bit, fixed_values<0>, 7>;
+  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
+  using bit_policy = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7>;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);

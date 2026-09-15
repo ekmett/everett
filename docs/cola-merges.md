@@ -64,7 +64,7 @@ This complete program runs both destination plans and checks the old snapshot:
 
 int main() {
   using namespace diet;
-  using P = storage_policy<profile_unit::byte>;
+  using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
   using node = cola_index<P>;
   auto record = [](char const * key, char const * value) {
     return profile_record{bit_string::from_bytes(key), bit_string::from_bytes(value)};

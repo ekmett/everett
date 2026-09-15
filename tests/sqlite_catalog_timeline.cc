@@ -28,7 +28,7 @@
 
 namespace {
   using namespace diet;
-  using policy = storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 4>;
+  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 4>;
   using catalog = sqlite_catalog<policy>;
   void require(bool condition, char const * message) { if (!condition) throw std::runtime_error(message); }
   template<class F> void rejects(F && action) {
@@ -479,7 +479,7 @@ namespace {
   }
   void bits() {
     temporary directory;
-    using P = storage_policy<profile_unit::bit, fixed_values<0>, 7, golomb<3>, 16>;
+    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, golomb<3>, 16>;
     auto db = sqlite_catalog<P>::create(directory.root, id(1));
     auto a = persist(db, 100);
     auto initial = db.create_timeline("create", "bits", a.head);

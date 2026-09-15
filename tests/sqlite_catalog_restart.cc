@@ -32,7 +32,7 @@
 
 namespace {
   using namespace diet;
-  using policy = storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 4>;
+  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 4>;
   using catalog = sqlite_catalog<policy>;
   using clock_type = std::chrono::steady_clock;
   void require(bool okay, char const * message) { if (!okay) throw std::runtime_error(message); }

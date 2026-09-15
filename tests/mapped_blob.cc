@@ -470,8 +470,7 @@ namespace {
     }
     rejects([&] { with_native<P>(index, [](auto) {}); });
     rejects([&] { with_index<P>(native, [](auto) {}); });
-    using wrong_width = storage_policy<P::unit, typename P::value_layout, P::group_size,
-      typename P::backspace_encoding, P::codec_block_size + 1>;
+    using wrong_width = storage_policy<typename P::registry_type, P::group_size, typename P::backspace_encoding, P::codec_block_size + 1>;
     rejects([&] { with_native<wrong_width>(native, [](auto) {}); });
     rejects([&] { with_index<wrong_width>(index, [](auto) {}); });
     for (auto shift : {1u, 3u, 7u}) {
@@ -1015,14 +1014,14 @@ namespace {
 
 int main() {
   try {
-    using byte_var = storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>;
-    using bit_var = storage_policy<profile_unit::bit, variable_values, 7, exponential_golomb<0>, 15>;
+    using byte_var = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>;
+    using bit_var = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, exponential_golomb<0>, 15>;
     run_policy<byte_var>(true);
     run_policy<bit_var>(true);
     empty_test<byte_var>();
     empty_test<bit_var>();
-    run_policy<storage_policy<profile_unit::byte, fixed_values<0>, 15, exponential_golomb<0>, 16>>(false);
-    run_policy<storage_policy<profile_unit::bit, fixed_values<5>, 31, golomb<3>, 15>>(false);
+    run_policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 15, exponential_golomb<0>, 16>>(false);
+    run_policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<5>>>>, 31, golomb<3>, 15>>(false);
 #if defined(__unix__) || defined(__APPLE__)
     guard_tests<byte_var>();
     guard_tests<bit_var>();

@@ -500,8 +500,7 @@ namespace {
       rejects([&] { moved.section(18); });
       rejects([&] { moved.borrowed(2); });
     });
-    using wrong_w = storage_policy<P::unit, typename P::value_layout, P::group_size,
-      typename P::backspace_encoding, P::codec_block_size + 1>;
+    using wrong_w = storage_policy<typename P::registry_type, P::group_size, typename P::backspace_encoding, P::codec_block_size + 1>;
     rejects([&] { with_index<wrong_w>(original, [](auto) {}); });
     rejects([&] { with_index<P>(f.native_bytes[layer], [](auto) {}); });
     rejects([&] { encode_cola_sections(*f.original[layer], f.identities[layer].native); });
@@ -634,17 +633,17 @@ namespace {
 
 int main() {
   try {
-    matrix<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::bit, fixed_values<13>, 3, golomb<3>, 16>>();
-    matrix<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<profile_unit::bit, variable_values, 7, exponential_golomb<2>, 15>>();
-    matrix<storage_policy<profile_unit::byte, fixed_values<7>, 15, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<profile_unit::bit, variable_values, 15, golomb<17>, 15>>();
-    matrix<storage_policy<profile_unit::byte, variable_values, 31, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::bit, fixed_values<0>, 31, exponential_golomb<1>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<13>>>>, 3, golomb<3>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, exponential_golomb<2>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<7>>>>, 15, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<17>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 31, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 31, exponential_golomb<1>, 16>>();
 #if defined(__unix__) || defined(__APPLE__)
-    metadata_only<storage_policy<profile_unit::byte, variable_values, 15>>();
-    metadata_only<storage_policy<profile_unit::bit, fixed_values<13>, 7, golomb<3>, 16>>();
+    metadata_only<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15>>();
+    metadata_only<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<13>>>>, 7, golomb<3>, 16>>();
 #endif
     std::cout << "mapped COLA tests passed\n";
   } catch (std::exception const & error) {

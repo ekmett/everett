@@ -61,12 +61,16 @@ backspaces. There's no need to choose codec parameters to get started.
 ```cpp
 #include <diet/fridge.h>
 
-using bytes = diet::storage_policy<diet::profile_unit::byte>;
-using bits = diet::storage_policy<diet::profile_unit::bit>;
+using strings = diet::encoded_sort<diet::byte_encoding<>>;
+using packed = diet::encoded_sort<diet::bit_encoding<>>;
+using bytes = diet::storage_policy<diet::tip<strings>>;
+using bits = diet::storage_policy<diet::tip<packed>>;
 using store_type = diet::fridge<bytes>;
 ```
 
-The fridge's associated types carry that policy for us. Here's a complete
+The registry chooses the storage units from its sorts; `tip<strings>` gives
+us one sort without a discriminator. The fridge's associated types carry that
+policy for us. Here's a complete
 program that builds a table and looks up a value:
 
 ```cpp
@@ -75,7 +79,8 @@ program that builds a table and looks up a value:
 #include <memory>
 
 int main() {
-  using policy = diet::storage_policy<diet::profile_unit::byte>;
+  using strings = diet::encoded_sort<diet::byte_encoding<>>;
+  using policy = diet::storage_policy<diet::tip<strings>>;
   using store_type = diet::fridge<policy>;
   auto text = [](char const * s) { return diet::bit_string::from_bytes(s); };
 
@@ -105,7 +110,7 @@ value. The same cursor interface works over mapped files.
 
 Despite its name, `bit_string::from_bytes` stores ordinary bytes, including
 embedded zeros; a byte policy compares keys in unsigned-byte order. For packed
-bits, select `profile_unit::bit` and construct keys and values with
+bits, use the `packed` sort above and construct keys and values with
 `bit_string::from_bits("101101")`. The query workflow stays the same. Fixed-size
 values and other representation choices are covered in
 [policy configuration](docs/usage.md#choose-byte-or-bit-units).
@@ -124,7 +129,8 @@ we can close the process and read it again:
 
 int main(int argc, char ** argv) {
   if (argc != 2) return 64; // Pass the backing directory.
-  using policy = diet::storage_policy<diet::profile_unit::byte>;
+  using strings = diet::encoded_sort<diet::byte_encoding<>>;
+  using policy = diet::storage_policy<diet::tip<strings>>;
   diet::fridge<policy> store(argv[1]);
   auto catalog = diet::sqlite_catalog<policy>::open(store.root());
   auto pin = catalog.acquire_save("read-initial", "initial", "example-reader");

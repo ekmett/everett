@@ -124,7 +124,7 @@ namespace {
     }
   };
 
-  using policy = storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 16>;
+  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>;
   using catalog = sqlite_catalog<policy>;
 
   std::vector<std::byte> pair_bytes(blob_identity const & pair) {
@@ -355,17 +355,17 @@ namespace {
 
   void schema_policy_test() {
     fixture value;
-    rejects([&] { (void)sqlite_catalog<storage_policy<profile_unit::bit, fixed_values<0>, 7, exponential_golomb<0>, 16>>::open(value.directory.path); });
-    rejects([&] { (void)sqlite_catalog<storage_policy<profile_unit::byte, variable_values, 7, exponential_golomb<0>, 16>>::open(value.directory.path); });
-    rejects([&] { (void)sqlite_catalog<storage_policy<profile_unit::byte, fixed_values<1>, 7, exponential_golomb<0>, 16>>::open(value.directory.path); });
-    rejects([&] { (void)sqlite_catalog<storage_policy<profile_unit::byte, fixed_values<0>, 3, exponential_golomb<0>, 16>>::open(value.directory.path); });
-    rejects([&] { (void)sqlite_catalog<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 15>>::open(value.directory.path); });
+    rejects([&] { (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>::open(value.directory.path); });
+    (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7, exponential_golomb<0>, 16>>::open(value.directory.path);
+    (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<1>>>>, 7, exponential_golomb<0>, 16>>::open(value.directory.path);
+    rejects([&] { (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>::open(value.directory.path); });
+    rejects([&] { (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>::open(value.directory.path); });
     {
       temporary_directory bits;
-      using bit_policy = storage_policy<profile_unit::bit, fixed_values<0>, 7, exponential_golomb<0>, 16>;
+      using bit_policy = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>;
       auto bit_catalog = sqlite_catalog<bit_policy>::create(bits.path, id(400));
-      rejects([&] { (void)sqlite_catalog<storage_policy<profile_unit::bit, fixed_values<0>, 7, golomb<3>, 16>>::open(bits.path); });
-      rejects([&] { (void)sqlite_catalog<storage_policy<profile_unit::bit, fixed_values<0>, 7, exponential_golomb<1>, 16>>::open(bits.path); });
+      rejects([&] { (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, golomb<3>, 16>>::open(bits.path); });
+      rejects([&] { (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<1>, 16>>::open(bits.path); });
     }
     rejects([&] { (void)catalog::open(value.directory.path, {-1}); });
     rejects([&] { (void)catalog::create(value.directory.path, id(333)); });
