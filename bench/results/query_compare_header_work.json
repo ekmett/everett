@@ -1,0 +1,100 @@
+{
+  "method": "Untimed independent integer model of the shared fixture and current forward header-navigation rules; not instrumented hardware accesses.",
+  "source": "import bisect\nimport csv\nimport hashlib\nimport json\nfrom pathlib import Path\n\nK = 15\nMASK = (1 << 64) - 1\n\ndef random_word(state):\n    state = (state + 0x9e3779b97f4a7c15) & MASK\n    x = state\n    x = ((x ^ (x >> 30)) * 0xbf58476d1ce4e5b9) & MASK\n    x = ((x ^ (x >> 27)) * 0x94d049bb133111eb) & MASK\n    return state, x ^ (x >> 31)\n\ndef layer(native, target=None):\n    borrowed = target['keys'][::K] if target else []\n    virtual = sorted([(x, 0) for x in native] + [(x, 1) for x in borrowed])\n    ranks = [0]\n    for _, role in virtual:\n        ranks.append(ranks[-1] + role)\n    return {'native': native, 'borrowed': borrowed, 'keys': [x for x, _ in virtual],\n            'ranks': ranks, 'target': target}\n\ndef model(count, queries, width):\n    ids = [[i * (1 << (2 * level)) * 4 + (level if i % 7 else 0)\n            for i in range(count // (1 << (2 * level)))] for level in range(4)]\n    root = layer(ids[0])\n    for native in ids[1:]:\n        root = layer(native, root)\n    while len(root['keys']) > K:\n        root = layer([], root)\n    total = {'catalogs': 0, 'matches': 0, 'pre_lane_headers': 0,\n             'candidate_headers': 0, 'value_access_headers': 0, 'checkpoint_reads': 0}\n    random = 0xb908fcef32571ad9\n    for query_number in range(queries):\n        random, word = random_word(random)\n        query = word % (count * 4)\n        if not query_number & 1:\n            random, word = random_word(random)\n            query = ids[0][word % len(ids[0])]\n        current, group = root, 0\n        while current:\n            total['catalogs'] += 1\n            first = group * K\n            last = min(first + K, len(current['keys']))\n            bf, bl = current['ranks'][first], current['ranks'][last]\n            nf, nl = first - bf, last - bl\n            native, borrowed = current['native'], current['borrowed']\n            for values, lo, hi, is_borrowed in ((native, nf, nl, False), (borrowed, bf, bl, True)):\n                visited = 0\n                if lo < hi:\n                    stop = (bisect.bisect_right if is_borrowed else bisect.bisect_left)(values, query, lo, hi)\n                    visited = min(stop + 1, hi) - lo\n                    total['candidate_headers'] += visited\n                # Borrowed empty-window repair still locates its predecessor length,\n                # except at zero or EOF, which needs no physical block access.\n                locate = bool(visited) or (is_borrowed and 0 < lo < len(values))\n                if locate:\n                    total['pre_lane_headers'] += lo % width\n                    total['checkpoint_reads'] += 1\n                    if visited:\n                        total['checkpoint_reads'] += (lo + visited - 1) // width - lo // width\n            native_at = bisect.bisect_left(native, query)\n            native_match = native_at < len(native) and native[native_at] == query\n            total['matches'] += native_match\n            if native_match and native_at < nf:\n                total['value_access_headers'] += native_at % width + 1\n                total['checkpoint_reads'] += 1\n            borrowed_at = bisect.bisect_right(borrowed, query) - 1\n            if borrowed_at < 0:\n                break\n            group = borrowed_at\n            current = current['target']\n    total['total_headers'] = total['pre_lane_headers'] + total['candidate_headers'] + total['value_access_headers']\n    return total\n\nif __name__ == '__main__':\n    root = Path(__file__).resolve().parent\n    data = list(csv.DictReader((root / 'results.csv').open()))\n    rows = []\n    for count in (4096, 65536):\n        for width in (15, 16):\n            counts = model(count, 4096, width)\n            reference = next(r for r in data if int(r['base_records']) == count)\n            assert counts['catalogs'] == int(reference['visited_catalogs'])\n            assert counts['matches'] == int(reference['matches'])\n            rows.append({'records': count, 'queries': 4096, 'codec_block_size': width,\n                         'counts': counts, 'per_query': {k: v / 4096 for k, v in counts.items()}})\n    source = Path(__file__).read_text()\n    output = {'method': 'Untimed independent integer model of the shared fixture and current forward header-navigation rules; not instrumented hardware accesses.',\n              'source': source, 'source_sha256': hashlib.sha256(source.encode()).hexdigest(),\n              'harness_sha256': hashlib.sha256((root / 'query_compare.cc').read_bytes()).hexdigest(), 'rows': rows}\n    (root / 'header_work.json').write_text(json.dumps(output, indent=2) + '\\n')\n    for row in rows:\n        print(row['records'], row['codec_block_size'], row['per_query'])\n",
+  "source_sha256": "60f194c5b2887c20afce1b3ed7ab2c2fa0ccaf25f60573eaeec5b5acb84bc5a0",
+  "harness_sha256": "5200a36f81c194c854443a3e031db7eb6158062df88f77829fb9e8049269df18",
+  "rows": [
+    {
+      "records": 4096,
+      "queries": 4096,
+      "codec_block_size": 15,
+      "counts": {
+        "catalogs": 20480,
+        "matches": 2796,
+        "pre_lane_headers": 162870,
+        "candidate_headers": 172054,
+        "value_access_headers": 0,
+        "checkpoint_reads": 38925,
+        "total_headers": 334924
+      },
+      "per_query": {
+        "catalogs": 5.0,
+        "matches": 0.6826171875,
+        "pre_lane_headers": 39.76318359375,
+        "candidate_headers": 42.00537109375,
+        "value_access_headers": 0.0,
+        "checkpoint_reads": 9.503173828125,
+        "total_headers": 81.7685546875
+      }
+    },
+    {
+      "records": 4096,
+      "queries": 4096,
+      "codec_block_size": 16,
+      "counts": {
+        "catalogs": 20480,
+        "matches": 2796,
+        "pre_lane_headers": 193855,
+        "candidate_headers": 172054,
+        "value_access_headers": 0,
+        "checkpoint_reads": 39484,
+        "total_headers": 365909
+      },
+      "per_query": {
+        "catalogs": 5.0,
+        "matches": 0.6826171875,
+        "pre_lane_headers": 47.327880859375,
+        "candidate_headers": 42.00537109375,
+        "value_access_headers": 0.0,
+        "checkpoint_reads": 9.6396484375,
+        "total_headers": 89.333251953125
+      }
+    },
+    {
+      "records": 65536,
+      "queries": 4096,
+      "codec_block_size": 15,
+      "counts": {
+        "catalogs": 24576,
+        "matches": 2810,
+        "pre_lane_headers": 170775,
+        "candidate_headers": 208415,
+        "value_access_headers": 0,
+        "checkpoint_reads": 43189,
+        "total_headers": 379190
+      },
+      "per_query": {
+        "catalogs": 6.0,
+        "matches": 0.68603515625,
+        "pre_lane_headers": 41.693115234375,
+        "candidate_headers": 50.882568359375,
+        "value_access_headers": 0.0,
+        "checkpoint_reads": 10.544189453125,
+        "total_headers": 92.57568359375
+      }
+    },
+    {
+      "records": 65536,
+      "queries": 4096,
+      "codec_block_size": 16,
+      "counts": {
+        "catalogs": 24576,
+        "matches": 2810,
+        "pre_lane_headers": 258843,
+        "candidate_headers": 208415,
+        "value_access_headers": 0,
+        "checkpoint_reads": 47499,
+        "total_headers": 467258
+      },
+      "per_query": {
+        "catalogs": 6.0,
+        "matches": 0.68603515625,
+        "pre_lane_headers": 63.194091796875,
+        "candidate_headers": 50.882568359375,
+        "value_access_headers": 0.0,
+        "checkpoint_reads": 11.596435546875,
+        "total_headers": 114.07666015625
+      }
+    }
+  ]
+}
