@@ -76,6 +76,18 @@ namespace {
           require(everett::rank_detail::prefix512_neon(words.data() + offset, bit) == expected,
                   "NEON 512-bit prefix oracle");
 #endif
+#if defined(__AVX2__)
+          require(everett::rank_detail::prefix512_avx2(words.data() + offset, bit) == expected,
+                  "AVX2 512-bit prefix oracle");
+#endif
+#if defined(__AVX512F__) && defined(__AVX512VPOPCNTDQ__)
+          require(everett::rank_detail::prefix512_avx512_vpopcnt(words.data() + offset, bit) == expected,
+                  "AVX512 VPOPCNTDQ 512-bit prefix oracle");
+#endif
+#if defined(__AVX512F__) && defined(__AVX512BW__)
+          require(everett::rank_detail::prefix512_avx512bw(words.data() + offset, bit) == expected,
+                  "AVX512BW 512-bit prefix oracle");
+#endif
           if (bit != 512) expected += unsigned((words[offset + bit / 64] >> (bit % 64)) & 1);
         }
       }
