@@ -23,6 +23,7 @@ namespace everett {
     // the merge frontier. Retention and strict order are supplied by callers;
     // no full key is stored here, only the preceding key's length.
     template <class P> struct native_output {
+      using policy_type = P;
       explicit native_output(std::optional<std::uint64_t> common_value_width)
         : common_(common_value_width) {
         if constexpr (P::fixed_width)
@@ -47,6 +48,7 @@ namespace everett {
       }
       std::uint64_t size() const noexcept { return count_; }
       bool finished() const noexcept { return finished_; }
+      bool failed() const noexcept { return false; }
       std::optional<std::uint64_t> common_value_width() const noexcept { return common_; }
       void require_active() const {
         if (finished_) error_detail::raise<std::logic_error>("native profile writer is finished");

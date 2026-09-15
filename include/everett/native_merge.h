@@ -127,11 +127,21 @@ namespace everett {
   // step budget is charged; key-aware policies also reconstruct those keys.
   // One step unit handles one distinct key and at most two input records.
   // Key bytes, composition work, output allocation and final EF work are extra.
-  template <class P, class Native = profile_array<P>, class Compose = replace_native_value>
+  // An alternate Output consumes append(retained,literal,value) synchronously,
+  // encodes policy P, and supplies size/common_value_width/finished/failed/finish.
+  // It starts empty and active; finished() and failed() are noexcept. The caller
+  // grants exclusive sink use to this builder, and keeps any referenced sink
+  // alive. A finish failure is retryable only when the sink reports !failed().
+  template <class P, class Native = profile_array<P>, class Compose = replace_native_value,
+            class Output = profile_detail::native_output<P>>
   struct native_merge_builder {
     static_assert(std::is_same_v<typename Native::policy_type, P>);
+    static_assert(std::is_same_v<typename Output::policy_type, P>);
     using policy_type = P;
     using source_type = Native;
+    using output_type = Output;
+    static_assert(noexcept(std::declval<Output const &>().finished()));
+    static_assert(noexcept(std::declval<Output const &>().failed()));
     using source_pointer = std::shared_ptr<Native const>;
     static constexpr bool encoded_keys = std::is_same_v<Compose, replace_native_value> ||
       (!std::is_invocable_v<Compose &, bit_view, bit_view, bit_view> &&
@@ -141,14 +151,17 @@ namespace everett {
 
     native_merge_builder(source_pointer older, source_pointer newer, Compose compose = {},
         std::optional<std::uint64_t> common_value_width = P::value_width)
+      requires std::is_constructible_v<Output, std::optional<std::uint64_t>>
+      : native_merge_builder(Output(common_value_width), std::move(older), std::move(newer), std::move(compose)) {}
+    native_merge_builder(Output output, source_pointer older, source_pointer newer, Compose compose = {})
       : older_(checked(std::move(older))), newer_(checked(std::move(newer))),
         older_cursor_(older_->view()), newer_cursor_(newer_->view()),
-        writer_(common_value_width), compose_(std::move(compose)) {}
+        writer_(checked_output(std::move(output))), compose_(std::move(compose)) {}
     native_merge_builder(native_merge_builder const &) = delete;
     native_merge_builder & operator=(native_merge_builder const &) = delete;
     native_merge_builder(native_merge_builder &&) = default;
     native_merge_builder & operator=(native_merge_builder && other)
-      requires std::is_move_assignable_v<Compose> {
+      requires (std::is_move_assignable_v<Compose> && std::is_move_assignable_v<Output>) {
       if (this != &other) {
         // Composition policies may throw during transfer. Keep a partially
         // assigned destination poisoned until every state field agrees.
@@ -215,10 +228,16 @@ namespace everett {
       return work;
     }
 
-    profile_array<P> finish() {
+    auto finish() {
       require_active();
       if (!done()) throw std::logic_error("native merge has unconsumed inputs");
-      return writer_.finish();
+      try { return writer_.finish(); }
+      catch (...) {
+        // In-memory EF allocation failure is retryable. A sink that has
+        // partially written final output must report its irreversible failure.
+        failed_ = writer_.failed();
+        throw;
+      }
     }
 
   private:
@@ -259,6 +278,11 @@ namespace everett {
         throw std::invalid_argument("native merge inputs must have unique sorted keys");
       return comparison->common_bits >> P::unit_shift;
     }
+    static Output checked_output(Output output) {
+      if (output.size() || output.finished() || output.failed())
+        throw std::invalid_argument("native merge output must be empty and active");
+      return output;
+    }
     static source_pointer checked(source_pointer source) {
       if (!source) throw std::invalid_argument("null native merge input");
       return source;
@@ -271,7 +295,7 @@ namespace everett {
     source_pointer newer_;
     cursor_type older_cursor_;
     cursor_type newer_cursor_;
-    profile_detail::native_output<P> writer_;
+    Output writer_;
     Compose compose_;
     native_merge_progress progress_;
     std::uint64_t older_prefix_ = 0;

@@ -459,6 +459,98 @@ namespace {
       }
     }
   }
+  struct output_receipt { std::uint64_t records; };
+  template <class P> struct output_state {
+    profile_detail::native_output<P> output{P::value_width};
+    std::optional<profile_array<P>> sealed;
+    unsigned finish_failures = 0;
+    bool irreversible = false, bad = false, append_failure = false;
+    output_state() = default;
+    output_state(output_state const &) = delete;
+    output_state(output_state &&) = delete;
+  };
+  // A movable reference to a nonmovable sink. This deliberately returns a
+  // receipt instead of an array; the sink retains the independently checked data.
+  template <class P> struct output_reference {
+    using policy_type = P;
+    output_state<P> * state;
+    std::uint64_t size() const noexcept { return state->output.size(); }
+    bool finished() const noexcept { return state->output.finished(); }
+    bool failed() const noexcept { return state->bad; }
+    std::optional<std::uint64_t> common_value_width() const noexcept {
+      return state->output.common_value_width();
+    }
+    void append(std::uint64_t retained, bit_view literal, bit_view value) {
+      state->output.append(retained, literal, value);
+      if (state->append_failure) {
+        state->bad = true;
+        throw std::runtime_error("simulated partial sink write");
+      }
+    }
+    output_receipt finish() {
+      if (state->finish_failures) {
+        --state->finish_failures;
+        state->bad = state->irreversible;
+        throw std::bad_alloc();
+      }
+      state->sealed.emplace(state->output.finish());
+      return {state->sealed->size()};
+    }
+  };
+  template <class P, class Compose = replace_native_value> void alternate_output(Compose compose = {}) {
+    auto old_records = fixture<P>({1, 3, 5}, 1), new_records = fixture<P>({2, 3, 4}, 2);
+    auto older = std::make_shared<profile_array<P> const>(profile_array<P>::build(old_records));
+    auto newer = std::make_shared<profile_array<P> const>(profile_array<P>::build(new_records));
+    auto expected = dictionary(old_records);
+    for (auto const & [key, value] : dictionary(new_records)) expected[key] = value;
+    using builder_type = native_merge_builder<P, profile_array<P>, Compose, output_reference<P>>;
+    output_state<P> sink, unused;
+    builder_type builder(output_reference<P>{&sink}, older, newer, compose);
+    builder.step(2);
+    auto moved = std::move(builder);
+    rejects([&] { builder.step(); });
+    builder_type assigned(output_reference<P>{&unused}, older, newer, compose);
+    assigned = std::move(moved);
+    rejects([&] { moved.step(); });
+    while (!assigned.done()) assigned.step(1);
+    sink.finish_failures = 1;
+    rejects([&] { (void)assigned.finish(); });
+    require(!assigned.failed() && assigned.done() && !assigned.finished(), "retryable sink failure poisoned merge");
+    auto receipt = assigned.finish();
+    require(receipt.records == expected.size() && decode(*sink.sealed) == expected,
+            "alternate sink receipt or output differs");
+    require(assigned.finished() && !unused.output.size(), "moved sink output identity changed");
+    rejects([&] { (void)assigned.finish(); });
+    for (unsigned state = 0; state != 3; ++state) {
+      output_state<P> invalid;
+      if (state == 0) invalid.output.append(0, old_records[0].key.view(), old_records[0].value.view());
+      if (state == 1) (void)invalid.output.finish();
+      if (state == 2) invalid.bad = true;
+      rejects([&] { builder_type rejected(output_reference<P>{&invalid}, older, newer, compose); });
+    }
+    for (bool during_append : {false, true}) {
+      output_state<P> broken;
+      broken.append_failure = during_append;
+      broken.finish_failures = 1; broken.irreversible = true;
+      builder_type failed(output_reference<P>{&broken}, older, newer, compose);
+      if (during_append) rejects([&] { failed.step(); });
+      else {
+        while (!failed.done()) failed.step();
+        rejects([&] { (void)failed.finish(); });
+      }
+      require(failed.failed() && !failed.done(), "irreversible sink failure remained active");
+      rejects([&] { failed.step(); });
+      rejects([&] { (void)failed.finish(); });
+    }
+  }
+  void output_sink_tests() {
+    alternate_output<storage_policy<profile_unit::byte>>();
+    alternate_output<storage_policy<profile_unit::bit, fixed_values<13>>>();
+    alternate_output<storage_policy<profile_unit::byte>>(
+      [](bit_view, bit_view newer) { return newer; });
+    alternate_output<storage_policy<profile_unit::bit>>(
+      [](bit_view, bit_view, bit_view newer) { return newer; });
+  }
   void failure_and_pins() {
     using P = storage_policy<profile_unit::byte>;
     auto records = fixture<P>({1}, 1);
@@ -493,6 +585,7 @@ int main() {
     associative_composition<storage_policy<profile_unit::byte>>();
     associative_composition<storage_policy<profile_unit::bit, variable_values, 7, golomb<3>, 16>>();
     failure_and_pins();
+    output_sink_tests();
     frontier_suite<storage_policy<profile_unit::byte>>();
     frontier_suite<storage_policy<profile_unit::byte, fixed_values<3>, 7, exponential_golomb<0>, 16>>();
     frontier_suite<storage_policy<profile_unit::bit, fixed_values<0>, 3, golomb<3>, 7>>();
