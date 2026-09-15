@@ -819,14 +819,15 @@ namespace diet {
           metadata.backspace_code != P::backspace_code || metadata.backspace_parameter != P::backspace_parameter ||
           metadata.count_code != expected.count_code || metadata.bit_order != profile_bit_order::msb_first ||
           metadata.role != Role || metadata.group_size != P::group_size ||
-          metadata.codec_block_size != P::codec_block_size || metadata.policy_fixed_values != P::fixed_width ||
-          metadata.policy_value_width != P::value_width.value_or(0))
+          metadata.codec_block_size != P::codec_block_size)
         error_detail::raise<std::invalid_argument>("profile metadata does not match reader policy");
+      if (!metadata.policy_fixed_values && metadata.policy_value_width)
+        error_detail::raise<std::invalid_argument>("variable profile policy width must be zero");
       if constexpr (Role == stream_role::borrowed) {
         if (metadata.common_value_width != std::optional<std::uint64_t>(0))
           error_detail::raise<std::invalid_argument>("borrowed profile must have empty values");
-      } else if constexpr (P::fixed_width) {
-        if (metadata.common_value_width != P::value_width)
+      } else if (metadata.policy_fixed_values) {
+        if (metadata.common_value_width != metadata.policy_value_width)
           error_detail::raise<std::invalid_argument>("fixed value width metadata mismatch");
       }
       if (!metadata.record_count && (metadata.extent || metadata.terminal_key_units))

@@ -159,6 +159,8 @@ namespace diet {
       metadata.extent = layout.extent;
       metadata.terminal_key_units = layout.terminal_key_units;
       metadata.common_value_width = header.common_value_width;
+      metadata.policy_fixed_values = header.policy_value_width.has_value();
+      metadata.policy_value_width = header.policy_value_width.value_or(0);
       auto part = [&](std::size_t slot) { return section(body, layout, slot); };
       elias_fano_view offsets{
         word_view::little_endian(part(low)), word_view::little_endian(part(high)),
@@ -346,6 +348,8 @@ namespace diet {
       auto const & metadata = array.metadata();
       header_.record_count = metadata.record_count;
       header_.common_value_width = metadata.common_value_width;
+      header_.policy_value_width = metadata.policy_fixed_values
+        ? std::optional(metadata.policy_value_width) : std::nullopt;
       file_detail::put(directory_, 8, 8, metadata.extent);
       file_detail::put(directory_, 16, 8, metadata.terminal_key_units);
       file_detail::put(directory_, 24, 8, offsets.universe);

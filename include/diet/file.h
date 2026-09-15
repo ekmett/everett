@@ -37,6 +37,9 @@ namespace diet {
     std::uint64_t extent = 0; // Body address units, exactly P::unit.
     std::uint64_t record_count = 0;
     std::optional<std::uint64_t> common_value_width;
+    // The writer's value-layout declaration, not the opening registry's
+    // default. Actual record framing is described by common_value_width.
+    std::optional<std::uint64_t> policy_value_width = P::value_width;
     bool operator==(file_header const &) const = default;
   };
 
@@ -93,11 +96,11 @@ namespace diet {
         if (header.common_value_width != std::optional<std::uint64_t>{0})
           throw std::invalid_argument("fractional index values must have width zero");
       } else if (header.kind == file_kind::native_blob) {
-        if constexpr (P::fixed_width)
-          if (header.common_value_width && header.common_value_width != P::value_width)
+        if (header.policy_value_width)
+          if (header.common_value_width && header.common_value_width != header.policy_value_width)
             throw std::invalid_argument("native common width disagrees with fixed policy");
         auto width = header.common_value_width;
-        if constexpr (P::fixed_width) width = P::value_width;
+        if (!width) width = header.policy_value_width;
         if (width && *width && header.record_count > header.extent / *width)
           throw std::invalid_argument("fixed value slots exceed body extent");
       }
@@ -156,9 +159,12 @@ namespace diet {
       throw std::invalid_argument("unsupported Diet backspace descriptor");
     if (file_detail::get(bytes, 20, 4) != P::codec_block_size ||
         file_detail::get(bytes, 24, 8) != P::group_size ||
-        bool(flags & 1) != P::fixed_width || file_detail::get(bytes, 32, 8) != P::value_width.value_or(0) ||
         backspace != static_cast<unsigned>(P::backspace_code) || backspace_parameter != P::backspace_parameter)
       throw std::invalid_argument("Diet stored policy descriptor mismatch");
+    header.policy_value_width.reset();
+    if (flags & 1) header.policy_value_width = file_detail::get(bytes, 32, 8);
+    else if (file_detail::get(bytes, 32, 8))
+      throw std::invalid_argument("variable policy width must encode zero");
     if (flags & 2) header.common_value_width = file_detail::get(bytes, 40, 8);
     else if (file_detail::get(bytes, 40, 8)) throw std::invalid_argument("absent common width must encode zero");
     header.extent = file_detail::get(bytes, 48, 8);
@@ -193,13 +199,13 @@ namespace diet {
     for (std::size_t i = 0; i < 8; ++i) result[i] = std::byte(static_cast<unsigned char>(magic[i]));
     file_detail::put(result, 8, 2, file_detail::version);
     file_detail::put(result, 10, 2, file_detail::header_bytes);
-    file_detail::put(result, 12, 4, (P::fixed_width ? 1u : 0u) | (header.common_value_width ? 2u : 0u));
+    file_detail::put(result, 12, 4, (header.policy_value_width ? 1u : 0u) | (header.common_value_width ? 2u : 0u));
     file_detail::put(result, 16, 1, static_cast<unsigned>(P::unit));
     file_detail::put(result, 17, 1, 1);
     file_detail::put(result, 18, 1, static_cast<unsigned>(P::backspace_code));
     file_detail::put(result, 20, 4, P::codec_block_size);
     file_detail::put(result, 24, 8, P::group_size);
-    file_detail::put(result, 32, 8, P::value_width.value_or(0));
+    file_detail::put(result, 32, 8, header.policy_value_width.value_or(0));
     file_detail::put(result, 40, 8, header.common_value_width.value_or(0));
     file_detail::put(result, 48, 8, header.extent);
     file_detail::put(result, 56, 8, header.record_count);

@@ -278,7 +278,7 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
       result.schema_version_ = result.detect_schema_version();
       result.validate_schema();
       catalog_detail::statement info(result.db_, "SELECT version,identity,policy FROM catalog_info WHERE singleton=1");
-      if (!info.row() || info.integer(0) != result.schema_version_ || info.blob(2) != policy())
+      if (!info.row() || info.integer(0) != result.schema_version_ || !compatible_policy(info.blob(2)))
         throw std::invalid_argument("Diet catalog schema or policy mismatch");
       (void)object_id(info.text(1));
       if (info.row()) throw std::invalid_argument("multiple Diet catalog identities");
@@ -710,6 +710,17 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
                         std::uint64_t(P::fixed_width), P::value_width.value_or(0)})
         catalog_detail::number(result, value);
       return result;
+    }
+    // The descriptor keeps the creation-time value-layout annotation, but a
+    // registry extension can widen its defaults without changing file framing.
+    // Every native object retains and validates its own actual common width.
+    static bool compatible_policy(std::span<std::byte const> stored) {
+      if (stored.size() != 7 * sizeof(std::uint64_t)) return false;
+      auto fixed = file_detail::get(stored, 40, 8);
+      auto width = file_detail::get(stored, 48, 8);
+      if (fixed > 1 || (!fixed && width)) return false;
+      auto expected = policy();
+      return std::equal(stored.begin(), stored.begin() + 40, expected.begin());
     }
     static void validate_options(catalog_options options) {
       if (sqlite3_libversion_number() < 3051003 || !sqlite3_threadsafe())
