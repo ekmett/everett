@@ -347,6 +347,7 @@ namespace everett {
     template <class, stream_role> friend struct profile_view;
     template <class> friend struct profile_blob;
     template <class> friend struct profile_blob_view;
+    template <class> friend struct cola_index_view;
     std::shared_ptr<bit_string const> query_;
     std::uint64_t common_bits_ = 0;
     std::uint64_t full_units_ = 0;
