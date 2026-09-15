@@ -101,7 +101,9 @@ for all three prefix lengths. All 12 rows passed; its
 timing evidence.
 
 The comparison still reads the common prefix to find its length. Predecessor
-capacity may still grow when longer keys arrive. The performance fixture has
+capacity may still grow when longer keys arrive, and retains the largest key
+allocation seen until finalization or destruction. Logical predecessor content
+is only the current key. The performance fixture has
 fixed key lengths within each case; it does not establish the same gain for
 varying lengths, whole index pipelines, mapped reads or native x86. Inputs and
 output are resident in memory, with no disk I/O or durable checkpoint claim.
