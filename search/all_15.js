@@ -30,7 +30,7 @@ var searchData=
   ['native_5flast_27',['native_last',['../structeverett_1_1profile__blob__window.html#a4f59c0c894bb6eabd7f6c669ab33628a',1,'everett::profile_blob_window']]],
   ['native_5fmerge_2eh_28',['native_merge.h',['../native__merge_8h.html',1,'']]],
   ['native_5fmerge_2emd_29',['native_merge.md',['../native__merge_8md.html',1,'']]],
-  ['native_5fmerge_5fbuilder_30',['native_merge_builder',['../structeverett_1_1native__merge__builder.html',1,'everett::native_merge_builder&lt; P, Native, Compose &gt;'],['../structeverett_1_1native__merge__builder.html#aa9bf33ec4e987ea5fdbe954fd4086bcd',1,'everett::native_merge_builder::native_merge_builder()'],['../structeverett_1_1multiverse.html#a7d10dc51216227a6424163c2201a6de6',1,'everett::multiverse::native_merge_builder'],['../structeverett_1_1native__merge__builder.html#a795f7061a5b5647c22a3c0a71d7d2662',1,'everett::native_merge_builder::native_merge_builder(native_merge_builder &amp;&amp;)=default'],['../structeverett_1_1native__merge__builder.html#a1692ad960b1381dffc6564e81ce94763',1,'everett::native_merge_builder::native_merge_builder(native_merge_builder const &amp;)=delete']]],
+  ['native_5fmerge_5fbuilder_30',['native_merge_builder',['../structeverett_1_1native__merge__builder.html',1,'everett::native_merge_builder&lt; P, Native, Compose &gt;'],['../structeverett_1_1native__merge__builder.html#a1692ad960b1381dffc6564e81ce94763',1,'everett::native_merge_builder::native_merge_builder()'],['../structeverett_1_1multiverse.html#a7d10dc51216227a6424163c2201a6de6',1,'everett::multiverse::native_merge_builder'],['../structeverett_1_1native__merge__builder.html#a795f7061a5b5647c22a3c0a71d7d2662',1,'everett::native_merge_builder::native_merge_builder(native_merge_builder &amp;&amp;)=default'],['../structeverett_1_1native__merge__builder.html#aa9bf33ec4e987ea5fdbe954fd4086bcd',1,'everett::native_merge_builder::native_merge_builder(source_pointer older, source_pointer newer, Compose compose={}, std::optional&lt; std::uint64_t &gt; common_value_width=P::value_width)']]],
   ['native_5fmerge_5fprogress_31',['native_merge_progress',['../structeverett_1_1native__merge__progress.html',1,'everett']]],
   ['native_5fobject_32',['native_object',['../structeverett_1_1mapped__blob.html#af8ac8157de332e3dede69f6ea8997f64',1,'everett::mapped_blob']]],
   ['native_5foutput_33',['native_output',['../structeverett_1_1profile__detail_1_1native__output.html#a80734e1d74c5c70f8322ddbd4a95c0e5',1,'everett::profile_detail::native_output::native_output()'],['../structeverett_1_1profile__detail_1_1native__output.html',1,'everett::profile_detail::native_output&lt; P &gt;'],['../structeverett_1_1profile__detail_1_1native__output.html#aaac2b8f7d0075ee5776f07955633b6e7',1,'everett::profile_detail::native_output::native_output(native_output &amp;&amp;other) noexcept'],['../structeverett_1_1profile__detail_1_1native__output.html#a8f22d3e24203e259fe6dd99c10319c44',1,'everett::profile_detail::native_output::native_output(std::optional&lt; std::uint64_t &gt; common_value_width)']]],
@@ -61,11 +61,10 @@ var searchData=
   ['next_5fidentity_58',['next_identity',['../structeverett_1_1world__run.html#a28bf24e7bad31c19ee92ddef611f6a71',1,'everett::world_run']]],
   ['next_5foffset_59',['next_offset',['../structeverett_1_1profile__encoded__record.html#aaf88bf27a3d019e869e36f2a9cbbab83',1,'everett::profile_encoded_record']]],
   ['next_5frecord_60',['next_record',['../structeverett_1_1profile__view.html#a4d2560e067ce4a4fc70b2ed988669404',1,'everett::profile_view']]],
-  ['not_20a_20byte_20bound_61',['4. Entry accounting is not a byte bound',['../md_docs_2network-admission.html#autotoc_md4-entry-accounting-is-not-a-byte-bound',1,'']]],
-  ['not_20a_20wire_20format_62',['3. A framing illustration, not a wire format',['../md_docs_2keys.html#autotoc_md3-a-framing-illustration-not-a-wire-format',1,'']]],
-  ['not_20bytes_63',['8. Records are not bytes',['../md_docs_2rebuild.html#autotoc_md8-records-are-not-bytes',1,'']]],
-  ['not_20retention_20counts_64',['3. Contributions are not retention counts',['../md_docs_2catalog.html#autotoc_md3-contributions-are-not-retention-counts',1,'']]],
-  ['notation_65',['Notation',['../md_docs_2design.html#notation',1,'']]],
-  ['null_66',['null',['../structeverett_1_1catalog__detail_1_1statement.html#aa3bdab220519b4d114019455ba63efae',1,'everett::catalog_detail::statement']]],
-  ['number_67',['number',['../namespaceeverett_1_1catalog__detail.html#a1400ba4ab3077311db805867a2f66a10',1,'everett::catalog_detail']]]
+  ['not_20a_20wire_20format_61',['3. A framing illustration, not a wire format',['../md_docs_2keys.html#autotoc_md3-a-framing-illustration-not-a-wire-format',1,'']]],
+  ['not_20bytes_62',['8. Records are not bytes',['../md_docs_2rebuild.html#autotoc_md8-records-are-not-bytes',1,'']]],
+  ['not_20retention_20counts_63',['3. Contributions are not retention counts',['../md_docs_2catalog.html#autotoc_md3-contributions-are-not-retention-counts',1,'']]],
+  ['notation_64',['Notation',['../md_docs_2design.html#notation',1,'']]],
+  ['null_65',['null',['../structeverett_1_1catalog__detail_1_1statement.html#aa3bdab220519b4d114019455ba63efae',1,'everett::catalog_detail::statement']]],
+  ['number_66',['number',['../namespaceeverett_1_1catalog__detail.html#a1400ba4ab3077311db805867a2f66a10',1,'everett::catalog_detail']]]
 ];
