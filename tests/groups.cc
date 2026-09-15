@@ -9,6 +9,7 @@
 
 #include <everett/rank_groups.h>
 #include <everett/select_groups.h>
+#include <everett/select15.h>
 
 #include <algorithm>
 #include <array>
@@ -20,6 +21,11 @@
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
+
+#if defined(__unix__) || defined(__APPLE__)
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
 
 namespace {
   void require(bool condition, char const * message) {
@@ -238,6 +244,15 @@ namespace {
         require(index.low_width == width, "valid full-codec width fixture");
       }
     }
+    // A decrease in every lane and every short vector remainder is rejected,
+    // including unsigned values on either side of the sign bit.
+    for (unsigned size = 2; size != 34; ++size)
+      for (unsigned at = 1; at != size; ++at) {
+        std::vector<std::uint64_t> source(size, std::uint64_t{1} << 63);
+        source[at] -= 1;
+        rejects([&] { everett::select_groups<K>::build(source, (size - 1) * K); });
+        rejects([&] { everett::select15_index::build(source, (size - 1) * 15); });
+      }
     std::vector<std::uint64_t> skewed(10001);
     for (std::size_t i = 17; i < skewed.size(); ++i) skewed[i] = 20000;
     auto sparse = check_select<K>(skewed, 10000 * K);
@@ -250,6 +265,131 @@ namespace {
     rejects([] { everett::select_groups<K>::build(std::array<std::uint64_t, 2>{1, 0}, 1); });
     everett::select_groups<K> empty;
     require(empty.view().offset(0, 13) == 0, "default select groups");
+  }
+
+  void check_high_words(std::span<std::uint64_t const> high, std::uint64_t bit_count) {
+    std::vector<std::uint64_t> positions;
+    for (std::uint64_t bit = 0; bit != bit_count; ++bit)
+      if ((high[bit / 64] >> (bit % 64)) & 1) positions.push_back(bit);
+    require(!positions.empty() && positions.size() <= 256, "high-word fixture shape");
+    std::array<everett::select_groups_sample, 1> samples{{{positions.front(), ~std::uint64_t{0}}}};
+    std::array<everett::select15_sample, 1> fixed_samples{{{positions.front(), ~std::uint64_t{0}}}};
+    auto records = (positions.size() - 1) * 15;
+    auto universe = bit_count - positions.size();
+    everett::select_groups_view<15> view({}, high, samples, {}, records, universe, 0);
+    everett::select15_view fixed({}, high, fixed_samples, {}, records, universe, 0);
+    for (std::size_t i = 0; i != positions.size(); ++i) {
+      auto expected = positions[i] - i;
+      require(view.residual(i) == expected && fixed.residual(i) == expected,
+              "independent within-word select oracle");
+    }
+  }
+
+  void test_word_select() {
+    // Every 16-bit bitmap in each quarter, all 64-bit selection ordinals,
+    // and nonuniform full-word populations use the public EF views.
+    for (unsigned pattern = 1; pattern != 65536; ++pattern)
+      for (unsigned shift : {0, 16, 32, 48}) {
+        std::array<std::uint64_t, 1> high{std::uint64_t(pattern) << shift};
+        check_high_words(high, 64);
+      }
+    std::mt19937_64 random(0x5e1ec7);
+    for (unsigned i = 0; i != 1024; ++i) {
+      std::array<std::uint64_t, 1> high{i < 64 ? ~(std::uint64_t{1} << i) : random() | 1};
+      check_high_words(high, 64);
+    }
+    std::array<std::uint64_t, 1> full{~std::uint64_t{0}};
+    check_high_words(full, 64);
+  }
+
+  void test_select15_encoding() {
+    std::mt19937_64 random(0x15ef);
+    for (unsigned count : {0, 1, 14, 15, 16, 255 * 15, 256 * 15, 10000 * 15})
+      for (unsigned pattern = 0; pattern != 4; ++pattern) {
+        std::vector<std::uint64_t> source(count / 15 + (count % 15 != 0) + 1);
+        for (std::size_t i = 1; i != source.size(); ++i)
+          source[i] = source[i - 1] + (pattern == 0 ? 0 : pattern == 1 ? 1 :
+            pattern == 2 ? random() % 10000 : (i == 17 ? 20000 : 0));
+        auto general = check_select<15>(source, count);
+        auto fixed = everett::select15_index::build(source, count);
+        require(fixed.low == general.low && fixed.high == general.high && fixed.sparse == general.sparse &&
+                fixed.universe == general.universe && fixed.low_width == general.low_width &&
+                fixed.samples.size() == general.samples.size(), "select15 exact encoded layout");
+        for (std::size_t i = 0; i != fixed.samples.size(); ++i)
+          require(fixed.samples[i].first == general.samples[i].first &&
+                  fixed.samples[i].sparse == general.samples[i].sparse, "select15 sample layout");
+        auto view = fixed.view();
+        for (std::size_t i = 0; i != source.size(); ++i)
+          require(view.residual(i) == source[i], "select15 residual construction oracle");
+      }
+  }
+
+  void test_select_guard_pages() {
+#if defined(__unix__) || defined(__APPLE__)
+    struct guarded_words {
+      std::size_t page = std::size_t(sysconf(_SC_PAGESIZE));
+      void * mapping = mmap(nullptr, 2 * page, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+      guarded_words() {
+        require(mapping != MAP_FAILED, "select guard mapping failed");
+        require(mprotect(static_cast<char *>(mapping) + page, page, PROT_NONE) == 0, "select guard protection failed");
+      }
+      ~guarded_words() { munmap(mapping, 2 * page); }
+      std::span<std::uint64_t> copy(std::span<std::uint64_t const> words) {
+        require(words.size_bytes() <= page, "select guard fixture too large");
+        auto end = reinterpret_cast<std::uint64_t *>(static_cast<char *>(mapping) + page);
+        std::span<std::uint64_t> result(end - words.size(), words.size());
+        std::copy(words.begin(), words.end(), result.begin());
+        return result;
+      }
+    } low_guard, high_guard;
+    // Complete SIMD packing tiles and every short remainder end at guards
+    // on both sides; old destination contents must be fully overwritten.
+    for (unsigned count = 0; count != 34; ++count)
+      for (unsigned width : {0, 1, 7, 8, 16, 32, 63}) {
+        std::vector<std::uint64_t> source(count);
+        for (unsigned i = 0; i != count; ++i) source[i] = ~std::uint64_t{0} - i * 0x102030405ull;
+        auto expected = low_oracle(source, width);
+        std::vector<std::uint64_t> old(expected.size(), ~std::uint64_t{0});
+        auto input = low_guard.copy(source), output = high_guard.copy(old);
+        everett::select_groups_detail::pack_low(input, output, width);
+        require(std::equal(output.begin(), output.end(), expected.begin(), expected.end()), "guarded low packing");
+      }
+    for (unsigned entries = 1; entries != 34; ++entries) {
+      std::vector<std::uint64_t> source(entries);
+      for (unsigned i = 0; i != entries; ++i) source[i] = i * 256;
+      auto bounded = low_guard.copy(source);
+      auto records = (entries - 1) * 15;
+      auto general = everett::select_groups<15>::build(bounded, records);
+      auto fixed = everett::select15_index::build(bounded, records);
+      require(general.low == fixed.low && general.high == fixed.high, "guarded constructor source");
+    }
+    // Exact 1..65-word spans end at an inaccessible page. The 65-word
+    // fixture starts at bit63 and ends4095 bits later, the dense limit.
+    for (unsigned words = 1; words <= 65; ++words) {
+      std::vector<std::uint64_t> high(words, std::uint64_t{1} << 63);
+      if (words == 65) high.back() = std::uint64_t{1} << 62;
+      check_high_words(high_guard.copy(high), words * 64 - unsigned(words == 65));
+    }
+    auto maximum = std::numeric_limits<std::uint64_t>::max();
+    for (unsigned width = 0; width != 64; ++width) {
+      std::uint64_t entries = 129;
+      while (entries > (maximum >> width)) entries = (entries + 1) / 2;
+      auto universe = entries << width;
+      std::vector<std::uint64_t> source(entries);
+      if (entries == 1) source[0] = universe;
+      else for (std::uint64_t i = 0; i != entries; ++i)
+        source[i] = (universe / (entries - 1)) * i + ((universe % (entries - 1)) * i) / (entries - 1);
+      auto records = entries == 1 ? 0 : (entries - 1) * 15 - 14;
+      auto index = everett::select_groups<15>::build(source, records);
+      auto low = low_guard.copy(index.low), high = high_guard.copy(index.high);
+      everett::select_groups_view<15> view(low, high, index.samples, index.sparse, records, universe, width);
+      std::vector<everett::select15_sample> fixed_samples;
+      for (auto sample : index.samples) fixed_samples.push_back({sample.first, sample.sparse});
+      everett::select15_view fixed(low, high, fixed_samples, index.sparse, records, universe, width);
+      for (std::size_t i = 0; i != source.size(); ++i)
+        require(view.residual(i) == source[i] && fixed.residual(i) == source[i], "guarded EF low/high tail");
+    }
+#endif
   }
 
   void test_wide_policy() {
@@ -266,6 +406,9 @@ namespace {
 int main() {
   try {
     test_low_packing();
+    test_word_select();
+    test_select15_encoding();
+    test_select_guard_pages();
     test_rank<3>(); test_rank<7>(); test_rank<15>(); test_rank<31>();
     test_rank15_agreement();
     test_select<3>(); test_select<7>(); test_select<15>(); test_select<31>();

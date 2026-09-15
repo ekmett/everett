@@ -21,6 +21,13 @@
 #include <utility>
 #include <vector>
 
+#if defined(__BMI2__) && (defined(__x86_64__) || defined(_M_X64))
+#include <immintrin.h>
+#endif
+#if defined(__aarch64__) && defined(__ARM_NEON)
+#include <arm_neon.h>
+#endif
+
 namespace everett {
   namespace select_groups_detail {
     inline std::uint64_t add(std::uint64_t a, std::uint64_t b) {
@@ -35,6 +42,47 @@ namespace everett {
     }
     inline std::uint64_t words(std::uint64_t bits) noexcept {
       return bits / 64 + (bits % 64 != 0);
+    }
+
+    inline bool monotone(std::span<std::uint64_t const> source) noexcept {
+      if (source.size() < 2) return true;
+      std::size_t i = 1;
+#if defined(__aarch64__) && defined(__ARM_NEON)
+      for (; source.size() - i >= 2; i += 2)
+        if (vmaxvq_u32(vreinterpretq_u32_u64(vcltq_u64(vld1q_u64(source.data() + i),
+                                                      vld1q_u64(source.data() + i - 1)))))
+          return false;
+#endif
+      for (; i < source.size(); ++i) if (source[i] < source[i - 1]) return false;
+      return true;
+    }
+
+    // Zero-based selection in a nonzero word, with ordinal < popcount(value).
+    // Byte-prefix populations fit in seven bits, so the marked subtraction
+    // finds the first byte whose cumulative population exceeds ordinal.
+    inline unsigned select_word(std::uint64_t value, unsigned ordinal) noexcept {
+#if defined(__BMI2__) && (defined(__x86_64__) || defined(_M_X64))
+      return unsigned(std::countr_zero(_pdep_u64(std::uint64_t{1} << ordinal, value)));
+#else
+      auto pairs = value - ((value >> 1) & 0x5555555555555555ull);
+      auto nibbles = (pairs & 0x3333333333333333ull) + ((pairs >> 2) & 0x3333333333333333ull);
+      auto bytes = (nibbles + (nibbles >> 4)) & 0x0f0f0f0f0f0f0f0full;
+      auto prefixes = bytes * 0x0101010101010101ull;
+      auto marked = ((prefixes | 0x8080808080808080ull) -
+                     (ordinal + 1) * 0x0101010101010101ull) & 0x8080808080808080ull;
+      auto shift = unsigned(std::countr_zero(marked)) & ~7u;
+      if (shift) ordinal -= unsigned((prefixes >> (shift - 8)) & 255);
+      auto lower = unsigned((nibbles >> shift) & 15);
+      auto step = unsigned(ordinal >= lower);
+      shift += step * 4;
+      ordinal -= step * lower;
+      auto bits = unsigned(value >> shift) & 15;
+      lower = (bits & 1) + ((bits >> 1) & 1);
+      step = unsigned(ordinal >= lower);
+      shift += step * 2;
+      ordinal -= step * lower;
+      return shift + ordinal + unsigned(((value >> shift) & 1) == 0);
+#endif
     }
 
     template <unsigned W, std::size_t O, std::size_t I>
@@ -72,9 +120,26 @@ namespace everett {
         constexpr auto inputs = 64 / divisor;
         constexpr auto outputs = W / divisor;
         std::size_t at = 0;
-        for (; source.size() - at >= inputs; at += inputs)
-          low_tile<W>(source.data() + at, out.data() + (at / inputs) * outputs,
-                      std::make_index_sequence<outputs>{});
+        for (; source.size() - at >= inputs; at += inputs) {
+          auto destination = out.data() + (at / inputs) * outputs;
+#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+          // These complete tiles consume exactly four/eight input words and
+          // emit one word. Narrowing preserves each field's low bits.
+          if constexpr (W == 16) {
+            auto a = vmovn_u64(vld1q_u64(source.data() + at));
+            auto b = vmovn_u64(vld1q_u64(source.data() + at + 2));
+            *destination = vget_lane_u64(vreinterpret_u64_u16(vmovn_u32(vcombine_u32(a, b))), 0);
+          } else if constexpr (W == 8) {
+            auto a = vmovn_u64(vld1q_u64(source.data() + at));
+            auto b = vmovn_u64(vld1q_u64(source.data() + at + 2));
+            auto c = vmovn_u64(vld1q_u64(source.data() + at + 4));
+            auto d = vmovn_u64(vld1q_u64(source.data() + at + 6));
+            *destination = vget_lane_u64(vreinterpret_u64_u8(vmovn_u16(vcombine_u16(
+              vmovn_u32(vcombine_u32(a, b)), vmovn_u32(vcombine_u32(c, d))))), 0);
+          } else
+#endif
+            low_tile<W>(source.data() + at, destination, std::make_index_sequence<outputs>{});
+        }
         auto tail = out.subspan((at / inputs) * outputs);
         std::fill(tail.begin(), tail.end(), 0);
         constexpr auto mask = (std::uint64_t{1} << W) - 1;
@@ -221,8 +286,7 @@ namespace everett {
         if (scanned) value = high_[word];
         auto population = unsigned(std::popcount(value));
         if (remaining < population) {
-          for (; remaining; --remaining) value &= value - 1;
-          auto position = word * 64 + unsigned(std::countr_zero(value));
+          auto position = word * 64 + select_groups_detail::select_word(value, remaining);
           if (position >= high_bits_ || position - sample.first >= 4096)
             throw std::invalid_argument("select_groups dense span");
           return position;
@@ -252,9 +316,8 @@ namespace everett {
       auto groups = records / K + (records % K != 0);
       if (residuals.size() != groups + 1)
         throw std::invalid_argument("select_groups residual count");
-      for (std::size_t i = 1; i < residuals.size(); ++i)
-        if (residuals[i] < residuals[i - 1])
-          throw std::invalid_argument("select_groups nonmonotone offsets");
+      if (!select_groups_detail::monotone(residuals))
+        throw std::invalid_argument("select_groups nonmonotone offsets");
       select_groups result;
       result.record_count = records;
       result.universe = residuals.back();

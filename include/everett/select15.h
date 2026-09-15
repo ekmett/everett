@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <everett/select_groups.h>
+
 #include <bit>
 #include <cstdint>
 #include <limits>
@@ -122,8 +124,7 @@ namespace everett {
         if (scanned) value = high_[word];
         auto population = unsigned(std::popcount(value));
         if (remaining < population) {
-          for (; remaining; --remaining) value &= value - 1;
-          auto position = word * 64 + unsigned(std::countr_zero(value));
+          auto position = word * 64 + select_groups_detail::select_word(value, remaining);
           if (position >= high_bits_ || position - sample.first >= 4096)
             throw std::invalid_argument("select15 dense span");
           return position;
@@ -149,9 +150,8 @@ namespace everett {
       auto groups = records / 15 + (records % 15 != 0);
       if (residuals.size() != groups + 1)
         throw std::invalid_argument("select15 residual count");
-      for (std::size_t i = 1; i < residuals.size(); ++i)
-        if (residuals[i] < residuals[i - 1])
-          throw std::invalid_argument("select15 nonmonotone offsets");
+      if (!select_groups_detail::monotone(residuals))
+        throw std::invalid_argument("select15 nonmonotone offsets");
       select15_index result;
       result.record_count = records;
       result.universe = residuals.back();
@@ -162,19 +162,8 @@ namespace everett {
       result.low.assign(select15_detail::words(low_bits), 0);
       result.high.assign(select15_detail::words(high_bits), 0);
       result.samples.clear();
-      std::uint64_t low_mask = result.low_width ? (std::uint64_t{1} << result.low_width) - 1 : 0;
-      for (std::uint64_t i = 0; i < residuals.size(); ++i) {
-        auto value = residuals[i];
-        if (result.low_width) {
-          auto bit = i * result.low_width;
-          unsigned shift = unsigned(bit % 64);
-          result.low[bit / 64] |= (value & low_mask) << shift;
-          if (shift + result.low_width > 64)
-            result.low[bit / 64 + 1] |= (value & low_mask) >> (64 - shift);
-        }
-        auto position = (value >> result.low_width) + i;
-        result.high[position / 64] |= std::uint64_t{1} << (position % 64);
-      }
+      select_groups_detail::pack_low(residuals, result.low, result.low_width);
+      select_groups_detail::write_high(residuals, result.high, result.low_width);
       for (std::uint64_t begin = 0; begin < residuals.size(); begin += 256) {
         auto end = residuals.size() - begin < 256 ? residuals.size() : begin + 256;
         auto first = (residuals[begin] >> result.low_width) + begin;
