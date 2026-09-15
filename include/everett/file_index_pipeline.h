@@ -50,12 +50,12 @@ namespace everett {
     using stage_type = file_index_stage<P>;
 
     file_index_pipeline(std::filesystem::path root, pair_type target, std::vector<stage_type> stages)
-      : base(target, make_stages(root, target, stages, nullptr)),
+      : base(target, make_stages<false>(root, target, stages, nullptr)),
         identities_(identities(stages)), head_(identities_.empty() ? target->identity() : identities_.back()) {
       receipts_.reserve(stages.size());
     }
     file_index_pipeline(std::filesystem::path root, pair_type target, std::vector<stage_type> stages, Ops & ops)
-      : base(target, make_stages(root, target, stages, &ops)),
+      : base(target, make_stages<true>(root, target, stages, &ops)),
         identities_(identities(stages)), head_(identities_.empty() ? target->identity() : identities_.back()) {
       receipts_.reserve(stages.size());
     }
@@ -113,6 +113,7 @@ namespace everett {
       for (auto const & stage : stages) result.push_back(stage.identity);
       return result;
     }
+    template <bool ExternalOps>
     static std::vector<std::unique_ptr<builder_type>> make_stages(std::filesystem::path const & root,
         pair_type const & target, std::span<stage_type const> stages, Ops * ops) {
       if (!target) error_detail::raise<std::invalid_argument>("null file index pipeline target");
@@ -129,7 +130,7 @@ namespace everett {
       result.reserve(stages.size());
       auto downstream = target->identity();
       for (auto const & stage : stages) {
-        if (ops) result.push_back(std::make_unique<builder_type>(root, stage.identity.index, stage.attempt,
+        if constexpr (ExternalOps) result.push_back(std::make_unique<builder_type>(root, stage.identity.index, stage.attempt,
           stage.source, stage.identity.native, downstream, *ops));
         else result.push_back(std::make_unique<builder_type>(root, stage.identity.index, stage.attempt,
           stage.source, stage.identity.native, downstream));
