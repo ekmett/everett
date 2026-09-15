@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <everett/error_detail.h>
+
 #include <everett/profile_blob.h>
 
 #include <algorithm>
@@ -47,7 +49,7 @@ namespace everett {
   namespace sampling_detail {
     template <class P> void check_ordinal(std::uint64_t count, std::uint64_t ordinal) {
       if (count > std::numeric_limits<std::uint64_t>::max() / P::group_size || ordinal != count * P::group_size)
-        throw std::invalid_argument("sample ordinals must be consecutive policy groups");
+        error_detail::raise<std::invalid_argument>("sample ordinals must be consecutive policy groups");
     }
 
     // Suffix must not alias context. Allocate before changing its retained
@@ -57,7 +59,7 @@ namespace everett {
     inline void replace_suffix(bit_string & context, std::uint64_t retained, bit_view suffix) {
       auto bits = profile_detail::add(retained, suffix.size());
       auto bytes = profile_detail::byte_count(bits);
-      if (bytes > context.bytes.max_size()) throw std::length_error("sample key is too large");
+      if (bytes > context.bytes.max_size()) error_detail::raise<std::length_error>("sample key is too large");
       if (bytes > context.bytes.capacity()) {
         auto capacity = context.bytes.capacity();
         auto grown = capacity > context.bytes.max_size() / 2 ? context.bytes.max_size() : capacity * 2;
@@ -76,9 +78,9 @@ namespace everett {
 
     profile_coded_sample<P> encode(bit_view key, std::uint64_t target_ordinal) {
       sampling_detail::check_ordinal<P>(count_, target_ordinal);
-      if (key.size() % P::bits_per_unit) throw std::invalid_argument("sample key unit mismatch");
+      if (key.size() % P::bits_per_unit) error_detail::raise<std::invalid_argument>("sample key unit mismatch");
       auto previous = key_.view();
-      if (compare_bits(previous, key) > 0) throw std::invalid_argument("sample keys must be sorted");
+      if (compare_bits(previous, key) > 0) error_detail::raise<std::invalid_argument>("sample keys must be sorted");
       auto retained = common_prefix_units<P>(previous, key);
       auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
       // Copy the transmitted suffix before editing context. Input may alias
@@ -105,15 +107,15 @@ namespace everett {
     bit_view accept(profile_coded_sample<P> const & sample) {
       sampling_detail::check_ordinal<P>(count_, sample.target_ordinal);
       auto suffix = sample.suffix.view();
-      if (suffix.size() % P::bits_per_unit) throw std::invalid_argument("sample suffix unit mismatch");
+      if (suffix.size() % P::bits_per_unit) error_detail::raise<std::invalid_argument>("sample suffix unit mismatch");
       auto previous = key_.view();
       auto previous_units = previous.size() / P::bits_per_unit;
-      if (sample.backspace > previous_units) throw std::invalid_argument("sample backspace exceeds previous key");
+      if (sample.backspace > previous_units) error_detail::raise<std::invalid_argument>("sample backspace exceeds previous key");
       auto retained = profile_detail::multiply(previous_units - sample.backspace, P::bits_per_unit);
       // Both keys share the retained prefix. Comparing only the two remaining
       // suffixes validates order without another full-key reconstruction.
       if (compare_bits(suffix, previous.subview(retained, previous.size() - retained)) < 0)
-        throw std::invalid_argument("sample keys must be sorted");
+        error_detail::raise<std::invalid_argument>("sample keys must be sorted");
       sampling_detail::replace_suffix(key_, retained, suffix);
       ++count_;
       return key_.view();
@@ -162,7 +164,7 @@ namespace everett {
     bool done() const noexcept { return native_.done() && borrowed_.done(); }
 
     profile_sample_view<P> peek() const & {
-      if (done()) throw std::out_of_range("sample cursor at end");
+      if (done()) error_detail::raise<std::out_of_range>("sample cursor at end");
       auto item = next_borrowed_ ? borrowed_.peek() : native_.peek();
       return {item.key.prefix, ordinal_, next_borrowed_ ? stream_role::borrowed : stream_role::native,
               item.ordinal};
@@ -170,7 +172,7 @@ namespace everett {
     profile_sample_view<P> peek() const && = delete;
 
     void advance() {
-      if (done()) throw std::out_of_range("sample cursor at end");
+      if (done()) error_detail::raise<std::out_of_range>("sample cursor at end");
       auto count = std::min(group_size, target_->virtual_size() - ordinal_);
       for (std::uint64_t i = 0; i != count; ++i) {
         if (next_borrowed_) {
@@ -192,7 +194,7 @@ namespace everett {
 
   private:
     static std::shared_ptr<target_type const> checked_target(std::shared_ptr<target_type const> target) {
-      if (!target) throw std::invalid_argument("sample cursor requires a pinned target");
+      if (!target) error_detail::raise<std::invalid_argument>("sample cursor requires a pinned target");
       return target;
     }
 

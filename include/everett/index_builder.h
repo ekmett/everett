@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <everett/error_detail.h>
+
 #include <everett/sampling.h>
 
 #include <algorithm>
@@ -60,14 +62,14 @@ namespace everett {
 
     void push(bit_view key, std::uint64_t target_ordinal) {
       check_active();
-      if (input_mode_ == input_mode::coded) throw std::logic_error("cannot mix coded and full index inputs");
+      if (input_mode_ == input_mode::coded) error_detail::raise<std::logic_error>("cannot mix coded and full index inputs");
       push_key(key, target_ordinal);
       input_mode_ = input_mode::full;
     }
 
     void push(coded_sample_type const & sample) {
       check_active();
-      if (input_mode_ == input_mode::full) throw std::logic_error("cannot mix coded and full index inputs");
+      if (input_mode_ == input_mode::full) error_detail::raise<std::logic_error>("cannot mix coded and full index inputs");
       check_input_slot(sample.target_ordinal);
       auto key = incoming_decoder_.accept(sample);
       try {
@@ -86,7 +88,7 @@ namespace everett {
     // authorizes consuming native keys: a later borrowed key may precede them.
     void close_input() {
       check_active();
-      if (input_closed_) throw std::logic_error("index input is already closed");
+      if (input_closed_) error_detail::raise<std::logic_error>("index input is already closed");
       input_closed_ = true;
     }
 
@@ -137,7 +139,7 @@ namespace everett {
 
     sample_type take_output() {
       check_active();
-      if (!outgoing_) throw std::logic_error("index builder has no outgoing sample");
+      if (!outgoing_) error_detail::raise<std::logic_error>("index builder has no outgoing sample");
       // Compatibility path: materialize a full queued key only when requested.
       sample_type result{bit_string::copy(outgoing_encoder_.key()), outgoing_->target_ordinal};
       outgoing_.reset();
@@ -148,7 +150,7 @@ namespace everett {
     // through the full-key compatibility interface. Consume coded frames in order.
     coded_sample_type take_coded_output() {
       check_active();
-      if (!outgoing_) throw std::logic_error("index builder has no outgoing sample");
+      if (!outgoing_) error_detail::raise<std::logic_error>("index builder has no outgoing sample");
       auto result = std::move(*outgoing_);
       outgoing_.reset();
       return result;
@@ -159,10 +161,10 @@ namespace everett {
     // Empty targets may be retained too. No durable publication is implied.
     blob_type finish(std::shared_ptr<blob_type const> target = {}) {
       check_active();
-      if (!done()) throw std::logic_error("index builder is not drained at EOF");
+      if (!done()) error_detail::raise<std::logic_error>("index builder is not drained at EOF");
       auto target_count = target ? target->virtual_size() : 0;
       auto expected = target_count / group_size + (target_count % group_size != 0);
-      if (expected != received_) throw std::invalid_argument("index samples disagree with target extent");
+      if (expected != received_) error_detail::raise<std::invalid_argument>("index samples disagree with target extent");
       try {
         flush_pending();
         blob_type result;
@@ -206,22 +208,22 @@ namespace everett {
     bool failed_ = false;
 
     void check_active() const {
-      if (finished_ || failed_) throw std::logic_error("index builder is no longer active");
+      if (finished_ || failed_) error_detail::raise<std::logic_error>("index builder is no longer active");
     }
     void check_input_slot(std::uint64_t target_ordinal) const {
-      if (!needs_input()) throw std::logic_error("index builder cannot accept another lookahead");
+      if (!needs_input()) error_detail::raise<std::logic_error>("index builder cannot accept another lookahead");
       if (received_ > std::numeric_limits<std::uint64_t>::max() / group_size ||
           target_ordinal != received_ * group_size)
-        throw std::invalid_argument("index samples must name consecutive target groups");
+        error_detail::raise<std::invalid_argument>("index samples must name consecutive target groups");
       if (received_ == std::numeric_limits<std::uint64_t>::max() - native_->size())
-        throw std::length_error("index augmented count overflows");
+        error_detail::raise<std::length_error>("index augmented count overflows");
     }
     void push_key(bit_view key, std::uint64_t target_ordinal) {
       check_input_slot(target_ordinal);
       if (key.size() % P::bits_per_unit)
-        throw std::invalid_argument("index sample key disagrees with policy units");
+        error_detail::raise<std::invalid_argument>("index sample key disagrees with policy units");
       auto order = pending_ ? compare_bits(pending_->view(), key) : -1;
-      if (order > 0) throw std::invalid_argument("index samples must be sorted");
+      if (order > 0) error_detail::raise<std::invalid_argument>("index samples must be sorted");
       auto copy = bit_string::copy(key);
       incoming_.emplace(std::move(copy));
       incoming_false_ = !order && pending_false_;

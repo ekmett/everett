@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <everett/error_detail.h>
+
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -29,7 +31,7 @@ namespace everett {
       : bytes_(std::as_bytes(words)), little_(std::endian::native == std::endian::little) {}
 
     static word_view little_endian(std::span<std::byte const> bytes) {
-      if (bytes.size() % 8) throw std::invalid_argument("word section length is not a multiple of eight");
+      if (bytes.size() % 8) error_detail::raise<std::invalid_argument>("word section length is not a multiple of eight");
       return {bytes, true};
     }
 
@@ -38,14 +40,14 @@ namespace everett {
     std::span<std::byte const> bytes() const noexcept { return bytes_; }
     bool is_little_endian() const noexcept { return little_; }
     word_view subspan(std::size_t offset, std::size_t count = std::dynamic_extent) const {
-      if (offset > size()) throw std::out_of_range("word section offset");
+      if (offset > size()) error_detail::raise<std::out_of_range>("word section offset");
       if (count == std::dynamic_extent) count = size() - offset;
-      if (count > size() - offset) throw std::out_of_range("word section length");
+      if (count > size() - offset) error_detail::raise<std::out_of_range>("word section length");
       return {bytes_.subspan(offset * 8, count * 8), little_};
     }
 
     std::uint64_t operator[](std::size_t index) const {
-      if (index >= size()) throw std::out_of_range("word section index");
+      if (index >= size()) error_detail::raise<std::out_of_range>("word section index");
       std::uint64_t value;
       std::memcpy(&value, bytes_.data() + index * 8, 8);
       if constexpr (std::endian::native == std::endian::big) {
@@ -85,7 +87,7 @@ namespace everett {
     }
 
     static sample_view little_endian(std::span<std::byte const> bytes) {
-      if (bytes.size() % 16) throw std::invalid_argument("sample section length is not a multiple of sixteen");
+      if (bytes.size() % 16) error_detail::raise<std::invalid_argument>("sample section length is not a multiple of sixteen");
       return sample_view(word_view::little_endian(bytes));
     }
 
@@ -94,7 +96,7 @@ namespace everett {
     word_view words() const noexcept { return words_; }
     std::span<std::byte const> bytes() const noexcept { return words_.bytes(); }
     sample_value operator[](std::size_t index) const {
-      if (index >= size()) throw std::out_of_range("sample section index");
+      if (index >= size()) error_detail::raise<std::out_of_range>("sample section index");
       return {words_[2 * index], words_[2 * index + 1]};
     }
 

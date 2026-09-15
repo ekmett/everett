@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <everett/error_detail.h>
+
 #include <everett/profile.h>
 #include <everett/rank_groups.h>
 #include <everett/word_view.h>
@@ -79,7 +81,7 @@ namespace everett {
           interleave.size() != virtual_count ||
           false_borrows.size() != borrowed.size() / 8 + (borrowed.size() % 8 != 0) ||
           cut_lcps.size() != group_count())
-        throw std::invalid_argument("profile blob section shape mismatch");
+        error_detail::raise<std::invalid_argument>("profile blob section shape mismatch");
     }
 
     native_view const & native() const noexcept { return native_; }
@@ -93,12 +95,12 @@ namespace everett {
     }
 
     bool false_borrow(std::uint64_t ordinal) const {
-      if (ordinal >= borrowed_.size()) throw std::out_of_range("profile blob borrowed ordinal");
+      if (ordinal >= borrowed_.size()) error_detail::raise<std::out_of_range>("profile blob borrowed ordinal");
       return (std::to_integer<unsigned>(false_borrows_[ordinal / 8]) >> (ordinal % 8)) & 1;
     }
 
     profile_blob_window project(std::uint64_t group) const {
-      if (group >= group_count()) throw std::out_of_range("profile blob virtual group");
+      if (group >= group_count()) error_detail::raise<std::out_of_range>("profile blob virtual group");
       auto first = group * group_size;
       auto last = first + std::min<std::uint64_t>(group_size, virtual_count_ - first);
       auto const & ranks = interleave_;
@@ -106,10 +108,10 @@ namespace everett {
       auto population = ranks.class_at(group);
       if (a > first || a > borrowed_.size() || population > last - first ||
           population > borrowed_.size() - a)
-        throw std::invalid_argument("invalid profile blob rank projection");
+        error_detail::raise<std::invalid_argument>("invalid profile blob rank projection");
       auto b = a + population;
       if (last - b > native_.size())
-        throw std::invalid_argument("invalid profile blob native projection");
+        error_detail::raise<std::invalid_argument>("invalid profile blob native projection");
       return {first - a, last - b, a, b};
     }
 
@@ -119,7 +121,7 @@ namespace everett {
         std::uint64_t group, profile_query_context<P> const & lower,
         profile_comparison_work * native_work = nullptr,
         profile_comparison_work * borrowed_work = nullptr) const {
-      if (lower.order() > 0) throw std::invalid_argument("query precedes its routed boundary");
+      if (lower.order() > 0) error_detail::raise<std::invalid_argument>("query precedes its routed boundary");
       auto window = project(group);
       profile_blob_window_result<P> result;
       native_.compare_window(window.native_first, window.native_last, lower,
@@ -134,7 +136,7 @@ namespace everett {
         result.borrowed_predecessor = profile_blob_borrowed_predecessor<P>{
           ordinal, checked_target_ordinal(ordinal), is_false, comparison};
         if (!comparison.order() && is_false && !result.native) {
-          if (!window.native_first) throw std::invalid_argument("false borrow has no native predecessor");
+          if (!window.native_first) error_detail::raise<std::invalid_argument>("false borrow has no native predecessor");
           auto native_ordinal = window.native_first - 1;
           result.native = profile_blob_native_match<P>{
             native_ordinal, bit_string::copy(native_.encoded_at(native_ordinal).value)};
@@ -167,7 +169,7 @@ namespace everett {
 
     static std::uint64_t checked_target_ordinal(std::uint64_t ordinal) {
       if (ordinal > std::numeric_limits<std::uint64_t>::max() / group_size) {
-        throw std::overflow_error("borrowed target ordinal overflows");
+        error_detail::raise<std::overflow_error>("borrowed target ordinal overflows");
       }
       return ordinal * group_size;
     }
@@ -189,7 +191,7 @@ namespace everett {
       check_count(native.size(), borrowed.size());
       for (std::size_t i = 1; i < native.size(); ++i) {
         if (compare_bits(native[i - 1].key.view(), native[i].key.view()) >= 0) {
-          throw std::invalid_argument("profile blob native keys must be strictly sorted");
+          error_detail::raise<std::invalid_argument>("profile blob native keys must be strictly sorted");
         }
       }
       profile_blob result;
@@ -207,7 +209,7 @@ namespace everett {
       profile_blob result;
       result.virtual_count_ = native.size();
       auto groups = result.group_count();
-      if (groups > result.cut_lcps_.max_size()) throw std::length_error("native index is too large");
+      if (groups > result.cut_lcps_.max_size()) error_detail::raise<std::length_error>("native index is too large");
       result.cut_lcps_.resize(static_cast<std::size_t>(groups), 0);
       result.interleave_ = rank_groups<group_size>::build(result.cut_lcps_, native.size());
       result.native_ = std::make_shared<native_array const>(std::move(native));
@@ -272,7 +274,7 @@ namespace everett {
 
     static void check_count(std::uint64_t native, std::uint64_t borrowed) {
       if (native > std::numeric_limits<std::uint64_t>::max() - borrowed) {
-        throw std::length_error("profile blob virtual count overflows");
+        error_detail::raise<std::length_error>("profile blob virtual count overflows");
       }
     }
 
@@ -285,7 +287,7 @@ namespace everett {
       std::size_t native_at = 0;
       for (std::size_t i = 0; i != borrowed.size(); ++i) {
         if (i && compare_bits(borrowed[i - 1].view(), borrowed[i].view()) > 0) {
-          throw std::invalid_argument("profile blob borrowed keys must be sorted");
+          error_detail::raise<std::invalid_argument>("profile blob borrowed keys must be sorted");
         }
         while (native_at != native.size() &&
                compare_bits(native[native_at].key.view(), borrowed[i].view()) < 0) {

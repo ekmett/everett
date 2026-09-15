@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <everett/error_detail.h>
+
 #include <everett/index_builder.h>
 
 #include <cstddef>
@@ -42,7 +44,7 @@ namespace everett {
       : target_(std::move(target)), source_(target_) {
       stages_.reserve(native_stages.size());
       for (auto const & source : native_stages) {
-        if (!source) throw std::invalid_argument("null pipeline native source");
+        if (!source) error_detail::raise<std::invalid_argument>("null pipeline native source");
         stages_.push_back(std::make_unique<index_builder<P>>(*source));
       }
       results_.resize(stages_.size());
@@ -64,11 +66,11 @@ namespace everett {
     std::size_t size() const noexcept { return stages_.size(); }
 
     std::uint64_t step(std::uint64_t quanta) {
-      if (finished_ || failed_) throw std::logic_error("pipeline is no longer active");
+      if (finished_ || failed_) error_detail::raise<std::logic_error>("pipeline is no longer active");
       std::uint64_t work = 0;
       try {
         while (work != quanta && !done()) {
-          if (!advance_one()) throw std::logic_error("index pipeline made no progress");
+          if (!advance_one()) error_detail::raise<std::logic_error>("index pipeline made no progress");
           ++work;
         }
       } catch (...) {
@@ -79,8 +81,8 @@ namespace everett {
     }
 
     pair_type finish() {
-      if (failed_) throw std::logic_error("index pipeline has failed");
-      if (!done()) throw std::logic_error("index pipeline still has input");
+      if (failed_) error_detail::raise<std::logic_error>("index pipeline has failed");
+      if (!done()) error_detail::raise<std::logic_error>("index pipeline still has input");
       if (!finished_) {
         try {
           auto target = target_;

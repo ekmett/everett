@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include <everett/error_detail.h>
+
 #include <everett/index_pipeline.h>
 
 #include <cstddef>
@@ -55,7 +57,7 @@ namespace everett {
     static query_root adopt_prepared(pair_type source) {
       validate(source);
       if (source->virtual_size() > P::group_size)
-        throw std::invalid_argument("query root head exceeds one cascade group");
+        error_detail::raise<std::invalid_argument>("query root head exceeds one cascade group");
       return query_root(std::move(source));
     }
     pair_type head() const noexcept { return head_; }
@@ -68,23 +70,23 @@ namespace everett {
 
     static void validate(pair_type const & source) {
       static_assert(P::group_size >= 3);
-      if (!source) throw std::invalid_argument("null query root");
+      if (!source) error_detail::raise<std::invalid_argument>("null query root");
       std::unordered_set<blob_type const *> seen;
       for (auto current = source; current; current = current->target()) {
-        if (!seen.insert(current.get()).second) throw std::invalid_argument("cyclic query chain");
+        if (!seen.insert(current.get()).second) error_detail::raise<std::invalid_argument>("cyclic query chain");
         auto native = current->native().size(), borrowed = current->borrowed().size();
         if (native > std::numeric_limits<std::uint64_t>::max() - borrowed ||
             native + borrowed != current->virtual_size())
-          throw std::invalid_argument("query catalog size mismatch");
+          error_detail::raise<std::invalid_argument>("query catalog size mismatch");
         auto groups = current->virtual_size() / P::group_size +
           (current->virtual_size() % P::group_size != 0);
         if (current->group_count() != groups)
-          throw std::invalid_argument("query catalog group count mismatch");
+          error_detail::raise<std::invalid_argument>("query catalog group count mismatch");
         auto target = current->target();
         if (borrowed != (target ? target->group_count() : 0))
-          throw std::invalid_argument("query chain sample count or target mismatch");
+          error_detail::raise<std::invalid_argument>("query chain sample count or target mismatch");
         if (current->cut_lcps().size() != current->group_count())
-          throw std::invalid_argument("query chain cut LCP count mismatch");
+          error_detail::raise<std::invalid_argument>("query chain cut LCP count mismatch");
       }
     }
   };
@@ -121,13 +123,13 @@ namespace everett {
     bool done() const noexcept { return !pipeline_ || pipeline_->done(); }
     bool finished() const noexcept { return finished_; }
     std::uint64_t step(std::uint64_t quanta) {
-      if (!head_) throw std::logic_error("query root preparation has no source");
-      if (finished_) throw std::logic_error("query root preparation is finished");
+      if (!head_) error_detail::raise<std::logic_error>("query root preparation has no source");
+      if (finished_) error_detail::raise<std::logic_error>("query root preparation is finished");
       return pipeline_ ? pipeline_->step(quanta) : 0;
     }
     query_root<P> finish() {
-      if (!head_) throw std::logic_error("query root preparation has no source");
-      if (!done()) throw std::logic_error("query root preparation still has input");
+      if (!head_) error_detail::raise<std::logic_error>("query root preparation has no source");
+      if (!done()) error_detail::raise<std::logic_error>("query root preparation still has input");
       if (!finished_) {
         if (pipeline_) head_ = pipeline_->finish();
         finished_ = true;
@@ -161,7 +163,7 @@ namespace everett {
 
     explicit query_cursor(query_root<P, Blob> const & root, bit_view query)
       : current_(root.head()), context_(query) {
-      if (!current_) throw std::invalid_argument("query root has no head");
+      if (!current_) error_detail::raise<std::invalid_argument>("query root has no head");
       if (!current_->virtual_size()) current_.reset();
     }
     bool done() const noexcept { return !current_ && !pending_; }
@@ -169,7 +171,7 @@ namespace everett {
     bool failed() const noexcept { return failed_; }
 
     std::uint64_t step(std::uint64_t catalog_budget = 1) {
-      if (failed_) throw std::logic_error("query cursor has failed");
+      if (failed_) error_detail::raise<std::logic_error>("query cursor has failed");
       if (pending_) return 0;
       std::uint64_t visited = 0;
       try {
@@ -180,7 +182,7 @@ namespace everett {
             auto const & next = *result.borrowed_predecessor;
             if (!target || next.target_ordinal % P::group_size ||
                 next.target_ordinal >= target->virtual_size())
-              throw std::invalid_argument("query descent has no valid target context");
+              error_detail::raise<std::invalid_argument>("query descent has no valid target context");
           }
           if (result.native)
             pending_.emplace(match_type{current_, result.native->ordinal, std::move(result.native->value)});
@@ -204,8 +206,8 @@ namespace everett {
       return visited;
     }
     match_type take_match() {
-      if (failed_) throw std::logic_error("query cursor has failed");
-      if (!pending_) throw std::logic_error("query cursor has no pending match");
+      if (failed_) error_detail::raise<std::logic_error>("query cursor has failed");
+      if (!pending_) error_detail::raise<std::logic_error>("query cursor has no pending match");
       auto result = std::move(*pending_);
       pending_.reset();
       return result;
