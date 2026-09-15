@@ -1,0 +1,22 @@
+{
+  "baseline": {
+    "executable_sha256": "180bc9d994ff6fc945d76692716fa199943ff184f6411e7d081e48ede369cf45",
+    "file_bytes": 327056,
+    "command": [
+      "size",
+      "-m",
+      "build-native-compact/baseline/native_encoded"
+    ],
+    "output": "Segment __PAGEZERO: 4294967296 (zero fill) \nSegment __TEXT: 163840\n\tSection __text: 133960\n\tSection __stubs: 468\n\tSection __gcc_except_tab: 5244\n\tSection __const: 2491\n\tSection __cstring: 2802\n\tSection __unwind_info: 1264\n\ttotal 146229\nSegment __DATA_CONST: 16384\n\tSection __got: 504\n\tSection __const: 832\n\ttotal 1336\nSegment __LINKEDIT: 147456\ntotal 4295294976\n"
+  },
+  "candidate": {
+    "executable_sha256": "bb85b804b6fcc47fc6c09d0b532be9a7c8b26d994e1b376da7c809af8a20c983",
+    "file_bytes": 313392,
+    "command": [
+      "size",
+      "-m",
+      "build-native-compact/candidate/native_encoded"
+    ],
+    "output": "Segment __PAGEZERO: 4294967296 (zero fill) \nSegment __TEXT: 147456\n\tSection __text: 133532\n\tSection __stubs: 468\n\tSection __gcc_except_tab: 5184\n\tSection __const: 2491\n\tSection __cstring: 2802\n\tSection __unwind_info: 1312\n\ttotal 145789\nSegment __DATA_CONST: 16384\n\tSection __got: 504\n\tSection __const: 832\n\ttotal 1336\nSegment __LINKEDIT: 163840\ntotal 4295294976\n"
+  }
+}
