@@ -13,13 +13,20 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <initializer_list>
 #include <limits>
 #include <random>
 #include <stdexcept>
 #include <vector>
+
+#if defined(__unix__) || defined(__APPLE__)
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
 
 namespace {
   void require(bool condition, char const * message) {
@@ -219,6 +226,90 @@ namespace {
     }
   }
 
+  void check_rank15_prefixes(std::span<std::uint64_t const> words,
+                            std::span<std::uint8_t const> populations) {
+    // Build the oracle from the original population array, independently of
+    // packed-word extraction, vector masks and horizontal reductions.
+    std::vector<std::uint64_t> oracle(populations.size() + 1);
+    std::vector<std::uint64_t> checkpoints;
+    for (std::size_t i = 0; i < populations.size(); ++i) {
+      if (i % 128 == 0) checkpoints.push_back(oracle[i]);
+      oracle[i + 1] = oracle[i] + populations[i];
+    }
+    everett::rank15_view view(words, checkpoints, populations.size() * 15, oracle.back());
+    for (std::size_t i = 0; i <= populations.size(); ++i)
+      require(view.rank(i) == oracle[i], "rank15 targeted prefix oracle");
+    for (std::size_t i = 0; i < populations.size(); ++i)
+      require(view.class_at(i) == populations[i], "rank15 targeted class oracle");
+  }
+
+  void test_rank15_lanes() {
+    // Isolate both nybbles of every byte in all four 128-bit vectors, including
+    // the transitions at 32, 64 and 96 classes. Complements also exercise the
+    // maximum prefix populations already covered by the all-ones fixtures.
+    for (unsigned lane = 0; lane < 128; ++lane)
+      for (unsigned active : {1u, 15u})
+        for (bool complement : {false, true}) {
+          std::array<std::uint8_t, 128> populations;
+          populations.fill(complement ? 15 : 0);
+          populations[lane] = std::uint8_t(complement ? 15 - active : active);
+          std::array<std::uint64_t, 8> words{};
+          for (unsigned i = 0; i < populations.size(); ++i)
+            words[i / 16] |= std::uint64_t(populations[i]) << (4 * (i % 16));
+          check_rank15_prefixes(words, populations);
+        }
+  }
+
+#if defined(__unix__) || defined(__APPLE__)
+  struct guarded_rank15_page {
+    std::byte * address = nullptr;
+    std::size_t page = 0;
+    guarded_rank15_page() {
+      auto size = ::sysconf(_SC_PAGESIZE);
+      require(size >= 128 && size % 64 == 0, "rank15 page size unavailable");
+      page = static_cast<std::size_t>(size);
+      auto mapping = ::mmap(nullptr, 3 * page, PROT_NONE, MAP_PRIVATE | MAP_ANON, -1, 0);
+      require(mapping != MAP_FAILED, "rank15 guard mapping failed");
+      address = static_cast<std::byte *>(mapping);
+    }
+    guarded_rank15_page(guarded_rank15_page const &) = delete;
+    ~guarded_rank15_page() { ::munmap(address, 3 * page); }
+    void protect(int protection) {
+      require(::mprotect(address + page, page, protection) == 0, "rank15 guard protection failed");
+    }
+    std::byte * end() const { return address + 2 * page; }
+  };
+
+  void test_rank15_guarded_tails() {
+    guarded_rank15_page memory;
+    for (unsigned groups = 0; groups <= 256; ++groups)
+      for (bool maximum : {false, true}) {
+        auto word_count = (groups + 15) / 16;
+        std::array<std::uint64_t, 16> packed;
+        // Nonzero padding catches a mask that includes an unused final nybble.
+        packed.fill(std::numeric_limits<std::uint64_t>::max());
+        std::vector<std::uint8_t> populations(groups);
+        for (unsigned i = 0; i < groups; ++i) {
+          populations[i] = std::uint8_t(maximum ? 15 : (11 * i + 3 * groups) % 16);
+          auto shift = 4 * (i % 16);
+          packed[i / 16] = (packed[i / 16] & ~(std::uint64_t{15} << shift)) |
+                          (std::uint64_t(populations[i]) << shift);
+        }
+        auto bytes = word_count * sizeof(std::uint64_t);
+        auto destination = memory.end() - bytes;
+        memory.protect(PROT_READ | PROT_WRITE);
+        if (bytes) std::memcpy(destination, packed.data(), bytes);
+        memory.protect(PROT_READ);
+        // Every span ends immediately before PROT_NONE. Eight-word checkpoints
+        // test full 64-byte loads; shorter spans test fallback bounds. Nine to
+        // fifteen words put a full checkpoint at only uint64_t alignment.
+        // The empty span points at the protected page and must read nothing.
+        auto words = std::span(reinterpret_cast<std::uint64_t const *>(destination), word_count);
+        check_rank15_prefixes(words, populations);
+      }
+  }
+#endif
+
   void test_rank15() {
     std::mt19937_64 random(0x1515);
     for (std::uint64_t bits : std::initializer_list<std::uint64_t>{0, 1, 14, 15, 16, 239, 240, 241, 1919, 1920,
@@ -318,6 +409,10 @@ int main() {
     test_rank();
     test_rank_tails();
     test_rank15_words();
+    test_rank15_lanes();
+#if defined(__unix__) || defined(__APPLE__)
+    test_rank15_guarded_tails();
+#endif
     test_rank15();
     test_select15();
     std::cout << "Storage rank, packed rank15, and Elias-Fano select15 oracle checks passed\n";
