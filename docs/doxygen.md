@@ -113,7 +113,7 @@ before each run so removed declarations cannot leave stale published pages.
   warnings per header. The configured run must emit no warnings.
 
 On 2026-09-15, Doxygen 1.9.8 passed these checks for all 29 public headers,
-23 real function/overload cases and twelve fixture symbols in all three
+26 real function/overload cases and twelve fixture symbols in all three
 metadata layouts. The unconfigured baseline had 58 warnings, exclusively for
 `\license` and `\endlicense`.
 

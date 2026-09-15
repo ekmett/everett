@@ -115,17 +115,25 @@ finds the difference in the first new unit. A redundant FC record can repeat
 more literal material; the same operation checks it and obtains the exact LCP.
 It also lets the merger reject non-increasing source keys while advancing.
 
-The output writer receives the winning head's known prefix through a private
-path. It checks units, value width and prefix bounds and writes the suffix;
-it does not rediscover that prefix by comparing from the start. Its public
-`append` still checks arbitrary caller keys. Input cursors retain their decoded
-current keys for output and composition callbacks.
+The shared frame writer receives the winning head's known prefix and literal
+suffix. It checks units, value width and prefix bounds, then writes the frame.
+It retains only the previous key's length. The two input cursors own the current
+keys needed for comparison and composition callbacks; the merger keeps no third
+key buffer. `profile_native_writer::append` uses the same framing component and
+retains its own predecessor to check arbitrary caller keys.
 
 Byte policies carry whole-byte LCP counts; bit policies carry exact bit counts.
 Fractional-index cut scalars remain exact bit LCPs, so a byte merge count alone
 cannot replace those scalars. EOF is a separate cursor state, never a sentinel
 key. Equal heads consume both inputs and preserve the callback's older/newer
 argument order.
+
+The [complete merge measurements](../bench/native_merge.md) cover short and
+long-prefix keys in both profiles, fixed and variable values, exact encoded
+output, and chronological composition. In the measured M2 Max fixtures, the
+integrated merger uses 12.50–80.31% less time than the original implementation.
+The isolated frame-output change saves 2.14–11.03%; these are separate paired
+comparisons, and their percentages should not be added.
 
 ## Work and ownership
 

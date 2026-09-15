@@ -68,7 +68,9 @@ without widening at query time. The selected run uses bounded NEON popcount
 on AArch64 or portable word operations. A query at a 512-bit boundary uses the
 directory without reading the bitmap. Construction handles complete 2048-bit
 blocks with four 512-bit popcounts and a separate bounded tail. This backend
-supplies rank alone and stores no select support.
+supplies rank alone and stores no select support. Intel targets have bounded
+AVX2 nibble-lookup/SAD, AVX-512BW lookup/SAD and AVX-512VPOPCNTDQ paths, chosen
+by compiler features. Short allocations retain the bounded scalar tail.
 
 `elias_fano` encodes a monotone sequence independently of how its caller sampled
 that sequence. `elias_fano_view::select(i)` returns the value at an existing
@@ -115,7 +117,10 @@ predictions:
 | [NEON and Cult rank](../bench/neon_cult_rank.md) | Packed rank against the actual external Cult CPU directory |
 | [Other grouped / bitmap rank](../bench/other_rank.md) | Groups 3, 7 and 31 and complete bitmap queries |
 | [Rank without cached totals](../bench/rank_bounds.md) | Existing-position queries, whole-query timing and view size |
+| [Stored spacer lanes](../bench/rank_spacers.md) | Complete bitmap queries with the gaps written during construction |
+| [Intel prefix paths](../bench/intel_prefix.md) | ISA guards, bounded loads, compiler output and execution coverage |
 | [Combined query refactor](../bench/query_refactor.md) | Complete byte/bit queries and root preparation after rank, Elias–Fano and exception outlining changes |
+| [Codec arithmetic integration](../bench/query_rounding.md) | Complete queries after explicit unit shifts and additive rounding |
 | [Elias–Fano construction / select](../bench/select_compare.md) | Tiled writing, narrowing, validation and scalar/SIMD select candidates |
 
 The selected implementations retain the measured latency tradeoffs: a
@@ -411,7 +416,12 @@ constructs its zero rank/cut directories without decoding the native keys.
 `native_merge_builder<P, Native, Compose>` pins two ordered inputs and resolves
 one distinct key per step unit. Equal keys call the supplied chronological
 composition; replacement is the default. Sources may be owning arrays or
-mapped-native owners. A step failure poisons the continuation while retaining
+mapped-native owners. Exact LCP lengths carried between the heads avoid
+rechecking their inherited prefixes. Shared frame output keeps only the previous
+key's length, leaving two decoded input keys and no third output-key buffer.
+The [merge measurements](../bench/native_merge.md) report 12.50–80.31% lower
+medians across twelve byte/bit, value-width and prefix fixtures, with exact
+payload and EF equivalence. A step failure poisons the continuation while retaining
 its inputs. The [native merge guide](native-merges.md) distinguishes the key
 budget from string/allocation work and durable checkpointing.
 
@@ -645,8 +655,8 @@ and forwarded VFS failures. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
 Combined verification on 2026-09-15: AppleClang 21, C++20, Release with strict
-warnings and ASan/UBSan passed all **30 CTests**, including three package consumers
-and Doxygen, in 96 seconds. SQLite headers and runtime were 3.53.4. This run covers
+warnings and ASan/UBSan passed all **32 CTests**, including three package consumers
+and Doxygen, in 97 seconds. SQLite headers and runtime were 3.53.4. This run covers
 ordinary-FC comparison, complete owning and mapped query chains, portable
 unaligned navigation, native construction and incremental merges, immutable
 writes, metadata-only opening, and persistent saves and reader pins.
@@ -659,7 +669,7 @@ rows through fresh connections. The 20 process-interruption cases additionally
 check actual writer death, including committed-but-unacknowledged operations.
 These tests do not establish behavior under physical power loss.
 
-Doxygen checked 29 public headers and 23 real declaration associations, with
+Doxygen checked 29 public headers and 26 real declaration associations, with
 clean generation that removes obsolete pages. The proof checkpoint checked
 693 Lean declarations with only standard `propext`, `Quot.sound` and
 `Classical.choice` axioms.
