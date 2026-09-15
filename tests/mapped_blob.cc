@@ -501,6 +501,18 @@ namespace {
       };
       auto table = envelope_bytes + (is_index ? section_detail::index_descriptor_offset : section_detail::native_descriptor_offset);
       auto count = is_index ? 9u : 5u;
+      require(get_le(encoded, envelope_bytes + 4, 2) == 2 &&
+              encoded[envelope_bytes + 3] == std::byte{'2'}, "mapped profile format version");
+      {
+        auto old_version = encoded;
+        put_le(old_version, envelope_bytes + 4, 2, 1);
+        repair_crc(old_version);
+        rejects([&] { open(old_version); });
+        auto old_magic = encoded;
+        old_magic[envelope_bytes + 3] = std::byte{'1'};
+        repair_crc(old_magic);
+        rejects([&] { open(old_magic); });
+      }
       for (unsigned s = 0; s < count; ++s) {
         for (unsigned field = 0; field < 2; ++field) {
           auto broken = encoded;

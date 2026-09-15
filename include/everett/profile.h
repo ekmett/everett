@@ -325,7 +325,11 @@ namespace everett {
       return query_->view();
     }
     std::uint64_t common_bits() const noexcept { return common_bits_; }
-    std::uint64_t full_units() const noexcept { return full_units_; }
+    // A repaired lower frontier needs only order and LCP. Its full length is
+    // available after reading a frame or establishing equality with the query.
+    std::optional<std::uint64_t> full_units() const noexcept {
+      return length_known_ ? std::optional(full_units_) : std::nullopt;
+    }
     int order() const noexcept { return order_; }
 
     profile_query_context with_key(bit_view key) const {
@@ -334,6 +338,7 @@ namespace everett {
       auto comparison = compare_common_bits(key, query());
       result.common_bits_ = comparison.common_bits;
       result.full_units_ = (key.size() >> P::unit_shift);
+      result.length_known_ = true;
       result.order_ = comparison.order;
       return result;
     }
@@ -346,9 +351,11 @@ namespace everett {
     std::uint64_t common_bits_ = 0;
     std::uint64_t full_units_ = 0;
     int order_ = 0;
+    bool length_known_ = true;
 
     std::uint64_t advance(profile_encoded_record const & record) {
-      if (record.retained > full_units_) error_detail::raise<std::invalid_argument>("comparison anchor is too short");
+      if (length_known_ && record.retained > full_units_)
+        error_detail::raise<std::invalid_argument>("comparison anchor is too short");
       auto retained_bits = profile_detail::multiply(record.retained, P::bits_per_unit);
       std::uint64_t compared = 0;
       if (common_bits_ >= retained_bits) {
@@ -360,20 +367,21 @@ namespace everett {
           (comparison.common_bits < std::min(record.suffix.size(), suffix_query.size()));
       }
       full_units_ = record.key_units;
+      length_known_ = true;
       return compared;
     }
 
-    profile_query_context predecessor(std::uint64_t lcp_bits, std::uint64_t key_units) const {
-      auto key_bits = profile_detail::multiply(key_units, P::bits_per_unit);
-      if (order_ > 0 || lcp_bits > key_bits ||
-          lcp_bits > profile_detail::multiply(full_units_, P::bits_per_unit))
+    profile_query_context predecessor(std::uint64_t lcp_bits) const {
+      if (order_ > 0 || (length_known_ &&
+          lcp_bits > profile_detail::multiply(full_units_, P::bits_per_unit)))
         error_detail::raise<std::invalid_argument>("invalid cut predecessor comparison");
       auto result = *this;
       result.common_bits_ = std::min(lcp_bits, common_bits_);
-      result.full_units_ = key_units;
-      if (result.common_bits_ == query().size() && key_bits > query().size())
-        error_detail::raise<std::invalid_argument>("cut predecessor exceeds query");
-      result.order_ = key_bits == query().size() && result.common_bits_ == key_bits ? 0 : -1;
+      // C <= boundary <= query. Matching all of query therefore means C=query;
+      // a shorter match means C<query, without consulting C's full length.
+      result.length_known_ = result.common_bits_ == query().size();
+      result.full_units_ = result.length_known_ ? query().size() >> P::unit_shift : 0;
+      result.order_ = result.length_known_ ? 0 : -1;
       return result;
     }
   };

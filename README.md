@@ -99,7 +99,7 @@ rather than distinct keys.
 Sorted strings share prefixes, so we can encode a key by backspacing from its
 predecessor and appending a suffix. Both physical streams use ordinary front
 coding. A search carries comparison state against its query: the known prefix
-agreement, comparison direction and full key length. It compares the next
+agreement, comparison direction and the full key length when known. It compares the next
 literal without reconstructing the inherited prefix.
 
 The borrowed predecessor before a window needs one extra scalar: its exact LCP
@@ -118,7 +118,7 @@ same policy family.
 
 Bit backspaces can use `golomb<M>` or `exponential_golomb<Order>`; the default
 is `exponential_golomb<0>`. The choice belongs to the policy and is checked in
-stream and file metadata. Checkpoint and suffix/value lengths still use
+stream and file metadata. Absolute retained counts and suffix/value lengths use
 order-zero exponential-Golomb, while the byte profile uses unsigned varints.
 Golomb's unary quotient can be long for a large backspace, so its decoding
 cost includes the count's encoded length even when the resulting key is short.
@@ -132,8 +132,9 @@ the contribution is `w * i` in the same address units. The fixed payload stride
 consequently does not inflate the residual offset universe. The terminal sample
 uses the actual record count, including a short final block. Physical block
 width `W` is independent of cascade stride `K`; both are part of the policy.
-Each block starts with its predecessor's key length, so we can parse controls
-before the selected lane without reconstructing those earlier keys.
+Each block starts with an absolute retained-prefix length, then uses relative
+backspaces. We can parse controls before the selected lane without reading the
+preceding block or reconstructing those earlier keys.
 
 This is why the blob has two sparse offset structures and a grouped rank
 structure, plus exact cut LCPs: two physical byte/bit streams, one virtual order. See

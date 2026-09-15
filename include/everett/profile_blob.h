@@ -143,17 +143,16 @@ namespace everett {
             native_ordinal, bit_string::copy(native_.encoded_at(native_ordinal).value)};
         }
       };
-      std::uint64_t previous_units = 0;
       borrowed_.compare_window(window.borrowed_first, window.borrowed_last, lower,
         [&](profile_comparison_item<P> item) {
           if (item.comparison.order() > 0) return false;
           remember(item.ordinal, item.comparison);
           return true;
-        }, borrowed_work, &previous_units);
+        }, borrowed_work);
       if (!result.borrowed_predecessor && window.borrowed_first) {
-        // The cut LCP repairs comparison only. Its physical predecessor length
-        // comes from header replay or the terminal checkpoint, never key bytes.
-        auto comparison = lower.predecessor(cut_lcps_[group], previous_units);
+        // Ordered cut LCPs recover equality and direction without fetching the
+        // preceding record's length or touching its physical block.
+        auto comparison = lower.predecessor(cut_lcps_[group]);
         remember(window.borrowed_first - 1, comparison);
       }
       return result;

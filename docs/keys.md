@@ -336,14 +336,15 @@ and bit streams with fixed/variable values and actual backspace counts. The
 blob uses ordinary FC in both roles. A sort registry and final prefix-free pair
 encoder remain to be supplied.
 
-Each physical block starts with one count-coded **actual predecessor key
-length**, followed by up to W records. A record stores its backspace count,
-suffix length, a value length when values are variable, then suffix and value
-payloads. Reaching a selected lane parses at most W − 1 controls from its
-checkpoint. This recovers positions and lengths without reconstructing or
-comparing those preceding keys. There is no full-key-length or record-offset
-array with one machine word per key. Block checkpoints are part of the residual
-Elias–Fano extent, and `terminal_key_units` stores the final key length separately.
+Each physical block contains up to W records. Its first record stores an
+absolute **retained-prefix length**; subsequent records store a relative
+backspace. Each then stores a suffix length, a value length when values are
+variable, and the suffix and value payloads. Reaching a selected lane parses at
+most W − 1 controls from the block start. This recovers positions and lengths
+without reading the preceding block or reconstructing earlier keys. There is
+no full-key-length or record-offset array with one machine word per key. All
+controls are part of the residual Elias–Fano extent; `terminal_key_units` stores
+the final key length separately. Profile metadata uses version 2.
 
 In the byte profile all counts and payloads use byte positions. In the bit
 profile the policy selects the backspace code; other counts use order-zero
@@ -354,17 +355,18 @@ policy, role, K and W. The [portable file sections](mapped-blobs.md) encode
 these fields explicitly alongside the stream and its navigation arrays.
 
 `profile_query_context<P>` owns the query and carries exact bit agreement,
-full key length and comparison direction. `with_key` establishes the comparison
+comparison direction and an optional full key length. `with_key` establishes the comparison
 of a supplied key against that query. At a projected stream's first candidate,
 the known virtual boundary supplies the retained-prefix comparison; the actual
-physical predecessor length still determines its backspace arithmetic. Later
+physical frame determines its retained position. Later
 records transfer the comparison in physical order. No inherited prefix needs
 to be materialized merely to compare the next literal suffix.
 
 The index's `cut_lcps()` stores one exact bit LCP per virtual group. For preceding
 borrowed key C and boundary B with C ≤ B ≤ Q, its minimum with the incoming
-LCP of B and Q gives the exact LCP of C and Q. Full lengths then resolve
-endpoints. C is absent iff borrowed rank is zero; borrowed rank equal to a
+LCP of B and Q gives the exact LCP of C and Q. Agreement over all of Q proves
+equality by the known order; otherwise C < Q. No access to C's length is needed.
+C is absent iff borrowed rank is zero; borrowed rank equal to a
 nonempty stream's length still names the final preceding key. The
 [comparison design](comparison-fc.md) derives these cases.
 
@@ -377,7 +379,10 @@ restart facility serves callers needing that separate operation; the cascade
 does not depend on it. Reconstruction copies returned values, while view
 callbacks borrow value spans and ephemeral key scratch.
 
-`encoded_at` parses from a bounded physical checkpoint. Full traversal also
+`encoded_at` parses from a bounded physical block start. `encoded_cursor()`
+traverses frames sequentially, borrowing suffix and value spans without reading
+their contents or allocating a key buffer. It validates framing, not sortedness
+or maximal prefix retention. Full traversal also
 checks predecessor continuity, sampled block offsets and terminal extent. The
 views check metadata, section bounds, padding and parsed counts; they do not
 authenticate objects or certify that arbitrary caller-supplied samples came from

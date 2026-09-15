@@ -106,9 +106,14 @@ The FC section separately records its meaningful bit length and padding.
 | 8 | — | Exact cut-LCP words |
 
 The native directory is 128 bytes; the index directory is 256 bytes. Both start
-with four-byte magic (`KV01` or `IX01`), a 16-bit version and a 16-bit section
+with four-byte magic (`KV02` or `IX02`), a 16-bit version of 2 and a 16-bit section
 count. Offsets 8, 16 and 24 contain the FC extent, terminal key length and EF
 universe as 64-bit words; byte 32 contains the low-bit width.
+
+Each FC block begins with an absolute retained-prefix count; later records use
+relative backspaces. Typed opening rejects version-1 section directories. The
+outer envelope has its own version, which remains 1: it describes opaque body
+bytes independently of the inner codec.
 
 In an index directory, byte 33 indicates a target, offset 40 contains the
 virtual occurrence count, and offsets 48, 64 and 80 contain the 16-byte native,

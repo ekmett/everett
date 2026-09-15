@@ -137,7 +137,7 @@ uses ordinary FC; its exact cut LCPs are separate metadata. Each stage retains:
   the current partial rank class.
 - Front-coding contexts, the last borrowed key, and the exact bit LCP between
   that key and each virtual cut boundary.
-- Physical block positions at interval W, predecessor-length checkpoints, final
+- Physical block positions at interval W, absolute retained-prefix counts, final
   key lengths, and residual offsets staged until the final extent determines
   the Elias–Fano encoding.
 

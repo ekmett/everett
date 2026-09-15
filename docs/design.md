@@ -101,7 +101,7 @@ need not occupy one file:
 4. Two `elias_fano` indexes, one for each physical stream.
 5. One false-borrow flag per borrowed record.
 6. One exact bit-LCP count per virtual cut, describing its preceding borrowed key.
-7. Exact immutable target identities, physical length checkpoints, and format information.
+7. Exact immutable target identities, physical block framing, and format information.
 
 ```mermaid
 flowchart TD
@@ -265,11 +265,13 @@ keys and borrowed keys have separate predecessor chains. Reindexing changes the
 borrowed stream and its navigation metadata while sharing the exact native
 allocation.
 
-Each physical block begins with its predecessor's actual full key length.
-Within a block, records have the following fields:
+The first record of each physical block starts with an absolute retained-prefix
+length. Other records start with a backspace relative to their physical
+predecessor. The remaining fields are the same:
 
 ```text
-backspace_count : encoded unsigned count
+retained_length : encoded unsigned count at block start
+backspace_count : encoded unsigned count otherwise
 suffix_length   : encoded unsigned count
 value_length    : encoded unsigned count, omitted for a common fixed width
 suffix          : suffix_length profile units
@@ -277,18 +279,19 @@ value           : value_length profile units
 ```
 
 If the actual predecessor has length $a$, a backspace of $b$ retains $a-b$
-units. Adding the suffix length gives the next full length. These arithmetic
+units; a block's first count supplies that retained position directly. Adding
+the suffix length gives the next full length. These arithmetic
 operations do not require the predecessor's key contents. Byte counts use
 unsigned varints. Bit backspaces use the policy's Golomb or exponential-Golomb
 code; other bit counts use order-zero exponential-Golomb. A large Golomb unary
 quotient can dominate the work even when the next key is short, so count
 parsing is charged to the encoded controls.
 
-The block checkpoint stores a length, not a key. For a physical ordinal at the
-start of a block, it directly gives that record's predecessor length. For an
-ordinal inside the block, we parse controls from its start. At the stream's end,
-`terminal_key_units` gives the final key length even when the end sentinel is
-block-aligned. No preceding-block scan is needed just to recover that length.
+The first record of the entire stream retains zero units. Later blocks can
+retain arbitrarily long prefixes: the count is a position within the key, not
+a full-key restart. We parse controls from the selected block's start without
+reading its predecessor. `terminal_key_units` records the final full length for
+sequential validation and explicit predecessor-length access at the endpoint.
 Fixed-width values remove their length fields and direct payload stride from
 the residual offsets; they do not influence which key prefix ordinary FC retains.
 
@@ -297,19 +300,22 @@ the residual offsets; they do not influence which key prefix ordinary FC retains
 `profile_query_context<P>` owns a shared immutable query and records:
 
 - The exact common-prefix length **in bits**, including for a byte policy.
-- The compared key's actual full length in policy units.
+- The compared key's full length in policy units, when known.
 - Its ordering relative to the query.
 
 Its constructor starts with the comparison of the empty key. `with_key` can
 establish a context from a known key; normal cascading transfers the context
 without copying that key's inherited prefix. `query()`, `common_bits()`,
-`full_units()` and `order()` expose the corresponding quantities. A comparison
+`full_units()` and `order()` expose the corresponding quantities. `full_units()`
+returns an optional length: reading a frame establishes it, while repairing a
+strictly lower borrowed frontier can leave it unknown. A comparison
 from one query cannot silently become an anchor for another.
 
 Byte FC retains whole bytes, but two unequal bytes can share several leading
 bits. Keeping an exact bit LCP avoids throwing that information away. Endpoints
-remain separate: a full-prefix match means equality only when both full lengths
-also agree. Empty keys and proper prefixes follow the same rule.
+remain separate. In a general comparison, full-prefix agreement needs length
+information to establish equality. A known lower bound $C\le Q$ lets us do
+better: agreement over all of $Q$ proves $C=Q$ without fetching $C$'s length.
 
 ### Entering a projected stream
 
@@ -354,10 +360,11 @@ $$
 =\min\bigl(\ell_g,\mathrm{lcp}_{\mathrm{bits}}(B,Q)\bigr).
 $$
 
-Together with $C$'s full length, this supplies its exact query comparison.
+The recovered LCP spans all of $Q$ exactly when $C=Q$; otherwise $C<Q$.
+This supplies its exact query comparison without reading $C$'s full length.
 The borrowed predecessor is absent precisely when $i=0$, at any cut. We store
 zero in that unused cut-LCP slot. Conversely, $i=|S|>0$ is a valid terminal
-frontier, with its length supplied by the stream's terminal metadata. A native
+frontier, repaired by the same formula. A native
 false-borrow match before the projected range still needs a separate value
 probe at the rank-derived native ordinal; it does not need key reconstruction.
 
@@ -729,7 +736,7 @@ retained history. A logarithmic total bound requires explicit policy contracts.
 
 Space accounting separately reports native key encoding, fixed values, borrowed
 keys, false-borrow bits, rank metadata, both offset indexes, exact cut-LCP
-counts, physical length checkpoints, unfinished outputs, and objects retained only by historical pins.
+counts, physical block framing, unfinished outputs, and objects retained only by historical pins.
 The redundant schedule budgets approximately $3\log_2(N+1)$ live indexes for
 one snapshot and another $3\log_2(N+1)$ during rebuilding, with a constant-size
 base case. A repeated first borrowed key of length $T$ therefore contributes

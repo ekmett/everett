@@ -168,9 +168,11 @@ the codec types. `fixed_values<N>` counts
 policy units, including the valid width zero. `profile_array<P, Role>` uses
 canonical byte varints and policy-selected Golomb or exponential-Golomb bit
 backspaces. Other bit counts use order-zero exponential-Golomb. Streams retain
-meaningful bit extents and canonical padding. One predecessor-length
-checkpoint per physical block supports header-only entry at a selected lane.
-The terminal key length handles an end-of-stream predecessor. Common fixed
+meaningful bit extents and canonical padding. Each physical block's first record
+stores an absolute retained-prefix count; later records use relative backspaces.
+Header-only entry needs no read of the preceding block. Profile metadata and
+mapped section directories use version 2. The terminal key length supports
+sequential checks and explicit endpoint length access. Common fixed
 value width is subtracted from the Elias–Fano residual positions.
 
 `profile_blob<P>` uses ordinary front coding for native and borrowed streams.
@@ -181,14 +183,19 @@ allocation and recomputes all dependent index metadata. The batch builder
 materializes native keys as scratch during reindex.
 
 `profile_query_context<P>` owns its immutable query and carries exact agreement
-in bits, key length in policy units and comparison direction. The profile reader
+in bits, an optional key length in policy units and comparison direction. The profile reader
 parses controls before the selected lane without reconstructing keys. It then
 compares literal suffixes and propagates inherited mismatches. Exact cut LCPs
 repair the outgoing borrowed predecessor even when it precedes the window.
+The known order establishes equality from the recovered LCP without reading
+that predecessor's length or replaying its physical block.
 Search returns both native values and downstream routing on equality; it does
 not resolve same-key arrows. Optional counters expose skipped/visited record
 headers and compared literal bits.
 
+`profile_encoded_cursor<P, Role>` traverses encoded frames with borrowed literal
+and value spans, without key allocation or payload reads. It checks framing and
+terminal metadata; sortedness is a separate content property.
 `profile_cursor<P, Role>` supplies sequential decoding with borrowed values;
 `profile_borrowed_writer<P>` incrementally encodes borrowed keys. Their output
 matches the batch encoder across the policy matrix. Ordinary advancement and

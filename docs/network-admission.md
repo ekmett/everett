@@ -19,7 +19,7 @@ pinned until a replacement index is complete.
 A standalone base has no downstream catalog to sample. It still needs native
 navigation structures and a terminal index representation. In the
 [portable format](mapped-blobs.md), a complete `.kv` includes its ordinary front-coded native
-stream, W-spaced predecessor-length checkpoints, final key length, and
+stream with absolute retained counts at W-spaced block starts, final key length, and
 Elias–Fano sampled-offset directory. We can receive
 and reuse those structures together. Receiving only the record stream instead
 requires scanning its framing, collecting sampled offsets and constructing EF;
@@ -156,7 +156,7 @@ although $S=q$, $c=1$, and the borrowed-entry bound is just $B=q$.
 The incoming short keys take only $O(q\log(q+1))$ units. Ordinary prefix
 compression within each independent stream cannot remove its first literal.
 Exact cut-LCP metadata and fixed-value stride subtraction do not remove these
-independent first literals. Later physical blocks need only predecessor lengths
+independent first literals. Later physical blocks need only retained-prefix positions
 and carried comparison context; they do not repeat a full-key restart.
 
 ### The redundant-level storage budget

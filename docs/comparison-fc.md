@@ -68,9 +68,10 @@ $$
 \min\bigl(\ell,\mathrm{lcp}(B,Q)\bigr).
 $$
 
-The identity includes equal keys and proper-prefix endpoints. Together with the
-full lengths of $C$ and $Q$, it determines equality; otherwise the known order
-is $C<Q$. At the initial cut there is no preceding borrowed occurrence to repair.
+The identity includes equal keys and proper-prefix endpoints. Since $C\le Q$,
+equality holds exactly when this LCP spans all of $Q$. Otherwise $C<Q$. We do
+not need $C$'s full length. At the initial cut there is no preceding borrowed
+occurrence to repair.
 
 This scalar belongs to the exact fractional-index view. It depends on the
 current cut layout and borrowed frontier, and stays pinned with those
@@ -144,10 +145,12 @@ corresponding physical sampling cadence when $W$ changes. The native directory
 continues to know nothing about later fractional-index layouts. Fixed-width
 values retain their separately calculated offset contribution.
 
-Each block needs its predecessor's full key **length** to parse backspaces and
-compute retained lengths. It does not need the predecessor's key bits or a full
-reset. Controls before the selected lane can be parsed without reconstructing
-their keys; the selected lane enters with the carried comparison state.
+The first record in each block stores an absolute **retained-prefix length**
+instead of a backspace. Adding its suffix length gives that key's full length;
+the remaining records use relative backspaces. Neither the preceding block nor
+its key contents are needed to parse these controls. Controls before the selected
+lane can be parsed without reconstructing their keys; the selected lane enters
+with the carried comparison state.
 
 A nonempty interval of $L$ records can cross at most
 $\lceil(W-1+L)/W\rceil$ blocks. Since each projected interval has $L\le K$,
@@ -156,14 +159,12 @@ independent choices of $W$ and $K$.
 Control parsing costs $O(W)$ per touched block. Keeping $W=O(K)$ retains an
 $O(K)$ entry/control bound for the whole projected window.
 
-That span counts forward candidates. The preceding borrowed record or a
-false-borrow native value can require an additional preceding block. In
-particular, $i$ may equal the borrowed stream's length even though $i-1$ is
-needed. If $i$ is also block-aligned, its directory entry is an end sentinel,
-not a block carrying the predecessor length. The stream's terminal key-length
-metadata supplies it without reading the preceding block. Fetching the native
-value at $d-1$ still requires its encoded record; the comparison counters exclude
-that separate false-borrow probe.
+That span counts forward candidates. Repairing the preceding borrowed comparison
+uses the cut LCP even when $i$ is the stream's length: it reads no preceding
+record. The repaired context leaves its full length unknown unless equality
+establishes it. Fetching a false-borrow native value at $d-1$ still requires its
+encoded record and can touch an additional preceding block; the comparison
+counters exclude that separate probe.
 
 The index currently stores each exact cut LCP in an unsigned 64-bit word.
 This allows direct addressing without another Elias–Fano directory and costs
@@ -180,17 +181,17 @@ $$
 w=\lfloor\log_2(x+1)\rfloor,\qquad x=2^w-1+\mathrm{tail}.
 $$
 
-Scalar scans can locate the unary terminators for the block's backspace and
-literal-length counts. Prefix sums locate the tails and literals. If $b_j$ and
-$s_j$ are backspace and literal lengths, respectively, then
+Scalar scans can locate the unary terminators for the block's prefix and
+literal-length counts. Prefix sums locate the tails and literals. With initial
+absolute retained count $r_0$, suffix lengths $s_j$ and later backspaces $b_j$,
 
 $$
-L_j=L_{\mathrm{anchor}}+\sum_{t\le j}(s_t-b_t),
-\qquad r_j=L_j-s_j.
+L_0=r_0+s_0,\qquad
+L_j=L_0+\sum_{t=1}^{j}(s_t-b_t),\qquad r_j=L_j-s_j.
 $$
 
-Here $L_{\mathrm{anchor}}$ is the actual physical block predecessor's length
-from its checkpoint. It is not the surrogate boundary $B$'s length.
+The initial retained position comes from the block itself; no predecessor length
+or surrogate boundary length appears in this calculation.
 
 We can align each literal with its query interval, compare those intervals
 independently, then scan the transfer summaries in order. Overflow, bounded
@@ -214,8 +215,8 @@ The [proof guide](../proof/README.md) records the checked mathematical pieces.
 The independent tests compare exact cut LCPs, per-candidate states and complete
 queries with full-key oracles. They cover reindexing, equality across cuts,
 empty projections and the preceding-frontier counterexample. Protected pages
-verify that control-only entry and terminal predecessor access do not read
-earlier key payloads. Reindexing preserves native bytes and pins the exact new
+verify that control-only entry skips key payloads and borrowed-frontier repair
+does not replay the preceding block. Reindexing preserves native bytes and pins the exact new
 index dependencies. Construction reconstructs sequentially. The explicit
 [mapped codec scan](mapped-blobs.md) verifies sequential FC framing, ordinary
 prefix retention, navigation directories, cut LCPs and exact target samples.

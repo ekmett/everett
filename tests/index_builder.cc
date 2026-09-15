@@ -170,7 +170,7 @@ namespace {
         auto const & key = borrowed[x.ordinal];
         require(x.comparison.common_bits() == oracle_common(key.view(), query.view()) &&
           x.comparison.order() == oracle_order(key.view(), query.view()) &&
-          x.comparison.full_units() == key.bit_size / P::bits_per_unit,
+          (!x.comparison.full_units() || x.comparison.full_units() == key.bit_size / P::bits_per_unit),
           "independent outgoing comparison oracle");
       }
     }

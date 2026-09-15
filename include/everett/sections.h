@@ -35,6 +35,7 @@ namespace everett {
   };
 
   namespace section_detail {
+    inline constexpr std::uint16_t version = 2;
     inline constexpr std::size_t native_directory_bytes = 128;
     inline constexpr std::size_t index_directory_bytes = 256;
     inline constexpr std::size_t native_descriptor_offset = 48;
@@ -106,11 +107,11 @@ namespace everett {
       if (body.size() < result.bytes) throw std::invalid_argument("truncated Everett section directory");
       if (header.extent != profile_detail::multiply(body.size(), 1u << (3 - P::unit_shift)))
         throw std::invalid_argument("Everett section container must occupy complete bytes");
-      auto magic = index ? "IX01" : "KV01";
+      auto magic = index ? "IX02" : "KV02";
       for (unsigned i = 0; i != 4; ++i)
         if (std::to_integer<unsigned>(body[i]) != unsigned(magic[i]))
           throw std::invalid_argument("unexpected Everett section magic");
-      if (file_detail::get(body, 4, 2) != 1 || file_detail::get(body, 6, 2) != result.count)
+      if (file_detail::get(body, 4, 2) != version || file_detail::get(body, 6, 2) != result.count)
         throw std::invalid_argument("unsupported Everett section directory");
       result.extent = file_detail::get(body, 8, 8);
       result.terminal_key_units = file_detail::get(body, 16, 8);
@@ -183,18 +184,21 @@ namespace everett {
       std::uint64_t at = 0, previous_units = 0;
       bit_string previous;
       for (std::uint64_t ordinal = 0; ordinal != metadata.record_count; ++ordinal) {
+        std::uint64_t retained;
         if (ordinal % P::codec_block_size == 0) {
           auto stride = profile_detail::multiply(ordinal, metadata.common_value_width.value_or(0));
           if (stride > at) throw std::invalid_argument("Everett fixed values exceed physical position");
           residuals.push_back(at - stride);
-          auto checkpoint = profile_detail::read_count<P>(data, at);
-          if (checkpoint != previous_units) throw std::invalid_argument("Everett profile length checkpoint mismatch");
+          retained = profile_detail::read_count<P>(data, at);
+          if (retained > previous_units)
+            throw std::invalid_argument("Everett profile absolute prefix exceeds predecessor");
+        } else {
+          auto backspace = profile_detail::read_backspace<P>(data, at);
+          if (backspace > previous_units) throw std::invalid_argument("Everett profile backspace exceeds predecessor");
+          retained = previous_units - backspace;
         }
-        auto backspace = profile_detail::read_backspace<P>(data, at);
         auto suffix = profile_detail::read_count<P>(data, at);
         auto values = metadata.common_value_width ? *metadata.common_value_width : profile_detail::read_count<P>(data, at);
-        if (backspace > previous_units) throw std::invalid_argument("Everett profile backspace exceeds predecessor");
-        auto retained = previous_units - backspace;
         auto length = profile_detail::add(retained, suffix);
         auto start_bits = profile_detail::multiply(at, P::bits_per_unit);
         auto suffix_bits = profile_detail::multiply(suffix, P::bits_per_unit);
@@ -347,9 +351,9 @@ namespace everett {
       bool index = kind == file_kind::fractional_index;
       directory_size_ = index ? section_detail::index_directory_bytes : section_detail::native_directory_bytes;
       auto descriptors = index ? section_detail::index_descriptor_offset : section_detail::native_descriptor_offset;
-      auto magic = index ? "IX01" : "KV01";
+      auto magic = index ? "IX02" : "KV02";
       for (unsigned i = 0; i != 4; ++i) directory_[i] = std::byte(magic[i]);
-      file_detail::put(directory_, 4, 2, 1);
+      file_detail::put(directory_, 4, 2, section_detail::version);
       file_detail::put(directory_, 6, 2, sections_.size());
       std::uint64_t end = directory_size_;
       for (std::size_t i = 0; i != sections_.size(); ++i) {

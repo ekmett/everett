@@ -137,7 +137,7 @@ common width `v`, sampled residual positions remove `ordinal * v`; add the same
 stride back when locating the record. A width constant only within each sort
 does not suffice for a single shared stride. Ordinary FC selects key prefixes
 from adjacent keys, independently of value widths. The residual universe still
-includes variable key/framing data and physical length checkpoints.
+includes variable key data and physical block framing.
 
 The generic envelope accepts arbitrary bodies. The [mapped blob format](mapped-blobs.md)
 encodes native FC, borrowed FC, rank, Elias–Fano, false-borrow flags and exact

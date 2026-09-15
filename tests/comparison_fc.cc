@@ -185,7 +185,10 @@ namespace {
     require(same_bits(actual.query(), query), "comparison context lost its owned query");
     require(actual.common_bits() == expected.common_bits, "comparison LCP differs from original bits");
     require(actual.order() == expected.order, "comparison direction/endpoint differs from oracle");
-    require(actual.full_units() == key.size() / P::bits_per_unit, "comparison lost full key length");
+    require(!actual.full_units() || actual.full_units() == key.size() / P::bits_per_unit,
+            "known comparison length differs from the original key");
+    if (!actual.order())
+      require(actual.full_units() == query.size() / P::bits_per_unit, "equal comparison must know query length");
   }
 
   template <class P> profile_query_context<P> own_displaced_query(bit_view query, unsigned shift) {
@@ -203,13 +206,11 @@ namespace {
         auto record = view.encoded_at(i);
         auto retained = compare_original(previous, key).common_bits / P::bits_per_unit;
         require(record.retained == retained, "stream is not ordinary FC relative to physical predecessor");
-        require(record.previous_units == previous.size() / P::bits_per_unit &&
-                record.key_units == key.size() / P::bits_per_unit &&
-                record.backspace == record.previous_units - retained,
-                "FC retained prefix used surrogate-anchor length instead of physical predecessor length");
+        require(record.key_units == key.size() / P::bits_per_unit,
+                "FC frame lost the full key length");
         profile_comparison_work work;
         require(view.predecessor_units(i, &work) == previous.size() / P::bits_per_unit &&
-                work.skipped_headers < P::codec_block_size && !work.visited_headers && !work.compared_bits,
+                work.skipped_headers <= P::codec_block_size && !work.visited_headers && !work.compared_bits,
                 "pre-lane length seek reconstructed or compared key content");
         previous = key;
       }
@@ -467,8 +468,8 @@ namespace {
       auto lower = profile_query_context<P>(query).with_key(catalog[group * P::group_size].key.view());
       auto expected = compare_original(borrowed.back().view(), query);
       // With the borrowed stream exhausted at an exact W boundary, even the
-      // previous block's header is inaccessible. Its length must come from the
-      // terminal sentinel, and the comparison from exact cut metadata.
+      // previous block's header is inaccessible. Exact cut metadata repairs
+      // the comparison without consulting the preceding key's full length.
       inaccessible_interior guard(encoded.borrowed().bytes());
       auto found = encoded.search_window(group, lower);
       require(found.native && found.native->ordinal + 1 == native.size(), "guarded terminal native match");
@@ -476,9 +477,44 @@ namespace {
               "guarded terminal borrowed route");
       auto const & state = found.borrowed_predecessor->comparison;
       require(state.common_bits() == expected.common_bits && state.order() == expected.order &&
-              state.full_units() == borrowed.back().bit_size / P::bits_per_unit,
-              "terminal frontier comparison/length required inaccessible earlier block");
+              !state.full_units(),
+              "terminal frontier comparison required inaccessible earlier block");
     }
+  }
+
+  template <class P> void no_block_predecessor_replay() {
+    auto page = ::sysconf(_SC_PAGESIZE);
+    require(page > 0, "page size unavailable");
+    auto width = P::codec_block_size;
+    std::vector<bit_string> borrowed;
+    for (unsigned i = 0; i != 2 * width; ++i)
+      borrowed.push_back(text(number(2 * i) + std::string(static_cast<std::size_t>(page) * 6, 'p')));
+    auto before_cut = (P::group_size - width % P::group_size) % P::group_size;
+    std::vector<profile_record> native;
+    for (unsigned i = 0; i <= before_cut; ++i)
+      native.push_back({text(number(2 * width - 1) + number(i)), value_for<P>(i + 1)});
+    auto encoded = profile_blob<P>::build(native, borrowed);
+    auto query = native.back().key.view();
+    auto group = (width + before_cut) / P::group_size;
+    auto window = encoded.project(group);
+    require(window.borrowed_first == width && window.borrowed_last > width,
+            "nonterminal frontier fixture did not enter a new borrowed block");
+    auto expected = compare_original(borrowed[width - 1].view(), query);
+    auto lower = profile_query_context<P>(query).with_key(query);
+    auto block_bits = encoded.borrowed().view().block_offset(1) * P::bits_per_unit;
+    // The preceding block's later headers are inaccessible, as well as its
+    // inherited literals. The next block's absolute prefix is sufficient.
+    inaccessible_interior guard(encoded.borrowed().bytes().first((block_bits + 7) >> 3));
+    profile_comparison_work work;
+    auto found = encoded.search_window(group, lower, nullptr, &work);
+    require(found.native && found.native->ordinal == before_cut, "nonterminal guarded native match");
+    require(found.borrowed_predecessor && found.borrowed_predecessor->ordinal + 1 == width,
+            "nonterminal guarded borrowed frontier");
+    auto const & state = found.borrowed_predecessor->comparison;
+    require(state.common_bits() == expected.common_bits && state.order() == expected.order && !state.full_units(),
+            "nonterminal borrowed comparison needed a predecessor length");
+    require(!work.skipped_headers && work.visited_headers == 1,
+            "nonterminal repair replayed the preceding block");
   }
 #endif
 }
@@ -499,6 +535,8 @@ int main() {
     no_prefix_replay<storage_policy<profile_unit::bit, fixed_values<0>, 3, exponential_golomb<0>, 16>>();
     no_terminal_predecessor_replay<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 16>>();
     no_terminal_predecessor_replay<storage_policy<profile_unit::bit, variable_values, 31, exponential_golomb<0>, 15>>();
+    no_block_predecessor_replay<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 16>>();
+    no_block_predecessor_replay<storage_policy<profile_unit::bit, variable_values, 31, exponential_golomb<0>, 15>>();
 #endif
     std::cout << "comparison FC tests passed\n";
   } catch (std::exception const & error) {

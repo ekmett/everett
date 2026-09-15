@@ -267,8 +267,9 @@ namespace {
     auto window = source->search_window(0, profile_query_context<P>(query.view()));
     require(window.borrowed_predecessor.has_value(), "partial-context fixture has no route");
     auto const & context = *window.borrowed_predecessor;
+    auto units = context.comparison.full_units();
     require(context.target_ordinal == P::group_size && context.comparison.order() < 0 &&
-            context.comparison.common_bits() < context.comparison.full_units() * P::bits_per_unit,
+            units && context.comparison.common_bits() < *units * P::bits_per_unit,
             "partial-context fixture did not distinguish agreement and full length");
     auto root = query_root<P>::build(source);
     require(root.head() == source, "partial-context fixture exceeded its initial window");

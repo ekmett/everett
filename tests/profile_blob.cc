@@ -188,8 +188,8 @@ namespace {
                   "outgoing exact bit agreement oracle");
           require(next.comparison.order() == oracle_order(expected_key.view(), query.view()),
                   "outgoing comparison direction oracle");
-          require(next.comparison.full_units() == expected_key.bit_size / P::bits_per_unit,
-                  "borrowed full length uses profile units");
+          require(!next.comparison.full_units() || next.comparison.full_units() == expected_key.bit_size / P::bits_per_unit,
+                  "known borrowed full length uses profile units");
           require(equal(next.comparison.query(), query.view()), "outgoing comparison retains its query");
         }
       }
