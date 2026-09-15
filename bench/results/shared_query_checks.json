@@ -1,0 +1,32 @@
+{
+  "source_revision": "d8bc932600719e576cbdc9a8cffe4ead2da62dcc",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "configuration": {
+    "CMAKE_BUILD_TYPE": "Release",
+    "CMAKE_CXX_FLAGS_RELEASE": "-O1 -g -DNDEBUG",
+    "EVERETT_SANITIZERS": "ON"
+  },
+  "scope": "Focused CMake/CTest checks under ASan/UBSan; installed consumer compiles its own ordinary executable.",
+  "tests": [
+    {
+      "name": "everett.profile",
+      "seconds": 6.8,
+      "status": "passed"
+    },
+    {
+      "name": "everett.query",
+      "seconds": 1.37,
+      "status": "passed"
+    },
+    {
+      "name": "everett.package.installed",
+      "seconds": 4.93,
+      "status": "passed"
+    }
+  ],
+  "source_sha256": {
+    "include/everett/profile.h": "050106ac048b2620b74d4c2b2da9bde0a6c4f064314cfada08ce09f3ee1a9a0f",
+    "tests/profile.cc": "c8902d0119a3399d46bd485b2bb3ac99173acdfd3c901ce1d72222ff6f7b6a46",
+    "tests/query.cc": "68935d70e5288c2355b6e3ebe736fb60d93d50811a67e9d44d36041a14e0039b"
+  }
+}
