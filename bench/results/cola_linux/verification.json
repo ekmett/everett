@@ -1,0 +1,71 @@
+{
+  "original_revision": "e13d0309557594c0becee3c1a5e32ce1f3b4771d",
+  "patch_revision": "9336a9ce4ad166c1aa7147fef2e31701f9194d91",
+  "verified_source_files": 55,
+  "changed_files": [
+    "tests/cola_index.cc"
+  ],
+  "max_compile_jobs": 2,
+  "patched_compile_jobs": 1,
+  "remote_gate_logs": [
+    "20260915-164154-psa10pzj/output.log",
+    "20260915-164356-n87dlnhm/output.log"
+  ],
+  "executions": [
+    {
+      "test": "cola_index",
+      "command": [
+        "/tmp/everett-cola-linux-YR37tcNZ/build/cola_index"
+      ],
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      },
+      "returncode": 0
+    },
+    {
+      "test": "mapped_cola",
+      "command": [
+        "/tmp/everett-cola-linux-YR37tcNZ/build/mapped_cola"
+      ],
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      },
+      "returncode": 0
+    },
+    {
+      "test": "mapped_cola_builder",
+      "command": [
+        "/tmp/everett-cola-linux-YR37tcNZ/build/mapped_cola_builder"
+      ],
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      },
+      "returncode": 0
+    },
+    {
+      "test": "cola_terminal",
+      "command": [
+        "/tmp/everett-cola-linux-YR37tcNZ/build/cola_terminal"
+      ],
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      },
+      "returncode": 0
+    },
+    {
+      "test": "cola_local_merge",
+      "command": [
+        "/tmp/everett-cola-linux-YR37tcNZ/build/cola_local_merge"
+      ],
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      },
+      "returncode": 0
+    }
+  ]
+}
