@@ -187,6 +187,14 @@ namespace {
     }
   };
   using pipe_type = tap<engine>;
+  struct ready_engine : engine {
+    using engine::engine;
+    bool admission_ready() const { return remaining == 0; }
+    cola_type contribute(contribution value) {
+      check(admission_ready(), "claimed input before retiring prior debt");
+      return engine::contribute(std::move(value));
+    }
+  };
 
   contribution input(int id, std::uint64_t work = 1, std::uint64_t bytes = 1) {
     contribution value; value.id = id; value.work = work; value.bytes = bytes; return value;
@@ -436,12 +444,35 @@ namespace {
       second.get()->cola->values == std::vector<int>({1, 2}), "destructor did not drain accepted work");
     check(retained->cola->values.empty(), "snapshot did not survive tap destruction");
   }
+
+  void required_maintenance() {
+    auto gate = std::make_shared<control>(); gate->blocked_id = 1; gate->gate_maintenance = true;
+    tap<ready_engine> pipe(ready_engine(gate), {8, 8, 2, 1});
+    auto value = input(1); value.maintenance = 2;
+    auto first = pipe.submit(std::move(value)); gate->wait_active();
+    auto second = pipe.submit(input(2));
+    gate->release_active(); auto before = first.get(); gate->wait_maintenance(1);
+    check(!second.ready() && pipe.pending_count() == 1 && pipe.outstanding().work == 1,
+      "required maintenance released queued admission reservation");
+    pipe.close(); // Accepted work must still get its prerequisite service.
+    gate->release_maintenance(1); gate->wait_maintenance(2);
+    auto intermediate = pipe.snapshot();
+    check(intermediate->logical == before->logical && intermediate->revision == before->revision + 1,
+      "required maintenance changed logical state");
+    check(!second.ready(), "input claimed while prerequisite debt remained");
+    gate->release_maintenance(2);
+    auto after = second.get();
+    check(after->cola->values == std::vector<int>({1, 2}) && after->cola->layout == 2 &&
+      after->generation == 2 && after->revision == 4, "required service/publication order");
+    pipe.shutdown();
+    check(pipe.pending_count() == 0, "close left accepted work behind prerequisite service");
+  }
 }
 
 int main() {
   watchdog deadline;
   fifo(); maintenance(); admission(); cancellation(); failure(false); failure(true); maintenance_failure();
   concurrent_submission(); close_wakes_submitter(); capacity_wakes_submitter();
-  contribution_construction(); destruction_drains();
+  contribution_construction(); destruction_drains(); required_maintenance();
   std::cout << "tap: publication, admission, cancellation and concurrency passed\n";
 }

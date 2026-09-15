@@ -57,7 +57,9 @@ namespace diet {
   //   bool pending() const;
   //   std::optional<cola_type> advance(std::uint64_t budget);
   // reservation is thread-safe and independent of mutable Engine state. Its
-  // work bound covers the complete synchronous charged contribution path.
+  // work is the Engine's conservative admission allowance. Existing merge
+  // debt is separate; an Engine can expose admission_ready() to require its
+  // service before claiming another queued input.
   // advance returns only completed, equivalent layouts of the current cola.
   // All returned colas own their transitive pins independently of Engine.
   //
@@ -291,13 +293,18 @@ namespace diet {
       } scope(this);
       while (true) {
         std::shared_ptr<request> item;
-        {
-          std::unique_lock lock(mutex_);
-          changed_.wait(lock, [&] { return !queue_.empty() || (closing_ ? count_ == 0 : pending); });
-          if (!queue_.empty()) { item = std::move(queue_.front()); queue_.pop_front(); }
-          else if (closing_) break;
-        }
         try {
+          bool ready = true;
+          if constexpr (requires (Engine const & value) { { value.admission_ready() } -> std::convertible_to<bool>; }) {
+            ready = engine_->admission_ready();
+            if (!ready && !pending) throw std::logic_error("Engine refuses admission without pending service");
+          }
+          {
+            std::unique_lock lock(mutex_);
+            changed_.wait(lock, [&] { return !queue_.empty() || (closing_ ? count_ == 0 : pending); });
+            if (!queue_.empty() && ready) { item = std::move(queue_.front()); queue_.pop_front(); }
+            else if (closing_ && count_ == 0) break;
+          }
           if (item) {
             auto candidate = next(engine_->contribute(std::move(*item->input)), true);
             item->input.reset();

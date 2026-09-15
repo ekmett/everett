@@ -24,6 +24,7 @@ for integration. These are development responsibilities.
 | Checksums | `crc32c.h`, generated backends, pinned generator and package notices; `tests/crc32c.cc` | independent CRC oracle, bounded loads, reproducible generation, target guards and multi-translation-unit installed consumption |
 | Key primitives | `key_detail.h`, `profile.h`; `tests/profile.cc`; [key policies](keys.md) | bounded comparisons, bit movement, count framing and independent bit-level oracles |
 | Sort registry | `registry.h`, `policy.h`; `tests/registry.cc`, `tests/registry_compat.cc` | typed discriminator dispatch, width/unit inference, stable-code extension, file-local framing and catalog reopen under broader defaults |
+| Mutable tap | `tap.h`; `tests/tap.cc` | serialized immutable publication, bounded accepted input, readiness backpressure, cancellation, shutdown, exact logical identity and worker failure |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `fridge.h`; profile/blob/fridge tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
 | Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
 | Native construction and merging | `native_writer.h`, `native_merge.h`; native writer/merge tests | streaming record acceptance, preserved FC/EF bytes, chronological composition, input pins and failure state |
@@ -609,6 +610,14 @@ select the exact supplied historical generation. Every generation retains its
 own root pin. Schema-1 catalogs keep the earlier save/reservation APIs; timeline
 methods reject them without an automatic migration. Catalog schema, object
 envelope and inner section versions are independent.
+
+`create_taps` selects schema 4. Named taps publish an opaque runtime checkpoint
+and prepared root pin atomically. Exact CAS and replay cover both; ordinary
+timeline publication cannot bypass the checkpoint. Historical `fork_tap` and
+`save_tap` retain the exact checkpoint with the root. The tap-catalog suite covers
+reopen, stale and competing publications, binary metadata, historical replay,
+save stability, schema protection and injected errors before/after COMMIT.
+It does not itself interpret runtime metadata or resume private file writes.
 
 The timeline suite checks binary names, competing connections, historical forks,
 reopen/replay, malformed outcomes, generation limits, eight COMMIT-failure cases

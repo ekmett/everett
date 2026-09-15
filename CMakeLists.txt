@@ -35,6 +35,8 @@ endforeach()
 
 add_library(diet INTERFACE)
 add_library(diet::diet ALIAS diet)
+find_package(Threads REQUIRED)
+target_link_libraries(diet INTERFACE Threads::Threads)
 target_compile_features(diet INTERFACE cxx_std_20)
 target_include_directories(diet INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

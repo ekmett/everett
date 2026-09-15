@@ -54,7 +54,7 @@ worker's exception.
 
 The limits cover accepted contributions, including the one currently running:
 
-- `work`: reserved structural service units for their charged operations.
+- `work`: reserved admission allowances in the engine's structural units.
 - `bytes`: retained input bytes quoted by the engine.
 - `contributions`: the number of accepted, unfinished inputs.
 
@@ -63,6 +63,14 @@ cancelled or rejected after failure. Popping the queue does not refund it.
 `outstanding()` and `pending_count()` expose these counters. Reservations are
 made before the tap constructs its private input; the caller's input remains
 caller-owned while a blocking submission waits for capacity.
+
+Existing merge debt remains the engine's responsibility. An engine can expose
+`admission_ready()` to require service before another queued contribution is
+claimed. Its pending work then takes priority, while queued input reservations
+remain held. This provides backpressure without charging an old carry to the
+next small input. An engine must bound the unfinished work it permits and state
+that bound separately; the queue's admission allowance is not a total merge-debt
+counter.
 
 These limits do not cover retained snapshots, the engine's working set, temporary
 output, total rewrite bytes or elapsed time. In particular, stepping a bounded
@@ -142,16 +150,20 @@ struct engine {
   cola_type snapshot() const;
   cola_type contribute(contribution_type);
   bool pending() const;
+  bool admission_ready() const; // Optional; defaults to true.
   std::optional<cola_type> advance(std::uint64_t budget);
 };
 ```
 
 `reservation` may run concurrently on submitting threads. It must be thread-safe,
-use only the input and immutable policy, and conservatively cover the entire
-charged `contribute` path. The caller cannot supply a smaller quote. A quote
+use only the input and immutable policy, and conservatively cover its admission
+allowance. The caller cannot supply a smaller quote. A quote
 that depends on the future height needs a conservative admitted-height bound,
 such as the engine's maximum representable level count. It must include the
-engine's admission and required index work, not just native records.
+engine's admission and required index work, not just native records. Previously
+created merge debt is serviced through `advance` before admission when the
+engine's readiness hook requires it. These are structural charges, not a bound
+on byte rewriting, user callbacks or elapsed time.
 
 `contribute` applies one input in queue order, performs its synchronous charged
 service and returns a fully searchable owning cola. It owns validation of old
@@ -159,10 +171,11 @@ values, chronological composition, disjoint partitions and operation replay.
 A reservation does not authorize blindly rebasing an update prepared against
 another state.
 
-`pending` reports optional equivalent-layout work. `advance` progresses that
+`pending` reports equivalent-layout work. `advance` progresses that
 work and returns a cola only when an equivalent layout is ready to publish.
 It may return an empty optional while more work remains. The worker checks
-`pending` again after each step and gives queued contributions priority. An
+`pending` again after each step and gives ready queued contributions priority.
+If `admission_ready()` returns false, `pending()` must be true. An
 engine must make progress for a positive maintenance budget or stop reporting
 pending work; otherwise it will spin its worker.
 

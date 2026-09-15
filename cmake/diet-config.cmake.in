@@ -10,6 +10,8 @@
 
 @PACKAGE_INIT@
 
+include(CMakeFindDependencyMacro)
+find_dependency(Threads)
 include("${CMAKE_CURRENT_LIST_DIR}/diet-targets.cmake")
 foreach(diet_component IN LISTS diet_FIND_COMPONENTS)
   if(diet_component STREQUAL "sqlite" AND

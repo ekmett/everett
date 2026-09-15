@@ -198,6 +198,8 @@ physical objects. [SQLite foreign-key contracts](https://sqlite.org/foreignkeys.
 
 `create` selects schema version 2; `create_cola` selects version 3 for
 two-route IX03 graphs as well as linear IX02 chains. Both support timelines.
+`create_taps` selects version 4, adding a small checkpoint to each named-tap
+generation and immutable saves of those generations.
 Version 1 catalogs still open and support
 reservations, seals, graph registration, immutable saves and reader acquisition.
 Their timeline methods explicitly reject the unsupported capability.
@@ -209,6 +211,42 @@ original value-width annotation, but opening compares the physical units,
 sampling, block size and backspace code. Each file owns its actual value framing;
 a newly admitted sort with a different width does not invalidate older files.
 This physical check does not verify semantic schema compatibility.
+
+## Named taps and restart checkpoints
+
+A named tap needs more than a root pointer to resume maintenance. I keep its
+small runtime checkpoint beside that exact generation in SQLite. The checkpoint
+can record admission intervals, live count, semantic signature and schema
+identity; its version and interpretation belong to the typed runtime.
+
+`create_tap(operation, name, head, checkpoint)` creates the initial generation.
+`publish_tap(operation, expected, candidate, checkpoint)` commits its root pin
+and checkpoint in one transaction. The comparison includes every field of the
+expected generation and its checkpoint. A conflict returns the observed pair;
+replay returns the original outcome even if the tap has advanced again.
+`find_tap(name)` reads the latest retained pair without scanning native payloads.
+The catalog accepts opaque checkpoint bytes and does not certify their semantic
+contents. The reopening runtime validates them against the mapped graph.
+
+`fork_tap(operation, name, source)` starts another named tap at an exact
+historical generation. `save_tap(operation, name, source)` retains that generation
+under an immutable save name; `find_saved_tap(name)` returns its root and
+checkpoint. The saved root also works with the ordinary save-reader API. These
+operations copy only small metadata and pin existing files.
+
+Ordinary `publish_timeline` rejects a named tap, so it cannot accidentally
+advance its root without recording the matching checkpoint. A plain timeline
+still works in a version-4 catalog. Checkpoint and save rows have the same
+immutable-row protections and schema validation as the other catalog tables.
+They do not reclaim old generations or certify resumption of a partly written
+private file. A runtime may resume from a complete published frontier and
+restart its private work; its checkpoint contract must state that choice.
+
+An uncertain COMMIT poisons the handle. After reopening, the root and checkpoint
+are both old or both new. Retry uses the same operation identity and exact
+request. The focused tests inject failure before and after COMMIT, exercise
+competing connections, binary names, historical saves and schema tampering.
+These are API and SQLite transaction checks, not a physical power-loss test.
 
 ## Registering COLA roots
 

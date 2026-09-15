@@ -53,6 +53,18 @@ namespace diet {
     catalog_timeline_head head; // New generation, or the observed head on conflict.
     bool operator==(catalog_timeline_publication const &) const = default;
   };
+  // The runtime's small, versioned continuation travels atomically with its
+  // immutable root. SQLite does not interpret the checkpoint's codec.
+  struct catalog_tap_head {
+    catalog_timeline_head timeline;
+    std::vector<std::byte> checkpoint;
+    bool operator==(catalog_tap_head const &) const = default;
+  };
+  struct catalog_tap_publication {
+    bool published;
+    catalog_tap_head head;
+    bool operator==(catalog_tap_publication const &) const = default;
+  };
   struct catalog_operation {
     std::string kind;
     std::vector<std::byte> request;
@@ -93,6 +105,12 @@ namespace diet {
     inline void timeline(bytes & out, catalog_timeline_head const & value) {
       field(out, value.name); number(out, value.generation); pair(out, value.head); field(out, value.owner);
     }
+    inline void binary(bytes & out, std::span<std::byte const> value) {
+      number(out, value.size()); out.insert(out.end(), value.begin(), value.end());
+    }
+    inline void tap(bytes & out, catalog_tap_head const & value) {
+      timeline(out, value.timeline); binary(out, value.checkpoint);
+    }
     // Outcomes are decoded, rather than looking up today's mutable head during
     // replay. These bounds also reject a malformed stored operation outcome.
     struct outcome_reader {
@@ -116,6 +134,14 @@ namespace diet {
         if (name.empty() || owner.empty() || generation > std::uint64_t(std::numeric_limits<std::int64_t>::max())) invalid();
         try { return {std::move(name), generation, {object_id(native), object_id(index)}, std::move(owner)}; }
         catch (std::invalid_argument const &) { invalid(); }
+      }
+      catalog_tap_head tap() {
+        auto head = timeline();
+        auto size = number();
+        if (size > data.size()) invalid();
+        bytes checkpoint(data.begin(), data.begin() + static_cast<std::size_t>(size));
+        data = data.subspan(static_cast<std::size_t>(size));
+        return {std::move(head), std::move(checkpoint)};
       }
       void end() const { if (!data.empty()) invalid(); }
     };
@@ -222,18 +248,18 @@ CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT N
     inline std::string schema_for(unsigned version) {
       std::string result = schema;
       if (version == 1) return result;
-      if (version != 2 && version != 3) throw std::invalid_argument("unsupported Diet catalog version");
+      if (version < 2 || version > 4) throw std::invalid_argument("unsupported Diet catalog version");
       auto replace = [&](std::string_view before, std::string_view after) {
         result.replace(result.find(before), before.size(), after);
       };
-      replace("CHECK(version=1)", version == 2 ? "CHECK(version=2)" : "CHECK(version=3)");
+      replace("CHECK(version=1)", "CHECK(version=" + std::to_string(version) + ")");
       replace("IN('attempt','save','reader')", "IN('attempt','save','reader','timeline')");
       result.insert(result.find("CREATE TRIGGER sealed_immutable"), R"sql(CREATE TABLE timelines(name BLOB PRIMARY KEY, source_name BLOB, source_generation INTEGER,
  CHECK((source_name IS NULL)=(source_generation IS NULL)), FOREIGN KEY(source_name,source_generation) REFERENCES timeline_generations(name,generation)) STRICT;
 CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name), generation INTEGER NOT NULL CHECK(generation>=0), native_id TEXT NOT NULL, index_id TEXT NOT NULL, owner_kind TEXT NOT NULL CHECK(owner_kind='timeline'), owner_id BLOB NOT NULL UNIQUE,
  PRIMARY KEY(name,generation), FOREIGN KEY(owner_kind,owner_id,native_id,index_id) REFERENCES owner_roots(owner_kind,owner_id,native_id,index_id)) STRICT;
 )sql");
-      if (version == 3) {
+      if (version >= 3) {
         auto first = result.find("CREATE TABLE pairs(");
         auto last = result.find(';', first);
         result.replace(first, last + 1 - first, R"sql(CREATE TABLE pairs(index_id TEXT PRIMARY KEY REFERENCES objects(id), native_id TEXT NOT NULL REFERENCES objects(id), target_native TEXT, target_index TEXT, native_count INTEGER NOT NULL CHECK(native_count>=0), borrowed_count INTEGER NOT NULL CHECK(borrowed_count>=0), virtual_count INTEGER NOT NULL CHECK(virtual_count>=0),
@@ -242,6 +268,12 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
  CHECK(native_count<=virtual_count AND secondary_borrowed_count<=virtual_count-native_count AND borrowed_count=virtual_count-native_count-secondary_borrowed_count),
  CHECK(secondary_native IS NOT NULL OR (secondary_native_count=0 AND secondary_borrowed_count=0)), CHECK(layout=3 OR (secondary_native IS NULL AND secondary_native_count=0 AND secondary_borrowed_count=0))) STRICT;)sql");
       }
+      if (version >= 4)
+        result.insert(result.find("CREATE TRIGGER sealed_immutable"), R"sql(CREATE TABLE tap_checkpoints(name BLOB NOT NULL, generation INTEGER NOT NULL, checkpoint BLOB NOT NULL,
+PRIMARY KEY(name,generation), FOREIGN KEY(name,generation) REFERENCES timeline_generations(name,generation)) STRICT;
+CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BLOB NOT NULL, generation INTEGER NOT NULL,
+ FOREIGN KEY(tap_name,generation) REFERENCES tap_checkpoints(name,generation)) STRICT;
+)sql");
       return result;
     }
   }
@@ -272,6 +304,10 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
     static sqlite_catalog create_cola(std::filesystem::path const & root, object_id const & identity,
         catalog_options options = {}, Ops ops = {}) {
       return create_version(root, identity, options, std::move(ops), 3);
+    }
+    static sqlite_catalog create_taps(std::filesystem::path const & root, object_id const & identity,
+        catalog_options options = {}, Ops ops = {}) {
+      return create_version(root, identity, options, std::move(ops), 4);
     }
     static sqlite_catalog open(std::filesystem::path const & root, catalog_options options = {}, Ops ops = {}) {
       auto result = connect(std::filesystem::canonical(root), options, std::move(ops));
@@ -578,6 +614,8 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
       auto outcome = transaction(op, "publish_timeline", request, [&] {
         auto current = timeline_at(expected.name);
         if (!current) throw std::invalid_argument("unknown Diet timeline");
+        if (schema_version_ >= 4 && checkpoint_at(current->name, current->generation))
+          throw std::invalid_argument("publish a named tap together with its checkpoint");
         bool published = *current == expected;
         if (published) {
           require_prepared(candidate);
@@ -596,6 +634,109 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
       });
     }
 
+    std::optional<catalog_tap_head> find_tap(std::string_view name) const {
+      require_taps(); catalog_detail::name(name);
+      return read([&]() -> std::optional<catalog_tap_head> {
+        auto head = timeline_at(name);
+        if (!head) return std::nullopt;
+        return attach_checkpoint(std::move(*head));
+      });
+    }
+
+    catalog_tap_head create_tap(std::string_view op, std::string_view name,
+        blob_identity const & head, std::span<std::byte const> checkpoint) {
+      require_taps(); catalog_detail::name(op); catalog_detail::name(name);
+      catalog_detail::bytes request; catalog_detail::field(request, name);
+      catalog_detail::pair(request, head); catalog_detail::binary(request, checkpoint);
+      auto outcome = transaction(op, "create_tap", request, [&] {
+        require_prepared(head);
+        catalog_detail::statement insert(db_, "INSERT INTO timelines(name) VALUES(?)");
+        insert.key(1, name); insert.done();
+        auto result = add_tap_generation(name, 0, head, checkpoint);
+        catalog_detail::bytes bytes; catalog_detail::tap(bytes, result); return bytes;
+      });
+      return decode_tap(outcome);
+    }
+
+    catalog_tap_publication publish_tap(std::string_view op, catalog_tap_head const & expected,
+        blob_identity const & candidate, std::span<std::byte const> checkpoint) {
+      require_taps(); catalog_detail::name(op); validate_timeline(expected.timeline);
+      catalog_detail::bytes request; catalog_detail::tap(request, expected);
+      catalog_detail::pair(request, candidate); catalog_detail::binary(request, checkpoint);
+      auto outcome = transaction(op, "publish_tap", request, [&] {
+        auto timeline = timeline_at(expected.timeline.name);
+        if (!timeline) throw std::invalid_argument("unknown Diet tap");
+        auto current = attach_checkpoint(std::move(*timeline));
+        bool published = current == expected;
+        if (published) {
+          require_prepared(candidate);
+          if (current.timeline.generation == std::uint64_t(std::numeric_limits<std::int64_t>::max()))
+            throw std::length_error("Diet tap generation exhausted");
+          current = add_tap_generation(current.timeline.name, current.timeline.generation + 1,
+            candidate, checkpoint);
+        }
+        catalog_detail::bytes bytes; catalog_detail::number(bytes, published);
+        catalog_detail::tap(bytes, current); return bytes;
+      });
+      return read([&] {
+        catalog_detail::outcome_reader reader{outcome};
+        auto published = reader.number();
+        if (published > 1) reader.invalid();
+        auto head = reader.tap(); reader.end();
+        return catalog_tap_publication{published != 0, std::move(head)};
+      });
+    }
+
+    catalog_tap_head fork_tap(std::string_view op, std::string_view name,
+        catalog_tap_head const & source) {
+      require_taps(); catalog_detail::name(op); catalog_detail::name(name);
+      validate_timeline(source.timeline);
+      catalog_detail::bytes request; catalog_detail::field(request, name); catalog_detail::tap(request, source);
+      auto outcome = transaction(op, "fork_tap", request, [&] {
+        auto actual = timeline_at(source.timeline.name, source.timeline.generation);
+        if (!actual || attach_checkpoint(std::move(*actual)) != source)
+          throw std::invalid_argument("fork source is not this exact tap generation");
+        require_prepared(source.timeline.head);
+        catalog_detail::statement insert(db_, "INSERT INTO timelines VALUES(?,?,?)");
+        insert.key(1, name); insert.key(2, source.timeline.name);
+        insert.integer(3, catalog_detail::integer(source.timeline.generation)); insert.done();
+        auto result = add_tap_generation(name, 0, source.timeline.head, source.checkpoint);
+        catalog_detail::bytes bytes; catalog_detail::tap(bytes, result); return bytes;
+      });
+      return decode_tap(outcome);
+    }
+
+    void save_tap(std::string_view op, std::string_view name, catalog_tap_head const & source) {
+      require_taps(); catalog_detail::name(op); catalog_detail::name(name);
+      validate_timeline(source.timeline);
+      catalog_detail::bytes request; catalog_detail::field(request, name); catalog_detail::tap(request, source);
+      transaction(op, "save_tap", request, [&] {
+        auto actual = timeline_at(source.timeline.name, source.timeline.generation);
+        if (!actual || attach_checkpoint(std::move(*actual)) != source)
+          throw std::invalid_argument("save source is not this exact tap generation");
+        auto const & head = source.timeline.head;
+        add_owner("save", name); add_root("save", name, head);
+        catalog_detail::statement saved(db_, "INSERT INTO saves VALUES(?,?,?)");
+        saved.key(1, name); saved.text(2, head.native.hex()); saved.text(3, head.index.hex()); saved.done();
+        catalog_detail::statement metadata(db_, "INSERT INTO tap_saves VALUES(?,?,?)");
+        metadata.key(1, name); metadata.key(2, source.timeline.name);
+        metadata.integer(3, catalog_detail::integer(source.timeline.generation)); metadata.done();
+        return catalog_detail::bytes{};
+      });
+    }
+
+    std::optional<catalog_tap_head> find_saved_tap(std::string_view name) const {
+      require_taps(); catalog_detail::name(name);
+      return read([&]() -> std::optional<catalog_tap_head> {
+        catalog_detail::statement saved(db_, "SELECT tap_name,generation FROM tap_saves WHERE name=?");
+        saved.key(1, name);
+        if (!saved.row()) return std::nullopt;
+        auto head = timeline_at(saved.key(0), std::uint64_t(saved.integer(1)));
+        if (!head) throw catalog_error("saved tap generation disappeared", SQLITE_CORRUPT);
+        return attach_checkpoint(std::move(*head));
+      });
+    }
+
   private:
     sqlite3 * db_ = nullptr;
     std::filesystem::path root_;
@@ -604,7 +745,7 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
     unsigned schema_version_ = 2;
     inline static constexpr char const * immutable_tables[] = {
       "catalog_info", "operations", "owners", "attempts", "pairs", "owner_objects", "owner_roots", "saves",
-      "timelines", "timeline_generations"
+      "timelines", "timeline_generations", "tap_checkpoints", "tap_saves"
     };
     sqlite_catalog(sqlite3 * db, std::filesystem::path root, Ops ops)
       : db_(db), root_(std::move(root)), ops_(std::move(ops)) {}
@@ -627,6 +768,7 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
         insert.integer(1, version); insert.text(2, identity.hex()); insert.blob(3, policy()); insert.done();
         // Immutable tables remain readable through ordinary SQL tooling.
         for (auto table : immutable_tables) {
+          if (!result.has_table(table)) continue;
           for (auto action : {"UPDATE", "DELETE"}) {
             std::string sql = "CREATE TRIGGER immutable_" + std::string(table) + "_" + action +
               " BEFORE " + action + " ON " + table + " BEGIN SELECT RAISE(ABORT,'immutable catalog row'); END";
@@ -659,6 +801,16 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
       require_active();
       if (schema_version_ < 2) throw std::logic_error("Diet timelines require catalog version 2 or later; no automatic migration");
     }
+    void require_taps() const {
+      require_active();
+      if (schema_version_ < 4)
+        throw std::logic_error("Diet named taps require catalog version 4; no automatic migration");
+    }
+    bool has_table(std::string_view table) const noexcept {
+      if (table == "tap_checkpoints" || table == "tap_saves") return schema_version_ >= 4;
+      if (table == "timelines" || table == "timeline_generations") return schema_version_ >= 2;
+      return true;
+    }
     static void validate_timeline(catalog_timeline_head const & value) {
       catalog_detail::name(value.name); catalog_detail::name(value.owner);
       (void)catalog_detail::integer(value.generation);
@@ -668,6 +820,23 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
         catalog_detail::outcome_reader reader{bytes};
         auto head = reader.timeline(); reader.end(); return head;
       });
+    }
+    catalog_tap_head decode_tap(catalog_detail::bytes const & bytes) const {
+      return read([&] {
+        catalog_detail::outcome_reader reader{bytes};
+        auto head = reader.tap(); reader.end(); return head;
+      });
+    }
+    std::optional<catalog_detail::bytes> checkpoint_at(std::string_view name, std::uint64_t generation) const {
+      catalog_detail::statement query(db_, "SELECT checkpoint FROM tap_checkpoints WHERE name=? AND generation=?");
+      query.key(1, name); query.integer(2, catalog_detail::integer(generation));
+      if (!query.row()) return std::nullopt;
+      return query.blob(0);
+    }
+    catalog_tap_head attach_checkpoint(catalog_timeline_head head) const {
+      auto checkpoint = checkpoint_at(head.name, head.generation);
+      if (!checkpoint) throw std::invalid_argument("timeline is not a named Diet tap");
+      return {std::move(head), std::move(*checkpoint)};
     }
     std::optional<catalog_timeline_head> timeline_at(std::string_view name,
         std::optional<std::uint64_t> generation = {}) const {
@@ -694,6 +863,14 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
       insert.key(1, name); insert.integer(2, catalog_detail::integer(generation));
       insert.text(3, head.native.hex()); insert.text(4, head.index.hex()); insert.key(5, owner); insert.done();
       return {std::string(name), generation, head, std::move(owner)};
+    }
+    catalog_tap_head add_tap_generation(std::string_view name, std::uint64_t generation,
+        blob_identity const & head, std::span<std::byte const> checkpoint) {
+      auto timeline = add_generation(name, generation, head);
+      catalog_detail::statement insert(db_, "INSERT INTO tap_checkpoints VALUES(?,?,?)");
+      insert.key(1, name); insert.integer(2, catalog_detail::integer(generation));
+      insert.blob(3, checkpoint); insert.done();
+      return {std::move(timeline), {checkpoint.begin(), checkpoint.end()}};
     }
     template<class F> auto read(F && action) const {
       try { return action(); }
@@ -766,7 +943,7 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
       catalog_detail::statement query(db_, "SELECT sql FROM sqlite_schema WHERE type='table' AND name='catalog_info'");
       if (query.row()) {
         auto actual = query.text(0);
-        for (unsigned version : {1, 2, 3}) {
+        for (unsigned version : {1, 2, 3, 4}) {
           auto expected = catalog_detail::schema_for(version);
           auto first = expected.find("CREATE TABLE catalog_info");
           auto last = expected.find(';', first);
@@ -793,7 +970,7 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
       auto last = source.rfind("END;");
       definition("trigger", "sealed_immutable", source.substr(first, last + 3 - first));
       for (auto table : immutable_tables) {
-        if (schema_version_ == 1 && (std::string_view(table) == "timelines" || std::string_view(table) == "timeline_generations")) continue;
+        if (!has_table(table)) continue;
         for (auto action : {"UPDATE", "DELETE"}) {
           std::string name = "immutable_" + std::string(table) + "_" + action;
           std::string sql = "CREATE TRIGGER " + name + " BEFORE " + action + " ON " + table +
@@ -802,10 +979,14 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
         }
       }
       definition("trigger", "objects_no_delete", "CREATE TRIGGER objects_no_delete BEFORE DELETE ON objects BEGIN SELECT RAISE(ABORT,'retained object'); END");
-      catalog_detail::statement triggers(db_, schema_version_ == 1 ?
-        "SELECT count(*) FROM sqlite_schema WHERE type='trigger' AND tbl_name IN('catalog_info','operations','owners','attempts','objects','pairs','owner_objects','owner_roots','saves')" :
-        "SELECT count(*) FROM sqlite_schema WHERE type='trigger' AND tbl_name IN('catalog_info','operations','owners','attempts','objects','pairs','owner_objects','owner_roots','saves','timelines','timeline_generations')");
-      if (!triggers.row() || triggers.integer(0) != (schema_version_ == 1 ? 18 : 22))
+      std::string trigger_query = "SELECT count(*) FROM sqlite_schema WHERE type='trigger' AND tbl_name IN('objects'";
+      std::int64_t trigger_count = 2;
+      for (auto table : immutable_tables) if (has_table(table)) {
+        trigger_query += ",'" + std::string(table) + "'"; trigger_count += 2;
+      }
+      trigger_query += ")";
+      catalog_detail::statement triggers(db_, trigger_query.c_str());
+      if (!triggers.row() || triggers.integer(0) != trigger_count)
         throw std::invalid_argument("unexpected trigger on Diet catalog tables");
     }
     void add_owner(std::string_view kind, std::string_view name) {
