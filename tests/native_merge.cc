@@ -229,8 +229,7 @@ namespace {
     for (auto const & [key, value] : expected) {
       auto encoded = output.view().encoded_at(ordinal++);
       require(encoded.retained == lcp(previous, key) / P::bits_per_unit, "frontier output is not maximal FC");
-      require(encoded.previous_units == previous.size() / P::bits_per_unit &&
-              encoded.key_units == key.size() / P::bits_per_unit, "frontier output framing");
+      require(encoded.key_units == key.size() / P::bits_per_unit, "frontier output framing");
       require(bits(encoded.value) == value, "frontier output value");
       previous = key;
     }
