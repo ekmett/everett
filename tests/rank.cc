@@ -32,6 +32,55 @@ namespace {
     require(threw, "invalid input was accepted");
   }
 
+  void test_popcount512() {
+    std::array<std::uint64_t, 8> words{};
+    for (unsigned count = 0; count <= 512; ++count) {
+      require(everett::rank_detail::popcount512(words.data()) == count, "512-bit population");
+      require(everett::rank_detail::popcount512_portable(words.data()) == count, "portable 512-bit population");
+      if (count != 512) words[count / 64] |= std::uint64_t{1} << (count % 64);
+    }
+    // Alignment is only that of uint64_t, not a SIMD register or cache line.
+    alignas(64) std::array<std::uint64_t, 15> shifted{};
+    std::mt19937_64 random(0x512);
+    for (auto & word : shifted) word = random();
+    for (unsigned offset = 0; offset < 8; ++offset) {
+      unsigned expected = 0;
+      for (unsigned bit = 0; bit < 512; ++bit)
+        expected += unsigned((shifted[offset + bit / 64] >> (bit % 64)) & 1);
+      require(everett::rank_detail::popcount512(shifted.data() + offset) == expected,
+              "unaligned 512-bit population");
+      require(everett::rank_detail::popcount512_portable(shifted.data() + offset) == expected,
+              "unaligned portable 512-bit population");
+    }
+  }
+
+  void test_rank_tails() {
+    std::mt19937_64 random(0x2048512);
+    for (std::uint64_t tail = 0; tail < 2048; ++tail) {
+      auto bits = 3 * 2048 + tail;
+      std::vector<std::uint64_t> source(bits / 64 + (bits % 64 != 0));
+      for (auto & word : source) word = random();
+      if (bits % 64) source.back() |= ~std::uint64_t{0} << (bits % 64);
+      std::vector<std::uint64_t> oracle(bits + 1);
+      for (std::uint64_t bit = 0; bit < bits; ++bit)
+        oracle[bit + 1] = oracle[bit] + ((source[bit / 64] >> (bit % 64)) & 1);
+      auto index = everett::rank_index::build(source, bits);
+      require(index.total == oracle.back(), "partial block total");
+      require(index.supers == std::vector<std::uint64_t>{0}, "partial block epoch directory");
+      for (std::uint64_t block = 0; block < index.blocks.size(); ++block) {
+        require(index.blocks[block].before == oracle[block * 2048], "partial block prefix");
+        for (unsigned run = 0; run < 3; ++run) {
+          auto first = std::min(bits, block * 2048 + run * 512);
+          auto last = std::min(bits, block * 2048 + (run + 1) * 512);
+          require(((index.blocks[block].runs >> (run * 10)) & 1023u) == oracle[last] - oracle[first],
+                  "partial block run population");
+        }
+      }
+      require(index.view().rank(bits) == oracle.back(), "partial block endpoint");
+      if (bits % 64) require(index.words.back() >> (bits % 64) == 0, "partial word masking");
+    }
+  }
+
   void test_rank_directory() {
     // Exercise every possible population in each position against a scalar
     // oracle, mixing maximum and zero neighboring lanes to expose carries.
@@ -195,8 +244,10 @@ namespace {
 
 int main() {
   try {
+    test_popcount512();
     test_rank_directory();
     test_rank();
+    test_rank_tails();
     test_rank15();
     test_select15();
     std::cout << "Storage rank, packed rank15, and Elias-Fano select15 oracle checks passed\n";

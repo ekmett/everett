@@ -16,6 +16,10 @@
 #include <stdexcept>
 #include <vector>
 
+#if defined(__aarch64__) && defined(__ARM_NEON)
+#include <arm_neon.h>
+#endif
+
 namespace everett {
   // Three independent ten-bit population counts, not cumulative ranks: the
   // latter would need eleven bits to represent the first three 512-bit runs.
@@ -26,6 +30,28 @@ namespace everett {
   static_assert(sizeof(rank_block) == 8);
 
   namespace rank_detail {
+    // Exactly eight readable words; no alignment beyond uint64_t is required.
+    inline unsigned popcount512_portable(std::uint64_t const * words) noexcept {
+      unsigned total = 0;
+      for (unsigned i = 0; i < 8; ++i) total += unsigned(std::popcount(words[i]));
+      return total;
+    }
+
+    inline unsigned popcount512(std::uint64_t const * words) noexcept {
+#if defined(__aarch64__) && defined(__ARM_NEON)
+      auto bytes = reinterpret_cast<std::uint8_t const *>(words);
+      auto a = vcntq_u8(vld1q_u8(bytes));
+      auto b = vcntq_u8(vld1q_u8(bytes + 16));
+      auto c = vcntq_u8(vld1q_u8(bytes + 32));
+      auto d = vcntq_u8(vld1q_u8(bytes + 48));
+      // Each byte lane sums to at most 32; the final horizontal sum needs
+      // sixteen bits because a completely full 512-bit run contains 512 ones.
+      return vaddlvq_u8(vaddq_u8(vaddq_u8(a, b), vaddq_u8(c, d)));
+#else
+      return popcount512_portable(words);
+#endif
+    }
+
     // Caller supplies 0 <= run <= 3 and independent counts in [0,512].
     // Widen to eleven-bit lanes before summing: 512+512+512 needs eleven
     // bits, although each stored population needs only ten.
@@ -110,20 +136,33 @@ namespace everett {
       if (bits % 64) result.words.back() &= (std::uint64_t{1} << (bits % 64)) - 1;
       result.blocks.resize(bits / 2048 + (bits % 2048 != 0));
       rank_detail::directory_cursor cursor;
-      for (std::uint64_t block = 0; block < result.blocks.size(); ++block) {
+      auto begin_block = [&](std::uint64_t block) -> rank_block & {
         auto & entry = result.blocks[block];
         entry.before = cursor.before(block, result.total);
         if (cursor.starts_epoch(block)) result.supers.push_back(cursor.epoch_base);
-        entry.runs = 0;
-        for (unsigned run = 0; run < 4; ++run) {
-          unsigned count = 0;
-          for (unsigned i = 0; i < 8; ++i) {
-            auto word = block * 32 + run * 8 + i;
-            if (word < result.words.size()) count += unsigned(std::popcount(result.words[word]));
-          }
-          if (run < 3) entry.runs |= count << (10 * run);
-          result.total += count;
-        }
+        return entry;
+      };
+      auto full_blocks = bits / 2048;
+      for (std::uint64_t block = 0; block < full_blocks; ++block) {
+        auto & entry = begin_block(block);
+        auto words = result.words.data() + block * 32;
+        auto a = rank_detail::popcount512(words);
+        auto b = rank_detail::popcount512(words + 8);
+        auto c = rank_detail::popcount512(words + 16);
+        auto d = rank_detail::popcount512(words + 24);
+        entry.runs = a | (b << 10) | (c << 20);
+        result.total += a + b + c + d;
+      }
+      if (full_blocks != result.blocks.size()) {
+        auto & entry = begin_block(full_blocks);
+        unsigned counts[4]{};
+        auto first = full_blocks * 32;
+        // Only the final partial block needs bounded word loads. The owning
+        // copy has already cleared unused bits in its final word.
+        for (auto word = first; word < result.words.size(); ++word)
+          counts[(word - first) / 8] += unsigned(std::popcount(result.words[word]));
+        entry.runs = counts[0] | (counts[1] << 10) | (counts[2] << 20);
+        result.total += counts[0] + counts[1] + counts[2] + counts[3];
       }
       return result;
     }
