@@ -32,6 +32,18 @@ unsigned prefix_scalar(std::uint64_t const * words, unsigned bits) {
   return result;
 }
 
+// Give the noinline baseline the same bounded-prefix fact as its rank caller.
+__attribute__((target("popcnt"), noinline))
+unsigned prefix_scalar_bounded(std::uint64_t const * words, unsigned bits) {
+  if (bits > 512) __builtin_unreachable();
+  unsigned result = 0;
+  for (unsigned word = 0; word < (bits >> 6); ++word)
+    result += unsigned(std::popcount(words[word]));
+  if (bits & 63)
+    result += unsigned(std::popcount(words[bits >> 6] & ((std::uint64_t{1} << (bits & 63)) - 1)));
+  return result;
+}
+
 template <unsigned Vector> __attribute__((target("avx2"), always_inline)) inline __m256i prefix512_masked_avx2(
     std::uint64_t const * words, unsigned bits) noexcept {
   auto positions = _mm256_setr_epi64x(4 * Vector, 4 * Vector + 1, 4 * Vector + 2, 4 * Vector + 3);
@@ -106,7 +118,7 @@ int main(int argc, char ** argv) try {
   auto trials = argc > 1 ? unsigned(std::strtoul(argv[1], nullptr, 10)) : 5u;
   auto queries = argc > 2 ? std::strtoull(argv[2], nullptr, 10) : 1048576ull;
   if (!trials || !queries) throw std::runtime_error("positive trials and queries required");
-  std::vector<variant> variants{{"scalar_popcnt", prefix_scalar}};
+  std::vector<variant> variants{{"scalar_popcnt", prefix_scalar}, {"scalar_bounded", prefix_scalar_bounded}};
   if (avx2) variants.push_back({"avx2", prefix512_avx2});
   if (avx512bw) variants.push_back({"avx512bw", prefix512_avx512bw});
   if (vpopcnt) variants.push_back({"avx512vpopcntdq", prefix512_avx512_vpopcnt});
