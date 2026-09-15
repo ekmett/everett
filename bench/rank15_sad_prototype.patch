@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+# SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+# Benchmark-only SAD-first prototype, based on aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06.
+# Result SHA-256: ed125be1898573ec2b926df930c96b909921fc506536d9c2e1c8b0363e0fb686
+--- qword_rank15.h
++++ sad_rank15.h
+@@ -80 +80,4 @@
+-      return result + sum_bytes(pairs);
++      // Widen before reducing: four 16-bit lanes and their total (at most
++      // 1920) fit without carries into the product's high 16 bits.
++      pairs = (pairs & 0x00ff00ff00ff00ffull) + ((pairs >> 8) & 0x00ff00ff00ff00ffull);
++      return result + ((pairs * 0x0001000100010001ull) >> 48);
+@@ -101,3 +104,3 @@
+-      // Reduce eight qwords first: byte lanes total at most 240, so they
+-      // cannot carry into each other. Exactly 64 bytes are readable.
+-      return sum_bytes(std::uint64_t(_mm512_reduce_add_epi64(pairs)));
++      // Each byte is at most 30. SAD widens groups of eight bytes before the
++      // qword reduction, whose maximum is 1920. Exactly 64 bytes are readable.
++      return unsigned(_mm512_reduce_add_epi64(_mm512_sad_epu8(pairs, _mm512_setzero_si512())));
+@@ -123,3 +126,3 @@
+-      // Two vectors contribute at most 60 per byte. Reduce four qwords first;
+-      // byte lanes total at most 240. Exactly 64 bytes are readable.
+-      auto totals = _mm256_add_epi8(a, b);
++      // Two vectors contribute at most 60 per byte. Widen before reducing the
++      // total, which fits in 32 bits (at most 1920). Exactly 64 bytes are readable.
++      auto totals = _mm256_sad_epu8(_mm256_add_epi8(a, b), _mm256_setzero_si256());
+@@ -127,3 +130 @@
+-      std::uint64_t value;
+-      _mm_storel_epi64(reinterpret_cast<__m128i *>(&value), _mm_add_epi64(halves, _mm_srli_si128(halves, 8)));
+-      return sum_bytes(value);
++      return unsigned(_mm_cvtsi128_si32(_mm_add_epi64(halves, _mm_srli_si128(halves, 8))));
+@@ -160,7 +160,0 @@
+-    static unsigned sum_bytes(std::uint64_t value) noexcept {
+-      // Byte lanes are at most 240. Widen before the horizontal sum: four
+-      // 16-bit lanes and their total (at most 1920) fit without carries.
+-      value = (value & 0x00ff00ff00ff00ffull) + ((value >> 8) & 0x00ff00ff00ff00ffull);
+-      return unsigned((value * 0x0001000100010001ull) >> 48);
+-    }
+-
