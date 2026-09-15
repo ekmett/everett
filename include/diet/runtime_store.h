@@ -24,6 +24,58 @@
 #endif
 
 namespace diet {
+  namespace runtime_store_detail {
+    // Owner identity, not a mapped address, determines reuse. A rotating
+    // cursor bounds housekeeping even when callers retain many snapshots.
+    template <class T, class V> struct owner_cache {
+      using key_type = std::weak_ptr<T const>;
+      using map_type = std::map<key_type, V, std::owner_less<key_type>>;
+      using iterator = typename map_type::iterator;
+
+      owner_cache() : next_(entries_.end()) {}
+      owner_cache(owner_cache const &) = delete;
+      owner_cache & operator=(owner_cache const &) = delete;
+      owner_cache(owner_cache && other) noexcept : owner_cache() { swap(other); }
+      owner_cache & operator=(owner_cache && other) noexcept {
+        if (this != &other) { owner_cache moved(std::move(other)); swap(moved); }
+        return *this;
+      }
+      void swap(owner_cache & other) noexcept {
+        auto at_end = next_ == entries_.end(), other_at_end = other.next_ == other.entries_.end();
+        entries_.swap(other.entries_);
+        std::swap(next_, other.next_);
+        // Element iterators survive map::swap, but past-end iterators do not
+        // transfer to the other container's sentinel.
+        if (other_at_end) next_ = entries_.end();
+        if (at_end) other.next_ = other.entries_.end();
+      }
+      iterator find(key_type const & key) { return entries_.find(key); }
+      iterator end() noexcept { return entries_.end(); }
+      V const & at(key_type const & key) const { return entries_.at(key); }
+      std::size_t size() const noexcept { return entries_.size(); }
+      void insert_or_assign(key_type key, V value) {
+        // New facade owners bring their own small cleanup allowance. A large
+        // restored frontier cannot grow the cache faster than it is inspected.
+        prune(2);
+        entries_.insert_or_assign(std::move(key), std::move(value));
+      }
+      std::size_t prune(std::size_t budget = 16) {
+        if (next_ == entries_.end()) next_ = entries_.begin();
+        std::size_t examined = 0;
+        while (examined != budget && next_ != entries_.end()) {
+          auto current = next_++;
+          if (current->first.expired()) entries_.erase(current);
+          ++examined;
+        }
+        return examined;
+      }
+
+    private:
+      map_type entries_;
+      iterator next_;
+    };
+  }
+
   // Physical and operation identities use OS entropy; semantic fingerprints
   // are unrelated. Catalog reservations and exclusive installation still
   // reject a collision instead of replacing an existing object.
@@ -139,19 +191,14 @@ namespace diet {
       std::owner_less<std::weak_ptr<T const>>>;
     catalog_type catalog_;
     Ids ids_;
-    cache<node_type, blob_identity> nodes_;
-    cache<native_type, object_id> natives_;
+    runtime_store_detail::owner_cache<node_type, blob_identity> nodes_;
+    runtime_store_detail::owner_cache<native_type, object_id> natives_;
     bool failed_ = false;
     std::string last_operation_;
 
     runtime_store(catalog_type catalog, Ids ids) : catalog_(std::move(catalog)), ids_(std::move(ids)) {}
     void require_active() const { if (failed()) throw std::logic_error("failed Diet runtime store; reopen it"); }
     std::string operation() { last_operation_ = ids_().hex(); return last_operation_; }
-    template <class T> static void prune(T & table) {
-      for (auto i = table.begin(); i != table.end();) {
-        if (i->first.expired()) i = table.erase(i); else ++i;
-      }
-    }
     // Mapping one checkpoint shares physical mappings and typed facades across
     // every visible and hidden root, preserving exact immutable dependencies.
     struct resolver {
@@ -196,7 +243,7 @@ namespace diet {
       }
     };
     stored_type restore(catalog_tap_head head) {
-      prune(nodes_); prune(natives_);
+      nodes_.prune(); natives_.prune();
       resolver loaded(*this);
       // Load retained roots first, both to validate every durable pin and to
       // make all subsequent checkpoint references share their exact owners.
@@ -209,7 +256,7 @@ namespace diet {
     }
     struct persisted { blob_identity head; catalog_auxiliary_roots auxiliary; };
     persisted persist(snapshot_type const & source) {
-      prune(nodes_); prune(natives_);
+      nodes_.prune(); natives_.prune();
       std::vector<pair_type> roots, outputs;
       std::vector<native_pointer> native_roots, native_outputs;
       cache<node_type, blob_identity> planned_pairs;

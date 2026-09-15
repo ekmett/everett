@@ -31,7 +31,7 @@ namespace diet {
   struct connection_options {
     // Empty selects Core's default. Custom registries require an explicit,
     // stable identity for their ordering, codecs, hashing and semantics.
-    std::string schema_id;
+    std::string schema_id{};
     bool create_if_missing = true;
     tap_limits limits{128'000'000, 64 * 1024 * 1024, 64, 4096};
   };

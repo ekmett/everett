@@ -108,6 +108,36 @@ A root retains the transitive closure of its objects. We can cache refcounts to
 accelerate this, provided we maintain them transactionally and can audit them
 against the graph. They are not an independent authority to delete files.
 
+### Shared retention
+
+I use the shared-suffix idea from my
+[on-line lowest common ancestor construction](https://www.schoolofhaskell.com/user/edwardk/online-lca):
+a retained head owns its immediate dependencies, which own theirs. Copying a
+head reference does not copy or revisit the tail. The same arrangement works
+for the main-index chain, terminal secondary files and hidden merge artifacts;
+an immutable frontier can own their small collection of roots.
+
+In memory, those edges are shared owners. Durable retention can use the same
+transition rule: activating a node from zero references retains its outgoing
+edges once; another reference to an already active node only changes that
+node's count. Releasing the last reference releases its outgoing edges, stopping
+at any dependency that remains active. Counts and activation state must change
+transactionally. Registration still validates new exact dependencies; it need
+not revalidate an already registered shared suffix for every new owner.
+
+A long final release belongs on a bounded retirement queue. A queued node keeps
+its outgoing retention until its release work commits, so interruption cannot
+make reachable files reclaimable. Ownership follows required file dependencies;
+keeping a new cola does not implicitly retain every earlier cola on its timeline.
+
+The sealed file identity and its backing-catalog identity can live with this
+shared owner as an immutable record. Reuse then follows the owner's lifetime,
+instead of requiring a separate table of weak owners to be scanned for expiry.
+A binding to another catalog needs its own sealed record even when it shares
+the same immutable bytes. Current in-memory query nodes already share their
+dependency owners; lifetime-coupled seal records and durable retirement are
+integration work, not a claim that catalog garbage collection is complete.
+
 ### Operations and background work
 
 | Table | Essential columns | Required relationships and constraints |

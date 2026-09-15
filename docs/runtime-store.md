@@ -39,6 +39,9 @@ then commits the root and checkpoint atomically. Unchanged native owners reuse
 their existing `.kv` identity when an index changes. A wholly unchanged graph
 needs only a new catalog generation. The weak caches retain neither native
 data nor dead snapshots, and reopening reconstructs those caches from metadata.
+Their cleanup cursor inspects a bounded number of owners per operation and
+per insertion; it does not scan all retained snapshots on every write. Expired
+cache entries can remain until that cursor reaches them.
 Mapped inputs must have been opened by this adapter; an unrelated mapped owner
 cannot silently substitute an object under a known identity.
 
