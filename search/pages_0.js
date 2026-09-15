@@ -7,7 +7,8 @@ var searchData=
   ['and_20background_20work_4',['SQLite catalog for worlds, pins and background work',['../md_docs_2catalog.html',1,'']]],
   ['and_20declaration_20ownership_5',['Doxygen metadata and declaration ownership',['../md_docs_2doxygen.html',1,'']]],
   ['and_20merge_20resumption_6',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]],
-  ['and_20publication_7',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
-  ['and_20stringlike_20keys_8',['Sorts and stringlike keys',['../md_docs_2keys.html',1,'']]],
-  ['and_20the_20choice_20of_20k_9',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]]
+  ['and_20packed_20rank_20comparison_7',['Full-vector and packed-rank comparison',['../md_bench_2rank__compare.html',1,'']]],
+  ['and_20publication_8',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
+  ['and_20stringlike_20keys_9',['Sorts and stringlike keys',['../md_docs_2keys.html',1,'']]],
+  ['and_20the_20choice_20of_20k_10',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]]
 ];

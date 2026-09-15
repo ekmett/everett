@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['rank_0',['rank',['../structeverett_1_1rank__view.html#ae9de68b25195cc5249b154840e64681c',1,'everett::rank_view::rank()'],['../structeverett_1_1rank15__view.html#ac75dd711080d3addcc66ecda6f348e5d',1,'everett::rank15_view::rank()'],['../structeverett_1_1rank__groups__view.html#afce89fabc3a61e9b6f187a743d1954de',1,'everett::rank_groups_view::rank()']]],
+  ['rank_0',['rank',['../structeverett_1_1rank__view.html#ae9de68b25195cc5249b154840e64681c',1,'everett::rank_view::rank()'],['../structeverett_1_1rank15__view.html#ac75dd711080d3addcc66ecda6f348e5d',1,'everett::rank15_view::rank()'],['../structeverett_1_1rank__groups__view.html#afce89fabc3a61e9b6f187a743d1954de',1,'everett::rank_groups_view::rank()'],['../structeverett_1_1rank__groups__view_3_0115_01_4.html#a8266319e9fc3b3f77557a2f792479e35',1,'everett::rank_groups_view&lt; 15 &gt;::rank()']]],
   ['rank15_5fview_1',['rank15_view',['../structeverett_1_1rank15__view.html#a2df02ddb795d6e386b8ea8a7bd34568b',1,'everett::rank15_view']]],
-  ['rank_5fgroups_5fview_2',['rank_groups_view',['../structeverett_1_1rank__groups__view.html#a5b201dba4ab9a1c475addd6b84c0bc5f',1,'everett::rank_groups_view']]],
+  ['rank_5fgroups_5fview_2',['rank_groups_view',['../structeverett_1_1rank__groups__view.html#a5b201dba4ab9a1c475addd6b84c0bc5f',1,'everett::rank_groups_view::rank_groups_view()'],['../structeverett_1_1rank__groups__view_3_0115_01_4.html#acb6c83b5123792c9e0ef9b91d9c29fc1',1,'everett::rank_groups_view&lt; 15 &gt;::rank_groups_view()']]],
   ['rank_5fview_3',['rank_view',['../structeverett_1_1rank__view.html#a7ffeeb759eeb709c5b6a7e3ceabbdbae',1,'everett::rank_view']]],
   ['read_4',['read',['../structeverett_1_1u64__world__codec.html#ae54534bc53cb314e25374b57a170a357',1,'everett::u64_world_codec']]],
   ['read_5fbackspace_5',['read_backspace',['../namespaceeverett_1_1profile__detail.html#a38ffe2c616f103f12161d95703aed833',1,'everett::profile_detail']]],
@@ -13,10 +13,10 @@ var searchData=
   ['read_5fvarint_10',['read_varint',['../namespaceeverett_1_1front__detail.html#aafe94fa6a969e202f7dea632f83467c1',1,'everett::front_detail']]],
   ['received_5fsamples_11',['received_samples',['../structeverett_1_1index__builder.html#a748ae155696be7e0a12dedaa96c1a446',1,'everett::index_builder']]],
   ['recompute_5fsignature_12',['recompute_signature',['../structeverett_1_1reference__world.html#af5bff83a1f0f5590c9606ebd7b896c95',1,'everett::reference_world::recompute_signature()'],['../structeverett_1_1pin__set.html#aead556fad20635218514ed57614ae5ea',1,'everett::pin_set::recompute_signature()']]],
-  ['reconstruct_5fat_13',['reconstruct_at',['../structeverett_1_1profile__view.html#a260a81ad2456a29d4481f831b5a4a27a',1,'everett::profile_view::reconstruct_at()'],['../structeverett_1_1front__view.html#a97893e5eb331f619d38ce6beaf21226d',1,'everett::front_view::reconstruct_at()']]],
+  ['reconstruct_5fat_13',['reconstruct_at',['../structeverett_1_1front__view.html#a97893e5eb331f619d38ce6beaf21226d',1,'everett::front_view::reconstruct_at()'],['../structeverett_1_1profile__view.html#a260a81ad2456a29d4481f831b5a4a27a',1,'everett::profile_view::reconstruct_at()']]],
   ['records_14',['records',['../structeverett_1_1world__run.html#aed0c24cbfa55740838f1accb638ec750',1,'everett::world_run']]],
   ['reference_5fworld_15',['reference_world',['../structeverett_1_1reference__world.html#a8ea6e75a9c1e67c6b178281819f8a042',1,'everett::reference_world']]],
-  ['region_16',['region',['../structeverett_1_1mapped__file__detail_1_1region.html#a70a0d6b5518987160b8f02bf25759c27',1,'everett::mapped_file_detail::region::region()=default'],['../structeverett_1_1mapped__file__detail_1_1region.html#a4e67e2d63f29af097f6e90009f9c3e8c',1,'everett::mapped_file_detail::region::region(region const &amp;)=delete']]],
+  ['region_16',['region',['../structeverett_1_1mapped__file__detail_1_1region.html#a4e67e2d63f29af097f6e90009f9c3e8c',1,'everett::mapped_file_detail::region::region(region const &amp;)=delete'],['../structeverett_1_1mapped__file__detail_1_1region.html#a70a0d6b5518987160b8f02bf25759c27',1,'everett::mapped_file_detail::region::region()=default']]],
   ['reindex_17',['reindex',['../structeverett_1_1profile__blob.html#ac3d465c93bae4d8d205d143e041dbf9a',1,'everett::profile_blob::reindex()'],['../structeverett_1_1blob.html#a1083c88b5aa68301a246af92333f7252',1,'everett::blob::reindex()']]],
   ['release_5fold_5fpins_18',['release_old_pins',['../structeverett_1_1merge__publication.html#a21aa1785e4d4eb2ab3e5275acb2d9b86',1,'everett::merge_publication']]],
   ['remove_19',['remove',['../structeverett_1_1pin__set.html#a2503433df9f2ba142aacaf09e819a814',1,'everett::pin_set']]],
@@ -25,11 +25,11 @@ var searchData=
   ['report_5fio_5ffailure_22',['report_io_failure',['../structeverett_1_1merge__publication.html#ab438ddfcc8c3ed50cadceb06eac63e36',1,'everett::merge_publication']]],
   ['require_5fevidence_23',['require_evidence',['../structeverett_1_1merge__publication.html#a3a54f377fb2caa3d584c93603662a10a',1,'everett::merge_publication']]],
   ['require_5fstage_24',['require_stage',['../structeverett_1_1merge__publication.html#a4aa9039a65e8c8e1d504e8e35bd608b1',1,'everett::merge_publication']]],
-  ['residual_25',['residual',['../structeverett_1_1select__groups__view.html#abf802f62f636768170f12a39e1b0b713',1,'everett::select_groups_view::residual()'],['../structeverett_1_1select15__view.html#a66db2db63fdb22fbd8fea7381ac4bfd8',1,'everett::select15_view::residual()']]],
+  ['residual_25',['residual',['../structeverett_1_1select15__view.html#a66db2db63fdb22fbd8fea7381ac4bfd8',1,'everett::select15_view::residual()'],['../structeverett_1_1select__groups__view.html#abf802f62f636768170f12a39e1b0b713',1,'everett::select_groups_view::residual()']]],
   ['resize_26',['resize',['../namespaceeverett_1_1profile__detail.html#a5fbc638f096e9a4d4428f0ef52d1c6e7',1,'everett::profile_detail']]],
   ['resolved_27',['resolved',['../structeverett_1_1reference__world.html#ab61098f25dcac682a181f1a50da776fd',1,'everett::reference_world']]],
   ['restore_28',['restore',['../structeverett_1_1reference__world.html#a32ef246b29e6a9f028a30a40c9cd5dbf',1,'everett::reference_world']]],
   ['resume_29',['resume',['../structeverett_1_1merge__publication.html#a637ac4e397e6ef8044fd12acc3f96215',1,'everett::merge_publication']]],
-  ['root_30',['root',['../structeverett_1_1multiverse.html#a8919d4e59a1209b26fd425d3e628d2d9',1,'everett::multiverse::root() const &amp;noexcept'],['../structeverett_1_1multiverse.html#a88b62137fd111cf43a341d63f199f901',1,'everett::multiverse::root() const &amp;&amp;=delete']]],
+  ['root_30',['root',['../structeverett_1_1multiverse.html#a88b62137fd111cf43a341d63f199f901',1,'everett::multiverse::root() const &amp;&amp;=delete'],['../structeverett_1_1multiverse.html#a8919d4e59a1209b26fd425d3e628d2d9',1,'everett::multiverse::root() const &amp;noexcept']]],
   ['run_5fprefix_31',['run_prefix',['../namespaceeverett_1_1rank__detail.html#a4c3532d5b073825919e8248a338cf89e',1,'everett::rank_detail']]]
 ];
