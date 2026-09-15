@@ -1,0 +1,58 @@
+cmake_minimum_required(VERSION 3.20)
+
+function(everett_run)
+  execute_process(COMMAND ${ARGV} RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
+  if(NOT result EQUAL 0)
+    string(JOIN " " command ${ARGV})
+    message(FATAL_ERROR "Command failed (${result}): ${command}\n${output}\n${error}")
+  endif()
+endfunction()
+
+if(NOT everett_smoke_mode MATCHES "^(installed|embedded)$")
+  message(FATAL_ERROR "Unknown package smoke-test mode")
+endif()
+set(root "@PROJECT_BINARY_DIR@/package-smoke/${everett_smoke_mode}")
+file(REMOVE_RECURSE "${root}")
+file(MAKE_DIRECTORY "${root}")
+set(config_args)
+if(NOT "${everett_smoke_config}" STREQUAL "")
+  list(APPEND config_args --config "${everett_smoke_config}")
+endif()
+
+set(mode_args "-DEVERETT_PACKAGE_MODE=${everett_smoke_mode}")
+if(everett_smoke_mode STREQUAL "installed")
+  everett_run("@CMAKE_COMMAND@" --install "@PROJECT_BINARY_DIR@"
+    --prefix "${root}/original" ${config_args})
+  # Remove the original prefix by moving it, so an accidentally hardcoded
+  # install path cannot make the consumer appear relocatable.
+  file(RENAME "${root}/original" "${root}/relocated")
+  list(APPEND mode_args "-DCMAKE_PREFIX_PATH=${root}/relocated"
+    "-DEVERETT_EXPECTED_PREFIX=${root}/relocated"
+    -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF -DCMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY=OFF)
+else()
+  list(APPEND mode_args "-DEVERETT_SOURCE_DIR=@PROJECT_SOURCE_DIR@")
+endif()
+set(generator_args -G "@CMAKE_GENERATOR@")
+if(NOT "@CMAKE_GENERATOR_PLATFORM@" STREQUAL "")
+  list(APPEND generator_args -A "@CMAKE_GENERATOR_PLATFORM@")
+endif()
+if(NOT "@CMAKE_GENERATOR_TOOLSET@" STREQUAL "")
+  list(APPEND generator_args -T "@CMAKE_GENERATOR_TOOLSET@")
+endif()
+everett_run("@CMAKE_COMMAND@" -S "@PROJECT_SOURCE_DIR@/tests/package" -B "${root}/consumer"
+  ${generator_args} "-DCMAKE_CXX_COMPILER=@CMAKE_CXX_COMPILER@"
+  "-DCMAKE_MAKE_PROGRAM=@CMAKE_MAKE_PROGRAM@" "-DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@"
+  ${mode_args})
+everett_run("@CMAKE_COMMAND@" --build "${root}/consumer" ${config_args} --parallel 4)
+everett_run("@CMAKE_CTEST_COMMAND@" --test-dir "${root}/consumer"
+  -C "${everett_smoke_config}" --output-on-failure)
+
+##
+# \file
+# \license
+# SPDX-FileType: SOURCE
+# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-Everett-All-Rights-Reserved
+# \endlicense
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Checks Everett package relocation and embedded consumption.

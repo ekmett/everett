@@ -1,0 +1,14 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/everett-targets.cmake")
+check_required_components(everett)
+
+##
+# \file
+# \license
+# SPDX-FileType: SOURCE
+# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>. All rights reserved.
+# SPDX-License-Identifier: LicenseRef-Everett-All-Rights-Reserved
+# \endlicense
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Configures Everett's installed package.
