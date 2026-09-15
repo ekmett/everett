@@ -170,6 +170,10 @@ int main() {
     exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 7>>();
     exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 15>>();
     exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 31>>();
+    exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 3, everett::golomb<3>>>();
+    exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 7, everett::golomb<5>>>();
+    exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 15, everett::exponential_golomb<2>>>();
+    exercise<everett::storage_policy<everett::profile_unit::bit, everett::variable_values, 31, everett::exponential_golomb<63>>>();
     std::cout << "Streaming index pipeline checks passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';

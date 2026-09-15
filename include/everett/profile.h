@@ -178,6 +178,8 @@ namespace everett {
     profile_unit count_unit = profile_unit::byte;
     profile_unit offset_unit = profile_unit::byte;
     profile_count_code count_code = profile_count_code::varint;
+    bit_backspace_code backspace_code = bit_backspace_code::exponential_golomb;
+    std::uint64_t backspace_parameter = 0;
     profile_bit_order bit_order = profile_bit_order::msb_first;
     stream_role role = stream_role::native;
     bool policy_fixed_values = false;
@@ -305,10 +307,110 @@ namespace everett {
         return ((std::uint64_t{1} << zeros) - 1) + suffix;
       }
     }
+    // Fixed-width suffixes are MSB-first. Width 64 is valid; no shift uses 64.
+    inline void put_fixed(bit_string & target, std::uint64_t & at, std::uint64_t value, unsigned width) {
+      for (unsigned remaining = width; remaining != 0; --remaining, ++at) {
+        auto mask = static_cast<std::byte>(1u << (7 - at % 8));
+        if ((value >> (remaining - 1)) & 1) target.bytes[at / 8] |= mask;
+        else target.bytes[at / 8] &= ~mask;
+      }
+    }
+    inline std::uint64_t read_fixed(bit_view data, std::uint64_t & at, unsigned width) {
+      if (at > data.size() || width > data.size() - at)
+        throw std::invalid_argument("truncated backspace remainder");
+      std::uint64_t value = 0;
+      for (unsigned i = 0; i != width; ++i) value = (value << 1) | unsigned(data.at(at++));
+      return value;
+    }
+    template <class P> constexpr std::uint64_t golomb_cutoff() {
+      constexpr auto width = std::bit_width(P::backspace_parameter - 1);
+      if constexpr (width == 64) return std::uint64_t{0} - P::backspace_parameter;
+      else return (std::uint64_t{1} << width) - P::backspace_parameter;
+    }
+    // Golomb length includes its unary quotient: a long predecessor can make
+    // a short key's backspace expensive even at an LPFC literal restart. Charge
+    // the actual codeword length as well as encoded distance from the anchor.
+    template <class P> std::uint64_t backspace_bits(std::uint64_t value) {
+      static_assert(P::unit == profile_unit::bit);
+      if constexpr (P::backspace_code == bit_backspace_code::exponential_golomb) {
+        auto quotient = value >> P::backspace_parameter;
+        auto prefix = quotient == std::numeric_limits<std::uint64_t>::max()
+          ? 129 : 2 * std::bit_width(quotient + 1) - 1;
+        return prefix + P::backspace_parameter;
+      } else {
+        constexpr auto modulus = P::backspace_parameter;
+        constexpr auto width = std::bit_width(modulus - 1);
+        auto remainder_width = width - (value % modulus < golomb_cutoff<P>());
+        return add(add(value / modulus, 1), remainder_width);
+      }
+    }
+    template <class P> void write_backspace(bit_string & target, std::uint64_t value) {
+      if constexpr (P::unit == profile_unit::byte) write_count<P>(target, value);
+      else {
+        // Check the complete length and allocate before emitting a unary run.
+        // Fresh bytes and the existing canonical tail supply its zero bits.
+        auto at = target.bit_size;
+        resize(target, add(at, backspace_bits<P>(value)));
+        if constexpr (P::backspace_code == bit_backspace_code::exponential_golomb) {
+          auto quotient = value >> P::backspace_parameter;
+          if (quotient == std::numeric_limits<std::uint64_t>::max()) {
+            at += 64;
+            put_fixed(target, at, 1, 1);
+            put_fixed(target, at, 0, 64);
+          } else {
+            auto code = quotient + 1;
+            auto width = unsigned(std::bit_width(code));
+            at += width - 1;
+            put_fixed(target, at, code, width);
+          }
+          put_fixed(target, at, value, unsigned(P::backspace_parameter));
+        } else {
+          constexpr auto modulus = P::backspace_parameter;
+          constexpr auto width = unsigned(std::bit_width(modulus - 1));
+          constexpr auto cutoff = golomb_cutoff<P>();
+          at += value / modulus;
+          put_fixed(target, at, 1, 1);
+          auto remainder = value % modulus;
+          if (remainder < cutoff) put_fixed(target, at, remainder, width - 1);
+          else put_fixed(target, at, remainder + cutoff, width);
+        }
+      }
+    }
+    template <class P> std::uint64_t read_backspace(bit_view data, std::uint64_t & offset) {
+      if constexpr (P::unit == profile_unit::byte) return read_count<P>(data, offset);
+      else if constexpr (P::backspace_code == bit_backspace_code::exponential_golomb) {
+        auto quotient = read_count<P>(data, offset);
+        if (quotient > (std::numeric_limits<std::uint64_t>::max() >> P::backspace_parameter))
+          throw std::invalid_argument("overflowing exponential-Golomb backspace");
+        auto remainder = read_fixed(data, offset, unsigned(P::backspace_parameter));
+        return (quotient << P::backspace_parameter) | remainder;
+      } else {
+        constexpr auto modulus = P::backspace_parameter;
+        constexpr auto width = unsigned(std::bit_width(modulus - 1));
+        constexpr auto cutoff = golomb_cutoff<P>();
+        constexpr auto limit = std::numeric_limits<std::uint64_t>::max() / modulus;
+        std::uint64_t quotient = 0;
+        while (!read_fixed(data, offset, 1)) {
+          if (quotient == limit) throw std::invalid_argument("overflowing Golomb quotient");
+          ++quotient;
+        }
+        std::uint64_t remainder = 0;
+        if constexpr (width != 0) {
+          remainder = read_fixed(data, offset, width - 1);
+          if (remainder >= cutoff) remainder = ((remainder << 1) | read_fixed(data, offset, 1)) - cutoff;
+        }
+        auto base = quotient * modulus;
+        if (remainder > std::numeric_limits<std::uint64_t>::max() - base)
+          throw std::invalid_argument("overflowing Golomb backspace");
+        return base + remainder;
+      }
+    }
     template <class P, stream_role Role> profile_metadata initial_metadata() {
       profile_metadata result;
       result.key_unit = result.value_unit = result.count_unit = result.offset_unit = P::unit;
       result.count_code = P::unit == profile_unit::byte ? profile_count_code::varint : profile_count_code::exp_golomb_zero;
+      result.backspace_code = P::backspace_code;
+      result.backspace_parameter = P::backspace_parameter;
       result.role = Role;
       result.group_size = P::group_size;
       result.policy_fixed_values = P::fixed_width;
@@ -333,6 +435,7 @@ namespace everett {
       auto expected = profile_detail::initial_metadata<P, Role>();
       if (metadata.version != 1 || metadata.key_unit != P::unit || metadata.value_unit != P::unit ||
           metadata.count_unit != P::unit || metadata.offset_unit != P::unit ||
+          metadata.backspace_code != P::backspace_code || metadata.backspace_parameter != P::backspace_parameter ||
           metadata.count_code != expected.count_code || metadata.bit_order != profile_bit_order::msb_first ||
           metadata.role != Role || metadata.group_size != P::group_size || metadata.policy_fixed_values != P::fixed_width ||
           metadata.policy_value_width != P::value_width.value_or(0))
@@ -453,7 +556,7 @@ namespace everett {
     bit_view data_;
 
     profile_encoded_record parse(std::uint64_t at, std::uint64_t previous) const {
-      auto backspace = profile_detail::read_count<P>(data_, at);
+      auto backspace = profile_detail::read_backspace<P>(data_, at);
       auto suffix = profile_detail::read_count<P>(data_, at);
       auto value = metadata_.common_value_width ? *metadata_.common_value_width : profile_detail::read_count<P>(data_, at);
       if (backspace > previous) throw std::invalid_argument("profile backspace exceeds predecessor");
@@ -593,7 +696,7 @@ namespace everett {
         if (retained && restart_factor && key_units <= std::numeric_limits<std::uint64_t>::max() / restart_factor &&
             start - anchor_offset > restart_factor * key_units) retained = 0;
         if (!retained) anchor_offset = start;
-        profile_detail::write_count<P>(data, previous_units - retained);
+        profile_detail::write_backspace<P>(data, previous_units - retained);
         profile_detail::write_count<P>(data, key_units - retained);
         if (!common) profile_detail::write_count<P>(data, value.size() / P::bits_per_unit);
         profile_detail::append(data, key.subview(profile_detail::multiply(retained, P::bits_per_unit),
@@ -654,7 +757,7 @@ namespace everett {
           offsets_.push_back(data_.bit_size / P::bits_per_unit);
           profile_detail::write_count<P>(data_, previous_units);
         }
-        profile_detail::write_count<P>(data_, previous_units - retained);
+        profile_detail::write_backspace<P>(data_, previous_units - retained);
         profile_detail::write_count<P>(data_, key_units - retained);
         auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
         profile_detail::append(data_, key.subview(retained_bits, key.size() - retained_bits));

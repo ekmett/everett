@@ -113,6 +113,7 @@ namespace {
     auto const & y = b.metadata();
     require(x.version == y.version && x.key_unit == y.key_unit && x.value_unit == y.value_unit &&
             x.count_unit == y.count_unit && x.offset_unit == y.offset_unit && x.count_code == y.count_code &&
+            x.backspace_code == y.backspace_code && x.backspace_parameter == y.backspace_parameter &&
             x.bit_order == y.bit_order && x.role == y.role && x.policy_fixed_values == y.policy_fixed_values &&
             x.policy_value_width == y.policy_value_width && x.common_value_width == y.common_value_width &&
             x.group_size == y.group_size && x.record_count == y.record_count && x.extent == y.extent,
@@ -237,6 +238,8 @@ namespace {
     }
     require(view.group_offsets().offset(groups, common) == array.metadata().extent, "actual-N terminal offset");
     require(array.metadata().group_size == P::group_size, "group policy metadata");
+    require(array.metadata().backspace_code == P::backspace_code &&
+            array.metadata().backspace_parameter == P::backspace_parameter, "backspace policy metadata");
   }
 
   template <class P> void roundtrip() {
@@ -276,6 +279,13 @@ namespace {
     wrong.group_size = P::group_size == 15 ? 7 : 15;
     rejects([&] { profile_view<P> invalid(fixed.bytes(), fixed.group_offsets().view(), wrong); });
     wrong = fixed.metadata();
+    wrong.backspace_code = P::backspace_code == bit_backspace_code::golomb
+      ? bit_backspace_code::exponential_golomb : bit_backspace_code::golomb;
+    rejects([&] { profile_view<P> invalid(fixed.bytes(), fixed.group_offsets().view(), wrong); });
+    wrong = fixed.metadata();
+    wrong.backspace_parameter ^= 1;
+    rejects([&] { profile_view<P> invalid(fixed.bytes(), fixed.group_offsets().view(), wrong); });
+    wrong = fixed.metadata();
     wrong.offset_unit = P::unit == profile_unit::byte ? profile_unit::bit : profile_unit::byte;
     rejects([&] { profile_view<P> invalid(fixed.bytes(), fixed.group_offsets().view(), wrong); });
     wrong = fixed.metadata();
@@ -298,7 +308,8 @@ namespace {
     std::vector<profile_record> records;
     auto prefix = P::unit == profile_unit::byte ? bit_string::from_bytes(std::string(31, 'a'))
                                                : bit_string::from_bits(std::string(31, '0'));
-    for (unsigned i = 0; i != 400; ++i) records.push_back({prefix, {}});
+    for (unsigned i = 0; i != 400; ++i)
+      records.push_back({prefix, binary(P::value_width.value_or(0) * P::bits_per_unit, i + 1)});
     auto array = profile_array<P>::build(records, {}, 18);
     auto view = array.view();
     std::uint64_t anchor = 0;
@@ -323,6 +334,8 @@ namespace {
     std::vector<profile_record> records{{bit_string::from_bytes("aa"), {}},
                                         {bit_string::from_bytes("abc"), {}},
                                         {bit_string::from_bytes("abde"), {}}};
+    if constexpr (P::fixed_width)
+      for (auto & record : records) record.value = binary(*P::value_width * P::bits_per_unit, 99);
     auto array = profile_array<P>::build(records);
     auto lower = bit_string::from_bytes("ab");
     auto query = bit_string::from_bytes("abd");
@@ -374,6 +387,206 @@ namespace {
       std::uint64_t offset = 0;
       rejects([&] { (void)profile_detail::read_count<byte_policy>(data.view(), offset); });
     }
+  }
+
+  template <class Code> using backspace_policy = storage_policy<profile_unit::bit, variable_values, 15, Code>;
+
+  template <class Code> void known_backspace(std::uint64_t value, std::string_view word) {
+    using policy = backspace_policy<Code>;
+    auto expected = bit_string::from_bits(word);
+    bit_string actual;
+    profile_detail::write_backspace<policy>(actual, value);
+    require(actual == expected, "known backspace bit vector");
+    require(profile_detail::backspace_bits<policy>(value) == word.size(), "backspace length prediction");
+    std::uint64_t at = 0;
+    require(profile_detail::read_backspace<policy>(expected.view(), at) == value && at == word.size(),
+            "known backspace vector decoding");
+    for (std::uint64_t size = 0; size < word.size(); ++size) {
+      at = 0;
+      rejects([&] { profile_detail::read_backspace<policy>(expected.view().prefix(size), at); });
+    }
+    auto shifted = bit_string::from_bits("101");
+    profile_detail::write_backspace<policy>(shifted, value);
+    require(compare_bits(shifted.view().subview(3, word.size()), expected.view()) == 0,
+            "unaligned backspace append changed bits");
+    at = 0;
+    require(profile_detail::read_backspace<policy>(shifted.view().subview(3, word.size()), at) == value,
+            "unaligned backspace decode");
+  }
+
+  template <class Code> void backspace_roundtrip(std::uint64_t limit = 1000) {
+    using policy = backspace_policy<Code>;
+    bit_string encoded;
+    std::vector<std::uint64_t> values;
+    for (std::uint64_t i = 0; i <= limit; ++i) {
+      values.push_back(i);
+      profile_detail::write_backspace<policy>(encoded, i);
+    }
+    if constexpr (policy::backspace_code == bit_backspace_code::golomb) {
+      constexpr auto modulus = policy::backspace_parameter;
+      for (auto value : {modulus - 1, modulus}) {
+        values.push_back(value);
+        profile_detail::write_backspace<policy>(encoded, value);
+      }
+      if constexpr (modulus != std::numeric_limits<std::uint64_t>::max()) {
+        values.push_back(modulus + 1);
+        profile_detail::write_backspace<policy>(encoded, modulus + 1);
+      }
+      if constexpr (modulus <= std::numeric_limits<std::uint64_t>::max() / 2) {
+        values.push_back(2 * modulus - 1);
+        profile_detail::write_backspace<policy>(encoded, 2 * modulus - 1);
+      }
+    }
+    // Large moduli and exponential codes can also cover the entire domain
+    // without allocating an impractically large unary quotient.
+    if constexpr (policy::backspace_code == bit_backspace_code::exponential_golomb ||
+                  policy::backspace_parameter >= (std::uint64_t{1} << 63)) {
+      for (auto value : {std::uint64_t{1} << 63, std::numeric_limits<std::uint64_t>::max() - 1,
+                         std::numeric_limits<std::uint64_t>::max()}) {
+        values.push_back(value);
+        profile_detail::write_backspace<policy>(encoded, value);
+      }
+    }
+    std::uint64_t at = 0;
+    for (auto value : values) {
+      auto start = at;
+      require(profile_detail::read_backspace<policy>(encoded.view(), at) == value, "backspace code roundtrip");
+      require(at - start == profile_detail::backspace_bits<policy>(value), "backspace consumed length");
+    }
+    require(at == encoded.bit_size, "backspace stream extent");
+    rejects([&] { profile_detail::read_backspace<policy>(encoded.view(), at); });
+    at = encoded.bit_size + 1;
+    rejects([&] { profile_detail::read_backspace<policy>(encoded.view(), at); });
+  }
+
+  template <class Code> void rejects_backspace(std::string_view word) {
+    auto bits = bit_string::from_bits(word);
+    std::uint64_t at = 0;
+    rejects([&] { profile_detail::read_backspace<backspace_policy<Code>>(bits.view(), at); });
+  }
+
+  void backspace_codes() {
+    static_assert(std::is_same_v<byte_policy::backspace_encoding, exponential_golomb<0>>);
+    static_assert(backspace_policy<golomb<3>>::backspace_code == bit_backspace_code::golomb);
+    static_assert(backspace_policy<golomb<3>>::backspace_parameter == 3);
+    static_assert(backspace_policy<exponential_golomb<63>>::backspace_parameter == 63);
+    for (auto [value, word] : std::array<std::pair<std::uint64_t, std::string_view>, 7>{{
+           {0, "10"}, {1, "110"}, {2, "111"}, {3, "010"}, {4, "0110"}, {5, "0111"}, {6, "0010"}}})
+      known_backspace<golomb<3>>(value, word);
+    for (auto [value, word] : std::array<std::pair<std::uint64_t, std::string_view>, 5>{{
+           {0, "100"}, {1, "101"}, {2, "110"}, {3, "1110"}, {4, "1111"}}})
+      known_backspace<golomb<5>>(value, word);
+    for (auto [value, word] : std::array<std::pair<std::uint64_t, std::string_view>, 8>{{
+           {0, "100"}, {1, "101"}, {2, "110"}, {3, "111"}, {4, "01000"}, {7, "01011"},
+           {8, "01100"}, {12, "0010000"}}})
+      known_backspace<exponential_golomb<2>>(value, word);
+    known_backspace<golomb<1>>(0, "1");
+    known_backspace<golomb<1>>(4, "00001");
+    known_backspace<golomb<4>>(5, "0101");
+    known_backspace<exponential_golomb<1>>(0, "10");
+    known_backspace<exponential_golomb<1>>(3, "0101");
+    constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
+    known_backspace<exponential_golomb<0>>(maximum, std::string(64, '0') + '1' + std::string(64, '0'));
+    known_backspace<exponential_golomb<63>>(maximum, "010" + std::string(63, '1'));
+    known_backspace<golomb<maximum>>(0, "1" + std::string(63, '0'));
+    known_backspace<golomb<maximum>>(1, "1" + std::string(62, '0') + "10");
+    known_backspace<golomb<maximum>>(maximum - 1, "1" + std::string(64, '1'));
+    known_backspace<golomb<maximum>>(maximum, "01" + std::string(63, '0'));
+    backspace_roundtrip<golomb<1>>(127);
+    backspace_roundtrip<golomb<2>>();
+    backspace_roundtrip<golomb<3>>();
+    backspace_roundtrip<golomb<5>>();
+    backspace_roundtrip<golomb<9>>();
+    backspace_roundtrip<golomb<17>>();
+    backspace_roundtrip<golomb<127>>();
+    backspace_roundtrip<golomb<65535>>();
+    backspace_roundtrip<golomb<(std::uint64_t{1} << 63)>>();
+    backspace_roundtrip<golomb<(std::uint64_t{1} << 63) + 1>>();
+    backspace_roundtrip<golomb<maximum>>();
+    backspace_roundtrip<exponential_golomb<0>>();
+    backspace_roundtrip<exponential_golomb<1>>();
+    backspace_roundtrip<exponential_golomb<2>>();
+    backspace_roundtrip<exponential_golomb<7>>();
+    backspace_roundtrip<exponential_golomb<31>>();
+    backspace_roundtrip<exponential_golomb<63>>();
+    // Impossible Golomb1 length is rejected before allocation or unary work.
+    bit_string target = bit_string::from_bits("101");
+    auto saved = target;
+    rejects([&] { profile_detail::write_backspace<backspace_policy<golomb<1>>>(target, maximum); });
+    require(target == saved, "overflowing backspace changed output");
+    rejects([&] { profile_detail::write_backspace<backspace_policy<golomb<1>>>(target, maximum - 1); });
+    require(target == saved, "overflowing combined extent changed output");
+    rejects([&] { profile_detail::backspace_bits<backspace_policy<golomb<1>>>(maximum); });
+    require(profile_detail::backspace_bits<backspace_policy<golomb<2>>>(maximum) ==
+            (std::uint64_t{1} << 63) + 1, "large representable Golomb length");
+    rejects_backspace<golomb<3>>("");
+    rejects_backspace<golomb<3>>("00000");
+    rejects_backspace<golomb<3>>("11"); // Long truncated remainder is missing its last bit.
+    rejects_backspace<golomb<maximum>>("00"); // Quotient alone is already out of range.
+    rejects_backspace<golomb<maximum>>("01" + std::string(62, '0') + "10"); // max + 1.
+    rejects_backspace<exponential_golomb<63>>("011"); // Quotient 2 cannot fit after shifting.
+    rejects_backspace<exponential_golomb<0>>(std::string(65, '0'));
+    rejects_backspace<exponential_golomb<0>>(std::string(64, '0') + '1' + std::string(63, '0') + '1');
+    // The default backspace encoding stays byte-for-byte identical to the
+    // existing count codec, including max and representative short values.
+    for (auto value : {std::uint64_t{0}, std::uint64_t{1}, std::uint64_t{7}, std::uint64_t{255}, maximum}) {
+      auto check = [&]<class P>() {
+        bit_string before, after;
+        profile_detail::write_count<P>(before, value);
+        profile_detail::write_backspace<P>(after, value);
+        require(before == after, "default backspace changed existing bytes");
+      };
+      check.template operator()<byte_policy>();
+      check.template operator()<bit_policy>();
+    }
+  }
+
+  void default_profile_bytes() {
+    std::vector<profile_record> bytes{{bit_string::from_bytes("ab"), {}},
+                                      {bit_string::from_bytes("ac"), {}}};
+    auto byte_array = profile_array<byte_policy>::build(bytes);
+    std::array<std::byte, 8> byte_expected{std::byte{0}, std::byte{0}, std::byte{2}, std::byte{'a'},
+      std::byte{'b'}, std::byte{1}, std::byte{1}, std::byte{'c'}};
+    require(std::ranges::equal(byte_array.bytes(), byte_expected), "default byte profile golden encoding");
+    std::vector<profile_record> bits{{bit_string::from_bits("0010"), {}},
+                                     {bit_string::from_bits("0011"), {}}};
+    auto bit_array = profile_array<bit_policy>::build(bits);
+    auto bit_expected = bit_string::from_bits("1" "1" "00101" "0010" "010" "010" "1");
+    require(bit_array.metadata().extent == bit_expected.bit_size &&
+            std::ranges::equal(bit_array.bytes(), bit_expected.bytes), "default bit profile golden encoding");
+  }
+
+  template <class P> void coded_profiles() {
+    roundtrip<P>();
+    lpfc<P>();
+    surrogate_anchor<P>();
+    bit_string bad;
+    profile_detail::write_count<P>(bad, 0); // Group checkpoint retains exp0.
+    profile_detail::write_backspace<P>(bad, 1);
+    profile_detail::write_count<P>(bad, 0); // Suffix length retains exp0.
+    auto metadata = profile_detail::initial_metadata<P, stream_role::borrowed>();
+    metadata.record_count = 1;
+    metadata.extent = bad.bit_size;
+    metadata.common_value_width = 0;
+    std::array<std::uint64_t, 2> offsets{0, bad.bit_size};
+    auto index = select_groups<P::group_size>::build(offsets, 1);
+    profile_view<P, stream_role::borrowed> view(bad.bytes, index.view(), metadata);
+    rejects([&] { view.cursor(); });
+  }
+
+  void long_golomb_backspace() {
+    using policy = backspace_policy<golomb<1>>;
+    std::vector<profile_record> records{{bit_string::from_bits(std::string(4096, '0')), {}},
+                                        {bit_string::from_bits("1"), {}}};
+    auto array = profile_array<policy>::build(records, {}, 18);
+    auto view = array.view();
+    auto first = view.encoded_at(0);
+    auto second = view.encoded_at(1);
+    require(second.retained == 0 && second.key_units == 1, "short literal key after long predecessor");
+    auto at = first.next_offset;
+    require(profile_detail::read_backspace<policy>(bit_view(array.bytes(), array.metadata().extent), at) == 4096 &&
+            at - first.next_offset == 4097, "Golomb backspace cost must include unary payload");
+    require(view.reconstruct_at(1).prefix == records[1].key, "long Golomb predecessor reconstruction");
   }
 
   template <class P> void malformed_streams() {
@@ -479,6 +692,13 @@ namespace {
 int main() {
   try {
     counts();
+    backspace_codes();
+    default_profile_bytes();
+    long_golomb_backspace();
+    coded_profiles<storage_policy<profile_unit::bit, variable_values, 3, golomb<3>>>();
+    coded_profiles<storage_policy<profile_unit::bit, fixed_values<3>, 7, golomb<5>>>();
+    coded_profiles<storage_policy<profile_unit::bit, fixed_values<0>, 15, exponential_golomb<2>>>();
+    coded_profiles<storage_policy<profile_unit::bit, variable_values, 31, exponential_golomb<63>>>();
     policies<3>();
     policies<7>();
     policies<15>();
