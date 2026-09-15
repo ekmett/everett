@@ -573,6 +573,12 @@ finite strings and associative content-mismatch transfer under the invariant
 that each literal mismatch lies at or beyond its retained prefix. Direction
 travels with the selected mismatch; endpoints remain separate.
 
+`Frontier` proves the sorted-merge comparison laws for carried LCP lengths:
+unequal lengths decide head order, equal lengths permit a suffix-only comparison,
+and either case recovers the exact LCP between the two heads. Equal keys and
+proper prefixes remain included; C++ cursor state maintenance is a separate
+refinement obligation.
+
 Those theorems do not verify stored cut-LCP scalars, literal comparisons or the
 encoded decoder. Compressed rank, Elias–Fano, front coding, full cascade execution, C++ refinement, scheduling
 and crash recovery remain outside its scope. The proof README records the assumptions
@@ -671,7 +677,7 @@ These tests do not establish behavior under physical power loss.
 
 Doxygen checked 29 public headers and 26 real declaration associations, with
 clean generation that removes obsolete pages. The proof checkpoint checked
-693 Lean declarations with only standard `propext`, `Quot.sound` and
+711 Lean declarations with only standard `propext`, `Quot.sound` and
 `Classical.choice` axioms.
 
 All seven complete README programs and the native-merge and SQLite guide

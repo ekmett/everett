@@ -11,6 +11,7 @@ import Everett.Adoption
 import Everett.Fractional
 import Everett.FractionalExamples
 import Everett.Prefix
+import Everett.Frontier
 import Everett.Transfer
 import Everett.NativeMerge
 import Everett.Examples

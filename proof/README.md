@@ -55,6 +55,7 @@ Field guide
 | [Adoption](Everett/Adoption.lean) | Discharges the semantic adoption premise for chronological adjacent merges, using the actual history-composition theorem |
 | [Fractional](Everett/Fractional.lean) | Stable tagged merging; exact every-Kth samples; sampled predecessor windows; endpoint-rank projections; local/global predecessor equivalence; false-borrow recovery for unique native keys; a list-level index builder and exact-target retention |
 | [Prefix](Everett/Prefix.lean) | Finite-string lexicographic order, prefix interval convexity and the exact LCP minimum for three ordered strings |
+| [Frontier](Everett/Frontier.lean) | Merge-head ordering from carried LCP lengths, suffix-only comparison at equal lengths, and exact new frontier lengths |
 | [Transfer](Everett/Transfer.lean) | Content-mismatch transfers, the literal-position invariant, composition and associative ordered summaries |
 | [NativeMerge](Everett/NativeMerge.lean) | Executable two-way merging of strictly ordered native runs; unique sorted output; optional pointwise lookup composition; chronological reassociation and disjoint-support commutation |
 | [Examples](Everett/Examples.lean) | Heterogeneous keys, valid and stale sources, noncommutative histories, changed index/target versions, and an old target that cannot be reclaimed while a snapshot retains it |
@@ -198,6 +199,15 @@ This lets an exact cut-LCP scalar repair the preceding borrowed key's comparison
 state. Equality and proper-prefix cases are included. The statement needs the
 ordering hypotheses; arbitrary triples only satisfy the usual lower bound.
 The theorem does not certify that a stored index contains the right scalar.
+
+`Frontier.lean` applies the same string law during a sorted merge. If both
+heads follow the preceding output, the head sharing the longer prefix with
+that output sorts first. Their mutual LCP is then the smaller carried length.
+When the lengths agree, dropping that shared prefix preserves strict order;
+adding it back to the suffix LCP recovers the exact new frontier. Equality,
+empty strings and proper prefixes are included. These laws justify the
+comparison shortcut independently of the cursor implementation. They do not
+prove cursor state maintenance, decoding, or its running time.
 
 `Transfer.lean` models a content mismatch as a position with its direction, or
 infinity. A record retaining $r$ units preserves an incoming mismatch before
