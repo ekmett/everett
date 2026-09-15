@@ -141,8 +141,9 @@ $$
 $$
 
 At $K=15$ this is $17B_i/13+2$. It is neither a bytes-per-record factor nor a
-live-data amplification ratio. The additive two is stable since $4/K\le2$ for
-our allowed $K\ge3$.
+live-data amplification ratio. The additive two is stable using the integer bound
+$\lceil x/K\rceil\le(x+K-1)/K$: the inherited $2/K$ and
+the two rounding terms $2(K-1)/K$ sum to two.
 
 Parameterized comparison
 ------------------------
