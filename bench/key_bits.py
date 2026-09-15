@@ -54,13 +54,16 @@ def main():
         source = "include/everett/" + name
         contents = subprocess.check_output(["git", "-C", str(repo), "show", args.candidate + ":" + source]) if args.candidate else (repo / source).read_bytes()
         (candidate / "everett" / name).write_bytes(contents)
+    source = (repo / "bench/key_bits.cc").read_bytes()
+    source_snapshot = build / "key_bits.cc"
+    source_snapshot.write_bytes(source)
     compiler = os.environ.get("CXX", "clang++")
     flags = ["-std=c++20", "-Wall", "-Wextra", "-Wpedantic", "-Werror"]
     flags += ["-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer"] if args.sanitize else ["-O3", "-DNDEBUG"]
     executables = {}
     for variant, headers in (("baseline", baseline), ("candidate", candidate)):
         executable = build / ("key_bits_" + variant + ("-sanitize" if args.sanitize else ""))
-        subprocess.run([compiler, *flags, "-I" + str(headers), "-I" + str(baseline), str(repo / "bench/key_bits.cc"), "-o", str(executable)], check=True)
+        subprocess.run([compiler, *flags, "-I" + str(headers), "-I" + str(baseline), str(source_snapshot), "-o", str(executable)], check=True)
         executables[variant] = executable
     rows = []
     expected = {}
@@ -85,7 +88,7 @@ def main():
     hashes = {name: hashlib.sha256((candidate / "everett" / name).read_bytes()).hexdigest() for name in headers}
     metadata = {"baseline": BASE, "candidate_revision": subprocess.check_output(["git", "-C", str(repo), "rev-parse", args.candidate or "HEAD"], text=True).strip(),
                 "candidate_working_tree": args.candidate is None, "dependency_revision": BASE, "candidate_overlay": headers,
-                "candidate_header_sha256": hashes, "source_sha256": hashlib.sha256((repo / "bench/key_bits.cc").read_bytes()).hexdigest(),
+                "candidate_header_sha256": hashes, "source_sha256": hashlib.sha256(source).hexdigest(),
                 "compiler": subprocess.check_output([compiler, "--version"], text=True), "flags": flags,
                 "platform": platform.platform(), "machine": platform.machine(), "trials": args.trials,
                 "work": args.work, "sanitize": args.sanitize}
