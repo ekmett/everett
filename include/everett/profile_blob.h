@@ -28,7 +28,8 @@
 #include <vector>
 
 namespace everett {
-  template <class P, class Native = profile_array<P>> struct index_builder;
+  template <class P, class Native = profile_array<P>, class Output = profile_detail::index_output<P>>
+  struct index_builder;
 
   struct profile_blob_window {
     std::uint64_t native_first = 0;

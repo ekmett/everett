@@ -93,7 +93,7 @@ namespace everett {
     std::uint64_t size() const noexcept { return count_; }
 
   private:
-    template <class, class> friend struct index_builder;
+    template <class, class, class> friend struct index_builder;
     // The builder supplies exact comparison state for sorted, unit-aligned
     // keys and consecutive output ordinals; the public entry remains checked.
     profile_coded_sample<P> encode_known(bit_view key, std::uint64_t target_ordinal,
@@ -123,7 +123,7 @@ namespace everett {
     std::uint64_t size() const noexcept { return count_; }
 
   private:
-    template <class, class> friend struct index_builder;
+    template <class, class, class> friend struct index_builder;
     std::pair<bit_view, bit_comparison> accept_compared(profile_coded_sample<P> const & sample) {
       sampling_detail::check_ordinal<P>(count_, sample.target_ordinal);
       auto suffix = sample.suffix.view();

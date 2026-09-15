@@ -19,7 +19,16 @@
 #include <vector>
 
 namespace everett {
-  template <class P, class Native> struct index_builder;
+  template <class P, class Native, class Output> struct index_builder;
+  namespace profile_detail {
+    template <class P> struct index_output;
+    template <class P> struct index_metadata {
+      rank_groups<P::group_size> interleave;
+      std::vector<std::byte> false_borrows;
+      std::vector<std::uint64_t> cut_lcps;
+      std::uint64_t virtual_count = 0;
+    };
+  }
 
   // An owning index artifact, independent of native storage. Construction uses
   // a pinned source and trusted samples of one exact target. The caller keeps
@@ -52,7 +61,8 @@ namespace everett {
     std::uint64_t native_size() const noexcept { return virtual_count_ - borrowed_.size(); }
 
   private:
-    template <class Q, class Native> friend struct index_builder;
+    template <class, class, class> friend struct index_builder;
+    friend struct profile_detail::index_output<P>;
 
     borrowed_array borrowed_;
     rank_groups<group_size> interleave_;
@@ -67,6 +77,30 @@ namespace everett {
         false_borrows_(std::move(false_borrows)), cut_lcps_(std::move(cut_lcps)),
         virtual_count_(virtual_count) {}
   };
+  namespace profile_detail {
+    // Default index output owns borrowed FC bytes. Alternate outputs share the
+    // same builder and consume this known adjacent-key comparison synchronously.
+    template <class P> struct index_output {
+      using policy_type = P;
+      index_output() = default;
+      index_output(index_output const &) = delete;
+      index_output & operator=(index_output const &) = delete;
+      index_output(index_output &&) = default;
+      index_output & operator=(index_output &&) = default;
+      std::uint64_t size() const noexcept { return writer_.size(); }
+      bool finished() const noexcept { return writer_.finished(); }
+      bool failed() const noexcept { return false; }
+      void append_known(bit_view key, std::uint64_t common_bits) { writer_.append_known(key, common_bits); }
+      profile_index<P> finish(index_metadata<P> metadata) {
+        auto borrowed = writer_.finish();
+        return profile_index<P>(std::move(borrowed), std::move(metadata.interleave),
+          std::move(metadata.false_borrows), std::move(metadata.cut_lcps), metadata.virtual_count);
+      }
+    private:
+      profile_borrowed_writer<P> writer_;
+    };
+  }
+
 }
 
 /**

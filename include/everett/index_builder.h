@@ -21,6 +21,7 @@
 #include <memory>
 #include <optional>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -34,10 +35,20 @@ namespace everett {
   // Coded handoff queues a backspace count, suffix and target ordinal. Backspace
   // counts P units relative to the preceding emitted sample. Decoder, lookahead,
   // pending-writer and outgoing-encoder contexts still retain full current keys.
-  template <class P, class Native>
+  // Output has nonthrowing move assignment, starts empty/active and consumes
+  // append_known(key, exact_bit_lcp)
+  // synchronously. Its finish takes owning navigation metadata and may return
+  // an artifact or receipt. Any step/finalization failure poisons this builder.
+  template <class P, class Native, class Output>
   struct index_builder {
     using policy_type = P;
     using native_type = Native;
+    using output_type = Output;
+    static_assert(std::same_as<typename Output::policy_type, P>);
+    static_assert(std::is_nothrow_move_assignable_v<Output>,
+      "index output move assignment must not throw");
+    static_assert(noexcept(std::declval<Output const &>().finished()));
+    static_assert(noexcept(std::declval<Output const &>().failed()));
     static_assert(std::same_as<typename Native::policy_type, P>);
     using blob_type = profile_blob<P>;
     using sample_type = profile_sample<P>;
@@ -45,11 +56,16 @@ namespace everett {
     static constexpr std::uint64_t group_size = P::group_size;
 
     explicit index_builder(blob_type const & source)
-      requires std::same_as<Native, typename blob_type::native_array>
+      requires (std::same_as<Native, typename blob_type::native_array> &&
+                std::same_as<Output, profile_detail::index_output<P>>)
       : index_builder(source.native_) {}
 
     explicit index_builder(std::shared_ptr<Native const> native)
-      : native_(checked_native(std::move(native))), native_cursor_(native_->view()) {}
+      requires std::is_default_constructible_v<Output>
+      : index_builder(Output{}, std::move(native)) {}
+    index_builder(Output output, std::shared_ptr<Native const> native)
+      : native_(checked_native(std::move(native))), native_cursor_(native_->view()),
+        writer_(checked_output(std::move(output))) {}
 
     index_builder(index_builder const &) = delete;
     index_builder & operator=(index_builder const &) = delete;
@@ -64,6 +80,7 @@ namespace everett {
       return native_ && !failed_ && input_closed_ && !incoming_ && native_cursor_.done() && !outgoing_;
     }
     bool finished() const noexcept { return finished_; }
+    bool failed() const noexcept { return failed_; }
     std::uint64_t size() const noexcept { return virtual_count_; }
     std::uint64_t received_samples() const noexcept { return received_; }
 
@@ -173,7 +190,8 @@ namespace everett {
     // A nonempty sampled stream requires the exact completed target pair.
     // Empty targets may be retained too. No durable publication is implied.
     blob_type finish(std::shared_ptr<blob_type const> target = {})
-      requires std::same_as<Native, typename blob_type::native_array> {
+      requires (std::same_as<Native, typename blob_type::native_array> &&
+                std::same_as<Output, profile_detail::index_output<P>>) {
       auto index = finish_index(target ? target->virtual_size() : 0);
       try {
         blob_type result;
@@ -194,17 +212,20 @@ namespace everett {
     // Keep native bytes in their original storage. The extent authenticates
     // only the sample count; the caller supplies samples from the exact target
     // and retains source/target pins until the resulting index is published.
-    profile_index<P> finish_index(std::uint64_t target_count) {
+    auto finish_index(std::uint64_t target_count)
+      -> decltype(std::declval<Output &>().finish(std::declval<profile_detail::index_metadata<P>>())) {
       check_active();
       if (!done()) error_detail::raise<std::logic_error>("index builder is not drained at EOF");
       auto expected = target_count / group_size + (target_count % group_size != 0);
       if (expected != received_) error_detail::raise<std::invalid_argument>("index samples disagree with target extent");
       try {
-        flush_pending();
-        auto borrowed = writer_.finish();
+        // Final rank allocation precedes the last pending append and any
+        // irreversible final writes in an alternate output.
         auto interleave = rank_groups<group_size>::build(classes_, virtual_count_);
-        profile_index<P> result(std::move(borrowed), std::move(interleave),
-          std::move(false_borrows_), std::move(cut_lcps_), virtual_count_);
+        flush_pending();
+        profile_detail::index_metadata<P> metadata{std::move(interleave),
+          std::move(false_borrows_), std::move(cut_lcps_), virtual_count_};
+        auto result = writer_.finish(std::move(metadata));
         finished_ = true;
         return result;
       } catch (...) {
@@ -218,7 +239,7 @@ namespace everett {
 
     std::shared_ptr<Native const> native_;
     profile_cursor<P, stream_role::native> native_cursor_;
-    profile_borrowed_writer<P> writer_;
+    Output writer_;
     std::optional<bit_string> incoming_;
     std::optional<bit_string> pending_;
     std::optional<coded_sample_type> outgoing_;
@@ -245,6 +266,11 @@ namespace everett {
 
     void check_active() const {
       if (!native_ || finished_ || failed_) error_detail::raise<std::logic_error>("index builder is no longer active");
+    }
+    static Output checked_output(Output output) {
+      if (output.size() || output.finished() || output.failed())
+        error_detail::raise<std::invalid_argument>("index builder requires an empty active output");
+      return output;
     }
     static std::shared_ptr<Native const> checked_native(std::shared_ptr<Native const> native) {
       if (!native) error_detail::raise<std::invalid_argument>("index builder requires a pinned native source");

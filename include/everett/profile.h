@@ -620,7 +620,8 @@ namespace everett {
   template <class P, stream_role Role = stream_role::native> struct profile_cursor;
   template <class P, stream_role Role = stream_role::native> struct profile_encoded_cursor;
   template <class P> struct profile_borrowed_writer;
-  template <class P, class Native> struct index_builder;
+  template <class P, class Native, class Output> struct index_builder;
+  namespace profile_detail { template <class P> struct index_output; }
   template <class P> struct profile_native_writer;
   namespace profile_detail { template <class P> struct native_output; }
 
@@ -1195,7 +1196,8 @@ namespace everett {
     }
 
   private:
-    template <class, class> friend struct index_builder;
+    template <class, class, class> friend struct index_builder;
+    friend struct profile_detail::index_output<P>;
     // Only the index builder bypasses the public comparison, using the exact
     // LCP already obtained when this borrowed key was accepted. Framing and
     // allocation rollback are shared with the public checked writer.
