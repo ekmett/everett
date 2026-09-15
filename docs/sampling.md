@@ -106,6 +106,37 @@ sampling policy. A downstream-index change creates a new pair whose export must
 be rebuilt or validated anew; the native bytes stay unchanged. This is an option
 for measurement, not a selected format extension or implemented feature.
 
+### Streaming construction pipeline
+
+A proposed builder pipeline keeps a few fingers per index under construction.
+Each stage merges its native keys with incoming samples from its exact target
+pair and passes every Kth augmented occurrence to the next stage. It retains:
+
+- Native and incoming-sample positions, with a next-key lookahead or explicit
+  end-of-stream for each input. A temporarily empty queue is not end-of-stream.
+- The virtual ordinal and its residue modulo K, cumulative borrowed rank and
+  the current partial rank class.
+- Front-coding contexts and any pending borrowed record whose shared-cut prefix
+  ceiling still depends on later input.
+- Physical group positions and sampled residual offsets, staged until the
+  final extent determines the Elias–Fano encoding.
+
+If a stage has n native entries and receives s samples, it emits
+\(\lceil(n+s)/K\rceil\) samples. Thus the contribution from one original source
+shrinks by roughly K per edge, but every stage adds its own native entries.
+Bounded queues and backpressure let stages advance at different rates; they
+must retain enough lookahead to establish the next merged key. Key lengths,
+prefix work and values mean that byte traffic and execution time need not shrink
+by K along with the sampled occurrence count.
+
+A sample key and target ordinal can become stable before the corresponding
+front-coded record is finalized or its output file is sealed. Construction may
+forward those samples immediately under the reserved target-pair generation.
+Readers adopt only a complete, validated and durable paired dependency graph;
+until that publication, old representations retain their existing pins. This
+pipeline is a concrete construction proposal, not an implemented runtime or a
+proof of the redundant-level scheduler's deadlines.
+
 ## 3. Per-level augmentation along one chain
 
 Index a nonempty chain of catalogs from small to large by \(i=0,\ldots,L-1\).
