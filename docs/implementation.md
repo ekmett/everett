@@ -836,8 +836,8 @@ forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
-Combined verification through `ca33a77` on 2026-09-15: AppleClang 21, C++20,
-Release with strict warnings and ASan/UBSan passed all **50 CTests**, including
+Combined verification through `df1cb2d` on 2026-09-15: AppleClang 21, C++20,
+Release with strict warnings and ASan/UBSan passed all **52 CTests**, including
 three package consumers and Doxygen. SQLite headers and runtime were 3.53.4.
 This run covers ordinary-FC comparison, owning and mapped single/two-route
 queries, carried sampling/build frontiers, portable unaligned navigation,
@@ -866,6 +866,12 @@ licenses and generated CRC includes are checked byte for byte
 against the source bundle, and the pinned generator reproduced all eight
 backends. Windows execution coverage is limited to the recorded rank component
 tests. Network transport and durable merge resumption remain separate work.
+
+The rename to Diet preserves the object formats and catalog schema. A separate
+compatibility check reopened a byte-profile, schema-3 store from the preceding
+build through `fridge`: both saved roots, the current timeline, reader-pin
+replay and twelve expected queries passed. Its logical catalog contents and
+all eight immutable object files remained unchanged.
 
 The optional `DIET_BUILD_DOCS` configuration generates Doxygen HTML/XML and
 checks all file footers plus representative function/member ownership. A
