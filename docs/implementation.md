@@ -19,8 +19,8 @@ for integration. These are development responsibilities.
 | Navigation and recovery | `rank.h`, `rank15.h`, `select15.h`, `durability.h`; `tests/rank.cc`, `tests/durability.cc` | rank and sparse-offset oracles, counter transitions, publication ordering, failure and resumption cases |
 | Grouped navigation and object files | `rank_groups.h`, `select_groups.h`, `mapped_file.h`, `file.h`, `object_path.h`; group/mapping/file tests | policy groups, checked binary envelopes, retained mappings and canonical sharded paths |
 | Checksums | `crc32c.h`, generated backends, pinned generator and package notices; `tests/crc32c.cc` | independent CRC oracle, bounded loads, reproducible generation, target guards and multi-translation-unit installed consumption |
-| Key codecs and blobs | `key_detail.h`, `front.h`, `blob.h`; `tests/front.cc`; [key policies](keys.md) | bounded comparison, partial-prefix lookup, false borrows, independent reindexing, conservative boundary contexts and sort contracts |
-| Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `multiverse.h`; profile/blob/multiverse tests | byte/bit and value-layout matrix, LPFC, modified borrowed FC, same-policy aliases and unchanged native allocation on reindex |
+| Key primitives | `key_detail.h`, `profile.h`; `tests/profile.cc`; [key policies](keys.md) | bounded comparisons, bit movement, count framing and independent bit-level oracles |
+| Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `multiverse.h`; profile/blob/multiverse tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
 | Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
 | World semantics and ownership | `fingerprint.h`, `pins.h`, `world.h`; `tests/world.cc`, `tests/pins.cc` | disjoint batch permutations, snapshots, old-value validation, contributions, replay and reference export |
 | Design documentation | [design](design.md), [arrows](arrows.md), [rebuilding](rebuild.md), [durability](durability.md), this ledger | consistent contracts, cited derivations, implementation limits and independently usable terminology |
@@ -33,244 +33,83 @@ this package.
 
 ### Rank and sparse offsets
 
-- Rank-only directory with 64-bit epoch counts, 32-bit block counts, and three
-  independent ten-bit populations. This backend has no select prerequisite.
-- The lane sum uses word-parallel arithmetic, widening ten-bit lanes to eleven
-  bits before addition. Tests exercise counter transitions at `2^32` and `2^33`
-  source bits without allocating those payloads.
-- Separate rank15 codec: four bits per class and a 64-bit prefix checkpoint
-  every 128 classes. A query accumulates at most eight packed words before one
-  horizontal sum. Those are 1920 virtual-entry checkpoints, distinct from the
-  512/2048-bit rank layout.
-- Elias–Fano over sparse residual offsets, with dense/sparse sampled access
-  support. Dense select scans at most 4096 high bits; sparse groups store direct
-  exception positions. This is bounded pragmatic support, not a tuned succinct
-  select directory.
-- Views borrow aligned native-endian spans. They validate shapes, not semantic
-  directory contents. Portable serialization, untrusted-data validation and mmap
-  ownership remain separate work. A full `2^32`-bit payload is not a test fixture.
+`rank_groups<K>` stores one borrowed-entry population per virtual group of
+`K = 2^r - 1` occurrences. Classes for 3, 7, 15 and 31 occupy two, three, four
+and five bits. A 64-bit prefix checkpoint covers 128 classes. `rank15` supplies
+the packed four-bit implementation used by `rank_groups<15>`; its checkpoint
+covers 1920 occurrences, independently of the full-bitvector layout below.
+A blob projects both endpoints with one rank query and the current class.
 
-`rank_groups<K>` and `select_groups<K>` now support policy-sized groups
-`K = 2^r - 1`, including 3, 7, 15 and 31. Packed class widths are respectively
-2, 3, 4 and 5 bits. Each checkpoint covers 128 classes. Groups of three sum
-two-bit fields with scalar packed arithmetic. Groups of seven and thirty-one
-use weighted bit-plane populations, with bounded NEON reductions on
-little-endian AArch64 and portable word reductions elsewhere. Short final
-checkpoints use only their readable words. Other group sizes retain the generic
-loop over at most 127 classes. The `K=15` view shares the packed rank15 implementation.
-The helpers in `rank15.h` and `select15.h` fix their interval to fifteen; the
-policy-backed blob uses `rank_groups<P::group_size>` and
-`select_groups<P::group_size>`.
-Offsets and fixed strides share the caller's byte/bit unit. Shape validation
-is not a substitute for complete validation of a serialized rank/select section.
-The [sampling analysis](sampling.md) distinguishes local correctness from
-per-level capacity and whole-chain storage bounds.
+On little-endian AArch64, rank15 loads a complete checkpoint in four NEON
+vectors, masks classes beyond the requested boundary and widens the final
+byte reduction. AVX2 uses two loads and AVX-512F/BW one. The x86 paths use
+`VPSADBW` before reducing lanes. Each byte pair sums to at most 30; a complete
+checkpoint sums to 1920. Short checkpoints use only readable scalar words.
+Groups of three use scalar packed sums; seven and thirty-one use bounded NEON
+bit-plane reductions on AArch64 and portable word reductions elsewhere.
+Other group sizes use the generic class loop, bounded by 127 classes.
+Instruction selection follows the compiler target, with no runtime dispatch
+or exported ISA flags.
 
-On little-endian AArch64, rank15 loads a complete checkpoint with four NEON
-vectors, masks the low and high nybbles at the requested boundary, and combines
-the byte lanes before one widening horizontal reduction. AVX2 uses two 32-byte
-loads; AVX-512F plus AVX-512BW uses one 64-byte load. Both x86 paths compare the
-even and odd nybble positions with the boundary and retain one pair sum per byte.
-The word shift used to extract high nybbles is masked again to remove bits from
-the neighboring byte.
+The separate full-bitvector `rank_view` has 64-bit epoch counts every $2^{32}$
+bits, 32-bit counts every 2048 bits and three ten-bit populations for the first
+three 512-bit runs. Populations are individual, not cumulative. Packed addition
+widens their lanes before summing; the selected run uses bounded NEON popcount
+on AArch64 or portable word operations. A query at a 512-bit boundary uses the
+directory without reading the bitmap. Construction handles complete 2048-bit
+blocks with four 512-bit popcounts and a separate bounded tail. This backend
+supplies rank alone and stores no select support.
 
-Each byte holds a sum of at most 30. Reducing the eight 64-bit lanes first
-would leave eight byte sums of at most 240, without carries between them. We
-could then finish in a scalar register with adjacent-byte sums and a multiply.
-I measured that variant against widening with `VPSADBW` before the final lane
-reduction. The latter avoids the dependent scalar fold and had lower independent
-rank and pair medians on both tested x86 processors, so it is the selected
-implementation. Dependent queries do not establish a universal winner. A complete
-checkpoint sums to at most 1920; the largest queried prefix has 127 classes and
-sums to 1905. The implementation selects an ISA from the compiler target; it adds
-neither runtime dispatch nor exported ISA flags.
+`select_groups<W>` encodes sparse residual offsets with Elias–Fano. Physical
+width `W` is independent of the virtual stride `K`; any positive width fitting
+the policy's 32-bit field is allowed. Fixed-width payload strides use the same
+byte/bit address unit and are added back on access. Dense select scans at most
+4096 high bits; sparse groups store exception positions. Within a selected
+word, broadword byte-prefix arithmetic locates the bit; BMI2 targets use
+`PDEP`. The helper `select15` fixes `W=15`.
 
-A bounded scalar path handles short final checkpoints and other targets. All
-vector paths check for 64 readable bytes before loading. The view caches its group
-count, adding eight bytes to the view without changing the stored classes or
-checkpoints. Both blob APIs project a window with one rank query and the group's
-population: the upper rank is the lower rank plus that population.
+The shared Elias–Fano writer packs low fields in width-specialized tiles of
+`64/gcd(width,64)` values and assigns each high word once. AArch64 uses NEON
+narrowing for complete width-eight and width-sixteen tiles, and bounded
+adjacent comparisons to validate monotone input. Other widths use constant
+shifts. Stored low/high arrays, select samples and sparse exceptions agree
+with independent scalar construction.
 
-The query checks cover maximum populations, every prefix cut, isolated nybbles
-and their complements, short final checkpoints, random packed words and every
-eight-byte alignment within a cache line. POSIX fixtures put complete and short
-checkpoints immediately before an inaccessible page, including nonzero padding.
-Typed `K=15` views retain the same encoded layout and use the same query
-implementation.
+Views borrow aligned native-endian spans and validate their shapes. They do
+not validate the semantic contents of every directory. Portable serialization,
+untrusted section validation and retained mmap ownership remain separate
+requirements. The [sampling analysis](sampling.md) distinguishes local window
+correctness from level capacity and whole-chain storage bounds.
 
-I compared the packed queries with the full bitvector directory and a CPU/NEON
-translation of [my Poppy shader](https://github.com/ekmett/vr/blob/master/shaders/poppy.glsl).
-That translation keeps the 2048/512-bit directory and loads all four vectors of
-the selected run, masks at the query position, and reduces their populations.
-That comparison predates the bounded NEON path now used by `rank_view`.
-Every variant sees the same bitmap and queries at the same fifteen-entry cuts.
+#### Tests and measurements
 
-For a 253,440-bit universe on an M2 Max, AppleClang 21 `-O3 -DNDEBUG`, the
-five-trial medians were:
+Tests cover every class boundary, maximum populations, isolated nybbles,
+random packed words, short tails, fixed-stride overflow and Elias–Fano widths.
+Protected pages exercise bounded loads and directory-only bitmap queries.
+Counter-transition fixtures cross $2^{32}$ and $2^{33}$ without allocating
+those enormous bitmaps. Forced-portable paths are tested separately from ISA
+paths; native Windows and Linux evidence is confined to the linked reports.
 
-| Rank implementation | Data plus directory | Independent random rank | Dependent random rank |
-| --- | ---: | ---: | ---: |
-| Full bitvector, scalar `rank_view` | 32,680 B | 14.86 ns | 23.26 ns |
-| Full bitvector, 512-bit NEON translation | 32,680 B | 4.89 ns | 18.77 ns |
-| Previous packed rank15 | 9,504 B | 15.78 ns | 19.96 ns |
-| Previous generic `rank_groups<15>` | 9,504 B | 43.78 ns | 45.53 ns |
-| Packed rank15, NEON | 9,504 B | 5.38 ns | 17.12 ns |
+I keep the source snapshots, independent oracles, raw trials and limitations in
+the benchmark reports rather than treating primitive timings as storage-I/O
+predictions:
 
-The packed representation uses about 29% of the full representation's space
-including their directories. For the adjacent endpoint pair used by window
-projection, two queries through the previous generic path took 78.67 ns; one
-SIMD rank plus the class took 6.56 ns. The full-bitvector NEON translation's
-corresponding rank-plus-fifteen-bit-popcount pair took 7.34 ns. These are rank
-primitive timings, including a common indirect call, not complete string lookups.
-The dependent stream derives its next position from the preceding answer and
-includes that address-generation cost.
+| Report | What it measures |
+| --- | --- |
+| [Packed rank / full bitmap](../bench/rank_compare.md) | Complete rank and window endpoints, resident sizes and dependent queries on M2 Max |
+| [Linux rank](../bench/rank_compare_quartus.md) | AVX2 scalar, SAD and qword-first reductions on Core i9-12900K |
+| [Windows rank](../bench/rank_compare_windows.md) | AVX2/AVX512 on Ryzen 9 7950X3D, including scheduling outliers |
+| [NEON and Cult rank](../bench/neon_cult_rank.md) | Packed rank against the actual external Cult CPU directory |
+| [Other grouped / bitmap rank](../bench/other_rank.md) | Groups 3, 7 and 31 and complete bitmap queries |
+| [Elias–Fano construction / select](../bench/select_compare.md) | Tiled writing, narrowing, validation and scalar/SIMD select candidates |
 
-Both data arrays were 64-byte aligned in this comparison. Queries were generated
-before timing, independently checked, and shared across variants; allocation,
-construction and the oracle are excluded. Larger cases include about 96 MiB of
-packed storage versus 330 MiB of full storage for the same universe. Their
-trial ranges overlap substantially, especially for dependent queries, so these
-measurements do not establish a large-working-set winner. The reproducible
-benchmark ([method](../bench/rank_compare.md), [runner](../bench/rank_compare.sh), [source](../bench/rank_compare.cc),
-[measurements](../bench/results/rank_compare_m2max.csv)) retains sizes,
-alignments, checksums and minimum/median/maximum times.
-These are resident-memory measurements on one processor, excluding page faults
-and file I/O.
-
-The SIMD and typed-view changes were reviewed at `d55fefba` and `b06798d`, and
-the comparison at `ef26e25`, in isolated component work. Combined ASan/UBSan
-verification passed all 18 CTests, including the blob projections, package
-consumers and Doxygen. Component checks also exercised the forced-portable rank
-and grouped-rank paths. That checkpoint introduced the packed `K=15` SIMD path;
-the other rank paths are measured separately below.
-
-The native x86 comparison uses a newer scalar baseline and the same packed
-input for both reductions. These are complete public rank calls, including
-checkpoint lookup and a common indirect call. The packed arrays occupy 32,760 B;
-the query array occupies 256 KiB. Entries are median nanoseconds per operation.
-
-| Processor / compiler target | Scalar rank | SAD rank | Qword-first rank | SAD rank + class | Qword-first rank + class |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Core i9-12900K / Clang 20 AVX2 | 9.212 | 2.896 | 3.235 | 3.234 | 3.694 |
-| Ryzen 9 7950X3D / MSVC 19.44 AVX2 | 8.961 | 4.289 | 4.939 | 5.272 | 5.809 |
-| Ryzen 9 7950X3D / MSVC 19.44 AVX512 | 8.850 | 3.673 | 4.344 | 4.709 | 4.928 |
-
-The [Linux report](../bench/rank_compare_quartus.md) includes a larger case
-where the scalar dependent query beats both SIMD variants. The
-[Windows report](../bench/rank_compare_windows.md) retains a dependent AVX512
-case favoring qword-first and substantial scheduling outliers. Both reports
-pin their source snapshots, record CPU affinity and usable ISA features, and
-provide the complete CSVs and reconstruction instructions. They exclude view
-construction, page faults and file I/O; these are not complete catalog searches.
-
-I also compared the NEON reductions against the actual Cult CPU rank header,
-using an external include. That directory stores twelve bytes per 512 source
-bits, or 18.75% metadata. It is distinct from the earlier 2048/512 Poppy
-translation. For the same 253,440-bit universe, the new M2 Max comparison gives:
-
-| Implementation | Encoded arrays + endpoint count | Independent rank | Rank + class | Dependent rank |
-| --- | ---: | ---: | ---: | ---: |
-| Current NEON | 9,512 B | 6.802 ns | 8.030 ns | 17.350 ns |
-| Qword-first NEON | 9,512 B | 5.731 ns | 9.583 ns | 20.192 ns |
-| Cult bitmap rank | 37,624 B | 7.368 ns | 10.611 ns | 18.612 ns |
-
-I kept the existing NEON widening reduction: qword-first improves independent
-single-rank throughput, but loses the paired and dependent hot queries. The
-larger comparison has mixed results too: Cult leads the independent pair while
-packed rank has smaller dependent medians. The
-[NEON/Cult report](../bench/neon_cult_rank.md) records exact storage, alignment,
-source hashes, timing ranges and reproduction commands. Its sizes include the
-terminal count, which the earlier Poppy comparison table excludes. The Cult
-header stays external and unchanged.
-
-The x86 kernels and guarded-tail tests were independently reviewed; the selected
-SAD kernels at `d7cbb09` match the native-tested bodies. Both public rank and
-grouped-rank suites passed for SAD and qword-first on Windows under AVX2 and
-AVX512. The selected header also passed both suites under Rosetta AVX2 in
-Release and ASan/UBSan, including the guarded-page fixtures. The NEON/Cult
-benchmark passed independent oracles and hot ASan/UBSan checks and was reviewed
-separately before integration at `1b7e25c`. Combined ASan/UBSan verification
-passed all 18 CTests, including installed and embedded package consumers,
-policy-group tests, blob projections and Doxygen.
-
-Rank construction now separates complete 2048-bit blocks from the bounded tail.
-A full block uses four 512-bit popcounts; AArch64 NEON sums four byte-popcount
-vectors with a widened final reduction, and other targets use eight portable
-word popcounts per run. Stored counts and directory layout are unchanged.
-The tests cover all 513 populations, word-aligned SIMD offsets and every
-partial-block length. On an M2 Max with AppleClang 21 `-O3`, owning builds over
-32 KiB, 8 MiB and 64 MiB inputs measured about 1.7–2.0 times faster than the
-previous builder. These are medians of seven warm-input rounds, including
-allocation and copying but excluding I/O; they are not cross-platform results.
-
-Elias–Fano construction packs low fields in width-specialized tiles of
-64/gcd(width,64) values and assigns each high word once. All encoded words,
-select samples and sparse exceptions remain identical. M2 Max / AppleClang 21
-`-O3 -DNDEBUG` measurements against the earlier writer show 2.01–3.03 times
-faster complete construction; 64 MiB source arrays at widths 8 and 12 retain
-2.35 and 2.01 times improvement. The all-width specializations add about 49 KiB
-of code in a minimal consumer and increased its median compile/link time from
-0.50 to 1.57 seconds. Those measurements cover the portable tiled writer.
-
-The current sparse-offset builders share that writer, including `select15`.
-On little-endian AArch64, complete width-eight and width-sixteen tiles use NEON
-narrowing; the remaining widths keep the constant-shift implementation. Both
-builders use bounded NEON adjacent comparisons to validate monotone input on
-AArch64. High-word accumulation and the encoded low/high arrays, samples and
-exceptions are unchanged.
-
-Select still scans scalar words within its bounded dense group. After finding
-the word, a broadword byte-prefix calculation locates the selected bit without
-clearing each preceding one. An x86-64 compiler target with BMI2 uses `PDEP`
-instead. The measured four-word SIMD scan lost to the scalar scan, and
-width-thirty-two narrowing lost to the existing tile. I kept those candidates
-in the [select comparison](../bench/select_compare.md), with the measured
-construction and query results. Sharing the writer also means a `select15`-only
-consumer instantiates the existing width dispatcher.
-
-The full bitmap `rank_view` now masks and popcounts a complete readable 512-bit
-run with NEON on AArch64; bounded portable work handles short tails and other
-targets. Queries at 512-bit boundaries return the directory count without
-touching the bitmap. Guarded-page tests cover both short tails and a completely
-inaccessible bitmap at directory-only boundaries.
-
-The [other-rank comparison](../bench/other_rank.md) records independent rank,
-dependent rank and rank-plus-class projection for groups 3, 7 and 31, alongside
-the full bitmap query. I selected the scalar two-bit sum for `K=3` because it
-has lower dependent latency, although NEON has higher independent throughput.
-The wider classes favor NEON for hot projection throughput; `K=31` retains a
-small dependent-latency tradeoff. Larger inputs give mixed results, so these
-measurements do not establish a universal winner outside the measured workloads.
-
-The navigation changes were reviewed and integrated at `bc24f44` (select) and
-`5817e02` (grouped and bitmap rank). Their component checks include independent
-population/offset oracles, forced-portable paths, protected pages, Rosetta AVX2
-with and without BMI2 where applicable, and package consumption. The selected
-native AArch64 timings and translated x86 correctness checks are distinguished
-in the linked reports. These changes preserve the stored layouts and add no
-runtime dispatch or exported ISA flags.
-
-### Front-coded blobs
-
-- Encoded byte-string arrays with configurable native LPFC, partial-key decoding,
-  sparse residual offsets, and fixed nine-byte optional-u64 slots.
-- Separate native and borrowed streams, two select15 indexes, one rank15, and
-  packed false-borrow flags, including equality spanning multiple group cuts.
-- `reindex` shares the exact immutable native allocation and repairs only the
-  borrowed/index data. The builder currently materializes native keys as scratch.
-- A caller-supplied virtual window projects to at most fifteen records. This is
-  a local lookup primitive, not a complete root-to-leaf catalog-search executor.
-- A two-sided borrowed-prefix policy reconstructs outgoing context with one
-  additional predecessor probe. It emits at most twice ordinary borrowed FC's
-  suffix bytes; framing and access metadata are separate costs.
-- The default policy constrains prefixes at actual shared fifteen-entry cuts.
-  Records unaffected by a cut keep ordinary front coding. Tests cover moving
-  cuts on reindex, multiple applicable cuts and suffix-byte ordering against
-  the two-sided reference.
-- A three-level fixture checks 920 queries, including replacement precedence
-  and tombstones. All three borrowed-prefix policies have cascade-oracle tests;
-  ordinary mode uses an explicit slow fallback when predecessor context is
-  missing. Native LPFC remains independent of changing index cuts.
+The selected implementations retain the measured latency tradeoffs: a
+qword-first NEON reduction improves independent single-rank throughput but
+loses paired and dependent queries; the four-word SIMD select scan loses to
+the scalar scan. Width-specialized Elias–Fano construction is faster in the
+recorded resident-memory cases, at the cost of about 49 KiB of additional code
+in a minimal consumer and higher compile time. These choices are measurable
+implementation decisions, not cross-platform performance guarantees.
 
 ### Typed byte and bit profiles
 
@@ -299,32 +138,44 @@ profiles. Short byte-key queries have 3–7% slower medians in the same fixture.
 Both runs retain all trials and match encoded-output and result checksums;
 the integer catalog oracle and a separate combined ASan/UBSan run also pass.
 
-`storage_policy<Unit, Values, GroupSize, BackspaceCode>` carries the unit,
-fixed/variable value layout, sampling group size and bit-backspace code through
+`storage_policy<Unit, Values, GroupSize, BackspaceCode, CodecBlockSize>` carries
+the unit, fixed/variable value layout, sampling stride, backspace code and
+independent physical block width through
 the codec types. `fixed_values<N>` counts
 policy units, including the valid width zero. `profile_array<P, Role>` uses
 canonical byte varints and policy-selected Golomb or exponential-Golomb bit
 backspaces. Other bit counts use order-zero exponential-Golomb. Streams retain
 meaningful bit extents and canonical padding. One predecessor-length
-checkpoint per physical group supports surrogate-anchor decoding. Common fixed
+checkpoint per physical block supports header-only entry at a selected lane.
+The terminal key length handles an end-of-stream predecessor. Common fixed
 value width is subtracted from the Elias–Fano residual positions.
 
-`profile_blob<P>` supplies native LPFC with default factor 18 and separate
-borrowed front coding constrained at shared group boundaries. It retains two
-sampled offset structures, one grouped origin rank and false-borrow flags.
-Reindexing shares the exact native allocation. Search returns both a native
-value and downstream routing on equality; it does not resolve same-key arrows.
-The builder still materializes decoded native keys as scratch during reindex.
+`profile_blob<P>` uses ordinary front coding for native and borrowed streams.
+It retains two physical offset directories, grouped origin rank, false-borrow
+flags and one exact bit-LCP scalar per virtual cut. The LCP relates the cut
+boundary to its preceding borrowed key. Reindexing shares the exact native
+allocation and recomputes all dependent index metadata. The batch builder
+materializes native keys as scratch during reindex.
+
+`profile_query_context<P>` owns its immutable query and carries exact agreement
+in bits, key length in policy units and comparison direction. The profile reader
+parses controls before the selected lane without reconstructing keys. It then
+compares literal suffixes and propagates inherited mismatches. Exact cut LCPs
+repair the outgoing borrowed predecessor even when it precedes the window.
+Search returns both native values and downstream routing on equality; it does
+not resolve same-key arrows. Optional counters expose skipped/visited record
+headers and compared literal bits.
+
 `profile_cursor<P, Role>` supplies sequential decoding with borrowed values;
 `profile_borrowed_writer<P>` incrementally encodes borrowed keys. Their output
-matches the batch encoder across the full policy matrix. `sample_cursor<P>`
-pins and samples an exact encoded pair without materializing its catalog.
-`index_builder<P>` retains one incoming/outgoing sample, delays the preceding
-borrowed record until its shared-cut ceiling is known, and preserves native
-allocations. `index_pipeline<P>` feeds samples directly between those stages,
-supports bounded cursor-event stepping and returns a chain with exact target
-pins. Inter-stage samples carry a policy-unit backspace and suffix; the first
-sample is literal and later samples refer to that producer's preceding sample.
+matches the batch encoder across the policy matrix. `sample_cursor<P>` pins
+and samples an exact encoded pair without materializing its catalog.
+`index_builder<P>` retains bounded sample/decoder state, records each cut's
+exact LCP and preserves native allocations. `index_pipeline<P>` feeds samples
+directly between stages, supports bounded cursor-event stepping and returns a
+chain with exact target pins. Inter-stage samples carry a policy-unit backspace
+and suffix; the first sample is literal and later samples refer to that
+producer's preceding sample.
 Final metadata construction is a separate linear phase. See the
 [construction implementation](sampling.md#streaming-construction-pipeline).
 
@@ -332,7 +183,7 @@ Codec fixtures cover 24 combinations: byte/bit × variable/fixed3/fixed0 values
 × groups 3/7/15/31. Blob fixtures cover 16 byte/bit × fixed/variable × group
 combinations, including repeated equal borrows, partial contexts, cascades and
 changed index boundaries. Selected Golomb moduli and exponential-Golomb orders
-also exercise native LPFC, borrowed writers and index pipelines. Count-code
+also exercise profile count encoding, borrowed writers and index pipelines. Count-code
 fixtures check known bit patterns, truncation, overflow, unaligned appends,
 metadata mismatch and unchanged default encodings. Invalid policy parameters
 are rejected at compile time. These test record/prefix behavior, not the full
@@ -427,6 +278,45 @@ alignment; it does not establish prefix freedom of an entire registry. Mapped
 files and slices outlive the reader object. There is no SQLite connection or
 persistent aggregate implementation behind these forward declarations.
 
+### Complete encoded-chain queries
+
+`query_root<P>` prepares an arbitrary exact-linked head for search. If it already
+fits in one policy group, the shared pointer is unchanged. Otherwise,
+`query_root_builder<P>` constructs an empty-native routing prefix through one
+streaming pipeline until its head fits. Preparation visits existing chain
+metadata once, samples the original head once and streams diminishing sample
+sets. It preserves all existing native/index bytes and exact target pins.
+
+`query_cursor<P>` owns its query and unvisited target suffix. Each step visits
+at most the caller's catalog budget and pauses at a native match. Taking the
+match returns its owned value, ordinal and exact source pair. Equality continues
+to route downstream, and full boundary lengths are retained alongside the
+exact query agreement and comparison direction. Independent copies can progress separately. Decoding
+failure makes the cursor unusable rather than resuming partial work.
+
+The [query contract](query.md) separates entry/header bounds from string bytes,
+preparation and scheduler costs. Shape validation rejects cycles, missing
+targets and mismatched sample counts, but does not authenticate manually pushed
+sample keys. The existing exact-sampler precondition and immutable-alias contract
+remain in force. These queries retrieve entries from in-memory encoded pairs;
+they do not evaluate arrows or publish durable worlds.
+
+The [whole-query comparison](../bench/query_compare.md) includes query
+creation, five- or six-catalog traversal and owned values. On this M2 Max,
+ordinary FC with exact cut comparisons reduces median query time by 38–48%
+across the six measured cases. Counted backing arrays change by less than 1%;
+root preparation has mixed results. Physical width 16 is slower than 15 in
+these scalar fixtures. The report records exact revisions, independent
+result checks, raw trials and the limits of its storage accounting.
+
+The implementation was reviewed and integrated at `4285e6b`, with moved-from
+preparation guards at `79fca75`. The independent query suite checks 20 policies
+against native-array oracles for exact source, ordinal, value and match order.
+They exercise large and empty roots, zero budgets, pauses, copied cursors,
+truncated long boundary contexts, native/borrowed equality across a cut, source
+reclamation and malformed chain shapes. The matrix includes physical widths
+1, 16 and 64 independently of cascade stride, and both byte and bit policies.
+
 ### World semantics and algebra
 
 - `reference_world` pins immutable sorted runs. Snapshots and forks share them;
@@ -515,9 +405,16 @@ eligible reclamation.
 The default `lake --wfail build` checks the proofs, examples and a transitive
 axiom audit. The interpreted examples cover duplicate keys across cuts, empty
 projections, missing predecessors, and partial tails for $K=3$ and $K=15$.
-Keys in this proof layer are natural numbers representing order; it does not
-decode string keys or the catalog's physical target graph. Compressed rank,
-Elias–Fano, front coding, full cascade execution, C++ refinement, scheduling
+Keys in the fractional-index layer are natural numbers representing order; it
+does not decode string keys or the catalog's physical target graph. Separate
+`Prefix` and `Transfer` modules establish the string/algebraic pieces of the
+[ordinary-FC design](comparison-fc.md): the exact LCP minimum for three ordered
+finite strings and associative content-mismatch transfer under the invariant
+that each literal mismatch lies at or beyond its retained prefix. Direction
+travels with the selected mismatch; endpoints remain separate.
+
+Those theorems do not verify stored cut-LCP scalars, literal comparisons or the
+encoded decoder. Compressed rank, Elias–Fano, front coding, full cascade execution, C++ refinement, scheduling
 and crash recovery remain outside its scope. The proof README records the assumptions
 and the distinctions between endpoint projection, full arrows and finite-key
 fingerprint sums.
@@ -535,44 +432,6 @@ runtimes remain to be attached to the selected SQLite catalog.
 prefix-free coding and hash selection. The category may depend on the full key,
 even when a sort supplies default policies. The typed codecs and homogeneous
 replacement oracle do not yet implement a heterogeneous sort registry.
-
-### Complete encoded-chain queries
-
-`query_root<P>` prepares an arbitrary exact-linked head for search. If it already
-fits in one policy group, the shared pointer is unchanged. Otherwise,
-`query_root_builder<P>` constructs an empty-native routing prefix through one
-streaming pipeline until its head fits. Preparation visits existing chain
-metadata once, samples the original head once and streams diminishing sample
-sets. It preserves all existing native/index bytes and exact target pins.
-
-`query_cursor<P>` owns its query and unvisited target suffix. Each step visits
-at most the caller's catalog budget and pauses at a native match. Taking the
-match returns its owned value, ordinal and exact source pair. Equality continues
-to route downstream, and full boundary lengths are retained alongside the
-query-limited prefixes. Independent copies can progress separately. Decoding
-failure makes the cursor unusable rather than resuming partial work.
-
-The [query contract](query.md) separates entry/header bounds from string bytes,
-preparation and scheduler costs. Shape validation rejects cycles, missing
-targets and mismatched sample counts, but does not authenticate manually pushed
-sample keys. The existing exact-sampler precondition and immutable-alias contract
-remain in force. These queries retrieve entries from in-memory encoded pairs;
-they do not evaluate arrows or publish durable worlds.
-
-The [whole-chain benchmark](../bench/query_chain.md) includes query creation,
-five-catalog traversal and owned values. The default byte/bit fixtures return
-the same 2,796 native matches for 4,096 queries. The runner pins headers and
-captures every raw trial. This is a new API measurement, not a comparison with
-an older complete-query implementation.
-
-The implementation was reviewed and integrated at `4285e6b`, with moved-from
-preparation guards at `79fca75`. Independent tests at `3a95552` check 14 policies
-against native-array oracles for exact source, ordinal, value and match order.
-They exercise large and empty roots, zero budgets, pauses, copied cursors,
-truncated long boundary contexts, native/borrowed equality across a cut, source
-reclamation and malformed chain shapes. Both native restart factors zero and
-18 are covered without changing the codec. The independent optimized and final
-ASan/UBSan runs passed before integration.
 
 ### SQLite catalog and network admission
 
@@ -604,8 +463,8 @@ exercise its schedule, bounded catch-up or durable publication.
 
 The [per-key category design](arrows.md) extends the semantics to composable
 diffs. It specifies composition, partition independence, exact endpoint deltas,
-query costs and dependency retention. `reference_world` still
-resolves replacements, and `blob` still uses its fixed value/tombstone payload.
+query costs and dependency retention. `reference_world` resolves replacements
+using optional values, and `profile_blob<P>` carries opaque value payloads.
 There is no generic arrow executor, category-dependent wire format or general
 normalization bound. A second concrete instance should test noncommuting changes
 before broadening the executor interface.
@@ -628,7 +487,7 @@ cmake --build build-sanitize --parallel 4
 ctest --test-dir build-sanitize --output-on-failure
 ```
 
-The sixteen component suites are `rank`, `groups`, `front`, `profile`,
+The sixteen component suites are `rank`, `groups`, `comparison_fc`, `profile`,
 `profile_blob`, `sampling`, `index_builder`, `index_pipeline`, `query`, `world`, `pins`,
 `durability`, `mapped_file`, `files`, `multiverse` and `crc32c`. Two additional CTests
 validate relocated installation and embedded CMake consumption, including
@@ -638,9 +497,14 @@ verification here after these commands run.
 Combined verification on 2026-09-15: AppleClang 21, C++20, Release with strict
 warnings and ASan/UBSan passed all **19 CTests**, including both package consumers
 and the optional Doxygen check. These checks include the complete query API,
-its `multiverse<P>` aliases and the independent query suite at `3a95552`, alongside
-the key/bit, grouped/bitmap rank and Elias–Fano changes. Doxygen checked 24 public
-headers, eleven real function/overload associations and 29 Markdown pages.
+its `multiverse<P>` aliases and the ordinary-FC path at `bac794e`/`2d58df0`.
+The independent comparison suite at `fc14481` covers exact cut LCPs, every
+candidate's comparison state and protected pre-lane/terminal payloads; the
+complete query suite checks 20 policies. Doxygen checked 22 public headers,
+eleven real function/overload associations and 31 Markdown pages, including the
+whole-query comparison report. The rendered site contains 478 dollar formulas;
+removed header pages are absent after a clean regeneration. Lean checked 631 declarations with
+only its standard `propext`, `Quot.sound` and `Classical.choice` axioms.
 The documentation includes the benchmark methods and bundles their runners,
 sources and measurements. Installed licenses and generated CRC includes were checked
 byte for byte against the source bundle; regenerating from the pinned generator
@@ -664,12 +528,12 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 | --- | --- | --- |
 | Sort registry | typed byte/bit policies and canonical key contracts | prefix-free framing and order, cross-sort boundaries, domain-separated hashes and stable policy versions |
 | Per-key arrow policy and second instance | categorical specification and replacement oracle | noncommuting diffs, heterogeneous keys, source validation, associative semantic composition, disjoint permutations, endpoint deltas, checkpoint observations and explicit work/dependency accounting |
-| Conservative fractional-index codec tuning | native LPFC and tested shared-cut policy | streaming reindex against changed downstream layout without changing native bytes; measured replayed-prefix bytes; empty projected streams and scratch-space costs |
+| Comparison block encoding | ordinary FC, exact cut LCP and scalar comparison transfers | transposed count/literal layouts, ordered SIMD transfer scans, bounded tails and independently measured time/space tradeoffs |
 | Portable blob sections and writer | checked envelope, typed codecs and retained mappings | serialize/validate codec sections, content addressing and durable publication, lazy block-integrity strategy; no full offset per key |
 | Attach encoded runs to world semantics | blob reader and query | batch/snapshot/export oracle tests using actual encoded immutable runs |
 | COLA scheduler and incremental string merge | correct run merge and index builder | byte/work-budgeted continuations, bounded active levels and shared-result adoption under interleaved forks |
 | SQLite catalog and persistent pins | object store and scheduler publication | reopen saves without re-encoding contents; retain exact dependency closure; query metadata with existing SQL tools; reclaim only after final pin; interruption tests |
-| Direct batch adoption | native file reader, prefix index builder and scheduler | preserve received LPFC bytes, bound visible catalogs and work debt, preserve causal order and charge actual key bytes |
+| Direct batch adoption | native file reader, prefix index builder and scheduler | preserve received ordinary-FC bytes, bound visible catalogs and work debt, preserve causal order and charge actual key bytes |
 | Durable backend and resumable merges | publication protocol and encoded merge continuations | fault injection at write/sync/rename/recovery cuts; failed barriers retain old roots; resume only from verified durable prefixes |
 | Durable round resumption | save manifests and update protocol | persist base/round identity, accepted batch identities and claimed keys; restart without double-applying a changeset |
 | Live-size rebuilding | scheduler and mutation accounting | replacement ready before half the clean base disappears; repeated overwrites do not grow history-sized active levels; preserve replay debt and explicit byte budgets |

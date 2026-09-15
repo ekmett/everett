@@ -54,6 +54,8 @@ Field guide
 | [Allocation](Everett/Allocation.lean) | A monotone allocation watermark, fresh installation and non-reuse of issued IDs across allocation/reclamation sequences |
 | [Adoption](Everett/Adoption.lean) | Discharges the semantic adoption premise for chronological adjacent merges, using the actual history-composition theorem |
 | [Fractional](Everett/Fractional.lean) | Stable tagged merging; exact every-Kth samples; sampled predecessor windows; endpoint-rank projections; local/global predecessor equivalence; false-borrow recovery for unique native keys; a list-level index builder and exact-target retention |
+| [Prefix](Everett/Prefix.lean) | Finite-string lexicographic order, prefix interval convexity and the exact LCP minimum for three ordered strings |
+| [Transfer](Everett/Transfer.lean) | Content-mismatch transfers, the literal-position invariant, composition and associative ordered summaries |
 | [Examples](Everett/Examples.lean) | Heterogeneous keys, valid and stale sources, noncommutative histories, changed index/target versions, and an old target that cannot be reclaimed while a snapshot retains it |
 | [FractionalExamples](Everett/FractionalExamples.lean) | K=3 and K=15, equal keys across several cuts, empty native projections, false-borrow recovery, empty targets, before-first queries, short tails and stored-index routing |
 | [Audit](Everett/Audit.lean) | Rejects unexpected axioms in every kernel-safe `Everett` declaration and its transitive dependencies |
@@ -174,6 +176,43 @@ independent borrowed-predecessor routing and composition of an entire cascade
 remain separate refinement obligations. The searches here enumerate finite
 lists, so these theorems establish the window's entry bound and lookup meaning,
 not the running time of binary search, compressed rank or key reconstruction.
+
+String prefixes and comparison transfers
+---------------------------------------
+
+The [comparison-state design](../docs/comparison-fc.md) separates two obligations
+for ordinary front coding. The forward candidate is between its physical
+predecessor and the incoming boundary. The borrowed predecessor needed for the
+next hop can instead precede the boundary, and needs additional information.
+
+`Prefix.lean` works with actual finite strings and lexicographic order. For
+ordered strings $C\le B\le Q$, the exact identity is
+
+$$
+\mathrm{lcp}(C,Q)=
+\min\bigl(\mathrm{lcp}(C,B),\mathrm{lcp}(B,Q)\bigr).
+$$
+
+This lets an exact cut-LCP scalar repair the preceding borrowed key's comparison
+state. Equality and proper-prefix cases are included. The statement needs the
+ordering hypotheses; arbitrary triples only satisfy the usual lower bound.
+The theorem does not certify that a stored index contains the right scalar.
+
+`Transfer.lean` models a content mismatch as a position with its direction, or
+infinity. A record retaining $r$ units preserves an incoming mismatch before
+$r$; otherwise it substitutes the literal mismatch $e$. Valid summaries require
+$e\ge r$. Their composition represents applying the earlier record followed by
+the later one, preserves validity, and is associative. The selected mismatch
+retains its direction.
+
+These summaries describe content mismatches. Infinity does not mean that two
+complete keys are equal: endpoints and full lengths remain separate. The module
+does not prove that a particular SIMD comparison produces the correct summary.
+
+The missing bridge is from the origin-filtered cut to these string hypotheses,
+then from the encoded length/LCP metadata and literal comparisons to the
+abstract state. Complete cascade composition, block access bounds and the C++
+implementation remain separate refinements.
 
 What the assumptions mean
 -------------------------

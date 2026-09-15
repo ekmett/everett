@@ -45,6 +45,11 @@ def quote(value):
 
 def run_doxygen(executable, source, inputs, output, aliases, html=False, markdown_main=None):
     output.mkdir(parents=True, exist_ok=True)
+    # Doxygen rewrites its index, but leaves pages for removed declarations in
+    # place. A publication must contain only the current source's reference.
+    for generated in (output / "html", output / "xml"):
+        if generated.exists():
+            shutil.rmtree(generated)
     warnings = output / "warnings.log"
     warnings.write_text("", encoding="utf-8")
     config = [

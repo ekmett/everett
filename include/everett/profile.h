@@ -677,9 +677,9 @@ namespace everett {
     }
 
     // The supplied anchor must share the first record's retained prefix. An
-    // anchor between its actual predecessor and that key suffices; conservative
-    // coding can also permit an upper frontier. The copied prefix is not an
-    // exact LCP with that anchor. Callback key views expire on the next call.
+    // anchor between its actual predecessor and that key suffices. The copied
+    // prefix is not an exact LCP with that anchor. Callback key views expire
+    // on the next call.
     template <class F> void visit_window(std::uint64_t first, std::uint64_t last,
       profile_anchor<P> anchor, std::uint64_t prefix_limit, F && callback) const {
       if (first > last || last > size() || last - first > P::group_size)

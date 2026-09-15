@@ -91,11 +91,17 @@ rather than distinct keys.
 ### String compression and offsets
 
 Sorted strings share prefixes, so we can encode a key by backspacing from its
-predecessor and appending a suffix. The complication is starting a search in
-the middle of that encoding. Locality-preserving front coding (LPFC) gives the
-native array a controlled starting context. For borrowed keys, we can use the
-context already known at shared group boundaries. Keeping that encoding in a
-separate stream lets us rebuild it while retaining the native bytes.
+predecessor and appending a suffix. Both physical streams use ordinary front
+coding. A search carries comparison state against its query: the known prefix
+agreement, comparison direction and full key length. It compares the next
+literal without reconstructing the inherited prefix.
+
+The borrowed predecessor before a window needs one extra scalar: its exact LCP
+with the incoming boundary. Because those two keys and the query are ordered,
+the smaller adjacent LCP gives its agreement with the query. This scalar belongs
+to the exact index view. Rebuilding an index recomputes it while retaining the
+native bytes. The [comparison argument](docs/comparison-fc.md) covers ties,
+endpoints and the separate roles of physical and virtual boundaries.
 
 The byte profile counts lengths and offsets in bytes. The bit profile works
 with densely packed, most-significant-bit-first strings and counts in bits.
@@ -111,17 +117,19 @@ order-zero exponential-Golomb, while the byte profile uses unsigned varints.
 Golomb's unary quotient can be long for a large backspace, so its decoding
 cost includes the count's encoded length even when the resulting key is short.
 
-We mark each physical stream's group starts and end sentinel, then encode those
+We mark each physical stream's block starts and end sentinel, then encode those
 monotone offsets with Elias–Fano. Fixed-width values give us an additional
 saving: their contribution to an offset is predictable, so we subtract it before
 encoding and add it back on access. If width is `w` and record ordinal is `i`,
 the contribution is `w * i` in the same address units. The fixed payload stride
-consequently does not inflate the residual offset universe; value width can
-still affect where native LPFC chooses to restart. The terminal sample uses the
-actual record count, including a short final group.
+consequently does not inflate the residual offset universe. The terminal sample
+uses the actual record count, including a short final block. Physical block
+width `W` is independent of cascade stride `K`; both are part of the policy.
+Each block starts with its predecessor's key length, so we can parse controls
+before the selected lane without reconstructing those earlier keys.
 
 This is why the blob has two sparse offset structures and a grouped rank
-structure: two physical byte/bit streams, one virtual order. See
+structure, plus exact cut LCPs: two physical byte/bit streams, one virtual order. See
 [key policies](docs/keys.md) for the framing and reconstruction contracts.
 
 ### Work that can stop and resume
@@ -149,7 +157,7 @@ completed links:       head ------> stage 0 ------> exact target
 Handoffs are front-coded: a backspace count and suffix relative to the preceding
 sample from that producer, with a literal first key. Counts use policy bytes or
 bits. The receiving builder retains its decoder context and independently
-applies the shared-cut constraints required by its final index.
+records the exact cut LCPs required by its final index.
 
 Stages are supplied nearest the target first. Bounded queues let a downstream
 stage pause its producer. `step(budget)` advances the pipeline in work quanta;
@@ -202,11 +210,13 @@ and files that share a policy agree on the units used by their metadata.
 
 int main() {
   using bytes = everett::storage_policy<
-    everett::profile_unit::byte, everett::fixed_values<8>, 15>;
+    everett::profile_unit::byte, everett::fixed_values<8>, 15,
+    everett::exponential_golomb<0>, 16>;
   using bits = everett::storage_policy<
     everett::profile_unit::bit, everett::fixed_values<3>, 7, everett::golomb<3>>;
 
   static_assert(bytes::bits_per_unit == 8);
+  static_assert(bytes::group_size == 15 && bytes::codec_block_size == 16);
   static_assert(bits::bits_per_unit == 1);
   static_assert(*bytes::value_width == 8);
   static_assert(*bits::value_width == 3);
@@ -245,8 +255,8 @@ int main() {
   auto blob = profile_blob<policy>::build(records, borrowed);
 
   auto query = text("beta");
-  auto boundary = profile_anchor<policy>::complete(records.front().key.view());
-  auto found = blob.search_window(query.view(), 0, boundary);
+  auto boundary = profile_query_context<policy>(query.view()).with_key(records.front().key.view());
+  auto found = blob.search_window(0, boundary);
   if (!found.native || !blob.false_borrow(0)) return 1;
   return compare_bits(found.native->value.view(), records[1].value.view()) == 0 ? 0 : 1;
 }
@@ -512,9 +522,12 @@ an independent catalog oracle. The component reports cover
 [Elias–Fano](bench/select_compare.md),
 [grouped and bitmap rank](bench/other_rank.md), and
 [rank15](bench/rank_compare.md), with source, raw trials and reproduction
-commands. The [complete-query measurements](bench/query_chain.md) include root
-preparation and traversal through every catalog, with owned results. These are
-resident-memory measurements; disk faults remain a separate cost.
+commands. The [whole-query comparison](bench/query_compare.md) includes root
+preparation and traversal through every catalog, with owned results. Ordinary FC
+with exact cut comparisons uses 38–48% less median query time in its M2 Max
+fixtures, with counted backing arrays changing by less than 1%. Root preparation
+has mixed results. These are resident-memory measurements; disk faults remain
+a separate cost.
 
 Proofs
 ------
@@ -536,6 +549,14 @@ These are abstract sequence proofs. Compressed rank, Elias–Fano, front coding,
 complete cascade execution, scheduling and the filesystem protocol still need
 their own refinements. The proof project builds independently of C++ and records
 those boundaries explicitly.
+
+The string-comparison modules also check the ordered-triple LCP identity and
+associative mismatch transfers used by the
+[ordinary-FC design](docs/comparison-fc.md). An exact LCP at each cut can repair
+the preceding borrowed comparison state without repeating its prefix. Connecting
+those theorems to encoded metadata and the complete cursor is the next proof
+obligation. The complete query tests separately check the encoded implementation
+against independent native-array oracles.
 
 Building
 --------
@@ -604,7 +625,7 @@ The functional
 and its deamortized variant in `structures` supply the starting point. Everett's
 levels use the redundant COLA scheme from
 [Cache-Oblivious Streaming B-trees](https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf).
-String locality and LPFC come from
+String locality and front-compression background come from
 [Cache-Oblivious String B-trees](https://people.csail.mit.edu/bradley/papers/BenderFaKu06.pdf),
 particularly Section 3.2. The sparse offset representation follows the
 Elias–Fano techniques discussed in

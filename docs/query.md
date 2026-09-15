@@ -69,12 +69,14 @@ query. This does not make attaching a tiny batch to a large head cheap; see
 successful `step(catalog_budget)` visits at most that many catalogs, stopping
 when it has a native match or no remaining route. The default budget is one.
 The cursor uses `search_window` at each catalog, carrying the sampled predecessor's
-group and owned prefix into the exact target.
+group and query-bound comparison context into the exact target. This context
+stores exact common-prefix agreement in bits, full key length in policy units,
+and comparison direction. It shares the owned immutable query. No inherited
+key prefix is reconstructed during traversal.
 
-The prefix is limited to the query's length, but the cursor also preserves its
-key's full length in policy units. Backspace decoding needs both quantities.
-Discarding the full length would make a short query unsafe against a longer
-boundary key.
+The full key length remains distinct from prefix agreement. A short query may
+agree with only part of a much longer boundary; endpoints and backspace parsing
+still need the actual lengths.
 
 There are three states to observe:
 
@@ -93,8 +95,9 @@ The cursor pins the unvisited suffix as it progresses. It can release an already
 visited prefix when nothing else retains it. Pending and returned matches keep
 their own source pairs alive, and each pair retains its exact target dependency.
 The input key, original root handle and original construction handles may be
-released without invalidating the traversal. Copying a cursor copies its current
-key, context and pending value into an independent traversal at the same point.
+released without invalidating the traversal. Copying a cursor shares the immutable
+query and copies its comparison state and pending value into an independent
+traversal at the same point.
 
 Native equality does not terminate the search. A matching borrowed occurrence
 still carries routing information, and its false-borrow flag can recover a native
@@ -113,12 +116,16 @@ share one budget of at most $K$ occurrences. Recovering the preceding borrowed
 context and a false native match adds bounded access work. Sparse-offset seeks
 and group-header scans retain their existing bounds.
 
-This gives $O(K)$ entry/header work per visited catalog, plus the actual prefix
-decoding, query copying and returned-value copying. With fixed policy $K$, it
+With physical block width $W$, this gives $O(K+W)$ entry/header work per visited
+catalog, plus literal comparison, query copying and returned-value copying.
+With fixed policy widths, it
 is linear in visited depth for fixed-size keys and values. There is no independent
 binary search in each data file, and traversal does not call backward full-key
-reconstruction. It uses the existing anchored codecs without changing their
-encoding or restart policy.
+reconstruction.
+
+The [comparison-state design](comparison-fc.md) describes ordinary FC and the
+exact cut-LCP scalar needed for an
+outgoing borrowed predecessor before the window.
 
 The bound does not establish $D=O(\log N)$ for arbitrary user-built chains.
 That is the redundant-level scheduler's responsibility. It also does not cover
@@ -128,10 +135,9 @@ arrows. This layer operates on the current in-memory encoded pairs.
 ## Construction and trust
 
 The root builder checks the chain once for null input, cycles, size mismatches,
-target/sample cardinality and borrowed-context support. Nonempty borrowed
-streams require an exact target; ordinary borrowed FC is rejected because it
-does not provide the bounded outgoing context required here. Native-only leaves
-and links to empty targets are supported.
+target/sample cardinality and the cut-LCP array's extent. Nonempty borrowed
+streams require an exact target. Native-only leaves and links to empty targets
+are supported.
 
 These are navigation-shape checks. They do not compare every sampled key with
 the target and cannot certify arbitrary equal-count samples manually supplied
@@ -149,7 +155,7 @@ world, resolve replacements, infer chronology or evaluate arrows. Keeping those
 choices with the caller lets the same query machinery retrieve fragments for
 different per-key categories.
 
-The [complete-query benchmark](../bench/query_chain.md) records preparation and
+The [complete-query benchmark](../bench/query_compare.md) records preparation and
 query timings, visited catalogs and returned matches with an independent
 integer-key oracle. Its source, raw trials and reproduction commands are bundled
 with the documentation.

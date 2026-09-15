@@ -80,7 +80,8 @@ Git metadata, replace the previous generated site, and add an empty `.nojekyll`
 file so GitHub serves Doxygen's underscored files unchanged. Commit with the
 source revision and push `gh-pages`. Updating `main` alone does not update the
 site. The publication should include the complete generated tree, including
-search assets and bundled source files.
+search assets and bundled source files. The checker clears generated HTML/XML
+before each run so removed declarations cannot leave stale published pages.
 
 ## What the check establishes
 
@@ -106,9 +107,9 @@ search assets and bundled source files.
 - A baseline without the aliases emits exactly the two expected unknown-command
   warnings per header. The configured run must emit no warnings.
 
-On 2026-09-15, Doxygen 1.9.8 passed these checks for all 24 public headers,
+On 2026-09-15, Doxygen 1.9.8 passed these checks for all 22 public headers,
 eleven real function/overload cases and twelve fixture symbols in all three
-metadata layouts. The unconfigured baseline had 48 warnings, exclusively for
+metadata layouts. The unconfigured baseline had 44 warnings, exclusively for
 `\license` and `\endlicense`.
 
 These checks verify file metadata and the tested lexical associations. Some
