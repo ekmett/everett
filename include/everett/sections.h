@@ -302,6 +302,8 @@ namespace everett {
     template <class Q> friend encoded_sections<Q> encode_native_sections(profile_array<Q, stream_role::native> const &);
     template <class Q> friend encoded_sections<Q> encode_index_sections(profile_blob<Q> const &, object_id const &,
                                                                       std::optional<blob_identity>);
+    template <class Q> friend encoded_sections<Q> encode_index_sections(profile_index<Q> const &, object_id const &,
+                                                                      std::optional<blob_identity>);
     encoded_sections() = default;
     void require_active() const {
       if (!directory_size_) throw std::logic_error("Everett section encoding has no source");
@@ -346,6 +348,22 @@ namespace everett {
       file_detail::put(directory_, 24, 8, offsets.universe);
       file_detail::put(directory_, 32, 1, offsets.low_width);
     }
+    template <class Index> void index(Index const & source, object_id const & native_id,
+                                      std::optional<blob_identity> const & exact_target) {
+      profile(source.borrowed());
+      words(source.interleave().classes);
+      words(source.interleave().checkpoints);
+      sections_.push_back(source.false_borrow_bits());
+      words(source.cut_lcps());
+      file_detail::put(directory_, 40, 8, source.virtual_size());
+      section_detail::put_id(directory_, 48, native_id);
+      if (exact_target) {
+        file_detail::put(directory_, 33, 1, 1);
+        section_detail::put_id(directory_, 64, exact_target->native);
+        section_detail::put_id(directory_, 80, exact_target->index);
+      }
+      finish(file_kind::fractional_index);
+    }
     void finish(file_kind kind) {
       header_.kind = kind;
       bool index = kind == file_kind::fractional_index;
@@ -383,22 +401,24 @@ namespace everett {
         (pair.target() && pair.borrowed().size() != pair.target()->group_count()))
       throw std::invalid_argument("Everett index encoding needs its exact bound target");
     encoded_sections<P> result;
-    result.profile(pair.borrowed());
-    result.words(pair.interleave().classes);
-    result.words(pair.interleave().checkpoints);
-    result.sections_.push_back(pair.false_borrow_bits());
-    result.words(pair.cut_lcps());
-    file_detail::put(result.directory_, 40, 8, pair.virtual_size());
-    section_detail::put_id(result.directory_, 48, native_id);
-    if (exact_target) {
-      file_detail::put(result.directory_, 33, 1, 1);
-      section_detail::put_id(result.directory_, 64, exact_target->native);
-      section_detail::put_id(result.directory_, 80, exact_target->index);
-    }
-    result.finish(file_kind::fractional_index);
+    result.index(pair, native_id, exact_target);
     return result;
   }
   template <class P> encoded_sections<P> encode_index_sections(profile_blob<P> const &&, object_id const &,
+                                                              std::optional<blob_identity> = std::nullopt) = delete;
+
+  // Serialize a newly built index against an unchanged native file. Identities
+  // are caller-authenticated declarations, checked against the pinned objects
+  // when binding/adopting the resulting pair.
+  template <class P> encoded_sections<P> encode_index_sections(profile_index<P> const & index,
+      object_id const & native_id, std::optional<blob_identity> exact_target = std::nullopt) {
+    if (!exact_target && index.borrowed().size())
+      throw std::invalid_argument("Everett index encoding needs its exact bound target");
+    encoded_sections<P> result;
+    result.index(index, native_id, exact_target);
+    return result;
+  }
+  template <class P> encoded_sections<P> encode_index_sections(profile_index<P> const &&, object_id const &,
                                                               std::optional<blob_identity> = std::nullopt) = delete;
 
   // Typed construction reads the envelope and fixed section directory only.

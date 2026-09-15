@@ -14,6 +14,7 @@
 #include <everett/sampling.h>
 
 #include <algorithm>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -33,16 +34,22 @@ namespace everett {
   // Coded handoff queues a backspace count, suffix and target ordinal. Backspace
   // counts P units relative to the preceding emitted sample. Decoder, lookahead,
   // pending-writer and outgoing-encoder contexts still retain full current keys.
-  template <class P>
+  template <class P, class Native>
   struct index_builder {
     using policy_type = P;
+    using native_type = Native;
+    static_assert(std::same_as<typename Native::policy_type, P>);
     using blob_type = profile_blob<P>;
     using sample_type = profile_sample<P>;
     using coded_sample_type = profile_coded_sample<P>;
     static constexpr std::uint64_t group_size = P::group_size;
 
     explicit index_builder(blob_type const & source)
-      : native_(source.native_), native_cursor_(native_->view()) {}
+      requires std::same_as<Native, typename blob_type::native_array>
+      : index_builder(source.native_) {}
+
+    explicit index_builder(std::shared_ptr<Native const> native)
+      : native_(checked_native(std::move(native))), native_cursor_(native_->view()) {}
 
     index_builder(index_builder const &) = delete;
     index_builder & operator=(index_builder const &) = delete;
@@ -50,11 +57,11 @@ namespace everett {
     index_builder & operator=(index_builder &&) = default;
 
     bool needs_input() const noexcept {
-      return !finished_ && !failed_ && !input_closed_ && !incoming_;
+      return native_ && !finished_ && !failed_ && !input_closed_ && !incoming_;
     }
     bool has_output() const noexcept { return bool(outgoing_); }
     bool done() const noexcept {
-      return !failed_ && input_closed_ && !incoming_ && native_cursor_.done() && !outgoing_;
+      return native_ && !failed_ && input_closed_ && !incoming_ && native_cursor_.done() && !outgoing_;
     }
     bool finished() const noexcept { return finished_; }
     std::uint64_t size() const noexcept { return virtual_count_; }
@@ -159,22 +166,39 @@ namespace everett {
     // Finalizes encoded offset/rank metadata; this can perform linear work.
     // A nonempty sampled stream requires the exact completed target pair.
     // Empty targets may be retained too. No durable publication is implied.
-    blob_type finish(std::shared_ptr<blob_type const> target = {}) {
+    blob_type finish(std::shared_ptr<blob_type const> target = {})
+      requires std::same_as<Native, typename blob_type::native_array> {
+      auto index = finish_index(target ? target->virtual_size() : 0);
+      try {
+        blob_type result;
+        result.native_ = native_;
+        result.borrowed_ = std::move(index.borrowed_);
+        result.interleave_ = std::move(index.interleave_);
+        result.false_borrows_ = std::move(index.false_borrows_);
+        result.virtual_count_ = index.virtual_count_;
+        result.cut_lcps_ = std::move(index.cut_lcps_);
+        result.target_ = std::move(target);
+        return result;
+      } catch (...) {
+        failed_ = true;
+        throw;
+      }
+    }
+
+    // Keep native bytes in their original storage. The extent authenticates
+    // only the sample count; the caller supplies samples from the exact target
+    // and retains source/target pins until the resulting index is published.
+    profile_index<P> finish_index(std::uint64_t target_count) {
       check_active();
       if (!done()) error_detail::raise<std::logic_error>("index builder is not drained at EOF");
-      auto target_count = target ? target->virtual_size() : 0;
       auto expected = target_count / group_size + (target_count % group_size != 0);
       if (expected != received_) error_detail::raise<std::invalid_argument>("index samples disagree with target extent");
       try {
         flush_pending();
-        blob_type result;
-        result.native_ = native_;
-        result.borrowed_ = writer_.finish();
-        result.interleave_ = rank_groups<group_size>::build(classes_, virtual_count_);
-        result.false_borrows_ = std::move(false_borrows_);
-        result.virtual_count_ = virtual_count_;
-        result.cut_lcps_ = std::move(cut_lcps_);
-        result.target_ = std::move(target);
+        auto borrowed = writer_.finish();
+        auto interleave = rank_groups<group_size>::build(classes_, virtual_count_);
+        profile_index<P> result(std::move(borrowed), std::move(interleave),
+          std::move(false_borrows_), std::move(cut_lcps_), virtual_count_);
         finished_ = true;
         return result;
       } catch (...) {
@@ -186,7 +210,7 @@ namespace everett {
   private:
     enum class input_mode { unset, full, coded };
 
-    std::shared_ptr<typename blob_type::native_array const> native_;
+    std::shared_ptr<Native const> native_;
     profile_cursor<P, stream_role::native> native_cursor_;
     profile_borrowed_writer<P> writer_;
     std::optional<bit_string> incoming_;
@@ -208,7 +232,11 @@ namespace everett {
     bool failed_ = false;
 
     void check_active() const {
-      if (finished_ || failed_) error_detail::raise<std::logic_error>("index builder is no longer active");
+      if (!native_ || finished_ || failed_) error_detail::raise<std::logic_error>("index builder is no longer active");
+    }
+    static std::shared_ptr<Native const> checked_native(std::shared_ptr<Native const> native) {
+      if (!native) error_detail::raise<std::invalid_argument>("index builder requires a pinned native source");
+      return native;
     }
     void check_input_slot(std::uint64_t target_ordinal) const {
       if (!needs_input()) error_detail::raise<std::logic_error>("index builder cannot accept another lookahead");

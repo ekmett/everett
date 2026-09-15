@@ -12,6 +12,7 @@
 #include <everett/error_detail.h>
 
 #include <everett/profile.h>
+#include <everett/profile_index.h>
 #include <everett/rank_groups.h>
 #include <everett/word_view.h>
 
@@ -27,7 +28,7 @@
 #include <vector>
 
 namespace everett {
-  template <class P> struct index_builder;
+  template <class P, class Native = profile_array<P>> struct index_builder;
 
   struct profile_blob_window {
     std::uint64_t native_first = 0;
@@ -261,7 +262,7 @@ namespace everett {
     }
 
   private:
-    friend struct index_builder<P>;
+    friend struct index_builder<P, native_array>;
 
     std::shared_ptr<native_array const> native_ =
       std::make_shared<native_array const>(native_array::build({}));

@@ -14,6 +14,7 @@
 #include <everett/profile_blob.h>
 
 #include <algorithm>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -152,19 +153,16 @@ namespace everett {
   // copied, and no array of reconstructed keys or samples is materialized.
   // peek() borrows cursor scratch until the next advance, move, or destruction.
   // A moved-to cursor remains valid; fresh peek() calls derive fresh key views.
-  template <class P> struct sample_cursor {
+  template <class P, class Target = profile_blob<P>> struct sample_cursor {
     using policy_type = P;
-    using target_type = profile_blob<P>;
+    using target_type = Target;
+    static_assert(std::same_as<typename Target::policy_type, P>);
     static constexpr std::uint64_t group_size = P::group_size;
 
     explicit sample_cursor(std::shared_ptr<target_type const> target)
-      : target_(checked_target(std::move(target))),
-        native_(target_->native().view()), borrowed_(target_->borrowed().view()) {
-      work_.decoded_entries = std::uint64_t(!native_.done()) + std::uint64_t(!borrowed_.done());
-      choose_next();
-    }
+      : sample_cursor(bind_target(std::move(target))) {}
 
-    bool done() const noexcept { return native_.done() && borrowed_.done(); }
+    bool done() const noexcept { return !target_ || (native_.done() && borrowed_.done()); }
 
     profile_sample_view<P> peek() const & {
       if (done()) error_detail::raise<std::out_of_range>("sample cursor at end");
@@ -196,9 +194,19 @@ namespace everett {
     sampling_work const & counters() const noexcept { return work_; }
 
   private:
-    static std::shared_ptr<target_type const> checked_target(std::shared_ptr<target_type const> target) {
+    struct binding {
+      std::shared_ptr<target_type const> target;
+      profile_blob_view<P> view;
+    };
+    static binding bind_target(std::shared_ptr<target_type const> target) {
       if (!target) error_detail::raise<std::invalid_argument>("sample cursor requires a pinned target");
-      return target;
+      auto view = target->view();
+      return {std::move(target), view};
+    }
+    explicit sample_cursor(binding source)
+      : target_(std::move(source.target)), native_(source.view.native()), borrowed_(source.view.borrowed()) {
+      work_.decoded_entries = std::uint64_t(!native_.done()) + std::uint64_t(!borrowed_.done());
+      choose_next();
     }
 
     void choose_next() {
