@@ -181,6 +181,51 @@ namespace {
     check(injected,"no orphan reservation fixture");
     rejects<std::invalid_argument>([&]{(void)redundant_snapshot<P>::restore(bad,snapshot.query_root().head());});
   }
+  // A real large carry must survive more than one admission allowance before
+  // two nonadjacent levels can be unsafe together. Keep the earlier keys
+  // encoded and compare only selected original-key occurrences at that point.
+  template<class P>void overlapping_levels(){
+    auto wide=[](std::uint64_t n){return bit_string::from_bytes(std::string{char(n>>24),char(n>>16),char(n>>8),char(n)});};
+    redundant_runtime<P> runtime;
+    std::optional<redundant_snapshot<P>> witness;
+    std::uint64_t count=0;
+    for(;count!=262144;){
+      check(runtime.admission_ready(),"normal allowance missed next admission");
+      profile_record record{wide(count%257?count:0),wide(count)};
+      auto state=runtime.try_contribute(record);check(bool(state),"overlap admission rejected");++count;
+      unsigned unsafe=0;
+      for(auto const & level:state->frontier().levels){unsigned active=0;for(auto const & slot:level.slots)active+=slot.state==redundant_slot_state::active;unsafe+=bool(level.job)||active==2;}
+      if(unsafe>=2){witness=*state;break;}
+      runtime.advance(runtime.service_budget(count));
+    }
+    check(bool(witness),"no simultaneous unsafe levels");
+    auto oracle=[&](redundant_snapshot<P> const & state){
+      topology(state);
+      for(auto k:std::array<std::uint64_t,7>{0,1,256,257,8191,count/2,count-1}){
+        std::vector<std::string> expected;auto runs=state.runs();
+        for(auto run=runs.rbegin();run!=runs.rend();++run){
+          std::optional<std::uint64_t> found;
+          if(!k){auto last=((*run)->last-1)/257*257;if(last>=(*run)->first)found=last;}
+          else if(k%257&&k>=(*run)->first&&k<(*run)->last)found=k;
+          if(found){auto value=wide(*found);expected.push_back(bits(value.view()));}
+        }
+        auto encoded=wide(k);auto cursor=state.cursor(encoded.view());std::vector<std::string> actual;
+        for(unsigned steps=0;!cursor.done();++steps){check(steps<10000,"overlap query stalled");cursor.step(1);if(cursor.has_match()){auto match=cursor.take_match();actual.push_back(bits(match.value.view()));}}
+        check(actual==expected,"overlap chronological occurrence oracle");
+      }
+    };
+    oracle(*witness);
+    auto source=redundant_snapshot<P>::restore(witness->frontier(),witness->query_root().head());
+    auto fork=redundant_runtime<P>::from_snapshot(source);check(fork.recovering(),"overlap recovery absent");
+    std::vector<redundant_snapshot<P>> retained{*witness};unsigned calls=0;
+    while(fork.pending()){
+      check(++calls<100000,"overlap recovery stalled");fork.advance(4093);
+      if(calls%31==0){auto state=fork.checkpoint();oracle(state);retained.push_back(state);}
+    }
+    oracle(fork.snapshot());for(auto const & state:retained)oracle(state);
+    drain(runtime,8191);oracle(runtime.snapshot());oracle(*witness);
+    std::cout<<"overlapping unsafe levels after "<<count<<" admissions\n";
+  }
   struct fail_compose {
     bit_string operator()(bit_view,bit_view,bit_view) const {throw std::runtime_error("composition failure");}
   };
@@ -215,6 +260,7 @@ int main(){
   using byte=diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>,15,diet::exponential_golomb<0>,4>;
   scenario<bit>(512);scenario<byte>(512);composed<bit>();composed<byte>();restart_stages<bit>();restart_stages<byte>();
   budget_fuzz<bit>();budget_fuzz<byte>();failures<bit>();failures<byte>();
+  overlapping_levels<bit>();
   static_assert(std::is_same_v<redundant_runtime_family<bit>::runtime_type<append>,redundant_runtime<bit,append>>);
   std::cout<<"redundant runtime tests passed\n";
 }
