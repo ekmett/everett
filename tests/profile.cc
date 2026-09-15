@@ -618,6 +618,9 @@ namespace {
     require(default_empty.view().size() == 0, "default profile");
 
     auto wrong = fixed.metadata();
+    wrong.version = 1;
+    rejects([&] { profile_view<P> invalid(fixed.bytes(), fixed.group_offsets().view(), wrong); });
+    wrong = fixed.metadata();
     wrong.group_size = P::group_size == 15 ? 7 : 15;
     rejects([&] { profile_view<P> invalid(fixed.bytes(), fixed.group_offsets().view(), wrong); });
     wrong = fixed.metadata();
@@ -963,6 +966,10 @@ namespace {
         auto cursor = view.cursor();
         while (!cursor.done()) cursor.advance();
       });
+      rejects([&] {
+        auto cursor = view.encoded_cursor();
+        while (!cursor.done()) cursor.advance();
+      });
       view.visit_all([](auto) { return true; });
     };
     auto encoded = [&](std::initializer_list<std::uint64_t> headers) {
@@ -998,6 +1005,10 @@ namespace {
       auto cursor = wrong_samples.cursor();
       while (!cursor.done()) cursor.advance();
     });
+    rejects([&] {
+      auto cursor = wrong_samples.encoded_cursor();
+      while (!cursor.done()) cursor.advance();
+    });
     auto bad_bytes = std::vector<std::byte>(array.bytes().begin(), array.bytes().end());
     auto metadata = array.metadata();
     if constexpr (P::unit == profile_unit::bit) {
@@ -1022,6 +1033,93 @@ namespace {
       std::vector<profile_record> invalid{{bit_string::from_bits("101"), {}}};
       rejects([&] { profile_array<P>::build(invalid); });
     }
+  }
+
+  template <class P> void absolute_boundaries() {
+    // The first record in a later block claims a prefix longer than the
+    // actual predecessor. Sequential readers know that length and reject it.
+    bit_string data;
+    for (std::uint64_t i = 0; i != P::codec_block_size; ++i) {
+      if (!i) profile_detail::write_count<P>(data, 0);
+      else profile_detail::write_backspace<P>(data, 0);
+      profile_detail::write_count<P>(data, 0);
+    }
+    auto boundary = data.bit_size / P::bits_per_unit;
+    profile_detail::write_count<P>(data, 1);
+    profile_detail::write_count<P>(data, 0);
+    auto metadata = profile_detail::initial_metadata<P, stream_role::native>();
+    metadata.record_count = P::codec_block_size + 1;
+    metadata.terminal_key_units = 1;
+    metadata.extent = data.bit_size / P::bits_per_unit;
+    metadata.common_value_width = 0;
+    std::array<std::uint64_t, 3> offsets{0, boundary, metadata.extent};
+    auto directory = elias_fano::build(offsets);
+    profile_view<P> view(data.bytes, directory.view(), metadata);
+    rejects([&] { auto cursor = view.cursor(); while (!cursor.done()) cursor.advance(); });
+    rejects([&] { auto cursor = view.encoded_cursor(); while (!cursor.done()) cursor.advance(); });
+    rejects([&] { view.reconstruct_at(P::codec_block_size); });
+    std::uint64_t predecessor = 99;
+    rejects([&] { view.compare_window(P::codec_block_size, P::codec_block_size + 1,
+      profile_query_context<P>({}), [](auto) { return true; }, nullptr, &predecessor); });
+    profile_comparison_work work;
+    require(view.predecessor_units(P::codec_block_size, &work) == 0 &&
+            work.skipped_headers == P::codec_block_size, "boundary predecessor replays one block of controls");
+    work = {};
+    require(view.predecessor_units(view.size(), &work) == 1 && !work.skipped_headers,
+            "terminal predecessor length needs no block replay");
+
+    auto records = fixture<P>();
+    auto array = profile_array<P>::build(records);
+    auto wrong_terminal = array.metadata();
+    ++wrong_terminal.terminal_key_units;
+    profile_view<P> wrong(array.bytes(), array.group_offsets().view(), wrong_terminal);
+    rejects([&] { auto cursor = wrong.encoded_cursor(); while (!cursor.done()) cursor.advance(); });
+    // The encoded cursor checks framing, not maximal retention. Existing
+    // restart and prefix-ceiling fixtures are accepted and covered separately.
+  }
+
+  template <class P> void guarded_encoded_payloads() {
+#if defined(__unix__) || defined(__APPLE__)
+    auto page = static_cast<std::size_t>(sysconf(_SC_PAGESIZE));
+    std::vector<profile_record> records;
+    for (unsigned i = 0; i != 5; ++i) {
+      auto key = bit_string::from_bytes(std::string(page * 4, 'q') + char('a' + i));
+      auto value = i ? bit_string{} : bit_string::from_bytes(std::string(page * 4, 'v'));
+      records.push_back({std::move(key), std::move(value)});
+    }
+    auto array = profile_array<P>::build(records);
+    auto extent = (array.bytes().size() + page - 1) / page * page;
+    auto raw = mmap(nullptr, extent, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    require(raw != MAP_FAILED, "encoded cursor guarded mapping");
+    struct cleanup { void * data; std::size_t size; ~cleanup() { munmap(data, size); } } guard{raw, extent};
+    auto bytes = static_cast<std::byte *>(raw);
+    std::copy(array.bytes().begin(), array.bytes().end(), bytes);
+    profile_view<P> view({bytes, array.bytes().size()}, array.group_offsets().view(), array.metadata());
+    auto first = view.encoded_at(0);
+    auto inside = [&](bit_view payload, std::size_t lo, std::size_t hi) {
+      return payload.offset() <= lo * 8 && (payload.offset() + payload.size()) >= hi * 8;
+    };
+    require(inside(first.suffix, page, page * 4) && inside(first.value, page * 5, page * 8),
+            "guarded ranges must lie strictly inside first record payloads");
+    require(mprotect(bytes + page, page * 3, PROT_NONE) == 0 &&
+            mprotect(bytes + page * 5, page * 3, PROT_NONE) == 0, "protect skipped key and value pages");
+    auto cursor = view.encoded_cursor();
+    for (std::uint64_t i = 0; i != records.size(); ++i) {
+      auto const & frame = cursor.peek();
+      require(frame.key_units == records[i].key.bit_size / P::bits_per_unit &&
+              frame.value.size() == records[i].value.bit_size, "guarded frame lengths");
+      require(frame.suffix.storage().data() == bytes && frame.value.storage().data() == bytes,
+              "guarded frame borrows mapped payload");
+      if (i) require(slow_compare(frame.suffix, records[i].key.view().subview(
+        frame.retained * P::bits_per_unit, frame.suffix.size())).order == 0, "guarded later literal");
+      cursor.advance();
+    }
+    require(cursor.done(), "guarded encoded traversal EOF");
+    require(view.encoded_at(2).key_units == records[2].key.bit_size / P::bits_per_unit,
+            "selected absolute frame skipped protected prefix");
+    require(view.predecessor_units(2) == records[1].key.bit_size / P::bits_per_unit,
+            "compatibility length replay skipped protected payload");
+#endif
   }
 
   template <class P, stream_role Role> void mapped_profile_sections() {
@@ -1272,6 +1370,11 @@ int main() {
     surrogate_anchor<bit_policy>();
     malformed_streams<byte_policy>();
     malformed_streams<bit_policy>();
+    absolute_boundaries<storage_policy<profile_unit::byte, fixed_values<0>, 3, exponential_golomb<0>, 2>>();
+    absolute_boundaries<storage_policy<profile_unit::bit, fixed_values<0>, 7, golomb<3>, 1>>();
+    absolute_boundaries<storage_policy<profile_unit::bit, fixed_values<0>, 15, exponential_golomb<2>, 16>>();
+    guarded_encoded_payloads<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 2>>();
+    guarded_encoded_payloads<storage_policy<profile_unit::bit, variable_values, 3, golomb<1>, 2>>();
     std::cout << "profile tests passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';

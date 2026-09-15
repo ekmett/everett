@@ -157,6 +157,36 @@ namespace {
     }
     require(rejected >= 20, "allocation rollback fixture did not inject failures");
   }
+
+  template <class P> void encoded_cursor_allocations() {
+    std::vector<profile_record> records;
+    for (std::uint64_t i = 0; i != P::codec_block_size * 2 + 1; ++i)
+      records.push_back({key_for<P>(i, i % 3 ? 3 : 8192), value_for<P>(i, i % 9)});
+    profile_native_writer<P> writer;
+    for (auto const & record : records) writer.append(record);
+    auto array = writer.finish();
+    auto view = array.view();
+    std::uint64_t count = 0, observed_key_units = 0, expected_key_units = 0;
+    for (auto const & record : records) expected_key_units += record.key.bit_size / P::bits_per_unit;
+    bool borrowed = true;
+    fail_after = 0;
+    try {
+      // Any allocation for key reconstruction or frame ownership fails here.
+      auto cursor = view.encoded_cursor();
+      while (!cursor.done()) {
+        auto copy = cursor;
+        auto const & record = cursor.peek();
+        observed_key_units += record.key_units;
+        borrowed = borrowed && record.suffix.storage().data() == array.bytes().data() &&
+          record.value.storage().data() == array.bytes().data() && copy.ordinal() == count;
+        cursor.advance();
+        ++count;
+      }
+    } catch (...) { fail_after = -1; throw; }
+    fail_after = -1;
+    require(count == records.size() && borrowed && observed_key_units == expected_key_units,
+            "allocation-free encoded cursor lost frames or borrowed storage");
+  }
 }
 
 int main() {
@@ -165,6 +195,7 @@ int main() {
     using bits = storage_policy<profile_unit::bit>;
     prefix_reuse<bytes>(); prefix_reuse<bits>();
     allocation_rollback<bytes>(); allocation_rollback<bits>();
+    encoded_cursor_allocations<bytes>(); encoded_cursor_allocations<bits>();
     std::cout << "Native predecessor reuse, exact encoding and allocation rollback passed\n";
   } catch (std::exception const & error) {
     fail_after = -1;
