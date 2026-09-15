@@ -357,6 +357,15 @@ checks predecessor continuity, sampled group offsets and the terminal extent. Th
 metadata, section bounds, padding and parsed counts; they do not authenticate
 objects or prove an arbitrary caller-supplied anchor shares the required prefix.
 
+`multiverse<P>` supplies the current read side of the backing store: it holds
+an existing object directory and opens checked `file<P>` envelopes under
+canonical object-ID paths. Its `sort`, `blob` and `file` aliases retain the same
+policy. Its `world`, `timeline` and `branch_point` aliases name forward-declared
+aggregate types, not working persistent runtimes. `sort<P>` checks an individual
+code's packing and policy alignment; it does not validate a whole prefix-free
+registry. The reader performs no directory creation or durable writes. SQLite
+integration for worlds, pins and progress remains separate implementation work.
+
 The reference world accepts one value type and one hashing-policy object per
 instantiation. Its existing `hash.value(value)` call does not receive the key
 or sort. Generic per-key value potentials and sort-dependent dispatch therefore
