@@ -87,11 +87,12 @@ free or bound it to `W` records.
 
 ## The output continuation
 
-The current merge's internal `native_output` keeps encoded bytes and sampled
-offsets in memory. `finish` constructs Elias–Fano metadata and returns an owning
-array. It has no detach/restore interface. Copying that entire object would cost
-space proportional to output already produced, so it is not the compact
-checkpoint we want.
+The in-memory merge's internal `native_output` keeps encoded bytes and sampled
+offsets in memory. `native_file_merge` instead uses a bounded payload buffer and
+an `object_stream`, retaining sampled offsets for final Elias–Fano construction.
+Neither sink has a detach/restore interface. Copying the in-memory output would
+cost space proportional to output already produced; the file sink avoids that
+allocation but still needs a verified output checkpoint.
 
 A resumable output sink needs an explicit boundary between verified immutable
 output and an unfinished tail. Its continuation must preserve:
@@ -109,9 +110,10 @@ output and an unfinished tail. Its continuation must preserve:
 - Exact sealed extents and their independently verified lengths/digests,
   together with the current output attempt and failure generation.
 
-`object_writer::seal` currently accepts a complete body with a known extent,
-writes its envelope and requests persistence barriers. It does not reopen an
-unfinished append stream. A future sink must avoid rewriting a sealed physical
+`object_writer::seal` accepts a complete body with a known extent.
+`object_stream` accepts incremental chunks and backpatches a private directory
+and envelope before sealing. Neither reopens an unfinished append stream or
+certifies a partial prefix. A resumable sink must avoid rewriting a sealed physical
 update unit merely to finish a partial byte or page. It can keep that tail
 private or continue in fresh immutable storage, with the associated framing
 and ownership recorded explicitly.
@@ -137,7 +139,7 @@ starts from the last independently verified continuation or the original inputs.
 The existing `merge_publication` and `merge_checkpoint` types in `durability.h`
 are protocol models. Their opaque strings are not a serialized continuation
 of `native_merge_builder`. Likewise, the implemented SQLite catalog retains
-objects, pairs, attempts, saves and reader ownership; its proposed job and
+objects, pairs, attempts, saves, timeline generations and reader ownership; its proposed job and
 checkpoint tables are not implemented yet.
 
 I would therefore implement process restart together with the output-sink

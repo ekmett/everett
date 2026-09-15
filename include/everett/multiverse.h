@@ -12,6 +12,7 @@
 #include <everett/file.h>
 #include <everett/mapped_blob.h>
 #include <everett/native_merge.h>
+#include <everett/native_file_merge.h>
 #include <everett/object_writer.h>
 #include <everett/object_stream.h>
 #include <everett/query.h>
@@ -59,8 +60,16 @@ namespace everett {
     using blob = everett::profile_blob<P>;
     using native_array = everett::profile_array<P>;
     using native_writer = everett::profile_native_writer<P>;
+    using native_file_writer = everett::native_file_writer<P>;
     template <class Native = native_array, class Compose = replace_native_value>
     using native_merge_builder = everett::native_merge_builder<P, Native, Compose>;
+    template <class Native = native_array, class Compose = replace_native_value>
+    using native_file_merge = everett::native_file_merge<P, Native, Compose>;
+    using index = everett::profile_index<P>;
+    template <class Native = native_array>
+    using index_builder = everett::index_builder<P, Native>;
+    template <class Target = blob>
+    using sample_cursor = everett::sample_cursor<P, Target>;
     using query_root = everett::query_root<P>;
     using query_root_builder = everett::query_root_builder<P>;
     using query_cursor = everett::query_cursor<P>;

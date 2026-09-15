@@ -265,6 +265,16 @@ Injected errors preserve surviving names and stop further writes or publication;
 short/interrupted writes are completed, while failed syncs and closes are never
 retried. This physical primitive does not implement catalog adoption or recovery.
 
+`object_stream<P>` retains an exclusive private attempt while accepting body
+chunks across calls. It reserves the envelope and optionally a fixed body
+prefix, then backpatches those private regions at finalization. CRC32C combination
+updates the checksum for that prefix replacement without rereading the suffix.
+Metadata rejection before final writes is retryable; I/O errors poison the
+stream and leave surviving names available for reconciliation. Tests cover
+prefix-only and mixed bodies, bit tails, partial writes, no-clobber installation,
+operation ownership and failures at each sealing step. The CRC combination
+oracle separately covers every bit of a 64-bit suffix length.
+
 POSIX tests protect every payload page while exercising checked opening, and
 the entire mapping while exercising trusted construction and body slicing.
 Other fixtures verify deferred rejection of corrupt headers, wrong policies,
@@ -451,6 +461,11 @@ literals directly, retaining prefix spans to validate strict source order.
 Three-argument key-aware callbacks retain reconstructed input keys. No path
 needs a third output-key buffer. Redundant/LP inputs and deep fragment chains
 are checked independently; span metadata can exceed contiguous key storage.
+Each span now stores a source bit offset and cumulative logical endpoint in
+16 bytes. The [compact span measurements](../bench/native_compact.md) show
+31.4–58.0% lower peak requested allocation bytes in the fragmented-key fixtures
+than the 40-byte descriptor. Those peaks still exceed materialized key buffers;
+all runtime trial ranges overlap, so this is a measured space choice.
 The [merge measurements](../bench/native_merge.md) report 12.50–80.31% lower
 medians across twelve byte/bit, value-width and prefix fixtures, with exact
 payload and EF equivalence. A step failure poisons the continuation while retaining
@@ -462,6 +477,19 @@ offsets, partial blocks, unique-key rejection, moves and input lifetimes. The
 merge oracle checks replacement and both parenthesizations of an associative,
 noncommutative value operation. These builders do not interpret tombstones,
 evaluate endpoints or establish a bounded redundant-level schedule.
+
+`native_file_writer<P>` streams the same framing into an immutable object
+attempt. It retains a reusable predecessor key, 64 KiB of payload buffering,
+bounded count scratch and residual block offsets. `native_file_merge` feeds
+that sink through the ordinary merge builder's policy-checked output interface;
+there is one merge algorithm for arrays and files. Finishing builds EF before
+final writes, emits the directory sections and seals through `object_stream`.
+The independent suite checks complete portable bytes across byte/bit policies,
+fixed/variable values and different K/W, long unary controls, large borrowed
+values, protected tails, geometric key growth, allocation retry and I/O poison.
+Mapped input tests retain owners after unlinking, pause between steps, and
+exercise both callback forms and malformed later records. These are live-process
+continuations; they do not yet restore partial output after process restart.
 
 Borrowed output now reserves its private predecessor buffer before fallible
 writes and updates only the actual changed suffix after those writes succeed.

@@ -63,6 +63,39 @@ The output is still an in-memory encoded array. Neither append nor finish is a
 byte-budgeted disk continuation. [Portable sections](mapped-blobs.md) package
 the finished array for the immutable writer without recoding it.
 
+## Writing directly to a file
+
+`native_file_writer<P>` accepts the same sorted records while streaming the FC
+payload into an `object_stream<P>`. Construction takes the object directory,
+reserved native identity, attempt identity and optional common value width.
+`append` consumes its key and value before returning. The writer keeps its
+previous key, 64 KiB of payload buffering, bounded control scratch and one
+residual offset per physical block. It does not retain the complete payload.
+
+`finish` builds Elias–Fano, writes its portable sections and fills the reserved
+native directory and envelope. CRC combination accounts for the backpatch
+without reading the body again. It then seals the file with the
+[immutable-object barriers](object-writer.md). Bytes match
+`encode_native_sections(profile_native_writer.finish())` for the same records
+and common-width choice. Bit profiles retain partial bytes until complete and
+stream long Golomb unary counts in bounded chunks.
+
+`native_file_merge<P, Native, Compose>` connects the same merge algorithm to
+that file sink. Its arguments are the directory, reserved native and attempt
+identities, older/newer source owners, composition policy and optional common
+width. `step`, `done` and `progress` have the in-memory builder's contracts;
+`finish` returns an `object_seal_receipt`. Both file wrappers are nonmovable.
+The [streamed timeline example](streamed-timeline.md) writes, merges, publishes
+and reopens actual files while retaining an earlier save.
+
+Invalid record input is rejected before output is changed. An allocation
+failure while constructing final EF metadata can be retried. Once final bytes
+are being emitted, an I/O or finalization failure poisons the attempt and
+preserves surviving names. This differs from the in-memory writer's ability to
+discard an unfinished allocation. Pausing a live merger retains its state;
+restoring an interrupted process still requires the
+[durable continuation](merge-resumption.md).
+
 ## Ordered two-way merges
 
 `native_merge_builder<P, Native, Compose>` pins two native source owners and
@@ -132,6 +165,13 @@ per key unit. This saves literal copies, but does not guarantee smaller scratch
 space than a contiguous key buffer. Key-aware callbacks use a reconstructed key
 through `profile_cursor::advance_comparison`.
 
+Each descriptor stores a source-relative bit offset and cumulative logical
+endpoint in 16 bytes; the source backing is shared by the cursor. The
+[space measurements](../bench/native_compact.md) quantify the savings and the
+remaining cost of deep fragment chains. This representation also gives us
+address-independent ingredients for a future checkpoint, though the current
+cursor does not serialize or restore them.
+
 The shared frame writer receives the winning head's known prefix and literal
 suffix. It checks units, value width and prefix bounds, then writes the frame.
 It retains only the previous key's length. If the input record retains $r_i$
@@ -154,6 +194,12 @@ output, and chronological composition. In the measured M2 Max fixtures, the
 integrated merger uses 12.50–80.31% less time than the original implementation.
 The isolated frame-output change saves 2.14–11.03%; these are separate paired
 comparisons, and their percentages should not be added.
+
+The [literal-forwarding measurements](../bench/native_encoded.md) isolate the
+encoded-source path and its first-unit comparison. They cover changing literal
+tails and deep prefix fragments in addition to shared prefixes, with requested
+allocation bytes reported separately from runtime. Fragment descriptors can
+use more memory than a reconstructed key even when literal copying is avoided.
 
 ## Work and ownership
 

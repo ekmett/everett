@@ -16,7 +16,7 @@ for the work.
 
 Everett 0.1.0 is experimental. The header-only library provides encoded storage
 components, mmap-backed query chains, incremental native merges, immutable
-object sealing, an optional persistent SQLite catalog, and an in-memory reference
+file construction and sealing, an optional persistent SQLite catalog, and an in-memory reference
 world. The
 [implementation ledger](docs/implementation.md) records the tested contracts.
 APIs and persisted formats may change during this work.
@@ -42,6 +42,7 @@ I call the backing store and its relationships the **multiverse**.
 | `elias_fano`, `rank_groups` | Monotone offsets and grouped origin counts, independent of the key representation. |
 | `profile_array`, `profile_view`, `profile_cursor` | Encoded records, borrowed views, and sequential decoding. |
 | `profile_native_writer`, `native_merge_builder` | Incremental native encoding and ordered per-key value composition. |
+| `native_file_writer`, `native_file_merge` | The same native framing and merge semantics with bounded payload buffering into private files. |
 | `profile_blob`, `profile_index` | A complete native/index pair, or an independently constructed index for existing native storage. |
 | `sample_cursor`, `index_builder`, `index_pipeline` | Sampling an existing pair and building new index links incrementally. |
 | `query_root`, `query_root_builder`, `query_cursor` | Preparing a bounded search head and visiting matching native entries through an exact index chain. |
@@ -523,6 +524,12 @@ composition and final EF construction have separate costs. The builder retains
 its source owners, and a failed step cannot publish a partial result. See
 [native writing and merging](docs/native-merges.md) for mapped inputs,
 value-width rules and the continuation's exact limits.
+
+For output larger than memory, `native_file_writer` and `native_file_merge`
+stream their payload into a reserved private file and return a seal receipt at
+completion. They retain sparse offsets until final Elias–Fano construction.
+The [streamed timeline example](docs/streamed-timeline.md) combines this path
+with mapped inputs, a new terminal index and persistent timeline publication.
 
 Mapped Objects
 --------------
