@@ -53,6 +53,9 @@ this package.
 `K = 2^r - 1`, including 3, 7, 15 and 31. Packed class widths are respectively
 2, 3, 4 and 5 bits. The generic rank directory reads at most 127 classes after
 a checkpoint. The `K=15` view shares the packed rank15 implementation.
+The helpers in `rank15.h` and `select15.h` fix their interval to fifteen; the
+policy-backed blob uses `rank_groups<P::group_size>` and
+`select_groups<P::group_size>`. SIMD rank is currently specialized for `K=15`.
 Offsets and fixed strides share the caller's byte/bit unit. Shape validation
 is not a substitute for complete validation of a serialized rank/select section.
 The [sampling analysis](sampling.md) distinguishes local correctness from
@@ -60,15 +63,34 @@ per-level capacity and whole-chain storage bounds.
 
 On little-endian AArch64, rank15 loads a complete checkpoint with four NEON
 vectors, masks the low and high nybbles at the requested boundary, and combines
-the byte lanes before one widening horizontal reduction. A bounded scalar path
-handles short final checkpoints and other targets. The view caches its group
+the byte lanes before one widening horizontal reduction. AVX2 uses two 32-byte
+loads; AVX-512F plus AVX-512BW uses one 64-byte load. Both x86 paths compare the
+even and odd nybble positions with the boundary and retain one pair sum per byte.
+The word shift used to extract high nybbles is masked again to remove bits from
+the neighboring byte.
+
+Each byte holds a sum of at most 30. Reducing the eight 64-bit lanes first
+would leave eight byte sums of at most 240, without carries between them. We
+could then finish in a scalar register with adjacent-byte sums and a multiply.
+I measured that variant against widening with `VPSADBW` before the final lane
+reduction. The latter avoids the dependent scalar fold and had lower independent
+rank and pair medians on both tested x86 processors, so it is the selected
+implementation. Dependent queries do not establish a universal winner. A complete
+checkpoint sums to at most 1920; the largest queried prefix has 127 classes and
+sums to 1905. The implementation selects an ISA from the compiler target; it adds
+neither runtime dispatch nor exported ISA flags.
+
+A bounded scalar path handles short final checkpoints and other targets. All
+vector paths check for 64 readable bytes before loading. The view caches its group
 count, adding eight bytes to the view without changing the stored classes or
 checkpoints. Both blob APIs project a window with one rank query and the group's
 population: the upper rank is the lower rank plus that population.
 
-The query checks cover maximum populations, every prefix cut, short final
-checkpoints, random packed words and every eight-byte alignment within a cache
-line. Typed `K=15` views retain the same encoded layout and use the same query
+The query checks cover maximum populations, every prefix cut, isolated nybbles
+and their complements, short final checkpoints, random packed words and every
+eight-byte alignment within a cache line. POSIX fixtures put complete and short
+checkpoints immediately before an inaccessible page, including nonzero padding.
+Typed `K=15` views retain the same encoded layout and use the same query
 implementation; other group sizes retain the generic loop.
 
 I compared the packed queries with the full bitvector directory and a CPU/NEON
@@ -117,6 +139,55 @@ consumers and Doxygen. Component checks also exercised the forced-portable rank
 and grouped-rank paths. The full-vector comparison remains
 a benchmark backend; only packed `K=15` queries gain a handwritten SIMD path in
 this change.
+
+The native x86 comparison uses a newer scalar baseline and the same packed
+input for both reductions. These are complete public rank calls, including
+checkpoint lookup and a common indirect call. The packed arrays occupy 32,760 B;
+the query array occupies 256 KiB. Entries are median nanoseconds per operation.
+
+| Processor / compiler target | Scalar rank | SAD rank | Qword-first rank | SAD rank + class | Qword-first rank + class |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Core i9-12900K / Clang 20 AVX2 | 9.212 | 2.896 | 3.235 | 3.234 | 3.694 |
+| Ryzen 9 7950X3D / MSVC 19.44 AVX2 | 8.961 | 4.289 | 4.939 | 5.272 | 5.809 |
+| Ryzen 9 7950X3D / MSVC 19.44 AVX512 | 8.850 | 3.673 | 4.344 | 4.709 | 4.928 |
+
+The [Linux report](../bench/rank_compare_quartus.md) includes a larger case
+where the scalar dependent query beats both SIMD variants. The
+[Windows report](../bench/rank_compare_windows.md) retains a dependent AVX512
+case favoring qword-first and substantial scheduling outliers. Both reports
+pin their source snapshots, record CPU affinity and usable ISA features, and
+provide the complete CSVs and reconstruction instructions. They exclude view
+construction, page faults and file I/O; these are not complete catalog searches.
+
+I also compared the NEON reductions against the actual Cult CPU rank header,
+using an external include. That directory stores twelve bytes per 512 source
+bits, or 18.75% metadata. It is distinct from the earlier 2048/512 Poppy
+translation. For the same 253,440-bit universe, the new M2 Max comparison gives:
+
+| Implementation | Encoded arrays + endpoint count | Independent rank | Rank + class | Dependent rank |
+| --- | ---: | ---: | ---: | ---: |
+| Current NEON | 9,512 B | 6.802 ns | 8.030 ns | 17.350 ns |
+| Qword-first NEON | 9,512 B | 5.731 ns | 9.583 ns | 20.192 ns |
+| Cult bitmap rank | 37,624 B | 7.368 ns | 10.611 ns | 18.612 ns |
+
+I kept the existing NEON widening reduction: qword-first improves independent
+single-rank throughput, but loses the paired and dependent hot queries. The
+larger comparison has mixed results too: Cult leads the independent pair while
+packed rank has smaller dependent medians. The
+[NEON/Cult report](../bench/neon_cult_rank.md) records exact storage, alignment,
+source hashes, timing ranges and reproduction commands. Its sizes include the
+terminal count, which the earlier Poppy comparison table excludes. The Cult
+header stays external and unchanged.
+
+The x86 kernels and guarded-tail tests were independently reviewed; the selected
+SAD kernels at `d7cbb09` match the native-tested bodies. Both public rank and
+grouped-rank suites passed for SAD and qword-first on Windows under AVX2 and
+AVX512. The selected header also passed both suites under Rosetta AVX2 in
+Release and ASan/UBSan, including the guarded-page fixtures. The NEON/Cult
+benchmark passed independent oracles and hot ASan/UBSan checks and was reviewed
+separately before integration at `1b7e25c`. Combined ASan/UBSan verification
+passed all 18 CTests, including installed and embedded package consumers,
+policy-group tests, blob projections and Doxygen.
 
 Rank construction now separates complete 2048-bit blocks from the bounded tail.
 A full block uses four 512-bit popcounts; AArch64 NEON sums four byte-popcount

@@ -139,6 +139,12 @@ The codecs accept a policy-selected group size;
 chain-size and scheduler assumptions. Offset units are bytes or bits according
 to the shared policy.
 
+The policy API spells these structures `rank_groups<P::group_size>` and
+`select_groups<P::group_size>`. `multiverse<P>::blob` uses that policy throughout.
+The helpers in `rank15.h` and `select15.h` have a fixed interval of fifteen; they
+do not fix the store's policy to fifteen. The `rank_groups<15>` view shares rank15's
+SIMD implementation, while other group sizes use the generic rank implementation.
+
 ### rank15
 
 We assign a conceptual origin bit of one to a borrowed entry and zero to a
