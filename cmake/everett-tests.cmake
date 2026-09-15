@@ -19,11 +19,11 @@ if(EVERETT_SANITIZERS)
   everett_check_sanitizers()
 endif()
 
-set(everett_test_names rank groups front world pins durability mapped_file)
-# Include profile fixtures when present in the checkout.
-foreach(everett_profile_test IN ITEMS profile profile_blob)
-  if(EXISTS "${PROJECT_SOURCE_DIR}/tests/${everett_profile_test}.cc")
-    list(APPEND everett_test_names "${everett_profile_test}")
+set(everett_test_names rank groups front world pins durability mapped_file files)
+# Include profile and facade fixtures when present in the checkout.
+foreach(everett_optional_test IN ITEMS profile profile_blob multiverse)
+  if(EXISTS "${PROJECT_SOURCE_DIR}/tests/${everett_optional_test}.cc")
+    list(APPEND everett_test_names "${everett_optional_test}")
   endif()
 endforeach()
 foreach(everett_test IN LISTS everett_test_names)
