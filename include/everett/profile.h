@@ -620,6 +620,7 @@ namespace everett {
   template <class P, stream_role Role = stream_role::native> struct profile_cursor;
   template <class P, stream_role Role = stream_role::native> struct profile_encoded_cursor;
   template <class P> struct profile_borrowed_writer;
+  template <class P, class Native> struct index_builder;
   template <class P> struct profile_native_writer;
   namespace profile_detail { template <class P> struct native_output; }
 
@@ -1166,37 +1167,7 @@ namespace everett {
       auto previous = previous_.view();
       auto comparison = compare_common_bits(previous, key);
       if (count_ && comparison.order > 0) error_detail::raise<std::invalid_argument>("profile keys must be sorted");
-      auto next_count = profile_detail::add(count_, 1);
-      auto retained = std::min((comparison.common_bits >> P::unit_shift), prefix_ceiling);
-      auto previous_units = (previous.size() >> P::unit_shift);
-      auto key_units = (key.size() >> P::unit_shift);
-      auto saved_bits = data_.bit_size;
-      auto saved_offsets = offsets_.size();
-      // Reserve before modifying output. The private predecessor retains its
-      // logical contents until all potentially allocating output writes finish.
-      auto next_bytes = profile_detail::byte_count(key.size());
-      if (next_bytes > previous_.bytes.max_size()) error_detail::raise<std::length_error>("profile bit string too large");
-      previous_.bytes.reserve(static_cast<std::size_t>(next_bytes));
-      try {
-        if (count_ % P::codec_block_size == 0) {
-          offsets_.push_back((data_.bit_size >> P::unit_shift));
-          profile_detail::write_count<P>(data_, retained);
-        } else profile_detail::write_backspace<P>(data_, previous_units - retained);
-        profile_detail::write_count<P>(data_, key_units - retained);
-        auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
-        profile_detail::append(data_, key.subview(retained_bits, key.size() - retained_bits));
-      } catch (...) {
-        profile_detail::resize(data_, saved_bits);
-        offsets_.resize(saved_offsets);
-        throw;
-      }
-      // This resize cannot allocate after reserve. Keep the actual shared
-      // prefix even when the encoding used a smaller boundary prefix ceiling.
-      auto common_bits = comparison.common_bits & ~std::uint64_t(P::bits_per_unit - 1);
-      profile_detail::resize(previous_, key.size());
-      profile_detail::copy_into(previous_, common_bits,
-        key.subview(common_bits, key.size() - common_bits));
-      count_ = next_count;
+      append_known(key, comparison.common_bits, prefix_ceiling);
     }
 
     // Finalizing EF takes work proportional to the staged group offsets.
@@ -1224,6 +1195,45 @@ namespace everett {
     }
 
   private:
+    template <class, class> friend struct index_builder;
+    // Only the index builder bypasses the public comparison, using the exact
+    // LCP already obtained when this borrowed key was accepted. Framing and
+    // allocation rollback are shared with the public checked writer.
+    void append_known(bit_view key, std::uint64_t exact_common_bits,
+                      std::uint64_t prefix_ceiling = std::numeric_limits<std::uint64_t>::max()) {
+      auto next_count = profile_detail::add(count_, 1);
+      auto retained = std::min((exact_common_bits >> P::unit_shift), prefix_ceiling);
+      auto previous_units = (previous_.bit_size >> P::unit_shift);
+      auto key_units = (key.size() >> P::unit_shift);
+      auto saved_bits = data_.bit_size;
+      auto saved_offsets = offsets_.size();
+      // Reserve before modifying output. The private predecessor retains its
+      // logical contents until all potentially allocating output writes finish.
+      auto next_bytes = profile_detail::byte_count(key.size());
+      if (next_bytes > previous_.bytes.max_size()) error_detail::raise<std::length_error>("profile bit string too large");
+      previous_.bytes.reserve(static_cast<std::size_t>(next_bytes));
+      try {
+        if (count_ % P::codec_block_size == 0) {
+          offsets_.push_back((data_.bit_size >> P::unit_shift));
+          profile_detail::write_count<P>(data_, retained);
+        } else profile_detail::write_backspace<P>(data_, previous_units - retained);
+        profile_detail::write_count<P>(data_, key_units - retained);
+        auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
+        profile_detail::append(data_, key.subview(retained_bits, key.size() - retained_bits));
+      } catch (...) {
+        profile_detail::resize(data_, saved_bits);
+        offsets_.resize(saved_offsets);
+        throw;
+      }
+      // This resize cannot allocate after reserve. Keep the actual shared
+      // prefix even when the encoding used a smaller boundary prefix ceiling.
+      auto common_bits = exact_common_bits & ~std::uint64_t(P::bits_per_unit - 1);
+      profile_detail::resize(previous_, key.size());
+      profile_detail::copy_into(previous_, common_bits,
+        key.subview(common_bits, key.size() - common_bits));
+      count_ = next_count;
+    }
+
     bit_string data_;
     bit_string previous_;
     std::vector<std::uint64_t> offsets_;

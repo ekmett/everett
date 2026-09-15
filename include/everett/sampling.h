@@ -85,15 +85,7 @@ namespace everett {
       auto previous = key_.view();
       auto comparison = compare_common_bits(previous, key);
       if (comparison.order > 0) error_detail::raise<std::invalid_argument>("sample keys must be sorted");
-      auto retained = comparison.common_bits >> P::unit_shift;
-      auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
-      // Copy the transmitted suffix before editing context. Input may alias
-      // this encoder's current key, including a subview of that key.
-      profile_coded_sample<P> result{(previous.size() >> P::unit_shift) - retained,
-        bit_string::copy(key.subview(retained_bits, key.size() - retained_bits)), target_ordinal};
-      sampling_detail::replace_suffix(key_, retained_bits, result.suffix.view());
-      ++count_;
-      return result;
+      return encode_known(key, target_ordinal, comparison.common_bits);
     }
 
     bit_view key() const & { return key_.view(); }
@@ -101,6 +93,22 @@ namespace everett {
     std::uint64_t size() const noexcept { return count_; }
 
   private:
+    template <class, class> friend struct index_builder;
+    // The builder supplies exact comparison state for sorted, unit-aligned
+    // keys and consecutive output ordinals; the public entry remains checked.
+    profile_coded_sample<P> encode_known(bit_view key, std::uint64_t target_ordinal,
+                                         std::uint64_t common_bits) {
+      auto retained = common_bits >> P::unit_shift;
+      auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
+      // Copy the transmitted suffix before editing context. Input may alias
+      // this encoder's current key, including a subview of that key.
+      profile_coded_sample<P> result{(key_.bit_size >> P::unit_shift) - retained,
+        bit_string::copy(key.subview(retained_bits, key.size() - retained_bits)), target_ordinal};
+      sampling_detail::replace_suffix(key_, retained_bits, result.suffix.view());
+      ++count_;
+      return result;
+    }
+
     bit_string key_;
     std::uint64_t count_ = 0;
   };

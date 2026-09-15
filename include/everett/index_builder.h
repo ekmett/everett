@@ -105,18 +105,19 @@ namespace everett {
       try {
         while (consumed < budget_entries && !outgoing_) {
           if ((!incoming_ && !input_closed_) || (!incoming_ && native_cursor_.done())) break;
-          auto take_borrowed = native_cursor_.done();
-          if (incoming_ && !native_cursor_.done()) {
-            auto order = compare_bits(incoming_->view(), native_cursor_.peek().key.prefix);
-            take_borrowed = order < 0;
-            if (!order) incoming_false_ = true;
-          }
+          auto comparison = compare_heads();
+          auto take_borrowed = comparison.order > 0;
+          if (incoming_ && !comparison.order) incoming_false_ = true;
           auto key = take_borrowed ? incoming_->view() : native_cursor_.peek().key.prefix;
+          auto edge = take_borrowed ? incoming_common_ : native_common_;
+          outgoing_common_ = std::min(outgoing_common_, edge);
+          if (pending_) pending_common_ = std::min(pending_common_, edge);
           auto boundary = virtual_count_ % group_size == 0;
           if (boundary) {
-            outgoing_.emplace(outgoing_encoder_.encode(key, virtual_count_));
+            outgoing_.emplace(outgoing_encoder_.encode_known(key, virtual_count_, outgoing_common_));
+            outgoing_common_ = key.size();
             classes_.push_back(0);
-            cut_lcps_.push_back(pending_ ? compare_common_bits(pending_->view(), key).common_bits : 0);
+            cut_lcps_.push_back(pending_ ? pending_common_ : 0);
           }
           if (take_borrowed) {
             flush_pending();
@@ -124,12 +125,17 @@ namespace everett {
             incoming_.reset();
             pending_false_ = incoming_false_;
             incoming_false_ = false;
+            pending_retained_ = incoming_borrowed_common_;
+            pending_common_ = key.size();
+            native_common_ = comparison.common_bits;
             auto ordinal = borrowed_count_++;
             if ((ordinal & 7) == 0) false_borrows_.push_back(std::byte{0});
             if (pending_false_) false_borrows_.back() |= std::byte(1u << (ordinal & 7));
             ++classes_.back();
           } else {
-            native_cursor_.advance();
+            incoming_common_ = comparison.common_bits;
+            auto next = native_cursor_.advance_comparison();
+            native_common_ = next ? next->common_bits : 0;
           }
           ++virtual_count_;
           ++consumed;
@@ -224,6 +230,12 @@ namespace everett {
     std::uint64_t virtual_count_ = 0;
     std::uint64_t borrowed_count_ = 0;
     std::uint64_t received_ = 0;
+    // Exact bit LCPs from the last consumed merged key to each live head.
+    std::uint64_t native_common_ = 0, incoming_common_ = 0;
+    // Minima of adjacent merged-key LCPs since each retained anchor. Sorted
+    // strings make these the exact LCPs with the last consumed merged key.
+    std::uint64_t outgoing_common_ = 0, pending_common_ = 0;
+    std::uint64_t incoming_borrowed_common_ = 0, pending_retained_ = 0;
     input_mode input_mode_ = input_mode::unset;
     bool incoming_false_ = false;
     bool pending_false_ = false;
@@ -261,11 +273,27 @@ namespace everett {
       auto copy = bit_string::copy(key);
       incoming_.emplace(std::move(copy));
       incoming_false_ = !comparison.order && pending_false_;
+      incoming_common_ = incoming_borrowed_common_ = comparison.common_bits;
       ++received_;
+    }
+    bit_comparison compare_heads() const {
+      if (!incoming_) return {0, -1};
+      if (native_cursor_.done()) return {0, 1};
+      if (native_common_ != incoming_common_)
+        return {std::min(native_common_, incoming_common_), native_common_ > incoming_common_ ? -1 : 1};
+      auto native = native_cursor_.peek().key.prefix;
+      auto incoming = incoming_->view();
+      // Revisit at most seven already equal bits to keep byte-aligned loads.
+      auto start = native_common_ & ~std::uint64_t{7};
+      if (!start) return compare_common_bits(native, incoming);
+      auto comparison = compare_common_bits(native.subview(start, native.size() - start),
+        incoming.subview(start, incoming.size() - start));
+      comparison.common_bits += start;
+      return comparison;
     }
     void flush_pending() {
       if (pending_) {
-        writer_.append(pending_->view());
+        writer_.append_known(pending_->view(), pending_retained_);
         pending_.reset();
       }
     }
