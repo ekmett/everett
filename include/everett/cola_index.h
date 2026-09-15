@@ -39,6 +39,43 @@ namespace everett {
         error_detail::raise<std::overflow_error>("COLA target ordinal overflow");
       return ordinal * stride;
     }
+    struct frontier_selection {
+      unsigned origin = 3;
+      std::array<std::uint64_t, 3> common{};
+    };
+    // Every live head follows the same preceding occurrence. Larger LCPs
+    // sort first; equal LCPs need only a suffix comparison. Stable origin order
+    // preserves native, main-borrow, secondary-borrow ties.
+    template <class Live, class Head> frontier_selection choose_frontier(
+        std::array<std::uint64_t, 3> const & prefixes, Live live, Head head) {
+      frontier_selection result;
+      bit_view key;
+      for (unsigned origin = 0; origin < 3; ++origin) if (live(origin)) {
+        auto candidate = head(origin);
+        if (result.origin == 3) {
+          result.origin = origin; key = candidate; result.common[origin] = key.size();
+          continue;
+        }
+        auto first = prefixes[origin], second = prefixes[result.origin];
+        bit_comparison comparison;
+        if (first != second) comparison = {std::min(first, second), first > second ? -1 : 1};
+        else {
+          comparison = compare_common_bits(candidate.subview(first, candidate.size() - first),
+            key.subview(first, key.size() - first));
+          comparison.common_bits += first;
+        }
+        if (comparison.order < 0) {
+          // New winner <= old winner <= each old loser: ordered LCP minimum.
+          for (unsigned i = 0; i < origin; ++i)
+            result.common[i] = std::min(result.common[i], comparison.common_bits);
+          result.origin = origin; key = candidate;
+          result.common[origin] = key.size();
+        } else result.common[origin] = comparison.common_bits;
+      }
+      if (result.origin == 3) error_detail::raise<std::invalid_argument>("COLA frontier has no live stream");
+      return result;
+    }
+
   }
 
   struct cola_window {
@@ -282,11 +319,17 @@ namespace everett {
       return {item.key.prefix, ordinal_, cola_origin(origin), item.ordinal};
     }
     cola_sample_view<P> peek() const && = delete;
-    void advance() {
+    void advance() { (void)advance_impl<false>(); }
+    std::optional<bit_comparison> advance_comparison() { return advance_impl<true>(); }
+
+  private:
+    template <bool Compare> std::optional<bit_comparison> advance_impl() {
       if (done()) error_detail::raise<std::out_of_range>("COLA sampler at end");
+      auto selected = choose();
+      auto first_length = selected.common[selected.origin];
+      auto common = first_length;
       auto width = std::min<std::uint64_t>(P::group_size, count_ - ordinal_);
       for (std::uint64_t i = 0; i < width; ++i) {
-        auto selected = choose();
         prefixes_ = selected.common;
         auto next = !selected.origin ? native_.advance_comparison() :
           borrowed_[selected.origin - 1].advance_comparison();
@@ -294,9 +337,16 @@ namespace everett {
           error_detail::raise<std::invalid_argument>("COLA sample source order mismatch");
         prefixes_[selected.origin] = next ? next->common_bits : 0;
         ++ordinal_;
+        if (!done() && (Compare || i + 1 < width)) {
+          selected = choose();
+          if constexpr (Compare) common = std::min(common, prefixes_[selected.origin]);
+        }
       }
+      if constexpr (Compare) if (!done())
+        return bit_comparison{common, common == first_length &&
+          selected.common[selected.origin] == first_length ? 0 : -1};
+      return std::nullopt;
     }
-  private:
     using borrowed_cursor = profile_cursor<P, stream_role::borrowed>;
     struct binding { std::shared_ptr<Target const> target; cola_index_view<P> view; };
     std::shared_ptr<Target const> target_;
@@ -313,43 +363,10 @@ namespace everett {
       : target_(std::move(source.target)), native_(source.view.native()),
         borrowed_{borrowed_cursor(source.view.borrowed(0)), borrowed_cursor(source.view.borrowed(1))},
         count_(source.view.virtual_size()) {}
-    struct selection {
-      unsigned origin = 3;
-      std::array<std::uint64_t, 3> common{};
-    };
-    selection choose() const {
-      selection result;
-      bit_view key;
-      if (!native_.done()) {
-        result.origin = 0; key = native_.peek().key.prefix;
-        result.common[0] = key.size();
-      }
-      for (unsigned route = 0; route < 2; ++route) if (!borrowed_[route].done()) {
-        auto origin = route + 1;
-        auto candidate = borrowed_[route].peek().key.prefix;
-        if (result.origin == 3) {
-          result.origin = origin; key = candidate; result.common[origin] = key.size();
-          continue;
-        }
-        auto first = prefixes_[origin], second = prefixes_[result.origin];
-        bit_comparison comparison;
-        if (first != second) comparison = {std::min(first, second), first > second ? -1 : 1};
-        else {
-          comparison = compare_common_bits(candidate.subview(first, candidate.size() - first),
-            key.subview(first, key.size() - first));
-          comparison.common_bits += first;
-        }
-        if (comparison.order < 0) {
-          // The new winner precedes every earlier candidate. Ordered-prefix
-          // convexity gives its LCP with each loser as the smaller frontier.
-          for (unsigned i = 0; i < origin; ++i)
-            result.common[i] = std::min(result.common[i], comparison.common_bits);
-          result.origin = origin; key = candidate;
-          result.common[origin] = key.size();
-        } else result.common[origin] = comparison.common_bits;
-      }
-      if (result.origin == 3) error_detail::raise<std::invalid_argument>("COLA sampler stream count mismatch");
-      return result;
+    cola_detail::frontier_selection choose() const {
+      return cola_detail::choose_frontier(prefixes_,
+        [&](unsigned origin) { return !origin ? !native_.done() : !borrowed_[origin - 1].done(); },
+        [&](unsigned origin) { return !origin ? native_.peek().key.prefix : borrowed_[origin - 1].peek().key.prefix; });
     }
   };
 
@@ -397,20 +414,20 @@ namespace everett {
         // depends only on their count: do not open a payload cursor at all.
         if (!native_cursor_) return step_terminal(budget);
         while (consumed < budget && !done()) {
-          unsigned origin = 3;
-          bit_view key;
-          for (unsigned i = 0; i < 3; ++i) if (live(i)) {
-            auto candidate = head(i);
-            if (origin == 3 || compare_bits(candidate, key) < 0) { origin = i; key = candidate; }
-          }
-          auto adjacent = compare_common_bits(previous_.view(), key);
-          if (adjacent.order > 0 || (!origin && count_ && !adjacent.order))
+          auto selected = cola_detail::choose_frontier(prefixes_,
+            [&](unsigned origin) { return live(origin); },
+            [&](unsigned origin) { return head(origin); });
+          auto origin = selected.origin;
+          auto key = head(origin);
+          auto common = prefixes_[origin];
+          bool equal = count_ && common == previous_length_ && key.size() == previous_length_;
+          if (!origin && equal)
             error_detail::raise<std::invalid_argument>("COLA sources violate sorted native order");
           for (unsigned route = 0; route < 2; ++route)
-            if (borrowed_count_[route]) cut_common_[route] = std::min(cut_common_[route], adjacent.common_bits);
+            if (borrowed_count_[route]) cut_common_[route] = std::min(cut_common_[route], common);
           if (!width_) for (unsigned route = 0; route < 2; ++route)
             cuts_[route].push_back(borrowed_count_[route] ? cut_common_[route] : 0);
-          native_equal_ = !origin || (!adjacent.order && native_equal_);
+          native_equal_ = !origin || (equal && native_equal_);
           if (origin) {
             auto route = origin - 1;
             // Along a sorted walk the minimum adjacent LCP since the preceding
@@ -423,11 +440,18 @@ namespace everett {
             ++population_[route];
             cut_common_[route] = key.size();
           }
-          auto retained = adjacent.common_bits & ~std::uint64_t{7};
-          sampling_detail::replace_suffix(previous_, retained, key.subview(retained, key.size() - retained));
-          if (!origin) native_cursor_->advance();
-          else if (origin == 1) primary_cursor_->advance();
-          else for (std::uint64_t i = 0; i < P::group_size && !secondary_cursor_->done(); ++i) secondary_cursor_->advance();
+          previous_length_ = key.size();
+          prefixes_ = selected.common;
+          if (!origin) prefixes_[0] = advance_native(*native_cursor_);
+          else if (origin == 1) {
+            auto next = primary_cursor_->advance_comparison();
+            prefixes_[1] = next ? next->common_bits : 0;
+          } else {
+            auto next_common = key.size();
+            for (std::uint64_t i = 0; i < P::group_size && !secondary_cursor_->done(); ++i)
+              next_common = std::min(next_common, advance_native(*secondary_cursor_));
+            prefixes_[2] = next_common;
+          }
           ++count_; ++consumed; ++width_;
           if (width_ == P::group_size) flush_group();
         }
@@ -459,8 +483,8 @@ namespace everett {
     std::array<std::vector<std::byte>, 2> flags_;
     std::array<std::vector<std::uint64_t>, 2> cuts_;
     std::array<std::uint64_t, 2> borrowed_count_{}, cut_common_{}, population_{};
-    bit_string previous_;
-    std::uint64_t count_ = 0, width_ = 0;
+    std::array<std::uint64_t, 3> prefixes_{};
+    std::uint64_t previous_length_ = 0, count_ = 0, width_ = 0;
     bool native_equal_ = false, failed_ = false, finished_ = false;
     static native_pointer checked(native_pointer native) {
       if (!native) error_detail::raise<std::invalid_argument>("null COLA native source");
@@ -478,6 +502,12 @@ namespace everett {
       if (!origin) return native_cursor_->peek().key.prefix;
       if (origin == 1) return primary_cursor_->peek().key;
       return secondary_cursor_->peek().key.prefix;
+    }
+    static std::uint64_t advance_native(profile_cursor<P> & cursor) {
+      auto next = cursor.advance_comparison();
+      if (next && next->order >= 0)
+        error_detail::raise<std::invalid_argument>("COLA native source order mismatch");
+      return next ? next->common_bits : 0;
     }
     std::uint64_t step_terminal(std::uint64_t budget) {
       std::uint64_t consumed = 0;
