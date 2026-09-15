@@ -94,6 +94,10 @@ Functions</h2></td></tr>
 <tr class="separator:a4da23fc1af4ab23cd6c77b4fa8b8141d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b637072b36d0ab89afdc0d1ecb902aa" id="r_a0b637072b36d0ab89afdc0d1ecb902aa"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1select__groups__detail.html#a0b637072b36d0ab89afdc0d1ecb902aa">words</a> (std::uint64_t bits) noexcept</td></tr>
 <tr class="separator:a0b637072b36d0ab89afdc0d1ecb902aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4bab1ec97106d67725a1bcc4d793fd87" id="r_a4bab1ec97106d67725a1bcc4d793fd87"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1select__groups__detail.html#a4bab1ec97106d67725a1bcc4d793fd87">monotone</a> (std::span&lt; std::uint64_t const &gt; source) noexcept</td></tr>
+<tr class="separator:a4bab1ec97106d67725a1bcc4d793fd87"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa454eb9fe262016ccb296274e599d4f2" id="r_aa454eb9fe262016ccb296274e599d4f2"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1select__groups__detail.html#aa454eb9fe262016ccb296274e599d4f2">select_word</a> (std::uint64_t value, unsigned ordinal) noexcept</td></tr>
+<tr class="separator:aa454eb9fe262016ccb296274e599d4f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9af4fa52c60a83e06cc877840926d77c" id="r_a9af4fa52c60a83e06cc877840926d77c"><td class="memTemplParams" colspan="2">template&lt;unsigned W, std::size_t O, std::size_t I&gt; </td></tr>
 <tr class="memitem:a9af4fa52c60a83e06cc877840926d77c"><td class="memTemplItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1select__groups__detail.html#a9af4fa52c60a83e06cc877840926d77c">low_component</a> (std::uint64_t const *source) noexcept</td></tr>
 <tr class="separator:a9af4fa52c60a83e06cc877840926d77c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -289,6 +293,32 @@ template&lt;unsigned W, std::size_t O, std::size_t... I&gt; </div>
 
 </div>
 </div>
+<a id="a4bab1ec97106d67725a1bcc4d793fd87" name="a4bab1ec97106d67725a1bcc4d793fd87"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4bab1ec97106d67725a1bcc4d793fd87">&#9670;&#160;</a></span>monotone()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool everett::select_groups_detail::monotone </td>
+          <td>(</td>
+          <td class="paramtype">std::span&lt; std::uint64_t const &gt;&#160;</td>
+          <td class="paramname"><em>source</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a4da23fc1af4ab23cd6c77b4fa8b8141d" name="a4da23fc1af4ab23cd6c77b4fa8b8141d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4da23fc1af4ab23cd6c77b4fa8b8141d">&#9670;&#160;</a></span>multiply()</h2>
 
@@ -389,6 +419,42 @@ template&lt;unsigned W&gt; </div>
           <td></td>
           <td class="paramtype">std::span&lt; std::uint64_t &gt;&#160;</td>
           <td class="paramname"><em>out</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa454eb9fe262016ccb296274e599d4f2" name="aa454eb9fe262016ccb296274e599d4f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa454eb9fe262016ccb296274e599d4f2">&#9670;&#160;</a></span>select_word()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned everett::select_groups_detail::select_word </td>
+          <td>(</td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>ordinal</em>&#160;</td>
         </tr>
         <tr>
           <td></td>

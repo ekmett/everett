@@ -82,7 +82,8 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#namespaces">Namespaces</a>  </div>
+<a href="#namespaces">Namespaces</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">rank_groups.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -90,6 +91,7 @@ $(function() {
 <p>Declares Everett's rank groups support.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;<a class="el" href="rank15_8h_source.html">everett/rank15.h</a>&gt;</code><br />
+<code>#include &lt;array&gt;</code><br />
 <code>#include &lt;bit&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;limits&gt;</code><br />
@@ -112,6 +114,17 @@ Classes</h2></td></tr>
 Namespaces</h2></td></tr>
 <tr class="memitem:namespaceeverett" id="r_namespaceeverett"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html">everett</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceeverett_1_1rank__groups__detail" id="r_namespaceeverett_1_1rank__groups__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__groups__detail.html">everett::rank_groups_detail</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a14f37f76f8c2276bf94efb6bcf0094ba" id="r_a14f37f76f8c2276bf94efb6bcf0094ba"><td class="memTemplParams" colspan="2">template&lt;unsigned Bits, unsigned Word, unsigned Plane&gt; </td></tr>
+<tr class="memitem:a14f37f76f8c2276bf94efb6bcf0094ba"><td class="memTemplItemLeft" align="right" valign="top">constexpr std::uint64_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__groups__detail.html#a14f37f76f8c2276bf94efb6bcf0094ba">everett::rank_groups_detail::plane_mask</a> () noexcept</td></tr>
+<tr class="separator:a14f37f76f8c2276bf94efb6bcf0094ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfe4b1751fc56c049565aeba70e6269f" id="r_adfe4b1751fc56c049565aeba70e6269f"><td class="memTemplParams" colspan="2">template&lt;unsigned Bits&gt; </td></tr>
+<tr class="memitem:adfe4b1751fc56c049565aeba70e6269f"><td class="memTemplItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__groups__detail.html#adfe4b1751fc56c049565aeba70e6269f">everett::rank_groups_detail::prefix_portable</a> (std::uint64_t const *words, unsigned count) noexcept</td></tr>
+<tr class="separator:adfe4b1751fc56c049565aeba70e6269f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Declares Everett's rank groups support. </p>

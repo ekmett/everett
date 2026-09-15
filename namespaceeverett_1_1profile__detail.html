@@ -94,6 +94,14 @@ Functions</h2></td></tr>
 <tr class="separator:a2bf409fd1f3112f8aaaa0556aa3475f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ff1e4bd398d5074844d0fb3b374127e" id="r_a2ff1e4bd398d5074844d0fb3b374127e"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a2ff1e4bd398d5074844d0fb3b374127e">byte_count</a> (std::uint64_t bits) noexcept</td></tr>
 <tr class="separator:a2ff1e4bd398d5074844d0fb3b374127e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc12d53cf449fb1deeecf85832230cbc" id="r_abc12d53cf449fb1deeecf85832230cbc"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#abc12d53cf449fb1deeecf85832230cbc">low_mask</a> (unsigned width) noexcept</td></tr>
+<tr class="separator:abc12d53cf449fb1deeecf85832230cbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae85dd0828073706459af3cd8f651f2bb" id="r_ae85dd0828073706459af3cd8f651f2bb"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#ae85dd0828073706459af3cd8f651f2bb">load_bits</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> data, std::uint64_t first, unsigned width) noexcept</td></tr>
+<tr class="separator:ae85dd0828073706459af3cd8f651f2bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3e2d6e00bae430a9c7ba56a79dfdca6" id="r_ac3e2d6e00bae430a9c7ba56a79dfdca6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#ac3e2d6e00bae430a9c7ba56a79dfdca6">store_bits</a> (std::byte *target, std::uint64_t at, std::uint64_t value, unsigned width) noexcept</td></tr>
+<tr class="separator:ac3e2d6e00bae430a9c7ba56a79dfdca6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2955d1876c43bf4b606513b6e49bd0d" id="r_ac2955d1876c43bf4b606513b6e49bd0d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#ac2955d1876c43bf4b606513b6e49bd0d">copy_bits</a> (std::byte *target, std::uint64_t first, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> source) noexcept</td></tr>
+<tr class="separator:ac2955d1876c43bf4b606513b6e49bd0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5fbc638f096e9a4d4428f0ef52d1c6e7" id="r_a5fbc638f096e9a4d4428f0ef52d1c6e7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a5fbc638f096e9a4d4428f0ef52d1c6e7">resize</a> (<a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &amp;value, std::uint64_t bits)</td></tr>
 <tr class="separator:a5fbc638f096e9a4d4428f0ef52d1c6e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a67741ac15fe43ade1c697566de506a58" id="r_a67741ac15fe43ade1c697566de506a58"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a67741ac15fe43ade1c697566de506a58">copy_into</a> (<a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &amp;target, std::uint64_t first, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> source)</td></tr>
@@ -104,16 +112,18 @@ Functions</h2></td></tr>
 <tr class="separator:a1da1b0de6f437ea3e3ed477e85b553e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f1e2f179a9d5b9f88b1ba1288b698b4" id="r_a7f1e2f179a9d5b9f88b1ba1288b698b4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a7f1e2f179a9d5b9f88b1ba1288b698b4">append_byte</a> (<a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &amp;target, unsigned value)</td></tr>
 <tr class="separator:a7f1e2f179a9d5b9f88b1ba1288b698b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a817f1c4e24ad9795f660ad7eaabd08" id="r_a1a817f1c4e24ad9795f660ad7eaabd08"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a1a817f1c4e24ad9795f660ad7eaabd08">put_fixed</a> (<a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &amp;target, std::uint64_t &amp;at, std::uint64_t value, unsigned width)</td></tr>
+<tr class="separator:a1a817f1c4e24ad9795f660ad7eaabd08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc0170e6bd34258fb482f869e751aa4c" id="r_afc0170e6bd34258fb482f869e751aa4c"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#afc0170e6bd34258fb482f869e751aa4c">read_fixed</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> data, std::uint64_t &amp;at, unsigned width)</td></tr>
+<tr class="separator:afc0170e6bd34258fb482f869e751aa4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e9939977a1ef729894286e4adc089d0" id="r_a3e9939977a1ef729894286e4adc089d0"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a3e9939977a1ef729894286e4adc089d0">read_zero_run</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> data, std::uint64_t &amp;at, std::uint64_t limit, char const *truncated, char const *overflow)</td></tr>
+<tr class="separator:a3e9939977a1ef729894286e4adc089d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a12fee97090b78ace066a89cd20b836ac" id="r_a12fee97090b78ace066a89cd20b836ac"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
 <tr class="memitem:a12fee97090b78ace066a89cd20b836ac"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a12fee97090b78ace066a89cd20b836ac">write_count</a> (<a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &amp;target, std::uint64_t value)</td></tr>
 <tr class="separator:a12fee97090b78ace066a89cd20b836ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a34c86d017c6c9ae5cf69cdfd652f0ddf" id="r_a34c86d017c6c9ae5cf69cdfd652f0ddf"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
 <tr class="memitem:a34c86d017c6c9ae5cf69cdfd652f0ddf"><td class="memTemplItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a34c86d017c6c9ae5cf69cdfd652f0ddf">read_count</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> data, std::uint64_t &amp;offset)</td></tr>
 <tr class="separator:a34c86d017c6c9ae5cf69cdfd652f0ddf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1a817f1c4e24ad9795f660ad7eaabd08" id="r_a1a817f1c4e24ad9795f660ad7eaabd08"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a1a817f1c4e24ad9795f660ad7eaabd08">put_fixed</a> (<a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &amp;target, std::uint64_t &amp;at, std::uint64_t value, unsigned width)</td></tr>
-<tr class="separator:a1a817f1c4e24ad9795f660ad7eaabd08"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc0170e6bd34258fb482f869e751aa4c" id="r_afc0170e6bd34258fb482f869e751aa4c"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#afc0170e6bd34258fb482f869e751aa4c">read_fixed</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> data, std::uint64_t &amp;at, unsigned width)</td></tr>
-<tr class="separator:afc0170e6bd34258fb482f869e751aa4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a436bc0fb9927acec8175abab371edced" id="r_a436bc0fb9927acec8175abab371edced"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
 <tr class="memitem:a436bc0fb9927acec8175abab371edced"><td class="memTemplItemLeft" align="right" valign="top">constexpr std::uint64_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a436bc0fb9927acec8175abab371edced">golomb_cutoff</a> ()</td></tr>
 <tr class="separator:a436bc0fb9927acec8175abab371edced"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -321,6 +331,48 @@ template&lt;class P &gt; </div>
 
 </div>
 </div>
+<a id="ac2955d1876c43bf4b606513b6e49bd0d" name="ac2955d1876c43bf4b606513b6e49bd0d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac2955d1876c43bf4b606513b6e49bd0d">&#9670;&#160;</a></span>copy_bits()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void everett::profile_detail::copy_bits </td>
+          <td>(</td>
+          <td class="paramtype">std::byte *&#160;</td>
+          <td class="paramname"><em>target</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>first</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&#160;</td>
+          <td class="paramname"><em>source</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a67741ac15fe43ade1c697566de506a58" name="a67741ac15fe43ade1c697566de506a58"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a67741ac15fe43ade1c697566de506a58">&#9670;&#160;</a></span>copy_into()</h2>
 
@@ -405,6 +457,74 @@ template&lt;class P , <a class="el" href="namespaceeverett.html#a374f546e980dc1c
           <td></td>
         </tr>
       </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae85dd0828073706459af3cd8f651f2bb" name="ae85dd0828073706459af3cd8f651f2bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae85dd0828073706459af3cd8f651f2bb">&#9670;&#160;</a></span>load_bits()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t everett::profile_detail::load_bits </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>first</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>width</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="abc12d53cf449fb1deeecf85832230cbc" name="abc12d53cf449fb1deeecf85832230cbc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc12d53cf449fb1deeecf85832230cbc">&#9670;&#160;</a></span>low_mask()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t everett::profile_detail::low_mask </td>
+          <td>(</td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>width</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 </div>
@@ -595,6 +715,60 @@ template&lt;class P &gt; </div>
 
 </div>
 </div>
+<a id="a3e9939977a1ef729894286e4adc089d0" name="a3e9939977a1ef729894286e4adc089d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e9939977a1ef729894286e4adc089d0">&#9670;&#160;</a></span>read_zero_run()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t everett::profile_detail::read_zero_run </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&#160;</td>
+          <td class="paramname"><em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint64_t &amp;&#160;</td>
+          <td class="paramname"><em>at</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>limit</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char const *&#160;</td>
+          <td class="paramname"><em>truncated</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char const *&#160;</td>
+          <td class="paramname"><em>overflow</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a5fbc638f096e9a4d4428f0ef52d1c6e7" name="a5fbc638f096e9a4d4428f0ef52d1c6e7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5fbc638f096e9a4d4428f0ef52d1c6e7">&#9670;&#160;</a></span>resize()</h2>
 
@@ -625,6 +799,54 @@ template&lt;class P &gt; </div>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac3e2d6e00bae430a9c7ba56a79dfdca6" name="ac3e2d6e00bae430a9c7ba56a79dfdca6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3e2d6e00bae430a9c7ba56a79dfdca6">&#9670;&#160;</a></span>store_bits()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void everett::profile_detail::store_bits </td>
+          <td>(</td>
+          <td class="paramtype">std::byte *&#160;</td>
+          <td class="paramname"><em>target</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>at</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>width</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">

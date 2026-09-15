@@ -7,6 +7,8 @@ var searchData=
   ['chosen_20per_20key_4',['Updates in a category chosen per key',['../md_docs_2arrows.html',1,'']]],
   ['comparison_5',['comparison',['../md_bench_2rank__compare.html',1,'Full-vector and packed-rank comparison'],['../native-avx2-packed-rank-comparison.html',1,'Native AVX2 packed-rank comparison'],['../md_bench_2rank__compare__windows.html',1,'Native Windows packed-rank comparison']]],
   ['composable_20change_6',['Everett: Persistent Storage Through Composable Change',['../index.html',1,'']]],
-  ['core_7',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
-  ['cult_20bitmap_20rank_8',['NEON reductions and the Cult bitmap rank',['../md_bench_2neon__cult__rank.html',1,'']]]
+  ['construction_7',['Elias–Fano Selection and Construction',['../eliasfano-selection-and-construction.html',1,'']]],
+  ['copies_20and_20framing_8',['Key prefixes, bit copies, and framing',['../md_bench_2key__bits.html',1,'']]],
+  ['core_9',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
+  ['cult_20bitmap_20rank_10',['NEON reductions and the Cult bitmap rank',['../md_bench_2neon__cult__rank.html',1,'']]]
 ];

@@ -1,0 +1,32 @@
+{
+  "baseline": "62ead3fab9d0ee5bda1b47780b7905a45aae1182",
+  "candidate_revision": "d0271623cd6af865ac39ef8e04fe39f899d399a2",
+  "candidate_working_tree": false,
+  "dependency_revision": "62ead3fab9d0ee5bda1b47780b7905a45aae1182",
+  "candidate_overlay": [
+    "profile.h",
+    "front.h",
+    "key_detail.h"
+  ],
+  "candidate_header_sha256": {
+    "profile.h": "205aa1abed0e5e815c2619c9e8a969c495830013db54c3094952e18d3f898715",
+    "front.h": "3a35cb0964aae07af8e36e1e21e8076f932ff62cf3443f8a9d50d7bddd9de80e",
+    "key_detail.h": "27ace4335bc66a513adb0f54784fde464fce02025ea9fdc0caf62918a3fcb51d"
+  },
+  "source_sha256": "e6d0ce2b434f7b79dfbf86b6ba11c5d9f133ada2bddc064e82846640a0959d59",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "flags": [
+    "-std=c++20",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "-Werror",
+    "-O3",
+    "-DNDEBUG"
+  ],
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "trials": 5,
+  "work": 8388608,
+  "sanitize": false
+}

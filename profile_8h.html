@@ -92,11 +92,13 @@ $(function() {
 <p>Declares Everett's profile support.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;<a class="el" href="policy_8h_source.html">everett/policy.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="key__detail_8h_source.html">everett/key_detail.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="select__groups_8h_source.html">everett/select_groups.h</a>&gt;</code><br />
 <code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;bit&gt;</code><br />
 <code>#include &lt;cstddef&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
+<code>#include &lt;cstring&gt;</code><br />
 <code>#include &lt;limits&gt;</code><br />
 <code>#include &lt;optional&gt;</code><br />
 <code>#include &lt;span&gt;</code><br />
@@ -112,6 +114,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1bit__view.html">everett::bit_view</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1bit__string.html">everett::bit_string</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1bit__comparison.html">everett::bit_comparison</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__anchor.html">everett::profile_anchor&lt; P &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -159,6 +163,16 @@ Functions</h2></td></tr>
 <tr class="separator:a2bf409fd1f3112f8aaaa0556aa3475f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ff1e4bd398d5074844d0fb3b374127e" id="r_a2ff1e4bd398d5074844d0fb3b374127e"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a2ff1e4bd398d5074844d0fb3b374127e">everett::profile_detail::byte_count</a> (std::uint64_t bits) noexcept</td></tr>
 <tr class="separator:a2ff1e4bd398d5074844d0fb3b374127e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc12d53cf449fb1deeecf85832230cbc" id="r_abc12d53cf449fb1deeecf85832230cbc"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#abc12d53cf449fb1deeecf85832230cbc">everett::profile_detail::low_mask</a> (unsigned width) noexcept</td></tr>
+<tr class="separator:abc12d53cf449fb1deeecf85832230cbc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae85dd0828073706459af3cd8f651f2bb" id="r_ae85dd0828073706459af3cd8f651f2bb"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#ae85dd0828073706459af3cd8f651f2bb">everett::profile_detail::load_bits</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> data, std::uint64_t first, unsigned width) noexcept</td></tr>
+<tr class="separator:ae85dd0828073706459af3cd8f651f2bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3e2d6e00bae430a9c7ba56a79dfdca6" id="r_ac3e2d6e00bae430a9c7ba56a79dfdca6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#ac3e2d6e00bae430a9c7ba56a79dfdca6">everett::profile_detail::store_bits</a> (std::byte *target, std::uint64_t at, std::uint64_t value, unsigned width) noexcept</td></tr>
+<tr class="separator:ac3e2d6e00bae430a9c7ba56a79dfdca6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2955d1876c43bf4b606513b6e49bd0d" id="r_ac2955d1876c43bf4b606513b6e49bd0d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#ac2955d1876c43bf4b606513b6e49bd0d">everett::profile_detail::copy_bits</a> (std::byte *target, std::uint64_t first, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> source) noexcept</td></tr>
+<tr class="separator:ac2955d1876c43bf4b606513b6e49bd0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4484ca2174d29abe61a7678186b9bbf1" id="r_a4484ca2174d29abe61a7678186b9bbf1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1bit__comparison.html">bit_comparison</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a4484ca2174d29abe61a7678186b9bbf1">everett::compare_common_bits</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> a, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> b)</td></tr>
+<tr class="separator:a4484ca2174d29abe61a7678186b9bbf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae9423adb98de151ba892a37dbb897214" id="r_ae9423adb98de151ba892a37dbb897214"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#ae9423adb98de151ba892a37dbb897214">everett::compare_bits</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> a, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> b)</td></tr>
 <tr class="separator:ae9423adb98de151ba892a37dbb897214"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a982b3d3e7579ba1f4546351487c84eb2" id="r_a982b3d3e7579ba1f4546351487c84eb2"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
@@ -177,16 +191,18 @@ Functions</h2></td></tr>
 <tr class="separator:a1da1b0de6f437ea3e3ed477e85b553e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7f1e2f179a9d5b9f88b1ba1288b698b4" id="r_a7f1e2f179a9d5b9f88b1ba1288b698b4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a7f1e2f179a9d5b9f88b1ba1288b698b4">everett::profile_detail::append_byte</a> (<a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &amp;target, unsigned value)</td></tr>
 <tr class="separator:a7f1e2f179a9d5b9f88b1ba1288b698b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a817f1c4e24ad9795f660ad7eaabd08" id="r_a1a817f1c4e24ad9795f660ad7eaabd08"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a1a817f1c4e24ad9795f660ad7eaabd08">everett::profile_detail::put_fixed</a> (<a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &amp;target, std::uint64_t &amp;at, std::uint64_t value, unsigned width)</td></tr>
+<tr class="separator:a1a817f1c4e24ad9795f660ad7eaabd08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc0170e6bd34258fb482f869e751aa4c" id="r_afc0170e6bd34258fb482f869e751aa4c"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#afc0170e6bd34258fb482f869e751aa4c">everett::profile_detail::read_fixed</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> data, std::uint64_t &amp;at, unsigned width)</td></tr>
+<tr class="separator:afc0170e6bd34258fb482f869e751aa4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e9939977a1ef729894286e4adc089d0" id="r_a3e9939977a1ef729894286e4adc089d0"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a3e9939977a1ef729894286e4adc089d0">everett::profile_detail::read_zero_run</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> data, std::uint64_t &amp;at, std::uint64_t limit, char const *truncated, char const *overflow)</td></tr>
+<tr class="separator:a3e9939977a1ef729894286e4adc089d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a12fee97090b78ace066a89cd20b836ac" id="r_a12fee97090b78ace066a89cd20b836ac"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
 <tr class="memitem:a12fee97090b78ace066a89cd20b836ac"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a12fee97090b78ace066a89cd20b836ac">everett::profile_detail::write_count</a> (<a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &amp;target, std::uint64_t value)</td></tr>
 <tr class="separator:a12fee97090b78ace066a89cd20b836ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a34c86d017c6c9ae5cf69cdfd652f0ddf" id="r_a34c86d017c6c9ae5cf69cdfd652f0ddf"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
 <tr class="memitem:a34c86d017c6c9ae5cf69cdfd652f0ddf"><td class="memTemplItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a34c86d017c6c9ae5cf69cdfd652f0ddf">everett::profile_detail::read_count</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> data, std::uint64_t &amp;offset)</td></tr>
 <tr class="separator:a34c86d017c6c9ae5cf69cdfd652f0ddf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1a817f1c4e24ad9795f660ad7eaabd08" id="r_a1a817f1c4e24ad9795f660ad7eaabd08"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a1a817f1c4e24ad9795f660ad7eaabd08">everett::profile_detail::put_fixed</a> (<a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &amp;target, std::uint64_t &amp;at, std::uint64_t value, unsigned width)</td></tr>
-<tr class="separator:a1a817f1c4e24ad9795f660ad7eaabd08"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afc0170e6bd34258fb482f869e751aa4c" id="r_afc0170e6bd34258fb482f869e751aa4c"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#afc0170e6bd34258fb482f869e751aa4c">everett::profile_detail::read_fixed</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> data, std::uint64_t &amp;at, unsigned width)</td></tr>
-<tr class="separator:afc0170e6bd34258fb482f869e751aa4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a436bc0fb9927acec8175abab371edced" id="r_a436bc0fb9927acec8175abab371edced"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
 <tr class="memitem:a436bc0fb9927acec8175abab371edced"><td class="memTemplItemLeft" align="right" valign="top">constexpr std::uint64_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1profile__detail.html#a436bc0fb9927acec8175abab371edced">everett::profile_detail::golomb_cutoff</a> ()</td></tr>
 <tr class="separator:a436bc0fb9927acec8175abab371edced"><td class="memSeparator" colspan="2">&#160;</td></tr>
