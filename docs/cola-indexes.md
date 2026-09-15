@@ -57,6 +57,10 @@ two targets. `step(budget)` consumes at most that many local merged occurrences.
 Advancing a sampled target can decode up to `K` source occurrences. String
 bytes, allocation and final Elias–Fano construction are additional work.
 `finish()` returns the completed index; it does not change the native array.
+With neither target present, all occurrences are native. Construction reads
+only the admitted native count and emits zero navigation per group; it never
+decodes native keys or accesses their payload pages. Native validation remains
+the admission or explicit `scan` operation's responsibility.
 
 `mapped_cola_index_builder<P>` does the same work with a pinned `mapped_native`
 input, a mapped main pair and a mapped secondary native file. Its completed

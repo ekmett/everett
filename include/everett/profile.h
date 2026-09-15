@@ -1202,8 +1202,9 @@ namespace everett {
 
   private:
     template <class, class, class> friend struct index_builder;
+    template <class, class, class> friend struct cola_index_builder;
     friend struct profile_detail::index_output<P>;
-    // Only the index builder bypasses the public comparison, using the exact
+    // The index builders bypass the public comparison, using the exact
     // LCP already obtained when this borrowed key was accepted. Framing and
     // allocation rollback are shared with the public checked writer.
     void append_known(bit_view key, std::uint64_t exact_common_bits,

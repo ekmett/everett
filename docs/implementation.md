@@ -56,6 +56,11 @@ and continued construction after the source files are unlinked.
 The [complete persistence example](cola-store.md) writes native files, saves
 both input and combined roots, publishes a merged timeline, then reopens and
 queries all three representations.
+Terminal COLA construction reads only the admitted native count and emits zero
+navigation. A protected-page test hides the entire native mapping through
+construction, moves, finalization and IX03 serialization, then compares the
+result with the ordinary key-walk encoding. The nonterminal builder reuses its
+exact carried LCP for borrowed FC output.
 The independent eight-policy core and mapped suites passed strict O3
 ASan/UBSan. The mapped suite independently assembles IX03 bytes, checks exact
 source/ordinal/value query results, mutates valid-CRC files, verifies target

@@ -380,7 +380,10 @@ namespace everett {
           native_equal_ = !origin || (!adjacent.order && native_equal_);
           if (origin) {
             auto route = origin - 1;
-            writers_[route].append(key);
+            // Along a sorted walk the minimum adjacent LCP since the preceding
+            // borrow is its exact LCP with this key. Reuse that same frontier
+            // for FC output instead of comparing the inherited prefix again.
+            writers_[route].append_known(key, borrowed_count_[route] ? cut_common_[route] : 0);
             auto ordinal = borrowed_count_[route]++;
             if (!(ordinal & 7)) flags_[route].push_back(std::byte{0});
             if (native_equal_) flags_[route].back() |= std::byte(1u << (ordinal & 7));
