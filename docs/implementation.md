@@ -437,7 +437,11 @@ one distinct key per step unit. Equal keys call the supplied chronological
 composition; replacement is the default. Sources may be owning arrays or
 mapped-native owners. Exact LCP lengths carried between the heads avoid
 rechecking their inherited prefixes. Shared frame output keeps only the previous
-key's length, leaving two decoded input keys and no third output-key buffer.
+key's length. Replacement and two-argument value-only composition forward input
+literals directly, retaining prefix spans to validate strict source order.
+Three-argument key-aware callbacks retain reconstructed input keys. No path
+needs a third output-key buffer. Redundant/LP inputs and deep fragment chains
+are checked independently; span metadata can exceed contiguous key storage.
 The [merge measurements](../bench/native_merge.md) report 12.50–80.31% lower
 medians across twelve byte/bit, value-width and prefix fixtures, with exact
 payload and EF equivalence. A step failure poisons the continuation while retaining
@@ -466,14 +470,28 @@ merge tests independently check replacement, concatenation and fixed-width
 affine composition, paused/moved continuations, unlinked input mappings, and
 sealed-output queries.
 
-### Persistent immutable saves
+### Persistent saves and timeline generations
 
 The optional `sqlite_catalog<P>` records reservations before output creation,
-sealing receipts, exact prepared chains, immutable saved roots and durable
-reader pins. Its normal registration path reads metadata only; explicit scan
+sealing receipts, exact prepared chains, immutable saved roots, timeline
+generations and durable reader pins. Its normal registration path reads metadata only; explicit scan
 admission verifies the pinned chain before taking the SQL writer lock. All
 mutations record exact request and outcome bytes under an operation ID in the
 same transaction. Replays compare the complete request, including binary IDs.
+
+New catalogs use schema 2. `create_timeline`, `fork_timeline` and
+`publish_timeline` append immutable generations under the SQLite writer lock.
+Publication compares the complete expected name, generation, head and owner;
+stale requests record their observed head as a stable replay outcome. Forks
+select the exact supplied historical generation. Every generation retains its
+own root pin. Schema-1 catalogs keep the earlier save/reservation APIs; timeline
+methods reject them without an automatic migration. Catalog schema, object
+envelope and inner section versions are independent.
+
+The timeline suite checks binary names, competing connections, historical forks,
+reopen/replay, malformed outcomes, generation limits, eight COMMIT-failure cases
+and eight process-kill cuts. These establish the tested API/SQLite behavior,
+not physical power-loss recovery or pin retirement.
 
 The adapter requires SQLite 3.51.3 or later in both headers and the loaded
 runtime, a serialized connection, verified WAL/FULL synchronization settings
@@ -680,8 +698,8 @@ ctest --test-dir build-sanitize --output-on-failure
 
 The default component suites cover codecs, native and borrowed writers, index
 construction, queries, world semantics, ownership, durability and mapped files.
-With SQLite enabled, four more suites cover the catalog, adversarial operations,
-forwarded VFS failures and process interruption. Three package consumers check relocated core and
+With SQLite enabled, five more suites cover the catalog, adversarial operations,
+forwarded VFS failures, process interruption and timeline publication. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
 Combined verification at `35be933` on 2026-09-15: AppleClang 21, C++20, Release with strict
@@ -729,7 +747,7 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 | Object identity and integrity | portable sections, mmap queries and immutable writer | cryptographic content addressing, durable catalog publication and lazy block-integrity strategy |
 | Attach encoded runs to world semantics | blob reader and query | batch/snapshot/export oracle tests using actual encoded immutable runs |
 | COLA scheduler and durable merge continuations | incremental native merge and index builder | byte/work-budgeted continuations, bounded active levels and shared-result adoption under interleaved forks |
-| Mutable catalog roots and pin retirement | immutable saved roots, reservations and exact file graph | conditional timeline publication, reader retirement, reclaim only after final pin, schema migration and interruption tests |
+| Catalog pin retirement | conditional timeline publication, immutable saves, reservations and exact file graph | reader/generation retirement, reclaim only after final pin, schema migration and interruption tests |
 | Direct batch adoption | native file reader, prefix index builder and scheduler | preserve received ordinary-FC bytes, bound visible catalogs and work debt, preserve causal order and charge actual key bytes |
 | Durable backend and resumable merges | publication protocol and encoded merge continuations | fault injection at write/sync/rename/recovery cuts; failed barriers retain old roots; resume only from verified durable prefixes |
 | Durable round resumption | save manifests and update protocol | persist base/round identity, accepted batch identities and claimed keys; restart without double-applying a changeset |

@@ -570,13 +570,16 @@ caller already knows the object's type, policy and format; checked opening is
 the default.
 
 The optional `sqlite_catalog<P>` reserves objects before writing, records their
-seal receipts, registers exact query chains and retains immutable named saves
-and reader pins. We can close it, reopen a save and query its mmap chain. Enable
+seal receipts, registers exact query chains and retains named saves, timeline
+generations and reader pins. We can close it, reopen a save and query its mmap chain. Enable
 `EVERETT_ENABLE_SQLITE` and link `everett::sqlite`; the ordinary core target has
 no SQLite dependency. The [working catalog guide](docs/sqlite-catalog.md) gives a
 complete publication/reopen example and explains operation replay and failed
-commits. The [catalog design](docs/catalog.md) extends this to mutable timelines,
-retirement and merge progress. This leaves two immutable object kinds for us to
+commits. Timelines support conditional publication and forks from exact historical
+generations; a stale publication returns the observed head, and replay returns
+that same outcome. Generations currently retain their pins. The
+[catalog design](docs/catalog.md) covers retirement and merge progress.
+This leaves two immutable object kinds for us to
 manage. The [durability protocol](docs/durability.md)
 orders verified output, durable publication, and old-pin release, with explicit
 recovery states after failed synchronization.

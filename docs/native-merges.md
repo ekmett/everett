@@ -78,10 +78,12 @@ auto array = merge.finish();
 
 The default composition uses the newer value when both streams contain the
 same key. It borrows that value until the output writer copies it, avoiding an
-intermediate payload allocation. For another per-key category, supply
-`compose(key, older_value, newer_value)`, returning either a borrowed `bit_view`
-or an owned `bit_string`. The key lets that operation choose its interpretation
-per record. Keys occurring in only one input retain their values unchanged.
+intermediate payload allocation. For another category, supply
+`compose(older_value, newer_value)`, returning either a borrowed `bit_view` or
+an owned `bit_string`. If interpretation depends on the key, supply
+`compose(key, older_value, newer_value)` instead. A callable supporting both
+forms uses the key-aware form. Keys occurring in only one input retain their
+values unchanged.
 
 The key argument borrows cursor scratch and expires when that cursor advances.
 Value arguments borrow the immutable input bytes. I copy the returned view into
@@ -116,17 +118,28 @@ $\ell_b=\mathrm{lcp}(p,b)$ in the policy's units.
 
 After emitting $a$, the comparison supplies the remaining head's
 $\mathrm{lcp}(a,b)$. The advancing cursor supplies $\mathrm{lcp}(a,a')$.
-`profile_cursor::advance_comparison` examines the old key and the new literal
-from the encoded retention boundary before replacing its scratch. Ordinary FC
-finds the difference in the first new unit. A redundant FC record can repeat
-more literal material; the same operation checks it and obtains the exact LCP.
-It also lets the merger reject non-increasing source keys while advancing.
+The replacement and value-only paths represent each current key as spans of
+immutable input literals. Advancing trims that span sequence at the retained
+position and appends the next literal. Before trimming, it compares the old key
+with the new suffix to obtain the exact LCP and reject non-increasing inputs.
+The boundary can precede the previous record's literal, so retaining only that
+one literal would lose the context needed for validation. Ordinary FC finds the
+difference in the first new unit; redundant FC may repeat more material.
+
+Each record adds at most one span; backward traversal removes crossed spans
+permanently. A long chain of one-unit extensions can still retain one descriptor
+per key unit. This saves literal copies, but does not guarantee smaller scratch
+space than a contiguous key buffer. Key-aware callbacks use a reconstructed key
+through `profile_cursor::advance_comparison`.
 
 The shared frame writer receives the winning head's known prefix and literal
 suffix. It checks units, value width and prefix bounds, then writes the frame.
-It retains only the previous key's length. The two input cursors own the current
-keys needed for comparison and composition callbacks; the merger keeps no third
-key buffer. `profile_native_writer::append` uses the same framing component and
+It retains only the previous key's length. If the input record retains $r_i$
+units and its output retains $r_o$, sorted order gives $r_o\ge r_i$: the previous
+output lies between this input's predecessor and its current key. We can emit
+the input literal after dropping $r_o-r_i$ units. A physical output block starts
+with absolute $r_o$; other records use a backspace from the last output length.
+The merger keeps no third key buffer. `profile_native_writer::append` uses the same framing component and
 retains its own predecessor to check arbitrary caller keys.
 
 Byte policies carry whole-byte LCP counts; bit policies carry exact bit counts.
@@ -161,5 +174,7 @@ while building the final EF directory can be retried without consuming inputs.
 Input arrays must remain immutable through all aliases and contain unique
 sorted keys. Use validated mapped inputs when reading untrusted files. The
 builder's C++ state is not a durable merge checkpoint, and it neither moves a
-saved root nor releases catalog pins. Those transitions belong to the
+saved root nor releases catalog pins. The [restart contract](merge-resumption.md)
+lists the input contexts, unfinished output and composition state that a durable
+continuation must retain. Those transitions belong to the
 [catalog](sqlite-catalog.md) and [publication protocol](durability.md).

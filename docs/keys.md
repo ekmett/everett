@@ -395,8 +395,8 @@ envelopes under canonical object-ID paths, seals immutable objects and reopens
 prepared mmap query chains. Its component aliases retain the same policy.
 Its `world`, `timeline` and `branch_point` aliases name forward-declared
 aggregate types. The separate [SQLite catalog](sqlite-catalog.md) owns durable
-reservations, immutable saved roots and reader pins. Mutable timeline heads,
-pin retirement and durable merge progress remain extensions.
+reservations, immutable saved roots, conditional timeline publication and reader pins.
+Pin retirement and durable merge progress remain extensions.
 
 `sort<P>` checks an individual code's packing and policy alignment; it does not
 validate a whole prefix-free registry. Object access validates headers by
