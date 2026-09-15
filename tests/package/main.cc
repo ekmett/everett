@@ -7,12 +7,10 @@
  * \endlicense
  */
 
-#include <everett/blob.h>
 #include <everett/crc32c.h>
 #include <everett/durability.h>
 #include <everett/fingerprint.h>
 #include <everett/file.h>
-#include <everett/front.h>
 #include <everett/index_pipeline.h>
 #include <everett/mapped_file.h>
 #include <everett/multiverse.h>
@@ -41,6 +39,7 @@ static_assert(std::is_same_v<store::sort, everett::sort<policy>>);
 static_assert(std::is_same_v<store::blob::policy_type, policy>);
 static_assert(std::is_same_v<store::query_root, everett::query_root<policy>>);
 static_assert(std::is_same_v<store::query_cursor, everett::query_cursor<policy>>);
+static_assert(std::is_same_v<store::query_context, everett::profile_query_context<policy>>);
 
 std::uint32_t crc32c_from_other_translation_unit(std::span<std::byte const> bytes);
 

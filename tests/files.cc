@@ -77,6 +77,7 @@ namespace {
       require(encoded[8] == std::byte{1} && encoded[9] == std::byte{0} &&
               encoded[10] == std::byte{96} && encoded[11] == std::byte{0}, "header little-endian version");
       require(file_detail::get(encoded, 24, 8) == P::group_size, "group policy missing");
+      require(file_detail::get(encoded, 20, 4) == P::codec_block_size, "codec block policy missing");
       require(file_detail::get(encoded, 18, 1) == static_cast<unsigned>(P::backspace_code) &&
               file_detail::get(encoded, 88, 8) == P::backspace_parameter, "backspace policy missing");
       if (kind == file_kind::fractional_index) {
@@ -225,11 +226,37 @@ namespace {
       file_header<policy> header{kind, 0, 0, std::nullopt};
       if (kind == file_kind::fractional_index) header.common_value_width = 0;
       auto encoded = encode_file(header, {});
-      require(encoded.size() == 96 && file_detail::get(encoded, 18, 6) == 0 &&
+      require(encoded.size() == 96 && file_detail::get(encoded, 18, 2) == 0 &&
+              file_detail::get(encoded, 20, 4) == policy::codec_block_size &&
               file_detail::get(encoded, 88, 8) == 0, "default reserved fields changed");
-      // These CRCs were recorded from the original version-1 encoder, before
-      // assigning its reserved bytes to the optional backspace descriptor.
+      // Canonical empty headers, including independent codec/cascade widths.
+      // The golden checksums are calculated with a separate bitwise oracle.
       require(file_detail::get(encoded, 68, 4) == expected_crc[i++], "default version-1 header changed");
+    }
+  }
+
+  template <profile_unit Unit, std::uint64_t W> void test_codec_width(std::filesystem::path const & directory) {
+    using policy = storage_policy<Unit, variable_values, 15, exponential_golomb<0>, W>;
+    using other = storage_policy<Unit, variable_values, 15, exponential_golomb<0>, W == 16 ? 15 : 16>;
+    roundtrip<policy>(directory);
+    for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
+      file_header<policy> header{kind, 0, 0, std::nullopt};
+      if (kind == file_kind::fractional_index) header.common_value_width = 0;
+      auto encoded = encode_file(header, {});
+      require(file_detail::get(encoded, 20, 4) == W, "independent codec width was not stored");
+      require(validate_file<policy>(encoded) == header, "codec width roundtrip");
+      rejects([&] { validate_file<other>(encoded); });
+      auto path = directory / ("codec-width" + std::string(file_extension(kind)));
+      rejects_open<other>(path, encoded);
+      write(path, encoded);
+      auto trusted = file<other>::open(path, file_open_mode::trusted);
+      require(trusted.body().empty(), "trusted codec mismatch changed opaque body");
+      rejects([&] { trusted.header(); });
+      rejects([&] { trusted.scan(); });
+      auto bad = encoded;
+      file_detail::put(bad, 20, 4, 0);
+      rehash_header(bad);
+      rejects([&] { validate_file<policy>(bad); });
     }
   }
 
@@ -478,8 +505,14 @@ int main() {
     temporary_directory directory;
     policy_matrix<3>(directory.path); policy_matrix<7>(directory.path);
     policy_matrix<15>(directory.path); policy_matrix<31>(directory.path);
-    test_default_headers<profile_unit::byte>({2989498560u, 13510922u});
-    test_default_headers<profile_unit::bit>({3121237548u, 150226918u});
+    test_default_headers<profile_unit::byte>({3574695498u, 1743753088u});
+    test_default_headers<profile_unit::bit>({3710642342u, 1876287852u});
+    test_codec_width<profile_unit::byte, 1>(directory.path);
+    test_codec_width<profile_unit::byte, 16>(directory.path);
+    test_codec_width<profile_unit::byte, 64>(directory.path);
+    test_codec_width<profile_unit::bit, 1>(directory.path);
+    test_codec_width<profile_unit::bit, 16>(directory.path);
+    test_codec_width<profile_unit::bit, 64>(directory.path);
     test_backspace_policy<exponential_golomb<1>>(directory.path);
     test_backspace_policy<exponential_golomb<63>>(directory.path);
     test_backspace_policy<golomb<1>>(directory.path);

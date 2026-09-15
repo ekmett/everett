@@ -44,7 +44,8 @@ namespace everett {
     // Version 1, explicit little-endian integers; never a raw C++ struct:
     //  0 magic[8]        8 version:u16       10 header_bytes:u16
     // 12 flags:u32      16 unit:u8          17 checksum_kind:u8 (=1)
-    // 18 backspace:u8   19 reserved[5]      24 group_K:u64
+    // 18 backspace:u8   19 reserved:u8      20 codec_W:u32
+    // 24 group_K:u64
     // 32 policy_value_width:u64
     // 40 common_width:u64                  48 body_extent:u64
     // 56 record_count:u64                  64 body_crc32c:u32
@@ -53,9 +54,8 @@ namespace everett {
     // Flags: bit0 fixed policy values; bit1 common width present. Header CRC
     // covers all 96 bytes with bytes68..71 zero. Padding and reserved bits zero.
     // Backspace: 0 exponential-Golomb (order 0..63), 1 Golomb (modulus >=1).
-    // Byte profiles require descriptor (0,0). These fields were reserved zero:
-    // default headers retain their exact version-1 bytes, and older readers
-    // reject every nondefault descriptor instead of misinterpreting its body.
+    // Byte profiles require descriptor (0,0). Codec width W is independent of
+    // the virtual cascade stride K and is part of the exact stored policy.
     inline std::uint64_t get(std::span<std::byte const> bytes, std::size_t at, unsigned width) noexcept {
       std::uint64_t value = 0;
       for (unsigned i = 0; i < width; ++i) value |= std::uint64_t(std::to_integer<unsigned>(bytes[at + i])) << (8 * i);
@@ -139,7 +139,7 @@ namespace everett {
         file_detail::get(bytes, 16, 1) != static_cast<unsigned>(P::unit))
       throw std::invalid_argument("Everett address unit disagrees with policy");
     if (file_detail::get(bytes, 17, 1) != 1) throw std::invalid_argument("unsupported Everett checksum kind");
-    if (file_detail::get(bytes, 19, 5))
+    if (file_detail::get(bytes, 19, 1))
       throw std::invalid_argument("nonzero Everett reserved header bytes");
     auto backspace = file_detail::get(bytes, 18, 1);
     auto backspace_parameter = file_detail::get(bytes, 88, 8);
@@ -148,7 +148,8 @@ namespace everett {
         (backspace == static_cast<unsigned>(bit_backspace_code::golomb) && !backspace_parameter) ||
         (P::unit == profile_unit::byte && (backspace || backspace_parameter)))
       throw std::invalid_argument("unsupported Everett backspace descriptor");
-    if (file_detail::get(bytes, 24, 8) != P::group_size ||
+    if (file_detail::get(bytes, 20, 4) != P::codec_block_size ||
+        file_detail::get(bytes, 24, 8) != P::group_size ||
         bool(flags & 1) != P::fixed_width || file_detail::get(bytes, 32, 8) != P::value_width.value_or(0) ||
         backspace != static_cast<unsigned>(P::backspace_code) || backspace_parameter != P::backspace_parameter)
       throw std::invalid_argument("Everett stored policy descriptor mismatch");
@@ -190,6 +191,7 @@ namespace everett {
     file_detail::put(result, 16, 1, static_cast<unsigned>(P::unit));
     file_detail::put(result, 17, 1, 1);
     file_detail::put(result, 18, 1, static_cast<unsigned>(P::backspace_code));
+    file_detail::put(result, 20, 4, P::codec_block_size);
     file_detail::put(result, 24, 8, P::group_size);
     file_detail::put(result, 32, 8, P::value_width.value_or(0));
     file_detail::put(result, 40, 8, header.common_value_width.value_or(0));

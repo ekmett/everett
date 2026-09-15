@@ -71,12 +71,12 @@ namespace {
   template <class P> using pair_type = std::shared_ptr<profile_blob<P> const>;
   template <class P> using rows_type = std::vector<std::vector<profile_record>>;
 
-  template <class P> pair_type<P> chain(rows_type<P> const & rows, std::uint64_t restart) {
+  template <class P> pair_type<P> chain(rows_type<P> const & rows) {
     require(!rows.empty(), "chain fixture needs a terminal");
-    auto tail = std::make_shared<profile_blob<P> const>(profile_blob<P>::build(rows.back(), {}, restart));
+    auto tail = std::make_shared<profile_blob<P> const>(profile_blob<P>::build(rows.back()));
     std::vector<pair_type<P>> stages;
     for (auto i = rows.size() - 1; i; --i)
-      stages.push_back(std::make_shared<profile_blob<P> const>(profile_blob<P>::build(rows[i - 1], {}, restart)));
+      stages.push_back(std::make_shared<profile_blob<P> const>(profile_blob<P>::build(rows[i - 1])));
     index_pipeline<P> pipeline(tail, std::move(stages));
     while (!pipeline.done()) {
       require(pipeline.step(0) == 0, "zero pipeline budget");
@@ -171,7 +171,7 @@ namespace {
     result.erase(std::unique(result.begin(), result.end(), [](auto const & a, auto const & b) { return equal(a.view(), b.view()); }), result.end());
     return result;
   }
-  template <class P> void full_chain(std::uint64_t restart) {
+  template <class P> void full_chain() {
     auto all = keys<P>();
     auto m = text("m");
     rows_type<P> rows(7);
@@ -180,7 +180,7 @@ namespace {
         if (layer == 0 || layer + 1 == rows.size() || (i + layer) % (layer + 2) == 0 ||
             equal(all[i].view(), m.view()))
           rows[layer].push_back({all[i], value_for<P>(unsigned(103 * layer + i))});
-    auto original = chain<P>(rows, restart);
+    auto original = chain<P>(rows);
     require(original->virtual_size() > P::group_size, "large-head fixture is too small");
     query_root_builder<P> builder(original);
     require(!builder.done() && !builder.finished(), "large query root skipped preparation");
@@ -243,7 +243,7 @@ namespace {
     for (unsigned i = 0; i < P::group_size - 3; ++i)
       rows[0].push_back({text("b" + number(i)), value_for<P>(200 + i)});
     rows[0].push_back({text("m"), value_for<P>(800)});
-    auto source = chain<P>(rows, 0);
+    auto source = chain<P>(rows);
     auto window = source->project(1);
     require(window.native_first == rows[0].size(), "tie fixture did not cross the native cut");
     require(source->false_borrow(window.borrowed_first), "equal sample lost its false-borrow flag");
@@ -255,22 +255,21 @@ namespace {
   }
 
   template <class P> void partial_context() {
-    // The last sample before b has a long key, but the incoming query only
-    // reconstructs one byte of it. The next native record backspaces from the
-    // full previous length, not the length of that query-limited prefix.
+    // A short query against a long boundary carries comparison state and the
+    // actual full key length, without constructing the boundary's missing bytes.
     rows_type<P> rows(2);
     rows[0].push_back({text("c"), value_for<P>(1)});
     for (unsigned i = 0; i <= P::group_size; ++i)
       rows[1].push_back({text(std::string(192, 'a') + number(i)), value_for<P>(i + 2)});
     rows[1].push_back({text("b"), value_for<P>(800)});
-    auto source = chain<P>(rows, 0);
+    auto source = chain<P>(rows);
     auto query = text("b");
-    auto window = source->search_window(query.view(), 0, {});
+    auto window = source->search_window(0, profile_query_context<P>(query.view()));
     require(window.borrowed_predecessor.has_value(), "partial-context fixture has no route");
     auto const & context = *window.borrowed_predecessor;
-    require(context.target_ordinal == P::group_size && context.has_context &&
-            context.prefix.bit_size < context.full_units * P::bits_per_unit,
-            "partial-context fixture reconstructed the entire boundary");
+    require(context.target_ordinal == P::group_size && context.comparison.order() < 0 &&
+            context.comparison.common_bits() < context.comparison.full_units() * P::bits_per_unit,
+            "partial-context fixture did not distinguish agreement and full length");
     auto root = query_root<P>::build(source);
     require(root.head() == source, "partial-context fixture exceeded its initial window");
     check_query(root, source, rows, query.view());
@@ -292,7 +291,7 @@ namespace {
     }
 
     rows_type<P> rows{{{text("m"), value_for<P>(7)}}};
-    auto source = chain<P>(rows, 0);
+    auto source = chain<P>(rows);
     query_root_builder<P> small(source);
     require(small.done() && small.step(3) == 0, "bounded root should need no sampler");
     auto moved = std::move(small);
@@ -309,14 +308,9 @@ namespace {
     rejects([&] { ready.cursor(m.view()); });
     check_query(moved_root, source, rows, m.view());
 
-    // Empty ordinary indexes have no context to repair and remain usable.
-    auto ordinary = std::make_shared<blob const>(blob::build(rows[0], {}, 0, {}, profile_borrowed_policy::ordinary));
-    require(query_root<P>::build(ordinary).head() == ordinary, "empty ordinary index rejected");
     std::vector<bit_string> samples{text("m")};
-    for (auto policy : {profile_borrowed_policy::ordinary, profile_borrowed_policy::shared_boundaries}) {
-      auto unbound = std::make_shared<blob const>(blob::build({}, samples, 0, {}, policy));
-      rejects([&] { query_root<P>::build(unbound); });
-    }
+    auto unbound = std::make_shared<blob const>(blob::build({}, samples));
+    rejects([&] { query_root<P>::build(unbound); });
 
     // A low-level builder checks sample extent when binding. Mutating an alias
     // afterward demonstrates that preparation also validates the linked shapes.
@@ -350,7 +344,7 @@ namespace {
     for (unsigned i = 0; i < rows.size(); ++i)
       rows[i].push_back({text("m"), value_for<P>(400 + i)});
     {
-      auto source = chain<P>(rows, 0);
+      auto source = chain<P>(rows);
       first = source;
       tail = source->target()->target();
       auto root = query_root<P>::build(source);
@@ -379,7 +373,7 @@ namespace {
     // cursor only needs the unvisited suffix and any pending match's source.
     rows_type<P> suffix_rows{{{text("a"), value_for<P>(1)}}, {{text("m"), value_for<P>(2)}}};
     {
-      auto source = chain<P>(suffix_rows, 0);
+      auto source = chain<P>(suffix_rows);
       first = source;
       tail = source->target();
       auto root = query_root<P>::build(source);
@@ -403,8 +397,7 @@ namespace {
     equality_cut<P>();
     partial_context<P>();
     ownership<P>();
-    full_chain<P>(0);
-    full_chain<P>(18);
+    full_chain<P>();
   }
   template <std::uint64_t K> void groups() {
     exercise<storage_policy<profile_unit::byte, variable_values, K>>();
@@ -420,6 +413,12 @@ int main() try {
   exercise<storage_policy<profile_unit::bit, fixed_values<5>, 31>>();
   exercise<storage_policy<profile_unit::bit, variable_values, 7, golomb<3>>>();
   exercise<storage_policy<profile_unit::bit, fixed_values<3>, 15, exponential_golomb<3>>>();
+  exercise<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>>();
+  exercise<storage_policy<profile_unit::bit, variable_values, 7, exponential_golomb<0>, 1>>();
+  exercise<storage_policy<profile_unit::byte, fixed_values<3>, 15, exponential_golomb<0>, 16>>();
+  exercise<storage_policy<profile_unit::bit, fixed_values<5>, 31, golomb<3>, 16>>();
+  exercise<storage_policy<profile_unit::byte, variable_values, 7, exponential_golomb<0>, 64>>();
+  exercise<storage_policy<profile_unit::bit, variable_values, 3, exponential_golomb<3>, 64>>();
   std::cout << "Prepared query roots, ordered exact-chain matches, ownership and budgets passed\n";
 } catch (std::exception const & error) {
   std::cerr << error.what() << '\n';

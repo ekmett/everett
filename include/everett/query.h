@@ -120,11 +120,8 @@ namespace everett {
         auto target = current->target();
         if (borrowed != (target ? target->group_count() : 0))
           throw std::invalid_argument("query chain sample count or target mismatch");
-        auto policy = current->borrowed_policy();
-        if (policy != profile_borrowed_policy::shared_boundaries &&
-            policy != profile_borrowed_policy::bidirectional &&
-            !(policy == profile_borrowed_policy::ordinary && !borrowed))
-          throw std::invalid_argument("query chain requires bounded borrowed context");
+        if (current->cut_lcps().size() != current->group_count())
+          throw std::invalid_argument("query chain cut LCP count mismatch");
       }
     }
   };
@@ -134,11 +131,11 @@ namespace everett {
   // Take that owned match before stepping again. Equal native keys do not stop
   // descent: the downstream route is retained for the next call. Visited pairs
   // can be released unless a pending/returned match owns them. Copying a cursor
-  // copies its query, context and pending value; copies then advance independently
+  // shares its immutable query and copies its context and pending value; copies advance independently
   // while sharing the same immutable suffix and source pins.
   //
-  // Search costs O(K) entry/header work per visited catalog plus prefix/value
-  // copying and decoding. Root preparation adds O(log_K A) catalogs for a head
+  // Search costs O(K+W) entry/header work per visited catalog plus literal
+  // comparison and value copying. Root preparation adds O(log_K A) catalogs for a head
   // of A entries. These bounds do not cover arbitrary string bytes, arrow
   // evaluation, disk faults, or a future level scheduler.
   template <class P> struct query_cursor {
@@ -147,11 +144,9 @@ namespace everett {
     using pair_type = std::shared_ptr<blob_type const>;
     using match_type = query_match<P>;
 
-    explicit query_cursor(query_root<P> const & root, bit_view query) : current_(root.head()) {
+    explicit query_cursor(query_root<P> const & root, bit_view query)
+      : current_(root.head()), context_(query) {
       if (!current_) throw std::invalid_argument("query root has no head");
-      if (query.size() % P::bits_per_unit)
-        throw std::invalid_argument("query length is not aligned to the profile unit");
-      query_ = bit_string::copy(query);
       if (!current_->virtual_size()) current_.reset();
     }
     bool done() const noexcept { return !current_ && !pending_; }
@@ -164,11 +159,11 @@ namespace everett {
       std::uint64_t visited = 0;
       try {
         while (current_ && visited != catalog_budget) {
-          auto result = current_->search_window(query_.view(), group_, {anchor_.view(), anchor_units_});
+          auto result = current_->search_window(group_, context_);
           auto target = current_->target();
           if (result.borrowed_predecessor) {
             auto const & next = *result.borrowed_predecessor;
-            if (!target || !next.has_context || next.target_ordinal % P::group_size ||
+            if (!target || next.target_ordinal % P::group_size ||
                 next.target_ordinal >= target->virtual_size())
               throw std::invalid_argument("query descent has no valid target context");
           }
@@ -177,10 +172,7 @@ namespace everett {
           if (result.borrowed_predecessor) {
             auto & next = *result.borrowed_predecessor;
             group_ = next.target_ordinal / P::group_size;
-            anchor_ = std::move(next.prefix);
-            // The prefix can be query-limited; its size is not the key's full
-            // length needed by front-coded backspace/reconstruction context.
-            anchor_units_ = next.full_units;
+            context_ = std::move(next.comparison);
             current_ = std::move(target);
           } else {
             // The first borrowed key samples the target's minimum. No borrowed
@@ -206,9 +198,7 @@ namespace everett {
 
   private:
     pair_type current_;
-    bit_string query_;
-    bit_string anchor_;
-    std::uint64_t anchor_units_ = 0;
+    profile_query_context<P> context_;
     std::uint64_t group_ = 0;
     std::optional<match_type> pending_;
     bool failed_ = false;

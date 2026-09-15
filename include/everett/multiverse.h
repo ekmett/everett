@@ -56,6 +56,7 @@ namespace everett {
     using query_root = everett::query_root<P>;
     using query_root_builder = everett::query_root_builder<P>;
     using query_cursor = everett::query_cursor<P>;
+    using query_context = everett::profile_query_context<P>;
     using file = everett::file<P>;
     using world = everett::world<P>;
     using timeline = everett::timeline<P>;
