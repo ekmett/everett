@@ -359,7 +359,7 @@ C(W_{t+1})=C(W_t)+\sum_j\Delta(D_j).
 <li>Delete/overwrite deltas match full recomputation; absent deletes earn no credit.</li>
 <li>Snapshots and forks remain unchanged after updates and compactions.</li>
 <li>Reused merge outputs leave old dependent indexes readable until adoption.</li>
-<li>Persistence publication/recovery and mmap lifetime once the file layer exists.</li>
+<li>Immutable-file sealing, publication/recovery, and mmap lifetime across unlink.</li>
 </ul>
 <h1><a class="anchor" id="autotoc_md11-references-and-their-roles"></a>
 11. References and their roles</h1>
