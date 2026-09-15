@@ -8,8 +8,7 @@
  */
 
 #include <everett/rank_groups.h>
-#include <everett/select_groups.h>
-#include <everett/select15.h>
+#include <everett/elias_fano.h>
 
 #include <algorithm>
 #include <array>
@@ -66,11 +65,11 @@ namespace {
       rejects([&] { (void)view.subspan(6); });
       rejects([&] { (void)view.subspan(4, 2); });
       rejects([&] { (void)everett::word_view::little_endian(bytes.first(7)); });
-      std::array<everett::select_groups_sample, 2> samples{{{source[2], source[3]}, {0, ~std::uint64_t{0}}}};
-      auto encoded = little_samples(std::span<everett::select_groups_sample const>(samples), offset);
+      std::array<everett::elias_fano_sample, 2> samples{{{source[2], source[3]}, {0, ~std::uint64_t{0}}}};
+      auto encoded = little_samples(std::span<everett::elias_fano_sample const>(samples), offset);
       auto sample_bytes = std::span(encoded).subspan(offset);
       auto sample = everett::sample_view::little_endian(sample_bytes);
-      everett::sample_view native_sample{std::span<everett::select_groups_sample const>(samples)};
+      everett::sample_view native_sample{std::span<everett::elias_fano_sample const>(samples)};
       require(sample.bytes().data() == sample_bytes.data() && sample.words().size() == 4, "sample bytes retained");
       for (std::size_t i = 0; i < samples.size(); ++i)
         require(sample[i].first == samples[i].first && sample[i].sparse == samples[i].sparse &&
@@ -222,47 +221,40 @@ namespace {
           // Nonzero old contents also check that tail words are assigned and
           // padding cleared, rather than being accidentally ORed with old data.
           std::vector<std::uint64_t> actual(expected.size(), ~std::uint64_t{0});
-          everett::select_groups_detail::pack_low(source, actual, width);
+          everett::elias_fano_detail::pack_low(source, actual, width);
           require(actual == expected, "width-specialized packing changed wire words");
         }
-    rejects([] { everett::select_groups_detail::pack_low({}, {}, 64); });
-    rejects([] { everett::select_groups_detail::pack_low(std::array<std::uint64_t, 1>{1}, {}, 1); });
-    rejects([] {
-      everett::select_groups_detail::multiply(std::numeric_limits<std::uint64_t>::max(), 2);
-    });
-    rejects([] {
-      everett::select_groups_detail::add(std::numeric_limits<std::uint64_t>::max(), 1);
-    });
+    rejects([] { everett::elias_fano_detail::pack_low({}, {}, 64); });
+    rejects([] { everett::elias_fano_detail::pack_low(std::array<std::uint64_t, 1>{1}, {}, 1); });
   }
 
-  template <std::uint64_t K> void check_encoding(everett::select_groups<K> const & index,
-                                               std::span<std::uint64_t const> source) {
+  void check_encoding(everett::elias_fano const & index,
+                      std::span<std::uint64_t const> source) {
     for (unsigned offset = 0; offset < 8; ++offset) {
       auto low = little_words(index.low, offset), high = little_words(index.high, offset);
       auto sparse = little_words(index.sparse, offset);
-      auto samples = little_samples(std::span<everett::select_groups_sample const>(index.samples), offset);
+      auto samples = little_samples(std::span<everett::elias_fano_sample const>(index.samples), offset);
       auto lo = everett::word_view::little_endian(std::span(low).subspan(offset));
       auto hi = everett::word_view::little_endian(std::span(high).subspan(offset));
       auto sp = everett::word_view::little_endian(std::span(sparse).subspan(offset));
       auto sm = everett::sample_view::little_endian(std::span(samples).subspan(offset));
-      everett::select_groups_view<K> mapped(lo, hi, sm, sp, index.record_count, index.universe, index.low_width);
+      everett::elias_fano_view mapped(lo, hi, sm, sp, index.entry_count, index.universe, index.low_width);
       require(mapped.low_words().bytes().data() == low.data() + offset &&
               mapped.high_words().bytes().data() == high.data() + offset &&
               mapped.samples().bytes().data() == samples.data() + offset &&
               mapped.sparse_words().bytes().data() == sparse.data() + offset,
               "select sections retained");
       require(mapped.universe() == index.universe && mapped.low_width() == index.low_width, "select scalar metadata");
-      for (std::size_t i = 0; i < source.size(); ++i) {
-        require(mapped.residual(i) == source[i], "unaligned mapped select oracle");
-        auto ordinal = i + 1 == source.size() ? index.record_count : i * K;
-        if (ordinal <= (~std::uint64_t{0} - source[i]) / 7)
-          require(mapped.offset(i, 7) == source[i] + ordinal * 7, "mapped fixed stride sentinel");
-      }
-      if constexpr (K == 15) {
-        everett::select15_view fixed(lo, hi, sm, sp, index.record_count, index.universe, index.low_width);
-        for (std::size_t i = 0; i < source.size(); ++i)
-          require(fixed.residual(i) == source[i], "mapped select15 oracle");
-      }
+      require(mapped.size() == source.size(), "mapped EF entry count");
+      for (std::size_t i = 0; i < source.size(); ++i)
+        require(mapped.select(i) == source[i], "unaligned mapped select oracle");
+      rejects([&] { mapped.select(source.size()); });
+    }
+    if (source.empty()) {
+      require(index.entry_count == 0 && index.universe == 0 && index.low_width == 0 &&
+              index.low.empty() && index.high.empty() && index.samples.empty() && index.sparse.empty(),
+              "canonical empty EF encoding");
+      return;
     }
     unsigned width = 0;
     for (auto quotient = source.back() / source.size(); quotient > 1; quotient >>= 1) ++width;
@@ -293,37 +285,26 @@ namespace {
     require(samples == index.samples.size() && sparse == index.sparse, "EF sparse word oracle");
   }
 
-  template <std::uint64_t K> everett::select_groups<K> check_select(
-      std::vector<std::uint64_t> const & residuals, std::uint64_t count) {
-    auto index = everett::select_groups<K>::build(residuals, count);
-    check_encoding(index, residuals);
+  everett::elias_fano check_select(std::vector<std::uint64_t> const & source) {
+    auto index = everett::elias_fano::build(source);
+    check_encoding(index, source);
     auto view = index.view();
-    for (std::uint64_t i = 0; i < residuals.size(); ++i) {
-      auto ordinal = i + 1 == residuals.size() ? count : i * K;
-      require(view.residual(i) == residuals[i], "group residual mismatch");
-      // Same API supports byte and bit addresses: fixed stride is in the
-      // same unit as the residual sequence, with no hidden eight-bit factor.
-      for (std::uint64_t stride : {0u, 7u, 8u, 13u}) {
-        if (!stride || ordinal <= (std::numeric_limits<std::uint64_t>::max() - residuals[i]) / stride)
-          require(view.offset(i, stride) == residuals[i] + stride * ordinal, "group fixed stride mismatch");
-        else rejects([&] { view.offset(i, stride); });
-      }
-    }
-    rejects([&] { view.residual(residuals.size()); });
+    require(view.size() == source.size(), "EF entry count");
+    for (std::uint64_t i = 0; i < source.size(); ++i)
+      require(view.select(i) == source[i], "EF value mismatch");
+    rejects([&] { view.select(source.size()); });
     return index;
   }
 
-  template <std::uint64_t K> void test_select() {
-    std::mt19937_64 random(0xef + K);
-    for (std::uint64_t count : std::array<std::uint64_t, 10>{0, 1, K - 1, K, K + 1, 255 * K,
-                                                           256 * K, 256 * K + 1, 257 * K, 10001 * K - 1}) {
-      auto groups = count / K + (count % K != 0);
+  void test_select() {
+    std::mt19937_64 random(0xef);
+    for (std::uint64_t count : {0, 1, 2, 3, 14, 15, 16, 17, 31, 32, 33, 255, 256, 257, 258, 10002}) {
       for (unsigned pattern = 0; pattern < 4; ++pattern) {
-        std::vector<std::uint64_t> residuals(groups + 1);
-        for (std::size_t i = 1; i < residuals.size(); ++i)
-          residuals[i] = residuals[i - 1] + (pattern == 0 ? 0 : pattern == 1 ? 1 :
+        std::vector<std::uint64_t> source(count);
+        for (std::size_t i = 1; i < source.size(); ++i)
+          source[i] = source[i - 1] + (pattern == 0 ? 0 : pattern == 1 ? 1 :
                           pattern == 2 ? random() % 32 : (std::uint64_t{1} << 40) + random() % 32);
-        check_select<K>(residuals, count);
+        check_select(source);
       }
     }
     // A large input cannot have width63 in a uint64 universe. Shrink the
@@ -341,8 +322,7 @@ namespace {
           residuals[i] = pattern == 2 ? (i < samples / 2 ? 0 : universe) :
             (universe / (samples - 1)) * at + ((universe % (samples - 1)) * at) / (samples - 1);
         }
-        auto count = samples == 1 ? 0 : (samples - 1) * K - (K - 1);
-        auto index = check_select<K>(residuals, count);
+        auto index = check_select(residuals);
         require(index.low_width == width, "valid full-codec width fixture");
       }
     }
@@ -352,21 +332,19 @@ namespace {
       for (unsigned at = 1; at != size; ++at) {
         std::vector<std::uint64_t> source(size, std::uint64_t{1} << 63);
         source[at] -= 1;
-        rejects([&] { everett::select_groups<K>::build(source, (size - 1) * K); });
-        rejects([&] { everett::select15_index::build(source, (size - 1) * 15); });
+        rejects([&] { everett::elias_fano::build(source); });
       }
     std::vector<std::uint64_t> skewed(10001);
     for (std::size_t i = 17; i < skewed.size(); ++i) skewed[i] = 20000;
-    auto sparse = check_select<K>(skewed, 10000 * K);
+    auto sparse = check_select(skewed);
     require(!sparse.sparse.empty(), "generic sparse select not exercised");
-    check_select<K>({maximum}, 0);
-    check_select<K>({0, maximum}, 1);
-    auto tiny = check_select<K>({0, 7}, K - 1);
-    rejects([&] { tiny.view().offset(1, maximum); });
-    rejects([] { everett::select_groups<K>::build({}, 0); });
-    rejects([] { everett::select_groups<K>::build(std::array<std::uint64_t, 2>{1, 0}, 1); });
-    everett::select_groups<K> empty;
-    require(empty.view().offset(0, 13) == 0, "default select groups");
+    check_select({maximum});
+    check_select({0, maximum});
+    check_select({0, 7});
+    rejects([] { everett::elias_fano::build(std::array<std::uint64_t, 2>{1, 0}); });
+    everett::elias_fano empty;
+    require(empty.view().size() == 0, "default EF has no sentinel");
+    rejects([&] { empty.view().select(0); });
   }
 
   void check_high_words(std::span<std::uint64_t const> high, std::uint64_t bit_count) {
@@ -374,15 +352,12 @@ namespace {
     for (std::uint64_t bit = 0; bit != bit_count; ++bit)
       if ((high[bit / 64] >> (bit % 64)) & 1) positions.push_back(bit);
     require(!positions.empty() && positions.size() <= 256, "high-word fixture shape");
-    std::array<everett::select_groups_sample, 1> samples{{{positions.front(), ~std::uint64_t{0}}}};
-    std::array<everett::select15_sample, 1> fixed_samples{{{positions.front(), ~std::uint64_t{0}}}};
-    auto records = (positions.size() - 1) * 15;
+    std::array<everett::elias_fano_sample, 1> samples{{{positions.front(), ~std::uint64_t{0}}}};
     auto universe = bit_count - positions.size();
-    everett::select_groups_view<15> view({}, high, samples, {}, records, universe, 0);
-    everett::select15_view fixed({}, high, fixed_samples, {}, records, universe, 0);
+    everett::elias_fano_view view({}, high, samples, {}, positions.size(), universe, 0);
     for (std::size_t i = 0; i != positions.size(); ++i) {
       auto expected = positions[i] - i;
-      require(view.residual(i) == expected && fixed.residual(i) == expected,
+      require(view.select(i) == expected,
               "independent within-word select oracle");
     }
   }
@@ -402,28 +377,6 @@ namespace {
     }
     std::array<std::uint64_t, 1> full{~std::uint64_t{0}};
     check_high_words(full, 64);
-  }
-
-  void test_select15_encoding() {
-    std::mt19937_64 random(0x15ef);
-    for (unsigned count : {0, 1, 14, 15, 16, 255 * 15, 256 * 15, 10000 * 15})
-      for (unsigned pattern = 0; pattern != 4; ++pattern) {
-        std::vector<std::uint64_t> source(count / 15 + (count % 15 != 0) + 1);
-        for (std::size_t i = 1; i != source.size(); ++i)
-          source[i] = source[i - 1] + (pattern == 0 ? 0 : pattern == 1 ? 1 :
-            pattern == 2 ? random() % 10000 : (i == 17 ? 20000 : 0));
-        auto general = check_select<15>(source, count);
-        auto fixed = everett::select15_index::build(source, count);
-        require(fixed.low == general.low && fixed.high == general.high && fixed.sparse == general.sparse &&
-                fixed.universe == general.universe && fixed.low_width == general.low_width &&
-                fixed.samples.size() == general.samples.size(), "select15 exact encoded layout");
-        for (std::size_t i = 0; i != fixed.samples.size(); ++i)
-          require(fixed.samples[i].first == general.samples[i].first &&
-                  fixed.samples[i].sparse == general.samples[i].sparse, "select15 sample layout");
-        auto view = fixed.view();
-        for (std::size_t i = 0; i != source.size(); ++i)
-          require(view.residual(i) == source[i], "select15 residual construction oracle");
-      }
   }
 
   void test_select_guard_pages() {
@@ -453,17 +406,15 @@ namespace {
         auto expected = low_oracle(source, width);
         std::vector<std::uint64_t> old(expected.size(), ~std::uint64_t{0});
         auto input = low_guard.copy(source), output = high_guard.copy(old);
-        everett::select_groups_detail::pack_low(input, output, width);
+        everett::elias_fano_detail::pack_low(input, output, width);
         require(std::equal(output.begin(), output.end(), expected.begin(), expected.end()), "guarded low packing");
       }
     for (unsigned entries = 1; entries != 34; ++entries) {
       std::vector<std::uint64_t> source(entries);
       for (unsigned i = 0; i != entries; ++i) source[i] = i * 256;
       auto bounded = low_guard.copy(source);
-      auto records = (entries - 1) * 15;
-      auto general = everett::select_groups<15>::build(bounded, records);
-      auto fixed = everett::select15_index::build(bounded, records);
-      require(general.low == fixed.low && general.high == fixed.high, "guarded constructor source");
+      auto index = everett::elias_fano::build(bounded);
+      check_encoding(index, source);
     }
     // Exact 1..65-word spans end at an inaccessible page. The 65-word
     // fixture starts at bit63 and ends4095 bits later, the dense limit.
@@ -481,15 +432,11 @@ namespace {
       if (entries == 1) source[0] = universe;
       else for (std::uint64_t i = 0; i != entries; ++i)
         source[i] = (universe / (entries - 1)) * i + ((universe % (entries - 1)) * i) / (entries - 1);
-      auto records = entries == 1 ? 0 : (entries - 1) * 15 - 14;
-      auto index = everett::select_groups<15>::build(source, records);
+      auto index = everett::elias_fano::build(source);
       auto low = low_guard.copy(index.low), high = high_guard.copy(index.high);
-      everett::select_groups_view<15> view(low, high, index.samples, index.sparse, records, universe, width);
-      std::vector<everett::select15_sample> fixed_samples;
-      for (auto sample : index.samples) fixed_samples.push_back({sample.first, sample.sparse});
-      everett::select15_view fixed(low, high, fixed_samples, index.sparse, records, universe, width);
+      everett::elias_fano_view view(low, high, index.samples, index.sparse, entries, universe, width);
       for (std::size_t i = 0; i != source.size(); ++i)
-        require(view.residual(i) == source[i] && fixed.residual(i) == source[i], "guarded EF low/high tail");
+        require(view.select(i) == source[i], "guarded EF low/high tail");
     }
 #endif
   }
@@ -543,30 +490,27 @@ namespace {
     require(index.view().rank(2) == maximum - 1 && index.view().count() == maximum,
             "wide group counter overflow");
     require(index.view().class_at(1) == k && index.view().class_at(2) == 1, "63-bit packed classes");
-    check_select<k>({0, 0, 0, 0}, maximum);
   }
 }
 
 int main() {
   try {
     rejects([] {
-      everett::select_groups_view<1>({}, {}, {}, {}, ~std::uint64_t{0}, 0, 0);
+      everett::elias_fano_view({}, {}, {}, {}, ~std::uint64_t{0}, 0, 0);
     });
-    rejects([] { (void)everett::select_groups<1>::build({}, ~std::uint64_t{0}); });
     test_byte_views();
     test_bad_rank_prefix<3>(); test_bad_rank_prefix<7>(); test_bad_rank_prefix<15>();
     test_bad_rank_prefix<31>(); test_bad_rank_prefix<63>();
     test_low_packing();
     test_word_select();
-    test_select15_encoding();
     test_select_guard_pages();
     test_rank<3>(); test_rank<7>(); test_rank<15>(); test_rank<31>();
     test_rank15_agreement();
-    test_select<3>(); test_select<7>(); test_select<15>(); test_select<31>();
+    test_select();
     test_mapped_rank_guards<3>(); test_mapped_rank_guards<7>();
     test_mapped_rank_guards<15>(); test_mapped_rank_guards<31>();
     test_wide_policy();
-    std::cout << "Policy groups 3/7/15/31, packed classes, and residual-address select checks passed\n";
+    std::cout << "Policy groups 3/7/15/31, packed classes, and generic Elias-Fano checks passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';
     return 1;

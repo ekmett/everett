@@ -10,7 +10,7 @@
 #include <everett/rank.h>
 #include <everett/rank15.h>
 #include <everett/rank_groups.h>
-#include <everett/select15.h>
+#include <everett/elias_fano.h>
 
 #include <algorithm>
 #include <array>
@@ -492,64 +492,58 @@ namespace {
     rejects([&] { (void)empty.view().rank(0); });
   }
 
-  everett::select15_index check_select(std::vector<std::uint64_t> const & offsets,
-                                            std::uint64_t records, std::uint64_t fixed = 8) {
-    auto index = everett::select15_index::build(offsets, records);
+  everett::elias_fano check_select(std::vector<std::uint64_t> const & source) {
+    auto index = everett::elias_fano::build(source);
     auto view = index.view();
-    for (std::uint64_t i = 0; i < offsets.size(); ++i) {
-      auto ordinal = i + 1 == offsets.size() ? records : i * 15;
-      require(view.residual(i) == offsets[i], "Elias-Fano residual mismatch");
-      if (!fixed || ordinal <= (std::numeric_limits<std::uint64_t>::max() - offsets[i]) / fixed)
-        require(view.offset(i, fixed) == offsets[i] + ordinal * fixed, "fixed stride restoration");
-      else rejects([&] { view.offset(i, fixed); });
-    }
-    rejects([&] { view.residual(offsets.size()); });
+    require(view.size() == source.size(), "Elias-Fano entry count");
+    for (std::uint64_t i = 0; i < source.size(); ++i)
+      require(view.select(i) == source[i], "Elias-Fano value mismatch");
+    rejects([&] { view.select(source.size()); });
     return index;
   }
 
-  void test_select15() {
+  void test_elias_fano() {
     std::mt19937_64 random(0xef15);
-    for (std::uint64_t records : std::initializer_list<std::uint64_t>{0, 1, 14, 15, 16, 239, 240, 241, 3824,
-                                 3825, 3840, 3841, 131073}) {
-      auto groups = records / 15 + (records % 15 != 0);
+    for (std::uint64_t count : std::initializer_list<std::uint64_t>{0, 1, 2, 15, 16, 17, 255,
+                                 256, 257, 258, 8740}) {
       for (unsigned pattern = 0; pattern < 5; ++pattern) {
-        std::vector<std::uint64_t> offsets(groups + 1);
-        for (std::size_t i = 1; i < offsets.size(); ++i) {
+        std::vector<std::uint64_t> source(count);
+        for (std::size_t i = 1; i < source.size(); ++i) {
           std::uint64_t step = pattern == 0 ? 0 : pattern == 1 ? 1 :
                                pattern == 2 ? random() % 32 : pattern == 3 ? random() % 100000 :
                                (std::uint64_t{1} << 40) + random() % 32;
-          offsets[i] = offsets[i - 1] + step;
+          source[i] = source[i - 1] + step;
         }
-        check_select(offsets, records);
+        check_select(source);
       }
     }
     // Concentrate a large gap inside a sampled group: bounded select must use
     // its sparse exception path instead of traversing thousands of zero bits.
     std::vector<std::uint64_t> skewed(10001);
     for (std::size_t i = 17; i < skewed.size(); ++i) skewed[i] = 20000;
-    auto sparse = check_select(skewed, 150000);
+    auto sparse = check_select(skewed);
     require(!sparse.sparse.empty(), "sparse select exception was not exercised");
 
     auto maximum = std::numeric_limits<std::uint64_t>::max();
-    check_select({maximum}, 0, 0); // low width 63, no shift by 64.
-    check_select({0, maximum}, 1, 0);
-    check_select({maximum - 1, maximum}, 1, 8); // restored-offset overflow.
-    check_select({0, 7}, 14, maximum); // stride multiplication overflow.
-    everett::select15_index empty_index;
+    check_select({maximum}); // low width 63, no shift by 64.
+    check_select({0, maximum});
+    check_select({maximum - 1, maximum});
+    check_select({0, 7});
+    everett::elias_fano empty_index;
     auto empty = empty_index.view();
-    require(empty.size() == 0 && empty.offset(0) == 0, "default select15");
-    rejects([] { everett::select15_index::build({}, 0); });
-    rejects([] { everett::select15_index::build(std::array<std::uint64_t, 2>{10, 0}, 1); });
+    require(empty.size() == 0, "default Elias-Fano");
+    rejects([&] { empty.select(0); });
+    rejects([] { everett::elias_fano::build(std::array<std::uint64_t, 2>{10, 0}); });
 
-    auto broken = everett::select15_index::build(std::array<std::uint64_t, 2>{0, 1}, 1);
+    auto broken = everett::elias_fano::build(std::array<std::uint64_t, 2>{0, 1});
     broken.high[0] = 0;
-    rejects([&] { broken.view().residual(0); });
-    broken = everett::select15_index::build(std::array<std::uint64_t, 2>{0, 1}, 1);
+    rejects([&] { broken.view().select(0); });
+    broken = everett::elias_fano::build(std::array<std::uint64_t, 2>{0, 1});
     broken.samples[0].sparse = 0;
-    rejects([&] { broken.view().residual(0); });
+    rejects([&] { broken.view().select(0); });
     broken.samples[0].sparse = maximum;
     broken.samples[0].first = maximum;
-    rejects([&] { broken.view().residual(0); });
+    rejects([&] { broken.view().select(0); });
     broken.high.clear();
     rejects([&] { broken.view(); });
   }
@@ -577,8 +571,8 @@ int main() {
     test_bitmap_guarded_tails();
 #endif
     test_rank15();
-    test_select15();
-    std::cout << "Storage rank, packed rank15, and Elias-Fano select15 oracle checks passed\n";
+    test_elias_fano();
+    std::cout << "Storage rank, packed rank15, and Elias-Fano oracle checks passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';
     return 1;
