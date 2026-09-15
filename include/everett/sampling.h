@@ -82,8 +82,9 @@ namespace everett {
       sampling_detail::check_ordinal<P>(count_, target_ordinal);
       if (key.size() & (P::bits_per_unit - 1)) error_detail::raise<std::invalid_argument>("sample key unit mismatch");
       auto previous = key_.view();
-      if (compare_bits(previous, key) > 0) error_detail::raise<std::invalid_argument>("sample keys must be sorted");
-      auto retained = common_prefix_units<P>(previous, key);
+      auto comparison = compare_common_bits(previous, key);
+      if (comparison.order > 0) error_detail::raise<std::invalid_argument>("sample keys must be sorted");
+      auto retained = comparison.common_bits >> P::unit_shift;
       auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
       // Copy the transmitted suffix before editing context. Input may alias
       // this encoder's current key, including a subview of that key.
