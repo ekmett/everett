@@ -24,6 +24,8 @@
 #include <vector>
 
 namespace everett {
+  template <class P> struct index_builder;
+
   enum class profile_borrowed_policy {
     ordinary,
     bidirectional,
@@ -120,6 +122,9 @@ namespace everett {
     std::span<std::byte const> false_borrow_bits() const noexcept { return false_borrows_; }
     std::uint64_t virtual_size() const noexcept { return virtual_count_; }
     profile_borrowed_policy borrowed_policy() const noexcept { return borrowed_policy_; }
+    // Incremental construction binds the exact downstream pair. Legacy batch
+    // build/reindex accept unbound sample spans and leave this empty.
+    std::shared_ptr<profile_blob const> target() const noexcept { return target_; }
     std::uint64_t group_count() const noexcept {
       return virtual_count_ / group_size + (virtual_count_ % group_size != 0);
     }
@@ -194,6 +199,8 @@ namespace everett {
     }
 
   private:
+    friend struct index_builder<P>;
+
     std::shared_ptr<native_array const> native_ =
       std::make_shared<native_array const>(native_array::build({}));
     borrowed_array borrowed_ = borrowed_array::build({});
@@ -201,6 +208,7 @@ namespace everett {
     std::vector<std::byte> false_borrows_;
     std::uint64_t virtual_count_ = 0;
     profile_borrowed_policy borrowed_policy_ = profile_borrowed_policy::shared_boundaries;
+    std::shared_ptr<profile_blob const> target_;
 
     static void check_count(std::uint64_t native, std::uint64_t borrowed) {
       if (native > std::numeric_limits<std::uint64_t>::max() - borrowed) {
