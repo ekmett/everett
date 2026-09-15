@@ -221,6 +221,7 @@ def check_actual_members(items, source):
         ("struct", "everett::index_builder", "finish_index", "index_builder.h", None, "no"),
         ("struct", "everett::file_index_builder", "finish", "file_index_builder.h", None, "no"),
         ("struct", "everett::file_index_pipeline", "seal_next", "file_index_pipeline.h", None, "no"),
+        ("struct", "everett::rank_groups_builder", "append", "rank_groups.h", None, "no"),
         ("struct", "everett::index_detail::pipeline_driver", "step", "index_pipeline_detail.h", None, "no"),
         ("struct", "everett::sample_cursor", "advance", "sampling.h", None, "no"),
         ("struct", "everett::elias_fano_view", "select", "elias_fano.h", None, "no"),

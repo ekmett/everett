@@ -126,7 +126,8 @@ namespace everett {
           if (boundary) {
             outgoing_.emplace(outgoing_encoder_.encode_known(key, virtual_count_, outgoing_common_));
             outgoing_common_ = key.size();
-            classes_.push_back(0);
+            if (virtual_count_) classes_.append(current_class_);
+            current_class_ = 0;
             cut_lcps_.push_back(borrowed_count_ ? pending_common_ : 0);
           }
           if (take_borrowed) {
@@ -141,7 +142,7 @@ namespace everett {
             auto ordinal = borrowed_count_++;
             if ((ordinal & 7) == 0) false_borrows_.push_back(std::byte{0});
             if (previous_false_) false_borrows_.back() |= std::byte(1u << (ordinal & 7));
-            ++classes_.back();
+            ++current_class_;
           } else {
             incoming_common_ = comparison.common_bits;
             auto next = native_cursor_.advance_comparison();
@@ -212,9 +213,13 @@ namespace everett {
       auto expected = target_count / group_size + (target_count % group_size != 0);
       if (expected != received_) error_detail::raise<std::invalid_argument>("index samples disagree with target extent");
       try {
-        // Every consumed borrowed occurrence is already encoded. Allocate the
-        // final rank directory before irreversible final output writes.
-        auto interleave = rank_groups<group_size>::build(classes_, virtual_count_);
+        // Completed groups are already packed. Admit the final partial group
+        // before irreversible final output writes.
+        if (virtual_count_) {
+          auto tail = virtual_count_ % group_size;
+          classes_.append(current_class_, tail ? tail : group_size);
+        }
+        auto interleave = classes_.finish();
         profile_detail::index_metadata<P> metadata{std::move(interleave),
           std::move(false_borrows_), std::move(cut_lcps_), virtual_count_};
         auto result = writer_.finish(std::move(metadata));
@@ -239,7 +244,8 @@ namespace everett {
     std::optional<coded_sample_type> outgoing_;
     profile_sample_encoder<P> outgoing_encoder_;
     profile_sample_decoder<P> incoming_decoder_;
-    std::vector<std::uint64_t> classes_;
+    rank_groups_builder<group_size> classes_;
+    std::uint64_t current_class_ = 0;
     std::vector<std::byte> false_borrows_;
     std::vector<std::uint64_t> cut_lcps_;
     std::uint64_t virtual_count_ = 0;
