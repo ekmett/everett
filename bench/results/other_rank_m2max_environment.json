@@ -1,0 +1,28 @@
+{
+  "baseline_revision": "62ead3fab9d0ee5bda1b47780b7905a45aae1182",
+  "candidate_revision": "5817e02b2672ed92a01bf13b5f4934341bded64a",
+  "candidate_headers_sha256": {
+    "rank": "7743e3091acbdcaedaeb61a48498a14f15423d1d37ba3e91a5481a20be4135a2",
+    "rank_groups": "5f327b47ee2c28c842f83994242fe9009becb4d4b0fb5281a0b568dc43ede021",
+    "rank15": "fd0d669d62d2eeabc6810547dc81027a11b33f41c6faba981c296cd90358dd36"
+  },
+  "source_sha256": "0da0ed72de04ff7a1eb6e9859deff9a15b8ca124b7aed8aed1de8dbfe300cb2c",
+  "neon_candidate_sha256": "db576985f03ff58f29e22cd2873ade10471948d9e292dd9ac74dab8c85323d89",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+  "flags": [
+    "-std=c++20",
+    "-O3",
+    "-DNDEBUG"
+  ],
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "host_description": "Apple M2 Max",
+  "qos": "QOS_CLASS_USER_INITIATED",
+  "resource_lease": [
+    "cpu-heavy",
+    "build-dir"
+  ],
+  "mode": "all",
+  "trials": 5,
+  "queries": 1048576,
+  "sanitize": false
+}
