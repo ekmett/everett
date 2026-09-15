@@ -12,6 +12,7 @@
 #include <span>
 #include <stdexcept>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace everett {
@@ -62,8 +63,6 @@ namespace everett {
       switch (kind) {
         case file_kind::native_blob: return {"EVRT.KV\0", 8};
         case file_kind::fractional_index: return {"EVRT.IX\0", 8};
-        case file_kind::manifest: return {"EVRT.WD\0", 8};
-        case file_kind::checkpoint: return {"EVRT.MG\0", 8};
       }
       throw std::invalid_argument("unsupported Everett file kind");
     }
@@ -90,8 +89,7 @@ namespace everett {
         if constexpr (P::fixed_width) width = P::value_width;
         if (width && *width && header.record_count > header.extent / *width)
           throw std::invalid_argument("fixed value slots exceed body extent");
-      } else if (header.common_value_width)
-        throw std::invalid_argument("metadata file has no common value width");
+      }
       (void)total_bytes<P>(header.extent);
     }
     template <class P> void validate_body(file_header<P> const & header, std::span<std::byte const> body) {
@@ -117,7 +115,7 @@ namespace everett {
     if (bytes.size() < file_detail::header_bytes) throw std::invalid_argument("truncated Everett header");
     file_header<P> header;
     bool recognized = false;
-    for (auto kind : {file_kind::native_blob, file_kind::fractional_index, file_kind::manifest, file_kind::checkpoint}) {
+    for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
       auto magic = file_detail::magic(kind);
       bool match = true;
       for (std::size_t i = 0; i < 8; ++i)

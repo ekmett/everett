@@ -1,5 +1,6 @@
 #include <everett/file.h>
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <random>
@@ -44,7 +45,7 @@ namespace {
   }
 
   template <class P> void roundtrip(std::filesystem::path const & directory) {
-    for (auto kind : {file_kind::native_blob, file_kind::fractional_index, file_kind::manifest, file_kind::checkpoint}) {
+    for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
       file_header<P> header{kind, 25, 3, std::nullopt};
       if (kind == file_kind::fractional_index) header.common_value_width = 0;
       if (kind == file_kind::native_blob) header.common_value_width = P::value_width.value_or(3);
@@ -122,7 +123,7 @@ namespace {
     rejects([] { encode_file(file_header<byte_fixed>{file_kind::native_blob, 5, 2, 5}, std::vector<std::byte>(5)); });
     rejects([] { encode_file(file_header<byte_fixed>{file_kind::fractional_index, 0, 0, std::nullopt}, {}); });
     rejects([] { encode_file(file_header<byte_fixed>{file_kind::fractional_index, 0, 0, 5}, {}); });
-    rejects([] { encode_file(file_header<byte_fixed>{file_kind::manifest, 0, 0, 0}, {}); });
+    rejects([] { encode_file(file_header<byte_fixed>{static_cast<file_kind>(2), 0, 0, 0}, {}); });
 
     using bits = storage_policy<profile_unit::bit>;
     auto bit_header = file_header<bits>{file_kind::native_blob, 3, 1, std::nullopt};
@@ -141,7 +142,7 @@ namespace {
 
   void test_paths() {
     auto id = object_id::from_hex("abcdef0123456789abcdef0123456789");
-    for (auto kind : {file_kind::native_blob, file_kind::fractional_index, file_kind::manifest, file_kind::checkpoint}) {
+    for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
       auto path = object_path(id, kind).generic_string();
       require(path == "ab/cd/ef0123456789abcdef0123456789" + std::string(file_extension(kind)), "shard prefix repeated in leaf");
       auto parsed = parse_object_path(path);
@@ -160,6 +161,8 @@ namespace {
     rejects([] { object_id::from_hex("ABCDEF0123456789abcdef0123456789"); });
     rejects([] { object_id::from_hex("abcdef0123456789abcdef012345678"); });
     rejects([] { object_id::from_hex("player/entity/position"); });
+    rejects([] { parse_object_path("ab/cd/ef0123456789abcdef0123456789.world"); });
+    rejects([] { parse_object_path("ab/cd/ef0123456789abcdef0123456789.merge"); });
     require(crc32c(std::as_bytes(std::span("123456789", std::size_t{9}))) == 0xe3069283u, "CRC32C check vector");
     require(crc32c({}) == 0, "empty CRC32C");
   }
