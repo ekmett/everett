@@ -530,6 +530,14 @@ reopen/replay, malformed outcomes, generation limits, eight COMMIT-failure cases
 and eight process-kill cuts. These establish the tested API/SQLite behavior,
 not physical power-loss recovery or pin retirement.
 
+The streamed publication suite adds 26 process-kill cuts across byte and
+partial-bit profiles. It merges actual mapped inputs, interrupts private output
+writes and sealing, then exercises receipt recording, index registration and
+timeline publication. Fresh connections verify complete-or-absent publication,
+exact operation outcomes and retained source, reader, historical and output
+pins. An old save remains queryable throughout. These tests cover process
+interruption; the partial merge still restarts from its inputs.
+
 The adapter requires SQLite 3.51.3 or later in both headers and the loaded
 runtime, a serialized connection, verified WAL/FULL synchronization settings
 and foreign keys. Opening checks the required table and trigger definitions,
