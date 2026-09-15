@@ -124,7 +124,7 @@ Storage</h1>
 <td class="markdownTableBodyNone"><code>large_packed96MiB</code>   </td><td class="markdownTableBodyRight">2,684,353,920   </td><td class="markdownTableBodyRight">89,478,464 + 11,184,808 = 100,663,272 B   </td><td class="markdownTableBodyRight">335,544,256 + 10,485,768 = 346,030,024 B   </td><td class="markdownTableBodyRight">8 MiB   </td></tr>
 </table>
 <p>These are encoded array sizes; vector capacities matched them. They exclude C++ view/vector objects, allocator bookkeeping and untimed oracle buffers. All data is in memory; this does not measure storage I/O. The large packed and full representations both exceed the shared 30 MiB L3 cache. Hot packed classes began at byte offset 32 modulo 64, and large classes at offset 16; both checkpoint arrays began at offset 16. All packed variants share those same addresses. Full-data offsets were 0 and 16 respectively.</p>
-<h1><a class="anchor" id="results-1"></a>
+<h1><a class="anchor" id="results-2"></a>
 Results</h1>
 <p>Entries are <b>median [minimum, maximum] nanoseconds per query</b>, across five trials. The paired rows report the complete pair operation.</p>
 <table class="markdownTable">

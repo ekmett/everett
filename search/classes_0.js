@@ -6,11 +6,5 @@ var searchData=
   ['bit_5fcomparison_3',['bit_comparison',['../structeverett_1_1bit__comparison.html',1,'everett']]],
   ['bit_5fstring_4',['bit_string',['../structeverett_1_1bit__string.html',1,'everett']]],
   ['bit_5fview_5',['bit_view',['../structeverett_1_1bit__view.html',1,'everett']]],
-  ['blob_6',['blob',['../structeverett_1_1blob.html',1,'everett']]],
-  ['blob_5fborrowed_5fpredecessor_7',['blob_borrowed_predecessor',['../structeverett_1_1blob__borrowed__predecessor.html',1,'everett']]],
-  ['blob_5fnative_5fmatch_8',['blob_native_match',['../structeverett_1_1blob__native__match.html',1,'everett']]],
-  ['blob_5frecord_9',['blob_record',['../structeverett_1_1blob__record.html',1,'everett']]],
-  ['blob_5fwindow_10',['blob_window',['../structeverett_1_1blob__window.html',1,'everett']]],
-  ['blob_5fwindow_5fresult_11',['blob_window_result',['../structeverett_1_1blob__window__result.html',1,'everett']]],
-  ['branch_5fpoint_12',['branch_point',['../structeverett_1_1branch__point.html',1,'everett']]]
+  ['branch_5fpoint_6',['branch_point',['../structeverett_1_1branch__point.html',1,'everett']]]
 ];

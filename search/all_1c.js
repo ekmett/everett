@@ -3,7 +3,7 @@ var searchData=
   ['u64_5ftable_5fhash_0',['u64_table_hash',['../structeverett_1_1u64__table__hash.html',1,'everett']]],
   ['u64_5fworld_5fcodec_1',['u64_world_codec',['../structeverett_1_1u64__world__codec.html',1,'everett']]],
   ['uncertain_2',['uncertain',['../namespaceeverett.html#a32e7c25e258570adfdbc424e5b59fa80acddf37909838913ffe0f7e9b316fc312',1,'everett']]],
-  ['unit_3',['unit',['../structeverett_1_1storage__policy.html#ac10a51f9ace849e65a3440adefdd730b',1,'everett::storage_policy']]],
+  ['unit_3',['unit',['../structeverett_1_1storage__policy.html#add2a499f530169caed9e8937f1640bf1',1,'everett::storage_policy']]],
   ['units_4',['units',['../md_docs_2keys.html#autotoc_md6-sampling-counts-entries-addressing-counts-profile-units',1,'6. Sampling counts entries, addressing counts profile units'],['../index.html#choose-byte-or-bit-units',1,'Choose byte or bit units']]],
   ['units_20and_20padding_5',['4. Bit lengths, units, and padding',['../md_docs_2keys.html#autotoc_md4-bit-lengths-units-and-padding',1,'']]],
   ['universe_6',['universe',['../md_docs_2rebuild.html#autotoc_md6-why-historical-updates-stop-determining-the-universe',1,'6. Why historical updates stop determining the universe'],['../structeverett_1_1select15__index.html#a89aa06b46fdea46466e001a6e802d69d',1,'everett::select15_index::universe'],['../structeverett_1_1select__groups.html#a103e2fdef2a45aa0c1882ff8fab872dc',1,'everett::select_groups::universe']]],

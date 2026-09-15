@@ -109,6 +109,10 @@ Field guide</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a href="source/proof/Everett/Fractional.lean">Fractional</a>   </td><td class="markdownTableBodyNone">Stable tagged merging; exact every-Kth samples; sampled predecessor windows; endpoint-rank projections; local/global predecessor equivalence; false-borrow recovery for unique native keys; a list-level index builder and exact-target retention    </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><a href="source/proof/Everett/Prefix.lean">Prefix</a>   </td><td class="markdownTableBodyNone">Finite-string lexicographic order, prefix interval convexity and the exact LCP minimum for three ordered strings    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a href="source/proof/Everett/Transfer.lean">Transfer</a>   </td><td class="markdownTableBodyNone">Content-mismatch transfers, the literal-position invariant, composition and associative ordered summaries    </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a href="source/proof/Everett/Examples.lean">Examples</a>   </td><td class="markdownTableBodyNone">Heterogeneous keys, valid and stale sources, noncommutative histories, changed index/target versions, and an old target that cannot be reclaimed while a snapshot retains it    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a href="source/proof/Everett/FractionalExamples.lean">FractionalExamples</a>   </td><td class="markdownTableBodyNone">K=3 and K=15, equal keys across several cuts, empty native projections, false-borrow recovery, empty targets, before-first queries, short tails and stored-index routing    </td></tr>
@@ -149,6 +153,20 @@ Fractional indexing</h1>
 <p>The mathematical <code>rank</code> function is defined at every position. The concrete <code>rank_groups&lt;K&gt;</code> API stores boundary ranks. <code>rank_inside_route</code> connects the two: a finer rank is the boundary rank plus the native count in a local prefix of fewer than \(K\) occurrences. No arbitrary-position constant-time rank API is assumed or proved.</p>
 <p>Finally, <code>build_index</code> stores a target ID and its sampled target occurrences. <code>build_index_matches</code> establishes exact correspondence from the builder's output. <code>index_route</code> reads those stored samples, and <code>indexed_predecessor_correct</code> proves that the resulting target-window search agrees with a full search of that exact target. Catalog extension and eligible reclamation preserve the certificate by preserving the target record. A source pair's <code>target_samples</code> follows its literal stored target edge; adding a merged target does not redirect that edge.</p>
 <p>This builder produces mathematical lists. Its entries retain the destination's occurrence labels and tags; constructing a source's borrowed stream requires source-local labels and borrowed tags. That retagging, encoded-file decoding, independent borrowed-predecessor routing and composition of an entire cascade remain separate refinement obligations. The searches here enumerate finite lists, so these theorems establish the window's entry bound and lookup meaning, not the running time of binary search, compressed rank or key reconstruction.</p>
+<h1><a class="anchor" id="string-prefixes-and-comparison-transfers"></a>
+String prefixes and comparison transfers</h1>
+<p>The <a class="el" href="md_docs_2comparison-fc.html">comparison-state design</a> separates two obligations for ordinary front coding. The forward candidate is between its physical predecessor and the incoming boundary. The borrowed predecessor needed for the next hop can instead precede the boundary, and needs additional information.</p>
+<p><code>Prefix.lean</code> works with actual finite strings and lexicographic order. For ordered strings \(C\le B\le Q\), the exact identity is</p>
+<p class="formulaDsp">
+\[
+\mathrm{lcp}(C,Q)=
+\min\bigl(\mathrm{lcp}(C,B),\mathrm{lcp}(B,Q)\bigr).
+\]
+</p>
+<p>This lets an exact cut-LCP scalar repair the preceding borrowed key's comparison state. Equality and proper-prefix cases are included. The statement needs the ordering hypotheses; arbitrary triples only satisfy the usual lower bound. The theorem does not certify that a stored index contains the right scalar.</p>
+<p><code>Transfer.lean</code> models a content mismatch as a position with its direction, or infinity. A record retaining \(r\) units preserves an incoming mismatch before \(r\); otherwise it substitutes the literal mismatch \(e\). Valid summaries require \(e\ge r\). Their composition represents applying the earlier record followed by the later one, preserves validity, and is associative. The selected mismatch retains its direction.</p>
+<p>These summaries describe content mismatches. Infinity does not mean that two complete keys are equal: endpoints and full lengths remain separate. The module does not prove that a particular SIMD comparison produces the correct summary.</p>
+<p>The missing bridge is from the origin-filtered cut to these string hypotheses, then from the encoded length/LCP metadata and literal comparisons to the abstract state. Complete cascade composition, block access bounds and the C++ implementation remain separate refinements.</p>
 <h1><a class="anchor" id="what-the-assumptions-mean"></a>
 What the assumptions mean</h1>
 <p>I expose category laws as fields of <code>category</code>: identity and associativity are requirements on a policy, not axioms asserting Everett's desired result. The replacement and noncommutative word policies supply concrete proofs of those laws. Histories have typed endpoints, so a chain cannot contain an arrow whose source differs from the preceding arrow's target.</p>

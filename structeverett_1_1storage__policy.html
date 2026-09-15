@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: everett::storage_policy&lt; Unit, Values, GroupSize, BackspaceCode &gt; Struct Template Reference</title>
+<title>Everett: everett::storage_policy&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt; Struct Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -84,7 +84,7 @@ $(function() {
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-static-attribs">Static Public Attributes</a> &#124;
 <a href="structeverett_1_1storage__policy-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">everett::storage_policy&lt; Unit, Values, GroupSize, BackspaceCode &gt; Struct Template Reference</div></div>
+  <div class="headertitle"><div class="title">everett::storage_policy&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt; Struct Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
@@ -92,57 +92,59 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:a2ddf0403db4de1062b9026736fd2d9b9" id="r_a2ddf0403db4de1062b9026736fd2d9b9"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a2ddf0403db4de1062b9026736fd2d9b9">value_layout</a> = Values</td></tr>
-<tr class="separator:a2ddf0403db4de1062b9026736fd2d9b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a42e2e8f3b5177874c406ceb7f77ace3b" id="r_a42e2e8f3b5177874c406ceb7f77ace3b"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a42e2e8f3b5177874c406ceb7f77ace3b">backspace_encoding</a> = BackspaceCode</td></tr>
-<tr class="separator:a42e2e8f3b5177874c406ceb7f77ace3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2cea02310d9c10718cf9b7d23d63ce07" id="r_a2cea02310d9c10718cf9b7d23d63ce07"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a2cea02310d9c10718cf9b7d23d63ce07">value_layout</a> = Values</td></tr>
+<tr class="separator:a2cea02310d9c10718cf9b7d23d63ce07"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60fe3e4c6a175d8369daea7fce8c8b04" id="r_a60fe3e4c6a175d8369daea7fce8c8b04"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a60fe3e4c6a175d8369daea7fce8c8b04">backspace_encoding</a> = BackspaceCode</td></tr>
+<tr class="separator:a60fe3e4c6a175d8369daea7fce8c8b04"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
-<tr class="memitem:ac973c3c1f2940537cb7f6663846794ff" id="r_ac973c3c1f2940537cb7f6663846794ff"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="namespaceeverett.html#a5cc5bbbccae07743f192dd109d44e18c">bit_backspace_code</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#ac973c3c1f2940537cb7f6663846794ff">backspace_code</a> = <a class="el" href="structeverett_1_1policy__detail_1_1backspace__traits.html">policy_detail::backspace_traits</a>&lt;BackspaceCode&gt;::code</td></tr>
-<tr class="separator:ac973c3c1f2940537cb7f6663846794ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac5fe487d0e48575991098b06b7f470b3" id="r_ac5fe487d0e48575991098b06b7f470b3"><td class="memItemLeft" align="right" valign="top">static constexpr std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#ac5fe487d0e48575991098b06b7f470b3">backspace_parameter</a> = <a class="el" href="structeverett_1_1policy__detail_1_1backspace__traits.html">policy_detail::backspace_traits</a>&lt;BackspaceCode&gt;::parameter</td></tr>
-<tr class="separator:ac5fe487d0e48575991098b06b7f470b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa7b7e691a33639f7d1fa27fafae8c1a0" id="r_aa7b7e691a33639f7d1fa27fafae8c1a0"><td class="memItemLeft" align="right" valign="top">static constexpr std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#aa7b7e691a33639f7d1fa27fafae8c1a0">group_size</a> = GroupSize</td></tr>
-<tr class="separator:aa7b7e691a33639f7d1fa27fafae8c1a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8c57905d49af018a7fffed80a10a84dd" id="r_a8c57905d49af018a7fffed80a10a84dd"><td class="memItemLeft" align="right" valign="top">static constexpr unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a8c57905d49af018a7fffed80a10a84dd">class_bits</a> = static_cast&lt;unsigned&gt;(std::bit_width(GroupSize))</td></tr>
-<tr class="separator:a8c57905d49af018a7fffed80a10a84dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac10a51f9ace849e65a3440adefdd730b" id="r_ac10a51f9ace849e65a3440adefdd730b"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#ac10a51f9ace849e65a3440adefdd730b">unit</a> = Unit</td></tr>
-<tr class="separator:ac10a51f9ace849e65a3440adefdd730b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0443595ad387d816bc545d98109d63bb" id="r_a0443595ad387d816bc545d98109d63bb"><td class="memItemLeft" align="right" valign="top">static constexpr unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a0443595ad387d816bc545d98109d63bb">bits_per_unit</a> = Unit == <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aa40ea57d3ee3c07bf1c102b466e1c3091">profile_unit::byte</a> ? 8 : 1</td></tr>
-<tr class="separator:a0443595ad387d816bc545d98109d63bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae17488bede79f47f7a0985ff0ef2c348" id="r_ae17488bede79f47f7a0985ff0ef2c348"><td class="memItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#ae17488bede79f47f7a0985ff0ef2c348">fixed_width</a> = <a class="el" href="structeverett_1_1policy__detail_1_1value__traits.html">policy_detail::value_traits</a>&lt;Values&gt;::fixed</td></tr>
-<tr class="separator:ae17488bede79f47f7a0985ff0ef2c348"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac53db376a39a7d216641faff23acf7ec" id="r_ac53db376a39a7d216641faff23acf7ec"><td class="memItemLeft" align="right" valign="top">static constexpr std::optional&lt; std::uint64_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#ac53db376a39a7d216641faff23acf7ec">value_width</a> = <a class="el" href="structeverett_1_1policy__detail_1_1value__traits.html">policy_detail::value_traits</a>&lt;Values&gt;::width</td></tr>
-<tr class="separator:ac53db376a39a7d216641faff23acf7ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a83413cb179a6248665b9714b2ec11032" id="r_a83413cb179a6248665b9714b2ec11032"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="namespaceeverett.html#a5cc5bbbccae07743f192dd109d44e18c">bit_backspace_code</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a83413cb179a6248665b9714b2ec11032">backspace_code</a> = <a class="el" href="structeverett_1_1policy__detail_1_1backspace__traits.html">policy_detail::backspace_traits</a>&lt;BackspaceCode&gt;::code</td></tr>
+<tr class="separator:a83413cb179a6248665b9714b2ec11032"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a16ff597806ecd70c7d1815845d2e01" id="r_a5a16ff597806ecd70c7d1815845d2e01"><td class="memItemLeft" align="right" valign="top">static constexpr std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a5a16ff597806ecd70c7d1815845d2e01">backspace_parameter</a> = <a class="el" href="structeverett_1_1policy__detail_1_1backspace__traits.html">policy_detail::backspace_traits</a>&lt;BackspaceCode&gt;::parameter</td></tr>
+<tr class="separator:a5a16ff597806ecd70c7d1815845d2e01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3be86520b9f323e093a4690675e2441b" id="r_a3be86520b9f323e093a4690675e2441b"><td class="memItemLeft" align="right" valign="top">static constexpr std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a3be86520b9f323e093a4690675e2441b">group_size</a> = GroupSize</td></tr>
+<tr class="separator:a3be86520b9f323e093a4690675e2441b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab48597d4bc8952492f386bbdf7e4424a" id="r_ab48597d4bc8952492f386bbdf7e4424a"><td class="memItemLeft" align="right" valign="top">static constexpr std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#ab48597d4bc8952492f386bbdf7e4424a">codec_block_size</a> = CodecBlockSize</td></tr>
+<tr class="separator:ab48597d4bc8952492f386bbdf7e4424a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a430867eef1ca2ade446d766edebd0982" id="r_a430867eef1ca2ade446d766edebd0982"><td class="memItemLeft" align="right" valign="top">static constexpr unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a430867eef1ca2ade446d766edebd0982">class_bits</a> = static_cast&lt;unsigned&gt;(std::bit_width(GroupSize))</td></tr>
+<tr class="separator:a430867eef1ca2ade446d766edebd0982"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add2a499f530169caed9e8937f1640bf1" id="r_add2a499f530169caed9e8937f1640bf1"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#add2a499f530169caed9e8937f1640bf1">unit</a> = Unit</td></tr>
+<tr class="separator:add2a499f530169caed9e8937f1640bf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac625cf8f5fa86d40a9b37af82519210" id="r_aac625cf8f5fa86d40a9b37af82519210"><td class="memItemLeft" align="right" valign="top">static constexpr unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#aac625cf8f5fa86d40a9b37af82519210">bits_per_unit</a> = Unit == <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aa40ea57d3ee3c07bf1c102b466e1c3091">profile_unit::byte</a> ? 8 : 1</td></tr>
+<tr class="separator:aac625cf8f5fa86d40a9b37af82519210"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a63779953311b0d9b491b24060ede0355" id="r_a63779953311b0d9b491b24060ede0355"><td class="memItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a63779953311b0d9b491b24060ede0355">fixed_width</a> = <a class="el" href="structeverett_1_1policy__detail_1_1value__traits.html">policy_detail::value_traits</a>&lt;Values&gt;::fixed</td></tr>
+<tr class="separator:a63779953311b0d9b491b24060ede0355"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3f740b279fafda996c40b2b939c7a3f7" id="r_a3f740b279fafda996c40b2b939c7a3f7"><td class="memItemLeft" align="right" valign="top">static constexpr std::optional&lt; std::uint64_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a3f740b279fafda996c40b2b939c7a3f7">value_width</a> = <a class="el" href="structeverett_1_1policy__detail_1_1value__traits.html">policy_detail::value_traits</a>&lt;Values&gt;::width</td></tr>
+<tr class="separator:a3f740b279fafda996c40b2b939c7a3f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a42e2e8f3b5177874c406ceb7f77ace3b" name="a42e2e8f3b5177874c406ceb7f77ace3b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a42e2e8f3b5177874c406ceb7f77ace3b">&#9670;&#160;</a></span>backspace_encoding</h2>
+<a id="a60fe3e4c6a175d8369daea7fce8c8b04" name="a60fe3e4c6a175d8369daea7fce8c8b04"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60fe3e4c6a175d8369daea7fce8c8b04">&#9670;&#160;</a></span>backspace_encoding</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;&gt; </div>
+template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode &gt;::backspace_encoding =  BackspaceCode</td>
+          <td class="memname">using <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::backspace_encoding =  BackspaceCode</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="a2ddf0403db4de1062b9026736fd2d9b9" name="a2ddf0403db4de1062b9026736fd2d9b9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2ddf0403db4de1062b9026736fd2d9b9">&#9670;&#160;</a></span>value_layout</h2>
+<a id="a2cea02310d9c10718cf9b7d23d63ce07" name="a2cea02310d9c10718cf9b7d23d63ce07"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2cea02310d9c10718cf9b7d23d63ce07">&#9670;&#160;</a></span>value_layout</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;&gt; </div>
+template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode &gt;::value_layout =  Values</td>
+          <td class="memname">using <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::value_layout =  Values</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -150,19 +152,19 @@ template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="ac973c3c1f2940537cb7f6663846794ff" name="ac973c3c1f2940537cb7f6663846794ff"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac973c3c1f2940537cb7f6663846794ff">&#9670;&#160;</a></span>backspace_code</h2>
+<a id="a83413cb179a6248665b9714b2ec11032" name="a83413cb179a6248665b9714b2ec11032"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a83413cb179a6248665b9714b2ec11032">&#9670;&#160;</a></span>backspace_code</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;&gt; </div>
+template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr <a class="el" href="namespaceeverett.html#a5cc5bbbccae07743f192dd109d44e18c">bit_backspace_code</a> <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode &gt;::backspace_code = <a class="el" href="structeverett_1_1policy__detail_1_1backspace__traits.html">policy_detail::backspace_traits</a>&lt;BackspaceCode&gt;::code</td>
+          <td class="memname">constexpr <a class="el" href="namespaceeverett.html#a5cc5bbbccae07743f192dd109d44e18c">bit_backspace_code</a> <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::backspace_code = <a class="el" href="structeverett_1_1policy__detail_1_1backspace__traits.html">policy_detail::backspace_traits</a>&lt;BackspaceCode&gt;::code</td>
         </tr>
       </table>
   </td>
@@ -174,19 +176,19 @@ template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db
 
 </div>
 </div>
-<a id="ac5fe487d0e48575991098b06b7f470b3" name="ac5fe487d0e48575991098b06b7f470b3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac5fe487d0e48575991098b06b7f470b3">&#9670;&#160;</a></span>backspace_parameter</h2>
+<a id="a5a16ff597806ecd70c7d1815845d2e01" name="a5a16ff597806ecd70c7d1815845d2e01"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5a16ff597806ecd70c7d1815845d2e01">&#9670;&#160;</a></span>backspace_parameter</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;&gt; </div>
+template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr std::uint64_t <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode &gt;::backspace_parameter = <a class="el" href="structeverett_1_1policy__detail_1_1backspace__traits.html">policy_detail::backspace_traits</a>&lt;BackspaceCode&gt;::parameter</td>
+          <td class="memname">constexpr std::uint64_t <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::backspace_parameter = <a class="el" href="structeverett_1_1policy__detail_1_1backspace__traits.html">policy_detail::backspace_traits</a>&lt;BackspaceCode&gt;::parameter</td>
         </tr>
       </table>
   </td>
@@ -198,19 +200,19 @@ template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db
 
 </div>
 </div>
-<a id="a0443595ad387d816bc545d98109d63bb" name="a0443595ad387d816bc545d98109d63bb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0443595ad387d816bc545d98109d63bb">&#9670;&#160;</a></span>bits_per_unit</h2>
+<a id="aac625cf8f5fa86d40a9b37af82519210" name="aac625cf8f5fa86d40a9b37af82519210"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aac625cf8f5fa86d40a9b37af82519210">&#9670;&#160;</a></span>bits_per_unit</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;&gt; </div>
+template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr unsigned <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode &gt;::bits_per_unit = Unit == <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aa40ea57d3ee3c07bf1c102b466e1c3091">profile_unit::byte</a> ? 8 : 1</td>
+          <td class="memname">constexpr unsigned <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::bits_per_unit = Unit == <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aa40ea57d3ee3c07bf1c102b466e1c3091">profile_unit::byte</a> ? 8 : 1</td>
         </tr>
       </table>
   </td>
@@ -222,19 +224,19 @@ template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db
 
 </div>
 </div>
-<a id="a8c57905d49af018a7fffed80a10a84dd" name="a8c57905d49af018a7fffed80a10a84dd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8c57905d49af018a7fffed80a10a84dd">&#9670;&#160;</a></span>class_bits</h2>
+<a id="a430867eef1ca2ade446d766edebd0982" name="a430867eef1ca2ade446d766edebd0982"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a430867eef1ca2ade446d766edebd0982">&#9670;&#160;</a></span>class_bits</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;&gt; </div>
+template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr unsigned <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode &gt;::class_bits = static_cast&lt;unsigned&gt;(std::bit_width(GroupSize))</td>
+          <td class="memname">constexpr unsigned <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::class_bits = static_cast&lt;unsigned&gt;(std::bit_width(GroupSize))</td>
         </tr>
       </table>
   </td>
@@ -246,19 +248,19 @@ template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db
 
 </div>
 </div>
-<a id="ae17488bede79f47f7a0985ff0ef2c348" name="ae17488bede79f47f7a0985ff0ef2c348"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae17488bede79f47f7a0985ff0ef2c348">&#9670;&#160;</a></span>fixed_width</h2>
+<a id="ab48597d4bc8952492f386bbdf7e4424a" name="ab48597d4bc8952492f386bbdf7e4424a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab48597d4bc8952492f386bbdf7e4424a">&#9670;&#160;</a></span>codec_block_size</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;&gt; </div>
+template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr bool <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode &gt;::fixed_width = <a class="el" href="structeverett_1_1policy__detail_1_1value__traits.html">policy_detail::value_traits</a>&lt;Values&gt;::fixed</td>
+          <td class="memname">constexpr std::uint64_t <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::codec_block_size = CodecBlockSize</td>
         </tr>
       </table>
   </td>
@@ -270,19 +272,19 @@ template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db
 
 </div>
 </div>
-<a id="aa7b7e691a33639f7d1fa27fafae8c1a0" name="aa7b7e691a33639f7d1fa27fafae8c1a0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa7b7e691a33639f7d1fa27fafae8c1a0">&#9670;&#160;</a></span>group_size</h2>
+<a id="a63779953311b0d9b491b24060ede0355" name="a63779953311b0d9b491b24060ede0355"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a63779953311b0d9b491b24060ede0355">&#9670;&#160;</a></span>fixed_width</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;&gt; </div>
+template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr std::uint64_t <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode &gt;::group_size = GroupSize</td>
+          <td class="memname">constexpr bool <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::fixed_width = <a class="el" href="structeverett_1_1policy__detail_1_1value__traits.html">policy_detail::value_traits</a>&lt;Values&gt;::fixed</td>
         </tr>
       </table>
   </td>
@@ -294,19 +296,19 @@ template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db
 
 </div>
 </div>
-<a id="ac10a51f9ace849e65a3440adefdd730b" name="ac10a51f9ace849e65a3440adefdd730b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac10a51f9ace849e65a3440adefdd730b">&#9670;&#160;</a></span>unit</h2>
+<a id="a3be86520b9f323e093a4690675e2441b" name="a3be86520b9f323e093a4690675e2441b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3be86520b9f323e093a4690675e2441b">&#9670;&#160;</a></span>group_size</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;&gt; </div>
+template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode &gt;::unit = Unit</td>
+          <td class="memname">constexpr std::uint64_t <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::group_size = GroupSize</td>
         </tr>
       </table>
   </td>
@@ -318,19 +320,43 @@ template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db
 
 </div>
 </div>
-<a id="ac53db376a39a7d216641faff23acf7ec" name="ac53db376a39a7d216641faff23acf7ec"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac53db376a39a7d216641faff23acf7ec">&#9670;&#160;</a></span>value_width</h2>
+<a id="add2a499f530169caed9e8937f1640bf1" name="add2a499f530169caed9e8937f1640bf1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#add2a499f530169caed9e8937f1640bf1">&#9670;&#160;</a></span>unit</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;&gt; </div>
+template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr std::optional&lt;std::uint64_t&gt; <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode &gt;::value_width = <a class="el" href="structeverett_1_1policy__detail_1_1value__traits.html">policy_detail::value_traits</a>&lt;Values&gt;::width</td>
+          <td class="memname">constexpr <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::unit = Unit</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3f740b279fafda996c40b2b939c7a3f7" name="a3f740b279fafda996c40b2b939c7a3f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3f740b279fafda996c40b2b939c7a3f7">&#9670;&#160;</a></span>value_width</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr std::optional&lt;std::uint64_t&gt; <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::value_width = <a class="el" href="structeverett_1_1policy__detail_1_1value__traits.html">policy_detail::value_traits</a>&lt;Values&gt;::width</td>
         </tr>
       </table>
   </td>

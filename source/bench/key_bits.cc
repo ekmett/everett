@@ -7,14 +7,18 @@
  * \endlicense
  */
 #include <everett/profile.h>
+#if __has_include(<everett/front.h>)
 #include <everett/front.h>
+#endif
 #include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstdint>
 #include <iostream>
+#include <span>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 #if defined(__APPLE__)
 #include <pthread/qos.h>
@@ -47,6 +51,26 @@ namespace {
       clock_type::time_point start, clock_type::time_point stop, std::uint64_t checksum, std::uint64_t encoding) {
     auto ns = std::chrono::duration<double, std::nano>(stop - start).count() / double(iterations);
     std::cout << operation << ',' << bits << ',' << offset << ',' << iterations << ',' << ns << ',' << checksum << ',' << encoding << '\n';
+  }
+  // Keep historical fixture revisions usable with their original byte helpers.
+  // Current headers express the same request through the typed profile API.
+  int compare_text(std::string_view a, std::string_view b) {
+#if __has_include(<everett/front.h>)
+    return everett::compare_keys(a, b);
+#else
+    return everett::compare_bits(
+      everett::bit_view(std::as_bytes(std::span(a.data(), a.size())), a.size() * 8),
+      everett::bit_view(std::as_bytes(std::span(b.data(), b.size())), b.size() * 8));
+#endif
+  }
+  std::uint64_t prefix_text(std::string_view a, std::string_view b) {
+#if __has_include(<everett/front.h>)
+    return everett::common_prefix(a, b);
+#else
+    return everett::common_prefix_units<byte_policy>(
+      everett::bit_view(std::as_bytes(std::span(a.data(), a.size())), a.size() * 8),
+      everett::bit_view(std::as_bytes(std::span(b.data(), b.size())), b.size() * 8));
+#endif
   }
   void primitive(unsigned bytes, unsigned offset, std::uint64_t work) {
     auto count = std::uint64_t(bytes) * 8 + (offset ? 1 : 0);
@@ -123,8 +147,8 @@ namespace {
       checksum = 0; start = clock_type::now();
       for (std::uint64_t i = 0; i != iterations; ++i) {
         auto k = unsigned(i & 15);
-        checksum += everett::compare_keys(text[k], other_text[k]) + 1;
-        checksum += everett::common_prefix(text[k], other_text[k]);
+        checksum += compare_text(text[k], other_text[k]) + 1;
+        checksum += prefix_text(text[k], other_text[k]);
       }
       end = clock_type::now();
       row("front_order_and_lcp", count, offset, iterations, start, end, checksum, 0);

@@ -190,8 +190,8 @@ Private Attributes</h2></td></tr>
 <tr class="separator:afe0e630d59e06b1340903def1f9b0390"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3812f7b3391eb95991adc16830ac59a2" id="r_a3812f7b3391eb95991adc16830ac59a2"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::byte &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1index__builder.html#a3812f7b3391eb95991adc16830ac59a2">false_borrows_</a></td></tr>
 <tr class="separator:a3812f7b3391eb95991adc16830ac59a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa99a92270c372cfb38584c6bb28ea237" id="r_aa99a92270c372cfb38584c6bb28ea237"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1index__builder.html#aa99a92270c372cfb38584c6bb28ea237">pending_ceiling_</a> = std::numeric_limits&lt;std::uint64_t&gt;::max()</td></tr>
-<tr class="separator:aa99a92270c372cfb38584c6bb28ea237"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69934ae9780b6acfb53ddaac28117e8b" id="r_a69934ae9780b6acfb53ddaac28117e8b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::uint64_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1index__builder.html#a69934ae9780b6acfb53ddaac28117e8b">cut_lcps_</a></td></tr>
+<tr class="separator:a69934ae9780b6acfb53ddaac28117e8b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a06212a87d85a97c98b6d2bb675bdee0b" id="r_a06212a87d85a97c98b6d2bb675bdee0b"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1index__builder.html#a06212a87d85a97c98b6d2bb675bdee0b">virtual_count_</a> = 0</td></tr>
 <tr class="separator:a06212a87d85a97c98b6d2bb675bdee0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac6ac3563c5f3a8d949a77de1481f1753" id="r_ac6ac3563c5f3a8d949a77de1481f1753"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1index__builder.html#ac6ac3563c5f3a8d949a77de1481f1753">borrowed_count_</a> = 0</td></tr>
@@ -982,6 +982,30 @@ template&lt;class P &gt; </div>
 
 </div>
 </div>
+<a id="a69934ae9780b6acfb53ddaac28117e8b" name="a69934ae9780b6acfb53ddaac28117e8b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a69934ae9780b6acfb53ddaac28117e8b">&#9670;&#160;</a></span>cut_lcps_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class P &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt;std::uint64_t&gt; <a class="el" href="structeverett_1_1index__builder.html">everett::index_builder</a>&lt; P &gt;::cut_lcps_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ab21839b0bd7f6d7d04334bf2e68ad4fc" name="ab21839b0bd7f6d7d04334bf2e68ad4fc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab21839b0bd7f6d7d04334bf2e68ad4fc">&#9670;&#160;</a></span>failed_</h2>
 
@@ -1307,30 +1331,6 @@ template&lt;class P &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">std::optional&lt;<a class="el" href="structeverett_1_1bit__string.html">bit_string</a>&gt; <a class="el" href="structeverett_1_1index__builder.html">everett::index_builder</a>&lt; P &gt;::pending_</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="aa99a92270c372cfb38584c6bb28ea237" name="aa99a92270c372cfb38584c6bb28ea237"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa99a92270c372cfb38584c6bb28ea237">&#9670;&#160;</a></span>pending_ceiling_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class P &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::uint64_t <a class="el" href="structeverett_1_1index__builder.html">everett::index_builder</a>&lt; P &gt;::pending_ceiling_ = std::numeric_limits&lt;std::uint64_t&gt;::max()</td>
         </tr>
       </table>
   </td>

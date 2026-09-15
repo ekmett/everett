@@ -36,7 +36,17 @@ namespace {
     require(rejected, "invalid profile blob input accepted");
   }
 
-  bool equal(bit_view a, bit_view b) { return compare_bits(a, b) == 0; }
+  std::uint64_t oracle_common(bit_view a, bit_view b) {
+    std::uint64_t i = 0;
+    while (i < std::min(a.size(), b.size()) && a.at(i) == b.at(i)) ++i;
+    return i;
+  }
+  int oracle_order(bit_view a, bit_view b) {
+    auto i = oracle_common(a, b);
+    if (i < std::min(a.size(), b.size())) return a.at(i) ? 1 : -1;
+    return a.size() < b.size() ? -1 : a.size() > b.size() ? 1 : 0;
+  }
+  bool equal(bit_view a, bit_view b) { return oracle_order(a, b) == 0; }
 
   std::string numbered(unsigned n) {
     auto number = std::to_string(n);
@@ -76,7 +86,7 @@ namespace {
       }
     }
     std::sort(keys.begin(), keys.end(), [](auto const & a, auto const & b) {
-      return compare_bits(a.view(), b.view()) < 0;
+      return oracle_order(a.view(), b.view()) < 0;
     });
     return keys;
   }
@@ -93,7 +103,7 @@ namespace {
     for (std::size_t i = 0; i != native.size(); ++i) catalog.push_back({native[i].key, false, i});
     for (std::size_t i = 0; i != borrowed.size(); ++i) catalog.push_back({borrowed[i], true, i});
     std::stable_sort(catalog.begin(), catalog.end(), [](auto const & a, auto const & b) {
-      auto order = compare_bits(a.key.view(), b.key.view());
+      auto order = oracle_order(a.key.view(), b.key.view());
       return order ? order < 0 : a.borrowed < b.borrowed;
     });
     return catalog;
@@ -103,36 +113,32 @@ namespace {
   void check_blob(std::span<profile_record const> native, std::span<bit_string const> borrowed,
                   std::span<bit_string const> queries, profile_blob<P> const * existing = nullptr) {
     auto encoded = existing ? *existing : profile_blob<P>::build(native, borrowed);
-    auto two_sided = profile_blob<P>::build(native, borrowed, 18, {}, profile_borrowed_policy::bidirectional);
-    auto ordinary = profile_blob<P>::build(native, borrowed, 18, {}, profile_borrowed_policy::ordinary);
-    require(encoded.borrowed_policy() == profile_borrowed_policy::shared_boundaries,
-            "shared-boundary borrowed policy must be default");
     require(encoded.native().size() == native.size() && encoded.borrowed().size() == borrowed.size(),
             "profile blob native/borrowed counts");
-    std::uint64_t shared_suffix = 0;
-    std::uint64_t two_sided_suffix = 0;
-    std::uint64_t ordinary_suffix = 0;
     for (std::size_t i = 0; i != borrowed.size(); ++i) {
-      auto a = encoded.borrowed().view().encoded_at(i);
-      auto b = two_sided.borrowed().view().encoded_at(i);
-      auto c = ordinary.borrowed().view().encoded_at(i);
-      shared_suffix += a.key_units - a.retained;
-      two_sided_suffix += b.key_units - b.retained;
-      ordinary_suffix += c.key_units - c.retained;
-      require(a.value.size() == 0, "borrowed stream has zero-width values under the same policy");
+      auto record = encoded.borrowed().view().encoded_at(i);
+      auto retained = i ? oracle_common(borrowed[i - 1].view(), borrowed[i].view()) / P::bits_per_unit : 0;
+      require(record.retained == retained, "borrowed stream is ordinary FC");
+      require(record.value.size() == 0, "borrowed stream has zero-width values under the same policy");
       auto found = std::find_if(native.begin(), native.end(), [&](auto const & record) {
         return equal(record.key.view(), borrowed[i].view());
       });
       require(encoded.false_borrow(i) == (found != native.end()), "false-borrow equality oracle");
     }
-    require(shared_suffix <= two_sided_suffix && two_sided_suffix <= 2 * ordinary_suffix,
-            "modified FC suffix bound in profile units");
+    for (std::size_t i = 0; i != native.size(); ++i) {
+      auto retained = i ? oracle_common(native[i - 1].key.view(), native[i].key.view()) / P::bits_per_unit : 0;
+      require(encoded.native().view().encoded_at(i).retained == retained, "native stream is ordinary FC");
+    }
 
     auto catalog = catalog_for(native, borrowed);
+    require(encoded.cut_lcps().size() == encoded.group_count(), "one cut LCP per virtual group");
     std::uint64_t native_at = 0;
     std::uint64_t borrowed_at = 0;
     for (std::uint64_t g = 0; g != encoded.group_count(); ++g) {
       auto projected = encoded.project(g);
+      auto expected_lcp = borrowed_at ? oracle_common(borrowed[borrowed_at - 1].view(),
+        catalog[g * P::group_size].key.view()) : 0;
+      require(encoded.cut_lcps()[g] == expected_lcp, "exact bit LCP at each virtual cut");
       require(projected.native_first == native_at && projected.borrowed_first == borrowed_at,
               "group ranks count entries independently of profile units");
       for (auto i = g * P::group_size; i != std::min<std::uint64_t>(catalog.size(), g * P::group_size + P::group_size); ++i) {
@@ -145,21 +151,21 @@ namespace {
               "projected window is bounded by the configured record count");
     }
     if (catalog.empty()) {
-      rejects([&] { encoded.search_window({}, 0, {}); });
+      rejects([&] { encoded.search_window(0, profile_query_context<P>({})); });
       return;
     }
 
     for (auto const & query : queries) {
       auto upper = std::upper_bound(catalog.begin(), catalog.end(), query, [](auto const & q, auto const & record) {
-        return compare_bits(q.view(), record.key.view()) < 0;
+        return oracle_order(q.view(), record.key.view()) < 0;
       });
       auto ordinal = upper == catalog.begin() ? 0 : static_cast<std::uint64_t>(upper - catalog.begin() - 1);
       auto group = ordinal / P::group_size;
       auto const & boundary = catalog[group * P::group_size].key;
-      auto limit = std::min(boundary.bit_size, query.bit_size);
-      profile_anchor<P> anchor{boundary.view().prefix(limit), boundary.bit_size / P::bits_per_unit};
-      for (auto const * candidate : {&encoded, &two_sided}) {
-        auto result = candidate->search_window(query.view(), group, anchor);
+      profile_query_context<P> anchor(query.view());
+      if (upper != catalog.begin()) anchor = anchor.with_key(boundary.view());
+      {
+        auto result = encoded.search_window(group, anchor);
         auto expected = std::find_if(native.begin(), native.end(), [&](auto const & record) {
           return equal(record.key.view(), query.view());
         });
@@ -169,7 +175,7 @@ namespace {
           require(equal(result.native->value.view(), expected->value.view()), "native value bits and length oracle");
         }
         auto expected_sample = std::upper_bound(borrowed.begin(), borrowed.end(), query,
-          [](auto const & q, auto const & key) { return compare_bits(q.view(), key.view()) < 0; });
+          [](auto const & q, auto const & key) { return oracle_order(q.view(), key.view()) < 0; });
         require(bool(result.borrowed_predecessor) == (expected_sample != borrowed.begin()),
                 "borrowed predecessor presence oracle");
         if (result.borrowed_predecessor) {
@@ -177,11 +183,14 @@ namespace {
           auto expected_ordinal = std::uint64_t(expected_sample - borrowed.begin() - 1);
           require(next.ordinal == expected_ordinal && next.target_ordinal == expected_ordinal * P::group_size,
                   "borrowed target ordinal uses entry units");
-          require(next.has_context, "modified FC supplies outgoing predecessor context");
           auto const & expected_key = borrowed[expected_ordinal];
-          require(equal(next.prefix.view(), expected_key.view().prefix(std::min(expected_key.bit_size, query.bit_size))),
-                  "query-limited borrowed prefix oracle");
-          require(next.full_units == expected_key.bit_size / P::bits_per_unit, "borrowed full length uses profile units");
+          require(next.comparison.common_bits() == oracle_common(expected_key.view(), query.view()),
+                  "outgoing exact bit agreement oracle");
+          require(next.comparison.order() == oracle_order(expected_key.view(), query.view()),
+                  "outgoing comparison direction oracle");
+          require(next.comparison.full_units() == expected_key.bit_size / P::bits_per_unit,
+                  "borrowed full length uses profile units");
+          require(equal(next.comparison.query(), query.view()), "outgoing comparison retains its query");
         }
       }
     }
@@ -252,21 +261,18 @@ namespace {
         }
       }
       std::vector<std::optional<bit_string>> actual(records.size());
-      bit_string anchor_prefix;
-      profile_anchor<P> anchor;
+      profile_query_context<P> anchor(query.view());
       std::uint64_t group = 0;
       for (std::size_t remaining = levels.size(); remaining; --remaining) {
         auto level = remaining - 1;
-        auto result = levels[level].search_window(query.view(), group, anchor);
+        auto result = levels[level].search_window(group, anchor);
         if (result.native) actual[level] = result.native->value;
         if (result.native && result.borrowed_predecessor) simultaneous_native_and_route = true;
         // Keep searching on equality: this layer returns value fragments and
         // routing, leaving chronological composition to its caller.
         if (!result.borrowed_predecessor) break;
         auto const & next = *result.borrowed_predecessor;
-        require(next.has_context, "cascade does not reconstruct backward through an index");
-        anchor_prefix = next.prefix;
-        anchor = {anchor_prefix.view(), next.full_units};
+        anchor = next.comparison;
         group = next.target_ordinal / P::group_size;
       }
       for (std::size_t level = 0; level != actual.size(); ++level) {
@@ -291,7 +297,7 @@ namespace {
     auto original = profile_blob<P>::build(native, old_samples);
     auto retained = original;
     auto replacement = original.reindex(new_samples);
-    require(&replacement.native() == &original.native(), "reindex shares exact native LPFC allocation");
+    require(&replacement.native() == &original.native(), "reindex shares exact native FC allocation");
     require(replacement.native().bytes().data() == retained.native().bytes().data(), "retained world keeps native bytes");
     for (std::size_t i = 0; i != old_samples.size(); ++i) {
       require(original.false_borrow(i) && retained.false_borrow(i), "old index keeps equality flags");
@@ -316,13 +322,10 @@ namespace {
     std::array<bit_string, 2> bad_samples{{keys[2], keys[1]}};
     rejects([&] { profile_blob<P>::build({}, bad_samples); });
     std::array<bit_string, 1> sample{{keys[1]}};
-    std::array<std::uint64_t, 2> wrong_ceilings{0, 0};
-    rejects([&] { profile_blob<P>::build({}, sample, 18, wrong_ceilings); });
-    rejects([&] { profile_blob<P>::build({}, sample, 18, {}, static_cast<profile_borrowed_policy>(99)); });
     if constexpr (P::unit == profile_unit::byte) {
       auto valid = profile_blob<P>::build({}, sample);
       auto odd = bit_string::from_bits("1");
-      rejects([&] { valid.search_window(odd.view(), 0, {}); });
+      rejects([&] { valid.search_window(0, profile_query_context<P>(odd.view())); });
     }
   }
 
