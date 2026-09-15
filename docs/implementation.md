@@ -658,9 +658,14 @@ without duplicating ownership. No inherited SQLite connection is used.
   it before publication; tests reject tampered first delivery and replay.
 - Fingerprint policies use addition, subtraction and multiplication, without
   division. Wrapping 64-bit arithmetic and GF(2^8) are exercised policies.
-- `save`/`restore` use a versioned **resolved-table reference export**, with
-  magic `DIETREF1`, an explicit value codec and binary-safe keys. This is not
-  the intended small manifest of pinned objects and does not establish crash
+- `save`/`restore` provide a **debug resolved-table dump**, conventionally a
+  `.rc` file. This is not an intended access pattern; normal persisted access
+  uses catalog object roots. The dump has
+  magic `DIET.RC` with a terminating zero (eight bytes), then little-endian
+  64-bit fields for format version 1, the value codec tag and record count.
+  The fixed header is 32 bytes. Each live entry then contributes its key byte
+  length, full binary-safe key and codec value in sorted order, without front
+  coding. Restore constructs a fresh reference table; callers own dump
   durability.
 
 The cola layer supplies a semantic oracle for attaching encoded blobs. Its eager
@@ -867,8 +872,10 @@ backends. Windows execution coverage is limited to the recorded rank component
 tests. Network transport and durable merge resumption remain separate work.
 
 Object envelopes use the eight-byte `DIET.KV`/`DIET.IX` signatures with a
-terminating zero; resolved-table reference exports use `DIETREF1`. Independent
-golden checks cover these bytes and the envelope CRC. Header validation and
+terminating zero; debug resolved-table dumps use the same eight-byte
+shape, `DIET.RC` plus a terminating zero, with a separate format version.
+Independent golden checks cover these bytes, the complete 32-byte empty
+reference header and the envelope CRC. Header validation and
 reference restore reject incompatible signatures even with otherwise valid
 fields and checksums.
 

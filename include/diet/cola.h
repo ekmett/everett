@@ -81,8 +81,8 @@ namespace diet {
   }
 
   struct u64_cola_codec {
-    // A codec's format tag belongs to the reference export, not the future
-    // blob allocation/manifest format. Custom fixed-width values supply a codec.
+    // The codec tag identifies values in the resolved-table reference export.
+    // Custom fixed-width values supply a codec.
     static constexpr std::uint64_t format_tag = 1;
     static void write(std::ostream & out, std::uint64_t value) {
       cola_detail::write_u64(out, value);
@@ -187,13 +187,15 @@ namespace diet {
       return result;
     }
 
-    // Portable resolved-table export for initial save/restore tests. This is
-    // deliberately distinct from the planned small manifest of pinned blobs.
+    // Debug resolved-table dump (.rc): every live entry in sorted order, with
+    // full keys without front coding followed by codec values. This is not an
+    // intended access pattern; catalog saves retain object roots separately.
     // Callers own atomic file replacement, durability and codec/hash agreement.
     template <class C = u64_cola_codec>
     void save(std::ostream & out, C codec = {}) const {
-      constexpr std::string_view magic = "DIETREF1";
+      constexpr std::string_view magic{"DIET.RC\0", 8};
       out.write(magic.data(), magic.size());
+      cola_detail::write_u64(out, 1);
       cola_detail::write_u64(out, C::format_tag);
       cola_detail::write_u64(out, live_size());
       for (auto const & entry : resolved()) {
@@ -209,8 +211,10 @@ namespace diet {
       cola_import_limits limits = {}) {
       std::array<char, 8> magic;
       in.read(magic.data(), magic.size());
-      if (!in || std::string_view(magic.data(), magic.size()) != "DIETREF1")
+      if (!in || std::string_view(magic.data(), magic.size()) != std::string_view{"DIET.RC\0", 8})
         throw std::runtime_error("invalid cola export header");
+      if (cola_detail::read_u64(in) != 1)
+        throw std::runtime_error("unsupported cola export version");
       if (cola_detail::read_u64(in) != C::format_tag)
         throw std::runtime_error("cola export value codec mismatch");
       auto count = cola_detail::read_u64(in);

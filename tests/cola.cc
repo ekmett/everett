@@ -220,7 +220,7 @@ namespace {
     std::ostringstream output(std::ios::binary);
     base.save(output);
     auto bytes = output.str();
-    require(bytes.size() >= 8 && bytes.substr(0, 8) == "DIETREF1",
+    require(bytes.size() >= 32 && std::string_view(bytes.data(), 8) == std::string_view{"DIET.RC\0", 8},
       "Diet reference signature differs from golden bytes");
     for (std::size_t size = 0; size < bytes.size(); ++size) {
       std::istringstream in(bytes.substr(0, size), std::ios::binary);
@@ -235,7 +235,17 @@ namespace {
     std::istringstream incompatible_magic(invalid, std::ios::binary);
     rejects([&] { cola::restore(incompatible_magic); }, "incompatible export identifier rejected");
     invalid = bytes;
-    invalid[8] = 2;
+    invalid[7] = 1;
+    std::istringstream bad_terminator(invalid, std::ios::binary);
+    rejects([&] { cola::restore(bad_terminator); }, "signature terminating zero is required");
+    for (auto offset : {8, 15}) {
+      invalid = bytes;
+      invalid[std::size_t(offset)] = 2;
+      std::istringstream bad_version(invalid, std::ios::binary);
+      rejects([&] { cola::restore(bad_version); }, "unsupported export format version rejected");
+    }
+    invalid = bytes;
+    invalid[16] = 2;
     std::istringstream bad_codec(invalid, std::ios::binary);
     rejects([&] { cola::restore(bad_codec); }, "wrong fixed-value codec rejected");
     std::istringstream record_limit(bytes, std::ios::binary);
@@ -246,7 +256,7 @@ namespace {
       "untrusted key allocation bounded");
 
     // Exercise actual file streams in a unique temporary directory. This does
-    // not claim fsync/crash publication or the future pinned-blob save format.
+    // not claim fsync/crash publication or catalog-root persistence.
     auto directory = std::filesystem::temp_directory_path() /
       ("diet-cola-" + std::to_string(reinterpret_cast<std::uintptr_t>(&base)));
     require(std::filesystem::create_directory(directory), "create unique test save directory");
@@ -255,10 +265,10 @@ namespace {
       ~cleanup() { std::error_code error; std::filesystem::remove_all(path, error); }
     } guard{directory};
     {
-      std::ofstream file(directory / "save.ref", std::ios::binary);
+      std::ofstream file(directory / "save.rc", std::ios::binary);
       base.save(file);
     }
-    std::ifstream file(directory / "save.ref", std::ios::binary);
+    std::ifstream file(directory / "save.rc", std::ios::binary);
     auto restored = cola::restore(file);
     require(restored.resolved() == base.resolved(), "disk save restores embedded NUL and extreme values");
     require(restored.signature() == base.signature(), "disk restore recomputes signature");
@@ -266,9 +276,11 @@ namespace {
     auto empty = cola{};
     std::ostringstream empty_bytes;
     empty.save(empty_bytes);
-    constexpr std::array<unsigned char, 24> empty_golden{
-      'D', 'I', 'E', 'T', 'R', 'E', 'F', '1', 1, 0, 0, 0, 0, 0, 0, 0,
-      0, 0, 0, 0, 0, 0, 0, 0};
+    constexpr std::array<unsigned char, 32> empty_golden{
+      'D', 'I', 'E', 'T', '.', 'R', 'C', 0, // eight-byte signature
+      1, 0, 0, 0, 0, 0, 0, 0, // export format version
+      1, 0, 0, 0, 0, 0, 0, 0, // value codec tag
+      0, 0, 0, 0, 0, 0, 0, 0}; // record count
     auto encoded_empty = empty_bytes.str();
     require(encoded_empty.size() == empty_golden.size() &&
       std::equal(empty_golden.begin(), empty_golden.end(), encoded_empty.begin()),
