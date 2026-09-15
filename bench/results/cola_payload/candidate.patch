@@ -1,0 +1,111 @@
+diff --git a/include/diet/cola_index.h b/include/diet/cola_index.h
+index e67440b..293cac5 100644
+--- a/include/diet/cola_index.h
++++ b/include/diet/cola_index.h
+@@ -224,13 +224,15 @@ namespace diet {
+   // This is a fractional-index representation, not a scheduler or chronology.
+   // Default parameters own native arrays and a homogeneous main chain. A
+   // supplied Native/Main pair instead yields a construction artifact retaining
+-  // those exact owners; its borrowed payload/navigation are newly built output.
++  // those exact owners; navigation is rebuilt and borrowed payload can be shared
++  // from a prior artifact with the same exact target.
+   // Persist such a mixed artifact before adopting a homogeneous mapped query.
+   template <class P, class Native, class Main> struct cola_index {
+     using policy_type = P;
+     using native_array = Native;
+     using target_type = std::conditional_t<std::is_void_v<Main>, cola_index, Main>;
+     using borrowed_array = profile_array<P, stream_role::borrowed>;
++    using borrowed_pointer = std::shared_ptr<borrowed_array const>;
+     using native_pointer = std::shared_ptr<native_array const>;
+     using pair_type = std::shared_ptr<cola_index const>;
+     using main_pointer = std::shared_ptr<target_type const>;
+@@ -250,7 +252,7 @@ namespace diet {
+     native_pointer native_owner() const noexcept { return native_; }
+     native_array const & native() const & { require_active(); return *native_; }
+     native_array const & native() const && = delete;
+-    borrowed_array const & borrowed(unsigned route) const & { require_active(); return borrowed_[cola_detail::route(route)]; }
++    borrowed_array const & borrowed(unsigned route) const & { require_active(); return *borrowed_[cola_detail::route(route)]; }
+     borrowed_array const & borrowed(unsigned) const && = delete;
+     borrowed_array const & borrowed(cola_target route) const & { return borrowed(unsigned(route)); }
+     borrowed_array const & borrowed(cola_target) const && = delete;
+@@ -272,7 +274,7 @@ namespace diet {
+     std::uint64_t group_count() const noexcept { auto n = virtual_size(); return n / group_size + (n % group_size != 0); }
+     cola_index_view<P> view() const & {
+       require_active();
+-      return {native_->view(), {borrowed_[0].view(), borrowed_[1].view()}, {ranks_[0].view(), ranks_[1].view()},
++      return {native_->view(), {borrowed_[0]->view(), borrowed_[1]->view()}, {ranks_[0].view(), ranks_[1].view()},
+         {flags_[0], flags_[1]}, {word_view(std::span<std::uint64_t const>(cuts_[0])),
+           word_view(std::span<std::uint64_t const>(cuts_[1]))}, count_};
+     }
+@@ -288,7 +290,7 @@ namespace diet {
+     native_pointer native_;
+     main_pointer main_;
+     native_pointer secondary_;
+-    std::array<borrowed_array, 2> borrowed_;
++    std::array<borrowed_pointer, 2> borrowed_;
+     std::array<rank_groups<group_size>, 2> ranks_;
+     std::array<std::vector<std::byte>, 2> flags_;
+     std::array<std::vector<std::uint64_t>, 2> cuts_;
+@@ -297,7 +299,7 @@ namespace diet {
+       if (!native_) error_detail::raise<std::logic_error>("moved-from COLA index");
+     }
+     cola_index(native_pointer native, main_pointer main, native_pointer secondary,
+-        std::array<borrowed_array, 2> borrowed, std::array<rank_groups<group_size>, 2> ranks,
++        std::array<borrowed_pointer, 2> borrowed, std::array<rank_groups<group_size>, 2> ranks,
+         std::array<std::vector<std::byte>, 2> flags, std::array<std::vector<std::uint64_t>, 2> cuts,
+         std::uint64_t count)
+       : native_(std::move(native)), main_(std::move(main)), secondary_(std::move(secondary)),
+@@ -387,7 +389,11 @@ namespace diet {
+     using pair_type = typename index_type::pair_type;
+     using main_pointer = typename index_type::main_pointer;
+     using target_type = typename index_type::target_type;
+-    explicit cola_index_builder(native_pointer native, main_pointer main = {}, native_pointer secondary = {})
++    // A prior artifact supplies only immutable FC/EF payloads whose present
++    // target has the same exact owner. It does not retain the old artifact or
++    // skip any source traversal, validation, rank, cut or equality work.
++    explicit cola_index_builder(native_pointer native, main_pointer main = {}, native_pointer secondary = {},
++                                pair_type reuse_source = {})
+       : native_(checked(std::move(native))), main_(std::move(main)), secondary_(std::move(secondary)) {
+       auto remaining = std::numeric_limits<std::uint64_t>::max() - native_->size();
+       auto primary_count = main_ ? main_->group_count() : 0;
+@@ -397,6 +403,11 @@ namespace diet {
+       if (main_ || secondary_) native_cursor_.emplace(native_->view());
+       if (main_) primary_cursor_.emplace(main_);
+       if (secondary_) secondary_cursor_.emplace(secondary_->view());
++      if (reuse_source) {
++        reuse_source->require_active();
++        if (main_ && main_ == reuse_source->main_) reused_[0] = reuse_source->borrowed_[0];
++        if (secondary_ && secondary_ == reuse_source->secondary_) reused_[1] = reuse_source->borrowed_[1];
++      }
+     }
+     cola_index_builder(cola_index_builder const &) = delete;
+     cola_index_builder & operator=(cola_index_builder const &) = delete;
+@@ -435,7 +446,7 @@ namespace diet {
+             // Along a sorted walk the minimum adjacent LCP since the preceding
+             // borrow is its exact LCP with this key. Reuse that same frontier
+             // for FC output instead of comparing the inherited prefix again.
+-            writers_[route].append_known(key, borrowed_count_[route] ? cut_common_[route] : 0);
++            if (!reused_[route]) writers_[route].append_known(key, borrowed_count_[route] ? cut_common_[route] : 0);
+             auto ordinal = borrowed_count_[route]++;
+             if (!(ordinal & 7)) flags_[route].push_back(std::byte{0});
+             if (native_equal_) flags_[route].back() |= std::byte(1u << (ordinal & 7));
+@@ -465,7 +476,10 @@ namespace diet {
+       if (!done()) error_detail::raise<std::logic_error>("COLA builder has remaining input");
+       try {
+         if (width_) flush_group();
+-        std::array<typename index_type::borrowed_array, 2> borrowed{writers_[0].finish(), writers_[1].finish()};
++        auto borrowed = reused_;
++        for (unsigned route = 0; route != 2; ++route)
++          if (!borrowed[route]) borrowed[route] =
++            std::make_shared<typename index_type::borrowed_array const>(writers_[route].finish());
+         std::array<rank_groups<P::group_size>, 2> ranks{ranks_[0].finish(), ranks_[1].finish()};
+         index_type result(native_, main_, secondary_, std::move(borrowed), std::move(ranks),
+           std::move(flags_), std::move(cuts_), count_);
+@@ -481,6 +495,7 @@ namespace diet {
+     std::optional<cola_sample_cursor<P, target_type>> primary_cursor_;
+     std::optional<profile_cursor<P>> secondary_cursor_;
+     std::array<profile_borrowed_writer<P>, 2> writers_;
++    std::array<typename index_type::borrowed_pointer, 2> reused_;
+     std::array<rank_groups_builder<P::group_size>, 2> ranks_;
+     std::array<std::vector<std::byte>, 2> flags_;
+     std::array<std::vector<std::uint64_t>, 2> cuts_;

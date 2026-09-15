@@ -1,0 +1,833 @@
+{
+  "started": "2026-09-15T21:09:56.388827+00:00",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "source_sha256": "e79265bd14d2d732083e8605df529a5821223b5d353d88fed597f048ef414fbc",
+  "runner_sha256": "86f61294a6a21474c16379e4d0aa3abce372435a1f141804cb91b68f86ee4cce",
+  "trials": 5,
+  "rounds": 3,
+  "variants": {
+    "baseline": {
+      "revision": "df1cb2dce83280503d4c2276dffbcace4a26a914",
+      "headers_sha256": {
+        "include/diet/cola.h": "e21b698550309f33d4cdb84688955b6b9a77b0d49733dd446cd9454d4f086070",
+        "include/diet/cola_index.h": "442aa8e10d96a0f4ad17e8e209584ebb0f8ef264f07988ba701e66b2dd66cfd6",
+        "include/diet/cola_local_merge.h": "91ef505c4bd4480749d9cc793538bbd8a1445853510a17a124ee9d4c505c3596",
+        "include/diet/cola_query.h": "45b69c2f818d7fc8da6e90dca470ef98bb941a54511f93079556c3c076d1e998",
+        "include/diet/cola_sections.h": "f02af58250dbe8dfd647fdd2e91e1d5ada7762dde8b1270b2d3a884651483f27",
+        "include/diet/crc32c.h": "cf739c872638cff868f7eeacc3e065af0decda5450506417f2674e1b157f6fc0",
+        "include/diet/detail/crc32c_arm_eor3.inc": "7755091b3e39a7664016d02b2ed01bb7879a72af65ba4bd407e5900070cc0ae5",
+        "include/diet/detail/crc32c_arm_pmull.inc": "b6b532595a666f259072a8d7186460c8f659de7a3176adb395850e43ed23d382",
+        "include/diet/detail/crc32c_arm_scalar.inc": "75f873c0a639a8d1fb6624c2d7f7ed9bbe43f912cc0df2b590603bb2bae9a153",
+        "include/diet/detail/crc32c_portable.inc": "ddb006d54b6c193a827214be300c41103ae5e7b8fb110910f217b5727172c6de",
+        "include/diet/detail/crc32c_x86_avx512.inc": "df4db10219b51e65bdcbfe57f92f85de292aa6ed30823d71f17dde75bf310d6c",
+        "include/diet/detail/crc32c_x86_pclmul.inc": "0323f3e95fd6414d3521a12e9879b3d8120ae7843c43ce4d2236a234af883a87",
+        "include/diet/detail/crc32c_x86_scalar.inc": "716586e61c8730beb4d71bd2eb779941c8972202ccd76648aa6d6379f9d2b965",
+        "include/diet/detail/crc32c_x86_vpclmul.inc": "55048fdceeaaa990be5c01795ae12a2e46d60d2af28b833ac20a500932bfcd30",
+        "include/diet/durability.h": "542a2c8fb9567d33ba0b6757aee6360e3708c6fa9efa16f94b83a26e9c837241",
+        "include/diet/elias_fano.h": "a257027b91cc01ac892a16fb0fdea6902ce7a738679da5fc53c1b66cc26f060f",
+        "include/diet/error_detail.h": "db138423788773648da9351425fe1526ac7fa32689fa185a574df9d20db8c403",
+        "include/diet/file.h": "1aea6d3ec74061754ef7fc0a2d6c4243b953f89e7d3fde2ea05e16651be32a0a",
+        "include/diet/file_index_builder.h": "c22c3e5fd9a4103c6ade3cba1a18ea8294479cc40e6ff19ed5d05809e22c6716",
+        "include/diet/file_index_pipeline.h": "2b49f6ede0edb52a15811b887061b25f04bb4bd0225fb068690272d381c1af9c",
+        "include/diet/fingerprint.h": "1257a2e153b1333a40c7c326f3f9f1950992fa3273adbc525cf25e436861d53d",
+        "include/diet/fridge.h": "d87c5a1891ecbae8f8ed079eaf03a570bb5c7fb980721e59b0893aa8f044ddda",
+        "include/diet/index_builder.h": "66f6a19d9c3340f7a3730baf5104edbd3f290777554ef802ed381cedcb8c6f21",
+        "include/diet/index_pipeline.h": "d6d2c495fea4d335672e55f9c2e6b9a5acb59c70d23cc92707d9e3ccffa2200e",
+        "include/diet/index_pipeline_detail.h": "10644750812595d5098bb5735608a572762ac9cedb5f7729de99fe42b6b48572",
+        "include/diet/key_detail.h": "3adbd28bd6223fcd6516184cca51a9797728f39ded5a02ea4582e784a83b0a51",
+        "include/diet/mapped_blob.h": "a221511b03edb9f19c419aaf4bed325def210ee7d3c0ce130e9f7a20ead7dc26",
+        "include/diet/mapped_cola.h": "7e895b932ec0968b3a9fd9715f2ae89b2e60787ff3a596a56ba78f0946e7d923",
+        "include/diet/mapped_file.h": "f36020a8dd626f0139c5af36de749d80d059419f43f3bbf66b08d4a1c2d3cb69",
+        "include/diet/native_file_merge.h": "8577b1585d4d05b1eafb3c9394d5a1b82f447271419793ee57ec7aa44acb5663",
+        "include/diet/native_file_writer.h": "abd03524142eeae9263a40981c7eb6003f8e5e05fc27d4b908e5ac840ea61b2b",
+        "include/diet/native_merge.h": "711508b4607b34c43f306a59bd646f8af1a74b3d70c5ffadf9020cee4ba066f8",
+        "include/diet/native_writer.h": "e738a6aca604036d8cf347a49a025606f475ccf4d7c842f24931360ce4ceed7d",
+        "include/diet/object_path.h": "366d9ed9bb2fcc08e0186acb2c91e1d0310d24a1fa866576da0d867bfa365cb7",
+        "include/diet/object_stream.h": "e0ddaf10ac801345ff1366e3226951c4c058a22cf1454de7707ba42cc79000e0",
+        "include/diet/object_writer.h": "b77dfc577dba315ab1dbc04532d9f55d95d5a65f99f8a21ecb8fbf8b6c0704c0",
+        "include/diet/pins.h": "bd3b952c10ff51b07559e0fba6af63c6509d91e8dc59b3028bbdd6821ffac42e",
+        "include/diet/policy.h": "11b13cf8ed9794844f4e2fbb8d9af504bea928482b37645f4eeddfe009b07b3e",
+        "include/diet/profile.h": "3171d016f38b39b0c79871980e49938d7c0d437dd5aa61f2ea56d0a51683c9ba",
+        "include/diet/profile_blob.h": "51b38358058b7bdc6d1ffb25491998fb3b8ea3a440d76b586f502e300cb55959",
+        "include/diet/profile_file_output.h": "a786334ab79fb3d9bcc4ed89bb89b606a11734c202ad93b72427dfdeefd00dc4",
+        "include/diet/profile_index.h": "cd21fb97d74b09789ffa559aab4d45325e8d4323cf8c67fd1b852d37efe95383",
+        "include/diet/query.h": "54e103c6e3cf14427c53f3bbdd4d659bd196f63a96d63e446c4db24c567e2631",
+        "include/diet/rank.h": "1cad2912fb0be700f9c1a3d8acae1363a1cc5dff4cf695fded3dbb5431ae4575",
+        "include/diet/rank15.h": "5d938cd4ac92d4b1437daab1fb59f2c1ca4af81399e65742996d1ce47dc796ef",
+        "include/diet/rank_groups.h": "e32ae6020c6196a9c0747be2f39262bd76838c7c0c1ca427a834cc1ca3d957e6",
+        "include/diet/sampling.h": "2bc6829c62fa9732175c6cc1d070b14992691688b99714e9dcaa746721d8dec9",
+        "include/diet/sections.h": "972ec31cb86a6124accd28b0fad85819e51af82a2db55a2c3602577d1d839ca5",
+        "include/diet/sqlite_catalog.h": "e115947f08285e95d77a36491152eb62d2ea652896d73842258e143503a4a7bd",
+        "include/diet/word_view.h": "5324e147a83d4508b7298ef44b7dd93e525f1a0ef6f6dda4f5206589ad340c17"
+      },
+      "commands": [
+        [
+          "clang++",
+          "-std=c++20",
+          "-O3",
+          "-DNDEBUG",
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic",
+          "-Werror",
+          "-I/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/baseline/include",
+          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
+          "-o",
+          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/baseline/run"
+        ],
+        [
+          "clang++",
+          "-std=c++20",
+          "-O3",
+          "-DNDEBUG",
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic",
+          "-Werror",
+          "-I/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/baseline/include",
+          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
+          "-o",
+          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/baseline/run-alloc",
+          "-DDIET_BENCH_ALLOCATIONS"
+        ]
+      ],
+      "binary_sha256": {
+        "run": "271c30f5e2bb3eef96b00402c5c118c77deda7bba89ac44598e2c636f3418866",
+        "run-alloc": "daced03d430542cbd1dede20d1cf1e27142ab68545287d1e114e0a91d380d918"
+      }
+    },
+    "candidate": {
+      "revision": "63c5de665fd0232e7207d9d8268aa012c66008ce",
+      "headers_sha256": {
+        "include/diet/cola.h": "e21b698550309f33d4cdb84688955b6b9a77b0d49733dd446cd9454d4f086070",
+        "include/diet/cola_index.h": "13629ce14058c3474efb8022492fa1c784f71784965429d0ef1c789b400f7bb6",
+        "include/diet/cola_local_merge.h": "91ef505c4bd4480749d9cc793538bbd8a1445853510a17a124ee9d4c505c3596",
+        "include/diet/cola_query.h": "45b69c2f818d7fc8da6e90dca470ef98bb941a54511f93079556c3c076d1e998",
+        "include/diet/cola_sections.h": "f02af58250dbe8dfd647fdd2e91e1d5ada7762dde8b1270b2d3a884651483f27",
+        "include/diet/crc32c.h": "cf739c872638cff868f7eeacc3e065af0decda5450506417f2674e1b157f6fc0",
+        "include/diet/detail/crc32c_arm_eor3.inc": "7755091b3e39a7664016d02b2ed01bb7879a72af65ba4bd407e5900070cc0ae5",
+        "include/diet/detail/crc32c_arm_pmull.inc": "b6b532595a666f259072a8d7186460c8f659de7a3176adb395850e43ed23d382",
+        "include/diet/detail/crc32c_arm_scalar.inc": "75f873c0a639a8d1fb6624c2d7f7ed9bbe43f912cc0df2b590603bb2bae9a153",
+        "include/diet/detail/crc32c_portable.inc": "ddb006d54b6c193a827214be300c41103ae5e7b8fb110910f217b5727172c6de",
+        "include/diet/detail/crc32c_x86_avx512.inc": "df4db10219b51e65bdcbfe57f92f85de292aa6ed30823d71f17dde75bf310d6c",
+        "include/diet/detail/crc32c_x86_pclmul.inc": "0323f3e95fd6414d3521a12e9879b3d8120ae7843c43ce4d2236a234af883a87",
+        "include/diet/detail/crc32c_x86_scalar.inc": "716586e61c8730beb4d71bd2eb779941c8972202ccd76648aa6d6379f9d2b965",
+        "include/diet/detail/crc32c_x86_vpclmul.inc": "55048fdceeaaa990be5c01795ae12a2e46d60d2af28b833ac20a500932bfcd30",
+        "include/diet/durability.h": "542a2c8fb9567d33ba0b6757aee6360e3708c6fa9efa16f94b83a26e9c837241",
+        "include/diet/elias_fano.h": "a257027b91cc01ac892a16fb0fdea6902ce7a738679da5fc53c1b66cc26f060f",
+        "include/diet/error_detail.h": "db138423788773648da9351425fe1526ac7fa32689fa185a574df9d20db8c403",
+        "include/diet/file.h": "1aea6d3ec74061754ef7fc0a2d6c4243b953f89e7d3fde2ea05e16651be32a0a",
+        "include/diet/file_index_builder.h": "c22c3e5fd9a4103c6ade3cba1a18ea8294479cc40e6ff19ed5d05809e22c6716",
+        "include/diet/file_index_pipeline.h": "2b49f6ede0edb52a15811b887061b25f04bb4bd0225fb068690272d381c1af9c",
+        "include/diet/fingerprint.h": "1257a2e153b1333a40c7c326f3f9f1950992fa3273adbc525cf25e436861d53d",
+        "include/diet/fridge.h": "d87c5a1891ecbae8f8ed079eaf03a570bb5c7fb980721e59b0893aa8f044ddda",
+        "include/diet/index_builder.h": "66f6a19d9c3340f7a3730baf5104edbd3f290777554ef802ed381cedcb8c6f21",
+        "include/diet/index_pipeline.h": "d6d2c495fea4d335672e55f9c2e6b9a5acb59c70d23cc92707d9e3ccffa2200e",
+        "include/diet/index_pipeline_detail.h": "10644750812595d5098bb5735608a572762ac9cedb5f7729de99fe42b6b48572",
+        "include/diet/key_detail.h": "3adbd28bd6223fcd6516184cca51a9797728f39ded5a02ea4582e784a83b0a51",
+        "include/diet/mapped_blob.h": "a221511b03edb9f19c419aaf4bed325def210ee7d3c0ce130e9f7a20ead7dc26",
+        "include/diet/mapped_cola.h": "7e895b932ec0968b3a9fd9715f2ae89b2e60787ff3a596a56ba78f0946e7d923",
+        "include/diet/mapped_file.h": "f36020a8dd626f0139c5af36de749d80d059419f43f3bbf66b08d4a1c2d3cb69",
+        "include/diet/native_file_merge.h": "8577b1585d4d05b1eafb3c9394d5a1b82f447271419793ee57ec7aa44acb5663",
+        "include/diet/native_file_writer.h": "abd03524142eeae9263a40981c7eb6003f8e5e05fc27d4b908e5ac840ea61b2b",
+        "include/diet/native_merge.h": "711508b4607b34c43f306a59bd646f8af1a74b3d70c5ffadf9020cee4ba066f8",
+        "include/diet/native_writer.h": "e738a6aca604036d8cf347a49a025606f475ccf4d7c842f24931360ce4ceed7d",
+        "include/diet/object_path.h": "366d9ed9bb2fcc08e0186acb2c91e1d0310d24a1fa866576da0d867bfa365cb7",
+        "include/diet/object_stream.h": "e0ddaf10ac801345ff1366e3226951c4c058a22cf1454de7707ba42cc79000e0",
+        "include/diet/object_writer.h": "b77dfc577dba315ab1dbc04532d9f55d95d5a65f99f8a21ecb8fbf8b6c0704c0",
+        "include/diet/pins.h": "bd3b952c10ff51b07559e0fba6af63c6509d91e8dc59b3028bbdd6821ffac42e",
+        "include/diet/policy.h": "11b13cf8ed9794844f4e2fbb8d9af504bea928482b37645f4eeddfe009b07b3e",
+        "include/diet/profile.h": "3171d016f38b39b0c79871980e49938d7c0d437dd5aa61f2ea56d0a51683c9ba",
+        "include/diet/profile_blob.h": "51b38358058b7bdc6d1ffb25491998fb3b8ea3a440d76b586f502e300cb55959",
+        "include/diet/profile_file_output.h": "a786334ab79fb3d9bcc4ed89bb89b606a11734c202ad93b72427dfdeefd00dc4",
+        "include/diet/profile_index.h": "cd21fb97d74b09789ffa559aab4d45325e8d4323cf8c67fd1b852d37efe95383",
+        "include/diet/query.h": "54e103c6e3cf14427c53f3bbdd4d659bd196f63a96d63e446c4db24c567e2631",
+        "include/diet/rank.h": "1cad2912fb0be700f9c1a3d8acae1363a1cc5dff4cf695fded3dbb5431ae4575",
+        "include/diet/rank15.h": "5d938cd4ac92d4b1437daab1fb59f2c1ca4af81399e65742996d1ce47dc796ef",
+        "include/diet/rank_groups.h": "e32ae6020c6196a9c0747be2f39262bd76838c7c0c1ca427a834cc1ca3d957e6",
+        "include/diet/sampling.h": "2bc6829c62fa9732175c6cc1d070b14992691688b99714e9dcaa746721d8dec9",
+        "include/diet/sections.h": "972ec31cb86a6124accd28b0fad85819e51af82a2db55a2c3602577d1d839ca5",
+        "include/diet/sqlite_catalog.h": "e115947f08285e95d77a36491152eb62d2ea652896d73842258e143503a4a7bd",
+        "include/diet/word_view.h": "5324e147a83d4508b7298ef44b7dd93e525f1a0ef6f6dda4f5206589ad340c17"
+      },
+      "commands": [
+        [
+          "clang++",
+          "-std=c++20",
+          "-O3",
+          "-DNDEBUG",
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic",
+          "-Werror",
+          "-I/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/candidate/include",
+          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
+          "-o",
+          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/candidate/run",
+          "-DDIET_REUSE"
+        ],
+        [
+          "clang++",
+          "-std=c++20",
+          "-O3",
+          "-DNDEBUG",
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic",
+          "-Werror",
+          "-I/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/candidate/include",
+          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
+          "-o",
+          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/candidate/run-alloc",
+          "-DDIET_BENCH_ALLOCATIONS",
+          "-DDIET_REUSE"
+        ]
+      ],
+      "binary_sha256": {
+        "run": "c35cf40ecfb5d81ccfba084988c9e6f128ef1e86c296b17bf9d556f4b752e7ea",
+        "run-alloc": "0fc268f034f0a1b3dc8204b364f37fc00f15ff4f959e1d3186a5228cdb15ba88"
+      }
+    }
+  },
+  "execution_order": [
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ]
+  ],
+  "wires": {
+    "baseline-0": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "candidate-0": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "candidate-1": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "baseline-1": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "baseline-2": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "candidate-2": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "candidate-3": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "baseline-3": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "baseline-4": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "candidate-4": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "candidate_reuse-0": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "candidate_reuse-1": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "candidate_reuse-2": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "candidate_reuse-3": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "candidate_reuse-4": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "baseline-0-alloc": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    },
+    "candidate-0-alloc": {
+      "bit-15-0.index": "bdcd5f07e5b8e64c14d11659eb5f838192e9875cb7f1e17131e5ae9c82c39886",
+      "bit-15-4096.index": "8d2abe0ab4c3377e7d2d983ddc9feee1e478fdc3d22579052b519c7711153587",
+      "bit-3-0.index": "6bce5b2ebbf94e6550fba6117a0ab514bfea0502047433a852030293a97f405c",
+      "bit-3-4096.index": "c4c9a3dea72e5df6f464a5525db1cb359f7cc94616de5350427616e5dc2b9e16",
+      "byte-15-0.index": "29f2b06b9ef6b059b23d3eb1a617c4de9b8fe1b8ac51ca5f17d32b83a8528dfd",
+      "byte-15-4096.index": "f9a8fee45e41c6d8f0ccd9472865b107f89b74dd435160d8e8796d107fd5bb65",
+      "byte-3-0.index": "14ec88b881ce899a9651fa46b81abfdc97639934066b3a583ba16c941e5673f1",
+      "byte-3-4096.index": "a0f3afdfb94986bb085c0cb54f03d4115963cd601619de7f28caee1cd554d960"
+    }
+  },
+  "sanitizer_command": [
+    "clang++",
+    "-std=c++20",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Wpedantic",
+    "-Werror",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer",
+    "-DDIET_REUSE",
+    "-I/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/candidate/include",
+    "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
+    "-o",
+    "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/sanitized"
+  ],
+  "results.csv_sha256": "2a8acf347c1cf8828ca4848f46d55c8b28be1981c85a407e0bdef6128a547699",
+  "allocations.csv_sha256": "d1a20de1e96c0141587303725a6c502c0afee83e89924e114279b3fca40988e3",
+  "summary": [
+    {
+      "case": "bit-15-0",
+      "operation": "build",
+      "baseline0": {
+        "min": 362.43047112462006,
+        "median": 369.52241641337383,
+        "max": 434.53951367781156
+      },
+      "candidate0": {
+        "min": 365.5490121580547,
+        "median": 378.92629179331306,
+        "max": 422.0809270516717
+      },
+      "candidate_reuse0": {
+        "min": 348.2302431610942,
+        "median": 366.07142857142856,
+        "max": 420.1337386018237
+      },
+      "candidate_reuse1": {
+        "min": 340.83738601823705,
+        "median": 366.6413373860182,
+        "max": 432.75075987841944
+      },
+      "candidate_reuse2": {
+        "min": 342.008358662614,
+        "median": 365.97644376899694,
+        "max": 436.09118541033433
+      },
+      "candidate_reuse3": {
+        "min": 331.03761398176295,
+        "median": 347.8024316109422,
+        "max": 431.00949848024317
+      }
+    },
+    {
+      "case": "bit-15-0",
+      "operation": "query",
+      "baseline0": {
+        "min": 5691.874267578125,
+        "median": 5863.861083984375,
+        "max": 5958.465576171875
+      },
+      "candidate0": {
+        "min": 5690.36865234375,
+        "median": 5918.161865234375,
+        "max": 5989.26806640625
+      },
+      "candidate_reuse0": {
+        "min": 5680.216552734375,
+        "median": 5907.012939453125,
+        "max": 6064.870361328125
+      }
+    },
+    {
+      "case": "bit-15-4096",
+      "operation": "build",
+      "baseline0": {
+        "min": 363.04787234042556,
+        "median": 385.17895136778117,
+        "max": 490.4380699088146
+      },
+      "candidate0": {
+        "min": 366.08738601823705,
+        "median": 385.495820668693,
+        "max": 471.7579787234043
+      },
+      "candidate_reuse0": {
+        "min": 353.54939209726444,
+        "median": 375.0315349544073,
+        "max": 439.0037993920973
+      },
+      "candidate_reuse1": {
+        "min": 342.5946048632219,
+        "median": 361.2272036474164,
+        "max": 444.6713525835866
+      },
+      "candidate_reuse2": {
+        "min": 344.96884498480244,
+        "median": 367.1952887537994,
+        "max": 406.1869300911854
+      },
+      "candidate_reuse3": {
+        "min": 336.468085106383,
+        "median": 354.213905775076,
+        "max": 432.5288753799392
+      }
+    },
+    {
+      "case": "bit-15-4096",
+      "operation": "query",
+      "baseline0": {
+        "min": 6404.96826171875,
+        "median": 6778.239013671875,
+        "max": 7061.167236328125
+      },
+      "candidate0": {
+        "min": 6562.02197265625,
+        "median": 6854.3193359375,
+        "max": 7211.904052734375
+      },
+      "candidate_reuse0": {
+        "min": 6397.623779296875,
+        "median": 6749.5830078125,
+        "max": 7060.92333984375
+      }
+    },
+    {
+      "case": "bit-3-0",
+      "operation": "build",
+      "baseline0": {
+        "min": 305.68260105448155,
+        "median": 315.39982425307556,
+        "max": 359.4244288224956
+      },
+      "candidate0": {
+        "min": 305.4407732864675,
+        "median": 319.11985940246046,
+        "max": 359.39525483304044
+      },
+      "candidate_reuse0": {
+        "min": 296.1555360281195,
+        "median": 306.75166959578206,
+        "max": 333.23813708260104
+      },
+      "candidate_reuse1": {
+        "min": 269.75694200351495,
+        "median": 291.19068541300527,
+        "max": 324.8022847100176
+      },
+      "candidate_reuse2": {
+        "min": 281.74428822495605,
+        "median": 292.67732864674866,
+        "max": 332.8646748681898
+      },
+      "candidate_reuse3": {
+        "min": 255.19929701230228,
+        "median": 265.8683655536028,
+        "max": 301.6915641476274
+      }
+    },
+    {
+      "case": "bit-3-0",
+      "operation": "query",
+      "baseline0": {
+        "min": 6294.138671875,
+        "median": 6525.27880859375,
+        "max": 6639.17041015625
+      },
+      "candidate0": {
+        "min": 6319.29541015625,
+        "median": 6522.430419921875,
+        "max": 6643.015380859375
+      },
+      "candidate_reuse0": {
+        "min": 6363.128662109375,
+        "median": 6478.668212890625,
+        "max": 6582.38720703125
+      }
+    },
+    {
+      "case": "bit-3-4096",
+      "operation": "build",
+      "baseline0": {
+        "min": 304.8841827768014,
+        "median": 315.31195079086115,
+        "max": 340.7001757469244
+      },
+      "candidate0": {
+        "min": 306.2096660808436,
+        "median": 320.5843585237258,
+        "max": 353.2659050966608
+      },
+      "candidate_reuse0": {
+        "min": 296.66801405975394,
+        "median": 311.6652021089631,
+        "max": 450.24165202108964
+      },
+      "candidate_reuse1": {
+        "min": 271.0091388400703,
+        "median": 280.8509666080844,
+        "max": 315.6267135325132
+      },
+      "candidate_reuse2": {
+        "min": 282.97451669595785,
+        "median": 290.05571177504396,
+        "max": 362.91739894551847
+      },
+      "candidate_reuse3": {
+        "min": 253.00966608084357,
+        "median": 267.45746924428823,
+        "max": 302.6288224956063
+      }
+    },
+    {
+      "case": "bit-3-4096",
+      "operation": "query",
+      "baseline0": {
+        "min": 7119.211669921875,
+        "median": 7498.47412109375,
+        "max": 7888.671875
+      },
+      "candidate0": {
+        "min": 7377.248291015625,
+        "median": 7569.305419921875,
+        "max": 7804.33154296875
+      },
+      "candidate_reuse0": {
+        "min": 6892.242431640625,
+        "median": 7417.10400390625,
+        "max": 7693.196533203125
+      }
+    },
+    {
+      "case": "byte-15-0",
+      "operation": "build",
+      "baseline0": {
+        "min": 232.80775075987842,
+        "median": 240.4384498480243,
+        "max": 298.6006838905775
+      },
+      "candidate0": {
+        "min": 235.67287234042553,
+        "median": 245.01329787234042,
+        "max": 278.41641337386017
+      },
+      "candidate_reuse0": {
+        "min": 227.94756838905775,
+        "median": 232.04787234042553,
+        "max": 304.6162613981763
+      },
+      "candidate_reuse1": {
+        "min": 222.61246200607903,
+        "median": 230.8449848024316,
+        "max": 256.80737082066867
+      },
+      "candidate_reuse2": {
+        "min": 224.27469604863222,
+        "median": 230.25911854103344,
+        "max": 312.21504559270517
+      },
+      "candidate_reuse3": {
+        "min": 218.7025075987842,
+        "median": 225.6048632218845,
+        "max": 277.46656534954406
+      }
+    },
+    {
+      "case": "byte-15-0",
+      "operation": "query",
+      "baseline0": {
+        "min": 3825.358154296875,
+        "median": 3997.35498046875,
+        "max": 4115.4990234375
+      },
+      "candidate0": {
+        "min": 3915.740966796875,
+        "median": 3961.934326171875,
+        "max": 4041.32080078125
+      },
+      "candidate_reuse0": {
+        "min": 3910.858154296875,
+        "median": 3967.722412109375,
+        "max": 4191.396240234375
+      }
+    },
+    {
+      "case": "byte-15-4096",
+      "operation": "build",
+      "baseline0": {
+        "min": 232.6812310030395,
+        "median": 235.64171732522797,
+        "max": 310.9802431610942
+      },
+      "candidate0": {
+        "min": 233.14019756838906,
+        "median": 238.665273556231,
+        "max": 288.35828267477206
+      },
+      "candidate_reuse0": {
+        "min": 227.69414893617022,
+        "median": 237.0345744680851,
+        "max": 240.99240121580547
+      },
+      "candidate_reuse1": {
+        "min": 225.46238601823708,
+        "median": 232.03229483282675,
+        "max": 243.49354103343464
+      },
+      "candidate_reuse2": {
+        "min": 223.30927051671733,
+        "median": 230.92401215805472,
+        "max": 260.54331306990883
+      },
+      "candidate_reuse3": {
+        "min": 219.01937689969606,
+        "median": 228.80243161094225,
+        "max": 281.2025075987842
+      }
+    },
+    {
+      "case": "byte-15-4096",
+      "operation": "query",
+      "baseline0": {
+        "min": 4383.015869140625,
+        "median": 4552.297119140625,
+        "max": 4780.8125
+      },
+      "candidate0": {
+        "min": 4287.80126953125,
+        "median": 4530.6396484375,
+        "max": 4650.67529296875
+      },
+      "candidate_reuse0": {
+        "min": 4275.919677734375,
+        "median": 4516.744140625,
+        "max": 4899.49560546875
+      }
+    },
+    {
+      "case": "byte-3-0",
+      "operation": "build",
+      "baseline0": {
+        "min": 204.13743409490334,
+        "median": 219.98400702987698,
+        "max": 269.3615114235501
+      },
+      "candidate0": {
+        "min": 206.1878734622144,
+        "median": 213.07855887521967,
+        "max": 232.45465729349738
+      },
+      "candidate_reuse0": {
+        "min": 202.86309314586995,
+        "median": 210.71318101933215,
+        "max": 223.92355008787345
+      },
+      "candidate_reuse1": {
+        "min": 193.7463971880492,
+        "median": 200.52724077328648,
+        "max": 222.21001757469244
+      },
+      "candidate_reuse2": {
+        "min": 196.08224956063268,
+        "median": 206.2463971880492,
+        "max": 245.82601054481546
+      },
+      "candidate_reuse3": {
+        "min": 184.95887521968365,
+        "median": 189.91652021089632,
+        "max": 249.84622144112478
+      }
+    },
+    {
+      "case": "byte-3-0",
+      "operation": "query",
+      "baseline0": {
+        "min": 4285.14599609375,
+        "median": 4455.01708984375,
+        "max": 4618.66259765625
+      },
+      "candidate0": {
+        "min": 4349.79248046875,
+        "median": 4468.617919921875,
+        "max": 4703.0234375
+      },
+      "candidate_reuse0": {
+        "min": 4422.73974609375,
+        "median": 4473.947998046875,
+        "max": 4557.952880859375
+      }
+    },
+    {
+      "case": "byte-3-4096",
+      "operation": "build",
+      "baseline0": {
+        "min": 204.6427065026362,
+        "median": 212.25096660808435,
+        "max": 402.72407732864673
+      },
+      "candidate0": {
+        "min": 206.68558875219685,
+        "median": 214.52108963093147,
+        "max": 228.44903339191563
+      },
+      "candidate_reuse0": {
+        "min": 202.37996485061512,
+        "median": 209.90773286467487,
+        "max": 244.96186291739895
+      },
+      "candidate_reuse1": {
+        "min": 192.36959578207382,
+        "median": 198.3597539543058,
+        "max": 216.78383128295255
+      },
+      "candidate_reuse2": {
+        "min": 195.94305799648507,
+        "median": 201.80140597539543,
+        "max": 283.80931458699473
+      },
+      "candidate_reuse3": {
+        "min": 185.24463971880493,
+        "median": 190.92706502636204,
+        "max": 203.7859402460457
+      }
+    },
+    {
+      "case": "byte-3-4096",
+      "operation": "query",
+      "baseline0": {
+        "min": 5040.659423828125,
+        "median": 5125.294921875,
+        "max": 8071.17724609375
+      },
+      "candidate0": {
+        "min": 4960.896728515625,
+        "median": 5142.110107421875,
+        "max": 5390.492919921875
+      },
+      "candidate_reuse0": {
+        "min": 4898.98681640625,
+        "median": 5092.59033203125,
+        "max": 5472.676513671875
+      }
+    }
+  ],
+  "completed": "2026-09-15T21:11:02.047807+00:00"
+}

@@ -1,0 +1,21 @@
+{
+  "reconstructed_headers": 50,
+  "all_match_measured_candidate": true,
+  "command": [
+    "git",
+    "apply",
+    "--unsafe-paths",
+    "--directory=/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-report-20260915/build-reproduction-check",
+    "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-report-20260915/bench/results/cola_payload/candidate.patch"
+  ],
+  "patch_sha256": "f046a2f02215f0669c764bf9fa0f0ea62ffff313fa22015f15010a5ca9163ce8",
+  "reproduction_runner_sha256": "45dd2465791b65caee9a7590d2fb866ec680176e0e7af6b354bd1dd975fb86fe",
+  "original_runner_preserved": true,
+  "measured_source_preserved": true,
+  "full_runner_smoke_passed": true,
+  "smoke_trials": 1,
+  "smoke_rounds": 1,
+  "smoke_metadata_sha256": "6b7633974070405f3e500cbf9f0db79142823bd09ed5415999ac6ec71456d1fb",
+  "smoke_gate_log": "20260915-171531-qpw9t1hf/output.log",
+  "smoke_not_used_for_timing_conclusions": true
+}

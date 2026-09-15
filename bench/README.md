@@ -15,3 +15,10 @@ arguments. Moving or renaming the repository does not change those Git objects.
 New measurements of Diet should record their own source hashes and results.
 The [implementation ledger](../docs/implementation.md) links the accepted
 measurements and describes the current library.
+
+Unadopted experiments
+--------------------
+
+- [Borrowed payload sharing](cola_payload.md): deterministic allocation savings
+  for reused in-memory routes, with default ownership costs and no persisted-pair
+  reuse. The report includes an archived patch for fresh-clone reproduction.
