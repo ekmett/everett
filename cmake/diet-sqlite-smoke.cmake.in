@@ -48,11 +48,31 @@ file(WRITE "${root}/source/core.cc" [=[
 int main() { return diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>::group_size != 15; }
 ]=])
 file(WRITE "${root}/source/sqlite.cc" [=[
-#include <diet/sqlite_catalog.h>
-#include <cstring>
+#include <diet/connection.h>
 int main() {
-  using P = diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
-  return std::strlen(diet::sqlite_catalog<P>::runtime_version()) == 0;
+#if defined(__APPLE__) || defined(__linux__)
+  auto pantry = diet::fridge<>::create("example-data");
+  auto db = pantry.connect("earth-616");
+  db.put("name", "Diet");
+  auto before = db.snapshot();
+  db.save("before-edit", before);
+  db.put("name", "A reduced COLA");
+  if (before.get("name") != "Diet" || db.get("name") != "A reduced COLA") return 1;
+  auto saved = db.load("before-edit");
+  if (!saved) return 2;
+  auto branch = db.fork("earth-617", *saved);
+  branch.put("name", "Another branch");
+  if (branch.get("name") != "Another branch" || saved->get("name") != "Diet") return 3;
+  auto base = db.snapshot();
+  auto left = base.put("partition/a", "updated A");
+  auto right = base.put("partition/b", "updated B");
+  db.apply(std::move(right)); db.apply(std::move(left));
+  auto ticket = db.put_async("async", "done");
+  ticket.get();
+  return db.get("async") != "done";
+#else
+  return 0;
+#endif
 }
 ]=])
 set(generator_args -G "@CMAKE_GENERATOR@")

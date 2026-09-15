@@ -26,10 +26,14 @@ First, some names for the intended aggregates:
   colas, timelines and retained references.
 - A **cola** is a logical state, independent of its current physical layout.
 - A **timeline** is an ordered progression of colas.
+- A **tap** follows the latest cola through mutable updates and equivalent
+  background merges. Named taps make that progression durable.
 - A **branch point** is a retained point from which a timeline can continue or
   fork; `branch_point` is the intended API spelling.
 
-`fridge<P>` opens and seals objects in an existing directory. It exposes
+`fridge<P>` opens and seals objects in an existing directory; `fridge<P>::create`
+also establishes missing directory names with explicit durability barriers.
+Its `connect` operation opens a [named typed tap](connection.md). It exposes
 `sort`, `blob`, `file`, `object_writer`, the mapped native/index/blob/query types,
 `cola`, `timeline` and `branch_point` associated types carrying the same policy.
 `open_query` reopens a prepared exact chain from its persisted pair identity;

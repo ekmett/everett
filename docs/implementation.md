@@ -25,6 +25,7 @@ for integration. These are development responsibilities.
 | Key primitives | `key_detail.h`, `profile.h`; `tests/profile.cc`; [key policies](keys.md) | bounded comparisons, bit movement, count framing and independent bit-level oracles |
 | Sort registry | `registry.h`, `policy.h`; `tests/registry.cc`, `tests/registry_compat.cc` | typed discriminator dispatch, width/unit inference, stable-code extension, file-local framing and catalog reopen under broader defaults |
 | Mutable tap | `tap.h`; `tests/tap.cc` | serialized immutable publication, bounded accepted input, readiness backpressure, cancellation, shutdown, exact logical identity and worker failure |
+| Named typed connection | `connection.h`; `tests/sqlite_catalog_connection.cc` | mutable and asynchronous commands, mapped snapshots, exact saves/forks, restart, stale publishers and healthy input rejection |
 | Encoded runtime | `cola_runtime.h`; `tests/cola_runtime.cc` | chronological runs, real native/index/carrier work, immutable publication, budget partition, mmap restoration and failed continuation isolation |
 | Runtime persistence | `runtime_store.h`; `tests/sqlite_catalog_runtime.cc` | exact graph sealing, weak owner caches, named checkpoints, saved frontiers, mapped reopening and pending carry restart |
 | Typed updates | `typed_cola.h`; `tests/typed_cola.cc` | replacement reads, chronological arrows, per-sort dispatch and hashes, validated deletes, disjoint contributions, mutable commands and snapshot metadata |
@@ -43,6 +44,14 @@ this package.
 ## Implemented foundations
 
 ### Active runtime and named frontiers
+
+`fridge<>::create(path).connect(name)` opens a default bit-profile string table.
+The [connection](connection.md) serializes mutable commands, publishes durable
+mapped results and services merge work in the background. Its synchronous
+`persistent_engine` is also available to caller-owned scheduling loops. Tests
+cover concurrent same-key commands, noncommutative arrows across reopen, saved
+generations, forks, rejected absent deletes and publication failures. The
+installed SQLite consumer exercises the README workflow.
 
 `cola_runtime<P, Compose>` admits encoded records, creates a real private binary
 carry queue, and publishes completed equivalent layouts. Its immutable snapshots
@@ -849,11 +858,12 @@ unchanged.
 
 File readers use the width encoded in each stream rather than demanding the
 current registry's global width hint. Physical unit, sampling, block size and
-count-code checks remain exact. The active handle that connects this registry
-to all reads, hash accounting and charged merge execution remains to be built.
-The existing profile grammar is the FC-string case. Per-sort record handlers
-must own key/value packing so fixed-width integer keys can be accessed directly
-without inherited FC controls; this codec dispatch is not implemented yet.
+count-code checks remain exact. `typed_engine` connects the registry to reads,
+hash accounting, conditional updates and merge composition. Its current
+transport uses canonical ordered keys and encoded arrows in the ordinary
+profile grammar. `sort_codec` implements leaf-owned key/value packing, including
+fixed-width integer keys; direct heterogeneous mapped integration is separate
+from that transport.
 The [schema-history extension](keys.md#schema-histories-and-migration) describes
 multiple historical registries and forward migration without claiming that
 runtime exists.
@@ -895,9 +905,11 @@ The [per-key category design](arrows.md) extends the semantics to composable
 diffs. It specifies composition, partition independence, exact endpoint deltas,
 query costs and dependency retention. `reference_cola` resolves replacements
 using optional values, and `profile_blob<P>` carries opaque value payloads.
-There is no generic arrow executor, category-dependent wire format or general
-normalization bound. A second concrete instance should test noncommuting changes
-before broadening the executor interface.
+`typed_engine` executes per-sort arrows and composes them in chronological
+order during native merges. A noncommutative append sort exercises that order,
+including hash accounting and snapshot restoration. Sort-specific stream
+grammars are implemented independently; their direct mapped integration and
+general normalization bounds remain separate concerns.
 
 ## Build and verification
 

@@ -39,7 +39,7 @@ list(APPEND diet_test_names cola_local_merge cola_local_merge_failure cola_runti
 if(DIET_ENABLE_SQLITE)
   list(APPEND diet_test_names sqlite_catalog sqlite_catalog_adversarial sqlite_catalog_vfs sqlite_catalog_restart sqlite_catalog_timeline sqlite_catalog_streamed)
   if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    list(APPEND diet_test_names sqlite_catalog_cola sqlite_catalog_taps sqlite_catalog_runtime)
+    list(APPEND diet_test_names sqlite_catalog_cola sqlite_catalog_taps sqlite_catalog_runtime sqlite_catalog_connection)
   endif()
 endif()
 foreach(diet_test IN LISTS diet_test_names)

@@ -1,12 +1,13 @@
 Detailed Usage
 ==============
 
-The [README](../README.md#quick-start) starts with the recommended settings and everyday
-query and snapshot APIs. This guide follows those operations through file
-construction, updates and merges, then explains the representation and tuning
-choices. We keep the same policy from input records to mapped queries.
+The [README](../README.md#quick-start) starts with the recommended named tap API.
+The [connection guide](connection.md) covers mutable commands, asynchronous
+tickets, snapshots and forks. This guide goes underneath that API to file
+construction, explicit updates and merges, then explains representation and
+tuning choices. We keep the same policy from input records to mapped queries.
 
-Start with a sort exposing `using encoding = byte_encoding<>` for byte strings,
+For low-level encoded blobs, use a sort exposing `using encoding = byte_encoding<>` for byte strings,
 or `bit_encoding<>` for packed bits, then use `storage_policy<tip<YourSort>>`.
 The registry derives the storage units from its sorts. Both encodings default
 to variable values, 15:1 sampling and physical blocks of 15 records; bit
