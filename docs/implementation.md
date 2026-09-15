@@ -658,22 +658,26 @@ without duplicating ownership. No inherited SQLite connection is used.
   it before publication; tests reject tampered first delivery and replay.
 - Fingerprint policies use addition, subtraction and multiplication, without
   division. Wrapping 64-bit arithmetic and GF(2^8) are exercised policies.
-- `save`/`restore` provide a **debug resolved-table dump**, conventionally a
-  `.rc` file. This is not an intended access pattern; normal persisted access
+- `debug_export`/`debug_import` provide a **debug resolved-table dump**,
+  conventionally a `.rc` file. This is not an intended access pattern; normal persisted access
   uses catalog object roots. The dump has
   magic `DIET.RC` with a terminating zero (eight bytes), then little-endian
   64-bit fields for format version 1, the value codec tag and record count.
   The fixed header is 32 bytes. Each live entry then contributes its key byte
   length, full binary-safe key and codec value in sorted order, without front
-  coding. Restore constructs a fresh reference table; callers own dump
+  coding. `debug_import` constructs a fresh reference table; callers own dump
   durability.
+
+`snapshot()` shares the reference model's existing state and run owners without
+materializing the resolved table. Catalog saves retain exact encoded roots;
+reopening those roots does not import a debug dump.
 
 The cola layer supplies a semantic oracle for attaching encoded blobs. Its eager
 ordered-map resolution is not the intended merge/query algorithm, and it has no
 logarithmic active-run-count guarantee. Batch generation may share an immutable
 base, while applying batches to one accumulator is serialized.
 
-The export does not persist round identity, accepted batch IDs or claimed keys.
+The debug dump does not persist round identity, accepted batch IDs or claimed keys.
 Durable update-round resumption requires additional manifest and replay metadata.
 The current hash interface is homogeneous; the sort- and full-key-dependent
 potential selection described in [keys.md](keys.md) and [arrows.md](arrows.md)
@@ -876,7 +880,7 @@ terminating zero; debug resolved-table dumps use the same eight-byte
 shape, `DIET.RC` plus a terminating zero, with a separate format version.
 Independent golden checks cover these bytes, the complete 32-byte empty
 reference header and the envelope CRC. Header validation and
-reference restore reject incompatible signatures even with otherwise valid
+`debug_import` reject incompatible signatures even with otherwise valid
 fields and checksums.
 
 The optional `DIET_BUILD_DOCS` configuration generates Doxygen HTML/XML and

@@ -67,13 +67,13 @@ namespace diet {
       std::array<char, 8> bytes;
       for (unsigned i = 0; i < 8; ++i) bytes[i] = char((value >> (8 * i)) & 255);
       out.write(bytes.data(), bytes.size());
-      if (!out) throw std::runtime_error("cola export write failed");
+      if (!out) throw std::runtime_error("cola debug export write failed");
     }
 
     inline std::uint64_t read_u64(std::istream & in) {
       std::array<unsigned char, 8> bytes;
       in.read(reinterpret_cast<char *>(bytes.data()), bytes.size());
-      if (!in) throw std::runtime_error("truncated cola export");
+      if (!in) throw std::runtime_error("truncated cola debug export");
       std::uint64_t value = 0;
       for (unsigned i = 0; i < 8; ++i) value |= std::uint64_t(bytes[i]) << (8 * i);
       return value;
@@ -81,7 +81,7 @@ namespace diet {
   }
 
   struct u64_cola_codec {
-    // The codec tag identifies values in the resolved-table reference export.
+    // The codec tag identifies values in debug resolved-table dumps.
     // Custom fixed-width values supply a codec.
     static constexpr std::uint64_t format_tag = 1;
     static void write(std::ostream & out, std::uint64_t value) {
@@ -90,6 +90,7 @@ namespace diet {
     static std::uint64_t read(std::istream & in) { return cola_detail::read_u64(in); }
   };
 
+  // Allocation bounds for debug_import of a resolved-table dump.
   struct cola_import_limits {
     std::uint64_t max_records = 1'000'000;
     std::uint64_t max_key_bytes = 64 * 1024 * 1024;
@@ -152,7 +153,7 @@ namespace diet {
     std::span<pin const> pins() const noexcept { return state_->owner.pins(); }
     pin_owner const & owner() const noexcept { return state_->owner; }
 
-    // A save/fork is just another owner of this exact immutable pin set.
+    // A snapshot/fork shares this exact immutable state and pin set.
     reference_cola snapshot() const { return *this; }
 
     std::vector<record> resolved() const {
@@ -192,7 +193,7 @@ namespace diet {
     // intended access pattern; catalog saves retain object roots separately.
     // Callers own atomic file replacement, durability and codec/hash agreement.
     template <class C = u64_cola_codec>
-    void save(std::ostream & out, C codec = {}) const {
+    void debug_export(std::ostream & out, C codec = {}) const {
       constexpr std::string_view magic{"DIET.RC\0", 8};
       out.write(magic.data(), magic.size());
       cola_detail::write_u64(out, 1);
@@ -203,23 +204,25 @@ namespace diet {
         out.write(entry.key.data(), static_cast<std::streamsize>(entry.key.size()));
         codec.write(out, *entry.value);
       }
-      if (!out) throw std::runtime_error("cola export write failed");
+      if (!out) throw std::runtime_error("cola debug export write failed");
     }
 
+    // Materializes a fresh reference table from a debug dump, rather than
+    // reopening pinned object roots.
     template <class C = u64_cola_codec>
-    static reference_cola restore(std::istream & in, C codec = {}, H hash = {},
+    static reference_cola debug_import(std::istream & in, C codec = {}, H hash = {},
       cola_import_limits limits = {}) {
       std::array<char, 8> magic;
       in.read(magic.data(), magic.size());
       if (!in || std::string_view(magic.data(), magic.size()) != std::string_view{"DIET.RC\0", 8})
-        throw std::runtime_error("invalid cola export header");
+        throw std::runtime_error("invalid cola debug export header");
       if (cola_detail::read_u64(in) != 1)
-        throw std::runtime_error("unsupported cola export version");
+        throw std::runtime_error("unsupported cola debug export version");
       if (cola_detail::read_u64(in) != C::format_tag)
-        throw std::runtime_error("cola export value codec mismatch");
+        throw std::runtime_error("cola debug export value codec mismatch");
       auto count = cola_detail::read_u64(in);
       if (count > limits.max_records || count > std::numeric_limits<std::size_t>::max())
-        throw std::runtime_error("cola export record limit");
+        throw std::runtime_error("cola debug export record limit");
       std::vector<record> entries;
       entries.reserve(static_cast<std::size_t>(count));
       std::uint64_t remaining = limits.max_key_bytes;
@@ -227,13 +230,13 @@ namespace diet {
         auto size = cola_detail::read_u64(in);
         if (size > remaining || size > std::numeric_limits<std::size_t>::max() ||
             size > std::uint64_t(std::numeric_limits<std::streamsize>::max()))
-          throw std::runtime_error("cola export key byte limit");
+          throw std::runtime_error("cola debug export key byte limit");
         remaining -= size;
         std::string key(static_cast<std::size_t>(size), '\0');
         in.read(key.data(), static_cast<std::streamsize>(size));
-        if (!in) throw std::runtime_error("truncated cola export key");
+        if (!in) throw std::runtime_error("truncated cola debug export key");
         if (!entries.empty() && !(entries.back().key < key))
-          throw std::runtime_error("cola export keys are not strictly sorted");
+          throw std::runtime_error("cola debug export keys are not strictly sorted");
         entries.push_back({std::move(key), codec.read(in)});
       }
       return from_records(std::move(entries), std::move(hash));
