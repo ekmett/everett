@@ -191,7 +191,11 @@ headers and compared literal bits.
 
 `profile_cursor<P, Role>` supplies sequential decoding with borrowed values;
 `profile_borrowed_writer<P>` incrementally encodes borrowed keys. Their output
-matches the batch encoder across the policy matrix. `sample_cursor<P>` pins
+matches the batch encoder across the policy matrix. Ordinary advancement and
+advancement with an adjacent-key comparison select separate compile-time modes.
+The [cursor comparison](../bench/sample_advance.md) records the smaller ordinary
+body, consumer-dependent code size and broadly flat pipeline timings.
+`sample_cursor<P>` pins
 and samples an exact encoded pair without materializing its catalog.
 `index_builder<P>` retains bounded sample/decoder state, records each cut's
 exact LCP and preserves native allocations. `index_pipeline<P>` feeds samples
@@ -670,9 +674,9 @@ With SQLite enabled, four more suites cover the catalog, adversarial operations,
 forwarded VFS failures and process interruption. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
-Combined verification on 2026-09-15: AppleClang 21, C++20, Release with strict
+Combined verification at `35be933` on 2026-09-15: AppleClang 21, C++20, Release with strict
 warnings and ASan/UBSan passed all **32 CTests**, including three package consumers
-and Doxygen, in 97 seconds. SQLite headers and runtime were 3.53.4. This run covers
+and Doxygen. SQLite headers and runtime were 3.53.4. This run covers
 ordinary-FC comparison, complete owning and mapped query chains, portable
 unaligned navigation, native construction and incremental merges, immutable
 writes, metadata-only opening, and persistent saves and reader pins.
