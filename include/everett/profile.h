@@ -890,9 +890,20 @@ namespace everett {
       if (comparison) {
         auto retained_bits = profile_detail::multiply(next.retained, P::bits_per_unit);
         auto previous = scratch_.view();
-        auto suffix = compare_common_bits(
-          previous.subview(retained_bits, previous.size() - retained_bits), next.suffix);
-        *comparison = {retained_bits + suffix.common_bits, suffix.order};
+        if (retained_bits == previous.size() || next.suffix.empty()) {
+          *comparison = {retained_bits, retained_bits != previous.size() ? 1 : next.suffix.empty() ? 0 : -1};
+        } else {
+          auto before = profile_detail::load_bits(previous, retained_bits, P::bits_per_unit);
+          auto after = profile_detail::load_bits(next.suffix, 0, P::bits_per_unit);
+          if (before != after) {
+            auto common = unsigned(std::countl_zero(before ^ after)) - (64 - P::bits_per_unit);
+            *comparison = {retained_bits + common, before < after ? -1 : 1};
+          } else {
+            auto suffix = compare_common_bits(
+              previous.subview(retained_bits, previous.size() - retained_bits), next.suffix);
+            *comparison = {retained_bits + suffix.common_bits, suffix.order};
+          }
+        }
       }
       profile_view<P, Role>::decode_into(next, std::numeric_limits<std::uint64_t>::max(), scratch_, context_);
       record_ = next;
