@@ -160,7 +160,7 @@ namespace everett {
     inline void pack_low(std::span<std::uint64_t const> source,
                          std::span<std::uint64_t> out, unsigned width) {
       if (width > 63) error_detail::raise<std::invalid_argument>("elias_fano low width");
-      if (width && source.size() > std::numeric_limits<std::uint64_t>::max() / width)
+      if (width && source.size() > (std::numeric_limits<std::uint64_t>::max() - 63) / width)
         error_detail::raise<std::overflow_error>("elias_fano low section extent");
       if (out.size() != words(source.size() * width))
         error_detail::raise<std::invalid_argument>("elias_fano low output size");
