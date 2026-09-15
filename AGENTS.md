@@ -41,9 +41,10 @@ the README and design Markdown in Doxygen, and verify that equations render.
   if present). The identifier is BSD-2-Clause OR Apache-2.0, at the recipient's
   choice; both complete texts are in LICENSES/ and the choice is stated in LICENSE.
   Do not change license terms without an explicit instruction.
-- File documentation stays in the existing footer form. The optional Doxygen
-  build uses license aliases and checks declaration ownership; see
-  docs/doxygen.md before changing those commands or their placement.
+- Put file author and brief metadata in the leading file comment alongside the
+  SPDX notices, outside the license code block. The optional Doxygen build uses
+  license aliases and checks declaration ownership; see docs/doxygen.md before
+  changing those commands or their placement.
 
 ## Work and verification
 

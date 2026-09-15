@@ -5,6 +5,8 @@
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 # \endlicense
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Configures the Diet build.
 
 cmake_minimum_required(VERSION 3.20)
 project(diet VERSION 0.1.0 DESCRIPTION "Experimental persistent string storage" LANGUAGES CXX)
@@ -78,8 +80,3 @@ endif()
 if(DIET_BUILD_DOCS)
   include(cmake/diet-docs.cmake)
 endif()
-
-##
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Configures the Diet build.

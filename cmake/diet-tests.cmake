@@ -5,6 +5,8 @@
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 # \endlicense
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Configures Diet's test targets and package checks.
 
 if(DIET_USE_CCACHE)
   find_program(diet_ccache NAMES ccache REQUIRED)
@@ -82,8 +84,3 @@ foreach(diet_mode IN ITEMS installed embedded)
   set_tests_properties(diet.package.${diet_mode} PROPERTIES
     RESOURCE_LOCK diet_package_build TIMEOUT 180)
 endforeach()
-
-##
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Configures Diet's test targets and package checks.

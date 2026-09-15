@@ -5,6 +5,8 @@
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 # \endlicense
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Configures Diet's optional Doxygen verification.
 
 find_package(Doxygen 1.9.8 REQUIRED COMPONENTS doxygen)
 find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
@@ -24,8 +26,3 @@ if(DIET_BUILD_TESTS)
       --output "${PROJECT_BINARY_DIR}/docs-test")
   set_tests_properties(diet.doxygen PROPERTIES TIMEOUT 120)
 endif()
-
-##
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Configures Diet's optional Doxygen verification.
