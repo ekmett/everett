@@ -88,10 +88,12 @@ namespace everett {
     bool done() const noexcept { return !pipeline_ || pipeline_->done(); }
     bool finished() const noexcept { return finished_; }
     std::uint64_t step(std::uint64_t quanta) {
+      if (!head_) throw std::logic_error("query root preparation has no source");
       if (finished_) throw std::logic_error("query root preparation is finished");
       return pipeline_ ? pipeline_->step(quanta) : 0;
     }
     query_root<P> finish() {
+      if (!head_) throw std::logic_error("query root preparation has no source");
       if (!done()) throw std::logic_error("query root preparation still has input");
       if (!finished_) {
         if (pipeline_) head_ = pipeline_->finish();
