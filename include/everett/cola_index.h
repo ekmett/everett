@@ -324,6 +324,10 @@ namespace everett {
   // head advances its source by at most K occurrences, and bytes/comparison and
   // allocation remain additional work. Only current cursor/key contexts are
   // reconstructed; borrowed payload and compact navigation are output storage.
+  // Without targets only native count is inspected; step charges occurrences
+  // while doing one zero-navigation update per crossed K-group, without keys.
+  // Native contents must already be trusted/admitted; this metadata-only path
+  // deliberately does not revalidate their framing or strictly sorted order.
   template <class P, class Native, class Main> struct cola_index_builder {
     using policy_type = P;
     using index_type = cola_index<P, Native, Main>;
@@ -332,13 +336,13 @@ namespace everett {
     using main_pointer = typename index_type::main_pointer;
     using target_type = typename index_type::target_type;
     explicit cola_index_builder(native_pointer native, main_pointer main = {}, native_pointer secondary = {})
-      : native_(checked(std::move(native))), main_(std::move(main)), secondary_(std::move(secondary)),
-        native_cursor_(native_->view()) {
+      : native_(checked(std::move(native))), main_(std::move(main)), secondary_(std::move(secondary)) {
       auto remaining = std::numeric_limits<std::uint64_t>::max() - native_->size();
       auto primary_count = main_ ? main_->group_count() : 0;
       auto secondary_count = secondary_ ? secondary_->size() / P::group_size + (secondary_->size() % P::group_size != 0) : 0;
       if (primary_count > remaining || secondary_count > remaining - primary_count)
         error_detail::raise<std::length_error>("COLA augmented count overflow");
+      if (main_ || secondary_) native_cursor_.emplace(native_->view());
       if (main_) primary_cursor_.emplace(main_);
       if (secondary_) secondary_cursor_.emplace(secondary_->view());
     }
@@ -346,7 +350,9 @@ namespace everett {
     cola_index_builder & operator=(cola_index_builder const &) = delete;
     cola_index_builder(cola_index_builder &&) = default;
     cola_index_builder & operator=(cola_index_builder &&) = default;
-    bool done() const noexcept { return native_ && !failed_ && !live(0) && !live(1) && !live(2); }
+    bool done() const noexcept {
+      return native_ && !failed_ && (native_cursor_ ? !live(0) && !live(1) && !live(2) : count_ == native_->size());
+    }
     bool failed() const noexcept { return failed_; }
     bool finished() const noexcept { return finished_; }
     std::uint64_t size() const noexcept { return count_; }
@@ -354,6 +360,9 @@ namespace everett {
       require_active();
       std::uint64_t consumed = 0;
       try {
+        // With no targets, all augmented occurrences are native. Navigation
+        // depends only on their count: do not open a payload cursor at all.
+        if (!native_cursor_) return step_terminal(budget);
         while (consumed < budget && !done()) {
           unsigned origin = 3;
           bit_view key;
@@ -380,7 +389,7 @@ namespace everett {
           }
           auto retained = adjacent.common_bits & ~std::uint64_t{7};
           sampling_detail::replace_suffix(previous_, retained, key.subview(retained, key.size() - retained));
-          if (!origin) native_cursor_.advance();
+          if (!origin) native_cursor_->advance();
           else if (origin == 1) primary_cursor_->advance();
           else for (std::uint64_t i = 0; i < P::group_size && !secondary_cursor_->done(); ++i) secondary_cursor_->advance();
           ++count_; ++consumed; ++width_;
@@ -406,7 +415,7 @@ namespace everett {
     native_pointer native_;
     main_pointer main_;
     native_pointer secondary_;
-    profile_cursor<P> native_cursor_;
+    std::optional<profile_cursor<P>> native_cursor_;
     std::optional<cola_sample_cursor<P, target_type>> primary_cursor_;
     std::optional<profile_cursor<P>> secondary_cursor_;
     std::array<profile_borrowed_writer<P>, 2> writers_;
@@ -425,14 +434,25 @@ namespace everett {
       if (!native_ || failed_ || finished_) error_detail::raise<std::logic_error>("COLA builder is no longer active");
     }
     bool live(unsigned origin) const noexcept {
-      if (!origin) return !native_cursor_.done();
+      if (!origin) return native_cursor_ && !native_cursor_->done();
       if (origin == 1) return primary_cursor_ && !primary_cursor_->done();
       return secondary_cursor_ && !secondary_cursor_->done();
     }
     bit_view head(unsigned origin) const {
-      if (!origin) return native_cursor_.peek().key.prefix;
+      if (!origin) return native_cursor_->peek().key.prefix;
       if (origin == 1) return primary_cursor_->peek().key;
       return secondary_cursor_->peek().key.prefix;
+    }
+    std::uint64_t step_terminal(std::uint64_t budget) {
+      std::uint64_t consumed = 0;
+      auto total = native_->size();
+      while (consumed < budget && count_ < total) {
+        if (!width_) for (auto & cuts : cuts_) cuts.push_back(0);
+        auto chunk = std::min({budget - consumed, total - count_, P::group_size - width_});
+        count_ += chunk; consumed += chunk; width_ += chunk;
+        if (width_ == P::group_size) flush_group();
+      }
+      return consumed;
     }
     void flush_group() {
       for (unsigned route = 0; route < 2; ++route) ranks_[route].append(population_[route], width_);
