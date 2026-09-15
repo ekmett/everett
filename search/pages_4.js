@@ -1,10 +1,9 @@
 var searchData=
 [
-  ['elias–fano_20selection_20and_20construction_0',['Elias–Fano Selection and Construction',['../eliasfano-selection-and-construction.html',1,'']]],
-  ['everett_1',['Everett',['../md__a_g_e_n_t_s.html',1,'']]],
-  ['everett_20design_2',['Everett design',['../md_docs_2design.html',1,'']]],
-  ['everett_20implementation_20status_3',['Everett implementation status',['../md_docs_2implementation.html',1,'']]],
-  ['everett_3a_20an_20abstract_20proof_20core_4',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
-  ['everett_3a_20persistent_20storage_20through_20composable_20change_5',['Everett: Persistent Storage Through Composable Change',['../index.html',1,'']]],
-  ['exact_20query_20roots_6',['Mapped blobs and exact query roots',['../mapped-blobs-and-exact-query-roots.html',1,'']]]
+  ['declaration_20ownership_0',['Doxygen metadata and declaration ownership',['../md_docs_2doxygen.html',1,'']]],
+  ['decoding_1',['Small bit-profile count decoding',['../md_bench_2small__count.html',1,'']]],
+  ['deletion_20by_20incremental_20rebuilding_2',['Strong deletion by incremental rebuilding',['../md_docs_2rebuild.html',1,'']]],
+  ['design_3',['Everett design',['../md_docs_2design.html',1,'']]],
+  ['doxygen_20metadata_20and_20declaration_20ownership_4',['Doxygen metadata and declaration ownership',['../md_docs_2doxygen.html',1,'']]],
+  ['durable_20publication_20and_20merge_20resumption_5',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]]
 ];

@@ -130,7 +130,7 @@ Notation</h2>
 <li>A front-coded array of native \((K,V)\) records.</li>
 <li>A separately front-coded array of borrowed keys and routing information.</li>
 <li>One <code>rank_groups&lt;K&gt;</code> describing their virtual interleaving.</li>
-<li>Two <code>select_groups&lt;W&gt;</code> indexes, one for each physical stream.</li>
+<li>Two <code>elias_fano</code> indexes, one for each physical stream.</li>
 <li>One false-borrow flag per borrowed record.</li>
 <li>One exact bit-LCP count per virtual cut, describing its preceding borrowed key.</li>
 <li>Exact immutable target identities, physical length checkpoints, and format information.</li>
@@ -147,17 +147,17 @@ Notation</h2>
 <h1><a class="anchor" id="autotoc_md3-navigation"></a>
 3. Navigation</h1>
 <p>We can work through the navigation equations with the default \(K=15\). The codecs accept a policy-selected group size; <a class="el" href="md_docs_2sampling.html">sampling.md</a> proves the local \(K=3\) case and states the separate chain-size and scheduler assumptions. Offset units are bytes or bits according to the shared policy.</p>
-<p>The policy API spells these structures <code>rank_groups&lt;P::group_size&gt;</code> and <code>select_groups&lt;P::codec_block_size&gt;</code>. <code>multiverse&lt;P&gt;::blob</code> uses that policy throughout. Rank boundaries count virtual occurrences; offset checkpoints count physical records. They need not have the same interval. The helpers in <code><a class="el" href="rank15_8h.html" title="Declares Everett&#39;s rank15 support.">rank15.h</a></code> and <code><a class="el" href="select15_8h.html" title="Declares Everett&#39;s select15 support.">select15.h</a></code> have a fixed interval of fifteen; they do not fix the store's policy to fifteen. The <code>rank_groups&lt;15&gt;</code> view shares rank15's SIMD implementation. Groups of three use packed scalar sums; seven and thirty-one use bounded NEON reductions on little-endian AArch64 and packed scalar reductions elsewhere. Other group sizes use the generic class loop. These choices preserve the same encoded classes and checkpoints.</p>
+<p>The policy API spells these structures <code>rank_groups&lt;P::group_size&gt;</code> and <code>elias_fano</code>. <code>multiverse&lt;P&gt;::blob</code> uses that policy throughout. Rank boundaries count virtual occurrences; offset checkpoints count physical records. They need not have the same interval. Elias–Fano stores only the chosen monotone positions. The profile layer chooses physical samples and restores fixed value strides. The <code>rank_groups&lt;15&gt;</code> view shares rank15's SIMD implementation. Groups of three use packed scalar sums; seven and thirty-one use bounded NEON reductions on little-endian AArch64 and packed scalar reductions elsewhere. Other group sizes use the generic class loop. These choices preserve the same encoded classes and checkpoints.</p>
 <h2><a class="anchor" id="rank15"></a>
 rank15</h2>
-<p>We assign a conceptual origin bit of one to a borrowed entry and zero to a native entry. We only need ranks at sampling boundaries:</p>
+<p>We assign a conceptual origin bit of one to a borrowed entry and zero to a native entry. We only query rank at the start of an existing group:</p>
 <p class="formulaDsp">
 \[
 R(g)=\mathrm{rank15}(g)=
-\#\{\text{borrowed entries before }\min(15g,|C|)\}.
+\#\{\text{borrowed entries before }15g\},\qquad 15g&lt;|C|.
 \]
 </p>
-<p>For a full virtual window \([15g,15(g+1))\), its borrowed range is \([R(g),R(g+1))\), and its native range is \([15g-R(g),15(g+1)-R(g+1))\). Substitute the actual final endpoint for a tail. The two range lengths add to at most fifteen.</p>
+<p>Let \(a=R(g)\), let \(c\) be that group's stored population, and let \(e=\min(15g+15,|C|)\). Its borrowed range is \([a,a+c)\) and its native range is \([15g-a,e-a-c)\). One rank query and one class give both boundaries, including the final partial group; their lengths add to at most fifteen. There is no endpoint rank entry or cached total. An empty index has no group to query. A requested total can be derived from the final real rank and class.</p>
 <p>A fifteen-entry population count lies in \([0,15]\), so four bits suffice. A prefix directory then answers the boundary queries. There is no second origin rank: native rank is virtual position minus borrowed rank.</p>
 <p>The optional exact-position extension is the RRR class/offset idea: a class \(i\) identifies the count, and an enumerative code of \(\lceil\log_2 {15\choose i}\rceil\) bits identifies the particular pattern. Ordinary cascading does not require that extension. See <a href="https://arxiv.org/abs/0705.0552">Raman, Raman, and Rao</a> for the general succinct-dictionary machinery.</p>
 <h2><a class="anchor" id="pragmatic-rank-only-backend"></a>

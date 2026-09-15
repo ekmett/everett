@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['vector_20and_20packed_20rank_20comparison_0',['Full-vector and packed-rank comparison',['../md_bench_2rank__compare.html',1,'']]],
-  ['views_1',['Owning queries with shared navigation views',['../md_bench_2shared__query.html',1,'']]]
+  ['updates_20in_20a_20category_20chosen_20per_20key_0',['Updates in a category chosen per key',['../md_docs_2arrows.html',1,'']]],
+  ['upstream_1',['UPSTREAM',['../upstream.html',1,'']]]
 ];

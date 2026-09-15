@@ -12,8 +12,9 @@ var searchData=
   ['index_5fdirectory_5fbytes_9',['index_directory_bytes',['../namespaceeverett_1_1section__detail.html#a3ae121467a72796e365495be5f25d72b',1,'everett::section_detail']]],
   ['input_5fclosed_5f_10',['input_closed_',['../structeverett_1_1index__builder.html#ac82308103eac1d797d711acf18a0a97b',1,'everett::index_builder']]],
   ['input_5fmode_5f_11',['input_mode_',['../structeverett_1_1index__builder.html#ab3fe9781ce2a615c65f126990a58b90f',1,'everett::index_builder']]],
-  ['input_5fversion_12',['input_version',['../structeverett_1_1merge__input__cursor.html#a51169797e48931ce70f53e3b0c947e2d',1,'everett::merge_input_cursor']]],
-  ['input_5fversions_13',['input_versions',['../structeverett_1_1merge__identity.html#a9c862187aa3631f77f1c04c880af70b9',1,'everett::merge_identity']]],
-  ['inputs_14',['inputs',['../structeverett_1_1merge__checkpoint.html#a0ad4cc4dec37a82a9f0b01b64bf7f583',1,'everett::merge_checkpoint']]],
-  ['interleave_5f_15',['interleave_',['../structeverett_1_1profile__blob__view.html#a79ceb2fb0e10c9743e6f1f6dbe725822',1,'everett::profile_blob_view::interleave_'],['../structeverett_1_1profile__blob.html#ab54f2b7f18ad04320525cfcc13f96e0f',1,'everett::profile_blob::interleave_']]]
+  ['input_5frecords_12',['input_records',['../structeverett_1_1native__merge__progress.html#a06e593546c6c02cb7ed281fa7f91cc51',1,'everett::native_merge_progress']]],
+  ['input_5fversion_13',['input_version',['../structeverett_1_1merge__input__cursor.html#a51169797e48931ce70f53e3b0c947e2d',1,'everett::merge_input_cursor']]],
+  ['input_5fversions_14',['input_versions',['../structeverett_1_1merge__identity.html#a9c862187aa3631f77f1c04c880af70b9',1,'everett::merge_identity']]],
+  ['inputs_15',['inputs',['../structeverett_1_1merge__checkpoint.html#a0ad4cc4dec37a82a9f0b01b64bf7f583',1,'everett::merge_checkpoint']]],
+  ['interleave_5f_16',['interleave_',['../structeverett_1_1profile__blob.html#ab54f2b7f18ad04320525cfcc13f96e0f',1,'everett::profile_blob::interleave_'],['../structeverett_1_1profile__blob__view.html#a79ceb2fb0e10c9743e6f1f6dbe725822',1,'everett::profile_blob_view::interleave_']]]
 ];

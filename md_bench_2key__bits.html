@@ -103,7 +103,7 @@ What is measured</h1>
 </ul>
 <p>The larger key fixture is a large <em>key</em>, not a cache-sized or disk-sized data set. These tests use a small, repeatedly accessed working set. They do not measure page faults, cold mmap traversal, or storage-device I/O.</p>
 <p>The harness validates copy results with independent bit extraction, validates profile reconstruction against the input records, and checks count values and consumed positions. Every trial must match baseline output checksums and exact encoded-byte digests. Validation, hashing, and formatting happen outside timed intervals. Profile digests cover encoded record bytes; the broader integration benchmark separately checks the complete blob/index encoding.</p>
-<h1><a class="anchor" id="results"></a>
+<h1><a class="anchor" id="results-1"></a>
 Results</h1>
 <p>Times are nanoseconds per operation, shown as median [minimum, maximum] over five trials. The ratio is baseline/candidate; values above 1 mean less time in the candidate. The <code>bits</code> column is key length for primitive cases, value width for counts, and shared-prefix length for profile cases. Source offset is in bits.</p>
 <table class="markdownTable">

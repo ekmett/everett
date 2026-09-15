@@ -80,7 +80,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="sqlite-catalog-for-worlds-pins-and-background-work"></a> Chosen architecture, 2026-09-15. Most of the bytes belong in immutable <code>.kv</code> and <code>.index</code> files. The metadata is comparatively small: which worlds exist, which representations they use, who retains them, and how far each merge or index build has progressed. SQLite gives us transactions over that metadata and a journal for recovering it. We need no additional custom manifest, transaction-log or checkpoint-file format.</p>
-<p>This document specifies the backend's architecture and acceptance contract. The SQLite adapter, schema migrations and transactional store executor are not implemented yet. The existing in-memory pin owner and durability state machine give us executable models of the ownership and publication rules.</p>
+<p>This document specifies the backend's architecture and acceptance contract. The <a class="el" href="md_docs_2sqlite-catalog.html">optional SQLite adapter</a> implements reservations, sealed objects, exact prepared chains, immutable saved roots and durable reader pins. The broader schema below specifies mutable timelines, ownership retirement and merge continuations. The in-memory pin owner and durability state machine give us executable models for those transitions.</p>
 <h1><a class="anchor" id="autotoc_md1-what-the-catalog-owns"></a>
 1. What the catalog owns</h1>
 <p>SQLite records which exact immutable objects are reachable and which transitions have committed. It does not contain the bulk key/value table, and a committed catalog row does not itself make an external file durable.</p>

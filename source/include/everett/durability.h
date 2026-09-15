@@ -64,7 +64,7 @@ namespace everett {
     std::vector<merge_input_cursor> inputs;
     std::vector<sealed_merge_extent> sealed_output;
     std::string previous_output_key;
-    // Versioned serialized continuation of rank15/select15 builders, partial
+    // Versioned serialized continuation of rank and Elias–Fano builders, partial
     // group counts/offsets, merge selection and accumulator state. This model
     // treats the bytes as opaque; the eventual codec validates them on load.
     std::string metadata_state;

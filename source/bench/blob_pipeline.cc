@@ -195,14 +195,14 @@ namespace {
     out.integer(metadata.common_value_width.value_or(~std::uint64_t{0}));
     auto const & offsets = value.group_offsets();
     out.words(offsets.low); out.words(offsets.high); out.words(offsets.sparse);
-    out.integer(offsets.record_count); out.integer(offsets.universe); out.integer(offsets.low_width);
+    out.integer(metadata.record_count); out.integer(offsets.universe); out.integer(offsets.low_width);
     for (auto const & sample : offsets.samples) { out.integer(sample.first); out.integer(sample.sparse); }
   }
   template <class B> void hash_blob(digest & result, B const & value) {
     hash_array(result, value.native()); hash_array(result, value.borrowed());
     result.words(value.interleave().classes);
     result.words(value.interleave().checkpoints);
-    result.integer(value.interleave().total);
+    result.integer(value.borrowed().size());
     result.integer(value.virtual_size());
     result.data(value.false_borrow_bits());
   }

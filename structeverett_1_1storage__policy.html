@@ -111,7 +111,9 @@ Static Public Attributes</h2></td></tr>
 <tr class="separator:a430867eef1ca2ade446d766edebd0982"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add2a499f530169caed9e8937f1640bf1" id="r_add2a499f530169caed9e8937f1640bf1"><td class="memItemLeft" align="right" valign="top">static constexpr <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#add2a499f530169caed9e8937f1640bf1">unit</a> = Unit</td></tr>
 <tr class="separator:add2a499f530169caed9e8937f1640bf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac625cf8f5fa86d40a9b37af82519210" id="r_aac625cf8f5fa86d40a9b37af82519210"><td class="memItemLeft" align="right" valign="top">static constexpr unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#aac625cf8f5fa86d40a9b37af82519210">bits_per_unit</a> = Unit == <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aa40ea57d3ee3c07bf1c102b466e1c3091">profile_unit::byte</a> ? 8 : 1</td></tr>
+<tr class="memitem:a882c6cf3787378f49662979c265fc8ef" id="r_a882c6cf3787378f49662979c265fc8ef"><td class="memItemLeft" align="right" valign="top">static constexpr unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a882c6cf3787378f49662979c265fc8ef">unit_shift</a> = Unit == <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aa40ea57d3ee3c07bf1c102b466e1c3091">profile_unit::byte</a> ? 3 : 0</td></tr>
+<tr class="separator:a882c6cf3787378f49662979c265fc8ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac625cf8f5fa86d40a9b37af82519210" id="r_aac625cf8f5fa86d40a9b37af82519210"><td class="memItemLeft" align="right" valign="top">static constexpr unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#aac625cf8f5fa86d40a9b37af82519210">bits_per_unit</a> = 1u &lt;&lt; <a class="el" href="structeverett_1_1storage__policy.html#a882c6cf3787378f49662979c265fc8ef">unit_shift</a></td></tr>
 <tr class="separator:aac625cf8f5fa86d40a9b37af82519210"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a63779953311b0d9b491b24060ede0355" id="r_a63779953311b0d9b491b24060ede0355"><td class="memItemLeft" align="right" valign="top">static constexpr bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html#a63779953311b0d9b491b24060ede0355">fixed_width</a> = <a class="el" href="structeverett_1_1policy__detail_1_1value__traits.html">policy_detail::value_traits</a>&lt;Values&gt;::fixed</td></tr>
 <tr class="separator:a63779953311b0d9b491b24060ede0355"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -212,7 +214,7 @@ template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr unsigned <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::bits_per_unit = Unit == <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aa40ea57d3ee3c07bf1c102b466e1c3091">profile_unit::byte</a> ? 8 : 1</td>
+          <td class="memname">constexpr unsigned <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::bits_per_unit = 1u &lt;&lt; <a class="el" href="structeverett_1_1storage__policy.html#a882c6cf3787378f49662979c265fc8ef">unit_shift</a></td>
         </tr>
       </table>
   </td>
@@ -333,6 +335,30 @@ template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db
       <table class="memname">
         <tr>
           <td class="memname">constexpr <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::unit = Unit</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a882c6cf3787378f49662979c265fc8ef" name="a882c6cf3787378f49662979c265fc8ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a882c6cf3787378f49662979c265fc8ef">&#9670;&#160;</a></span>unit_shift</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232a">profile_unit</a> Unit, class Values  = variable_values, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr unsigned <a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;::unit_shift = Unit == <a class="el" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aa40ea57d3ee3c07bf1c102b466e1c3091">profile_unit::byte</a> ? 3 : 0</td>
         </tr>
       </table>
   </td>

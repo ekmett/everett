@@ -1,7 +1,10 @@
 var searchData=
 [
-  ['native_20avx2_20packed_20rank_20comparison_0',['Native AVX2 packed-rank comparison',['../native-avx2-packed-rank-comparison.html',1,'']]],
-  ['native_20windows_20packed_20rank_20comparison_1',['Native Windows packed-rank comparison',['../md_bench_2rank__compare__windows.html',1,'']]],
-  ['navigation_20views_2',['Owning queries with shared navigation views',['../md_bench_2shared__query.html',1,'']]],
-  ['neon_20reductions_20and_20the_20cult_20bitmap_20rank_3',['NEON reductions and the Cult bitmap rank',['../md_bench_2neon__cult__rank.html',1,'']]]
+  ['mapped_20blobs_20and_20exact_20query_20roots_0',['Mapped blobs and exact query roots',['../mapped-blobs-and-exact-query-roots.html',1,'']]],
+  ['mappings_20and_20publication_1',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
+  ['merge_20frontiers_20and_20framed_20output_2',['Native merge frontiers and framed output',['../native-merge-frontiers-and-framed-output.html',1,'']]],
+  ['merge_20resumption_3',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]],
+  ['merging_4',['Incremental native writing and merging',['../md_docs_2native-merges.html',1,'']]],
+  ['metadata_20and_20declaration_20ownership_5',['Doxygen metadata and declaration ownership',['../md_docs_2doxygen.html',1,'']]],
+  ['mit_6',['LICENSE.MIT',['../licensemit.html',1,'']]]
 ];

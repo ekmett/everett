@@ -124,8 +124,8 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>      std::uint64_t x, y;</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>      std::memcpy(&amp;x, a + at, 8); std::memcpy(&amp;y, b + at, 8);</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>      <span class="keywordflow">if</span> (<span class="keyword">auto</span> different = x ^ y) {</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::endian::native == std::endian::little) <span class="keywordflow">return</span> at + std::countr_zero(different) / 8;</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::endian::native == std::endian::big) <span class="keywordflow">return</span> at + std::countl_zero(different) / 8;</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>        <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::endian::native == std::endian::little) <span class="keywordflow">return</span> at + (std::countr_zero(different) &gt;&gt; 3);</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>        <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::endian::native == std::endian::big) <span class="keywordflow">return</span> at + (std::countl_zero(different) &gt;&gt; 3);</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        <span class="keywordflow">else</span> <span class="keywordflow">break</span>;</div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>      }</div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    }</div>
@@ -162,7 +162,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::endian::native == std::endian::big) std::memcpy(target, &amp;value, 8);</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>      <span class="keyword">auto</span> bytes = <span class="keyword">static_cast&lt;</span><span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> *<span class="keyword">&gt;</span>(target);</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>      <span class="keywordflow">for</span> (<span class="keywordtype">unsigned</span> i = 0; i != 8; ++i) bytes[i] = <span class="keyword">static_cast&lt;</span><span class="keywordtype">unsigned</span> <span class="keywordtype">char</span><span class="keyword">&gt;</span>(value &gt;&gt; (56 - 8 * i));</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>      <span class="keywordflow">for</span> (<span class="keywordtype">unsigned</span> i = 0; i != 8; ++i) bytes[i] = <span class="keyword">static_cast&lt;</span><span class="keywordtype">unsigned</span> <span class="keywordtype">char</span><span class="keyword">&gt;</span>(value &gt;&gt; (56 - (i &lt;&lt; 3)));</div>
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    }</div>
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>  }</div>
 </div>

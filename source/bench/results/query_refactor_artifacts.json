@@ -1,0 +1,32 @@
+{
+  "baseline": "e45e47f14b45a2f9726d23c80d1d19b33de7745a",
+  "candidate": "9c2c3beeb0f5ce6cf3d81eb5963d41efdc22041e",
+  "artifacts": {
+    "bench/results/query_refactor_m2max.csv": "a72888320be1a3871d50054b4736e255d0f76d137d3999725a7f805c1f80f9bf",
+    "bench/results/query_refactor_sanitizer.csv": "41e9b343e6687928efadba1f6bb796f56f2bfd15e11a4859d46574af419b356c",
+    "bench/results/query_refactor_m2max.json": "c0353402b936a18454d4f601f543f2fd9f795693ff721dfde136d6f83843aaad",
+    "bench/results/query_refactor_sanitizer.json": "809219eab82512252818b222db0fecf7fb36be53eb4bca7728172d3e12a8a394"
+  },
+  "executables": {
+    "release/baseline_w15": {
+      "sha256": "20cb32fd9c2f7f2fe650383e128e8b7fcd876a88e7ff0381cbf4c25a217a18ed",
+      "file_bytes": 382448,
+      "size_output": "Segment __PAGEZERO: 4294967296 (zero fill) \nSegment __TEXT: 212992\n\tSection __text: 181812\n\tSection __stubs: 468\n\tSection __gcc_except_tab: 9808\n\tSection __const: 2659\n\tSection __cstring: 4098\n\tSection __unwind_info: 2368\n\ttotal 201213\nSegment __DATA_CONST: 16384\n\tSection __got: 504\n\tSection __const: 912\n\ttotal 1416\nSegment __LINKEDIT: 163840\ntotal 4295360512\n"
+    },
+    "release/candidate_w15": {
+      "sha256": "9123cec860749a5f3d244a38858f960d7ad6cccb627051738a6048a5a1f0f59b",
+      "file_bytes": 400176,
+      "size_output": "Segment __PAGEZERO: 4294967296 (zero fill) \nSegment __TEXT: 196608\n\tSection __text: 166120\n\tSection __stubs: 468\n\tSection __gcc_except_tab: 5292\n\tSection __const: 2643\n\tSection __cstring: 4025\n\tSection __unwind_info: 1664\n\ttotal 180212\nSegment __DATA_CONST: 16384\n\tSection __got: 504\n\tSection __const: 912\n\ttotal 1416\nSegment __LINKEDIT: 196608\ntotal 4295376896\n"
+    },
+    "sanitize/baseline_w15": {
+      "sha256": "7ecb0b7cffaf124ae566e19f612e502446a3ba1d8e2372bfff485ec3fc037e07",
+      "file_bytes": 2631984,
+      "size_output": "Segment __PAGEZERO: 4294967296 (zero fill) \nSegment __TEXT: 1769472\n\tSection __text: 1494684\n\tSection __stubs: 972\n\tSection __init_offsets: 4\n\tSection __gcc_except_tab: 26768\n\tSection __const: 96100\n\tSection __asan_cstring: 10048\n\tSection __cstring: 14847\n\tSection __unwind_info: 15520\n\tSection __eh_frame: 100472\n\ttotal 1759415\nSegment __DATA_CONST: 16384\n\tSection __got: 1384\n\tSection __mod_term_func: 8\n\tSection __const: 912\n\ttotal 2304\nSegment __DATA: 409600\n\tSection __data: 392400\n\tSection __asan_globals: 8320\n\tSection __asan_liveness: 2080\n\tSection __common: 8 (zerofill)\n\ttotal 402808\nSegment __LINKEDIT: 442368\ntotal 4297605120\n"
+    },
+    "sanitize/candidate_w15": {
+      "sha256": "e0ad75dea3505fb872ea5aeb9797aa2cbe68c0af143ce72cee91312591b5ef8f",
+      "file_bytes": 2590848,
+      "size_output": "Segment __PAGEZERO: 4294967296 (zero fill) \nSegment __TEXT: 1736704\n\tSection __text: 1471452\n\tSection __stubs: 972\n\tSection __init_offsets: 4\n\tSection __gcc_except_tab: 19012\n\tSection __const: 94436\n\tSection __asan_cstring: 10080\n\tSection __cstring: 15140\n\tSection __unwind_info: 14672\n\tSection __eh_frame: 98464\n\ttotal 1724232\nSegment __DATA_CONST: 16384\n\tSection __got: 1384\n\tSection __mod_term_func: 8\n\tSection __const: 912\n\ttotal 2304\nSegment __DATA: 409600\n\tSection __data: 387728\n\tSection __asan_globals: 8384\n\tSection __asan_liveness: 2096\n\tSection __common: 8 (zerofill)\n\ttotal 398216\nSegment __LINKEDIT: 442368\ntotal 4297572352\n"
+    }
+  }
+}

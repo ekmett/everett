@@ -10,6 +10,7 @@
 #include <everett/rank.h>
 #include <everett/rank_groups.h>
 #include "baseline_rank.h"
+#include "baseline_rank15.h"
 #include "baseline_rank_groups.h"
 #include "neon_rank_groups.h"
 
@@ -54,7 +55,7 @@ namespace {
     std::uint64_t rank(std::uint64_t g) const {
       auto groups = source.virtual_count / K + (source.virtual_count % K != 0);
       if (g > groups) throw std::out_of_range("portable group");
-      if (g == groups) return source.total;
+      if (g == groups) return source.view().count();
       auto result = source.checkpoints[g / 128];
       auto count = unsigned(g % 128);
       if (!count) return result;
@@ -115,6 +116,12 @@ namespace {
     }
   }
 
+  template <class V, class Index> V grouped_view(Index const & index) {
+    if constexpr (requires { V(index.classes, index.checkpoints, index.virtual_count); })
+      return V(index.classes, index.checkpoints, index.virtual_count);
+    else return V(index.classes, index.checkpoints, index.virtual_count, index.view().count());
+  }
+
   template <unsigned K> void groups(bool large, std::uint64_t queries, unsigned trials, bool check) {
     auto n = large ? (std::uint64_t{1} << 25) + 37 : 16384ull + 37;
     std::uint64_t seed = 0x11112222;
@@ -123,9 +130,9 @@ namespace {
     auto index = everett::rank_groups<K>::build(classes, n * K);
     classes.clear(); classes.shrink_to_fit();
     auto candidate = index.view();
-    baseline::rank_groups_view<K> old{index.classes, index.checkpoints, index.virtual_count, index.total};
+    auto old = grouped_view<baseline::rank_groups_view<K>>(index);
     portable_groups<K> portable{index};
-    rank_neon::rank_groups_view<K> neon{index.classes, index.checkpoints, index.virtual_count, index.total};
+    auto neon = grouped_view<rank_neon::rank_groups_view<K>>(index);
     std::array variants{make_variant("baseline", old), make_variant("portable_packed", portable), make_variant("neon_packed", neon), make_variant("selected", candidate)};
     auto bytes = 8 * (index.classes.size() + index.checkpoints.size());
     auto kind = "groups" + std::to_string(K);
@@ -204,9 +211,8 @@ namespace {
     for (std::uint64_t i = 0; i < words.size(); ++i) { words[i] = random_word(seed); oracle[i + 1] = oracle[i] + std::popcount(words[i]); }
     auto index = everett::rank_index::build(words, bits);
     auto candidate = index.view();
-    std::vector<baseline::rank_block> blocks;
-    for (auto b : index.blocks) blocks.push_back({b.before, b.runs});
-    baseline::rank_view old{index.words, blocks, index.supers, index.bit_count, index.total};
+    auto old_index = baseline::rank_index::build(words, bits);
+    auto old = old_index.view();
     std::array variants{make_variant("baseline", old), make_variant("selected", candidate)};
     auto bytes = 8 * (index.words.size() + index.blocks.size() + index.supers.size());
     measure("bitmap", large ? "large" : "hot", variants, bits, bytes, queries, trials, check,

@@ -1,0 +1,439 @@
+	.build_version macos, 26, 0	sdk_version 26, 5
+	.section	__TEXT,__text,regular,pure_instructions
+	.section	__TEXT,__const
+	.p2align	6, 0x0                          ## -- Begin function prefix_probe
+LCPI0_0:
+	.space	64,15
+LCPI0_1:
+	.byte	0                               ## 0x0
+	.byte	1                               ## 0x1
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	3                               ## 0x3
+	.byte	4                               ## 0x4
+	.byte	0                               ## 0x0
+	.byte	1                               ## 0x1
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	3                               ## 0x3
+	.byte	4                               ## 0x4
+	.byte	0                               ## 0x0
+	.byte	1                               ## 0x1
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	3                               ## 0x3
+	.byte	4                               ## 0x4
+	.byte	0                               ## 0x0
+	.byte	1                               ## 0x1
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	3                               ## 0x3
+	.byte	4                               ## 0x4
+	.section	__TEXT,__text,regular,pure_instructions
+	.globl	_prefix_probe
+	.p2align	4
+_prefix_probe:                          ## @prefix_probe
+	.cfi_startproc
+## %bb.0:
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	movl	%esi, %ecx
+	shrl	$6, %ecx
+	movl	$1, %eax
+	shll	%cl, %eax
+	leal	-1(%rax), %edx
+	btsl	%ecx, %edx
+	kmovd	%edx, %k1
+	vmovdqu64	(%rdi), %zmm0 {%k1} {z}
+	movq	$-1, %rdx
+	movl	%esi, %ecx
+	shlq	%cl, %rdx
+	vpbroadcastq	%rdx, %zmm1
+	kmovd	%eax, %k1
+	vpandnq	%zmm0, %zmm1, %zmm0 {%k1}
+	vmovdqa64	LCPI0_0(%rip), %zmm1    ## zmm1 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
+	vpandq	%zmm1, %zmm0, %zmm2
+	vmovdqa64	LCPI0_1(%rip), %zmm3    ## zmm3 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
+	vpshufb	%zmm2, %zmm3, %zmm2
+	vpsrlw	$4, %zmm0, %zmm0
+	vpandq	%zmm1, %zmm0, %zmm0
+	vpshufb	%zmm0, %zmm3, %zmm0
+	vpaddb	%zmm2, %zmm0, %zmm0
+	vpxor	%xmm1, %xmm1, %xmm1
+	vpsadbw	%zmm1, %zmm0, %zmm0
+	vextracti64x4	$1, %zmm0, %ymm1
+	vpaddq	%zmm1, %zmm0, %zmm0
+	vextracti128	$1, %ymm0, %xmm1
+	vpaddq	%xmm1, %xmm0, %xmm0
+	vpshufd	$238, %xmm0, %xmm1              ## xmm1 = xmm0[2,3,2,3]
+	vpaddq	%xmm1, %xmm0, %xmm0
+	vmovq	%xmm0, %rax
+                                        ## kill: def $eax killed $eax killed $rax
+	popq	%rbp
+	vzeroupper
+	retq
+	.cfi_endproc
+                                        ## -- End function
+	.globl	_rank_probe                     ## -- Begin function rank_probe
+	.p2align	4
+_rank_probe:                            ## @rank_probe
+	.cfi_startproc
+## %bb.0:
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	popq	%rbp
+	jmp	__ZNK7everett9rank_view4rankEy  ## TAILCALL
+	.cfi_endproc
+                                        ## -- End function
+	.section	__TEXT,__const
+	.p2align	6, 0x0                          ## -- Begin function _ZNK7everett9rank_view4rankEy
+LCPI2_0:
+	.quad	0                               ## 0x0
+	.quad	1                               ## 0x1
+	.quad	2                               ## 0x2
+	.quad	3                               ## 0x3
+	.quad	4                               ## 0x4
+	.quad	5                               ## 0x5
+	.quad	6                               ## 0x6
+	.quad	7                               ## 0x7
+LCPI2_1:
+	.space	64,15
+LCPI2_2:
+	.byte	0                               ## 0x0
+	.byte	1                               ## 0x1
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	3                               ## 0x3
+	.byte	4                               ## 0x4
+	.byte	0                               ## 0x0
+	.byte	1                               ## 0x1
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	3                               ## 0x3
+	.byte	4                               ## 0x4
+	.byte	0                               ## 0x0
+	.byte	1                               ## 0x1
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	3                               ## 0x3
+	.byte	4                               ## 0x4
+	.byte	0                               ## 0x0
+	.byte	1                               ## 0x1
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	3                               ## 0x3
+	.byte	4                               ## 0x4
+	.section	__TEXT,__text,regular,pure_instructions
+	.globl	__ZNK7everett9rank_view4rankEy
+	.weak_def_can_be_hidden	__ZNK7everett9rank_view4rankEy
+	.p2align	4
+__ZNK7everett9rank_view4rankEy:         ## @_ZNK7everett9rank_view4rankEy
+Lfunc_begin0:
+	.cfi_startproc
+	.cfi_personality 155, ___gxx_personality_v0
+	.cfi_lsda 16, Lexception0
+## %bb.0:
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	pushq	%r14
+	pushq	%rbx
+	.cfi_offset %rbx, -32
+	.cfi_offset %r14, -24
+	cmpq	48(%rdi), %rsi
+	jae	LBB2_1
+## %bb.4:
+	movq	%rsi, %rax
+	shrq	$11, %rax
+	movq	16(%rdi), %r9
+	movq	32(%rdi), %rcx
+	movl	(%r9,%rax,8), %r8d
+	movq	%rsi, %rdx
+	movq	%rsi, %r10
+	shrq	$32, %r10
+	addq	(%rcx,%r10,8), %r8
+	shrq	$9, %rdx
+	movl	%edx, %ecx
+	andb	$3, %cl
+	movzbl	%cl, %ecx
+	leal	(%rcx,%rcx,4), %r10d
+	leal	(%rcx,%r10,2), %ecx
+	movq	$-1, %r10
+                                        ## kill: def $cl killed $cl killed $ecx
+	shlq	%cl, %r10
+	notl	%r10d
+	andl	4(%r9,%rax,8), %r10d
+	imulq	$4196353, %r10, %rax            ## imm = 0x400801
+	shrq	$22, %rax
+	andl	$2047, %eax                     ## imm = 0x7FF
+	addq	%r8, %rax
+	movl	%esi, %r9d
+	andl	$511, %r9d                      ## imm = 0x1FF
+	je	LBB2_13
+## %bb.5:
+	leaq	(,%rdx,8), %rcx
+	movq	8(%rdi), %r8
+	shlq	$6, %rdx
+	addq	(%rdi), %rdx
+	subq	%rcx, %r8
+	movl	%r9d, %ecx
+	shrl	$6, %ecx
+	cmpq	$8, %r8
+	jb	LBB2_7
+## %bb.6:
+	movl	$1, %edi
+	shll	%cl, %edi
+	leal	-1(%rdi), %r8d
+	btsl	%ecx, %r8d
+	movq	$-1, %r9
+	movl	%esi, %ecx
+	shlq	%cl, %r9
+	kmovd	%r8d, %k1
+	vmovdqu64	(%rdx), %zmm0 {%k1} {z}
+	vpbroadcastq	%r9, %zmm1
+	kmovd	%edi, %k1
+	vpandnq	%zmm0, %zmm1, %zmm0 {%k1}
+	vmovdqa64	LCPI2_1(%rip), %zmm1    ## zmm1 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
+	vpandq	%zmm1, %zmm0, %zmm2
+	vmovdqa64	LCPI2_2(%rip), %zmm3    ## zmm3 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
+	vpshufb	%zmm2, %zmm3, %zmm2
+	vpsrlw	$4, %zmm0, %zmm0
+	vpandq	%zmm1, %zmm0, %zmm0
+	vpshufb	%zmm0, %zmm3, %zmm0
+	vpaddb	%zmm2, %zmm0, %zmm0
+	vpxor	%xmm1, %xmm1, %xmm1
+	vpsadbw	%zmm1, %zmm0, %zmm0
+	vextracti64x4	$1, %zmm0, %ymm1
+	vpaddq	%zmm1, %zmm0, %zmm0
+	vextracti128	$1, %ymm0, %xmm1
+	vpaddq	%xmm1, %xmm0, %xmm0
+	vpshufd	$238, %xmm0, %xmm1              ## xmm1 = xmm0[2,3,2,3]
+	vpaddq	%xmm1, %xmm0, %xmm0
+	vmovq	%xmm0, %rcx
+	movl	%ecx, %ecx
+	jmp	LBB2_12
+LBB2_7:
+	xorl	%r8d, %r8d
+	movl	%ecx, %edi
+	cmpl	$64, %r9d
+	jb	LBB2_9
+## %bb.8:
+	leaq	-1(%rdi), %rcx
+	vpbroadcastq	%rcx, %zmm0
+	vpcmpnltuq	LCPI2_0(%rip), %zmm0, %k1
+	vmovdqu64	(%rdx), %zmm0 {%k1} {z}
+	vmovdqa64	LCPI2_1(%rip), %zmm1    ## zmm1 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
+	vpandq	%zmm1, %zmm0, %zmm2
+	vmovdqa64	LCPI2_2(%rip), %zmm3    ## zmm3 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
+	vpshufb	%zmm2, %zmm3, %zmm2
+	vpsrlw	$4, %zmm0, %zmm0
+	vpandq	%zmm1, %zmm0, %zmm0
+	vpshufb	%zmm0, %zmm3, %zmm0
+	vpaddb	%zmm2, %zmm0, %zmm0
+	vpxor	%xmm1, %xmm1, %xmm1
+	vpsadbw	%zmm1, %zmm0, %zmm0
+	vpmovqd	%zmm0, %ymm0 {%k1} {z}
+	vpmovdb	%zmm0, %xmm0
+	vpxor	%xmm1, %xmm1, %xmm1
+	vpsadbw	%xmm1, %xmm0, %xmm0
+	vmovd	%xmm0, %r8d
+LBB2_9:
+	testb	$63, %sil
+	je	LBB2_11
+## %bb.10:
+	movq	$-1, %r9
+	movl	%esi, %ecx
+	shlq	%cl, %r9
+	notq	%r9
+	andq	(%rdx,%rdi,8), %r9
+	popcntq	%r9, %rcx
+	addl	%ecx, %r8d
+LBB2_11:
+	movl	%r8d, %ecx
+LBB2_12:
+	addq	%rcx, %rax
+LBB2_13:
+	popq	%rbx
+	popq	%r14
+	popq	%rbp
+	vzeroupper
+	retq
+LBB2_1:
+	movl	$16, %edi
+	callq	___cxa_allocate_exception
+	movq	%rax, %rbx
+Ltmp0:
+	leaq	L_.str(%rip), %rsi
+	movq	%rax, %rdi
+	callq	__ZNSt12out_of_rangeC1B9nqe210106EPKc
+Ltmp1:
+## %bb.2:
+	movq	%rbx, %rdi
+	callq	__ZNK7everett9rank_view4rankEy.cold.1
+LBB2_3:
+Ltmp2:
+	movq	%rax, %r14
+	movq	%rbx, %rdi
+	callq	___cxa_free_exception
+	movq	%r14, %rdi
+	callq	__Unwind_Resume
+Lfunc_end0:
+	.cfi_endproc
+	.section	__TEXT,__gcc_except_tab
+	.p2align	2, 0x0
+GCC_except_table2:
+Lexception0:
+	.byte	255                             ## @LPStart Encoding = omit
+	.byte	255                             ## @TType Encoding = omit
+	.byte	1                               ## Call site Encoding = uleb128
+	.uleb128 Lcst_end0-Lcst_begin0
+Lcst_begin0:
+	.uleb128 Lfunc_begin0-Lfunc_begin0      ## >> Call Site 1 <<
+	.uleb128 Ltmp0-Lfunc_begin0             ##   Call between Lfunc_begin0 and Ltmp0
+	.byte	0                               ##     has no landing pad
+	.byte	0                               ##   On action: cleanup
+	.uleb128 Ltmp0-Lfunc_begin0             ## >> Call Site 2 <<
+	.uleb128 Ltmp1-Ltmp0                    ##   Call between Ltmp0 and Ltmp1
+	.uleb128 Ltmp2-Lfunc_begin0             ##     jumps to Ltmp2
+	.byte	0                               ##   On action: cleanup
+	.uleb128 Ltmp1-Lfunc_begin0             ## >> Call Site 3 <<
+	.uleb128 Lfunc_end0-Ltmp1               ##   Call between Ltmp1 and Lfunc_end0
+	.byte	0                               ##     has no landing pad
+	.byte	0                               ##   On action: cleanup
+Lcst_end0:
+	.p2align	2, 0x0
+                                        ## -- End function
+	.section	__TEXT,__text,regular,pure_instructions
+	.private_extern	__ZNSt12out_of_rangeC1B9nqe210106EPKc ## -- Begin function _ZNSt12out_of_rangeC1B9nqe210106EPKc
+	.globl	__ZNSt12out_of_rangeC1B9nqe210106EPKc
+	.weak_def_can_be_hidden	__ZNSt12out_of_rangeC1B9nqe210106EPKc
+	.p2align	4
+__ZNSt12out_of_rangeC1B9nqe210106EPKc:  ## @_ZNSt12out_of_rangeC1B9nqe210106EPKc
+	.cfi_startproc
+## %bb.0:
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	pushq	%rbx
+	pushq	%rax
+	.cfi_offset %rbx, -24
+	movq	%rdi, %rbx
+	callq	__ZNSt11logic_errorC2EPKc
+	movq	__ZTVSt12out_of_range@GOTPCREL(%rip), %rax
+	addq	$16, %rax
+	movq	%rax, (%rbx)
+	addq	$8, %rsp
+	popq	%rbx
+	popq	%rbp
+	retq
+	.cfi_endproc
+                                        ## -- End function
+	.p2align	4                               ## -- Begin function _ZNK7everett9rank_view4rankEy.cold.1
+__ZNK7everett9rank_view4rankEy.cold.1:  ## @_ZNK7everett9rank_view4rankEy.cold.1
+	.cfi_startproc
+## %bb.0:
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	movq	__ZTISt12out_of_range@GOTPCREL(%rip), %rsi
+	movq	__ZNSt12out_of_rangeD1Ev@GOTPCREL(%rip), %rdx
+	callq	___cxa_throw
+	.cfi_endproc
+                                        ## -- End function
+	.section	__TEXT,__cstring,cstring_literals
+L_.str:                                 ## @.str
+	.asciz	"rank position"
+
+.subsections_via_symbols

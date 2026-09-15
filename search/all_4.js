@@ -6,5 +6,6 @@ var searchData=
   ['5_20navigation_20cost_20and_20evaluation_20cost_20separate_3',['5. Navigation cost and evaluation cost separate',['../md_docs_2arrows.html#autotoc_md5-navigation-cost-and-evaluation-cost-separate',1,'']]],
   ['5_20publish_20files_20before_20adopting_20their_20catalog_20roots_4',['5. Publish files before adopting their catalog roots',['../md_docs_2catalog.html#autotoc_md5-publish-files-before-adopting-their-catalog-roots',1,'']]],
   ['5_20redundant_20levels_20and_20merge_20work_5',['5. Redundant levels and merge work',['../md_docs_2design.html#autotoc_md5-redundant-levels-and-merge-work',1,'']]],
-  ['5_20why_20the_20replay_20queue_20actually_20finishes_6',['5. Why the replay queue actually finishes',['../md_docs_2rebuild.html#autotoc_md5-why-the-replay-queue-actually-finishes',1,'']]]
+  ['5_20why_20the_20replay_20queue_20actually_20finishes_6',['5. Why the replay queue actually finishes',['../md_docs_2rebuild.html#autotoc_md5-why-the-replay-queue-actually-finishes',1,'']]],
+  ['512_20bit_20rank_20prefixes_7',['Intel paths for bounded 512-bit rank prefixes',['../intel-paths-for-bounded-512-bit-rank-prefixes.html',1,'']]]
 ];

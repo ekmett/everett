@@ -154,7 +154,7 @@ Larger same-universe results</h1>
 <td class="markdownTableBodyNone">Cult bitmap rank   </td><td class="markdownTableBodyRight">18.318 [18.098,20.102]   </td><td class="markdownTableBodyRight">21.405 [21.026,21.449]   </td><td class="markdownTableBodyRight">167.289 [153.595,176.036]   </td><td class="markdownTableBodyRight">166.223 [156.725,169.526]   </td></tr>
 </table>
 <p>Cult's independent queries remain competitive despite its larger representation; its independent paired result is the smallest in this run. The packed representations have markedly smaller dependent-query medians. The changes across patterns and broad large-case ranges prevent a single universal speed ranking. These are resident-memory microbenchmarks, not mmap fault, storage I/O, complete lookup, or end-to-end update measurements.</p>
-<h1><a class="anchor" id="reproduction-1"></a>
+<h1><a class="anchor" id="reproduction-3"></a>
 Reproduction</h1>
 <p>Run these commands through the host's usual exclusive CPU/build resource gate. Only the external header path depends on the Cult checkout location.</p>
 <div class="fragment"><div class="line">python3 bench/neon_cult_rank.py hot \</div>

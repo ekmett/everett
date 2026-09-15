@@ -80,7 +80,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="complete-queries-with-comparison-state"></a> This experiment compares the complete query implementation at <code>71a92a9</code> with ordinary front coding and exact cut LCPs at <code>2d58df0</code>. It also measures the latter with physical block width <code>W=16</code>; cascade stride stays <code>K=15</code> throughout.</p>
-<h1><a class="anchor" id="method-1"></a>
+<h1><a class="anchor" id="method-2"></a>
 Method</h1>
 <p>The <a href="source/bench/query_compare.cc">shared harness</a> retains the fixture, timers and integer oracle from <a href="source/bench/query_chain.cc">query_chain.cc</a>. Both revisions compile that same source. The added backing-array accounting runs outside the timers; the optional <code>W=16</code> definition changes only the candidate's policy instantiation.</p>
 <p>Four native catalogs contain <code>N</code>, <code>N/4</code>, <code>N/16</code> and <code>N/64</code> records. Sequential index construction links them, then each trial prepares the small query root. For <code>N=4096</code>, preparation adds one routing catalog to an 87-entry head. For <code>N=65536</code>, it adds two routing catalogs to a 1,390-entry head. The corresponding queries visit five and six catalogs, respectively.</p>
@@ -88,7 +88,7 @@ Method</h1>
 <p>Every process first prepares a warm root and verifies every query result. It then times one root preparation and 4,096 complete queries, followed by another full result verification. Timed matches and value checksums must match the oracle. The Python runner also requires identical head sizes, routing depths, catalog visits, match counts and checksums across revisions and block widths. Encoded byte equality is not required.</p>
 <p>Preparation includes validation, allocation and index finalization, but excludes source encoding and construction of the existing chain. Query time includes cursor creation/destruction, owned query and result storage, one-catalog steps, and a checksum consuming every returned value byte. Root destruction is outside the preparation timer.</p>
 <p>Five fresh-process trials alternate variant order: <code>baseline, candidate W15, candidate W16</code>, then the reverse. Each process measures byte followed by bit. This controls variant order, but does not isolate operating system activity, fix core frequency or measure cold storage. The harness requests user-initiated QoS. All builds and runs use the host's exclusive CPU/build-directory resource gate with sequential compilation.</p>
-<h1><a class="anchor" id="results-1"></a>
+<h1><a class="anchor" id="results-3"></a>
 Results</h1>
 <p>Native M2 Max host, AppleClang 21, C++20, <code>-O3 -DNDEBUG</code>. Current <code>W=15</code> reduced median complete-query time by <b>38.2–47.5%</b> in all six cases. Every baseline query-time range was above the corresponding current <code>W=15</code> range. These are comparisons within this run, not against timings in older reports.</p>
 <table class="markdownTable">

@@ -79,7 +79,7 @@ $(function() {
   <div class="headertitle"><div class="title">Files, mappings and publication</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="files-mappings-and-publication"></a> Updated 2026-09-15. SQLite manages catalog metadata; bulk data lives in two custom file kinds, <code>.kv</code> and <code>.index</code>. We have read-only mapping, checked object envelopes, typed codecs and an immutable object writer as implemented foundations. Portable codec sections and exact mapped chains are also implemented; the SQLite adapter and recovery executor remain work. See <a class="el" href="md_docs_2implementation.html">implementation status</a>, the <a class="el" href="md_docs_2catalog.html">catalog design</a> and the <a class="el" href="md_docs_2durability.html">failure and resumption protocol</a>.</p>
+<div class="textblock"><p><a class="anchor" id="files-mappings-and-publication"></a> Updated 2026-09-15. SQLite manages catalog metadata; bulk data lives in two custom file kinds, <code>.kv</code> and <code>.index</code>. We have read-only mapping, checked object envelopes, typed codecs and an immutable object writer as implemented foundations. Portable codec sections, exact mapped chains and an optional SQLite save catalog are also implemented. Mutable-head publication and the recovery executor remain work. See <a class="el" href="md_docs_2implementation.html">implementation status</a>, the <a class="el" href="md_docs_2catalog.html">catalog design</a> and the <a class="el" href="md_docs_2durability.html">failure and resumption protocol</a>.</p>
 <h1><a class="anchor" id="objects-and-names"></a>
 Objects and names</h1>
 <table class="markdownTable">

@@ -1,0 +1,466 @@
+	.build_version macos, 26, 0	sdk_version 26, 5
+	.section	__TEXT,__text,regular,pure_instructions
+	.section	__TEXT,__const
+	.p2align	5, 0x0                          ## -- Begin function prefix_probe
+LCPI0_0:
+	.quad	0                               ## 0x0
+	.quad	1                               ## 0x1
+	.quad	2                               ## 0x2
+	.quad	3                               ## 0x3
+LCPI0_1:
+	.space	32,15
+LCPI0_2:
+	.byte	0                               ## 0x0
+	.byte	1                               ## 0x1
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	3                               ## 0x3
+	.byte	4                               ## 0x4
+	.byte	0                               ## 0x0
+	.byte	1                               ## 0x1
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	3                               ## 0x3
+	.byte	4                               ## 0x4
+LCPI0_3:
+	.quad	4                               ## 0x4
+	.quad	5                               ## 0x5
+	.quad	6                               ## 0x6
+	.quad	7                               ## 0x7
+LCPI0_4:
+	.byte	15                              ## 0xf
+	.section	__TEXT,__text,regular,pure_instructions
+	.globl	_prefix_probe
+	.p2align	4
+_prefix_probe:                          ## @prefix_probe
+	.cfi_startproc
+## %bb.0:
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	movl	%esi, %ecx
+	movl	%esi, %eax
+	shrl	$6, %eax
+	vmovq	%rax, %xmm0
+	vpbroadcastq	%xmm0, %ymm0
+	movq	$-1, %rax
+                                        ## kill: def $cl killed $cl killed $ecx
+	shlq	%cl, %rax
+	notq	%rax
+	vmovq	%rax, %xmm1
+	vpbroadcastq	%xmm1, %ymm1
+	vmovdqa	LCPI0_0(%rip), %ymm2            ## ymm2 = [0,1,2,3]
+	vpcmpgtq	%ymm2, %ymm0, %ymm3
+	vpcmpeqq	%ymm2, %ymm0, %ymm2
+	vpand	%ymm1, %ymm2, %ymm2
+	vpor	%ymm2, %ymm3, %ymm2
+	vpand	(%rdi), %ymm2, %ymm2
+	vpbroadcastb	LCPI0_4(%rip), %ymm3    ## ymm3 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
+	vpand	%ymm3, %ymm2, %ymm4
+	vmovdqa	LCPI0_2(%rip), %ymm5            ## ymm5 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
+	vpshufb	%ymm4, %ymm5, %ymm4
+	vpsrlw	$4, %ymm2, %ymm2
+	vpand	%ymm3, %ymm2, %ymm2
+	vpshufb	%ymm2, %ymm5, %ymm2
+	vmovdqa	LCPI0_3(%rip), %ymm6            ## ymm6 = [4,5,6,7]
+	vpcmpgtq	%ymm6, %ymm0, %ymm7
+	vpcmpeqq	%ymm6, %ymm0, %ymm0
+	vpand	%ymm1, %ymm0, %ymm0
+	vpor	%ymm0, %ymm7, %ymm0
+	vpand	32(%rdi), %ymm0, %ymm0
+	vpand	%ymm3, %ymm0, %ymm1
+	vpshufb	%ymm1, %ymm5, %ymm1
+	vpaddb	%ymm1, %ymm4, %ymm1
+	vpaddb	%ymm1, %ymm2, %ymm1
+	vpsrlw	$4, %ymm0, %ymm0
+	vpand	%ymm3, %ymm0, %ymm0
+	vpshufb	%ymm0, %ymm5, %ymm0
+	vpaddb	%ymm0, %ymm1, %ymm0
+	vpxor	%xmm1, %xmm1, %xmm1
+	vpsadbw	%ymm1, %ymm0, %ymm0
+	vextracti128	$1, %ymm0, %xmm1
+	vpaddq	%xmm1, %xmm0, %xmm0
+	vpshufd	$238, %xmm0, %xmm1              ## xmm1 = xmm0[2,3,2,3]
+	vpaddq	%xmm1, %xmm0, %xmm0
+	vmovd	%xmm0, %eax
+	popq	%rbp
+	vzeroupper
+	retq
+	.cfi_endproc
+                                        ## -- End function
+	.globl	_rank_probe                     ## -- Begin function rank_probe
+	.p2align	4
+_rank_probe:                            ## @rank_probe
+	.cfi_startproc
+## %bb.0:
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	popq	%rbp
+	jmp	__ZNK7everett9rank_view4rankEy  ## TAILCALL
+	.cfi_endproc
+                                        ## -- End function
+	.section	__TEXT,__literal8,8byte_literals
+	.p2align	3, 0x0                          ## -- Begin function _ZNK7everett9rank_view4rankEy
+LCPI2_0:
+	.quad	-9223372036854775808            ## 0x8000000000000000
+	.section	__TEXT,__const
+	.p2align	5, 0x0
+LCPI2_1:
+	.quad	-9223372036854775808            ## 0x8000000000000000
+	.quad	-9223372036854775807            ## 0x8000000000000001
+	.quad	-9223372036854775806            ## 0x8000000000000002
+	.quad	-9223372036854775805            ## 0x8000000000000003
+LCPI2_2:
+	.space	32,15
+LCPI2_3:
+	.byte	0                               ## 0x0
+	.byte	1                               ## 0x1
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	3                               ## 0x3
+	.byte	4                               ## 0x4
+	.byte	0                               ## 0x0
+	.byte	1                               ## 0x1
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	1                               ## 0x1
+	.byte	2                               ## 0x2
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	2                               ## 0x2
+	.byte	3                               ## 0x3
+	.byte	3                               ## 0x3
+	.byte	4                               ## 0x4
+LCPI2_4:
+	.quad	-9223372036854775805            ## 0x8000000000000003
+	.quad	-9223372036854775804            ## 0x8000000000000004
+	.quad	-9223372036854775803            ## 0x8000000000000005
+	.quad	-9223372036854775802            ## 0x8000000000000006
+LCPI2_5:
+	.quad	0                               ## 0x0
+	.quad	1                               ## 0x1
+	.quad	2                               ## 0x2
+	.quad	3                               ## 0x3
+LCPI2_6:
+	.quad	4                               ## 0x4
+	.quad	5                               ## 0x5
+	.quad	6                               ## 0x6
+	.quad	7                               ## 0x7
+LCPI2_7:
+	.byte	15                              ## 0xf
+	.section	__TEXT,__text,regular,pure_instructions
+	.globl	__ZNK7everett9rank_view4rankEy
+	.weak_def_can_be_hidden	__ZNK7everett9rank_view4rankEy
+	.p2align	4
+__ZNK7everett9rank_view4rankEy:         ## @_ZNK7everett9rank_view4rankEy
+Lfunc_begin0:
+	.cfi_startproc
+	.cfi_personality 155, ___gxx_personality_v0
+	.cfi_lsda 16, Lexception0
+## %bb.0:
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	pushq	%r14
+	pushq	%rbx
+	.cfi_offset %rbx, -32
+	.cfi_offset %r14, -24
+	cmpq	48(%rdi), %rsi
+	jae	LBB2_1
+## %bb.4:
+	movq	%rsi, %rax
+	shrq	$11, %rax
+	movq	16(%rdi), %r9
+	movq	32(%rdi), %rcx
+	movl	(%r9,%rax,8), %r8d
+	movq	%rsi, %rdx
+	movq	%rsi, %r10
+	shrq	$32, %r10
+	addq	(%rcx,%r10,8), %r8
+	shrq	$9, %rdx
+	movl	%edx, %ecx
+	andb	$3, %cl
+	movzbl	%cl, %ecx
+	leal	(%rcx,%rcx,4), %r10d
+	leal	(%rcx,%r10,2), %ecx
+	movq	$-1, %r10
+                                        ## kill: def $cl killed $cl killed $ecx
+	shlq	%cl, %r10
+	notl	%r10d
+	andl	4(%r9,%rax,8), %r10d
+	imulq	$4196353, %r10, %rax            ## imm = 0x400801
+	shrq	$22, %rax
+	andl	$2047, %eax                     ## imm = 0x7FF
+	addq	%r8, %rax
+	movl	%esi, %r9d
+	andl	$511, %r9d                      ## imm = 0x1FF
+	je	LBB2_16
+## %bb.5:
+	leaq	(,%rdx,8), %rcx
+	movq	8(%rdi), %r8
+	shlq	$6, %rdx
+	addq	(%rdi), %rdx
+	subq	%rcx, %r8
+	movl	%r9d, %ecx
+	shrl	$6, %ecx
+	cmpq	$8, %r8
+	jb	LBB2_7
+## %bb.6:
+	movl	%ecx, %ecx
+	vmovq	%rcx, %xmm0
+	vpbroadcastq	%xmm0, %ymm0
+	movq	$-1, %rdi
+	movl	%esi, %ecx
+	shlq	%cl, %rdi
+	notq	%rdi
+	vmovq	%rdi, %xmm1
+	vpbroadcastq	%xmm1, %ymm1
+	vmovdqa	LCPI2_5(%rip), %ymm2            ## ymm2 = [0,1,2,3]
+	vpcmpgtq	%ymm2, %ymm0, %ymm3
+	vpcmpeqq	%ymm2, %ymm0, %ymm2
+	vpand	%ymm1, %ymm2, %ymm2
+	vpor	%ymm2, %ymm3, %ymm2
+	vpand	(%rdx), %ymm2, %ymm2
+	vpbroadcastb	LCPI2_7(%rip), %ymm3    ## ymm3 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
+	vpand	%ymm3, %ymm2, %ymm4
+	vmovdqa	LCPI2_3(%rip), %ymm5            ## ymm5 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
+	vpshufb	%ymm4, %ymm5, %ymm4
+	vpsrlw	$4, %ymm2, %ymm2
+	vpand	%ymm3, %ymm2, %ymm2
+	vpshufb	%ymm2, %ymm5, %ymm2
+	vmovdqa	LCPI2_6(%rip), %ymm6            ## ymm6 = [4,5,6,7]
+	vpcmpgtq	%ymm6, %ymm0, %ymm7
+	vpcmpeqq	%ymm6, %ymm0, %ymm0
+	vpand	%ymm1, %ymm0, %ymm0
+	vpor	%ymm0, %ymm7, %ymm0
+	vpand	32(%rdx), %ymm0, %ymm0
+	vpand	%ymm3, %ymm0, %ymm1
+	vpshufb	%ymm1, %ymm5, %ymm1
+	vpaddb	%ymm1, %ymm4, %ymm1
+	vpaddb	%ymm1, %ymm2, %ymm1
+	vpsrlw	$4, %ymm0, %ymm0
+	vpand	%ymm3, %ymm0, %ymm0
+	vpshufb	%ymm0, %ymm5, %ymm0
+	vpaddb	%ymm0, %ymm1, %ymm0
+	vpxor	%xmm1, %xmm1, %xmm1
+	vpsadbw	%ymm1, %ymm0, %ymm0
+	vextracti128	$1, %ymm0, %xmm1
+	vpaddq	%xmm1, %xmm0, %xmm0
+	vpshufd	$238, %xmm0, %xmm1              ## xmm1 = xmm0[2,3,2,3]
+	vpaddq	%xmm1, %xmm0, %xmm0
+	vmovd	%xmm0, %ecx
+	jmp	LBB2_15
+LBB2_7:
+	xorl	%r8d, %r8d
+	movl	%ecx, %edi
+	cmpl	$64, %r9d
+	jb	LBB2_12
+## %bb.8:
+	leaq	-1(%rdi), %r8
+	vmovq	%r8, %xmm0
+	vpbroadcastq	%xmm0, %ymm0
+	addl	$3, %ecx
+	andl	$-4, %ecx
+	vpbroadcastq	LCPI2_0(%rip), %ymm1    ## ymm1 = [9223372036854775808,9223372036854775808,9223372036854775808,9223372036854775808]
+	vpxor	%ymm1, %ymm0, %ymm1
+	vmovdqa	LCPI2_1(%rip), %ymm0            ## ymm0 = [9223372036854775808,9223372036854775809,9223372036854775810,9223372036854775811]
+	vpcmpgtq	%ymm1, %ymm0, %ymm0
+	vpcmpeqd	%ymm2, %ymm2, %ymm2
+	vpxor	%ymm2, %ymm0, %ymm4
+	vpmaskmovq	(%rdx), %ymm4, %ymm0
+	vpbroadcastb	LCPI2_7(%rip), %ymm2    ## ymm2 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
+	vpand	%ymm2, %ymm0, %ymm5
+	vmovdqa	LCPI2_3(%rip), %ymm3            ## ymm3 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
+	vpshufb	%ymm5, %ymm3, %ymm5
+	vpsrlw	$4, %ymm0, %ymm0
+	vpand	%ymm2, %ymm0, %ymm0
+	vpshufb	%ymm0, %ymm3, %ymm0
+	vpaddb	%ymm5, %ymm0, %ymm0
+	vpxor	%xmm5, %xmm5, %xmm5
+	vpsadbw	%ymm5, %ymm0, %ymm0
+	vextracti128	$1, %ymm0, %xmm6
+	vpackusdw	%xmm6, %xmm0, %xmm0
+	cmpl	$4, %ecx
+	jne	LBB2_10
+## %bb.9:
+	vextracti128	$1, %ymm4, %xmm1
+	vpackssdw	%xmm1, %xmm4, %xmm1
+	vpxor	%xmm2, %xmm2, %xmm2
+	jmp	LBB2_11
+LBB2_10:
+	vpcmpgtq	LCPI2_4(%rip), %ymm1, %ymm4
+	vextracti128	$1, %ymm4, %xmm1
+	vpackssdw	%xmm1, %xmm4, %xmm1
+	vpmaskmovq	32(%rdx), %ymm4, %ymm4
+	vpand	%ymm2, %ymm4, %ymm6
+	vpshufb	%ymm6, %ymm3, %ymm6
+	vpsrlw	$4, %ymm4, %ymm4
+	vpand	%ymm2, %ymm4, %ymm2
+	vpshufb	%ymm2, %ymm3, %ymm2
+	vpaddb	%ymm6, %ymm2, %ymm2
+	vpsadbw	%ymm5, %ymm2, %ymm2
+	vextracti128	$1, %ymm2, %xmm3
+	vpackusdw	%xmm3, %xmm2, %xmm3
+	vmovdqa	%xmm0, %xmm2
+	vpaddd	%xmm3, %xmm0, %xmm0
+LBB2_11:
+	vpslld	$31, %xmm1, %xmm1
+	vblendvps	%xmm1, %xmm0, %xmm2, %xmm0
+	vshufps	$238, %xmm0, %xmm0, %xmm1       ## xmm1 = xmm0[2,3,2,3]
+	vpaddd	%xmm1, %xmm0, %xmm0
+	vpshufd	$85, %xmm0, %xmm1               ## xmm1 = xmm0[1,1,1,1]
+	vpaddd	%xmm1, %xmm0, %xmm0
+	vmovd	%xmm0, %r8d
+LBB2_12:
+	testb	$63, %sil
+	je	LBB2_14
+## %bb.13:
+	movq	$-1, %r9
+	movl	%esi, %ecx
+	shlq	%cl, %r9
+	notq	%r9
+	andq	(%rdx,%rdi,8), %r9
+	popcntq	%r9, %rcx
+	addl	%ecx, %r8d
+LBB2_14:
+	movl	%r8d, %ecx
+LBB2_15:
+	addq	%rcx, %rax
+LBB2_16:
+	popq	%rbx
+	popq	%r14
+	popq	%rbp
+	vzeroupper
+	retq
+LBB2_1:
+	movl	$16, %edi
+	callq	___cxa_allocate_exception
+	movq	%rax, %rbx
+Ltmp0:
+	leaq	L_.str(%rip), %rsi
+	movq	%rax, %rdi
+	callq	__ZNSt12out_of_rangeC1B9nqe210106EPKc
+Ltmp1:
+## %bb.2:
+	movq	%rbx, %rdi
+	callq	__ZNK7everett9rank_view4rankEy.cold.1
+LBB2_3:
+Ltmp2:
+	movq	%rax, %r14
+	movq	%rbx, %rdi
+	callq	___cxa_free_exception
+	movq	%r14, %rdi
+	callq	__Unwind_Resume
+Lfunc_end0:
+	.cfi_endproc
+	.section	__TEXT,__gcc_except_tab
+	.p2align	2, 0x0
+GCC_except_table2:
+Lexception0:
+	.byte	255                             ## @LPStart Encoding = omit
+	.byte	255                             ## @TType Encoding = omit
+	.byte	1                               ## Call site Encoding = uleb128
+	.uleb128 Lcst_end0-Lcst_begin0
+Lcst_begin0:
+	.uleb128 Lfunc_begin0-Lfunc_begin0      ## >> Call Site 1 <<
+	.uleb128 Ltmp0-Lfunc_begin0             ##   Call between Lfunc_begin0 and Ltmp0
+	.byte	0                               ##     has no landing pad
+	.byte	0                               ##   On action: cleanup
+	.uleb128 Ltmp0-Lfunc_begin0             ## >> Call Site 2 <<
+	.uleb128 Ltmp1-Ltmp0                    ##   Call between Ltmp0 and Ltmp1
+	.uleb128 Ltmp2-Lfunc_begin0             ##     jumps to Ltmp2
+	.byte	0                               ##   On action: cleanup
+	.uleb128 Ltmp1-Lfunc_begin0             ## >> Call Site 3 <<
+	.uleb128 Lfunc_end0-Ltmp1               ##   Call between Ltmp1 and Lfunc_end0
+	.byte	0                               ##     has no landing pad
+	.byte	0                               ##   On action: cleanup
+Lcst_end0:
+	.p2align	2, 0x0
+                                        ## -- End function
+	.section	__TEXT,__text,regular,pure_instructions
+	.private_extern	__ZNSt12out_of_rangeC1B9nqe210106EPKc ## -- Begin function _ZNSt12out_of_rangeC1B9nqe210106EPKc
+	.globl	__ZNSt12out_of_rangeC1B9nqe210106EPKc
+	.weak_def_can_be_hidden	__ZNSt12out_of_rangeC1B9nqe210106EPKc
+	.p2align	4
+__ZNSt12out_of_rangeC1B9nqe210106EPKc:  ## @_ZNSt12out_of_rangeC1B9nqe210106EPKc
+	.cfi_startproc
+## %bb.0:
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	pushq	%rbx
+	pushq	%rax
+	.cfi_offset %rbx, -24
+	movq	%rdi, %rbx
+	callq	__ZNSt11logic_errorC2EPKc
+	movq	__ZTVSt12out_of_range@GOTPCREL(%rip), %rax
+	addq	$16, %rax
+	movq	%rax, (%rbx)
+	addq	$8, %rsp
+	popq	%rbx
+	popq	%rbp
+	retq
+	.cfi_endproc
+                                        ## -- End function
+	.p2align	4                               ## -- Begin function _ZNK7everett9rank_view4rankEy.cold.1
+__ZNK7everett9rank_view4rankEy.cold.1:  ## @_ZNK7everett9rank_view4rankEy.cold.1
+	.cfi_startproc
+## %bb.0:
+	pushq	%rbp
+	.cfi_def_cfa_offset 16
+	.cfi_offset %rbp, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register %rbp
+	movq	__ZTISt12out_of_range@GOTPCREL(%rip), %rsi
+	movq	__ZNSt12out_of_rangeD1Ev@GOTPCREL(%rip), %rdx
+	callq	___cxa_throw
+	.cfi_endproc
+                                        ## -- End function
+	.section	__TEXT,__cstring,cstring_literals
+L_.str:                                 ## @.str
+	.asciz	"rank position"
+
+.subsections_via_symbols

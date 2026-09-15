@@ -1,0 +1,53 @@
+import concurrent.futures,hashlib,json,shutil,subprocess
+from pathlib import Path
+b=Path(__file__).resolve().parent
+root=b.parent
+inc=b/'headers'
+if inc.exists():shutil.rmtree(inc)
+shutil.copytree(root/'include',inc/'include')
+shutil.copyfile(root/'tests/rank.cc',b/'rank.cc')
+common=['clang++','-std=c++20','-Wall','-Wextra','-Wpedantic','-Werror','-I'+str(inc/'include')]
+asan=['-O1','-g','-fsanitize=address,undefined','-fno-omit-frame-pointer']
+profiles={
+ 'native':[],
+ 'scalar':['-arch','x86_64','-mno-avx','-mno-popcnt'],
+ 'avx2':['-arch','x86_64','-mavx2','-mno-avx512f'],
+ 'avx512f':['-arch','x86_64','-mavx512f','-mno-avx512bw','-mno-avx512vpopcntdq','-mno-avx512dq','-mno-avx512vl'],
+ 'vpopcnt':['-arch','x86_64','-mavx512f','-mavx512vpopcntdq','-mno-avx512bw','-mno-avx512dq','-mno-avx512vl'],
+ 'avx512bw':['-arch','x86_64','-mavx512f','-mavx512bw','-mno-avx512vpopcntdq','-mno-avx512dq','-mno-avx512vl'],
+ 'avx512both':['-arch','x86_64','-mavx512f','-mavx512bw','-mavx512vpopcntdq','-mno-avx512dq','-mno-avx512vl'],
+}
+commands=[]
+for name,flags in profiles.items():
+ if name in ['native','scalar','avx2']:
+  commands.append((name,[*common,*asan,*flags,str(b/'rank.cc'),'-o',str(b/name)]))
+ else:
+  commands.append((name,[*common,'-O2',*flags,'-c',str(b/'rank.cc'),'-o',str(b/(name+'.o'))]))
+ if name not in ['native']:
+  commands.append((name+'-asm',[*common,'-O3',*flags,'-S',str(b/'assembly.cc'),'-o',str(b/(name+'.s'))]))
+commands.append(('caps',['clang++','-std=c++20','-arch','x86_64',str(b/'caps.cc'),'-o',str(b/'caps')]))
+def run_compile(item):
+ name,command=item
+ result=subprocess.run(command,text=True,capture_output=True)
+ print(name,result.returncode,result.stderr,flush=True)
+ return {'name':name,'command':command,'returncode':result.returncode,'stdout':result.stdout,'stderr':result.stderr}
+with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+ results=list(pool.map(run_compile,commands))
+if any(r['returncode'] for r in results):raise RuntimeError('compile failure')
+caps=json.loads(subprocess.check_output(['arch','-x86_64',str(b/'caps')],text=True))
+runs=[]
+for name in ['native','scalar']+(['avx2'] if caps['avx2'] else []):
+ command=([str(b/name)] if name=='native' else ['arch','-x86_64',str(b/name)])
+ r=subprocess.run(command,text=True,capture_output=True,check=True)
+ print(name,r.stdout,flush=True)
+ runs.append({'name':name,'command':command,'stdout':r.stdout,'stderr':r.stderr,'returncode':r.returncode})
+adapter=['python3','bench/rank_bounds.py','--build-dir',str(b/'rank-bounds-adapter'),'--trials','1','--queries','65536']
+r=subprocess.run(adapter,cwd=root,text=True,capture_output=True,check=True)
+print('rank-bounds-adapter',r.stdout,flush=True)
+runs.append({'name':'rank-bounds-adapter','command':adapter,'stdout':r.stdout,'stderr':r.stderr,'returncode':r.returncode})
+manifest={'compiler':subprocess.check_output(['clang++','--version'],text=True),'base':'6f7a160',
+ 'headers_sha256':{str(p.relative_to(inc)):hashlib.sha256(p.read_bytes()).hexdigest() for p in (inc/'include').rglob('*.h')},
+ 'test_sha256':hashlib.sha256((b/'rank.cc').read_bytes()).hexdigest(),
+ 'compiles':results,'rosetta_capabilities':caps,'runs':runs,
+ 'assembly_sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in b.glob('*.s')}}
+(b/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')

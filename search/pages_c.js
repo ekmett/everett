@@ -1,7 +1,10 @@
 var searchData=
 [
-  ['object_20sealing_0',['Immutable object sealing',['../immutable-object-sealing.html',1,'']]],
-  ['of_20k_1',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]],
-  ['ownership_2',['Doxygen metadata and declaration ownership',['../md_docs_2doxygen.html',1,'']]],
-  ['owning_20queries_20with_20shared_20navigation_20views_3',['Owning queries with shared navigation views',['../md_bench_2shared__query.html',1,'']]]
+  ['native_20avx2_20packed_20rank_20comparison_0',['Native AVX2 packed-rank comparison',['../native-avx2-packed-rank-comparison.html',1,'']]],
+  ['native_20key_20prefixes_1',['Reusing native-key prefixes',['../md_bench_2native__prefix.html',1,'']]],
+  ['native_20merge_20frontiers_20and_20framed_20output_2',['Native merge frontiers and framed output',['../native-merge-frontiers-and-framed-output.html',1,'']]],
+  ['native_20windows_20packed_20rank_20comparison_3',['Native Windows packed-rank comparison',['../md_bench_2rank__compare__windows.html',1,'']]],
+  ['native_20writing_20and_20merging_4',['Incremental native writing and merging',['../md_docs_2native-merges.html',1,'']]],
+  ['navigation_20views_5',['Owning queries with shared navigation views',['../md_bench_2shared__query.html',1,'']]],
+  ['neon_20reductions_20and_20the_20cult_20bitmap_20rank_6',['NEON reductions and the Cult bitmap rank',['../md_bench_2neon__cult__rank.html',1,'']]]
 ];

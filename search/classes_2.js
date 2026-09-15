@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['encoded_5fsections_0',['encoded_sections',['../structeverett_1_1encoded__sections.html',1,'everett']]],
-  ['entry_1',['entry',['../structeverett_1_1pin__set_1_1entry.html',1,'everett::pin_set']]],
-  ['exponential_5fgolomb_2',['exponential_golomb',['../structeverett_1_1exponential__golomb.html',1,'everett']]]
+  ['descriptor_0',['descriptor',['../structeverett_1_1section__detail_1_1descriptor.html',1,'everett::section_detail']]],
+  ['directory_1',['directory',['../structeverett_1_1section__detail_1_1directory.html',1,'everett::section_detail']]],
+  ['directory_5fcursor_2',['directory_cursor',['../structeverett_1_1rank__detail_1_1directory__cursor.html',1,'everett::rank_detail']]]
 ];

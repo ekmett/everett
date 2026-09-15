@@ -1,7 +1,12 @@
 var searchData=
 [
-  ['k_0',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]],
-  ['key_1',['Updates in a category chosen per key',['../md_docs_2arrows.html',1,'']]],
-  ['key_20prefixes_20bit_20copies_20and_20framing_2',['Key prefixes, bit copies, and framing',['../md_bench_2key__bits.html',1,'']]],
-  ['keys_3',['Sorts and stringlike keys',['../md_docs_2keys.html',1,'']]]
+  ['immutable_20catalog_20chain_0',['Querying an immutable catalog chain',['../md_docs_2query.html',1,'']]],
+  ['immutable_20object_20sealing_1',['Immutable object sealing',['../immutable-object-sealing.html',1,'']]],
+  ['implementation_20status_2',['Everett implementation status',['../md_docs_2implementation.html',1,'']]],
+  ['in_20a_20category_20chosen_20per_20key_3',['Updates in a category chosen per key',['../md_docs_2arrows.html',1,'']]],
+  ['in_20complete_20bitmap_20rank_4',['Stored spacers in complete bitmap rank',['../stored-spacers-in-complete-bitmap-rank.html',1,'']]],
+  ['in_20complete_20queries_5',['Cold exception paths in complete queries',['../cold-exception-paths-in-complete-queries.html',1,'']]],
+  ['incremental_20native_20writing_20and_20merging_6',['Incremental native writing and merging',['../md_docs_2native-merges.html',1,'']]],
+  ['incremental_20rebuilding_7',['Strong deletion by incremental rebuilding',['../md_docs_2rebuild.html',1,'']]],
+  ['intel_20paths_20for_20bounded_20512_20bit_20rank_20prefixes_8',['Intel paths for bounded 512-bit rank prefixes',['../intel-paths-for-bounded-512-bit-rank-prefixes.html',1,'']]]
 ];

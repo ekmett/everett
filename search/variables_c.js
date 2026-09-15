@@ -10,6 +10,9 @@ var searchData=
   ['native_5fid_7',['native_id',['../structeverett_1_1section__detail_1_1directory.html#a01d654751922646d9c22d003ed1726ae',1,'everett::section_detail::directory']]],
   ['native_5flast_8',['native_last',['../structeverett_1_1profile__blob__window.html#a4f59c0c894bb6eabd7f6c669ab33628a',1,'everett::profile_blob_window']]],
   ['native_5fsignature_9',['native_signature',['../structeverett_1_1pin__set_1_1entry.html#a1a766d9a68921debf12b1bcf2e286188',1,'everett::pin_set::entry']]],
-  ['next_5fborrowed_5f_10',['next_borrowed_',['../structeverett_1_1sample__cursor.html#a0ec59edbba96eab26f76d82683811a09',1,'everett::sample_cursor']]],
-  ['next_5foffset_11',['next_offset',['../structeverett_1_1profile__encoded__record.html#aaf88bf27a3d019e869e36f2a9cbbab83',1,'everett::profile_encoded_record']]]
+  ['newer_5f_10',['newer_',['../structeverett_1_1native__merge__builder.html#aef990603b7022c989c752a4331de2bb3',1,'everett::native_merge_builder']]],
+  ['newer_5fcursor_5f_11',['newer_cursor_',['../structeverett_1_1native__merge__builder.html#ac0af46df637d7386b35b961381778144',1,'everett::native_merge_builder']]],
+  ['newer_5fprefix_5f_12',['newer_prefix_',['../structeverett_1_1native__merge__builder.html#aa57a48853daef33041743e3a9b676bfc',1,'everett::native_merge_builder']]],
+  ['next_5fborrowed_5f_13',['next_borrowed_',['../structeverett_1_1sample__cursor.html#a0ec59edbba96eab26f76d82683811a09',1,'everett::sample_cursor']]],
+  ['next_5foffset_14',['next_offset',['../structeverett_1_1profile__encoded__record.html#aaf88bf27a3d019e869e36f2a9cbbab83',1,'everett::profile_encoded_record']]]
 ];

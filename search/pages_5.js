@@ -1,9 +1,12 @@
 var searchData=
 [
-  ['files_20mappings_20and_20publication_0',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
-  ['for_20worlds_20pins_20and_20background_20work_1',['SQLite catalog for worlds, pins and background work',['../md_docs_2catalog.html',1,'']]],
-  ['framing_2',['Key prefixes, bit copies, and framing',['../md_bench_2key__bits.html',1,'']]],
-  ['from_20peers_3',['Admitting sorted blobs from peers',['../md_docs_2network-admission.html',1,'']]],
-  ['front_20coding_20with_20comparison_20state_4',['Front coding with comparison state',['../md_docs_2comparison-fc.html',1,'']]],
-  ['full_20vector_20and_20packed_20rank_20comparison_5',['Full-vector and packed-rank comparison',['../md_bench_2rank__compare.html',1,'']]]
+  ['elias–fano_20refactor_0',['Complete queries after the rank and Elias–Fano refactor',['../complete-queries-after-the-rank-and-eliasfano-refactor.html',1,'']]],
+  ['elias–fano_20selection_20and_20construction_1',['Elias–Fano Selection and Construction',['../eliasfano-selection-and-construction.html',1,'']]],
+  ['everett_2',['Everett',['../md__a_g_e_n_t_s.html',1,'']]],
+  ['everett_20design_3',['Everett design',['../md_docs_2design.html',1,'']]],
+  ['everett_20implementation_20status_4',['Everett implementation status',['../md_docs_2implementation.html',1,'']]],
+  ['everett_3a_20an_20abstract_20proof_20core_5',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
+  ['everett_3a_20persistent_20storage_20through_20composable_20change_6',['Everett: Persistent Storage Through Composable Change',['../index.html',1,'']]],
+  ['exact_20query_20roots_7',['Mapped blobs and exact query roots',['../mapped-blobs-and-exact-query-roots.html',1,'']]],
+  ['exception_20paths_20in_20complete_20queries_8',['Cold exception paths in complete queries',['../cold-exception-paths-in-complete-queries.html',1,'']]]
 ];

@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['mapped_2dblobs_2emd_0',['mapped-blobs.md',['../mapped-blobs_8md.html',1,'']]],
-  ['mapped_5fblob_2eh_1',['mapped_blob.h',['../mapped__blob_8h.html',1,'']]],
-  ['mapped_5ffile_2eh_2',['mapped_file.h',['../mapped__file_8h.html',1,'']]],
-  ['multiverse_2eh_3',['multiverse.h',['../multiverse_8h.html',1,'']]]
+  ['license_2emd_0',['LICENSE.md',['../_l_i_c_e_n_s_e_8md.html',1,'']]],
+  ['license_2emit_2emd_1',['LICENSE.MIT.md',['../_l_i_c_e_n_s_e_8_m_i_t_8md.html',1,'']]],
+  ['license_2ezlib_2emd_2',['LICENSE.zlib.md',['../_l_i_c_e_n_s_e_8zlib_8md.html',1,'']]]
 ];

@@ -5,5 +5,6 @@ var searchData=
   ['key_5fcomparisons_2',['key_comparisons',['../structeverett_1_1sampling__work.html#a9c8bf295ff327b3b2373bd78bac5782d',1,'everett::sampling_work']]],
   ['key_5funit_3',['key_unit',['../structeverett_1_1profile__metadata.html#a1ff182cde113690d2500fe09ee0d1b66',1,'everett::profile_metadata']]],
   ['key_5funits_4',['key_units',['../structeverett_1_1profile__encoded__record.html#aee37a31302b9fbf20c8edd0a227c2693',1,'everett::profile_encoded_record']]],
-  ['kind_5',['kind',['../structeverett_1_1file__header.html#a9e73757bd15740c567d416388ad364f1',1,'everett::file_header::kind'],['../structeverett_1_1parsed__object__path.html#a2efa1685bf3867e580f7271e0bbf79dc',1,'everett::parsed_object_path::kind']]]
+  ['keys_5',['keys',['../structeverett_1_1native__merge__progress.html#a42466d03fcdff2b8edf16265a340a3c0',1,'everett::native_merge_progress']]],
+  ['kind_6',['kind',['../structeverett_1_1file__header.html#a9e73757bd15740c567d416388ad364f1',1,'everett::file_header::kind'],['../structeverett_1_1parsed__object__path.html#a2efa1685bf3867e580f7271e0bbf79dc',1,'everett::parsed_object_path::kind'],['../structeverett_1_1catalog__object__reservation.html#aa91c56e57fd8f23233b11ec407c89333',1,'everett::catalog_object_reservation::kind'],['../structeverett_1_1catalog__operation.html#a6344455db5b0bd9138fe70732c76cc2b',1,'everett::catalog_operation::kind']]]
 ];

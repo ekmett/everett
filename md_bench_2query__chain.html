@@ -80,7 +80,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="complete-prepared-chain-queries"></a> This fixture measures the complete query API: preparing a small routing head, creating a query cursor, following its exact target links and retrieving every matching native entry. It complements the <a class="el" href="blob-and-pipeline-performance.html">known-window comparison</a>, which begins with a selected window. These are measurements of the new API, without a baseline speedup claim.</p>
-<h1><a class="anchor" id="method"></a>
+<h1><a class="anchor" id="method-1"></a>
 Method</h1>
 <p>The <a href="source/bench/query_chain.cc">source</a> builds four native blobs containing 4,096/1,024/256/64 records. The three added native stages are indexed with <code>index_pipeline</code>. Their final augmented head has 87 entries. Preparing it under <code>K=15</code> adds one empty-native routing catalog containing six samples; each query in this fixture consequently visits five catalogs.</p>
 <p>Keys contain a fixed-width, big-endian integer after either zero or 64 common prefix bytes. Bit-profile keys append one meaningful parity bit. Both profiles use variable values identifying the source level and integer key. The integer identifiers are retained separately for an oracle using ordinary integer <code>lower_bound</code>, without calling the encoded comparison or routing machinery. Half the queries are selected from the base's native keys; the rest are drawn from the entire identifier range.</p>

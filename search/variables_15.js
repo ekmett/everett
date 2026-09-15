@@ -4,5 +4,5 @@ var searchData=
   ['words_1',['words',['../structeverett_1_1rank__index.html#ac20147a9edf87c874dbc0b7085b2f26e',1,'everett::rank_index']]],
   ['words_5f_2',['words_',['../structeverett_1_1rank__view.html#a58fbb7f0f6b2f04a6e7e943f9c66b86d',1,'everett::rank_view::words_'],['../structeverett_1_1sample__view.html#ac4276dda52a897bb95a7a6edabf0fd44',1,'everett::sample_view::words_']]],
   ['work_5f_3',['work_',['../structeverett_1_1sample__cursor.html#a3d62160a3d2ecb90c64f71948f47a9ea',1,'everett::sample_cursor']]],
-  ['writer_5f_4',['writer_',['../structeverett_1_1index__builder.html#aa61123905f65d229d184dc09bd6119ad',1,'everett::index_builder']]]
+  ['writer_5f_4',['writer_',['../structeverett_1_1index__builder.html#aa61123905f65d229d184dc09bd6119ad',1,'everett::index_builder::writer_'],['../structeverett_1_1native__merge__builder.html#a168fb517fffe2b385898f58fa600eda9',1,'everett::native_merge_builder::writer_']]]
 ];

@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['file_2dlifecycle_2emd_0',['file-lifecycle.md',['../file-lifecycle_8md.html',1,'']]],
-  ['file_2eh_1',['file.h',['../file_8h.html',1,'']]],
-  ['fingerprint_2eh_2',['fingerprint.h',['../fingerprint_8h.html',1,'']]]
+  ['elias_5ffano_2eh_0',['elias_fano.h',['../elias__fano_8h.html',1,'']]],
+  ['error_5fdetail_2eh_1',['error_detail.h',['../error__detail_8h.html',1,'']]]
 ];

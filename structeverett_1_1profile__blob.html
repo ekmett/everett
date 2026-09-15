@@ -139,6 +139,8 @@ Public Member Functions</h2></td></tr>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:ab5388454a5ead2ae4771de574d5c2938" id="r_ab5388454a5ead2ae4771de574d5c2938"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="structeverett_1_1profile__blob.html">profile_blob</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__blob.html#ab5388454a5ead2ae4771de574d5c2938">build</a> (std::span&lt; <a class="el" href="structeverett_1_1profile__record.html">profile_record</a> const &gt; <a class="el" href="structeverett_1_1profile__blob.html#a32643ba4e3bd29ed95edfed4328b7494">native</a>, std::span&lt; <a class="el" href="structeverett_1_1bit__string.html">bit_string</a> const &gt; <a class="el" href="structeverett_1_1profile__blob.html#a302a5aa532dc4c5ab96b4f1d5e6ec12e">borrowed</a>={})</td></tr>
 <tr class="separator:ab5388454a5ead2ae4771de574d5c2938"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc96cb5042e86d97183b6dcdbbbfe27d" id="r_adc96cb5042e86d97183b6dcdbbbfe27d"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="structeverett_1_1profile__blob.html">profile_blob</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__blob.html#adc96cb5042e86d97183b6dcdbbbfe27d">adopt_native</a> (<a class="el" href="structeverett_1_1profile__blob.html#afce5a4ac82351d910c8608f3631416dd">native_array</a> <a class="el" href="structeverett_1_1profile__blob.html#a32643ba4e3bd29ed95edfed4328b7494">native</a>)</td></tr>
+<tr class="separator:adc96cb5042e86d97183b6dcdbbbfe27d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
 Static Public Attributes</h2></td></tr>
@@ -224,6 +226,34 @@ template&lt;class P &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="adc96cb5042e86d97183b6dcdbbbfe27d" name="adc96cb5042e86d97183b6dcdbbbfe27d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adc96cb5042e86d97183b6dcdbbbfe27d">&#9670;&#160;</a></span>adopt_native()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class P &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static <a class="el" href="structeverett_1_1profile__blob.html">profile_blob</a> <a class="el" href="structeverett_1_1profile__blob.html">everett::profile_blob</a>&lt; P &gt;::adopt_native </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1profile__blob.html#afce5a4ac82351d910c8608f3631416dd">native_array</a>&#160;</td>
+          <td class="paramname"><em>native</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a302a5aa532dc4c5ab96b4f1d5e6ec12e" name="a302a5aa532dc4c5ab96b4f1d5e6ec12e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a302a5aa532dc4c5ab96b4f1d5e6ec12e">&#9670;&#160;</a></span>borrowed()</h2>
 
@@ -917,7 +947,7 @@ template&lt;class P &gt; </div>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">=</div>
 <div class="line">      std::make_shared&lt;native_array const&gt;(<a class="code hl_function" href="structeverett_1_1profile__array.html#a52fbc9ae5861028903860e81a4513ba0">native_array::build</a>({}))</div>
-<div class="ttc" id="astructeverett_1_1profile__array_html_a52fbc9ae5861028903860e81a4513ba0"><div class="ttname"><a href="structeverett_1_1profile__array.html#a52fbc9ae5861028903860e81a4513ba0">everett::profile_array::build</a></div><div class="ttdeci">static profile_array build(std::span&lt; profile_record const &gt; records, std::span&lt; std::uint64_t const &gt; prefix_ceilings={}, std::uint64_t restart_factor=0)</div><div class="ttdef"><b>Definition</b> profile.h:897</div></div>
+<div class="ttc" id="astructeverett_1_1profile__array_html_a52fbc9ae5861028903860e81a4513ba0"><div class="ttname"><a href="structeverett_1_1profile__array.html#a52fbc9ae5861028903860e81a4513ba0">everett::profile_array::build</a></div><div class="ttdeci">static profile_array build(std::span&lt; profile_record const &gt; records, std::span&lt; std::uint64_t const &gt; prefix_ceilings={}, std::uint64_t restart_factor=0)</div><div class="ttdef"><b>Definition</b> profile.h:965</div></div>
 </div><!-- fragment -->
 </div>
 </div>
