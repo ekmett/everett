@@ -7,8 +7,8 @@
  * \endlicense
  */
 
-#include <everett/rank.h>
-#include <everett/rank_groups.h>
+#include <diet/rank.h>
+#include <diet/rank_groups.h>
 #include "baseline_rank.h"
 #include "baseline_rank15.h"
 #include "baseline_rank_groups.h"
@@ -50,7 +50,7 @@ namespace {
   template <bool Pair = false, class V> variant make_variant(char const * name, V const & v) { return {name, &v, query<V, Pair>}; }
 
   template <unsigned K> struct portable_groups {
-    everett::rank_groups<K> const & source;
+    diet::rank_groups<K> const & source;
     std::uint64_t class_at(std::uint64_t g) const { return source.view().class_at(g); }
     std::uint64_t rank(std::uint64_t g) const {
       auto groups = source.virtual_count / K + (source.virtual_count % K != 0);
@@ -59,8 +59,8 @@ namespace {
       auto result = source.checkpoints[g / 128];
       auto count = unsigned(g % 128);
       if (!count) return result;
-      constexpr auto bits = everett::rank_groups<K>::class_bits;
-      return result + everett::rank_groups_detail::prefix_portable<bits>(source.classes.data() + (g / 128) * (2 * bits), count);
+      constexpr auto bits = diet::rank_groups<K>::class_bits;
+      return result + diet::rank_groups_detail::prefix_portable<bits>(source.classes.data() + (g / 128) * (2 * bits), count);
     }
   };
 
@@ -127,7 +127,7 @@ namespace {
     std::uint64_t seed = 0x11112222;
     std::vector<std::uint64_t> classes(n), oracle(n + 1);
     for (std::uint64_t i = 0; i < n; ++i) { classes[i] = random_word(seed) & K; oracle[i + 1] = oracle[i] + classes[i]; }
-    auto index = everett::rank_groups<K>::build(classes, n * K);
+    auto index = diet::rank_groups<K>::build(classes, n * K);
     classes.clear(); classes.shrink_to_fit();
     auto candidate = index.view();
     auto old = grouped_view<baseline::rank_groups_view<K>>(index);
@@ -209,7 +209,7 @@ namespace {
     std::uint64_t seed = 0x11112222;
     std::vector<std::uint64_t> words((bits + 63) / 64), oracle(words.size() + 1);
     for (std::uint64_t i = 0; i < words.size(); ++i) { words[i] = random_word(seed); oracle[i + 1] = oracle[i] + std::popcount(words[i]); }
-    auto index = everett::rank_index::build(words, bits);
+    auto index = diet::rank_index::build(words, bits);
     auto candidate = index.view();
     auto old_index = baseline::rank_index::build(words, bits);
     auto old = old_index.view();

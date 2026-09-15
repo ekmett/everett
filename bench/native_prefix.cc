@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/native_writer.h>
+#include <diet/native_writer.h>
 
 #include <algorithm>
 #include <chrono>
@@ -22,7 +22,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using clock_type = std::chrono::steady_clock;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);

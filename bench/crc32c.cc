@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/crc32c.h>
+#include <diet/crc32c.h>
 
 #include <algorithm>
 #include <array>
@@ -29,24 +29,24 @@ namespace {
     }
     return ~crc;
   }
-  [[gnu::noinline]] std::uint32_t public_crc(bytes input) { return everett::crc32c(input); }
+  [[gnu::noinline]] std::uint32_t public_crc(bytes input) { return diet::crc32c(input); }
   [[gnu::noinline]] std::uint32_t portable(bytes input) {
-    return everett::crc32c_detail::portable::crc32_impl(
+    return diet::crc32c_detail::portable::crc32_impl(
       0, reinterpret_cast<char const *>(input.data()), input.size());
   }
 #if defined(__aarch64__) && defined(__ARM_FEATURE_CRC32)
   [[gnu::noinline]] std::uint32_t scalar(bytes input) {
-    return everett::crc32c_detail::arm_scalar::crc32_impl(
+    return diet::crc32c_detail::arm_scalar::crc32_impl(
       0, reinterpret_cast<char const *>(input.data()), input.size());
   }
 #if defined(__ARM_FEATURE_CRYPTO) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   [[gnu::noinline]] std::uint32_t pmull(bytes input) {
-    return everett::crc32c_detail::arm_pmull::crc32_impl(
+    return diet::crc32c_detail::arm_pmull::crc32_impl(
       0, reinterpret_cast<char const *>(input.data()), input.size());
   }
 #if defined(__ARM_FEATURE_SHA3)
   [[gnu::noinline]] std::uint32_t fused(bytes input) {
-    return everett::crc32c_detail::arm_eor3::crc32_impl(
+    return diet::crc32c_detail::arm_eor3::crc32_impl(
       0, reinterpret_cast<char const *>(input.data()), input.size());
   }
 #endif
@@ -121,5 +121,5 @@ int main(int argc, char ** argv) {
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Benchmarks Everett's CRC32C backends.
+ * \brief Benchmarks Diet's CRC32C backends.
  */

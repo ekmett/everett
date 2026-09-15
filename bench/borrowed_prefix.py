@@ -8,6 +8,8 @@
 
 """Compare pinned borrowed writers with a shared wire/key-checked harness."""
 
+from snapshot import Snapshot
+
 import argparse
 import csv
 import datetime
@@ -61,21 +63,21 @@ def main():
     variants = {}
     for name, ref in (("baseline", args.baseline), ("candidate", args.candidate)):
         revision = subprocess.check_output(["git", "-C", str(repo), "rev-parse", ref], text=True).strip()
-        paths = subprocess.check_output(["git", "-C", str(repo), "ls-tree", "-r", "--name-only",
-            revision, "include/everett"], text=True).splitlines()
+        snapshot = Snapshot(repo, revision)
+        paths = snapshot.paths
         headers = build / name / "headers"
         if headers.exists():
             shutil.rmtree(headers)
         hashes = {}
         for path in paths:
-            data = subprocess.check_output(["git", "-C", str(repo), "show", revision + ":" + path])
+            data = snapshot.read(path)
             destination = headers / path
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(data)
             hashes[path] = digest(data)
         executable = build / name / "borrowed_prefix"
         command = [*compiler, *flags, "-I" + str(headers / "include"), str(source), "-o", str(executable)]
-        metadata["variants"][name] = {"revision": revision, "headers_sha256": hashes, "command": command}
+        metadata["variants"][name] = {"revision": revision, "headers_sha256": hashes, "normalization": snapshot.metadata(), "command": command}
         variants[name] = executable
         print("Building " + name, flush=True)
         subprocess.run(command, check=True)

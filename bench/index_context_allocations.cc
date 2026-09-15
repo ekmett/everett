@@ -7,8 +7,8 @@
  * \endlicense
  */
 
-#include <everett/index_builder.h>
-#include <everett/sections.h>
+#include <diet/index_builder.h>
+#include <diet/sections.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -21,10 +21,10 @@
 #include <string>
 #include <vector>
 
-#define EVERETT_BENCH_ALLOCATIONS 1
+#define DIET_BENCH_ALLOCATIONS 1
 namespace allocation_probe {
   struct totals { std::uint64_t requested = 0, peak = 0, live = 0, calls = 0; };
-#if defined(EVERETT_BENCH_ALLOCATIONS)
+#if defined(DIET_BENCH_ALLOCATIONS)
   thread_local totals counts;
   thread_local std::uint64_t epoch = 0;
   thread_local bool active = false;
@@ -57,7 +57,7 @@ namespace allocation_probe {
   totals end() { return {}; }
 #endif
 }
-#if defined(EVERETT_BENCH_ALLOCATIONS)
+#if defined(DIET_BENCH_ALLOCATIONS)
 void * operator new(std::size_t size) { return allocation_probe::allocate(size, alignof(std::max_align_t)); }
 void * operator new[](std::size_t size) { return allocation_probe::allocate(size, alignof(std::max_align_t)); }
 void * operator new(std::size_t size, std::align_val_t align) { return allocation_probe::allocate(size, std::size_t(align)); }
@@ -73,7 +73,7 @@ void operator delete[](void * p, std::size_t, std::align_val_t) noexcept { alloc
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   void require(bool value, char const * message) {
     if (!value) throw std::runtime_error(message);
   }
@@ -127,8 +127,8 @@ namespace {
 int main() try {
   std::cout << "profile,prefix_bytes,input,records,allocations,requested_bytes,peak_bytes,builder_bytes,checksum\n";
   for (auto prefix : {0u, 4096u}) for (bool coded : {false, true}) {
-    run<everett::storage_policy<everett::profile_unit::byte>>("byte", prefix, coded);
-    run<everett::storage_policy<everett::profile_unit::bit>>("bit", prefix, coded);
+    run<diet::storage_policy<diet::profile_unit::byte>>("byte", prefix, coded);
+    run<diet::storage_policy<diet::profile_unit::bit>>("bit", prefix, coded);
   }
   return 0;
 } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }

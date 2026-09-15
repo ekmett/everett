@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/native_merge.h>
+#include <diet/native_merge.h>
 
 #include <algorithm>
 #include <chrono>
@@ -27,7 +27,7 @@
 
 namespace allocation_probe {
   struct totals { std::uint64_t requested = 0, peak = 0, live = 0, calls = 0; };
-#if defined(EVERETT_BENCH_ALLOCATIONS)
+#if defined(DIET_BENCH_ALLOCATIONS)
   thread_local totals counts;
   thread_local std::uint64_t epoch = 0;
   thread_local bool active = false;
@@ -60,7 +60,7 @@ namespace allocation_probe {
   totals end() { return {}; }
 #endif
 }
-#if defined(EVERETT_BENCH_ALLOCATIONS)
+#if defined(DIET_BENCH_ALLOCATIONS)
 void * operator new(std::size_t size) { return allocation_probe::allocate(size, alignof(std::max_align_t)); }
 void * operator new[](std::size_t size) { return allocation_probe::allocate(size, alignof(std::max_align_t)); }
 void * operator new(std::size_t size, std::align_val_t align) { return allocation_probe::allocate(size, std::size_t(align)); }
@@ -76,7 +76,7 @@ void operator delete[](void * p, std::size_t, std::align_val_t) noexcept { alloc
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using clock_type = std::chrono::steady_clock;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -218,7 +218,7 @@ int main(int argc, char ** argv) {
     auto prefix = argc > 2 ? unsigned(std::stoul(argv[2])) : 64;
     auto rounds = argc > 3 ? unsigned(std::stoul(argv[3])) : 3;
     require(count && rounds, "positive count and rounds required");
-#if defined(EVERETT_BENCH_ALLOCATIONS)
+#if defined(DIET_BENCH_ALLOCATIONS)
     allocation_probe::begin();
     auto probe = ::operator new(33, std::align_val_t{64});
     require((reinterpret_cast<std::uintptr_t>(probe) & 63) == 0, "allocation probe alignment");

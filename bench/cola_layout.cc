@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 // SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 
-#include <everett/cola_sections.h>
+#include <diet/cola_sections.h>
 
 #include <chrono>
 #include <cstdint>
@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-using namespace everett;
+using namespace diet;
 
 template <class P> void run(unsigned prefix, unsigned rounds, std::filesystem::path const & dump) {
   using node = cola_index<P>;

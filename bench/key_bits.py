@@ -6,6 +6,8 @@
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 # \endlicense
 """Compare identical key/bit fixtures using a pinned baseline and current headers."""
+from snapshot import Snapshot
+
 import argparse
 import csv
 import hashlib
@@ -17,7 +19,6 @@ import platform
 import shutil
 import shlex
 import subprocess
-import tarfile
 
 BASE = "62ead3fab9d0ee5bda1b47780b7905a45aae1182"
 
@@ -43,16 +44,13 @@ def main():
     harness_revision = resolve(args.harness or "HEAD")
     build = (args.build_dir or repo / "build-key-bits-bench").resolve()
     build.mkdir(parents=True, exist_ok=True)
+    normalizations = {}
     def extract(reference, destination):
         if destination.exists():
             shutil.rmtree(destination)
-        archive = subprocess.check_output(["git", "-C", str(repo), "archive", reference, "include/"])
-        with tarfile.open(fileobj=io.BytesIO(archive)) as data:
-            for member in data:
-                if member.isfile():
-                    target = destination / member.name
-                    target.parent.mkdir(parents=True, exist_ok=True)
-                    target.write_bytes(data.extractfile(member).read())
+        snapshot = Snapshot(repo, reference)
+        snapshot.write(destination)
+        normalizations[reference] = snapshot.metadata()
         return destination / "include"
 
     baseline = extract(BASE, build / "baseline")
@@ -64,10 +62,12 @@ def main():
             shutil.rmtree(candidate.parent)
         shutil.copytree(baseline, candidate)
         overlay = ["profile.h", "front.h", "key_detail.h"]
+        overlay_snapshot = Snapshot(repo, candidate_revision) if args.candidate else None
         for name in overlay:
-            path = "include/everett/" + name
-            contents = subprocess.check_output(["git", "-C", str(repo), "show", candidate_revision + ":" + path]) if args.candidate else (repo / path).read_bytes()
-            (candidate / "everett" / name).write_bytes(contents)
+            path = "include/diet/" + name
+            contents = overlay_snapshot.read(path) if overlay_snapshot else (repo / path).read_bytes()
+            (candidate / "diet" / name).write_bytes(contents)
+        if overlay_snapshot: normalizations[candidate_revision] = overlay_snapshot.metadata()
         dependency_revision = BASE
     else:
         # A current profile can depend on newer policy/navigation descriptors;
@@ -81,7 +81,8 @@ def main():
             shutil.copytree(repo / "include", candidate)
         dependency_revision = candidate_revision if args.candidate else "working-tree"
     fixture_path = "bench/key_bits.cc"
-    source = subprocess.check_output(["git", "-C", str(repo), "show", harness_revision + ":" + fixture_path]) if args.harness else (repo / fixture_path).read_bytes()
+    fixture_snapshot = Snapshot(repo, harness_revision) if args.harness else None
+    source = fixture_snapshot.read(fixture_path) if fixture_snapshot else (repo / fixture_path).read_bytes()
     source_snapshot = build / "key_bits.cc"
     source_snapshot.write_bytes(source)
     compiler = shlex.split(os.environ.get("CXX", "clang++"))
@@ -115,7 +116,8 @@ def main():
         writer.writerows(rows)
     hashes = {path.relative_to(candidate).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
               for path in sorted(candidate.rglob("*")) if path.is_file()}
-    metadata = {"baseline": BASE, "candidate_revision": candidate_revision,
+    metadata = {"baseline": BASE, "normalization": normalizations,
+                "harness_normalization": fixture_snapshot.metadata() if fixture_snapshot else None, "candidate_revision": candidate_revision,
                 "candidate_working_tree": args.candidate is None, "dependency_revision": dependency_revision,
                 "candidate_overlay": overlay, "candidate_header_sha256": hashes,
                 "harness_revision": harness_revision, "harness_working_tree": args.harness is None,
@@ -125,7 +127,7 @@ def main():
                 "compiler": subprocess.check_output([*compiler, "--version"], text=True), "flags": flags,
                 "platform": platform.platform(), "machine": platform.machine(), "trials": args.trials,
                 "work": args.work, "sanitize": args.sanitize,
-                "byte_comparison_api": {"baseline": "front", "candidate": "front" if (candidate / "everett/front.h").exists() else "profile"}}
+                "byte_comparison_api": {"baseline": "front", "candidate": "front" if (candidate / "diet/front.h").exists() else "profile"}}
     output.with_suffix(".json").write_text(json.dumps(metadata, indent=2) + "\n")
     print(output)
 

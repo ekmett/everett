@@ -6,6 +6,8 @@
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 # \endlicense
 """Compile a comparison with baseline62ead3f, then run it under the caller's resource gate."""
+from snapshot import Snapshot
+
 import argparse
 import json
 import os
@@ -26,18 +28,22 @@ p.add_argument('--pattern', choices=('dense','zero','sparse'), default='dense')
 p.add_argument('--output', type=Path)
 a=p.parse_args();root=Path(__file__).resolve().parent.parent
 build=(a.build_dir or root/'build-select').resolve();build.mkdir(parents=True,exist_ok=True)
+baseline_snapshot=Snapshot(root,BASE)
+candidate_snapshot=Snapshot(root,CANDIDATE)
 for name in ('select_groups','select15'):
-    (build/('baseline_'+name+'.h')).write_bytes(subprocess.check_output(['git','-C',str(root),'show',BASE+':include/everett/'+name+'.h']))
+    (build/('baseline_'+name+'.h')).write_bytes(baseline_snapshot.read('include/diet/'+name+'.h'))
 stage1=build/'stage1'
 if a.prototype:
-    (stage1/'include/everett').mkdir(parents=True,exist_ok=True)
+    (stage1/'include/diet').mkdir(parents=True,exist_ok=True)
     for name in ('select_groups','select15'):
-        (stage1/('include/everett/'+name+'.h')).write_bytes((build/('baseline_'+name+'.h')).read_bytes())
+        (stage1/('include/diet/'+name+'.h')).write_bytes((build/('baseline_'+name+'.h')).read_bytes())
     subprocess.run(['patch','--silent','-p1','-d',str(stage1),'-i',str(root/'bench/select_stage1.patch')],check=True)
-candidate=build/'candidate/everett'
+candidate=build/'candidate/diet'
 candidate.mkdir(parents=True,exist_ok=True)
 for name in ('select_groups','select15'):
-    (candidate/(name+'.h')).write_bytes(subprocess.check_output(['git','-C',str(root),'show',CANDIDATE+':include/everett/'+name+'.h']))
+    (candidate/(name+'.h')).write_bytes(candidate_snapshot.read('include/diet/'+name+'.h'))
+baseline_snapshot.record(build/'baseline-snapshot.json')
+candidate_snapshot.record(build/'candidate-snapshot.json')
 flags=['-std=c++20','-O3','-DNDEBUG','-Wall','-Wextra','-Wpedantic','-Werror']
 if a.arch=='x86_64':
     if platform.system()=='Darwin': flags+=['-arch','x86_64']
@@ -48,7 +54,7 @@ command=[os.environ.get('CXX','clang++'),*flags,'-I'+str(candidate.parent),
  '-DSELECT_BASELINE_FIXED="'+str(build/'baseline_select15.h')+'"']
 if a.prototype:
     prototype=build/'prototype_select_groups.h'
-    prototype.write_bytes((stage1/'include/everett/select_groups.h').read_bytes())
+    prototype.write_bytes((stage1/'include/diet/select_groups.h').read_bytes())
     subprocess.run(['patch','--silent',str(prototype),str(root/'bench/select_simd_prototype.patch')],check=True)
     command+=['-DSELECT_PROTOTYPE="'+str(prototype)+'"']
 command += [str(root/'bench/select_compare.cc'),'-o',str(exe)]

@@ -6,6 +6,8 @@
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 # \endlicense
 """Reproduce NEON rank15/Cult rank checks without copying the external header."""
+from snapshot import Snapshot
+
 import argparse
 import hashlib
 import json
@@ -33,8 +35,9 @@ def main():
     cult = args.cult_header.resolve()
     if hashlib.sha256(cult.read_bytes()).hexdigest() != CULT_SHA256:
         raise SystemExit("external Cult header differs from the reviewed source hash")
-    base = subprocess.check_output(["git", "-C", str(repo), "show", BASE + ":include/everett/rank15.h"])
-    baseline_dir = build / "baseline/everett"
+    snapshot = Snapshot(repo, BASE)
+    base = snapshot.read("include/diet/rank15.h")
+    baseline_dir = build / "baseline/diet"
     baseline_dir.mkdir(parents=True, exist_ok=True)
     (baseline_dir / "rank15.h").write_bytes(base)
     text = base.decode()
@@ -48,12 +51,12 @@ def main():
     executable = build / ("neon_cult_rank_sanitize" if args.sanitize else "neon_cult_rank")
     flags = ["-std=c++20", "-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer"] if args.sanitize else ["-std=c++20", "-O3", "-DNDEBUG"]
     command = [compiler, *flags, "-Wall", "-Wextra", "-Werror", "-I" + str(baseline_dir.parent),
-               '-DEVERETT_NEON_QWORD_HEADER="' + str(candidate) + '"',
-               '-DEVERETT_EXTERNAL_CULT_RANK_HEADER="' + str(cult) + '"',
+               '-DDIET_NEON_QWORD_HEADER="' + str(candidate) + '"',
+               '-DDIET_EXTERNAL_CULT_RANK_HEADER="' + str(cult) + '"',
                str(repo / "bench/neon_cult_rank.cc"), "-o", str(executable)]
     subprocess.run(command, check=True)
     cult_revision = subprocess.check_output(["git", "-C", str(cult.parent), "rev-parse", "HEAD"], text=True).strip()
-    metadata = {"everett_revision": BASE, "everett_rank_sha256": hashlib.sha256(base).hexdigest(),
+    metadata = {"diet_revision": BASE, "normalization": snapshot.metadata(), "diet_rank_sha256": hashlib.sha256(base).hexdigest(),
                 "candidate_sha256": hashlib.sha256(candidate.read_bytes()).hexdigest(),
                 "cult_revision": cult_revision, "cult_rank_sha256": CULT_SHA256,
                 "source_sha256": hashlib.sha256((repo / "bench/neon_cult_rank.cc").read_bytes()).hexdigest(),

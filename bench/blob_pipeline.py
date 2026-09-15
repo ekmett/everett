@@ -8,6 +8,8 @@
 
 """Compare pinned headers on complete blob builds, pipelines and window queries."""
 
+from snapshot import Snapshot
+
 import argparse
 import csv
 import hashlib
@@ -65,18 +67,20 @@ def main():
         if headers.exists():
             shutil.rmtree(headers)
         headers.mkdir(parents=True)
+        normalization = None
         if revision == "working-tree":
-            shutil.copytree(repo / "include/everett", headers / "everett")
+            shutil.copytree(repo / "include/diet", headers / "diet")
             commit = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
         else:
             commit = subprocess.check_output(["git", "-C", str(repo), "rev-parse", revision], text=True).strip()
-            paths = subprocess.check_output(["git", "-C", str(repo), "ls-tree", "-r", "--name-only", commit, "include/everett"], text=True)
-            for path in paths.splitlines():
+            snapshot = Snapshot(repo, commit)
+            for path in snapshot.paths:
                 destination = headers / Path(path).relative_to("include")
                 destination.parent.mkdir(parents=True, exist_ok=True)
-                destination.write_bytes(subprocess.check_output(["git", "-C", str(repo), "show", commit + ":" + path]))
+                destination.write_bytes(snapshot.read(path))
+            normalization = snapshot.metadata()
         metadata["variants"][name] = {
-            "selection": revision, "commit": commit,
+            "selection": revision, "commit": commit, "normalization": normalization,
             "headers_sha256": {str(p.relative_to(headers)): hashlib.sha256(p.read_bytes()).hexdigest()
                                for p in sorted(headers.rglob("*")) if p.is_file()},
         }

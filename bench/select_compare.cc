@@ -7,16 +7,16 @@
  * \endlicense
  */
 // Use select_compare.py to supply the pinned baseline and optional prototype.
-#include <everett/select_groups.h>
-#include <everett/select15.h>
-#define everett select_baseline
+#include <diet/select_groups.h>
+#include <diet/select15.h>
+#define diet select_baseline
 #include SELECT_BASELINE_GROUPS
 #include SELECT_BASELINE_FIXED
-#undef everett
+#undef diet
 #ifdef SELECT_PROTOTYPE
-#define everett select_prototype
+#define diet select_prototype
 #include SELECT_PROTOTYPE
-#undef everett
+#undef diet
 #endif
 #include <chrono>
 #include <iostream>
@@ -74,7 +74,7 @@ namespace {
     return true;
   }
   [[gnu::noinline]] bool monotone_current(std::span<std::uint64_t const> source) {
-    return everett::select_groups_detail::monotone(source);
+    return diet::select_groups_detail::monotone(source);
   }
   void exercise(std::size_t entries, unsigned trials, std::uint64_t count, unsigned width, std::string pattern) {
     std::uint64_t seed = 0x123456789abcdefull;
@@ -84,9 +84,9 @@ namespace {
       source[i] = pattern == "zero" ? 0 : pattern == "sparse" ? (i < 17 ? 0 : entries * step) :
         (i / 2) * (step * 2) + (i % 2 ? random_word(seed) % (step * 2) : 0);
     source.back() = pattern == "zero" ? 0 : entries * step;
-    auto index = everett::select_groups<15>::build(source, (entries - 1) * 15);
+    auto index = diet::select_groups<15>::build(source, (entries - 1) * 15);
     auto old = select_baseline::select_groups<15>::build(source, (entries - 1) * 15);
-    auto fixed = everett::select15_index::build(source, (entries - 1) * 15);
+    auto fixed = diet::select15_index::build(source, (entries - 1) * 15);
     auto old_fixed = select_baseline::select15_index::build(source, (entries - 1) * 15);
     if (old.low != index.low || old.high != index.high || old.sparse != index.sparse ||
         fixed.low != index.low || fixed.high != index.high || old_fixed.low != index.low || old_fixed.high != index.high)
@@ -100,9 +100,9 @@ namespace {
       auto pointer = start + misalignment/8;
       std::copy(index.high.begin(), index.high.end(), pointer);
       std::span<std::uint64_t const> high(pointer, index.high.size());
-      everett::select_groups_view<15> current(index.low, high, index.samples, index.sparse, (entries-1)*15, index.universe, index.low_width);
+      diet::select_groups_view<15> current(index.low, high, index.samples, index.sparse, (entries-1)*15, index.universe, index.low_width);
       select_baseline::select_groups_view<15> baseline(index.low, high, old.samples, index.sparse, (entries-1)*15, index.universe, index.low_width);
-      everett::select15_view current_fixed(index.low, high, fixed.samples, index.sparse, (entries-1)*15, index.universe, index.low_width);
+      diet::select15_view current_fixed(index.low, high, fixed.samples, index.sparse, (entries-1)*15, index.universe, index.low_width);
       select_baseline::select15_view baseline_fixed(index.low, high, old_fixed.samples, index.sparse, (entries-1)*15, index.universe, index.low_width);
       std::vector variants{make("old_groups", baseline), make("current_groups", current),
         make("old_select15", baseline_fixed), make("current_select15", current_fixed)};
@@ -136,13 +136,13 @@ namespace {
       for(std::size_t j=0;j<variants.size();++j) row("query", name, variants[j].name,entries,index.low_width,bytes,misalignment,count,times[j],sums[j]);
     }
     std::vector<std::pair<char const *,build_function>> builders{{"old_groups",build<select_baseline::select_groups<15>>},
-      {"current_groups",build<everett::select_groups<15>>}, {"old_select15",build<select_baseline::select15_index>},
-      {"current_select15",build<everett::select15_index>}};
+      {"current_groups",build<diet::select_groups<15>>}, {"old_select15",build<select_baseline::select15_index>},
+      {"current_select15",build<diet::select15_index>}};
 #ifdef SELECT_PROTOTYPE
     builders.push_back({"simd_prototype",build<select_prototype::select_groups<15>>});
 #endif
     std::vector<std::uint64_t (*)()> checks{build_checksum<select_baseline::select_groups<15>>,
-      build_checksum<everett::select_groups<15>>,build_checksum<select_baseline::select15_index>,build_checksum<everett::select15_index>};
+      build_checksum<diet::select_groups<15>>,build_checksum<select_baseline::select15_index>,build_checksum<diet::select15_index>};
 #ifdef SELECT_PROTOTYPE
     checks.push_back(build_checksum<select_prototype::select_groups<15>>);
 #endif
@@ -172,7 +172,7 @@ namespace {
     for(unsigned w:{1,7,8,16,32,63}) {
       std::vector<std::uint64_t> packed((entries*w+63)/64);
       std::vector<std::pair<char const *,pack_function>> packers{{"old_groups",select_baseline::select_groups_detail::pack_low},
-        {"current_groups",everett::select_groups_detail::pack_low}};
+        {"current_groups",diet::select_groups_detail::pack_low}};
 #ifdef SELECT_PROTOTYPE
       packers.push_back({"simd_prototype",select_prototype::select_groups_detail::pack_low});
 #endif

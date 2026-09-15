@@ -1,5 +1,5 @@
---- a/include/everett/select_groups.h
-+++ b/include/everett/select_groups.h
+--- a/include/diet/select_groups.h
++++ b/include/diet/select_groups.h
 @@ -24 +24 @@
 -#if defined(__BMI2__)
 +#if defined(__BMI2__) || defined(__AVX2__)

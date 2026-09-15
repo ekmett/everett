@@ -8,6 +8,8 @@
 
 """Compare pinned full bitmap rank implementations under the caller's resource lease."""
 
+from snapshot import Snapshot
+
 import argparse
 import datetime
 import hashlib
@@ -47,16 +49,18 @@ def main():
     if include.exists():
         shutil.rmtree(include)
     hashes = {}
-    for name in git("ls-tree", "-r", "--name-only", revisions["candidate"], "include/everett").decode().splitlines():
-        data = git("show", revisions["candidate"] + ":" + name)
+    candidate_snapshot = Snapshot(root, revisions["candidate"])
+    for name in candidate_snapshot.paths:
+        data = candidate_snapshot.read(name)
         path = include / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
         hashes[name] = digest(data)
-    old = git("show", revisions["baseline"] + ":include/everett/rank.h")
-    if b"#include <everett/" in old or old.count(b"namespace everett {") != 1:
+    baseline_snapshot = Snapshot(root, revisions["baseline"])
+    old = baseline_snapshot.read("include/diet/rank.h")
+    if b"#include <diet/" in old or old.count(b"namespace diet {") != 1:
         raise RuntimeError("review baseline namespace/dependency adapter")
-    adapted = old.replace(b"namespace everett {", b"namespace baseline {")
+    adapted = old.replace(b"namespace diet {", b"namespace baseline {")
     (build / "baseline_rank.h").write_bytes(adapted)
     source = build / "rank_spacers.cc"
     source.write_bytes((root / "bench/rank_spacers.cc").read_bytes())
@@ -71,7 +75,7 @@ def main():
     if args.sanitize:
         invocation.append("check")
     metadata = {
-        "revisions": revisions, "candidate_headers_sha256": hashes,
+        "revisions": revisions, "normalization": {"baseline": baseline_snapshot.metadata(), "candidate": candidate_snapshot.metadata()}, "candidate_headers_sha256": hashes,
         "baseline_rank_sha256": digest(old), "adapted_baseline_rank_sha256": digest(adapted),
         "source_sha256": digest(source.read_bytes()), "runner_sha256": digest(Path(__file__).read_bytes()),
         "executable_sha256": digest(executable.read_bytes()), "command": command, "invocation": invocation,

@@ -5,6 +5,8 @@
 
 Run under the host CPU resource gate. Uses the shared cola_layout.cc fixture.
 """
+from snapshot import Snapshot
+
 import argparse
 import csv
 import datetime
@@ -53,16 +55,17 @@ def main():
         revision = git("rev-parse", ref).decode().strip()
         headers = build / name / "include"
         hashes = {}
-        for path in git("ls-tree", "-r", "--name-only", revision, "include/everett").decode().splitlines():
+        snapshot = Snapshot(repo, revision)
+        for path in snapshot.paths:
             target = build / name / path
             target.parent.mkdir(parents=True, exist_ok=True)
-            data = git("show", revision + ":" + path)
+            data = snapshot.read(path)
             target.write_bytes(data)
             hashes[path] = sha(data)
         executable = build / name / "run"
         command = [*compiler, "-O3", "-DNDEBUG", "-std=c++20", "-I" + str(headers), str(source), "-o", str(executable)]
         subprocess.run(command, check=True)
-        metadata["variants"][name] = {"revision": revision, "headers_sha256": hashes,
+        metadata["variants"][name] = {"revision": revision, "headers_sha256": hashes, "normalization": snapshot.metadata(),
             "command": command, "binary_sha256": sha(executable.read_bytes())}
     print("Compilation complete; timing both variants.", flush=True)
     fields = "unit,k,prefix,round,items,ns,ns_per_item,bytes,crc".split(",")

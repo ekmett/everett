@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/query.h>
+#include <diet/query.h>
 
 #include <algorithm>
 #include <array>
@@ -38,46 +38,46 @@ namespace {
     x = (x ^ (x >> 27)) * 0x94d049bb133111ebull;
     return x ^ (x >> 31);
   }
-  template <class P> std::uint64_t match_checksum(everett::query_match<P> const & match) {
+  template <class P> std::uint64_t match_checksum(diet::query_match<P> const & match) {
     auto value = match.ordinal + match.value.bit_size + 1;
     for (auto byte : match.value.bytes) value = value * 37 + std::to_integer<unsigned>(byte);
     return value;
   }
-  template <class P> everett::bit_string key_for(std::uint64_t id, unsigned prefix) {
+  template <class P> diet::bit_string key_for(std::uint64_t id, unsigned prefix) {
     std::string key(prefix, 'p');
     for (unsigned i = 8; i; --i) key.push_back(char((id >> (8 * (i - 1))) & 255));
-    auto result = everett::bit_string::from_bytes(key);
-    if constexpr (P::unit == everett::profile_unit::bit) {
+    auto result = diet::bit_string::from_bytes(key);
+    if constexpr (P::unit == diet::profile_unit::bit) {
       result.bytes.push_back((id & 1) ? std::byte{128} : std::byte{0});
       ++result.bit_size;
     }
     return result;
   }
   template <class P> struct fixture {
-    using blob = everett::profile_blob<P>;
+    using blob = diet::profile_blob<P>;
     using pair = std::shared_ptr<blob const>;
     struct lookup {
-      everett::bit_string key;
-      std::vector<everett::query_match<P>> expected;
+      diet::bit_string key;
+      std::vector<diet::query_match<P>> expected;
     };
     pair head;
     std::vector<lookup> queries;
 
     fixture(unsigned count, unsigned prefix, unsigned query_count) {
       std::array<std::vector<std::uint64_t>, 4> ids;
-      std::array<std::vector<everett::profile_record>, 4> records;
+      std::array<std::vector<diet::profile_record>, 4> records;
       std::array<pair, 4> source;
       for (unsigned level = 0; level != 4; ++level) {
         auto stride = std::uint64_t{1} << (2 * level);
         for (unsigned i = 0; i != count / stride; ++i) {
           auto id = i * stride * 4 + (i % 7 ? level : 0);
           ids[level].push_back(id);
-          auto value = everett::bit_string::from_bytes(std::to_string(level) + ":" + std::to_string(id));
+          auto value = diet::bit_string::from_bytes(std::to_string(level) + ":" + std::to_string(id));
           records[level].push_back({key_for<P>(id, prefix), std::move(value)});
         }
         source[level] = std::make_shared<blob const>(blob::build(records[level]));
       }
-      everett::index_pipeline<P> pipeline(source[0], {source[1], source[2], source[3]});
+      diet::index_pipeline<P> pipeline(source[0], {source[1], source[2], source[3]});
       while (!pipeline.done()) pipeline.step(4096);
       head = pipeline.finish();
       auto current = head;
@@ -101,7 +101,7 @@ namespace {
         queries.push_back(std::move(q));
       }
     }
-    void verify(everett::query_root<P> const & root) const {
+    void verify(diet::query_root<P> const & root) const {
       for (auto const & q : queries) {
         auto cursor = root.cursor(q.key.view());
         std::size_t at = 0;
@@ -121,7 +121,7 @@ namespace {
   template <class P> void run(char const * label, unsigned count, unsigned prefix,
                               unsigned query_count, unsigned trials) {
     fixture<P> input(count, prefix, query_count);
-    auto warm = everett::query_root<P>::build(input.head);
+    auto warm = diet::query_root<P>::build(input.head);
     input.verify(warm);
     std::uint64_t expected_checksum = 0, expected_matches = 0;
     for (auto const & q : input.queries) for (auto const & match : q.expected) {
@@ -130,7 +130,7 @@ namespace {
     }
     for (unsigned trial = 0; trial != trials; ++trial) {
       auto begin = clock_type::now();
-      auto root = everett::query_root<P>::build(input.head);
+      auto root = diet::query_root<P>::build(input.head);
       auto preparation = elapsed(begin);
       unsigned added = 0;
       for (auto current = root.head(); current != input.head; current = current->target()) {
@@ -170,8 +170,8 @@ int main(int argc, char ** argv) try {
   auto trials = argc > 4 ? unsigned(std::stoul(argv[4])) : 5u;
   require(count >= 64 && count <= 1048576 && prefix <= 4096 && queries && trials, "invalid benchmark dimensions");
   std::cout << "profile,group_size,base_records,prefix_bytes,head_entries,prefix_catalogs,queries,trial,prepare_ns,query_ns,visited_catalogs,matches,checksum\n";
-  run<everett::storage_policy<everett::profile_unit::byte>>("byte", count, prefix, queries, trials);
-  run<everett::storage_policy<everett::profile_unit::bit>>("bit", count, prefix, queries, trials);
+  run<diet::storage_policy<diet::profile_unit::byte>>("byte", count, prefix, queries, trials);
+  run<diet::storage_policy<diet::profile_unit::bit>>("bit", count, prefix, queries, trials);
 } catch (std::exception const & error) {
   std::cerr << error.what() << '\n';
   return 1;

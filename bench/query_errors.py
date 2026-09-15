@@ -8,6 +8,8 @@
 
 """Measure unchanged query checks with inline throws, cold throws or fail-stop helpers."""
 
+from snapshot import Snapshot
+
 import argparse
 import csv
 import datetime
@@ -46,16 +48,16 @@ def main():
     def git(*arguments):
         return subprocess.check_output(["git", "-C", str(repo), *arguments])
     revision = git("rev-parse", args.baseline).decode().strip()
-    original = {p: git("show", revision + ":" + p)
-                for p in git("ls-tree", "-r", "--name-only", revision, "include/everett").decode().splitlines()}
+    snapshot = Snapshot(repo, revision)
+    original = {p: snapshot.read(p) for p in snapshot.paths}
     closure = set()
     def visit(path):
         if path in closure:
             return
         closure.add(path)
-        for child in re.findall(rb"#include <(everett/[^>]+)>", original[path]):
+        for child in re.findall(rb"#include <(diet/[^>]+)>", original[path]):
             visit("include/" + child.decode())
-    visit("include/everett/query.h")
+    visit("include/diet/query.h")
     expression = re.compile(r'throw\s+(std::[a-z_]+)\(("(?:[^"\\]|\\.)*"|truncated|overflow)\);')
     transformed = {}
     sites = {}
@@ -70,7 +72,7 @@ def main():
         if not matches:
             continue
         sites[path] = [{"exception": m[1], "message": m[2]} for m in matches]
-        output = output.replace("#pragma once\n", "#pragma once\n\n#include <everett/error_detail.h>\n", 1)
+        output = output.replace("#pragma once\n", "#pragma once\n\n#include <diet/error_detail.h>\n", 1)
         transformed[path] = output.encode()
     preamble = '''/**
  * \\file
@@ -83,7 +85,7 @@ def main():
 #pragma once
 #include <cstdlib>
 #include <stdexcept>
-namespace everett::error_detail {
+namespace diet::error_detail {
   template <class E> [[noreturn]]
 #if defined(__GNUC__) || defined(__clang__)
   [[gnu::cold, gnu::noinline]]
@@ -97,7 +99,7 @@ namespace everett::error_detail {
     source.write_bytes((repo / "bench/query_compare.cc").read_bytes())
     metadata = {
         "started_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "baseline_revision": revision, "query_include_closure": sorted(closure),
+        "baseline_revision": revision, "normalization": snapshot.metadata(), "query_include_closure": sorted(closure),
         "transformed_sites": sites, "source_sha256": digest(source.read_bytes()),
         "runner_sha256": digest(Path(__file__).read_bytes()),
         "queries": args.queries, "records": args.records, "larger_records": args.larger_records,
@@ -117,7 +119,7 @@ namespace everett::error_detail {
         contents = dict(original)
         if variant != "baseline":
             contents.update(transformed)
-            contents["include/everett/error_detail.h"] = helpers[variant].encode()
+            contents["include/diet/error_detail.h"] = helpers[variant].encode()
         patch = []
         for path, data in contents.items():
             destination = headers / path

@@ -7,7 +7,7 @@
  * \endlicense
  */
 
-#include <everett/index_pipeline.h>
+#include <diet/index_pipeline.h>
 
 #include <algorithm>
 #include <array>
@@ -24,7 +24,7 @@
 #endif
 
 namespace {
-  using namespace everett;
+  using namespace diet;
   using clock_type = std::chrono::steady_clock;
   void require(bool ok, char const * message) { if (!ok) throw std::runtime_error(message); }
   double elapsed(clock_type::time_point start) {
