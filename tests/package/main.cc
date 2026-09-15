@@ -12,6 +12,7 @@
 #include <everett/fingerprint.h>
 #include <everett/file.h>
 #include <everett/front.h>
+#include <everett/index_pipeline.h>
 #include <everett/mapped_file.h>
 #include <everett/multiverse.h>
 #include <everett/object_path.h>
@@ -28,6 +29,7 @@
 
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <type_traits>
 
 using policy = everett::storage_policy<everett::profile_unit::bit, everett::fixed_values<3>, 7>;
@@ -49,6 +51,13 @@ int main() {
   auto decoded = blob.native().view().reconstruct_at(0);
   if (everett::compare_bits(decoded.prefix.view(), records[0].key.view()) ||
       everett::compare_bits(decoded.value.view(), records[0].value.view())) return 3;
+  auto target = std::make_shared<store::blob const>(std::move(blob));
+  everett::index_pipeline<policy> pipeline(target, {target});
+  while (!pipeline.done()) pipeline.step(4);
+  auto head = pipeline.finish();
+  if (head->target() != target || head->borrowed().size() != 1 ||
+      !head->false_borrow(0) ||
+      std::addressof(head->native()) != std::addressof(target->native())) return 4;
   return 0;
 }
 

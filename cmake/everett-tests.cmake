@@ -27,7 +27,7 @@ if(EVERETT_SANITIZERS)
   everett_check_sanitizers()
 endif()
 
-set(everett_test_names rank groups front profile profile_blob world pins durability mapped_file files multiverse)
+set(everett_test_names rank groups front profile profile_blob sampling index_builder index_pipeline world pins durability mapped_file files multiverse)
 foreach(everett_test IN LISTS everett_test_names)
   add_executable(everett_test_${everett_test} "${PROJECT_SOURCE_DIR}/tests/${everett_test}.cc")
   target_link_libraries(everett_test_${everett_test} PRIVATE everett::everett)
