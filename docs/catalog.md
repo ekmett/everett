@@ -9,8 +9,8 @@ or checkpoint-file format.
 
 This document specifies the backend's architecture and acceptance contract.
 The [optional SQLite adapter](sqlite-catalog.md) implements reservations, sealed
-objects, exact prepared chains, immutable saved roots and durable reader pins.
-The broader schema below specifies mutable timelines, ownership retirement and
+objects, exact prepared chains, immutable saved roots, timeline generations and durable reader pins.
+The broader schema below specifies logical world metadata, ownership retirement and
 merge continuations. The in-memory pin owner and durability state machine give
 us executable models for those transitions.
 

@@ -310,6 +310,13 @@ file after registration, so an accidental payload reopen in any timeline
 operation fails the test. These checks establish the tested transaction and
 process-restart behavior, not survival of physical power loss.
 
+The streamed publication suite adds 26 kills while merging real mapped files
+and publishing the result. Byte and partial-bit fixtures interrupt private
+payload writes, sealing, receipt recording, registration and the timeline
+transaction. Reopening checks the exact operation outcome, every retained
+source/reader/history/output pin and the old saved values. An interrupted
+private output remains unadopted; the test restarts that merge from its inputs.
+
 ## Scope
 
 I can persist and reopen prepared mmap query chains, reserve their construction,

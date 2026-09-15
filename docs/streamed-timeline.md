@@ -123,8 +123,8 @@ Received or uncertain objects can require explicit scans instead.
 The tables here have at most $K$ records, so a terminal pair is already a
 prepared query root. A larger head needs an empty-native routing prefix built
 from its augmented samples before publication. The
-[mapped index builder](sampling.md#constructing-samples-from-a-pinned-pair)
-builds those links without rewriting the existing native files.
+[file-index pipeline](file-indexes.md) builds those links without rewriting the
+existing native files or accumulating their borrowed payloads in memory.
 
 `step` limits distinct keys, not bytes or elapsed time. Large literals, values,
 composition callbacks and final metadata construction have their own costs.

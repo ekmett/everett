@@ -363,6 +363,23 @@ copied or recoded. The artifact does not own dependency pins; its builder,
 sampler and publishing caller retain them. `profile_index::native_only` builds
 terminal zero directories from the admitted count without visiting native keys.
 
+`file_index_builder<P, Native>` supplies a borrowed-stream file sink to that
+same builder. `profile_file_output` shares count framing, bounded payload
+buffering, residual offsets and section emission with native file construction.
+The index sink fixes value width to zero even under a fixed native-value policy.
+It emits the same nine IX02 sections as the owning index encoder. Structural
+metadata checks precede final writes; sample provenance and exact LCPs come
+from the builder. A complete semantic scan remains an explicit readback operation.
+
+`file_index_pipeline<P>` shares the owning pipeline's bounded handoff loop.
+Its source sampler pins the exact mapped target, and each stage pins an
+unchanged mapped native file. Front-coded samples pass directly between
+builders as their borrowed payloads stream to private files. `seal_next`
+finalizes one stage in dependency order and retains its receipt; later failures
+leave earlier receipts and all surviving names available for reconciliation.
+The caller records receipts and publishes the completed graph through its
+catalog. These construction APIs provide no partial-output restart operation.
+
 `mapped_native`, `mapped_index` and `mapped_blob` retain mappings and expose
 the same profile/navigation views used by owning blobs. Typed opening reads
 only the envelope and fixed directory. `open_mapped_query` follows declared

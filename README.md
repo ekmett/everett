@@ -45,6 +45,7 @@ I call the backing store and its relationships the **multiverse**.
 | `native_file_writer`, `native_file_merge` | The same native framing and merge semantics with bounded payload buffering into private files. |
 | `profile_blob`, `profile_index` | A complete native/index pair, or an independently constructed index for existing native storage. |
 | `sample_cursor`, `index_builder`, `index_pipeline` | Sampling an existing pair and building new index links incrementally. |
+| `file_index_builder`, `file_index_pipeline` | Streaming those index links to files while retaining the original mapped native data. |
 | `query_root`, `query_root_builder`, `query_cursor` | Preparing a bounded search head and visiting matching native entries through an exact index chain. |
 | `mapped_file`, `file`, `multiverse` | Retained read-only mappings and policy-checked object access. |
 | `encode_native_sections`, `encode_index_sections`, `mapped_blob`, `mapped_query_root` | Portable blob files and queries over exact pinned mmap chains. |
@@ -565,6 +566,13 @@ as a `profile_index<P>`. `sample_cursor<P, mapped_blob<P>>` supplies samples fro
 an exact mapped target. For a terminal pair, `profile_index<P>::native_only`
 constructs the zero directories from the native count without reading its keys.
 See [sampling](docs/sampling.md) for ownership and target-validation contracts.
+
+`file_index_builder<P, mapped_native<P>>` sends the borrowed stream directly to
+a private `.index` attempt. `file_index_pipeline<P>` builds several links
+together, passing front-coded samples through bounded queues and sealing the
+results from target to head. The [file-index example](docs/file-indexes.md)
+constructs and queries a complete mapped chain without collecting its borrowed
+payloads in memory.
 
 `multiverse<P>::seal_object` writes a body under caller-reserved object and
 attempt identities. It accepts a contiguous span or borrowed chunks, including

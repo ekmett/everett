@@ -170,13 +170,26 @@ by K along with the sampled occurrence count.
 
 A sample key and target ordinal can become stable before the output file is
 sealed. Construction may forward those samples immediately under the reserved target-pair generation.
-The implemented pipeline produces encoded in-memory pairs. Its step budget
-counts cursor events; source advances consume at most K records, while key
-bytes and allocations have their own costs. `finish()` separately constructs
-the remaining Elias–Fano/rank metadata and attaches exact target pins. It can
-perform linear work in staged metadata and is not a worst-case scheduler bound.
+The owning `index_pipeline` produces encoded in-memory pairs. The
+`file_index_pipeline` uses the same handoff loop over mapped native files and
+streams each borrowed payload into a private `.index` attempt. Its native
+sources and exact target stay pinned. Both step budgets count cursor events;
+source advances consume at most K records, while key bytes and allocations
+have their own costs. Finalization separately constructs Elias–Fano/rank
+metadata. Owning `finish` attaches exact target pins; file `seal_next` seals one
+stage in target-to-head order and retains its receipt before proceeding.
+This final work is linear in staged metadata and is not a worst-case scheduler
+bound. The [file-index example](file-indexes.md) exercises the complete mapped path.
 The completed graph is the input to the [durable publication protocol](durability.md);
 old representations keep their pins throughout construction.
+
+Construction carries exact bit LCPs between the last merged key and each input
+head. Unequal LCPs determine the next head without comparing its key bytes;
+equal LCPs begin comparison at the shared frontier. Running minima supply the
+next outgoing sample's retention and the cut's borrowed LCP. The
+[carried-prefix measurements](../bench/index_lcp.md) report 14.5–17.7% lower
+pipeline medians on the measured 4 KiB-prefix workloads. Short-key trial ranges
+overlap, including an increase that follows a moving unchanged-code control.
 
 ## 3. Per-level augmentation along one chain
 
