@@ -492,4 +492,12 @@ namespace diet {
       return *execution_;
     }
   };
+
+  template <class P> struct binary_runtime_family {
+    using policy_type = P;
+    using snapshot_type = cola_runtime_snapshot<P>;
+    using node_type = cola_runtime_node<P>;
+    using native_type = cola_runtime_native<P>;
+    template <class Compose> using runtime_type = cola_runtime<P, Compose>;
+  };
 }

@@ -131,16 +131,18 @@ namespace diet {
     bool operator==(typed_cola_metadata const &) const = default;
   };
 
-  template <class P, class A> struct typed_contribution;
-  template <class P, class A> struct typed_batch;
-  template <class P, class A, std::uint64_t DepthLimit> struct typed_engine;
+  template <class P, class A, class Family = binary_runtime_family<P>> struct typed_contribution;
+  template <class P, class A, class Family = binary_runtime_family<P>> struct typed_batch;
+  template <class P, class A, std::uint64_t DepthLimit, class Family> struct typed_engine;
 
-  template <class P = string_policy, class A = wrapping_fingerprint_algebra> struct typed_cola {
+  template <class P = string_policy, class A = wrapping_fingerprint_algebra,
+    class Family = binary_runtime_family<P>> struct typed_cola {
     using policy_type = P;
     using metadata_type = typed_cola_metadata<A>;
-    using runtime_snapshot = cola_runtime_snapshot<P>;
-    using contribution_type = typed_contribution<P, A>;
-    using batch_type = typed_batch<P, A>;
+    using runtime_family = Family;
+    using runtime_snapshot = typename Family::snapshot_type;
+    using contribution_type = typed_contribution<P, A, Family>;
+    using batch_type = typed_batch<P, A, Family>;
     runtime_snapshot const & runtime() const & noexcept { return runtime_; }
     runtime_snapshot const & runtime() const && = delete;
     metadata_type const & metadata() const & noexcept { return metadata_; }
@@ -191,26 +193,26 @@ namespace diet {
     template <class S = typed_detail::default_sort_t<P>> contribution_type
     erase(typed_detail::key_t<S> const & key) const requires typed_detail::replacement<S>;
   private:
-    template <class, class, std::uint64_t> friend struct typed_engine;
+    template <class, class, std::uint64_t, class> friend struct typed_engine;
     runtime_snapshot runtime_;
     metadata_type metadata_;
     typed_cola(runtime_snapshot data, metadata_type metadata) : runtime_(std::move(data)), metadata_(std::move(metadata)) {}
   };
 
-  template <class P, class A> struct typed_contribution {
-    std::optional<typed_cola<P, A>> const & base() const noexcept { return base_; }
+  template <class P, class A, class Family> struct typed_contribution {
+    std::optional<typed_cola<P, A, Family>> const & base() const noexcept { return base_; }
     std::span<profile_record const> records() const noexcept { return records_; }
   private:
-    friend struct typed_batch<P, A>;
-    std::optional<typed_cola<P, A>> base_;
+    friend struct typed_batch<P, A, Family>;
+    std::optional<typed_cola<P, A, Family>> base_;
     std::vector<profile_record> records_;
-    typed_contribution(std::optional<typed_cola<P, A>> base, std::vector<profile_record> records)
+    typed_contribution(std::optional<typed_cola<P, A, Family>> base, std::vector<profile_record> records)
       : base_(std::move(base)), records_(std::move(records)) {}
   };
 
-  template <class P, class A> struct typed_batch {
+  template <class P, class A, class Family> struct typed_batch {
     typed_batch() = default;
-    explicit typed_batch(typed_cola<P, A> base) : base_(std::move(base)) {}
+    explicit typed_batch(typed_cola<P, A, Family> base) : base_(std::move(base)) {}
     template <class S = typed_detail::default_sort_t<P>> typed_batch &
     change(typed_detail::key_t<S> const & key, typed_detail::arrow_t<S> const & arrow) {
       records_.push_back({typed_detail::key<P, S>(key), typed_detail::value<P, S>(arrow)});
@@ -225,7 +227,7 @@ namespace diet {
         throw std::invalid_argument("deleting absent typed key");
       return change<S>(key, sort_semantics<S>::erase(key));
     }
-    typed_contribution<P, A> finish() && {
+    typed_contribution<P, A, Family> finish() && {
       std::sort(records_.begin(), records_.end(), [](auto const & a, auto const & b) {
         return compare_bits(a.key.view(), b.key.view()) < 0;
       });
@@ -235,33 +237,35 @@ namespace diet {
       return {std::move(base_), std::move(records_)};
     }
   private:
-    std::optional<typed_cola<P, A>> base_;
+    std::optional<typed_cola<P, A, Family>> base_;
     std::vector<profile_record> records_;
   };
 
-  template <class P, class A> auto typed_cola<P, A>::batch() const -> batch_type { return batch_type(*this); }
-  template <class P, class A> template <class S>
-  auto typed_cola<P, A>::change(typed_detail::key_t<S> const & key, typed_detail::arrow_t<S> const & arrow) const -> contribution_type {
+  template <class P, class A, class Family> auto typed_cola<P, A, Family>::batch() const -> batch_type { return batch_type(*this); }
+  template <class P, class A, class Family> template <class S>
+  auto typed_cola<P, A, Family>::change(typed_detail::key_t<S> const & key, typed_detail::arrow_t<S> const & arrow) const -> contribution_type {
     auto result = batch(); result.template change<S>(key, arrow); return std::move(result).finish();
   }
-  template <class P, class A> template <class S>
-  auto typed_cola<P, A>::put(typed_detail::key_t<S> const & key, typed_detail::state_t<S> const & value) const -> contribution_type
+  template <class P, class A, class Family> template <class S>
+  auto typed_cola<P, A, Family>::put(typed_detail::key_t<S> const & key, typed_detail::state_t<S> const & value) const -> contribution_type
     requires typed_detail::replacement<S> { return change<S>(key, value); }
-  template <class P, class A> template <class S>
-  auto typed_cola<P, A>::erase(typed_detail::key_t<S> const & key) const -> contribution_type
+  template <class P, class A, class Family> template <class S>
+  auto typed_cola<P, A, Family>::erase(typed_detail::key_t<S> const & key) const -> contribution_type
     requires typed_detail::replacement<S> {
     auto result = batch(); result.template erase<S>(key); return std::move(result).finish();
   }
 
   // The depth limit is enforced support, not an inferred COLA theorem. It gives
   // an input-only conservative allowance for ready singleton admissions.
-  template <class P = string_policy, class A = wrapping_fingerprint_algebra, std::uint64_t DepthLimit = 256>
+  template <class P = string_policy, class A = wrapping_fingerprint_algebra, std::uint64_t DepthLimit = 256,
+    class Family = binary_runtime_family<P>>
   struct typed_engine {
     using policy_type = P;
-    using cola_type = typed_cola<P, A>;
-    using contribution_type = typed_contribution<P, A>;
+    using cola_type = typed_cola<P, A, Family>;
+    using contribution_type = typed_contribution<P, A, Family>;
     using metadata_type = typed_cola_metadata<A>;
-    using runtime_type = cola_runtime<P, typed_detail::compose<P>>;
+    using runtime_family = Family;
+    using runtime_type = typename Family::template runtime_type<typed_detail::compose<P>>;
     static constexpr std::uint64_t admission_allowance = 2 * P::group_size + 128 + DepthLimit + 32;
     static_assert(DepthLimit && DepthLimit < (std::uint64_t{1} << 32) && P::group_size < (std::uint64_t{1} << 32));
 
@@ -273,7 +277,7 @@ namespace diet {
     bool failed() const noexcept { return failed_ || runtime_.failed(); }
     bool admission_ready() const noexcept { return runtime_.admission_ready(); }
     auto work() const { return runtime_.work(); }
-    static typed_batch<P, A> batch() { return {}; }
+    static typed_batch<P, A, Family> batch() { return {}; }
     template <class S = typed_detail::default_sort_t<P>> static contribution_type
     change(typed_detail::key_t<S> const & key, typed_detail::arrow_t<S> const & arrow) {
       auto result = batch(); result.template change<S>(key, arrow); return std::move(result).finish();
