@@ -391,6 +391,184 @@ namespace {
     require(tail.expired(), "terminal match source remained pinned after release");
   }
 
+  // A second owner type deliberately exposes profile views directly. Adoption
+  // and traversal must not require profile_array or any owning-only .view().
+  template <class P> struct alternate_pair {
+    using policy_type = P;
+    using pointer = std::shared_ptr<alternate_pair const>;
+    pair_type<P> storage;
+    profile_blob_view<P> sections;
+    pointer next;
+    std::optional<std::uint64_t> virtual_override, groups_override;
+    bool omit_cuts = false;
+    mutable std::uint64_t searches = 0;
+
+    alternate_pair(pair_type<P> source, pointer target = {})
+      : storage(std::move(source)), sections(storage->view()), next(std::move(target)) {}
+    auto const & native() const { return sections.native(); }
+    auto const & borrowed() const { return sections.borrowed(); }
+    auto target() const { return next; }
+    auto cut_lcps() const { return omit_cuts ? word_view{} : sections.cut_lcps(); }
+    auto virtual_size() const { return virtual_override.value_or(sections.virtual_size()); }
+    auto group_count() const { return groups_override.value_or(sections.group_count()); }
+    auto search_window(std::uint64_t group, profile_query_context<P> const & lower) const {
+      ++searches;
+      return sections.search_window(group, lower);
+    }
+  };
+
+  template <class Root> concept can_build_root = requires(typename Root::pair_type source) {
+    Root::build(source);
+  };
+
+  template <class P> void alternate_owner() {
+    using other = alternate_pair<P>;
+    using pointer = typename other::pointer;
+    using root_type = query_root<P, other>;
+    static_assert(can_build_root<query_root<P>> && !can_build_root<root_type>);
+    static_assert(std::is_same_v<typename query_match<P, other>::pair_type, pointer>);
+    rows_type<P> rows(3);
+    std::vector<bit_string> queries{text(""), text("a"), text("m"), text("ma"), text("z")};
+    for (unsigned i = 0; i != 2 * P::group_size + 7; ++i) {
+      auto key = text("long-shared-prefix/" + number(i));
+      queries.push_back(key);
+      for (unsigned level = 0; level != rows.size(); ++level)
+        if ((i + level) % 4) rows[level].push_back({key, value_for<P>(i + 100 * level)});
+    }
+    for (unsigned level = 0; level != rows.size(); ++level) {
+      rows[level].push_back({text("m"), value_for<P>(700 + level)});
+      std::sort(rows[level].begin(), rows[level].end(), [](auto const & a, auto const & b) {
+        return order(a.key.view(), b.key.view()) < 0;
+      });
+    }
+    auto source = chain<P>(rows);
+    auto prepared = query_root<P>::build(source);
+    auto adopted_owner = query_root<P>::adopt_prepared(prepared.head());
+    require(adopted_owner.head() == prepared.head(), "owning adoption changed prepared identity");
+    rejects([&] { query_root<P>::adopt_prepared(source); });
+    std::vector<pair_type<P>> originals;
+    for (auto at = prepared.head(); at; at = at->target()) originals.push_back(at);
+    pointer head;
+    for (auto i = originals.size(); i; --i) head = std::make_shared<other>(originals[i - 1], head);
+    auto root = root_type::adopt_prepared(head);
+    require(root.head() == head, "alternate adoption changed prepared identity");
+    for (auto at = head; at; at = at->target())
+      require(at->searches == 0, "adoption searched encoded records");
+    for (auto const & query : queries) {
+      auto expected = expected_matches<P>(source, rows, query.view());
+      auto cursor = root.cursor(query.view());
+      auto copy = cursor;
+      for (auto * active : {&cursor, &copy}) {
+        std::size_t matched = 0;
+        std::uint64_t visited = 0;
+        require(active->step(0) == 0 && !active->has_match(), "alternate zero budget progressed");
+        while (!active->done()) {
+          if (!active->has_match()) {
+            visited += active->step(2);
+            require(visited <= originals.size(), "alternate cursor revisited a catalog");
+            continue;
+          }
+          require(active->step() == 0, "alternate pending match did not backpressure");
+          auto actual = active->take_match();
+          require(matched < expected.size(), "alternate owner emitted extra native match");
+          auto const & want = expected[matched++];
+          require(actual.source->storage == want.source && actual.ordinal == want.ordinal &&
+                  equal(actual.value.view(), want.value.view()), "alternate full native-result oracle");
+        }
+        require(matched == expected.size(), "alternate owner omitted native matches");
+      }
+    }
+
+    rejects([] { root_type::adopt_prepared({}); });
+    auto oversized = std::make_shared<other>(source, head->target());
+    rejects([&] { root_type::adopt_prepared(oversized); });
+    auto invalid = std::make_shared<other>(head->storage, head->target());
+    invalid->virtual_override = invalid->virtual_size() + 1;
+    rejects([&] { root_type::adopt_prepared(invalid); });
+    invalid->virtual_override.reset();
+    invalid->groups_override = invalid->group_count() + 1;
+    rejects([&] { root_type::adopt_prepared(invalid); });
+    invalid->groups_override.reset();
+    invalid->omit_cuts = true;
+    rejects([&] { root_type::adopt_prepared(invalid); });
+    invalid->omit_cuts = false;
+    invalid->next.reset();
+    rejects([&] { root_type::adopt_prepared(invalid); });
+    auto empty_source = std::make_shared<profile_blob<P> const>(profile_blob<P>::build({}));
+    auto empty = std::make_shared<other>(empty_source);
+    require(root_type::adopt_prepared(empty).cursor({}).done(), "alternate empty root did not finish");
+    empty->next = empty;
+    bool rejected = false;
+    try { (void)root_type::adopt_prepared(empty); } catch (std::exception const &) { rejected = true; }
+    empty->next.reset();
+    require(rejected, "alternate cycle accepted");
+
+    // A copied query and the exact unvisited owner survive all external handles.
+    std::optional<query_cursor<P, other>> cursor;
+    std::weak_ptr<other const> weak;
+    {
+      auto tiny_source = std::make_shared<profile_blob<P> const>(profile_blob<P>::build(
+        std::vector<profile_record>{{text("m"), value_for<P>(991)}}));
+      auto tiny = std::make_shared<other>(tiny_source);
+      weak = tiny;
+      auto tiny_root = root_type::adopt_prepared(tiny);
+      auto query = text("m");
+      cursor.emplace(tiny_root, query.view());
+    }
+    require(!weak.expired() && cursor->step() == 1 && cursor->has_match(), "alternate owner/query lifetime");
+    auto retained = cursor->take_match();
+    cursor.reset();
+    auto expected_value = value_for<P>(991);
+    require(!weak.expired() && equal(retained.value.view(), expected_value.view()),
+            "alternate returned match lost source/value");
+    retained.source.reset();
+    require(weak.expired(), "alternate result retained released owner");
+  }
+
+  template <class P> void borrowed_view_shapes() {
+    std::vector<profile_record> native;
+    for (unsigned i = 0; i != 2 * P::group_size + 1; ++i)
+      native.push_back({text("x" + number(2 * i)), value_for<P>(i)});
+    std::vector<bit_string> borrowed{text("x" + number(1)), text("x" + number(3))};
+    auto owner = profile_blob<P>::build(native, borrowed);
+    auto ranks = owner.interleave();
+    auto flags = owner.false_borrow_bits();
+    auto cuts = word_view(owner.cut_lcps());
+    auto make = [&](std::span<std::byte const> f, word_view c, std::uint64_t count) {
+      return profile_blob_view<P>(owner.native().view(), owner.borrowed().view(),
+        ranks.view(), f, c, count);
+    };
+    auto view = make(flags, cuts, owner.virtual_size());
+    require(view.native().size() == native.size() && view.borrowed().size() == borrowed.size(),
+            "borrowed blob view changed physical counts");
+    for (std::uint64_t group = 0; group != owner.group_count(); ++group) {
+      auto a = owner.project(group), b = view.project(group);
+      require(a.native_first == b.native_first && a.native_last == b.native_last &&
+              a.borrowed_first == b.borrowed_first && a.borrowed_last == b.borrowed_last,
+              "owning and borrowed projections disagree");
+    }
+    rejects([&] { make({}, cuts, owner.virtual_size()); });
+    rejects([&] { make(flags, {}, owner.virtual_size()); });
+    rejects([&] { make(flags, cuts, owner.virtual_size() + 1); });
+    rejects([&] { view.project(view.group_count()); });
+    rejects([&] { view.false_borrow(borrowed.size()); });
+
+    ranks.checkpoints[0] = 1;
+    rejects([&] { make(flags, cuts, owner.virtual_size()).project(0); });
+    // Overflow must be detected inside rank, before a wrapped result could
+    // look like a valid small physical ordinal in the shared projection.
+    ranks.checkpoints[0] = std::numeric_limits<std::uint64_t>::max();
+    rejects([&] { make(flags, cuts, owner.virtual_size()).project(1); });
+    ranks = owner.interleave();
+    ranks.classes[0] = (ranks.classes[0] & ~P::group_size) | P::group_size;
+    rejects([&] { make(flags, cuts, owner.virtual_size()).project(0); });
+    ranks = owner.interleave();
+    // Zero populations throughout leave the terminal native endpoint beyond
+    // native.size(), although every encoded class still fits its word field.
+    std::fill(ranks.classes.begin(), ranks.classes.end(), 0);
+    rejects([&] { make(flags, cuts, owner.virtual_size()).project(owner.group_count() - 1); });
+  }
+
   template <class P> void exercise() {
     static_assert(std::is_same_v<typename query_root<P>::policy_type, P>);
     identities_and_invalid<P>();
@@ -398,6 +576,8 @@ namespace {
     partial_context<P>();
     ownership<P>();
     full_chain<P>();
+    alternate_owner<P>();
+    borrowed_view_shapes<P>();
   }
   template <std::uint64_t K> void groups() {
     exercise<storage_policy<profile_unit::byte, variable_values, K>>();
