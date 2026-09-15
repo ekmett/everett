@@ -115,6 +115,41 @@ namespace {
     for (bool pending : reserved) check(!pending, "undrained destination reservation");
   }
   void state_check(scheduler const & s) {
+    // Ignore saved snapshots here: this is the current world's working set.
+    // Walk exact dependencies independently of retained_node_ids(), including
+    // private carrier routes that are not yet reachable from the root.
+    std::set<identity> slots, live;
+    std::vector<interval> unused;
+    for (auto const & level : s.levels())
+      for (auto const & slot : level.slots) if (slot.object) slots.insert(slot.object);
+    auto add = [&](identity id) {
+      std::set<identity> local;
+      unused.clear();
+      walk(s, id, local, unused);
+      live.insert(local.begin(), local.end());
+    };
+    add(s.root().root.main);
+    add(s.root().root.secondary);
+    for (auto const & level : s.levels()) {
+      for (auto const & slot : level.slots) {
+        add(slot.object);
+        add(slot.route.main);
+        add(slot.route.secondary);
+      }
+      if (level.work) {
+        auto const & job = *level.work;
+        add(job.existing_main);
+        add(job.output_node);
+        add(job.destination_route.main);
+        add(job.destination_route.secondary);
+        for (auto input : job.inputs) {
+          check(level.slots[input].status == state::active, "unfinished job lost an input slot");
+          add(level.slots[input].object);
+        }
+      }
+    }
+    for (auto id : live) check(slots.contains(id), "live exact dependency escaped occupied slots");
+    check(live.size() <= 3 * s.levels().size(), "working graph exceeds logical slot bound");
     for (unsigned i = 0; i < s.levels().size(); ++i) {
       unsigned active = 0, carrier = 0, staging = 0;
       for (auto const & slot : s.levels()[i].slots) {

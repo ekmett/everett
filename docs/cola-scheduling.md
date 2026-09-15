@@ -166,6 +166,31 @@ that native file, not an additional index object.
 Three logical slots consequently do not claim three physical `.index` files
 including snapshots and partially constructed carriers.
 
+Current-world object closure
+----------------------------
+
+The useful space invariant is stronger than counting slots: every exact target
+owned by the current root, a live array or a private carrier must still occupy
+a logical slot. Otherwise a retired slot could hide an arbitrarily long tail
+of immutable dependencies. The model tests this closure independently after
+admissions and paused service transitions. Its current-world closure has at
+most $3h$ completed array handles across h levels. A main handle owns a native
+file and index; a secondary handle owns only a native file. Unfinished output
+and index stages add only a constant number of owners per active job.
+
+The retirement obligation is that a newly visible replacement leaves no
+private carrier or unfinished job referring to an input whose slot is being
+released. The smallest-unsafe schedule and visibility-before-reuse rule are
+what must establish that obligation; root unreachability alone is insufficient.
+The executable histories satisfy it, but I have not proved it for all histories.
+A production scheduler must also release completed builders and input owners.
+
+This $O(h)$ working-owner argument excludes saved roots, timeline generations,
+failed attempts and durable continuation checkpoints. Their retained graphs
+must be counted as a union of exact identities, with separate retention limits.
+The current insert-only catalog does not reclaim these records or files, so
+this is not a bound on its on-disk history or an implemented garbage collector.
+
 Counted service and its limits
 ------------------------------
 
