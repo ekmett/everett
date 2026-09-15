@@ -10,6 +10,7 @@
 #pragma once
 
 #include <everett/mapped_blob.h>
+#include <everett/mapped_cola.h>
 #include <everett/object_writer.h>
 #include <sqlite3.h>
 
@@ -214,21 +215,30 @@ CREATE TABLE saves(name BLOB PRIMARY KEY, native_id TEXT NOT NULL, index_id TEXT
 CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT NULL OR NEW.id<>OLD.id OR NEW.kind<>OLD.kind OR NEW.attempt<>OLD.attempt BEGIN SELECT RAISE(ABORT,'immutable object'); END;
 )sql";
     // Version 1 is retained verbatim for old-catalog validation. No open path
-    // rewrites it. Only newly created catalogs use the version 2 extension.
+    // rewrites it. Creation explicitly chooses the timeline or COLA extension.
     inline std::string schema_for(unsigned version) {
       std::string result = schema;
       if (version == 1) return result;
-      if (version != 2) throw std::invalid_argument("unsupported Everett catalog version");
+      if (version != 2 && version != 3) throw std::invalid_argument("unsupported Everett catalog version");
       auto replace = [&](std::string_view before, std::string_view after) {
         result.replace(result.find(before), before.size(), after);
       };
-      replace("CHECK(version=1)", "CHECK(version=2)");
+      replace("CHECK(version=1)", version == 2 ? "CHECK(version=2)" : "CHECK(version=3)");
       replace("IN('attempt','save','reader')", "IN('attempt','save','reader','timeline')");
       result.insert(result.find("CREATE TRIGGER sealed_immutable"), R"sql(CREATE TABLE timelines(name BLOB PRIMARY KEY, source_name BLOB, source_generation INTEGER,
  CHECK((source_name IS NULL)=(source_generation IS NULL)), FOREIGN KEY(source_name,source_generation) REFERENCES timeline_generations(name,generation)) STRICT;
 CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name), generation INTEGER NOT NULL CHECK(generation>=0), native_id TEXT NOT NULL, index_id TEXT NOT NULL, owner_kind TEXT NOT NULL CHECK(owner_kind='timeline'), owner_id BLOB NOT NULL UNIQUE,
  PRIMARY KEY(name,generation), FOREIGN KEY(owner_kind,owner_id,native_id,index_id) REFERENCES owner_roots(owner_kind,owner_id,native_id,index_id)) STRICT;
 )sql");
+      if (version == 3) {
+        auto first = result.find("CREATE TABLE pairs(");
+        auto last = result.find(';', first);
+        result.replace(first, last + 1 - first, R"sql(CREATE TABLE pairs(index_id TEXT PRIMARY KEY REFERENCES objects(id), native_id TEXT NOT NULL REFERENCES objects(id), target_native TEXT, target_index TEXT, native_count INTEGER NOT NULL CHECK(native_count>=0), borrowed_count INTEGER NOT NULL CHECK(borrowed_count>=0), virtual_count INTEGER NOT NULL CHECK(virtual_count>=0),
+ layout INTEGER NOT NULL DEFAULT 2 CHECK(layout IN(2,3)), secondary_native TEXT REFERENCES objects(id), secondary_native_count INTEGER NOT NULL DEFAULT 0 CHECK(secondary_native_count>=0), secondary_borrowed_count INTEGER NOT NULL DEFAULT 0 CHECK(secondary_borrowed_count>=0),
+ UNIQUE(native_id,index_id), FOREIGN KEY(target_native,target_index) REFERENCES pairs(native_id,index_id), CHECK((target_native IS NULL)=(target_index IS NULL)),
+ CHECK(native_count<=virtual_count AND secondary_borrowed_count<=virtual_count-native_count AND borrowed_count=virtual_count-native_count-secondary_borrowed_count),
+ CHECK(secondary_native IS NOT NULL OR (secondary_native_count=0 AND secondary_borrowed_count=0)), CHECK(layout=3 OR (secondary_native IS NULL AND secondary_native_count=0 AND secondary_borrowed_count=0))) STRICT;)sql");
+      }
       return result;
     }
   }
@@ -252,46 +262,13 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
 
     static sqlite_catalog create(std::filesystem::path const & root, object_id const & identity,
         catalog_options options = {}, Ops ops = {}) {
-      validate_options(options);
-      catalog_detail::bytes descriptor; catalog_detail::identity(descriptor, identity);
-      auto location = std::filesystem::canonical(root);
-#if defined(__APPLE__) || defined(__linux__)
-      // Reserve this catalog name without following a pre-existing symlink.
-      auto path = location / "catalog.sqlite3";
-      int fd = ::open(path.c_str(), O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC | O_NOFOLLOW, 0600);
-      if (fd < 0) throw std::system_error(errno, std::generic_category(), "create Everett catalog");
-      if (::close(fd)) throw std::system_error(errno, std::generic_category(), "close new Everett catalog");
-      auto result = connect(location, options, std::move(ops));
-      result.transaction("", "initialize", {}, [&] {
-        catalog_detail::exec(result.db_, catalog_detail::schema_for(2).c_str());
-        catalog_detail::statement insert(result.db_, "INSERT INTO catalog_info VALUES(1,2,?,?)");
-        insert.text(1, identity.hex()); insert.blob(2, policy()); insert.done();
-        // Immutable tables remain readable through ordinary SQL tooling.
-        for (auto table : immutable_tables) {
-          for (auto action : {"UPDATE", "DELETE"}) {
-            std::string sql = "CREATE TRIGGER immutable_" + std::string(table) + "_" + action +
-              " BEFORE " + action + " ON " + table + " BEGIN SELECT RAISE(ABORT,'immutable catalog row'); END";
-            catalog_detail::exec(result.db_, sql.c_str());
-          }
-        }
-        catalog_detail::exec(result.db_, "CREATE TRIGGER objects_no_delete BEFORE DELETE ON objects BEGIN SELECT RAISE(ABORT,'retained object'); END");
-        return catalog_detail::bytes{};
-      }, false);
-      // SQLite's transaction is not a substitute for retaining this new name.
-      posix_object_ops barriers;
-      int directory = barriers.open_root(location);
-      if (directory < 0) throw std::system_error(errno, std::generic_category(), "open catalog directory");
-      if (barriers.sync_directory(directory)) {
-        int error = errno; barriers.close(directory);
-        throw std::system_error(error, std::generic_category(), "sync catalog directory; initialization outcome unknown");
-      }
-      if (barriers.close(directory))
-        throw std::system_error(errno, std::generic_category(), "close catalog directory; initialization outcome unknown");
-      return result;
-#else
-      (void)location; (void)options; (void)ops;
-      throw std::system_error(std::make_error_code(std::errc::operation_not_supported), "Everett catalog creation requires POSIX directory barriers");
-#endif
+      return create_version(root, identity, options, std::move(ops), 2);
+    }
+    // Explicit schema opt-in. Existing catalogs are never migrated on open.
+    // Version 3 admits both linear IX02 and dual-target IX03 graphs.
+    static sqlite_catalog create_cola(std::filesystem::path const & root, object_id const & identity,
+        catalog_options options = {}, Ops ops = {}) {
+      return create_version(root, identity, options, std::move(ops), 3);
     }
     static sqlite_catalog open(std::filesystem::path const & root, catalog_options options = {}, Ops ops = {}) {
       auto result = connect(std::filesystem::canonical(root), options, std::move(ops));
@@ -424,10 +401,12 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
           require_sealed(pair.identity().native, file_kind::native_blob);
           require_sealed(pair.identity().index, file_kind::fractional_index);
           auto target = pair.target();
-          catalog_detail::statement old(db_, "SELECT native_id,target_native,target_index,native_count,borrowed_count,virtual_count FROM pairs WHERE index_id=?");
+          catalog_detail::statement old(db_, schema_version_ >= 3 ?
+            "SELECT native_id,target_native,target_index,native_count,borrowed_count,virtual_count,layout FROM pairs WHERE index_id=?" :
+            "SELECT native_id,target_native,target_index,native_count,borrowed_count,virtual_count,2 FROM pairs WHERE index_id=?");
           old.text(1, pair.identity().index.hex());
           if (old.row()) {
-            if (old.text(0) != pair.identity().native.hex() || old.is_null(1) != !target ||
+            if (old.integer(6) != 2 || old.text(0) != pair.identity().native.hex() || old.is_null(1) != !target ||
                 (target && (old.text(1) != target->identity().native.hex() || old.text(2) != target->identity().index.hex())) ||
                 old.integer(3) != catalog_detail::integer(pair.native().size()) ||
                 old.integer(4) != catalog_detail::integer(pair.borrowed().size()) ||
@@ -435,13 +414,85 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
               throw std::invalid_argument("registered index identity already has different contents");
             continue;
           }
-          catalog_detail::statement insert(db_, "INSERT INTO pairs VALUES(?,?,?,?,?,?,?)");
+          catalog_detail::statement insert(db_, "INSERT INTO pairs(index_id,native_id,target_native,target_index,native_count,borrowed_count,virtual_count) VALUES(?,?,?,?,?,?,?)");
           insert.text(1, pair.identity().index.hex()); insert.text(2, pair.identity().native.hex());
           if (target) { insert.text(3, target->identity().native.hex()); insert.text(4, target->identity().index.hex()); }
           else { insert.null(3); insert.null(4); }
           insert.integer(5, catalog_detail::integer(pair.native().size()));
           insert.integer(6, catalog_detail::integer(pair.borrowed().size()));
           insert.integer(7, catalog_detail::integer(pair.virtual_size())); insert.done();
+        }
+        catalog_detail::bytes result; catalog_detail::pair(result, opened.head()->identity()); return result;
+      });
+    }
+
+    // COLA admission is an explicit schema-3 operation. The terminal secondary
+    // edge retains only its native object; only the main edge recurses. As for
+    // linear admission, trusted mode reads fixed metadata, not payload contents.
+    void register_chain(std::string_view op, mapped_cola_query_root<P> const & source,
+        catalog_admission admission = catalog_admission::trusted) {
+      require_active(); catalog_detail::name(op);
+      if (schema_version_ < 3)
+        throw std::logic_error("COLA admission requires catalog version 3; no automatic migration");
+      if (admission != catalog_admission::trusted && admission != catalog_admission::scan)
+        throw std::invalid_argument("unsupported catalog admission mode");
+      auto head = source.head();
+      if (!head) throw std::invalid_argument("empty COLA catalog query root");
+      auto opened = open_mapped_cola_query<P>(root_, head->identity());
+      if (admission == catalog_admission::scan) opened.head()->scan();
+      std::vector<typename mapped_cola_blob<P>::pair_type> chain;
+      catalog_detail::bytes request;
+      catalog_detail::number(request, static_cast<unsigned>(admission));
+      for (auto current = opened.head(); current; current = current->main_target()) {
+        chain.push_back(current);
+        auto view = current->view();
+        auto main = current->main_target();
+        auto secondary = current->secondary_target();
+        catalog_detail::pair(request, current->identity());
+        catalog_detail::number(request, bool(main));
+        if (main) catalog_detail::pair(request, main->identity());
+        catalog_detail::number(request, bool(secondary));
+        if (secondary) catalog_detail::identity(request, *current->index_object()->secondary_id());
+        for (auto count : {view.native().size(), view.borrowed(0).size(), view.borrowed(1).size(),
+                          secondary ? secondary->size() : 0, view.virtual_size()})
+          catalog_detail::number(request, count);
+      }
+      transaction(op, "register_cola_chain", request, [&] {
+        for (auto entry = chain.rbegin(); entry != chain.rend(); ++entry) {
+          auto const & pair = **entry;
+          auto view = pair.view();
+          auto main = pair.main_target();
+          auto secondary = pair.secondary_target();
+          auto const & secondary_id = pair.index_object()->secondary_id();
+          auto secondary_count = secondary ? secondary->size() : 0;
+          require_sealed(pair.identity().native, file_kind::native_blob);
+          require_sealed(pair.identity().index, file_kind::fractional_index);
+          if (secondary) require_sealed(*secondary_id, file_kind::native_blob);
+          catalog_detail::statement old(db_, "SELECT native_id,target_native,target_index,native_count,borrowed_count,virtual_count,layout,secondary_native,secondary_native_count,secondary_borrowed_count FROM pairs WHERE index_id=?");
+          old.text(1, pair.identity().index.hex());
+          if (old.row()) {
+            if (old.integer(6) != 3 || old.text(0) != pair.identity().native.hex() ||
+                old.is_null(1) != !main || old.is_null(2) != !main ||
+                (main && (old.text(1) != main->identity().native.hex() || old.text(2) != main->identity().index.hex())) ||
+                old.is_null(7) != !secondary || (secondary && old.text(7) != secondary_id->hex()) ||
+                old.integer(3) != catalog_detail::integer(view.native().size()) ||
+                old.integer(4) != catalog_detail::integer(view.borrowed(0).size()) ||
+                old.integer(5) != catalog_detail::integer(view.virtual_size()) ||
+                old.integer(8) != catalog_detail::integer(secondary_count) ||
+                old.integer(9) != catalog_detail::integer(view.borrowed(1).size()))
+              throw std::invalid_argument("registered COLA index identity already has different contents");
+            continue;
+          }
+          catalog_detail::statement insert(db_, "INSERT INTO pairs(index_id,native_id,target_native,target_index,native_count,borrowed_count,virtual_count,layout,secondary_native,secondary_native_count,secondary_borrowed_count) VALUES(?,?,?,?,?,?,?,3,?,?,?)");
+          insert.text(1, pair.identity().index.hex()); insert.text(2, pair.identity().native.hex());
+          if (main) { insert.text(3, main->identity().native.hex()); insert.text(4, main->identity().index.hex()); }
+          else { insert.null(3); insert.null(4); }
+          insert.integer(5, catalog_detail::integer(view.native().size()));
+          insert.integer(6, catalog_detail::integer(view.borrowed(0).size()));
+          insert.integer(7, catalog_detail::integer(view.virtual_size()));
+          if (secondary) insert.text(8, secondary_id->hex()); else insert.null(8);
+          insert.integer(9, catalog_detail::integer(secondary_count));
+          insert.integer(10, catalog_detail::integer(view.borrowed(1).size())); insert.done();
         }
         catalog_detail::bytes result; catalog_detail::pair(result, opened.head()->identity()); return result;
       });
@@ -554,12 +605,56 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
     };
     sqlite_catalog(sqlite3 * db, std::filesystem::path root, Ops ops)
       : db_(db), root_(std::move(root)), ops_(std::move(ops)) {}
+    static sqlite_catalog create_version(std::filesystem::path const & root, object_id const & identity,
+        catalog_options options, Ops ops, unsigned version) {
+      validate_options(options);
+      catalog_detail::bytes descriptor; catalog_detail::identity(descriptor, identity);
+      auto location = std::filesystem::canonical(root);
+#if defined(__APPLE__) || defined(__linux__)
+      // Reserve this catalog name without following a pre-existing symlink.
+      auto path = location / "catalog.sqlite3";
+      int fd = ::open(path.c_str(), O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC | O_NOFOLLOW, 0600);
+      if (fd < 0) throw std::system_error(errno, std::generic_category(), "create Everett catalog");
+      if (::close(fd)) throw std::system_error(errno, std::generic_category(), "close new Everett catalog");
+      auto result = connect(location, options, std::move(ops));
+      result.schema_version_ = version;
+      result.transaction("", "initialize", {}, [&] {
+        catalog_detail::exec(result.db_, catalog_detail::schema_for(version).c_str());
+        catalog_detail::statement insert(result.db_, "INSERT INTO catalog_info VALUES(1,?,?,?)");
+        insert.integer(1, version); insert.text(2, identity.hex()); insert.blob(3, policy()); insert.done();
+        // Immutable tables remain readable through ordinary SQL tooling.
+        for (auto table : immutable_tables) {
+          for (auto action : {"UPDATE", "DELETE"}) {
+            std::string sql = "CREATE TRIGGER immutable_" + std::string(table) + "_" + action +
+              " BEFORE " + action + " ON " + table + " BEGIN SELECT RAISE(ABORT,'immutable catalog row'); END";
+            catalog_detail::exec(result.db_, sql.c_str());
+          }
+        }
+        catalog_detail::exec(result.db_, "CREATE TRIGGER objects_no_delete BEFORE DELETE ON objects BEGIN SELECT RAISE(ABORT,'retained object'); END");
+        return catalog_detail::bytes{};
+      }, false);
+      // SQLite's transaction is not a substitute for retaining this new name.
+      posix_object_ops barriers;
+      int directory = barriers.open_root(location);
+      if (directory < 0) throw std::system_error(errno, std::generic_category(), "open catalog directory");
+      if (barriers.sync_directory(directory)) {
+        int error = errno; barriers.close(directory);
+        throw std::system_error(error, std::generic_category(), "sync catalog directory; initialization outcome unknown");
+      }
+      if (barriers.close(directory))
+        throw std::system_error(errno, std::generic_category(), "close catalog directory; initialization outcome unknown");
+      return result;
+#else
+      (void)location; (void)options; (void)ops; (void)version;
+      throw std::system_error(std::make_error_code(std::errc::operation_not_supported), "Everett catalog creation requires POSIX directory barriers");
+#endif
+    }
     void require_active() const {
       if (!db_ || poisoned_) throw std::logic_error("Everett catalog handle is inactive or poisoned");
     }
     void require_timelines() const {
       require_active();
-      if (schema_version_ != 2) throw std::logic_error("Everett timelines require catalog version 2; no automatic migration");
+      if (schema_version_ < 2) throw std::logic_error("Everett timelines require catalog version 2 or later; no automatic migration");
     }
     static void validate_timeline(catalog_timeline_head const & value) {
       catalog_detail::name(value.name); catalog_detail::name(value.owner);
@@ -657,7 +752,7 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
       catalog_detail::statement query(db_, "SELECT sql FROM sqlite_schema WHERE type='table' AND name='catalog_info'");
       if (query.row()) {
         auto actual = query.text(0);
-        for (unsigned version : {1, 2}) {
+        for (unsigned version : {1, 2, 3}) {
           auto expected = catalog_detail::schema_for(version);
           auto first = expected.find("CREATE TABLE catalog_info");
           auto last = expected.find(';', first);
