@@ -66,8 +66,9 @@ the admission or explicit `scan` operation's responsibility.
 input, a mapped main pair and a mapped secondary native file. Its completed
 `mapped_cola_artifact<P>` retains those mappings and owns the newly encoded
 borrowed streams. `encode_cola_sections` seals that artifact as IX03; reopening
-it gives us a homogeneous mapped query chain. No native data is copied or
-re-encoded. The [save and merge example](cola-store.md) takes this path through
+it gives us a homogeneous mapped query chain. The native file and navigation
+arrays are reused without copying or re-encoding them; key cursors retain
+decoded frontier scratch. The [save and merge example](cola-store.md) takes this path through
 native construction, publication, snapshots and reopening.
 
 `cola_query_root<P>::build(main, secondary)` includes both level-zero arrays.
