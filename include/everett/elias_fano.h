@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <array>
 #include <everett/word_view.h>
+#include <everett/error_detail.h>
 
 #include <bit>
 #include <cstddef>
@@ -158,11 +159,11 @@ namespace everett {
     // including zero tail padding. Source and destination must not overlap.
     inline void pack_low(std::span<std::uint64_t const> source,
                          std::span<std::uint64_t> out, unsigned width) {
-      if (width > 63) throw std::invalid_argument("elias_fano low width");
+      if (width > 63) error_detail::raise<std::invalid_argument>("elias_fano low width");
       if (width && source.size() > std::numeric_limits<std::uint64_t>::max() / width)
-        throw std::overflow_error("elias_fano low section extent");
+        error_detail::raise<std::overflow_error>("elias_fano low section extent");
       if (out.size() != words(source.size() * width))
-        throw std::invalid_argument("elias_fano low output size");
+        error_detail::raise<std::invalid_argument>("elias_fano low output size");
       static constexpr auto packers = low_packers(std::make_index_sequence<64>{});
       packers[width](source, out);
     }
@@ -221,10 +222,10 @@ namespace everett {
                        std::uint64_t entry_count, std::uint64_t universe, unsigned low_width)
       : low_(low), high_(high), samples_(samples), sparse_(sparse),
         entry_count_(entry_count), universe_(universe), low_width_(low_width) {
-      if (low_width > 63) throw std::invalid_argument("elias_fano low width");
+      if (low_width > 63) error_detail::raise<std::invalid_argument>("elias_fano low width");
       if (!entry_count) {
         if (universe || low_width || !low.empty() || !high.empty() || !samples.empty() || !sparse.empty())
-          throw std::invalid_argument("invalid empty Elias-Fano sections");
+          error_detail::raise<std::invalid_argument>("invalid empty Elias-Fano sections");
         return;
       }
       constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
@@ -232,13 +233,13 @@ namespace everett {
       // Validate section extents once, before borrowing any navigation words.
       if ((low_width && entries > maximum / low_width) ||
           (universe >> low_width) > maximum - entries)
-        throw std::overflow_error("elias_fano section extent");
+        error_detail::raise<std::overflow_error>("elias_fano section extent");
       auto low_bits = elias_fano_detail::multiply(entries, low_width);
       high_bits_ = elias_fano_detail::add(universe >> low_width, entries);
       if (low.size() != elias_fano_detail::words(low_bits) ||
           high.size() != elias_fano_detail::words(high_bits_) ||
           samples.size() != entries / 256 + (entries % 256 != 0))
-        throw std::invalid_argument("invalid elias_fano spans");
+        error_detail::raise<std::invalid_argument>("invalid elias_fano spans");
     }
 
     word_view low_words() const noexcept { return low_; }
@@ -250,11 +251,11 @@ namespace everett {
     std::uint64_t size() const noexcept { return entry_count_; }
 
     std::uint64_t select(std::uint64_t ordinal) const {
-      if (ordinal >= entry_count_) throw std::out_of_range("Elias-Fano ordinal");
+      if (ordinal >= entry_count_) error_detail::raise<std::out_of_range>("Elias-Fano ordinal");
       auto position = select_high(ordinal);
-      if (position < ordinal) throw std::invalid_argument("invalid elias_fano high value");
+      if (position < ordinal) error_detail::raise<std::invalid_argument>("invalid elias_fano high value");
       auto hi = position - ordinal;
-      if (hi > (universe_ >> low_width_)) throw std::invalid_argument("elias_fano high overflow");
+      if (hi > (universe_ >> low_width_)) error_detail::raise<std::invalid_argument>("elias_fano high overflow");
       std::uint64_t lo = 0;
       if (low_width_) {
         auto bit = ordinal * low_width_;
@@ -265,7 +266,7 @@ namespace everett {
         lo &= (std::uint64_t{1} << low_width_) - 1;
       }
       auto value = (hi << low_width_) | lo;
-      if (value > universe_) throw std::invalid_argument("elias_fano value exceeds universe");
+      if (value > universe_) error_detail::raise<std::invalid_argument>("elias_fano value exceeds universe");
       return value;
     }
 
@@ -275,13 +276,13 @@ namespace everett {
       unsigned remaining = unsigned(ordinal % 256);
       if (sample.sparse != std::numeric_limits<std::uint64_t>::max()) {
         if (sample.sparse > sparse_.size() || remaining >= sparse_.size() - sample.sparse)
-          throw std::invalid_argument("invalid elias_fano exception");
+          error_detail::raise<std::invalid_argument>("invalid elias_fano exception");
         auto position = sparse_[sample.sparse + remaining];
         if (position >= high_bits_ || !(high_[position / 64] & (std::uint64_t{1} << (position % 64))))
-          throw std::invalid_argument("invalid elias_fano sparse position");
+          error_detail::raise<std::invalid_argument>("invalid elias_fano sparse position");
         return position;
       }
-      if (sample.first >= high_bits_) throw std::invalid_argument("invalid elias_fano sample");
+      if (sample.first >= high_bits_) error_detail::raise<std::invalid_argument>("invalid elias_fano sample");
       auto word = sample.first / 64;
       auto value = high_[word] & (~std::uint64_t{0} << (sample.first % 64));
       for (unsigned scanned = 0; scanned < 65 && word < high_.size(); ++scanned, ++word) {
@@ -290,12 +291,12 @@ namespace everett {
         if (remaining < population) {
           auto position = word * 64 + elias_fano_detail::select_word(value, remaining);
           if (position >= high_bits_ || position - sample.first >= 4096)
-            throw std::invalid_argument("elias_fano dense span");
+            error_detail::raise<std::invalid_argument>("elias_fano dense span");
           return position;
         }
         remaining -= population;
       }
-      throw std::invalid_argument("elias_fano missing high bit");
+      error_detail::raise<std::invalid_argument>("elias_fano missing high bit");
     }
 
     word_view low_;
@@ -312,7 +313,7 @@ namespace everett {
     static elias_fano build(std::span<std::uint64_t const> residuals) {
       if (residuals.empty()) return {};
       if (!elias_fano_detail::monotone(residuals))
-        throw std::invalid_argument("elias_fano nonmonotone offsets");
+        error_detail::raise<std::invalid_argument>("elias_fano nonmonotone offsets");
       elias_fano result;
       result.entry_count = residuals.size();
       result.universe = residuals.back();
@@ -321,7 +322,7 @@ namespace everett {
       constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
       if ((result.low_width && residuals.size() > maximum / result.low_width) ||
           (result.universe >> result.low_width) > maximum - residuals.size())
-        throw std::overflow_error("elias_fano section extent");
+        error_detail::raise<std::overflow_error>("elias_fano section extent");
       auto low_bits = elias_fano_detail::multiply(residuals.size(), result.low_width);
       auto high_bits = elias_fano_detail::add(result.universe >> result.low_width, residuals.size());
       result.low.assign(elias_fano_detail::words(low_bits), 0);
