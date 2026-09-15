@@ -857,10 +857,9 @@ clean generation that removes obsolete pages. The proof checkpoint checked
 858 Lean declarations with only standard `propext`, `Quot.sound` and
 `Classical.choice` axioms.
 
-All seven complete README programs and the native-merge and SQLite guide
-examples passed strict warnings and ASan/UBSan, nine executables in total.
-The COLA index example and the complete mapped save/merge and owning local-job
-examples also passed strict warnings and ASan/UBSan. The mapped save example
+All twelve complete programs from the README and the native-merge, SQLite,
+COLA index, mapped save/merge and local-job guides passed strict warnings and
+ASan/UBSan. The mapped save example
 reopens two saved roots and the current timeline after publication. Installed
 licenses and generated CRC includes are checked byte for byte
 against the source bundle, and the pinned generator reproduced all eight
