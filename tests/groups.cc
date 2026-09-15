@@ -37,6 +37,60 @@ namespace {
     require(threw, "invalid group operation accepted");
   }
 
+  std::vector<std::byte> little_words(std::span<std::uint64_t const> words, unsigned offset = 0) {
+    std::vector<std::byte> result(offset + words.size() * 8, std::byte{0x9d});
+    for (std::size_t i = 0; i < words.size(); ++i)
+      for (unsigned byte = 0; byte < 8; ++byte)
+        result[offset + i * 8 + byte] = std::byte((words[i] >> (byte * 8)) & 255);
+    return result;
+  }
+
+  template <class Sample> std::vector<std::byte> little_samples(std::span<Sample const> samples, unsigned offset) {
+    std::vector<std::uint64_t> words;
+    for (auto sample : samples) { words.push_back(sample.first); words.push_back(sample.sparse); }
+    return little_words(words, offset);
+  }
+
+  void test_byte_views() {
+    std::array<std::uint64_t, 5> source{0, 1, 0x0123456789abcdefull, 0xfedcba9876543210ull, ~std::uint64_t{0}};
+    everett::word_view native(source);
+    for (unsigned offset = 0; offset < 8; ++offset) {
+      auto storage = little_words(source, offset);
+      auto bytes = std::span(storage).subspan(offset);
+      auto view = everett::word_view::little_endian(bytes);
+      require(view.bytes().data() == bytes.data() && view.size() == source.size(), "word bytes retained");
+      for (std::size_t i = 0; i < source.size(); ++i)
+        require(view[i] == source[i] && native[i] == source[i], "word LE/native load");
+      require(view.subspan(2, 1)[0] == source[2] && view.subspan(5).empty(), "word subspan");
+      rejects([&] { (void)view[5]; });
+      rejects([&] { (void)view.subspan(6); });
+      rejects([&] { (void)view.subspan(4, 2); });
+      rejects([&] { (void)everett::word_view::little_endian(bytes.first(7)); });
+      std::array<everett::select_groups_sample, 2> samples{{{source[2], source[3]}, {0, ~std::uint64_t{0}}}};
+      auto encoded = little_samples(std::span<everett::select_groups_sample const>(samples), offset);
+      auto sample_bytes = std::span(encoded).subspan(offset);
+      auto sample = everett::sample_view::little_endian(sample_bytes);
+      everett::sample_view native_sample{std::span<everett::select_groups_sample const>(samples)};
+      require(sample.bytes().data() == sample_bytes.data() && sample.words().size() == 4, "sample bytes retained");
+      for (std::size_t i = 0; i < samples.size(); ++i)
+        require(sample[i].first == samples[i].first && sample[i].sparse == samples[i].sparse &&
+                native_sample[i].first == samples[i].first && native_sample[i].sparse == samples[i].sparse,
+                "sample LE/native load");
+      rejects([&] { (void)sample[2]; });
+      rejects([&] { (void)everett::sample_view::little_endian(sample_bytes.first(24)); });
+    }
+  }
+
+  template <std::uint64_t K> void test_bad_rank_prefix() {
+    auto index = everett::rank_groups<K>::build(std::array<std::uint64_t, 2>{1, 1}, 2 * K);
+    index.checkpoints[0] = ~std::uint64_t{0};
+    auto view = index.view(); // Shape checks must not read the checkpoint.
+    rejects([&] { (void)view.rank(0); });
+    rejects([&] { (void)view.rank(1); });
+    index.checkpoints[0] = 2;
+    rejects([&] { (void)index.view().rank(1); });
+  }
+
   template <std::uint64_t K> void test_rank() {
     std::mt19937_64 random(0x6715 + K);
     for (std::uint64_t count : std::array<std::uint64_t, 12>{0, 1, K - 1, K, K + 1, 31 * K,
@@ -58,6 +112,18 @@ namespace {
           require(view.rank(i) == oracle[i], "rank groups prefix oracle");
         for (std::uint64_t i = 0; i < groups; ++i)
           require(view.class_at(i) == classes[i], "rank groups class oracle");
+        for (unsigned offset = 0; offset < 8; ++offset) {
+          auto packed = little_words(index.classes, offset), checkpoints = little_words(index.checkpoints, offset);
+          auto pc = everett::word_view::little_endian(std::span(packed).subspan(offset));
+          auto cp = everett::word_view::little_endian(std::span(checkpoints).subspan(offset));
+          everett::rank_groups_view<K> mapped(pc, cp, count, index.total);
+          require(mapped.class_words().bytes().data() == packed.data() + offset &&
+                  mapped.checkpoint_words().bytes().data() == checkpoints.data() + offset, "rank sections retained");
+          for (std::uint64_t i = 0; i <= groups; ++i)
+            require(mapped.rank(i) == oracle[i], "unaligned mapped rank oracle");
+          for (std::uint64_t i = 0; i < groups; ++i)
+            require(mapped.class_at(i) == classes[i], "unaligned mapped class oracle");
+        }
         // Independent bit-at-a-time oracle checks packed fields crossing words.
         constexpr unsigned width = everett::rank_groups<K>::class_bits;
         for (std::uint64_t i = 0; i < groups; ++i)
@@ -162,6 +228,33 @@ namespace {
 
   template <std::uint64_t K> void check_encoding(everett::select_groups<K> const & index,
                                                std::span<std::uint64_t const> source) {
+    for (unsigned offset = 0; offset < 8; ++offset) {
+      auto low = little_words(index.low, offset), high = little_words(index.high, offset);
+      auto sparse = little_words(index.sparse, offset);
+      auto samples = little_samples(std::span<everett::select_groups_sample const>(index.samples), offset);
+      auto lo = everett::word_view::little_endian(std::span(low).subspan(offset));
+      auto hi = everett::word_view::little_endian(std::span(high).subspan(offset));
+      auto sp = everett::word_view::little_endian(std::span(sparse).subspan(offset));
+      auto sm = everett::sample_view::little_endian(std::span(samples).subspan(offset));
+      everett::select_groups_view<K> mapped(lo, hi, sm, sp, index.record_count, index.universe, index.low_width);
+      require(mapped.low_words().bytes().data() == low.data() + offset &&
+              mapped.high_words().bytes().data() == high.data() + offset &&
+              mapped.samples().bytes().data() == samples.data() + offset &&
+              mapped.sparse_words().bytes().data() == sparse.data() + offset,
+              "select sections retained");
+      require(mapped.universe() == index.universe && mapped.low_width() == index.low_width, "select scalar metadata");
+      for (std::size_t i = 0; i < source.size(); ++i) {
+        require(mapped.residual(i) == source[i], "unaligned mapped select oracle");
+        auto ordinal = i + 1 == source.size() ? index.record_count : i * K;
+        if (ordinal <= (~std::uint64_t{0} - source[i]) / 7)
+          require(mapped.offset(i, 7) == source[i] + ordinal * 7, "mapped fixed stride sentinel");
+      }
+      if constexpr (K == 15) {
+        everett::select15_view fixed(lo, hi, sm, sp, index.record_count, index.universe, index.low_width);
+        for (std::size_t i = 0; i < source.size(); ++i)
+          require(fixed.residual(i) == source[i], "mapped select15 oracle");
+      }
+    }
     unsigned width = 0;
     for (auto quotient = source.back() / source.size(); quotient > 1; quotient >>= 1) ++width;
     require(index.low_width == width && index.universe == source.back(), "EF width/universe changed");
@@ -392,6 +485,46 @@ namespace {
 #endif
   }
 
+  template <std::uint64_t K> void test_mapped_rank_guards() {
+#if defined(__unix__) || defined(__APPLE__)
+    auto page = std::size_t(sysconf(_SC_PAGESIZE));
+    auto raw = mmap(nullptr, page * 2, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    require(raw != MAP_FAILED, "mapped rank guard allocation");
+    struct cleanup {
+      void * data;
+      std::size_t bytes;
+      ~cleanup() { munmap(data, bytes); }
+    } guard{raw, page * 2};
+    auto end = static_cast<std::byte *>(raw) + page;
+    require(mprotect(end, page, PROT_NONE) == 0, "mapped rank tail guard");
+    std::mt19937_64 random(0xfeed + K);
+    for (std::uint64_t groups = 0; groups <= 260; ++groups) {
+      auto count = groups ? (groups - 1) * K + 1 : 0;
+      std::vector<std::uint64_t> source(groups), oracle(groups + 1);
+      for (std::uint64_t i = 0; i < groups; ++i) {
+        source[i] = i + 1 == groups ? 1 : random() % (K + 1);
+        oracle[i + 1] = oracle[i] + source[i];
+      }
+      auto index = everett::rank_groups<K>::build(source, count);
+      auto encoded = little_words(index.classes);
+      require(encoded.size() <= page, "mapped rank fits guard page");
+      auto start = end - encoded.size();
+      std::copy(encoded.begin(), encoded.end(), start);
+      std::span<std::byte const> bytes(start, encoded.size());
+      auto words = everett::word_view::little_endian(bytes);
+      auto checkpoints = everett::word_view(index.checkpoints);
+      require(mprotect(raw, page, PROT_NONE) == 0, "mapped rank shape guard");
+      everett::rank_groups_view<K> view(words, checkpoints, count, index.total);
+      require(view.class_words().bytes().data() == start, "mapped rank shape retains pointer");
+      require(mprotect(raw, page, PROT_READ | PROT_WRITE) == 0, "mapped rank shape unprotect");
+      for (std::uint64_t i = 0; i <= groups; ++i) {
+        require(view.rank(i) == oracle[i], "guarded mapped rank oracle");
+        if (i < groups) require(view.class_at(i) == source[i], "guarded mapped class oracle");
+      }
+    }
+#endif
+  }
+
   void test_wide_policy() {
     constexpr std::uint64_t k = (std::uint64_t{1} << 63) - 1;
     constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
@@ -405,6 +538,13 @@ namespace {
 
 int main() {
   try {
+    rejects([] {
+      everett::select_groups_view<1>({}, {}, {}, {}, ~std::uint64_t{0}, 0, 0);
+    });
+    rejects([] { (void)everett::select_groups<1>::build({}, ~std::uint64_t{0}); });
+    test_byte_views();
+    test_bad_rank_prefix<3>(); test_bad_rank_prefix<7>(); test_bad_rank_prefix<15>();
+    test_bad_rank_prefix<31>(); test_bad_rank_prefix<63>();
     test_low_packing();
     test_word_select();
     test_select15_encoding();
@@ -412,6 +552,8 @@ int main() {
     test_rank<3>(); test_rank<7>(); test_rank<15>(); test_rank<31>();
     test_rank15_agreement();
     test_select<3>(); test_select<7>(); test_select<15>(); test_select<31>();
+    test_mapped_rank_guards<3>(); test_mapped_rank_guards<7>();
+    test_mapped_rank_guards<15>(); test_mapped_rank_guards<31>();
     test_wide_policy();
     std::cout << "Policy groups 3/7/15/31, packed classes, and residual-address select checks passed\n";
   } catch (std::exception const & error) {
