@@ -21,8 +21,8 @@
 #endif
 
 namespace everett {
-  // Three independent ten-bit population counts, not cumulative ranks: the
-  // latter would need eleven bits to represent the first three 512-bit runs.
+  // Three ten-bit populations at bits 0, 11 and 22. The zero spacers
+  // let a multiply sum up to 1536 without carrying between lanes.
   struct rank_block {
     std::uint32_t before;
     std::uint32_t runs;
@@ -33,10 +33,10 @@ namespace everett {
     // Read only words contributing to the prefix, including a masked tail.
     inline unsigned prefix512_portable(std::uint64_t const * words, unsigned bits) noexcept {
       unsigned result = 0;
-      for (unsigned word = 0; word < bits / 64; ++word)
+      for (unsigned word = 0; word < (bits >> 6); ++word)
         result += unsigned(std::popcount(words[word]));
-      if (bits % 64)
-        result += unsigned(std::popcount(words[bits / 64] & ((std::uint64_t{1} << (bits % 64)) - 1)));
+      if (bits & 63)
+        result += unsigned(std::popcount(words[bits >> 6] & ((std::uint64_t{1} << (bits & 63)) - 1)));
       return result;
     }
 
@@ -44,8 +44,8 @@ namespace everett {
     template <unsigned Vector> inline uint8x16_t prefix512_vector(
         std::uint64_t const * words, unsigned bits) noexcept {
       uint64x2_t positions{2 * Vector, 2 * Vector + 1};
-      auto boundary = vdupq_n_u64(bits / 64);
-      auto tail = vdupq_n_u64((std::uint64_t{1} << (bits % 64)) - 1);
+      auto boundary = vdupq_n_u64(bits >> 6);
+      auto tail = vdupq_n_u64((std::uint64_t{1} << (bits & 63)) - 1);
       auto mask = vorrq_u64(vcltq_u64(positions, boundary),
                             vandq_u64(vceqq_u64(positions, boundary), tail));
       return vcntq_u8(vreinterpretq_u8_u64(vandq_u64(vld1q_u64(words + 2 * Vector), mask)));
@@ -84,21 +84,17 @@ namespace everett {
     }
 
     // Caller supplies 0 <= run <= 3 and independent counts in [0,512].
-    // Widen to eleven-bit lanes before summing: 512+512+512 needs eleven
-    // bits, although each stored population needs only ten.
+    // The stored spacer bits already leave eleven-bit lanes for the sum.
     constexpr unsigned run_prefix(std::uint32_t packed, unsigned run) noexcept {
-      std::uint64_t selected = packed & ((std::uint64_t{1} << (10 * run)) - 1);
-      auto widened = (selected & 0x3ffu) |
-                     ((selected & 0xffc00u) << 1) |
-                     ((selected & 0x3ff00000u) << 2);
-      return unsigned(((widened * 0x400801ull) >> 22) & 2047u);
+      std::uint64_t selected = packed & ((std::uint64_t{1} << (11 * run)) - 1);
+      return unsigned(((selected * 0x400801ull) >> 22) & 2047u);
     }
 
     // The builder calls this at each 2048-bit block. Kept independent of
     // payload allocation so counter transitions can be checked at 2^32 bits.
     struct directory_cursor {
       static constexpr bool starts_epoch(std::uint64_t block) noexcept {
-        return block % (std::uint64_t{1} << 21) == 0;
+        return (block & ((std::uint64_t{1} << 21) - 1)) == 0;
       }
       std::uint32_t before(std::uint64_t block, std::uint64_t total) {
         if (starts_epoch(block)) epoch_base = total;
@@ -123,9 +119,10 @@ namespace everett {
               std::uint64_t bit_count)
       : words_(words), blocks_(blocks), supers_(supers),
         bit_count_(bit_count) {
-      if (words.size() != bit_count / 64 + (bit_count % 64 != 0) ||
-          blocks.size() != bit_count / 2048 + (bit_count % 2048 != 0) ||
-          supers.size() != (bit_count >> 32) + ((bit_count & 0xffffffffu) != 0))
+      if (bit_count > std::numeric_limits<std::uint64_t>::max() - 0xffffffffu ||
+          words.size() != ((bit_count + 63) >> 6) ||
+          blocks.size() != ((bit_count + 2047) >> 11) ||
+          supers.size() != ((bit_count + 0xffffffffu) >> 32))
         throw std::invalid_argument("invalid rank spans");
     }
 
@@ -134,18 +131,18 @@ namespace everett {
     std::uint64_t count() const {
       if (!bit_count_) return 0;
       auto last = bit_count_ - 1;
-      return rank(last) + ((words_[last / 64] >> (last % 64)) & 1);
+      return rank(last) + ((words_[last >> 6] >> (last & 63)) & 1);
     }
 
     // Exclusive rank at an existing bit. Use count() for the total population.
     std::uint64_t rank(std::uint64_t position) const {
       if (position >= bit_count_) throw std::out_of_range("rank position");
-      auto block = blocks_[position / 2048];
-      unsigned run = unsigned((position / 512) % 4);
+      auto block = blocks_[position >> 11];
+      unsigned run = unsigned((position >> 9) & 3);
       std::uint64_t result = supers_[position >> 32] + block.before;
       result += rank_detail::run_prefix(block.runs, run);
-      auto word = (position / 512) * 8;
-      auto bits = unsigned(position % 512);
+      auto word = (position >> 9) << 3;
+      auto bits = unsigned(position & 511);
       if (!bits) return result;
 #if defined(__aarch64__) && defined(__ARM_NEON)
       if (words_.size() - word >= 8)
@@ -163,13 +160,14 @@ namespace everett {
 
   struct rank_index {
     static rank_index build(std::span<std::uint64_t const> source, std::uint64_t bits) {
-      if (source.size() != bits / 64 + (bits % 64 != 0))
+      if (bits > std::numeric_limits<std::uint64_t>::max() - 0xffffffffu ||
+          source.size() != ((bits + 63) >> 6))
         throw std::invalid_argument("rank source length");
       rank_index result;
       result.bit_count = bits;
       result.words.assign(source.begin(), source.end());
-      if (bits % 64) result.words.back() &= (std::uint64_t{1} << (bits % 64)) - 1;
-      result.blocks.resize(bits / 2048 + (bits % 2048 != 0));
+      if (bits & 63) result.words.back() &= (std::uint64_t{1} << (bits & 63)) - 1;
+      result.blocks.resize((bits + 2047) >> 11);
       rank_detail::directory_cursor cursor;
       std::uint64_t total = 0;
       auto begin_block = [&](std::uint64_t block) -> rank_block & {
@@ -178,7 +176,7 @@ namespace everett {
         if (cursor.starts_epoch(block)) result.supers.push_back(cursor.epoch_base);
         return entry;
       };
-      auto full_blocks = bits / 2048;
+      auto full_blocks = bits >> 11;
       for (std::uint64_t block = 0; block < full_blocks; ++block) {
         auto & entry = begin_block(block);
         auto words = result.words.data() + block * 32;
@@ -186,7 +184,7 @@ namespace everett {
         auto b = rank_detail::popcount512(words + 8);
         auto c = rank_detail::popcount512(words + 16);
         auto d = rank_detail::popcount512(words + 24);
-        entry.runs = a | (b << 10) | (c << 20);
+        entry.runs = a | (b << 11) | (c << 22);
         total += a + b + c + d;
       }
       if (full_blocks != result.blocks.size()) {
@@ -196,8 +194,8 @@ namespace everett {
         // Only the final partial block needs bounded word loads. The owning
         // copy has already cleared unused bits in its final word.
         for (auto word = first; word < result.words.size(); ++word)
-          counts[(word - first) / 8] += unsigned(std::popcount(result.words[word]));
-        entry.runs = counts[0] | (counts[1] << 10) | (counts[2] << 20);
+          counts[(word - first) >> 3] += unsigned(std::popcount(result.words[word]));
+        entry.runs = counts[0] | (counts[1] << 11) | (counts[2] << 22);
         total += counts[0] + counts[1] + counts[2] + counts[3];
       }
       return result;

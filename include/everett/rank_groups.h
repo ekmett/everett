@@ -69,7 +69,7 @@ namespace everett {
 
     template <unsigned Bits> inline unsigned prefix_portable(
         std::uint64_t const * words, unsigned count) noexcept {
-      return prefix_portable<Bits>(word_view(std::span(words, (count * Bits + 63) / 64)), count);
+      return prefix_portable<Bits>(word_view(std::span(words, ((count * Bits + 63) >> 6))), count);
     }
 
 #if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -90,8 +90,8 @@ namespace everett {
     template <unsigned Bits, unsigned Vector = 0>
     inline uint16x8_t prefix_vectors(std::byte const * bytes, unsigned bits) noexcept {
       uint64x2_t positions{2 * Vector, 2 * Vector + 1};
-      auto boundary = vdupq_n_u64(bits / 64);
-      auto tail = vdupq_n_u64((std::uint64_t{1} << (bits % 64)) - 1);
+      auto boundary = vdupq_n_u64(bits >> 6);
+      auto tail = vdupq_n_u64((std::uint64_t{1} << (bits & 63)) - 1);
       auto mask = vorrq_u64(vcltq_u64(positions, boundary),
                             vandq_u64(vceqq_u64(positions, boundary), tail));
       auto selected = vandq_u64(vreinterpretq_u64_u8(vld1q_u8(
@@ -134,11 +134,11 @@ namespace everett {
                      std::uint64_t virtual_count)
       : classes_(classes), checkpoints_(checkpoints), virtual_count_(virtual_count) {
       auto groups = group_count();
-      if (groups > std::numeric_limits<std::uint64_t>::max() / class_bits)
+      if (groups > (std::numeric_limits<std::uint64_t>::max() - 63) / class_bits)
         error_detail::raise<std::overflow_error>("rank groups packed size");
       auto bits = groups * class_bits;
-      if (classes.size() != bits / 64 + (bits % 64 != 0) ||
-          checkpoints.size() != groups / 128 + (groups % 128 != 0))
+      if (classes.size() != ((bits + 63) >> 6) ||
+          checkpoints.size() != ((groups + 127) >> 7))
         error_detail::raise<std::invalid_argument>("invalid rank groups spans");
     }
 
@@ -164,12 +164,12 @@ namespace everett {
     // Exclusive prefix at K*group for an existing group only.
     std::uint64_t rank(std::uint64_t group) const {
       if (group >= group_count()) error_detail::raise<std::out_of_range>("rank groups boundary");
-      auto result = checkpoints_[group / 128];
+      auto result = checkpoints_[group >> 7];
       auto limit = virtual_count_;
       if constexpr (K == 3 || K == 7 || K == 31) {
-        auto count = unsigned(group % 128);
+        auto count = unsigned(group & 127);
         if (!count) return add_prefix(result, 0, limit);
-        auto word = (group / 128) * (2 * class_bits);
+        auto word = (group >> 7) * (2 * class_bits);
 #if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
         // Two-bit broadword sums have lower dependent query latency. Wider
         // classes favor NEON for the rank-plus-class projection operation.
@@ -180,7 +180,7 @@ namespace everett {
 #endif
         return add_prefix(result, rank_groups_detail::prefix_portable<class_bits>(classes_.subspan(word), count), limit);
       }
-      for (auto i = (group / 128) * 128; i < group; ++i) result = add_prefix(result, read_class(i), limit);
+      for (auto i = group & ~std::uint64_t{127}; i < group; ++i) result = add_prefix(result, read_class(i), limit);
       return add_prefix(result, 0, limit);
     }
 
@@ -192,8 +192,8 @@ namespace everett {
     }
     std::uint64_t read_class(std::uint64_t group) const noexcept {
       auto bit = group * class_bits;
-      auto word = bit / 64;
-      unsigned shift = unsigned(bit % 64);
+      auto word = bit >> 6;
+      unsigned shift = unsigned(bit & 63);
       auto value = classes_[word] >> shift;
       if (shift + class_bits > 64) value |= classes_[word + 1] << (64 - shift);
       return value & K;
@@ -239,22 +239,22 @@ namespace everett {
     static rank_groups build(std::span<std::uint64_t const> source, std::uint64_t count) {
       auto groups = count / K + (count % K != 0);
       if (source.size() != groups) error_detail::raise<std::invalid_argument>("rank groups class length");
-      if (groups > std::numeric_limits<std::uint64_t>::max() / class_bits)
+      if (groups > (std::numeric_limits<std::uint64_t>::max() - 63) / class_bits)
         error_detail::raise<std::overflow_error>("rank groups packed size");
       auto bits = groups * class_bits;
       rank_groups result;
       result.virtual_count = count;
-      result.classes.resize(bits / 64 + (bits % 64 != 0));
+      result.classes.resize((bits + 63) >> 6);
       std::uint64_t total = 0;
       for (std::uint64_t i = 0; i < groups; ++i) {
         auto limit = i + 1 == groups && count % K ? count % K : K;
         auto value = source[i];
         if (value > limit) error_detail::raise<std::invalid_argument>("rank groups population");
-        if (i % 128 == 0) result.checkpoints.push_back(total);
+        if ((i & 127) == 0) result.checkpoints.push_back(total);
         auto bit = i * class_bits;
-        unsigned shift = unsigned(bit % 64);
-        result.classes[bit / 64] |= value << shift;
-        if (shift + class_bits > 64) result.classes[bit / 64 + 1] |= value >> (64 - shift);
+        unsigned shift = unsigned(bit & 63);
+        result.classes[bit >> 6] |= value << shift;
+        if (shift + class_bits > 64) result.classes[(bit >> 6) + 1] |= value >> (64 - shift);
         total += value;
       }
       return result;

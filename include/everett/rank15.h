@@ -46,8 +46,8 @@ namespace everett {
         virtual_count_(virtual_count),
         group_count_(virtual_count / 15 + (virtual_count % 15 != 0)) {
       auto groups = group_count();
-      if (classes.size() != groups / 16 + (groups % 16 != 0) ||
-          checkpoints.size() != groups / 128 + (groups % 128 != 0))
+      if (classes.size() != ((groups + 15) >> 4) ||
+          checkpoints.size() != ((groups + 127) >> 7))
         error_detail::raise<std::invalid_argument>("invalid rank15 spans");
     }
 
@@ -68,32 +68,32 @@ namespace everett {
 
     unsigned class_at(std::uint64_t group) const {
       if (group >= group_count()) error_detail::raise<std::out_of_range>("rank15 class");
-      return unsigned((classes_[group / 16] >> (4 * (group % 16))) & 15);
+      return unsigned((classes_[group >> 4] >> (4 * (group & 15))) & 15);
     }
 
     // rank(group) counts entries before the start of an existing group.
     // An empty index has no valid rank query; count() handles its total.
     std::uint64_t rank(std::uint64_t group) const {
       if (group >= group_count()) error_detail::raise<std::out_of_range>("rank15 group");
-      auto result = checkpoints_[group / 128];
+      auto result = checkpoints_[group >> 7];
       auto limit = virtual_count_;
-      if (group % 128 == 0) return add_prefix(result, 0, limit);
-      auto word = (group / 128) * 8;
+      if ((group & 127) == 0) return add_prefix(result, 0, limit);
+      auto word = (group >> 7) << 3;
 #if defined(__AVX512F__) && defined(__AVX512BW__)
       if (classes_.size() - word >= 8)
-        return add_prefix(result, prefix128_avx512(classes_.bytes().data() + word * 8, unsigned(group % 128)), limit);
+        return add_prefix(result, prefix128_avx512(classes_.bytes().data() + word * 8, unsigned(group & 127)), limit);
 #elif defined(__AVX2__)
       if (classes_.size() - word >= 8)
-        return add_prefix(result, prefix128_avx2(classes_.bytes().data() + word * 8, unsigned(group % 128)), limit);
+        return add_prefix(result, prefix128_avx2(classes_.bytes().data() + word * 8, unsigned(group & 127)), limit);
 #elif defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       if (classes_.size() - word >= 8)
-        return add_prefix(result, prefix128_neon(classes_.bytes().data() + word * 8, unsigned(group % 128)), limit);
+        return add_prefix(result, prefix128_neon(classes_.bytes().data() + word * 8, unsigned(group & 127)), limit);
 #endif
       // Each word contributes at most 30 to each byte. Eight words fit in
       // byte lanes (240), so we can accumulate before the horizontal sum.
       std::uint64_t pairs = 0;
-      for (; word < group / 16; ++word) pairs += pair_nibbles(classes_[word]);
-      auto tail = unsigned(group % 16);
+      for (; word < (group >> 4); ++word) pairs += pair_nibbles(classes_[word]);
+      auto tail = unsigned(group & 15);
       // group is an existing class, so this word exists even for tail=0.
       pairs += pair_nibbles(classes_[word] & ((std::uint64_t{1} << (4 * tail)) - 1));
       return add_prefix(result, sum_bytes(pairs), limit);
@@ -198,13 +198,13 @@ namespace everett {
       if (source.size() != groups) error_detail::raise<std::invalid_argument>("rank15 class length");
       rank15_index result;
       result.virtual_count = count;
-      result.classes.resize(groups / 16 + (groups % 16 != 0));
+      result.classes.resize((groups + 15) >> 4);
       std::uint64_t total = 0;
       for (std::uint64_t i = 0; i < groups; ++i) {
         auto limit = i + 1 == groups && count % 15 ? count % 15 : 15;
         if (source[i] > limit) error_detail::raise<std::invalid_argument>("rank15 class population");
-        if (i % 128 == 0) result.checkpoints.push_back(total);
-        result.classes[i / 16] |= std::uint64_t(source[i]) << (4 * (i % 16));
+        if ((i & 127) == 0) result.checkpoints.push_back(total);
+        result.classes[i >> 4] |= std::uint64_t(source[i]) << (4 * (i & 15));
         total += source[i];
       }
       return result;

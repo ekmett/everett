@@ -211,9 +211,8 @@ namespace {
     for (std::uint64_t i = 0; i < words.size(); ++i) { words[i] = random_word(seed); oracle[i + 1] = oracle[i] + std::popcount(words[i]); }
     auto index = everett::rank_index::build(words, bits);
     auto candidate = index.view();
-    std::vector<baseline::rank_block> blocks;
-    for (auto b : index.blocks) blocks.push_back({b.before, b.runs});
-    baseline::rank_view old{index.words, blocks, index.supers, index.bit_count, index.view().count()};
+    auto old_index = baseline::rank_index::build(words, bits);
+    auto old = old_index.view();
     std::array variants{make_variant("baseline", old), make_variant("selected", candidate)};
     auto bytes = 8 * (index.words.size() + index.blocks.size() + index.supers.size());
     measure("bitmap", large ? "large" : "hot", variants, bits, bytes, queries, trials, check,

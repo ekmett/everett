@@ -36,7 +36,7 @@ namespace everett {
     constexpr std::uint64_t add(std::uint64_t a, std::uint64_t b) noexcept { return a + b; }
     constexpr std::uint64_t multiply(std::uint64_t a, std::uint64_t b) noexcept { return a * b; }
     inline std::uint64_t words(std::uint64_t bits) noexcept {
-      return bits / 64 + (bits % 64 != 0);
+      return (bits + 63) >> 6;
     }
 
     inline bool monotone(std::span<std::uint64_t const> source) noexcept {
@@ -140,10 +140,10 @@ namespace everett {
         constexpr auto mask = (std::uint64_t{1} << W) - 1;
         for (std::size_t i = 0; i != source.size() - at; ++i) {
           auto bit = i * W;
-          unsigned shift = unsigned(bit % 64);
+          unsigned shift = unsigned(bit & 63);
           auto value = source[at + i] & mask;
-          tail[bit / 64] |= value << shift;
-          if (shift + W > 64) tail[bit / 64 + 1] |= value >> (64 - shift);
+          tail[bit >> 6] |= value << shift;
+          if (shift + W > 64) tail[(bit >> 6) + 1] |= value >> (64 - shift);
         }
       }
     }
@@ -177,13 +177,13 @@ namespace everett {
       std::uint64_t word = 0, value = 0;
       for (std::uint64_t i = 0; i != source.size(); ++i) {
         auto position = (source[i] >> width) + i;
-        auto next = position / 64;
+        auto next = position >> 6;
         if (next != word) {
           out[word] = value;
           word = next;
           value = 0;
         }
-        value |= std::uint64_t{1} << (position % 64);
+        value |= std::uint64_t{1} << (position & 63);
       }
       if (!source.empty()) out[word] = value;
     }
@@ -228,17 +228,17 @@ namespace everett {
           error_detail::raise<std::invalid_argument>("invalid empty Elias-Fano sections");
         return;
       }
-      constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
+      constexpr auto maximum = std::numeric_limits<std::uint64_t>::max() - 255;
       auto entries = entry_count;
       // Validate section extents once, before borrowing any navigation words.
-      if ((low_width && entries > maximum / low_width) ||
+      if (entries > maximum || (low_width && entries > maximum / low_width) ||
           (universe >> low_width) > maximum - entries)
         error_detail::raise<std::overflow_error>("elias_fano section extent");
       auto low_bits = elias_fano_detail::multiply(entries, low_width);
       high_bits_ = elias_fano_detail::add(universe >> low_width, entries);
       if (low.size() != elias_fano_detail::words(low_bits) ||
           high.size() != elias_fano_detail::words(high_bits_) ||
-          samples.size() != entries / 256 + (entries % 256 != 0))
+          samples.size() != ((entries + 255) >> 8))
         error_detail::raise<std::invalid_argument>("invalid elias_fano spans");
     }
 
@@ -260,8 +260,8 @@ namespace everett {
       std::uint64_t lo = 0;
       if (low_width_) {
         auto bit = ordinal * low_width_;
-        auto word = bit / 64;
-        unsigned shift = unsigned(bit % 64);
+        auto word = bit >> 6;
+        unsigned shift = unsigned(bit & 63);
         lo = low_[word] >> shift;
         if (shift + low_width_ > 64) lo |= low_[word + 1] << (64 - shift);
         lo &= (std::uint64_t{1} << low_width_) - 1;
@@ -273,19 +273,19 @@ namespace everett {
 
   private:
     std::uint64_t select_high(std::uint64_t ordinal) const {
-      auto sample = samples_[ordinal / 256];
-      unsigned remaining = unsigned(ordinal % 256);
+      auto sample = samples_[ordinal >> 8];
+      unsigned remaining = unsigned(ordinal & 255);
       if (sample.sparse != std::numeric_limits<std::uint64_t>::max()) {
         if (sample.sparse > sparse_.size() || remaining >= sparse_.size() - sample.sparse)
           error_detail::raise<std::invalid_argument>("invalid elias_fano exception");
         auto position = sparse_[sample.sparse + remaining];
-        if (position >= high_bits_ || !(high_[position / 64] & (std::uint64_t{1} << (position % 64))))
+        if (position >= high_bits_ || !(high_[position >> 6] & (std::uint64_t{1} << (position & 63))))
           error_detail::raise<std::invalid_argument>("invalid elias_fano sparse position");
         return position;
       }
       if (sample.first >= high_bits_) error_detail::raise<std::invalid_argument>("invalid elias_fano sample");
-      auto word = sample.first / 64;
-      auto value = high_[word] & (~std::uint64_t{0} << (sample.first % 64));
+      auto word = sample.first >> 6;
+      auto value = high_[word] & (~std::uint64_t{0} << (sample.first & 63));
       for (unsigned scanned = 0; scanned < 65 && word < high_.size(); ++scanned, ++word) {
         if (scanned) value = high_[word];
         auto population = unsigned(std::popcount(value));
@@ -320,8 +320,8 @@ namespace everett {
       result.universe = residuals.back();
       auto quotient = result.universe / residuals.size();
       result.low_width = quotient ? unsigned(std::bit_width(quotient) - 1) : 0;
-      constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
-      if ((result.low_width && residuals.size() > maximum / result.low_width) ||
+      constexpr auto maximum = std::numeric_limits<std::uint64_t>::max() - 255;
+      if (residuals.size() > maximum || (result.low_width && residuals.size() > maximum / result.low_width) ||
           (result.universe >> result.low_width) > maximum - residuals.size())
         error_detail::raise<std::overflow_error>("elias_fano section extent");
       auto low_bits = elias_fano_detail::multiply(residuals.size(), result.low_width);

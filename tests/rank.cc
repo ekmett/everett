@@ -153,7 +153,7 @@ namespace {
     std::mt19937_64 random(0x2048512);
     for (std::uint64_t tail = 0; tail < 2048; ++tail) {
       auto bits = 3 * 2048 + tail;
-      std::vector<std::uint64_t> source(bits / 64 + (bits % 64 != 0));
+      std::vector<std::uint64_t> source((bits + 63) / 64);
       for (auto & word : source) word = random();
       if (bits % 64) source.back() |= ~std::uint64_t{0} << (bits % 64);
       std::vector<std::uint64_t> oracle(bits + 1);
@@ -164,10 +164,12 @@ namespace {
       require(index.supers == std::vector<std::uint64_t>{0}, "partial block epoch directory");
       for (std::uint64_t block = 0; block < index.blocks.size(); ++block) {
         require(index.blocks[block].before == oracle[block * 2048], "partial block prefix");
+        require((index.blocks[block].runs & ((1u << 10) | (1u << 21))) == 0,
+                "rank spacer bits must be zero");
         for (unsigned run = 0; run < 3; ++run) {
           auto first = std::min(bits, block * 2048 + run * 512);
           auto last = std::min(bits, block * 2048 + (run + 1) * 512);
-          require(((index.blocks[block].runs >> (run * 10)) & 1023u) == oracle[last] - oracle[first],
+          require(((index.blocks[block].runs >> (run * 11)) & 1023u) == oracle[last] - oracle[first],
                   "partial block run population");
         }
       }
@@ -184,11 +186,11 @@ namespace {
         for (unsigned other : {0u, 511u, 512u}) {
           std::array<unsigned, 3> counts{other, other, other};
           counts[lane] = value;
-          auto packed = counts[0] | (counts[1] << 10) | (counts[2] << 20);
+          auto packed = counts[0] | (counts[1] << 11) | (counts[2] << 22);
           unsigned expected = 0;
           for (unsigned run = 0; run < 4; ++run) {
             require(everett::rank_detail::run_prefix(packed, run) == expected,
-                    "SWAR ten-bit prefix mismatch");
+                    "SWAR spaced prefix mismatch");
             if (run < 3) expected += counts[run];
           }
         }
@@ -219,7 +221,7 @@ namespace {
     for (std::uint64_t bits : std::initializer_list<std::uint64_t>{0, 1, 63, 64, 65, 511, 512, 513, 1024,
                               1536, 2047, 2048, 2049, 8193, 100003}) {
       for (unsigned pattern = 0; pattern < 5; ++pattern) {
-        std::vector<std::uint64_t> source(bits / 64 + (bits % 64 != 0));
+        std::vector<std::uint64_t> source((bits + 63) / 64);
         std::vector<std::uint64_t> oracle(bits + 1);
         for (std::uint64_t i = 0; i < bits; ++i) {
           bool bit = pattern == 1 || (pattern == 2 && i % 512 == 0) ||
@@ -236,11 +238,12 @@ namespace {
           require(view.rank(i) == oracle[i], "rank prefix mismatch");
         rejects([&] { view.rank(bits); });
         if (bits >= 2048 && pattern == 1)
-          require(index.blocks[0].runs == (512u | (512u << 10) | (512u << 20)),
+          require(index.blocks[0].runs == (512u | (512u << 11) | (512u << 22)),
                   "packed runs must hold independent populations of 512");
       }
     }
     rejects([] { everett::rank_index::build({}, 1); });
+    rejects([] { everett::rank_index::build({}, std::numeric_limits<std::uint64_t>::max()); });
     everett::rank_index empty;
     require(empty.view().count() == 0, "default rank");
     rejects([&] { (void)empty.view().rank(0); });
