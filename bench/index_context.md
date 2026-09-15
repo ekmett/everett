@@ -93,7 +93,7 @@ time is reported or used as performance evidence.
 
 The stack-resident builder object is 912 → 832 bytes on this compiler/ABI.
 Allocation counts cover construction, pushes, stepping and finalization;
-fixtures, validation and destruction follow outside the counting interval.
+fixture preparation, validation and destruction are outside the counting interval.
 The probe intercepts single-thread C++ `new`/`delete`, including aligned forms,
 and reports requested bytes. Peak is the maximum simultaneously live requested
 storage from that interval. It excludes fixture storage, allocator headers,
@@ -108,7 +108,7 @@ borrowed-writer CTests (4/4), the actual streamed-file matrix, and the focused
 decoder allocation-rollback test. Coverage includes byte/bit policies, fixed and
 variable native values, independent K/W, duplicates/empty keys, exact whole
 `.index` parity, original-key rank/cut/query oracles, mapped pins/unlink,
-short-write/final-barrier poisoning inherited from the sink, and custom Output
+stream-append/final-barrier poisoning, and custom Output
 exceptions. New tests specifically push while output is unread, move the
 builder, reject a descending replacement, and retry failed context growth.
 
