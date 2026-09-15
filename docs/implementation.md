@@ -19,7 +19,7 @@ for integration. These are development responsibilities.
 | Navigation and recovery | `rank.h`, `rank15.h`, `select15.h`, `durability.h`; `tests/rank.cc`, `tests/durability.cc` | rank and sparse-offset oracles, counter transitions, publication ordering, failure and resumption cases |
 | Grouped navigation and object files | `rank_groups.h`, `select_groups.h`, `mapped_file.h`, `file.h`, `object_path.h`; group/mapping/file tests | policy groups, checked binary envelopes, retained mappings and canonical sharded paths |
 | Checksums | `crc32c.h`, generated backends, pinned generator and package notices; `tests/crc32c.cc` | independent CRC oracle, bounded loads, reproducible generation, target guards and multi-translation-unit installed consumption |
-| Key codecs and blobs | `front.h`, `blob.h`; `tests/front.cc`; [key policies](keys.md) | partial-prefix lookup, false borrows, independent reindexing, conservative boundary contexts and sort contracts |
+| Key codecs and blobs | `key_detail.h`, `front.h`, `blob.h`; `tests/front.cc`; [key policies](keys.md) | bounded comparison, partial-prefix lookup, false borrows, independent reindexing, conservative boundary contexts and sort contracts |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `multiverse.h`; profile/blob/multiverse tests | byte/bit and value-layout matrix, LPFC, modified borrowed FC, same-policy aliases and unchanged native allocation on reindex |
 | World semantics and ownership | `fingerprint.h`, `pins.h`, `world.h`; `tests/world.cc`, `tests/pins.cc` | disjoint batch permutations, snapshots, old-value validation, contributions, replay and reference export |
 | Design documentation | [design](design.md), [arrows](arrows.md), [rebuilding](rebuild.md), [durability](durability.md), this ledger | consistent contracts, cited derivations, implementation limits and independently usable terminology |
@@ -51,11 +51,15 @@ this package.
 
 `rank_groups<K>` and `select_groups<K>` now support policy-sized groups
 `K = 2^r - 1`, including 3, 7, 15 and 31. Packed class widths are respectively
-2, 3, 4 and 5 bits. The generic rank directory reads at most 127 classes after
-a checkpoint. The `K=15` view shares the packed rank15 implementation.
+2, 3, 4 and 5 bits. Each checkpoint covers 128 classes. Groups of three sum
+two-bit fields with scalar packed arithmetic. Groups of seven and thirty-one
+use weighted bit-plane populations, with bounded NEON reductions on
+little-endian AArch64 and portable word reductions elsewhere. Short final
+checkpoints use only their readable words. Other group sizes retain the generic
+loop over at most 127 classes. The `K=15` view shares the packed rank15 implementation.
 The helpers in `rank15.h` and `select15.h` fix their interval to fifteen; the
 policy-backed blob uses `rank_groups<P::group_size>` and
-`select_groups<P::group_size>`. SIMD rank is currently specialized for `K=15`.
+`select_groups<P::group_size>`.
 Offsets and fixed strides share the caller's byte/bit unit. Shape validation
 is not a substitute for complete validation of a serialized rank/select section.
 The [sampling analysis](sampling.md) distinguishes local correctness from
@@ -91,13 +95,13 @@ and their complements, short final checkpoints, random packed words and every
 eight-byte alignment within a cache line. POSIX fixtures put complete and short
 checkpoints immediately before an inaccessible page, including nonzero padding.
 Typed `K=15` views retain the same encoded layout and use the same query
-implementation; other group sizes retain the generic loop.
+implementation.
 
 I compared the packed queries with the full bitvector directory and a CPU/NEON
 translation of [my Poppy shader](https://github.com/ekmett/vr/blob/master/shaders/poppy.glsl).
 That translation keeps the 2048/512-bit directory and loads all four vectors of
 the selected run, masks at the query position, and reduces their populations.
-It is a benchmark backend, not the current `rank_view` query implementation.
+That comparison predates the bounded NEON path now used by `rank_view`.
 Every variant sees the same bitmap and queries at the same fifteen-entry cuts.
 
 For a 253,440-bit universe on an M2 Max, AppleClang 21 `-O3 -DNDEBUG`, the
@@ -105,7 +109,7 @@ five-trial medians were:
 
 | Rank implementation | Data plus directory | Independent random rank | Dependent random rank |
 | --- | ---: | ---: | ---: |
-| Full bitvector, current `rank_view` | 32,680 B | 14.86 ns | 23.26 ns |
+| Full bitvector, scalar `rank_view` | 32,680 B | 14.86 ns | 23.26 ns |
 | Full bitvector, 512-bit NEON translation | 32,680 B | 4.89 ns | 18.77 ns |
 | Previous packed rank15 | 9,504 B | 15.78 ns | 19.96 ns |
 | Previous generic `rank_groups<15>` | 9,504 B | 43.78 ns | 45.53 ns |
@@ -136,9 +140,8 @@ The SIMD and typed-view changes were reviewed at `d55fefba` and `b06798d`, and
 the comparison at `ef26e25`, in isolated component work. Combined ASan/UBSan
 verification passed all 18 CTests, including the blob projections, package
 consumers and Doxygen. Component checks also exercised the forced-portable rank
-and grouped-rank paths. The full-vector comparison remains
-a benchmark backend; only packed `K=15` queries gain a handwritten SIMD path in
-this change.
+and grouped-rank paths. That checkpoint introduced the packed `K=15` SIMD path;
+the other rank paths are measured separately below.
 
 The native x86 comparison uses a newer scalar baseline and the same packed
 input for both reductions. These are complete public rank calls, including
@@ -206,7 +209,45 @@ select samples and sparse exceptions remain identical. M2 Max / AppleClang 21
 faster complete construction; 64 MiB source arrays at widths 8 and 12 retain
 2.35 and 2.01 times improvement. The all-width specializations add about 49 KiB
 of code in a minimal consumer and increased its median compile/link time from
-0.50 to 1.57 seconds. This is portable word packing, without handwritten SIMD.
+0.50 to 1.57 seconds. Those measurements cover the portable tiled writer.
+
+The current sparse-offset builders share that writer, including `select15`.
+On little-endian AArch64, complete width-eight and width-sixteen tiles use NEON
+narrowing; the remaining widths keep the constant-shift implementation. Both
+builders use bounded NEON adjacent comparisons to validate monotone input on
+AArch64. High-word accumulation and the encoded low/high arrays, samples and
+exceptions are unchanged.
+
+Select still scans scalar words within its bounded dense group. After finding
+the word, a broadword byte-prefix calculation locates the selected bit without
+clearing each preceding one. An x86-64 compiler target with BMI2 uses `PDEP`
+instead. The measured four-word SIMD scan lost to the scalar scan, and
+width-thirty-two narrowing lost to the existing tile. I kept those candidates
+in the [select comparison](../bench/select_compare.md), with the measured
+construction and query results. Sharing the writer also means a `select15`-only
+consumer instantiates the existing width dispatcher.
+
+The full bitmap `rank_view` now masks and popcounts a complete readable 512-bit
+run with NEON on AArch64; bounded portable work handles short tails and other
+targets. Queries at 512-bit boundaries return the directory count without
+touching the bitmap. Guarded-page tests cover both short tails and a completely
+inaccessible bitmap at directory-only boundaries.
+
+The [other-rank comparison](../bench/other_rank.md) records independent rank,
+dependent rank and rank-plus-class projection for groups 3, 7 and 31, alongside
+the full bitmap query. I selected the scalar two-bit sum for `K=3` because it
+has lower dependent latency, although NEON has higher independent throughput.
+The wider classes favor NEON for hot projection throughput; `K=31` retains a
+small dependent-latency tradeoff. Larger inputs give mixed results, so these
+measurements do not establish a universal winner outside the measured workloads.
+
+The navigation changes were reviewed and integrated at `bc24f44` (select) and
+`5817e02` (grouped and bitmap rank). Their component checks include independent
+population/offset oracles, forced-portable paths, protected pages, Rosetta AVX2
+with and without BMI2 where applicable, and package consumption. The selected
+native AArch64 timings and translated x86 correctness checks are distinguished
+in the linked reports. These changes preserve the stored layouts and add no
+runtime dispatch or exported ISA flags.
 
 ### Front-coded blobs
 
@@ -231,6 +272,31 @@ of code in a minimal consumer and increased its median compile/link time from
   missing. Native LPFC remains independent of changing index cuts.
 
 ### Typed byte and bit profiles
+
+Key comparison and longest-common-prefix discovery share one scan. The byte
+scanner uses bounded 16-byte NEON or SSE2 loads, followed by word and byte tails;
+unrelated bit keys retain a short first-bit mismatch path. Bit copying handles
+aligned bodies with `memmove` and shifted bodies in 64-bit chunks, preserving
+masked edges, overlapping input and aliased appends. Fixed-width fields and
+Golomb framing also use bounded word operations. These are representation-neutral
+changes: bit order, counts, padding and encoded bytes remain the same.
+
+The [key/bit comparison](../bench/key_bits.md) separates byte-prefix SIMD from
+word-at-a-time bit operations and measures both primitives and complete profile
+encoding/decoding. Its oracles cover every bit alignment, protected-page tails,
+overlaps, and exact framing bytes, including every truncation of the maximum
+129-bit exponential-Golomb code. Native M2 timings and x86-64/Rosetta correctness
+checks are reported separately.
+
+The key/bit implementation was reviewed and integrated at `cbd6201`, with the
+short mismatch/copy paths at `d027162`. The
+[combined blob and pipeline comparison](../bench/blob_pipeline.md) exercises
+all three component changes together. With 64-byte shared prefixes on the M2 Max,
+base builds improve about 3.4 times, three-link construction 1.6–2.2 times, and
+known-window queries 1.3 times for byte profiles and 2.9–3.0 times for bit
+profiles. Short byte-key queries have 3–7% slower medians in the same fixture.
+Both runs retain all trials and match encoded-output and result checksums;
+the integer catalog oracle and a separate combined ASan/UBSan run also pass.
 
 `storage_policy<Unit, Values, GroupSize, BackspaceCode>` carries the unit,
 fixed/variable value layout, sampling group size and bit-backspace code through
@@ -532,15 +598,17 @@ verification here after these commands run.
 
 Combined verification on 2026-09-15: AppleClang 21, C++20, Release with strict
 warnings and ASan/UBSan passed all **18 CTests**, including both package consumers
-and the optional Doxygen check, after the SIMD rank and window-projection changes.
+and the optional Doxygen check, with the key/bit, grouped/bitmap rank and
+Elias–Fano changes integrated. The tested public headers match `d027162`.
 The documentation includes the benchmark method and bundles its runner, source
 and measurements. Installed licenses and generated CRC includes were checked
 byte for byte against the source bundle; regenerating from the pinned generator
 also reproduced all eight backends.
 All five complete README examples also compiled and ran with strict warnings
 and ASan/UBSan. Local Markdown links were checked, including heading anchors.
-We haven't yet tested Windows execution, a persistent SQLite backend, network
-transport, filesystem writer fault injection or physical power loss.
+Windows execution coverage is limited to the recorded rank component tests.
+A persistent SQLite backend, network transport, filesystem writer fault injection
+and physical power loss remain outside these checks.
 
 The optional `EVERETT_BUILD_DOCS` configuration generates Doxygen HTML/XML and
 checks all file footers plus representative function/member ownership. A

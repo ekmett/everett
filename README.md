@@ -427,6 +427,33 @@ for us to manage. The [durability protocol](docs/durability.md)
 orders verified output, durable publication, and old-pin release, with explicit
 recovery states after failed synchronization.
 
+Performance
+-----------
+
+The compact representation also gives us useful units of parallel work. Packed
+rank classes can be summed together, byte prefixes can be compared sixteen
+bytes at a time, and bit streams can be copied or framed in word-sized chunks.
+The implementations keep loads within the supplied spans, including the last
+partial byte. Compiler targets select the available instructions; the package
+does not add runtime dispatch or impose ISA flags on consumers.
+
+I measure dependent queries as well as independent throughput. The next step
+through a fractional index depends on the previous answer, and the fastest
+bulk kernel need not have the lowest latency for that chain. In particular,
+groups of three keep a scalar packed sum, while seven and thirty-one use NEON
+on little-endian AArch64. The dense select scan also stays scalar: its SIMD
+candidate was slower in the measured cases.
+
+The [blob and pipeline comparison](bench/blob_pipeline.md) measures complete
+in-memory builds, three-link index construction and searches within a known
+window. It checks the resulting bytes and answers against the same inputs and
+an independent catalog oracle. The component reports cover
+[key and bit operations](bench/key_bits.md),
+[Elias–Fano](bench/select_compare.md),
+[grouped and bitmap rank](bench/other_rank.md), and
+[rank15](bench/rank_compare.md), with source, raw trials and reproduction
+commands. Disk faults and a complete multi-catalog search are separate costs.
+
 Proofs
 ------
 

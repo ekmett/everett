@@ -143,7 +143,10 @@ The policy API spells these structures `rank_groups<P::group_size>` and
 `select_groups<P::group_size>`. `multiverse<P>::blob` uses that policy throughout.
 The helpers in `rank15.h` and `select15.h` have a fixed interval of fifteen; they
 do not fix the store's policy to fifteen. The `rank_groups<15>` view shares rank15's
-SIMD implementation, while other group sizes use the generic rank implementation.
+SIMD implementation. Groups of three use packed scalar sums; seven and thirty-one
+use bounded NEON reductions on little-endian AArch64 and packed scalar reductions
+elsewhere. Other group sizes use the generic class loop. These choices preserve
+the same encoded classes and checkpoints.
 
 ### rank15
 

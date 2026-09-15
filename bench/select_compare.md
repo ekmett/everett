@@ -114,9 +114,8 @@ the baseline and retained implementation.
 Rosetta AVX2 medians for generic hot select were 48.498→37.337 ns with BMI2
 explicitly disabled, and 46.357→36.932 ns with BMI2 enabled. These are separate
 translated runs, not native x86 performance or proof of a PDEP speed advantage.
-The BMI2 executable contains `pdepq`. Automatic approval review rejected both
-attempts to transfer the same minimal task files to the authorized Quartus host;
-no source was transferred and no native x86 results were obtained.
+The BMI2 executable contains `pdepq`. No native x86 measurements were obtained
+for this comparison.
 
 Validation and reproduction
 ---------------------------

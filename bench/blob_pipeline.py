@@ -46,7 +46,10 @@ def main():
     flags = ["-std=c++20", "-Wall", "-Wextra", "-Wpedantic", "-Werror"]
     flags += (["-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer"]
               if args.sanitize else ["-O3", "-DNDEBUG"])
-    source = repo / "bench/blob_pipeline.cc"
+    # Capture the harness too: an edit while the two variants compile must not
+    # silently give the baseline and candidate different benchmark bodies.
+    source = build / "blob_pipeline.cc"
+    source.write_bytes((repo / "bench/blob_pipeline.cc").read_bytes())
     metadata = {
         "compiler": subprocess.check_output([*compiler, "--version"], text=True),
         "flags": flags,
