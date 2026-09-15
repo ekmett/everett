@@ -841,7 +841,7 @@ namespace everett {
                                                 std::uint64_t * predecessor = nullptr) const {
       auto group = ordinal / P::codec_block_size;
       auto at = block_offset(group);
-      auto retained = profile_detail::read_count<P>(data_, at);
+      auto retained = read_absolute(at);
       if (!group && retained) error_detail::raise<std::invalid_argument>("first profile key is not literal");
       std::uint64_t previous = 0;
       for (auto i = group * P::codec_block_size; i < ordinal; ++i) {
@@ -863,8 +863,18 @@ namespace everett {
       return {at, retained};
     }
 
-    profile_encoded_record parse_absolute(std::uint64_t at) const {
+    std::uint64_t read_absolute(std::uint64_t & at) const {
+      auto start = at;
       auto retained = profile_detail::read_count<P>(data_, at);
+      // Every retained unit appeared in an earlier literal. Use the restored
+      // physical offset, including fixed-width values, rather than EF residuals.
+      if (retained > start)
+        error_detail::raise<std::invalid_argument>("profile retained prefix exceeds physical offset");
+      return retained;
+    }
+
+    profile_encoded_record parse_absolute(std::uint64_t at) const {
+      auto retained = read_absolute(at);
       return parse_payload(at, retained);
     }
 
@@ -877,10 +887,12 @@ namespace everett {
     profile_encoded_record parse_payload(std::uint64_t at, std::uint64_t retained) const {
       auto suffix = profile_detail::read_count<P>(data_, at);
       auto value = metadata_.common_value_width ? *metadata_.common_value_width : profile_detail::read_count<P>(data_, at);
-      auto key_units = profile_detail::add(retained, suffix);
-      (void)profile_detail::multiply(key_units, P::bits_per_unit);
       if (at > metadata_.extent || suffix > metadata_.extent - at || value > metadata_.extent - at - suffix)
         error_detail::raise<std::invalid_argument>("truncated profile payload");
+      // Absolute controls establish retained <= frame start. Relative controls
+      // inherit key_units <= the previous frame's end. Thus retained <= at and
+      // the bounded suffix gives key_units <= extent, whose bit size was admitted.
+      auto key_units = retained + suffix;
       auto suffix_bits = profile_detail::multiply(suffix, P::bits_per_unit);
       auto value_bits = profile_detail::multiply(value, P::bits_per_unit);
       auto key_data = data_.subview(profile_detail::multiply(at, P::bits_per_unit), suffix_bits);

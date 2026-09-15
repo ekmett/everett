@@ -1122,6 +1122,50 @@ namespace {
 #endif
   }
 
+  template <class P> void absolute_extent_bounds() {
+    static_assert(P::codec_block_size == 1 && P::value_width == 0);
+    // Redirect the second sample into a literal that looks like a complete
+    // absolute header. Its retained count fits uint64 but cannot have appeared
+    // before this physical position. Endpoint/EF shape checks alone allow it.
+    bit_string key;
+    profile_detail::write_count<P>(key, 1024);
+    profile_detail::write_count<P>(key, 0);
+    profile_detail::resize(key, 2048 * P::bits_per_unit);
+    auto last = bit_string::from_bits(std::string(P::bits_per_unit, '1'));
+    std::array<profile_record, 2> records{{{key, {}}, {last, {}}}};
+    auto array = profile_array<P>::build(records);
+    auto position = array.view().encoded_at(0).suffix.offset() / P::bits_per_unit;
+    require(position < 1024, "malicious sample fixture lacks impossible retained position");
+    std::array<std::uint64_t, 3> offsets{0, position, array.metadata().extent};
+    auto directory = elias_fano::build(offsets);
+    profile_view<P> redirected(array.bytes(), directory.view(), array.metadata());
+    rejects([&] { (void)redirected.encoded_at(1); });
+    rejects([&] { auto cursor = redirected.encoded_cursor(); cursor.advance(); });
+
+    // Maximal decoded counts must be rejected before unchecked key-length or
+    // bit-extent arithmetic. The final headers really exist in bounded input.
+    constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
+    for (bool bad_retained : {false, true}) {
+      bit_string data;
+      profile_detail::write_count<P>(data, 0);
+      profile_detail::write_count<P>(data, 1);
+      profile_detail::append(data, last.view());
+      auto boundary = data.bit_size / P::bits_per_unit;
+      profile_detail::write_count<P>(data, bad_retained ? maximum : 1);
+      profile_detail::write_count<P>(data, bad_retained ? 0 : maximum);
+      auto metadata = profile_detail::initial_metadata<P, stream_role::native>();
+      metadata.record_count = 2;
+      metadata.common_value_width = 0;
+      metadata.extent = data.bit_size / P::bits_per_unit;
+      metadata.terminal_key_units = 1;
+      std::array<std::uint64_t, 3> at{0, boundary, metadata.extent};
+      auto ef = elias_fano::build(at);
+      profile_view<P> view(data.bytes, ef.view(), metadata);
+      rejects([&] { (void)view.encoded_at(1); });
+      rejects([&] { auto cursor = view.encoded_cursor(); cursor.advance(); });
+    }
+  }
+
   template <class P, stream_role Role> void mapped_profile_sections() {
     std::vector<profile_record> records;
     for (unsigned i = 0; i < 33; ++i) {
@@ -1375,6 +1419,8 @@ int main() {
     absolute_boundaries<storage_policy<profile_unit::bit, fixed_values<0>, 15, exponential_golomb<2>, 16>>();
     guarded_encoded_payloads<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 2>>();
     guarded_encoded_payloads<storage_policy<profile_unit::bit, variable_values, 3, golomb<1>, 2>>();
+    absolute_extent_bounds<storage_policy<profile_unit::byte, fixed_values<0>, 3, exponential_golomb<0>, 1>>();
+    absolute_extent_bounds<storage_policy<profile_unit::bit, fixed_values<0>, 3, golomb<3>, 1>>();
     std::cout << "profile tests passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';
