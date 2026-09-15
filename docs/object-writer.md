@@ -1,0 +1,111 @@
+Immutable object sealing
+========================
+
+`object_writer<P>` writes an already encoded body under a reserved physical
+`object_id`. I keep this operation separate from publishing a world: sealing
+does not reserve identities, retain inputs, adopt objects in SQLite, select a
+recovery root, or authorize reclamation. CRC32C checks accidental corruption;
+it does not turn an opaque object identity into a content address.
+
+The caller supplies an existing, durably established object directory, an
+object identity, and a stable `object_attempt_id`. Both identities must already
+be reserved and must never identify different work. The caller also retains the
+verified source inputs and owns reconciliation after an uncertain result.
+
+```cpp
+using P = everett::storage_policy<everett::profile_unit::byte>;
+everett::file_header<P> header{
+  everett::file_kind::native_blob, encoded_body.size(), record_count, std::nullopt};
+
+auto sealed = everett::object_writer<P>::seal(
+  object_directory, reserved_object_id, reserved_attempt_id, header,
+  std::span<std::byte const>(encoded_body));
+```
+
+The body can instead be a span of borrowed byte spans, including empty spans.
+Their bytes must remain readable and immutable for the whole call. A retained
+mapping is suitable; the writer does not allocate or reconstruct the body. It
+checks the total physical extent and canonical bit-profile padding before I/O.
+It does not validate kind-specific codec sections or exact index dependencies.
+
+The receipt records the identities, final path, byte count, body CRC and barrier
+used. It acknowledges successfully submitted bytes and completed OS persistence
+operations. It is not `persistence_result::durable_verified`, which has broader
+allocator, dependency and recovery-root obligations. An explicit later
+`file<P>::scan()` checks readable envelope/body bytes; it is not evidence that
+an earlier failed persistence attempt recovered.
+
+Sealing sequence
+----------------
+
+We create the two shard directories from `object_path(id, kind)` as needed,
+opening each relative to its parent directory handle without following a
+symlink. The final object is never replaced, even if existing bytes happen to
+match. The private file is created exclusively in the destination shard:
+
+```text
+ab/cd/<remaining-id>.kv
+ab/cd/.<remaining-id>.kv.attempt-<attempt-id>
+```
+
+The operation then:
+
+1. Reserves the 96-byte header and writes borrowed body chunks, completing short
+   writes and writes interrupted before progress. It computes CRC32C over those
+   unchanged source chunks and overwrites only the private header with the
+   canonical envelope.
+2. Makes the private file owner-readable and non-writable, then synchronizes
+   its contents and metadata.
+3. Installs the final name with `linkat`, which fails if that name already
+   exists. No existing object is truncated or rewritten.
+4. Synchronizes the leaf directory, first shard and supplied root, including
+   ancestors that were already present.
+5. Removes the private name, synchronizes its removal and synchronizes the
+   object again. Finally it closes each descriptor once and returns a receipt.
+
+Linux uses `fsync` for files and directories. macOS uses `F_FULLFSYNC` for the
+file barriers, including the final barrier after directory writeback requests;
+directory barriers use `fsync`. There is no silent fallback to a weaker file
+barrier. Unsupported platforms, including Windows in this implementation, fail
+before creating an output. Filesystems without the required hard-link or
+directory-sync support return an error.
+
+Linux explicitly requires directory synchronization in addition to file
+synchronization for name persistence. [Linux fsync manual](https://man7.org/linux/man-pages/man2/fsync.2.html)
+`linkat` creates a second name for an existing file without overwriting the
+destination. [Linux link manual](https://man7.org/linux/man-pages/man2/link.2.html)
+Apple describes `F_FULLFSYNC` as requesting a drive-buffer flush after file
+synchronization. [Apple fcntl manual](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/fcntl.2.html)
+
+Failure and limits
+------------------
+
+An I/O failure throws `object_write_error` with both identities, both paths,
+the failed operation, and the last acknowledged stage. The stage is not a claim
+about what reached persistent storage: an installation can take effect and
+still return an error. No subsequent write, sync, install or unlink is attempted.
+Only remaining handles are closed. Surviving private and final outputs remain
+available for caller-directed recovery; even a partially written private file
+is retained. If cleanup fails after the private name was removed, the final
+name remains.
+
+There is no retry or adopt-existing API. A fresh process must reconcile the
+reserved identities through its recovery owner. Successful cached readback,
+reopening, or retrying a failed flush is not general recovery evidence. See
+[the failure protocol](durability.md). Closing is never retried because an
+error can occur after the descriptor was released.
+[Linux close manual](https://man7.org/linux/man-pages/man2/close.2.html)
+
+The root and shards must share one supported local filesystem/device. The root
+ancestry, filesystem and concurrent users must be trusted. Directory
+handles reject shard symlinks but do not prevent another actor from renaming
+directories, changing mounts or modifying an existing object. Owner-only
+read-only permissions are a guardrail, not an operating-system immutable-file
+guarantee. The caller establishes the supplied root's own durable parent entry.
+
+The tests inject syscall failures, partial/interrupted writes, failed-close
+acknowledgments and a link failure that still installs a name. They also seal
+real mmap-backed byte and bit bodies, reject name collisions and symlinks,
+and check a guarded input tail. These checks establish implementation behavior
+and syscall ordering on the tested host. They are not physical power-loss tests
+or certification of a particular filesystem, device or storage stack.
