@@ -691,7 +691,8 @@ namespace everett {
     // replaying; no inherited key bytes are reconstructed or read.
     profile_encoded_record encoded_at(std::uint64_t ordinal) const {
       if (ordinal >= size()) error_detail::raise<std::out_of_range>("profile record ordinal");
-      return locate(ordinal, nullptr);
+      auto [at, retained] = locate(ordinal, nullptr);
+      return parse_payload(at, retained);
     }
 
     // Compatibility length lookup: replay the predecessor's physical block.
@@ -702,7 +703,8 @@ namespace everett {
       if (ordinal > size()) error_detail::raise<std::out_of_range>("profile predecessor ordinal");
       if (!ordinal) return 0;
       if (ordinal == size()) return metadata_.terminal_key_units;
-      auto record = locate(ordinal - 1, work);
+      auto [at, retained] = locate(ordinal - 1, work);
+      auto record = parse_payload(at, retained);
       if (work) ++work->skipped_headers;
       return record.key_units;
     }
@@ -719,7 +721,8 @@ namespace everett {
         if (predecessor) *predecessor = predecessor_units(first, work);
         return;
       }
-      auto record = locate(first, work, predecessor);
+      auto [at, retained] = locate(first, work, predecessor);
+      auto record = parse_payload(at, retained);
       for (auto i = first; i != last; ++i) {
         auto compared = context.advance(record);
         if (work) { ++work->visited_headers; work->compared_bits += compared; }
@@ -834,26 +837,30 @@ namespace everett {
     profile_metadata metadata_;
     bit_view data_;
 
-    profile_encoded_record locate(std::uint64_t ordinal, profile_comparison_work * work,
-                                   std::uint64_t * predecessor = nullptr) const {
+    std::pair<std::uint64_t, std::uint64_t> locate(std::uint64_t ordinal, profile_comparison_work * work,
+                                                std::uint64_t * predecessor = nullptr) const {
       auto group = ordinal / P::codec_block_size;
       auto at = block_offset(group);
-      auto record = parse_absolute(at);
-      if (!group && record.retained) error_detail::raise<std::invalid_argument>("first profile key is not literal");
+      auto retained = profile_detail::read_count<P>(data_, at);
+      if (!group && retained) error_detail::raise<std::invalid_argument>("first profile key is not literal");
       std::uint64_t previous = 0;
       for (auto i = group * P::codec_block_size; i < ordinal; ++i) {
+        auto record = parse_payload(at, retained);
         previous = record.key_units;
-        record = parse_relative(record.next_offset, previous);
+        at = record.next_offset;
+        auto backspace = profile_detail::read_backspace<P>(data_, at);
+        if (backspace > previous) error_detail::raise<std::invalid_argument>("profile backspace exceeds predecessor");
+        retained = previous - backspace;
         if (work) ++work->skipped_headers;
       }
       if (predecessor) {
         if (ordinal && ordinal % P::codec_block_size == 0)
           previous = predecessor_units(ordinal, work);
-        if (record.retained > previous)
+        if (retained > previous)
           error_detail::raise<std::invalid_argument>("profile retained prefix exceeds predecessor");
         *predecessor = previous;
       }
-      return record;
+      return {at, retained};
     }
 
     profile_encoded_record parse_absolute(std::uint64_t at) const {
