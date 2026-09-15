@@ -6,7 +6,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-// Run with bench/rank_bounds.py; old and new views share every encoded byte.
+// Run with bench/rank_bounds.py; both revisions encode the same logical input.
 #include <everett/rank.h>
 #include <everett/rank_groups.h>
 #include "old_rank.h"
@@ -102,10 +102,9 @@ namespace {
     for (auto & word : words) word = random_word(seed);
     for (std::size_t i = 0; i < n; ++i) oracle[i+1] = oracle[i] + ((words[i / 64] >> (i % 64)) & 1);
     auto index = everett::rank_index::build(words, n);
-    std::vector<old::rank_block> blocks;
-    for (auto b : index.blocks) blocks.push_back({b.before, b.runs});
+    auto old_index = old::rank_index::build(words, n);
     bitmap current{index.view(), std::span<std::uint64_t const>(index.words)};
-    bitmap previous{old::rank_view(index.words, blocks, index.supers, n, oracle.back()), std::span<std::uint64_t const>(index.words)};
+    bitmap previous{old_index.view(), std::span<std::uint64_t const>(old_index.words)};
     auto bytes = 8 * (index.words.size() + index.blocks.size() + index.supers.size());
     measure("bitmap", "rank", {variant_of<false>("cached_total", previous), variant_of<false>("bounded", current)},
       n, bytes, trials, queries, [&](auto g) { return oracle[g]; });
