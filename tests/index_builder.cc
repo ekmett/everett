@@ -370,6 +370,45 @@ namespace {
       if (coded.has_output()) coded.take_coded_output();
     }
 
+    // Push the next lookahead while the previous outgoing frame is still
+    // unread. Decoder mutation must not replace the independently owned output.
+    for (bool use_coded : {false, true}) {
+      index_builder<P> before(profile_blob<P>::build({}));
+      profile_sample_encoder<P> inputs;
+      auto first_key = all[all.size() / 2];
+      auto second_key = all.back();
+      if (use_coded) before.push(inputs.encode(first_key.view(), 0));
+      else before.push(first_key.view(), 0);
+      require(before.step(1) == 1 && before.has_output() && before.needs_input(), "consumed input leaves unread sample");
+      if (use_coded) before.push(inputs.encode(second_key.view(), P::group_size));
+      else before.push(second_key.view(), P::group_size);
+      index_builder<P> context(std::move(before));
+      rejects([&] { before.step(1); });
+      auto saved = context.take_output();
+      require(oracle_order(saved.key.view(), first_key.view()) == 0, "queued sample survives next input and move");
+      context.step(1);
+      require(context.needs_input(), "second input consumed");
+      if (use_coded) {
+        auto invalid_frame = profile_coded_sample<P>{second_key.bit_size >> P::unit_shift,
+          first_key, 2 * P::group_size};
+        rejects([&] { context.push(invalid_frame); });
+        context.push(inputs.encode(second_key.view(), 2 * P::group_size));
+      } else {
+        rejects([&] { context.push(first_key.view(), 2 * P::group_size); });
+        context.push(second_key.view(), 2 * P::group_size);
+      }
+      context.close_input();
+      while (!context.done()) { context.step(1); if (context.has_output()) context.take_coded_output(); }
+      auto artifact = context.finish_index(2 * P::group_size + 1);
+      auto cursor = artifact.borrowed().view().cursor();
+      for (auto const * key : {&first_key, &second_key, &second_key}) {
+        require(!cursor.done() && oracle_order(cursor.peek().key.prefix, key->view()) == 0,
+          "decoder context survives rejected replacement");
+        cursor.advance();
+      }
+      require(cursor.done(), "exact borrowed decoder occurrence count");
+    }
+
     // The original wrapper can die, and moving a partly built stage preserves
     // both decoding context and the actual shared native allocation.
     auto ephemeral = std::make_unique<profile_blob<P>>(profile_blob<P>::build(one));

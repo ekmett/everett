@@ -507,11 +507,14 @@ namespace {
     for (bool append : {false, true}) {
       builder stage(throwing_output{append, !append}, native);
       auto a = bit_string::from_bits("0"), b = bit_string::from_bits("1");
-      stage.push(a.view(), 0); stage.step(1); (void)stage.take_output();
-      stage.push(b.view(), P::group_size);
+      stage.push(a.view(), 0);
       if (append) rejects([&] { stage.step(1); });
-      else { stage.step(1); stage.close_input(); rejects([&] { stage.finish_index(P::group_size + 1); }); }
-      require(stage.failed(), "alternate output exception did not poison builder");
+      else {
+        stage.step(1); (void)stage.take_output();
+        stage.push(b.view(), P::group_size); stage.step(1); stage.close_input();
+        rejects([&] { stage.finish_index(P::group_size + 1); });
+      }
+      require(stage.failed() && !stage.has_output(), "alternate output exception did not poison and clear output");
       rejects([&] { stage.step(1); });
     }
     builder original(throwing_output{}, native);

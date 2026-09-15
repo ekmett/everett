@@ -33,8 +33,9 @@ namespace everett {
   // construction. Inputs must come from the exact target's trusted sampler;
   // finish() checks its count but does not rescan it to authenticate every key.
   // Coded handoff queues a backspace count, suffix and target ordinal. Backspace
-  // counts P units relative to the preceding emitted sample. Decoder, lookahead,
-  // pending-writer and outgoing-encoder contexts still retain full current keys.
+  // counts P units relative to the preceding emitted sample. The incoming decoder
+  // owns one reusable key: queued input until consumed, then the preceding
+  // borrowed key until the next push. The outgoing encoder owns its own context.
   // Output has nonthrowing move assignment, starts empty/active and consumes
   // append_known(key, exact_bit_lcp)
   // synchronously. Its finish takes owning navigation metadata and may return
@@ -95,16 +96,8 @@ namespace everett {
       check_active();
       if (input_mode_ == input_mode::full) error_detail::raise<std::logic_error>("cannot mix coded and full index inputs");
       check_input_slot(sample.target_ordinal);
-      auto [key, comparison] = incoming_decoder_.accept_compared(sample);
-      try {
-        // The decoder's current key is copied once into the existing lookahead
-        // state. Failure after advancing that context makes this stage unusable.
-        accept_key(key, comparison);
-      } catch (...) {
-        failed_ = true;
-        outgoing_.reset();
-        throw;
-      }
+      auto comparison = incoming_decoder_.accept_compared(sample).second;
+      accept_key(comparison);
       input_mode_ = input_mode::coded;
     }
 
@@ -125,29 +118,29 @@ namespace everett {
           auto comparison = compare_heads();
           auto take_borrowed = comparison.order > 0;
           if (incoming_ && !comparison.order) incoming_false_ = true;
-          auto key = take_borrowed ? incoming_->view() : native_cursor_.peek().key.prefix;
+          auto key = take_borrowed ? incoming_decoder_.key() : native_cursor_.peek().key.prefix;
           auto edge = take_borrowed ? incoming_common_ : native_common_;
           outgoing_common_ = std::min(outgoing_common_, edge);
-          if (pending_) pending_common_ = std::min(pending_common_, edge);
+          if (borrowed_count_) pending_common_ = std::min(pending_common_, edge);
           auto boundary = virtual_count_ % group_size == 0;
           if (boundary) {
             outgoing_.emplace(outgoing_encoder_.encode_known(key, virtual_count_, outgoing_common_));
             outgoing_common_ = key.size();
             classes_.push_back(0);
-            cut_lcps_.push_back(pending_ ? pending_common_ : 0);
+            cut_lcps_.push_back(borrowed_count_ ? pending_common_ : 0);
           }
           if (take_borrowed) {
-            flush_pending();
-            pending_ = std::move(incoming_);
-            incoming_.reset();
-            pending_false_ = incoming_false_;
+            // Output borrows this key only for the call. It is encoded now,
+            // before the decoder can replace its suffix on a later push.
+            writer_.append_known(key, incoming_borrowed_common_);
+            incoming_ = false;
+            previous_false_ = incoming_false_;
             incoming_false_ = false;
-            pending_retained_ = incoming_borrowed_common_;
             pending_common_ = key.size();
             native_common_ = comparison.common_bits;
             auto ordinal = borrowed_count_++;
             if ((ordinal & 7) == 0) false_borrows_.push_back(std::byte{0});
-            if (pending_false_) false_borrows_.back() |= std::byte(1u << (ordinal & 7));
+            if (previous_false_) false_borrows_.back() |= std::byte(1u << (ordinal & 7));
             ++classes_.back();
           } else {
             incoming_common_ = comparison.common_bits;
@@ -219,10 +212,9 @@ namespace everett {
       auto expected = target_count / group_size + (target_count % group_size != 0);
       if (expected != received_) error_detail::raise<std::invalid_argument>("index samples disagree with target extent");
       try {
-        // Final rank allocation precedes the last pending append and any
-        // irreversible final writes in an alternate output.
+        // Every consumed borrowed occurrence is already encoded. Allocate the
+        // final rank directory before irreversible final output writes.
         auto interleave = rank_groups<group_size>::build(classes_, virtual_count_);
-        flush_pending();
         profile_detail::index_metadata<P> metadata{std::move(interleave),
           std::move(false_borrows_), std::move(cut_lcps_), virtual_count_};
         auto result = writer_.finish(std::move(metadata));
@@ -240,8 +232,10 @@ namespace everett {
     std::shared_ptr<Native const> native_;
     profile_cursor<P, stream_role::native> native_cursor_;
     Output writer_;
-    std::optional<bit_string> incoming_;
-    std::optional<bit_string> pending_;
+    // Queued: received == borrowed_count + 1; otherwise they are equal.
+    // The decoder holds the queued key or the last consumed borrowed key.
+    // Output has already encoded exactly borrowed_count successful records.
+    bool incoming_ = false;
     std::optional<coded_sample_type> outgoing_;
     profile_sample_encoder<P> outgoing_encoder_;
     profile_sample_decoder<P> incoming_decoder_;
@@ -256,10 +250,10 @@ namespace everett {
     // Minima of adjacent merged-key LCPs since each retained anchor. Sorted
     // strings make these the exact LCPs with the last consumed merged key.
     std::uint64_t outgoing_common_ = 0, pending_common_ = 0;
-    std::uint64_t incoming_borrowed_common_ = 0, pending_retained_ = 0;
+    std::uint64_t incoming_borrowed_common_ = 0;
     input_mode input_mode_ = input_mode::unset;
     bool incoming_false_ = false;
-    bool pending_false_ = false;
+    bool previous_false_ = false;
     bool input_closed_ = false;
     bool finished_ = false;
     bool failed_ = false;
@@ -286,19 +280,15 @@ namespace everett {
     }
     void push_key(bit_view key, std::uint64_t target_ordinal) {
       check_input_slot(target_ordinal);
-      if (key.size() & (P::bits_per_unit - 1))
-        error_detail::raise<std::invalid_argument>("index sample key disagrees with policy units");
-      auto comparison = pending_ ? compare_common_bits(pending_->view(), key) : bit_comparison{0, -1};
-      if (comparison.order > 0) error_detail::raise<std::invalid_argument>("index samples must be sorted");
-      accept_key(key, comparison);
+      auto comparison = incoming_decoder_.accept_full(key, target_ordinal);
+      accept_key(comparison);
     }
-    // The coded decoder's previous accepted key is exactly pending_: receiving
-    // another key requires consuming the old incoming occurrence first. Reuse
-    // its already checked suffix comparison instead of scanning the full key.
-    void accept_key(bit_view key, bit_comparison comparison) {
-      auto copy = bit_string::copy(key);
-      incoming_.emplace(std::move(copy));
-      incoming_false_ = !comparison.order && pending_false_;
+    // A new input is admitted only after its predecessor was consumed. The
+    // decoder therefore compares against the last borrowed key, even though
+    // the active merged frontier can advance through native keys afterward.
+    void accept_key(bit_comparison comparison) noexcept {
+      incoming_ = true;
+      incoming_false_ = !comparison.order && previous_false_;
       incoming_common_ = incoming_borrowed_common_ = comparison.common_bits;
       ++received_;
     }
@@ -308,7 +298,7 @@ namespace everett {
       if (native_common_ != incoming_common_)
         return {std::min(native_common_, incoming_common_), native_common_ > incoming_common_ ? -1 : 1};
       auto native = native_cursor_.peek().key.prefix;
-      auto incoming = incoming_->view();
+      auto incoming = incoming_decoder_.key();
       // Revisit at most seven already equal bits to keep byte-aligned loads.
       auto start = native_common_ & ~std::uint64_t{7};
       if (!start) return compare_common_bits(native, incoming);
@@ -317,12 +307,7 @@ namespace everett {
       comparison.common_bits += start;
       return comparison;
     }
-    void flush_pending() {
-      if (pending_) {
-        writer_.append_known(pending_->view(), pending_retained_);
-        pending_.reset();
-      }
-    }
+
   };
 }
 

@@ -124,6 +124,20 @@ namespace everett {
 
   private:
     template <class, class, class> friend struct index_builder;
+    // Only the index builder uses this full-key path. Its input cannot borrow
+    // the private decoder context; reserve before editing its retained prefix.
+    bit_comparison accept_full(bit_view key, std::uint64_t ordinal) {
+      sampling_detail::check_ordinal<P>(count_, ordinal);
+      if (key.size() & (P::bits_per_unit - 1))
+        error_detail::raise<std::invalid_argument>("sample key unit mismatch");
+      auto comparison = compare_common_bits(key_.view(), key);
+      if (comparison.order > 0)
+        error_detail::raise<std::invalid_argument>("sample keys must be sorted");
+      auto retained = comparison.common_bits & ~std::uint64_t{7};
+      sampling_detail::replace_suffix(key_, retained, key.subview(retained, key.size() - retained));
+      ++count_;
+      return comparison;
+    }
     std::pair<bit_view, bit_comparison> accept_compared(profile_coded_sample<P> const & sample) {
       sampling_detail::check_ordinal<P>(count_, sample.target_ordinal);
       auto suffix = sample.suffix.view();
