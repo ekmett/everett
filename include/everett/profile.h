@@ -68,7 +68,10 @@ namespace everett {
     }
     bit_view subview(std::uint64_t first, std::uint64_t count) const {
       if (first > size_ || count > size_ - first) error_detail::raise<std::out_of_range>("bit subview");
-      return {bytes_, count, offset_ + first};
+      auto result = *this;
+      result.offset_ += first;
+      result.size_ = count;
+      return result;
     }
     bit_view prefix(std::uint64_t count) const { return subview(0, std::min(count, size_)); }
 

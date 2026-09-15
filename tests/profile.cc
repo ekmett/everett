@@ -59,6 +59,53 @@ namespace {
     auto mask = std::byte(1u << (7 - at % 8));
     if (value) bytes[at / 8] |= mask; else bytes[at / 8] &= ~mask;
   }
+  void subview_oracle() {
+    constexpr bit_view constant_empty;
+    constexpr bit_view constant_copy = constant_empty;
+    auto empty = constant_copy.subview(0, 0);
+    require(empty.empty() && empty.offset() == 0 && empty.storage().empty(),
+            "default empty subview");
+    std::array<std::byte, 4> bytes{std::byte{0x81}, std::byte{0x6a}, std::byte{0xfe}, std::byte{0x35}};
+    auto check = [&](bit_view value, std::uint64_t offset, std::uint64_t size) {
+      require(value.offset() == offset && value.size() == size &&
+              value.storage().data() == bytes.data() && value.storage().size() == bytes.size(),
+              "subview storage and extent");
+      for (std::uint64_t i = 0; i < size; ++i)
+        require(value.at(i) == (slow_bit(bytes, offset + i) != 0), "subview bit oracle");
+    };
+    // All valid views and subranges, including byte boundaries and empty ends.
+    for (std::uint64_t offset = 0; offset <= 32; ++offset)
+      for (std::uint64_t size = 0; size <= 32 - offset; ++size) {
+        bit_view original(bytes, size, offset);
+        check(original.prefix(std::numeric_limits<std::uint64_t>::max()), offset, size);
+        for (std::uint64_t first = 0; first <= size; ++first)
+          for (std::uint64_t count = 0; count <= size - first; ++count) {
+            auto value = original.subview(first, count);
+            check(value, offset + first, count);
+            check(value.subview(count / 2, count - count / 2), offset + first + count / 2,
+                  count - count / 2);
+          }
+        check(original, offset, size);
+        auto rejected = [&](std::uint64_t first, std::uint64_t count) {
+          bool caught = false;
+          try { (void)original.subview(first, count); }
+          catch (std::out_of_range const & error) {
+            caught = std::string(error.what()) == "bit subview";
+          }
+          require(caught, "subview exception type and message");
+        };
+        rejected(size + 1, 0);
+        rejected(size, 1);
+        rejected(0, size + 1);
+        rejected(std::numeric_limits<std::uint64_t>::max(), 0);
+        rejected(0, std::numeric_limits<std::uint64_t>::max());
+      }
+    auto zero_storage = std::span<std::byte const>(bytes).subspan(2, 0);
+    auto zero = bit_view(zero_storage, 0).subview(0, 0);
+    require(zero.empty() && zero.storage().data() == bytes.data() + 2 && zero.storage().empty(),
+            "empty subview preserves non-null storage pointer");
+  }
+
   bit_comparison slow_compare(bit_view a, bit_view b) {
     std::uint64_t i = 0;
     while (i < a.size() && i < b.size() && a.at(i) == b.at(i)) ++i;
@@ -1165,6 +1212,7 @@ namespace {
 int main() {
   try {
     rounded_bit_extents();
+    subview_oracle();
     byte_comparison_oracle();
     offset_metadata<storage_policy<profile_unit::byte, variable_values, 7, exponential_golomb<0>, 16>>();
     offset_metadata<storage_policy<profile_unit::bit, variable_values, 3, golomb<3>, 7>>();
