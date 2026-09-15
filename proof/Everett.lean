@@ -12,5 +12,6 @@ import Everett.Fractional
 import Everett.FractionalExamples
 import Everett.Prefix
 import Everett.Transfer
+import Everett.NativeMerge
 import Everett.Examples
 import Everett.Audit

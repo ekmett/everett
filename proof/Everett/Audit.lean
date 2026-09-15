@@ -7,6 +7,7 @@ import Everett.Allocation
 import Everett.FractionalExamples
 import Everett.Prefix
 import Everett.Transfer
+import Everett.NativeMerge
 import Lean
 
 open Lean Elab Command

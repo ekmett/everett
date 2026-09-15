@@ -56,6 +56,7 @@ Field guide
 | [Fractional](Everett/Fractional.lean) | Stable tagged merging; exact every-Kth samples; sampled predecessor windows; endpoint-rank projections; local/global predecessor equivalence; false-borrow recovery for unique native keys; a list-level index builder and exact-target retention |
 | [Prefix](Everett/Prefix.lean) | Finite-string lexicographic order, prefix interval convexity and the exact LCP minimum for three ordered strings |
 | [Transfer](Everett/Transfer.lean) | Content-mismatch transfers, the literal-position invariant, composition and associative ordered summaries |
+| [NativeMerge](Everett/NativeMerge.lean) | Executable two-way merging of strictly ordered native runs; unique sorted output; optional pointwise lookup composition; chronological reassociation and disjoint-support commutation |
 | [Examples](Everett/Examples.lean) | Heterogeneous keys, valid and stale sources, noncommutative histories, changed index/target versions, and an old target that cannot be reclaimed while a snapshot retains it |
 | [FractionalExamples](Everett/FractionalExamples.lean) | K=3 and K=15, equal keys across several cuts, empty native projections, false-borrow recovery, empty targets, before-first queries, short tails and stored-index routing |
 | [Audit](Everett/Audit.lean) | Rejects unexpected axioms in every kernel-safe `Everett` declaration and its transitive dependencies |
@@ -213,6 +214,43 @@ The missing bridge is from the origin-filtered cut to these string hypotheses,
 then from the encoded length/LCP metadata and literal comparisons to the
 abstract state. Complete cascade composition, block access bounds and the C++
 implementation remain separate refinements.
+
+Native run merging
+------------------
+
+I model a native run as a finite list of natural-number keys with arbitrary
+values. `native_merge.merge` is the actual two-way recursive algorithm: it
+emits the smaller head, and combines equal heads with
+`compose key older newer`. The callback produces a value at the same key.
+`merge_ordered` proves strict output order, and `merge_unique` proves that no
+key occurs twice. Neither result needs an algebraic law for the callback.
+
+`lookup_merge` gives the per-key meaning of the algorithm. A key present in only
+one input keeps its value; a key in both inputs gets the callback result in
+older/newer order. Missing bindings act as identities in `Option Value`, without
+requiring an identity element in `Value` itself. Strict input order is essential:
+these theorems do not grant arbitrary duplicate keys within one native run.
+
+We can then reason about different merge trees. If the callback is associative
+at each key, `lookup_merge_assoc` proves the same lookup in either
+parenthesization of three chronological inputs. `ordered_ext` establishes that
+strictly ordered runs are canonical for their lookups, so `merge_assoc` strengthens
+this to equality of the complete output lists. It changes parenthesization while
+keeping the same ordered leaves. For disjoint supports, `merge_disjoint` proves
+that the two inputs commute without any callback law.
+
+The checked concatenation examples make the distinction concrete: equal-key
+values `[30]` followed by `[31]` produce `[30, 31]`; reversing them produces
+`[31, 30]`. Concatenation is associative, and `concat_assoc` applies the general
+merge theorem to it, but `concat_not_commutative` proves that swapping overlapping
+inputs changes the result.
+
+This module uses a total value callback. I keep typed arrow admissibility in the
+category modules; the native-merge theorem does not itself validate an arrow's
+source, choose a merge schedule, handle exceptions, or elide deletion markers.
+It also does not refine the C++ builder, front-coded streams, allocation or disk
+publication. Those layers must preserve this ordered callback semantics before
+we can transfer the abstract result to them.
 
 What the assumptions mean
 -------------------------
