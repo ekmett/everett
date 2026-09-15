@@ -1,0 +1,17 @@
+#include <cpuid.h>
+#include <iostream>
+int main() {
+  unsigned a=0,b=0,c=0,d=0;
+  __get_cpuid(1,&a,&b,&c,&d);
+  unsigned long long xcr=0;
+  if (c & (1u<<27)) {
+    unsigned lo,hi;
+    asm volatile("xgetbv" : "=a"(lo), "=d"(hi) : "c"(0));
+    xcr=(static_cast<unsigned long long>(hi)<<32)|lo;
+  }
+  __get_cpuid_count(7,0,&a,&b,&c,&d);
+  std::cout << "{\"avx2\":" << bool((b&(1u<<5))&&(xcr&6)==6)
+    << ",\"avx512f\":" << bool((b&(1u<<16))&&(xcr&0xe6)==0xe6)
+    << ",\"avx512bw\":" << bool((b&(1u<<30))&&(xcr&0xe6)==0xe6)
+    << ",\"avx512vpopcntdq\":" << bool((c&(1u<<14))&&(xcr&0xe6)==0xe6) << "}\n";
+}

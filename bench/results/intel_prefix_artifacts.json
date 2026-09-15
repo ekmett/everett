@@ -1,0 +1,21 @@
+{
+  "production_commit": "1b1446c72dc10506e8415a277f75c97de77d5668",
+  "tested_rank_header_sha256": "6230107aad396d35a340bb77886bc3f8600c0d82d32fe53799cf4cef123cb828",
+  "committed_rank_header_sha256": "e7af6bcfce2f335ed549dc7db2794759b4fa3748b7a542ad71794810dd1913aa",
+  "post_validation_change": "Only the two-line prefix-helper precondition comment; removing it reproduces the tested header exactly.",
+  "artifacts": {
+    "bench/results/intel_prefix_assembly.cc.txt": "35ce08a0798104bef980b90419ce72b942ec4cf93122ae777308721d3a9edba6",
+    "bench/results/intel_prefix_avx2.s.txt": "8dd9140091e51da1503e2adab8642fed31d95d504d40810711a135d18536b8ca",
+    "bench/results/intel_prefix_avx512bw.s.txt": "ad1ec077a06c844b87bdc7241c52cfa32db8ddd657e4cb13ce6a08cfd682b6b8",
+    "bench/results/intel_prefix_caps.cc.txt": "9578d66fc0831c480ea281c0ca5bd7149e4c48e1054bce06f96626f2103ac5be",
+    "bench/results/intel_prefix_check.py.txt": "63992685d624a106d7d98f736fa04d37b27c6cd360016a172b328b91c3288bc0",
+    "bench/results/intel_prefix_checks.json": "a07f245958d35f21c0a547af687c4238be2f8ce93bd20723ee752b4ced26d3a4",
+    "bench/results/intel_prefix_vpopcnt.s.txt": "a7391d5072efa7b217158e7ff5c4500b51b67c2779223008139489863908b23b"
+  },
+  "spacer_benchmark_artifacts": {
+    "bench/results/rank_spacers_m2.csv": "2cb01b78ce74d2dadda9cceb5a4caaeec7478131c0b0da958a9828818a898388",
+    "bench/results/rank_spacers_m2.json": "85d2c5fbafd7de856d63c9e837cdc06323cb9bf42d1a06ded6c4d54127845d7a",
+    "bench/results/rank_spacers_sanitizer.csv": "58dca0831e4f027481cae45fbd7dbeceead75d05f97c5dc18b74bb46f1b65e41",
+    "bench/results/rank_spacers_sanitizer.json": "0a4de5e923c1ce51c52dc0f2cd103d69510309de4860a9510f0dfe624cdd1af7"
+  }
+}
