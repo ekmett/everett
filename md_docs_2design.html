@@ -144,6 +144,7 @@ Notation</h2>
 <h1><a class="anchor" id="autotoc_md3-navigation"></a>
 3. Navigation</h1>
 <p>We can work through the navigation equations with the default \(K=15\). The codecs accept a policy-selected group size; <a class="el" href="md_docs_2sampling.html">sampling.md</a> proves the local \(K=3\) case and states the separate chain-size and scheduler assumptions. Offset units are bytes or bits according to the shared policy.</p>
+<p>The policy API spells these structures <code>rank_groups&lt;P::group_size&gt;</code> and <code>select_groups&lt;P::group_size&gt;</code>. <code>multiverse&lt;P&gt;::blob</code> uses that policy throughout. The helpers in <code><a class="el" href="rank15_8h.html" title="Declares Everett&#39;s rank15 support.">rank15.h</a></code> and <code><a class="el" href="select15_8h.html" title="Declares Everett&#39;s select15 support.">select15.h</a></code> have a fixed interval of fifteen; they do not fix the store's policy to fifteen. The <code>rank_groups&lt;15&gt;</code> view shares rank15's SIMD implementation, while other group sizes use the generic rank implementation.</p>
 <h2><a class="anchor" id="rank15"></a>
 rank15</h2>
 <p>We assign a conceptual origin bit of one to a borrowed entry and zero to a native entry. We only need ranks at sampling boundaries:</p>

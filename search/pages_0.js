@@ -10,5 +10,7 @@ var searchData=
   ['and_20packed_20rank_20comparison_7',['Full-vector and packed-rank comparison',['../md_bench_2rank__compare.html',1,'']]],
   ['and_20publication_8',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
   ['and_20stringlike_20keys_9',['Sorts and stringlike keys',['../md_docs_2keys.html',1,'']]],
-  ['and_20the_20choice_20of_20k_10',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]]
+  ['and_20the_20choice_20of_20k_10',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]],
+  ['and_20the_20cult_20bitmap_20rank_11',['NEON reductions and the Cult bitmap rank',['../md_bench_2neon__cult__rank.html',1,'']]],
+  ['avx2_20packed_20rank_20comparison_12',['Native AVX2 packed-rank comparison',['../native-avx2-packed-rank-comparison.html',1,'']]]
 ];

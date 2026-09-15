@@ -12,9 +12,11 @@ var searchData=
   ['here_9',['2. What strong deletion promises here',['../md_docs_2rebuild.html#autotoc_md2-what-strong-deletion-promises-here',1,'']]],
   ['hex_10',['hex',['../structeverett_1_1object__id.html#a3b3696f9ff76a1b03b2e13de216bd282',1,'everett::object_id']]],
   ['hex_5f_11',['hex_',['../structeverett_1_1object__id.html#a664ed8cd4c9f5a808a9c17c3372d2b7f',1,'everett::object_id']]],
-  ['high_12',['high',['../structeverett_1_1select15__index.html#a06dad84366b3b096b057741bc6d97cda',1,'everett::select15_index::high'],['../structeverett_1_1select__groups.html#a55cc4a47fc1a1b2f1d22c4c634d20225',1,'everett::select_groups::high']]],
-  ['high_5f_13',['high_',['../structeverett_1_1select15__view.html#a4a70a78a62585a89ed4df8a0eac4db2a',1,'everett::select15_view::high_'],['../structeverett_1_1select__groups__view.html#a6604287574e902bd259f16d04620caf1',1,'everett::select_groups_view::high_']]],
-  ['high_5fbits_5f_14',['high_bits_',['../structeverett_1_1select__groups__view.html#a667543f2d4919198400d4bf3695d6d90',1,'everett::select_groups_view::high_bits_'],['../structeverett_1_1select15__view.html#ad1c293bd50a3808884e18b4d711d781d',1,'everett::select15_view::high_bits_']]],
+  ['high_12',['high',['../structeverett_1_1select__groups.html#a55cc4a47fc1a1b2f1d22c4c634d20225',1,'everett::select_groups::high'],['../structeverett_1_1select15__index.html#a06dad84366b3b096b057741bc6d97cda',1,'everett::select15_index::high']]],
+  ['high_5f_13',['high_',['../structeverett_1_1select__groups__view.html#a6604287574e902bd259f16d04620caf1',1,'everett::select_groups_view::high_'],['../structeverett_1_1select15__view.html#a4a70a78a62585a89ed4df8a0eac4db2a',1,'everett::select15_view::high_']]],
+  ['high_5fbits_5f_14',['high_bits_',['../structeverett_1_1select15__view.html#ad1c293bd50a3808884e18b4d711d781d',1,'everett::select15_view::high_bits_'],['../structeverett_1_1select__groups__view.html#a667543f2d4919198400d4bf3695d6d90',1,'everett::select_groups_view::high_bits_']]],
   ['historical_20updates_20stop_20determining_20the_20universe_15',['6. Why historical updates stop determining the universe',['../md_docs_2rebuild.html#autotoc_md6-why-historical-updates-stop-determining-the-universe',1,'']]],
-  ['histories_20are_20simplices_20merges_20compose_20adjacent_20segments_16',['2. Histories are simplices; merges compose adjacent segments',['../md_docs_2arrows.html#autotoc_md2-histories-are-simplices-merges-compose-adjacent-segments',1,'']]]
+  ['histories_20are_20simplices_20merges_20compose_20adjacent_20segments_16',['2. Histories are simplices; merges compose adjacent segments',['../md_docs_2arrows.html#autotoc_md2-histories-are-simplices-merges-compose-adjacent-segments',1,'']]],
+  ['host_20and_20method_17',['Host and method',['../native-avx2-packed-rank-comparison.html#host-and-method',1,'']]],
+  ['hot_20results_18',['Hot results',['../md_bench_2neon__cult__rank.html#hot-results',1,'']]]
 ];

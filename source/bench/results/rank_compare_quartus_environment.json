@@ -1,0 +1,146 @@
+{
+  "hostname": "eak-quartus",
+  "platform": "Linux-6.8.0-100-generic-x86_64-with-glibc2.35",
+  "cpu": {
+    "processor": "12",
+    "vendor_id": "GenuineIntel",
+    "cpu family": "6",
+    "model": "151",
+    "model name": "12th Gen Intel(R) Core(TM) i9-12900K",
+    "stepping": "2",
+    "microcode": "0x3a",
+    "cpu MHz": "800.000",
+    "cache size": "30720 KB",
+    "physical id": "0",
+    "siblings": "24",
+    "core id": "24",
+    "cpu cores": "16",
+    "apicid": "48",
+    "initial apicid": "48",
+    "fpu": "yes",
+    "fpu_exception": "yes",
+    "cpuid level": "32",
+    "wp": "yes",
+    "flags": "fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid rdseed adx smap clflushopt clwb intel_pt sha_ni xsaveopt xsavec xgetbv1 xsaves split_lock_detect user_shstk avx_vnni dtherm ida arat pln pts hwp hwp_notify hwp_act_window hwp_epp hwp_pkg_req hfi vnmi umip pku ospke waitpkg gfni vaes vpclmulqdq tme rdpid movdiri movdir64b fsrm md_clear serialize pconfig arch_lbr ibt flush_l1d arch_capabilities ibpb_exit_to_user",
+    "vmx flags": "vnmi preemption_timer posted_intr invvpid ept_x_only ept_ad ept_1gb flexpriority apicv tsc_offset vtpr mtf vapic ept vpid unrestricted_guest vapic_reg vid ple shadow_vmcs ept_mode_based_exec tsc_scaling usr_wait_pause",
+    "bugs": "spectre_v1 spectre_v2 spec_store_bypass swapgs eibrs_pbrsb rfds bhi vmscape",
+    "bogomips": "6374.40",
+    "clflush size": "64",
+    "cache_alignment": "64",
+    "address sizes": "46 bits physical, 48 bits virtual",
+    "power management": ""
+  },
+  "allowed_cpus": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+  ],
+  "pinned_cpu": 12,
+  "affinity_probe": "[12]",
+  "compiler": "Ubuntu clang version 20.0.0 (++20241101031257+b74e588e1f46-1~exp1~20241101151424.2024)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/lib/llvm-20/bin\n",
+  "memory": "MemTotal:       98628284 kB",
+  "cache": {
+    "index2": {
+      "level": "2",
+      "type": "Unified",
+      "size": "1280K",
+      "shared_cpu_list": "12-13"
+    },
+    "index0": {
+      "level": "1",
+      "type": "Data",
+      "size": "48K",
+      "shared_cpu_list": "12-13"
+    },
+    "index3": {
+      "level": "3",
+      "type": "Unified",
+      "size": "30720K",
+      "shared_cpu_list": "0-23"
+    },
+    "index1": {
+      "level": "1",
+      "type": "Instruction",
+      "size": "32K",
+      "shared_cpu_list": "12-13"
+    }
+  },
+  "frequency_policy": {
+    "cpuinfo_max_freq": "5200000",
+    "scaling_governor": "powersave",
+    "scaling_driver": "intel_pstate",
+    "energy_performance_preference": "balance_performance"
+  },
+  "flags": "-std=c++20 -O3 -DNDEBUG -mavx2 -mpopcnt -mno-avx512f -Wall -Wextra -Werror",
+  "source_manifest": {
+    "revision": "aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06",
+    "scalar_revision": "9f68e4d0fdecae73b7d28b748a0d062cc072fbfa",
+    "files": {
+      "baseline/everett/rank.h": "b36560f7eb35dfb933b2c68a1af64bbc1f1bbbf786a45ecee6f765739be92cec",
+      "baseline/everett/rank15.h": "f11fbcfa831d1b617ede57d09bd009ba35a24fe09eee3d84a839a393553a1de4",
+      "baseline/everett/rank_groups.h": "25cd54c51435941fcc230cc7bc34b6b33e3c1a2b47ee926aedc0efad7fb404de",
+      "bench/rank_compare.cc": "3bf47da16e69832c8db80e80d6f97d6f3a6cd0c6350930d24c1782ef419e4266",
+      "include/everett/rank.h": "b36560f7eb35dfb933b2c68a1af64bbc1f1bbbf786a45ecee6f765739be92cec",
+      "include/everett/rank15.h": "80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c",
+      "include/everett/rank_groups.h": "25cd54c51435941fcc230cc7bc34b6b33e3c1a2b47ee926aedc0efad7fb404de",
+      "include/everett/select15.h": "1df8bd4b5c0d177da5dc13545af553a4c1c4d4841fed8d70d2e7dcf1667148c3",
+      "include/everett/select_groups.h": "fc041a779d9c4eee69b9ed2285e87cc3260241bb52d443de4e48f07652b8eff9",
+      "qword_rank15.h": "80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c",
+      "sad_rank15.h": "ed125be1898573ec2b926df930c96b909921fc506536d9c2e1c8b0363e0fb686",
+      "tests/groups.cc": "4f998d56bd0c6f62b9b87c11463d7d32af04b07022f71daa153728fb457de82b",
+      "tests/rank.cc": "cbafa834d84a8f0ed3974ec33d5f2486d0e8180f7ec74fe51cb5a3bde85eb08c"
+    },
+    "benchmark_note": "Exact portability source committed as ca93a619a45f1a7ab3a923e2f5793fa9211678d5: MSVC intrinsics/noinline support and NEON-only Poppy declarations guarded; query/data behavior unchanged."
+  },
+  "benchmark_compile_command": "/usr/bin/clang++ -DEVERETT_RANK_CANDIDATE=\\\"/tmp/everett-rank-avx2-aeaaa9d.xPs4g3/sad_rank15.h\\\" -DEVERETT_RANK_SIMD=\\\"/tmp/everett-rank-avx2-aeaaa9d.xPs4g3/qword_rank15.h\\\" -I/tmp/everett-rank-avx2-aeaaa9d.xPs4g3/baseline -O3 -DNDEBUG -std=c++20 -mavx2 -mpopcnt -mno-avx512f -Wall -Wextra -Werror -o CMakeFiles/rank_compare.dir/bench/rank_compare.cc.o -c /tmp/everett-rank-avx2-aeaaa9d.xPs4g3/bench/rank_compare.cc",
+  "benchmark_source_blob": "506524722923b7aac1af17cc3f29173af9f5fb01",
+  "benchmark_source_portability_commit": "ca93a619a45f1a7ab3a923e2f5793fa9211678d5",
+  "runs": [
+    {
+      "case": "hot_packed32KiB",
+      "started_utc": "2026-09-15T13:00:18Z",
+      "completed_utc": "2026-09-15T13:00:21Z"
+    },
+    {
+      "case": "large_packed96MiB",
+      "started_utc": "2026-09-15T13:02:22Z",
+      "completed_utc": "2026-09-15T13:02:39Z"
+    }
+  ],
+  "validation": {
+    "source_revision": "aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06",
+    "release_ctest": [
+      "everett.rank",
+      "everett.groups"
+    ],
+    "asan_ubsan_ctest": [
+      "everett.rank",
+      "everett.groups"
+    ],
+    "sanitizer_flags": "-O2 -g -DNDEBUG -mavx2 -mpopcnt -mno-avx512f -fsanitize=address,undefined -fno-omit-frame-pointer",
+    "shared_query_oracles": "passed for every generated random/dependent query and all variants; timed checksums agree",
+    "warnings": "-Wall -Wextra -Werror; oracle tests also -Wpedantic -UNDEBUG"
+  },
+  "csv_sha256": "6f2f2f955a7ef13c8a749e83e3f48c7e9de3aab5baa4682c6bcfedbb282656b9"
+}

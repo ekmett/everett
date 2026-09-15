@@ -20,5 +20,6 @@ var searchData=
   ['step_17',['step',['../structeverett_1_1index__builder.html#a3ba199a54b1de9e8b7d4916f894ee951',1,'everett::index_builder::step()'],['../structeverett_1_1index__pipeline.html#a3c7feb3744dab8b21bd82bf67ed63df8',1,'everett::index_pipeline::step()']]],
   ['storage_18',['storage',['../structeverett_1_1bit__view.html#a02143aa48081c5f0f48608be608a501d',1,'everett::bit_view']]],
   ['subtract_19',['subtract',['../structeverett_1_1wrapping__fingerprint__algebra.html#a212f848fc332ffe317744fe82effcb21',1,'everett::wrapping_fingerprint_algebra']]],
-  ['subview_20',['subview',['../structeverett_1_1bit__view.html#abc63db2bb1e951e5b960029413c3bbfa',1,'everett::bit_view']]]
+  ['subview_20',['subview',['../structeverett_1_1bit__view.html#abc63db2bb1e951e5b960029413c3bbfa',1,'everett::bit_view']]],
+  ['sum_5fbytes_21',['sum_bytes',['../structeverett_1_1rank15__view.html#ac72b9680b97b74eac52fc5b394b745b9',1,'everett::rank15_view']]]
 ];
