@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -20,6 +21,10 @@
 #include <string>
 #include <utility>
 #include <vector>
+#if defined(__unix__) || defined(__APPLE__)
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
 
 namespace {
   using namespace everett;
@@ -551,6 +556,75 @@ namespace {
     alternate_output<storage_policy<profile_unit::bit>>(
       [](bit_view, bit_view, bit_view newer) { return newer; });
   }
+#if defined(__unix__) || defined(__APPLE__)
+  template <class P> struct guarded_native {
+    using policy_type = P;
+    explicit guarded_native(profile_array<P> source) : sections(std::move(source)) {
+      auto page_size = ::sysconf(_SC_PAGESIZE);
+      require(page_size > 0, "cannot obtain page size");
+      auto page = static_cast<std::size_t>(page_size);
+      auto size = sections.bytes().size();
+      auto pages = (std::max(size, std::size_t{1}) + page - 1) / page;
+      extent = (pages + 1) * page;
+      mapping = ::mmap(nullptr, extent, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+      require(mapping != MAP_FAILED, "cannot map guarded source");
+      auto guard = static_cast<std::byte *>(mapping) + pages * page;
+      if (::mprotect(guard, page, PROT_NONE)) {
+        ::munmap(mapping, extent); mapping = MAP_FAILED;
+        throw std::runtime_error("cannot protect source tail");
+      }
+      data = guard - size;
+      if (size) std::memcpy(data, sections.bytes().data(), size);
+    }
+    ~guarded_native() { if (mapping != MAP_FAILED) ::munmap(mapping, extent); }
+    guarded_native(guarded_native const &) = delete;
+    guarded_native(guarded_native &&) = delete;
+    profile_view<P> view() const {
+      return {std::span<std::byte const>(data, sections.bytes().size()),
+              sections.group_offsets().view(), sections.metadata()};
+    }
+    profile_array<P> sections;
+    void * mapping = MAP_FAILED;
+    std::byte * data = nullptr;
+    std::size_t extent = 0;
+  };
+  template <class P> void guarded_fragments() {
+    std::set<std::string> keys{std::string{}};
+    std::string prefix, unit(P::bits_per_unit, '0'), higher = unit;
+    higher.back() = '1';
+    for (unsigned i = 0; i != 129; ++i) {
+      keys.insert(prefix + higher); prefix += unit; keys.insert(prefix);
+    }
+    std::vector<profile_record> records;
+    for (auto const & key : keys) records.push_back(record<P>(key, 1));
+    for (bool redundant : {false, true}) {
+      std::vector<std::uint64_t> ceilings;
+      if (redundant) for (std::size_t i = 0; i != records.size(); ++i) ceilings.push_back(i % 13);
+      // Find a physically unaligned start and, for bit policy, a partial final
+      // byte. The guard starts immediately after the exact encoded byte extent.
+      auto source = profile_array<P>::build(records, ceilings);
+      for (unsigned extra = 0; extra != 16 &&
+          (((source.bytes().size() & 7) == 0) ||
+           (P::unit == profile_unit::bit && (source.metadata().extent & 7) == 0)); ++extra) {
+        auto value = bits(records.back().value.view()) + unit;
+        records.back().value = bit_string::from_bits(value);
+        source = profile_array<P>::build(records, ceilings);
+      }
+      require((source.bytes().size() & 7) != 0, "guard fixture must start unaligned");
+      if constexpr (P::unit == profile_unit::bit)
+        require((source.metadata().extent & 7) != 0, "guard fixture must have a partial bit tail");
+      auto input = std::make_shared<guarded_native<P> const>(std::move(source));
+      require((reinterpret_cast<std::uintptr_t>(input->data) & 7) != 0, "mapped start unexpectedly aligned");
+      std::weak_ptr<guarded_native<P> const> weak = input;
+      native_merge_builder<P, guarded_native<P>> builder(input, input);
+      input.reset(); builder.step(31);
+      auto moved = std::move(builder);
+      while (!moved.done()) moved.step(7);
+      check_output(moved.finish(), dictionary(records));
+      require(!weak.expired(), "descriptor source mapping lost after finish");
+    }
+  }
+#endif
   void failure_and_pins() {
     using P = storage_policy<profile_unit::byte>;
     auto records = fixture<P>({1}, 1);
@@ -586,6 +660,10 @@ int main() {
     associative_composition<storage_policy<profile_unit::bit, variable_values, 7, golomb<3>, 16>>();
     failure_and_pins();
     output_sink_tests();
+#if defined(__unix__) || defined(__APPLE__)
+    guarded_fragments<storage_policy<profile_unit::byte>>();
+    guarded_fragments<storage_policy<profile_unit::bit, variable_values, 7, golomb<3>, 16>>();
+#endif
     frontier_suite<storage_policy<profile_unit::byte>>();
     frontier_suite<storage_policy<profile_unit::byte, fixed_values<3>, 7, exponential_golomb<0>, 16>>();
     frontier_suite<storage_policy<profile_unit::bit, fixed_values<0>, 3, golomb<3>, 7>>();

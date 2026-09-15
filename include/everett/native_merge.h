@@ -35,7 +35,8 @@ namespace everett {
     // Each record adds at most one span; truncation removes spans permanently.
     // Deep proper-prefix chains can retain one span per key unit.
     template <class P> struct encoded_source {
-      explicit encoded_source(profile_view<P> view) : cursor_(view) {
+      explicit encoded_source(profile_view<P> view)
+        : data_(view.bytes(), view.metadata().extent << P::unit_shift), cursor_(view) {
         if (!done()) retain(cursor_.peek());
       }
       bool done() const noexcept { return cursor_.done(); }
@@ -55,24 +56,21 @@ namespace everett {
 
     private:
       struct span {
+        std::uint64_t source_bit_offset;
         std::uint64_t end_units;
-        bit_view literal;
       };
+      static_assert(sizeof(span) == 16);
       bit_comparison compare_successor(std::uint64_t retained, bit_view suffix) const {
-        auto first = spans_.end();
+        auto first = spans_.size();
         // Every crossed span beyond this boundary will be removed by retain;
         // walking back is amortized over the one span added per input record.
-        while (first != spans_.begin()) {
-          auto previous = first - 1;
-          if (previous->end_units <= retained) break;
-          first = previous;
-        }
+        while (first && spans_[first - 1].end_units > retained) --first;
+        auto begin = first ? spans_[first - 1].end_units : 0;
         // Ordinary FC differs in the first remaining policy unit. Handle it
         // directly; redundant controls fall through to the full fragment walk.
-        if (first != spans_.end() && !suffix.empty()) {
-          auto begin = first->end_units - (first->literal.size() >> P::unit_shift);
-          auto offset = (retained - begin) << P::unit_shift;
-          auto before = profile_detail::load_bits(first->literal, offset, P::bits_per_unit);
+        if (first != spans_.size() && !suffix.empty()) {
+          auto offset = spans_[first].source_bit_offset + ((retained - begin) << P::unit_shift);
+          auto before = profile_detail::load_bits(data_, offset, P::bits_per_unit);
           auto after = profile_detail::load_bits(suffix, 0, P::bits_per_unit);
           if (before != after) {
             auto common = unsigned(std::countl_zero(before ^ after)) - (64 - P::bits_per_unit);
@@ -81,18 +79,19 @@ namespace everett {
         }
         auto position = retained;
         std::uint64_t compared = 0;
-        while (first != spans_.end() && compared != suffix.size()) {
-          auto begin = first->end_units - (first->literal.size() >> P::unit_shift);
-          auto offset = (position - begin) << P::unit_shift;
-          auto count = std::min(first->literal.size() - offset, suffix.size() - compared);
-          auto result = compare_common_bits(first->literal.subview(offset, count),
-                                           suffix.subview(compared, count));
+        while (first != spans_.size() && compared != suffix.size()) {
+          auto const & fragment = spans_[first];
+          auto offset = fragment.source_bit_offset + ((position - begin) << P::unit_shift);
+          auto count = std::min((fragment.end_units - position) << P::unit_shift,
+                                suffix.size() - compared);
+          auto result = compare_common_bits(data_.subview(offset, count), suffix.subview(compared, count));
           if (result.order) {
             result.common_bits += (retained << P::unit_shift) + compared;
             return result;
           }
           compared += count;
-          position = first->end_units;
+          position = fragment.end_units;
+          begin = position;
           ++first;
         }
         auto previous_units = spans_.empty() ? 0 : spans_.back().end_units;
@@ -103,19 +102,18 @@ namespace everett {
       void retain(profile_encoded_record const & record) {
         auto retained = record.retained;
         while (!spans_.empty()) {
-          auto & last = spans_.back();
-          auto begin = last.end_units - (last.literal.size() >> P::unit_shift);
+          auto begin = spans_.size() > 1 ? spans_[spans_.size() - 2].end_units : 0;
           if (begin >= retained) spans_.pop_back();
           else {
-            if (last.end_units > retained) {
-              last.literal = last.literal.prefix((retained - begin) << P::unit_shift);
-              last.end_units = retained;
-            }
+            if (spans_.back().end_units > retained) spans_.back().end_units = retained;
             break;
           }
         }
-        if (!record.suffix.empty()) spans_.push_back({record.key_units, record.suffix});
+        // Every frame uses this one immutable backing. A span's logical start
+        // is the preceding endpoint, so truncation needs no copied length/view.
+        if (!record.suffix.empty()) spans_.push_back({record.suffix.offset(), record.key_units});
       }
+      bit_view data_;
       profile_encoded_cursor<P> cursor_;
       std::vector<span> spans_;
     };
