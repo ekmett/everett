@@ -34,16 +34,19 @@ if(everett_smoke_mode STREQUAL "installed")
   # Remove the original prefix by moving it, so an accidentally hardcoded
   # install path cannot make the consumer appear relocatable.
   file(RENAME "${root}/original" "${root}/relocated")
-  foreach(notice IN ITEMS LICENSE LICENSES/BSD-2-Clause.txt LICENSES/Apache-2.0.txt)
+  foreach(notice IN ITEMS LICENSE THIRD_PARTY.md LICENSES/BSD-2-Clause.txt LICENSES/Apache-2.0.txt
+      third_party/fast-crc32/LICENSE.md third_party/fast-crc32/LICENSE.MIT.md
+      third_party/fast-crc32/LICENSE.zlib.md third_party/fast-crc32/UPSTREAM.md)
     set(installed_notice "${root}/relocated/@CMAKE_INSTALL_DATADIR@/everett/${notice}")
     if(NOT EXISTS "${installed_notice}")
       message(FATAL_ERROR "Installed package is missing ${notice}")
     endif()
-    file(SHA256 "@PROJECT_SOURCE_DIR@/${notice}" source_hash)
-    file(SHA256 "${installed_notice}" installed_hash)
-    if(NOT source_hash STREQUAL installed_hash)
-      message(FATAL_ERROR "Installed license differs from source: ${notice}")
-    endif()
+    everett_run("@CMAKE_COMMAND@" -E compare_files "@PROJECT_SOURCE_DIR@/${notice}" "${installed_notice}")
+  endforeach()
+  foreach(backend IN ITEMS portable arm_scalar arm_pmull arm_eor3 x86_scalar x86_pclmul x86_avx512 x86_vpclmul)
+    set(header "everett/detail/crc32c_${backend}.inc")
+    everett_run("@CMAKE_COMMAND@" -E compare_files "@PROJECT_SOURCE_DIR@/include/${header}"
+      "${root}/relocated/@CMAKE_INSTALL_INCLUDEDIR@/${header}")
   endforeach()
   list(APPEND mode_args "-DCMAKE_PREFIX_PATH=${root}/relocated"
     "-DEVERETT_EXPECTED_PREFIX=${root}/relocated"

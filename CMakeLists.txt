@@ -50,8 +50,11 @@ install(EXPORT everett-targets FILE everett-targets.cmake
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/everett-config.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/everett-config-version.cmake"
   DESTINATION "${everett_config_dir}")
-install(FILES LICENSE DESTINATION "${CMAKE_INSTALL_DATADIR}/everett")
+install(FILES LICENSE THIRD_PARTY.md DESTINATION "${CMAKE_INSTALL_DATADIR}/everett")
 install(DIRECTORY LICENSES/ DESTINATION "${CMAKE_INSTALL_DATADIR}/everett/LICENSES")
+install(FILES third_party/fast-crc32/LICENSE.md third_party/fast-crc32/LICENSE.MIT.md
+  third_party/fast-crc32/LICENSE.zlib.md third_party/fast-crc32/UPSTREAM.md
+  DESTINATION "${CMAKE_INSTALL_DATADIR}/everett/third_party/fast-crc32")
 
 if(EVERETT_BUILD_TESTS)
   enable_testing()
