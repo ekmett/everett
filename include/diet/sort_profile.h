@@ -42,11 +42,11 @@ namespace diet {
       if ((retained + literal.size()) & 7) throw std::invalid_argument("string key ends inside byte");
       return {retained, literal};
     }
-    static void header(sort_bit_writer & out, std::uint64_t retained, std::uint64_t suffix_bits) {
+    template <class Output> static void header(Output & out, std::uint64_t retained, std::uint64_t suffix_bits) {
       if ((retained + suffix_bits) & 7) throw std::invalid_argument("string key ends inside byte");
       out.template write_count<C>(suffix_bits);
     }
-    static void write(sort_bit_writer & out, std::uint64_t retained, bit_view suffix) {
+    template <class Output> static void write(Output & out, std::uint64_t retained, bit_view suffix) {
       header(out, retained, suffix.size()); out.append(suffix);
     }
   };
@@ -57,10 +57,10 @@ namespace diet {
     static fc_key_frame read(sort_bit_reader & in, std::uint64_t retained) {
       return {retained, in.take_bits(in.template read_count<C>())};
     }
-    static void header(sort_bit_writer & out, std::uint64_t, std::uint64_t suffix_bits) {
+    template <class Output> static void header(Output & out, std::uint64_t, std::uint64_t suffix_bits) {
       out.template write_count<C>(suffix_bits);
     }
-    static void write(sort_bit_writer & out, std::uint64_t retained, bit_view suffix) {
+    template <class Output> static void write(Output & out, std::uint64_t retained, bit_view suffix) {
       header(out, retained, suffix.size()); out.append(suffix);
     }
   };
@@ -77,10 +77,10 @@ namespace diet {
       if (retained) throw std::invalid_argument("raw integer has an inherited prefix");
       return {0, in.take_bits(N)};
     }
-    static void header(sort_bit_writer &, std::uint64_t retained, std::uint64_t suffix_bits) {
+    template <class Output> static void header(Output &, std::uint64_t retained, std::uint64_t suffix_bits) {
       if (retained || suffix_bits != N) throw std::invalid_argument("raw integer frame width");
     }
-    static void write(sort_bit_writer & out, std::uint64_t retained, bit_view suffix) {
+    template <class Output> static void write(Output & out, std::uint64_t retained, bit_view suffix) {
       header(out, retained, suffix.size()); out.append(suffix);
     }
   };
@@ -97,11 +97,11 @@ namespace diet {
       if (retained) throw std::invalid_argument("raw string has an inherited prefix");
       return {0, in.take_bits(profile_detail::multiply(in.template read_count<C>(), 8))};
     }
-    static void header(sort_bit_writer & out, std::uint64_t retained, std::uint64_t suffix_bits) {
+    template <class Output> static void header(Output & out, std::uint64_t retained, std::uint64_t suffix_bits) {
       if (retained || (suffix_bits & 7)) throw std::invalid_argument("raw string frame width");
       out.template write_count<C>(suffix_bits >> 3);
     }
-    static void write(sort_bit_writer & out, std::uint64_t retained, bit_view suffix) {
+    template <class Output> static void write(Output & out, std::uint64_t retained, bit_view suffix) {
       header(out, retained, suffix.size()); out.append(suffix);
     }
   };
@@ -407,12 +407,94 @@ namespace diet {
     profile_metadata metadata_ = [] { auto m = profile_detail::initial_metadata<P, stream_role::native>(); m.version = 3; return m; }();
   };
 
+  namespace sort_profile_detail {
+    // Shared wire framing. A sink supplies position, append and write_count;
+    // payload ownership and sealing stay outside this small navigation state.
+    template <class P, class Selector> struct encoder {
+      static_assert(P::unit == profile_unit::bit, "sort profile framing uses bit addresses");
+      using leaves = typename registry_detail::info<typename P::registry_type>::leaves;
+      profile_metadata metadata = [] { auto m = profile_detail::initial_metadata<P, stream_role::native>(); m.version = 3; return m; }();
+      bit_string dictionary, seeds;
+      std::vector<std::uint64_t> dictionary_offsets{0};
+      elias_fano offsets;
+      std::uint64_t size() const noexcept { return metadata.record_count; }
+      template <class Output> void append_frame(Output & out, sort_profile_frame const & frame,
+          std::span<bit_view const> spans, std::uint64_t common, bit_view value) {
+        visit<leaves>::at(frame.leaf, [&]<class S>(std::type_identity<S>) {
+          append<S>(out, frame.path, frame.key_units - frame.path.size(), spans, value, common);
+        });
+      }
+      template <class S, class Output> void append(Output & out, bit_view path, std::uint64_t key_bits,
+          std::span<bit_view const> key, bit_view value, std::uint64_t common) {
+        using codec = sort_profile_key<typename sort_codec<S>::key_codec>;
+        sort_bit_reader validate(value);
+        sort_codec<S>::value_codec::skip(validate);
+        if (!validate.empty()) throw std::invalid_argument("trailing sort profile value bits");
+        auto total = std::uint64_t{0};
+        for (auto part : key) total = profile_detail::add(total, part.size());
+        if (total != profile_detail::add(path.size(), key_bits) || common > total)
+          throw std::invalid_argument("sort merge key spans");
+        constexpr auto leaf = ordinal<leaves, S>::value;
+        auto found = std::find(ids_.begin(), ids_.end(), leaf);
+        auto id = std::size_t(found - ids_.begin());
+        if (found == ids_.end()) {
+          ids_.push_back(leaf); profile_detail::append(dictionary, path);
+          dictionary_offsets.push_back(dictionary.bit_size);
+        }
+        auto same = size() && compare_bits(previous_path_.view(), path) == 0;
+        auto retained = same && codec::front_coded ? common : path.size();
+        if (retained < path.size() || retained > total) throw std::invalid_argument("sort retained prefix outside key");
+        if (!(size() % P::codec_block_size)) {
+          raw_offsets_.push_back(out.position()); block_seeds_.push_back(id);
+          out.template write_count<exponential_golomb<0>>(retained);
+        } else {
+          auto joint = same ? retained : compare_common_bits(previous_path_.view(), path).common_bits;
+          if (joint > previous_continuation_) throw std::invalid_argument("sort backspace exceeds continuation");
+          out.template write_count<typename P::backspace_encoding>(previous_continuation_ - joint);
+          if (!same) out.append(path.subview(joint, path.size() - joint));
+        }
+        auto local = retained - path.size();
+        codec::header(out, local, key_bits - local);
+        auto skip = retained;
+        for (auto part : key) {
+          auto prefix = std::min(skip, part.size()); skip -= prefix;
+          out.append(part.subview(prefix, part.size() - prefix));
+        }
+        out.append(value);
+        if (!size()) metadata.common_value_width = value.size();
+        else if (metadata.common_value_width != value.size()) metadata.common_value_width.reset();
+        ++metadata.record_count;
+        metadata.terminal_key_units = total;
+        previous_path_ = bit_string::copy(path);
+        previous_continuation_ = path.size() + (codec::front_coded ? key_bits : 0);
+      }
+      void finish(std::uint64_t extent) {
+        raw_offsets_.push_back(extent);
+        auto common = metadata.common_value_width.value_or(0);
+        for (std::size_t i = 0; i != raw_offsets_.size(); ++i) {
+          auto ordinal = i + 1 == raw_offsets_.size() ? size() : i * P::codec_block_size;
+          raw_offsets_[i] -= ordinal * common;
+        }
+        offsets = elias_fano::build(raw_offsets_);
+        auto width = ids_.size() < 2 ? 0u : std::bit_width(ids_.size() - 1);
+        sort_bit_writer out(seeds);
+        for (auto id : block_seeds_) out.write_bits(id, unsigned(width));
+        metadata.extent = extent;
+      }
+    private:
+      bit_string previous_path_;
+      std::vector<std::size_t> ids_;
+      std::vector<std::uint64_t> raw_offsets_, block_seeds_;
+      std::uint64_t previous_continuation_ = 0;
+    };
+  }
+
   template <class P, class Selector> struct sort_profile_writer {
     using policy_type = P;
     using array_type = sort_profile_array<P, Selector>;
-    using leaves = typename registry_detail::info<typename P::registry_type>::leaves;
     template <class S> void append(typename sort_codec<S>::key_codec::value_type const & key,
                                   typename sort_codec<S>::value_codec::value_type const & value) {
+      require_active();
       if (encoded_only_) throw std::logic_error("typed append after encoded sort frames");
       sort_codec_detail::validate_value_width<S>();
       bit_string path, encoded_value;
@@ -424,92 +506,45 @@ namespace diet {
       auto comparison = compare_common_bits(previous_.view(), logical.view());
       if (size() && comparison.order >= 0) throw std::invalid_argument("sort profile requires unique sorted keys");
       std::array<bit_view, 1> spans{logical.view()};
-      append_logical<S>(path.view(), bits.bit_size, spans, encoded_value.view(), comparison.common_bits);
-      previous_ = std::move(logical);
+      try {
+        sort_bit_writer out(output_.data_);
+        encoder_.template append<S>(out, path.view(), bits.bit_size, spans, encoded_value.view(), comparison.common_bits);
+        previous_ = std::move(logical);
+      } catch (...) { failed_ = true; throw; }
     }
     // Trusted sorted merge output: spans describe the full logical key, but
     // only the suffix after the known output LCP is copied to the file.
     void append_frame(sort_profile_frame const & frame, std::span<bit_view const> spans,
                       std::uint64_t common, bit_view value) {
-      sort_profile_detail::visit<leaves>::at(frame.leaf, [&]<class S>(std::type_identity<S>) {
-        append_logical<S>(frame.path, frame.key_units - frame.path.size(), spans, value, common);
-      });
-      encoded_only_ = true;
+      require_active();
+      try {
+        sort_bit_writer out(output_.data_);
+        encoder_.append_frame(out, frame, spans, common, value);
+        encoded_only_ = true;
+      } catch (...) { failed_ = true; throw; }
     }
-    std::uint64_t size() const noexcept { return output_.metadata_.record_count; }
+    std::uint64_t size() const noexcept { return encoder_.size(); }
     bool failed() const noexcept { return failed_; }
     bool finished() const noexcept { return finished_; }
     array_type finish() {
       require_active();
       try {
-      offsets_.push_back(output_.data_.bit_size);
-      auto common = output_.metadata_.common_value_width.value_or(0);
-      for (std::size_t i = 0; i != offsets_.size(); ++i) {
-        auto ordinal = i + 1 == offsets_.size() ? size() : i * P::codec_block_size;
-        offsets_[i] -= ordinal * common;
-      }
-      output_.offsets_ = elias_fano::build(offsets_);
-      auto width = ids_.size() < 2 ? 0u : std::bit_width(ids_.size() - 1);
-      sort_bit_writer seeds(output_.seeds_);
-      for (auto id : seeds_) seeds.write_bits(id, unsigned(width));
-      output_.metadata_.extent = output_.data_.bit_size;
-      finished_ = true; return std::move(output_);
+        encoder_.finish(output_.data_.bit_size);
+        output_.metadata_ = encoder_.metadata;
+        output_.offsets_ = std::move(encoder_.offsets);
+        output_.dictionary_ = std::move(encoder_.dictionary);
+        output_.dictionary_offsets_ = std::move(encoder_.dictionary_offsets);
+        output_.seeds_ = std::move(encoder_.seeds);
+        finished_ = true; return std::move(output_);
       } catch (...) { failed_ = true; throw; }
     }
   private:
     array_type output_;
-    bit_string previous_, previous_path_;
-    std::vector<std::size_t> ids_;
-    std::vector<std::uint64_t> offsets_, seeds_;
-    std::uint64_t previous_continuation_ = 0;
+    sort_profile_detail::encoder<P, Selector> encoder_;
+    bit_string previous_;
     bool failed_ = false, finished_ = false, encoded_only_ = false;
     void require_active() const {
       if (failed_ || finished_) throw std::logic_error("inactive sort profile writer");
-    }
-    template <class S> void append_logical(bit_view path, std::uint64_t key_bits, std::span<bit_view const> key, bit_view value, std::uint64_t common) {
-      require_active();
-      try {
-        using codec = sort_profile_key<typename sort_codec<S>::key_codec>;
-        sort_bit_reader validate(value);
-        sort_codec<S>::value_codec::skip(validate);
-        if (!validate.empty()) throw std::invalid_argument("trailing sort profile value bits");
-        constexpr auto leaf = sort_profile_detail::ordinal<leaves, S>::value;
-        auto found = std::find(ids_.begin(), ids_.end(), leaf);
-        auto id = std::size_t(found - ids_.begin());
-        if (found == ids_.end()) {
-          ids_.push_back(leaf); profile_detail::append(output_.dictionary_, path);
-          output_.dictionary_offsets_.push_back(output_.dictionary_.bit_size);
-        }
-        auto same = size() && compare_bits(previous_path_.view(), path) == 0;
-        auto retained = same && codec::front_coded ? common : path.size();
-        auto & data = output_.data_;
-        if (!(size() % P::codec_block_size)) {
-          offsets_.push_back(data.bit_size); seeds_.push_back(id);
-          profile_detail::write_count<P>(data, retained);
-        } else {
-          auto joint = same ? retained : compare_common_bits(previous_path_.view(), path).common_bits;
-          profile_detail::write_backspace<P>(data, previous_continuation_ - joint);
-          if (!same) profile_detail::append(data, path.subview(joint, path.size() - joint));
-        }
-        sort_bit_writer out(data);
-        auto local = retained - path.size();
-        codec::header(out, local, key_bits - local);
-        auto skip = retained;
-        std::uint64_t total = 0;
-        for (auto part : key) {
-          total = profile_detail::add(total, part.size());
-          auto prefix = std::min(skip, part.size()); skip -= prefix;
-          out.append(part.subview(prefix, part.size() - prefix));
-        }
-        if (skip || total != path.size() + key_bits) throw std::invalid_argument("sort merge key spans");
-        out.append(value);
-        if (!size()) output_.metadata_.common_value_width = value.size();
-        else if (output_.metadata_.common_value_width != value.size()) output_.metadata_.common_value_width.reset();
-        ++output_.metadata_.record_count;
-        output_.metadata_.terminal_key_units = path.size() + key_bits;
-        previous_path_ = bit_string::copy(path);
-        previous_continuation_ = path.size() + (codec::front_coded ? key_bits : 0);
-      } catch (...) { failed_ = true; throw; }
     }
   };
 

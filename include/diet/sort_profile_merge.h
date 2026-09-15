@@ -61,15 +61,19 @@ namespace diet {
   }
 
   template <class P, class Native = sort_profile_array<P>, class Compose = replace_native_value,
-            class Selector = typename Native::stream_family::selector_type>
+            class Selector = typename Native::stream_family::selector_type,
+            class Output = sort_profile_writer<P, Selector>>
   struct sort_profile_merge_builder {
     using source_pointer = std::shared_ptr<Native const>;
     using view_type = decltype(std::declval<Native const &>().view());
     sort_profile_merge_builder(source_pointer older, source_pointer newer, Compose compose = {})
+      : sort_profile_merge_builder(Output{}, std::move(older), std::move(newer), std::move(compose)) {}
+    sort_profile_merge_builder(Output output, source_pointer older, source_pointer newer, Compose compose = {})
       : older_(checked(std::move(older))), newer_(checked(std::move(newer))),
-        left_(older_->view()), right_(newer_->view()), compose_(std::move(compose)) {}
+        left_(older_->view()), right_(newer_->view()), output_(std::move(output)), compose_(std::move(compose)) {}
     bool done() const noexcept { return older_ && newer_ && !failed_ && left_.done() && right_.done(); }
-    bool failed() const noexcept { return failed_; }
+    bool failed() const noexcept { return failed_ || output_.failed(); }
+    bool finished() const noexcept { return finished_; }
     native_merge_progress progress() const noexcept { return progress_; }
     std::uint64_t materialized_keys() const noexcept { return materialized_keys_; }
     native_merge_progress step(std::uint64_t budget = 1) {
@@ -103,7 +107,7 @@ namespace diet {
         return work;
       } catch (...) { failed_ = true; throw; }
     }
-    sort_profile_array<P, Selector> finish() {
+    auto finish() {
       if (!done() || finished_) throw std::logic_error("unfinished sort merge");
       try { auto result = output_.finish(); finished_ = true; return result; }
       catch (...) { failed_ = true; throw; }
@@ -111,7 +115,7 @@ namespace diet {
   private:
     source_pointer older_, newer_;
     sort_profile_detail::merge_source<view_type> left_, right_;
-    sort_profile_writer<P, Selector> output_;
+    Output output_;
     Compose compose_;
     native_merge_progress progress_;
     std::uint64_t left_common_ = 0, right_common_ = 0, materialized_keys_ = 0;
