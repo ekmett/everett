@@ -1,11 +1,13 @@
 # Doxygen metadata and declaration ownership
 
-Each public header has its SPDX notices in a Doxygen file block before the code,
-and its author and brief in a second file block at the end. Each SPDX field
-appears once. This follows the
+Each public header starts with one Doxygen file comment containing its file
+marker, author, brief and SPDX notices. Each field appears once, and no file
+metadata footer follows the code. A blank comment paragraph separates the brief
+from the following license block so Doxygen does not include the notices in the
+brief. This follows the
 [REUSE recommendation to place licensing information near the top](https://reuse.software/spec-3.3/#comment-headers).
-The `\file` command attaches each block to its containing file; it does not
-attach the trailing block to the last namespace, structure or function.
+The `\file` command attaches that comment to its containing file; it does not
+attach the metadata to the first namespace, structure or function.
 Doxygen's
 [structural-command documentation](https://www.doxygen.nl/manual/docblocks.html#structuralcommands)
 describes this explicit association. The generated XML is also checked to verify
@@ -49,7 +51,7 @@ These aliases preserve the three SPDX notice lines as a code block. The author
 and file brief remain separate metadata. The public-header notices record Diet's
 `BSD-2-Clause OR Apache-2.0` license choice. Generated CRC kernels retain their
 upstream notices; see [third-party components](../THIRD_PARTY.md).
-Our fixture comparison checks both end-of-file placement and the split layout.
+The two-file fixture checks declaration ownership with this same top-header layout.
 Doxygen describes alias expansion in its
 [custom-command manual](https://www.doxygen.nl/manual/custcmd.html).
 
@@ -88,9 +90,9 @@ before each run so removed declarations cannot leave stale published pages.
 `tests/check_doxygen.py` runs Doxygen over the actual public headers and checks:
 
 - Each file compound has its own exact brief, author and all three SPDX notices.
-- Each SPDX field appears exactly once in the source, in the leading file block
-  before code. The final file block contains only author and brief metadata.
-- The SPDX code block ends before the author and brief, and file metadata does
+- One combined file comment precedes code and contains the file marker, author,
+  brief and all SPDX fields. Each SPDX field appears exactly once in the source.
+- The author and brief are outside the SPDX code block, and file metadata does
   not appear in namespace, structure or member descriptions.
 - Namespace functions and class members have the expected qualified owners,
   source files and declaration lines. Concrete cases include
@@ -105,17 +107,18 @@ before each run so removed declarations cannot leave stale published pages.
   and reader acquisition.
   Template parameters are checked as well.
 - Two files with same-named functions, same-named classes in distinct namespaces,
-  overloads and distinct documentation markers retain identical ownership and
-  descriptions with combined file blocks before or after the declarations, and
-  with SPDX notices before and author/brief after. The source locations must
-  change by precisely the actual movement.
+  overloads and distinct documentation markers retain their expected ownership,
+  descriptions and exact source locations beneath combined top file comments.
+- Negative fixtures reject footer-only or split file metadata, duplicate blocks,
+  author/brief commands inside the license, SPDX fields outside the license and
+  a missing license terminator.
 - A baseline without the aliases emits exactly the two expected unknown-command
   warnings per header. The configured run must emit no warnings.
 
-At `ca33a77` on 2026-09-15, Doxygen 1.9.8 passed these checks for all 42 public headers,
-41 real function/overload cases and twelve fixture symbols in all three
-metadata layouts. The unconfigured baseline had 84 warnings, exclusively for
-`\license` and `\endlicense`.
+The checker reports the exact header and function/overload counts for the source
+revision being documented. The unconfigured baseline must emit two warnings per
+header, exclusively for `\license` and `\endlicense`; these are intentional
+negative controls, not warnings accepted in the configured publication.
 
 These checks verify file metadata and the tested lexical associations. Some
 APIs still lack prose descriptions. `EXTRACT_ALL=YES` exposes declarations for

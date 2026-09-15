@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 ##
 # \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Tests Diet's Doxygen metadata and declaration associations.
+#
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -117,12 +120,15 @@ def description(element):
                     ("briefdescription", "detaileddescription", "inbodydescription"))
 
 
-def metadata_fields(path, split=False):
+def metadata_fields(path):
     source = path.read_text(encoding="utf-8")
     blocks = [block for block in re.finditer(r"/\*\*(.*?)\*/", source, re.S)
               if re.search(r"\\file\s", block.group(1))]
-    require(bool(blocks), f"Missing file metadata: {path}")
-    metadata = "\n".join(block.group(1) for block in blocks)
+    require(len(blocks) == 1, f"Expected one combined file metadata block: {path}")
+    head = blocks[0]
+    require(not source[:head.start()].strip(), f"File metadata must precede code: {path}")
+    metadata = head.group(1)
+    require(len(re.findall(r"\\file\b", metadata)) == 1, f"Nonunique file command: {path}")
     briefs = re.findall(r"\\brief ([^\n]+)", metadata)
     authors = re.findall(r"\\author ([^\n]+)", metadata)
     require(len(briefs) == 1 and len(authors) == 1, f"Nonunique brief or author: {path}")
@@ -133,29 +139,23 @@ def metadata_fields(path, split=False):
         require(len(matches) == 1, f"Expected exactly one SPDX-{field}: {path}")
         require(matches[0] in metadata, f"SPDX notice outside file metadata: {path}")
         notices.append(matches[0])
-    if split:
-        require(len(blocks) == 2, f"Expected separate leading/trailing file blocks: {path}")
-        head, tail = blocks
-        require(not source[:head.start()].strip(), f"SPDX header must precede code: {path}")
-        require(not source[tail.end():].strip(), f"File brief/author must follow code: {path}")
-        require(all(notice in head.group(1) for notice in notices), f"SPDX notices must be in header: {path}")
-        require("\\license" in head.group(1) and "\\endlicense" in head.group(1),
-                f"Missing SPDX block delimiters: {path}")
-        require("\\brief" not in head.group(1) and "\\author" not in head.group(1),
-                f"Brief/author must remain in footer: {path}")
-        require("SPDX-" not in tail.group(1) and "\\license" not in tail.group(1)
-                and "\\endlicense" not in tail.group(1), f"License repeated in footer: {path}")
+    license_blocks = re.findall(r"\\license\b(.*?)\\endlicense\b", metadata, re.S)
+    require(len(license_blocks) == 1 and len(re.findall(r"\\(?:end)?license\b", metadata)) == 2,
+            f"Expected one complete SPDX block: {path}")
+    license_text = license_blocks[0]
+    require(all(notice in license_text for notice in notices), f"SPDX notice outside license: {path}")
+    require(not re.search(r"\\(?:author|brief)\b", license_text), f"File metadata nested in license: {path}")
     normalize = lambda value: " ".join(value.replace("<", "").replace(">", "").split())
     return normalize(briefs[0]), normalize(authors[0]), [" ".join(value.split()) for value in notices]
 
 
-def check_file_metadata(items, headers, aliases=True, split=False, markdown=()):
+def check_file_metadata(items, headers, aliases=True, markdown=()):
     files = {item.findtext("compoundname"): item for item in items
              if item.attrib["kind"] == "file"}
     require(set(files) == {path.name for path in [*headers, *markdown]}, "Unexpected documented file set")
     briefs = []
     for path in headers:
-        brief, author, notices = metadata_fields(path, split=split)
+        brief, author, notices = metadata_fields(path)
         briefs.append(brief)
         item = files[path.name]
         require(text(item.find("briefdescription")) == brief, f"Wrong file brief: {path}")
@@ -285,7 +285,7 @@ def check_actual_members(items, source):
     return len(cases)
 
 
-def make_fixtures(directory, placement):
+def make_fixtures(directory):
     directory.mkdir(parents=True, exist_ok=True)
     expected = {}
     for filename, namespace, parameter in (("alpha.h", "left", "int"), ("beta.h", "right", "double")):
@@ -306,22 +306,46 @@ def make_fixtures(directory, placement):
         lines += ["};", "}", f"/// \\brief {marker}",
                   f"inline {parameter} standalone({parameter} value) {{ return value; }}"]
         specs.append((filename, "standalone", marker, "function"))
-        footer = ["/**", r" * \file", r" * \license", " * SPDX-FileType: SOURCE",
+        header = ["/**", r" * \file", r" * \author Edward Kmett <ekmett@gmail.com>",
+                  f" * \\brief File {filename} marker.", " *", r" * \license", " * SPDX-FileType: SOURCE",
                   " * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>",
                   " * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0",
-                  r" * \endlicense", r" * \author Edward Kmett <ekmett@gmail.com>",
-                  f" * \\brief File {filename} marker.", " */"]
-        if placement == "split":
-            head = footer[:7] + [" */"]
-            tail = ["/**", r" * \file"] + footer[7:]
-            complete = head + lines + tail
-        else:
-            complete = footer + lines if placement == "before" else lines + footer
+                  r" * \endlicense", " */"]
+        complete = header + lines
         (directory / filename).write_text("\n".join(complete) + "\n", encoding="utf-8")
         for owner, name, marker, kind in specs:
             line = next(i + 2 for i, value in enumerate(complete) if value.strip() == "/// \\brief " + marker)
             expected[marker] = (owner, name, kind, filename, line)
     return expected
+
+
+def check_metadata_rejections(directory, valid_header):
+    directory.mkdir(parents=True, exist_ok=True)
+    source = valid_header.read_text(encoding="utf-8")
+    end = source.index("*/") + 2
+    header, code = source[:end], source[end:]
+    metadata = "\n".join(line for line in header.splitlines()
+                         if "\\author" in line or "\\brief" in line)
+    without_metadata = "\n".join(line for line in header.splitlines()
+                                  if "\\author" not in line and "\\brief" not in line)
+    notice = next(line for line in header.splitlines() if "SPDX-License-Identifier:" in line)
+    invalid = {
+        "footer": code + header,
+        "split": without_metadata + code + "/**\n * \\file\n" + metadata + "\n */\n",
+        "duplicate": source + header,
+        "nested": without_metadata.replace(r" * \endlicense", metadata + "\n" + r" * \endlicense") + code,
+        "outside-license": header.replace(notice, "").replace(r" * \license", notice + "\n" + r" * \license") + code,
+        "unterminated-license": source.replace(r"\endlicense", ""),
+    }
+    for name, content in invalid.items():
+        path = directory / (name + ".h")
+        path.write_text(content, encoding="utf-8")
+        try:
+            metadata_fields(path)
+        except RuntimeError:
+            continue
+        raise RuntimeError("Invalid file metadata accepted: " + name)
+    return len(invalid)
 
 
 def check_fixtures(items, expected):
@@ -672,6 +696,8 @@ def main():
     source, output = args.source.resolve(), args.output.resolve()
     headers = sorted((source / "include/diet").glob("*.h"))
     require(bool(headers), "No Diet headers found")
+    for header in headers:
+        metadata_fields(header)
     baseline = output / "baseline"
     diagnostics = run_doxygen(args.doxygen, source, headers, baseline, aliases=False)
     lines = diagnostics.splitlines()
@@ -679,7 +705,7 @@ def main():
     require(all(re.search(r"warning: Found unknown command ['`]\\(?:end)?license['`]", line) for line in lines),
             f"Unexpected baseline diagnostics: {diagnostics}")
     baseline_items = compounds(baseline)
-    check_file_metadata(baseline_items, headers, aliases=False, split=True)
+    check_file_metadata(baseline_items, headers, aliases=False)
     check_actual_members(baseline_items, source)
 
     check_markdown_adapter()
@@ -689,7 +715,7 @@ def main():
     run_doxygen(args.doxygen, source, [*headers, *markdown], reference, aliases=True, html=True,
                 markdown_main=source / "README.md")
     items = compounds(reference)
-    check_file_metadata(items, headers, split=True, markdown=markdown)
+    check_file_metadata(items, headers, markdown=markdown)
     member_count = check_actual_members(items, source)
     repaired_links = repair_markdown_links(items, source, reference)
     items = compounds(reference)
@@ -697,19 +723,17 @@ def main():
     items = compounds(reference)
     formula_count = check_markdown_pages(items, source, markdown, reference)
     check_markdown_fixture(args.doxygen, output)
-    fixture_results = []
-    for placement in ("before", "after", "split"):
-        inputs = output / ("fixture-" + placement)
-        expected = make_fixtures(inputs, placement)
-        generated = output / ("fixture-" + placement + "-docs")
-        run_doxygen(args.doxygen, source, [inputs], generated, aliases=True)
-        items = compounds(generated)
-        check_file_metadata(items, sorted(inputs.glob("*.h")), split=placement == "split")
-        fixture_results.append(check_fixtures(items, expected))
-    require(all(result == fixture_results[0] for result in fixture_results[1:]),
-            "Moving or splitting file metadata changed symbol documentation")
+    inputs = output / "fixture-top"
+    expected = make_fixtures(inputs)
+    rejection_count = check_metadata_rejections(output / "metadata-rejections", inputs / "alpha.h")
+    generated = output / "fixture-top-docs"
+    run_doxygen(args.doxygen, source, [inputs], generated, aliases=True)
+    items = compounds(generated)
+    check_file_metadata(items, sorted(inputs.glob("*.h")))
+    check_fixtures(items, expected)
     print(f"Checked {len(headers)} headers, {member_count} real function/overload associations, "
-          "and twelve fixture symbols with file metadata before/after/split around declarations.")
+          "and twelve fixture symbols with combined top-of-file metadata.")
+    print(f"Rejected {rejection_count} misplaced, duplicated or malformed file-metadata fixtures.")
     print(f"Checked {len(markdown)} Markdown pages and {formula_count} dollar formulas with MathJax HTML, "
           f"cross-page links ({repaired_links} repaired links), and protected-code/currency fixtures.")
     print(f"Bundled {source_files} linked source files with byte-for-byte checks.")
@@ -722,9 +746,3 @@ if __name__ == "__main__":
     except (RuntimeError, OSError, xml.ParseError) as error:
         print(f"Doxygen check failed: {error}", file=sys.stderr)
         sys.exit(1)
-
-
-##
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Tests Diet's Doxygen metadata and declaration associations.
