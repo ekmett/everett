@@ -19,11 +19,94 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace everett {
   struct replace_native_value {
     bit_view operator()(bit_view, bit_view, bit_view newer) const { return newer; }
+    bit_view operator()(bit_view, bit_view newer) const { return newer; }
   };
+
+  namespace native_merge_detail {
+    // Keep the predecessor as immutable literal spans, without copying its
+    // inherited prefix. A new retained boundary can precede the immediately
+    // preceding literal, so checking that one literal alone is insufficient.
+    // Each record adds at most one span; truncation removes spans permanently.
+    // Deep proper-prefix chains can retain one span per key unit.
+    template <class P> struct encoded_source {
+      explicit encoded_source(profile_view<P> view) : cursor_(view) {
+        if (!done()) retain(cursor_.peek());
+      }
+      bool done() const noexcept { return cursor_.done(); }
+      profile_encoded_record const & peek() const & { return cursor_.peek(); }
+      profile_encoded_record const & peek() const && = delete;
+
+      std::optional<bit_comparison> advance_comparison() {
+        cursor_.advance();
+        if (done()) return std::nullopt;
+        auto const & next = cursor_.peek();
+        auto result = compare_successor(next.retained, next.suffix);
+        if (result.order >= 0)
+          throw std::invalid_argument("native merge inputs must have unique sorted keys");
+        retain(next);
+        return result;
+      }
+
+    private:
+      struct span {
+        std::uint64_t end_units;
+        bit_view literal;
+      };
+      bit_comparison compare_successor(std::uint64_t retained, bit_view suffix) const {
+        auto first = spans_.end();
+        // Every crossed span beyond this boundary will be removed by retain;
+        // walking back is amortized over the one span added per input record.
+        while (first != spans_.begin()) {
+          auto previous = first - 1;
+          if (previous->end_units <= retained) break;
+          first = previous;
+        }
+        auto position = retained;
+        std::uint64_t compared = 0;
+        while (first != spans_.end() && compared != suffix.size()) {
+          auto begin = first->end_units - (first->literal.size() >> P::unit_shift);
+          auto offset = (position - begin) << P::unit_shift;
+          auto count = std::min(first->literal.size() - offset, suffix.size() - compared);
+          auto result = compare_common_bits(first->literal.subview(offset, count),
+                                           suffix.subview(compared, count));
+          if (result.order) {
+            result.common_bits += (retained << P::unit_shift) + compared;
+            return result;
+          }
+          compared += count;
+          position = first->end_units;
+          ++first;
+        }
+        auto previous_units = spans_.empty() ? 0 : spans_.back().end_units;
+        auto previous_remaining = (previous_units - retained) << P::unit_shift;
+        return {(retained << P::unit_shift) + compared,
+                previous_remaining < suffix.size() ? -1 : previous_remaining > suffix.size() ? 1 : 0};
+      }
+      void retain(profile_encoded_record const & record) {
+        auto retained = record.retained;
+        while (!spans_.empty()) {
+          auto & last = spans_.back();
+          auto begin = last.end_units - (last.literal.size() >> P::unit_shift);
+          if (begin >= retained) spans_.pop_back();
+          else {
+            if (last.end_units > retained) {
+              last.literal = last.literal.prefix((retained - begin) << P::unit_shift);
+              last.end_units = retained;
+            }
+            break;
+          }
+        }
+        if (!record.suffix.empty()) spans_.push_back({record.key_units, record.suffix});
+      }
+      profile_encoded_cursor<P> cursor_;
+      std::vector<span> spans_;
+    };
+  }
 
   struct native_merge_progress {
     std::uint64_t keys = 0;
@@ -31,13 +114,17 @@ namespace everett {
   };
 
   // Merge two chronologically ordered native streams. Equal keys call
-  // compose(key, older_value, newer_value); default composition is replacement.
+  // compose(key, older_value, newer_value), or compose(older_value, newer_value)
+  // for value-only policies. Default composition is replacement. Key-aware
+  // policies retain materialized cursors; the other cases forward encoded
+  // literals and validate strict input order through immutable prefix spans.
+  // A custom policy accepting both forms uses the key-aware form.
   // Each input must have unique sorted keys. Input owners stay pinned,
   // including after a decoding/composition failure.
   // Callback keys borrow cursor scratch. A policy retaining a value view must
   // retain its source owner too; reassignment can release earlier source pins.
-  // Construction decodes the first record from each nonempty source before
-  // any step budget is charged.
+  // Construction parses the first record from each nonempty source before any
+  // step budget is charged; key-aware policies also reconstruct those keys.
   // One step unit handles one distinct key and at most two input records.
   // Key bytes, composition work, output allocation and final EF work are extra.
   template <class P, class Native = profile_array<P>, class Compose = replace_native_value>
@@ -46,6 +133,11 @@ namespace everett {
     using policy_type = P;
     using source_type = Native;
     using source_pointer = std::shared_ptr<Native const>;
+    static constexpr bool encoded_keys = std::is_same_v<Compose, replace_native_value> ||
+      (!std::is_invocable_v<Compose &, bit_view, bit_view, bit_view> &&
+       std::is_invocable_v<Compose &, bit_view, bit_view>);
+    static_assert(encoded_keys || std::is_invocable_v<Compose &, bit_view, bit_view, bit_view>,
+                  "native composition accepts (key, older, newer) or (older, newer)");
 
     native_merge_builder(source_pointer older, source_pointer newer, Compose compose = {},
         std::optional<std::uint64_t> common_value_width = P::value_width)
@@ -92,20 +184,23 @@ namespace everett {
           auto total_records = profile_detail::add(progress_.input_records, consumed);
           if (order < 0) {
             auto item = older_cursor_.peek();
-            append(item.key.prefix, item.value, older_prefix_);
+            append(item, item.value, older_prefix_);
             newer_prefix_ = comparison.common_bits >> P::unit_shift;
             older_prefix_ = advance(older_cursor_);
           } else if (order > 0) {
             auto item = newer_cursor_.peek();
-            append(item.key.prefix, item.value, newer_prefix_);
+            append(item, item.value, newer_prefix_);
             older_prefix_ = comparison.common_bits >> P::unit_shift;
             newer_prefix_ = advance(newer_cursor_);
           } else {
             auto older = older_cursor_.peek(), newer = newer_cursor_.peek();
-            auto value = std::invoke(compose_, older.key.prefix, older.value, newer.value);
+            auto value = [&] {
+              if constexpr (encoded_keys) return std::invoke(compose_, older.value, newer.value);
+              else return std::invoke(compose_, older.key.prefix, older.value, newer.value);
+            }();
             if constexpr (std::is_same_v<decltype(value), bit_view>)
-              append(older.key.prefix, value, older_prefix_);
-            else append(older.key.prefix, value.view(), older_prefix_);
+              append(older, value, older_prefix_);
+            else append(older, value.view(), older_prefix_);
             older_prefix_ = advance(older_cursor_);
             newer_prefix_ = advance(newer_cursor_);
           }
@@ -127,9 +222,21 @@ namespace everett {
     }
 
   private:
-    void append(bit_view key, bit_view value, std::uint64_t retained) {
-      auto first = retained * P::bits_per_unit;
-      writer_.append(retained, key.subview(first, key.size() - first), value);
+    using cursor_type = std::conditional_t<encoded_keys, native_merge_detail::encoded_source<P>,
+                                            profile_cursor<P, stream_role::native>>;
+    static bit_view suffix(auto const & item, std::uint64_t retained) {
+      if constexpr (encoded_keys) {
+        if (retained < item.retained)
+          throw std::invalid_argument("native merge output prefix precedes input prefix");
+        auto first = (retained - item.retained) << P::unit_shift;
+        return item.suffix.subview(first, item.suffix.size() - first);
+      } else {
+        auto first = retained << P::unit_shift;
+        return item.key.prefix.subview(first, item.key.prefix.size() - first);
+      }
+    }
+    void append(auto const & item, bit_view value, std::uint64_t retained) {
+      writer_.append(retained, suffix(item, retained), value);
     }
     // Both heads follow the last emitted key p. The head sharing more of p
     // sorts first. Equal LCPs need only a suffix comparison from that boundary.
@@ -137,17 +244,15 @@ namespace everett {
       if (older_cursor_.done()) return {0, 1};
       if (newer_cursor_.done()) return {0, -1};
       if (older_prefix_ != newer_prefix_)
-        return {std::min(older_prefix_, newer_prefix_) * P::bits_per_unit,
+        return {std::min(older_prefix_, newer_prefix_) << P::unit_shift,
                 older_prefix_ > newer_prefix_ ? -1 : 1};
-      auto older = older_cursor_.peek().key.prefix;
-      auto newer = newer_cursor_.peek().key.prefix;
-      auto start = older_prefix_ * P::bits_per_unit;
-      auto result = compare_common_bits(older.subview(start, older.size() - start),
-                                       newer.subview(start, newer.size() - start));
+      auto start = older_prefix_ << P::unit_shift;
+      auto result = compare_common_bits(suffix(older_cursor_.peek(), older_prefix_),
+                                       suffix(newer_cursor_.peek(), newer_prefix_));
       result.common_bits += start;
       return result;
     }
-    static std::uint64_t advance(profile_cursor<P, stream_role::native> & cursor) {
+    static std::uint64_t advance(cursor_type & cursor) {
       auto comparison = cursor.advance_comparison();
       if (!comparison) return 0;
       if (comparison->order >= 0)
@@ -164,8 +269,8 @@ namespace everett {
     }
     source_pointer older_;
     source_pointer newer_;
-    profile_cursor<P, stream_role::native> older_cursor_;
-    profile_cursor<P, stream_role::native> newer_cursor_;
+    cursor_type older_cursor_;
+    cursor_type newer_cursor_;
     profile_detail::native_output<P> writer_;
     Compose compose_;
     native_merge_progress progress_;

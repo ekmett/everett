@@ -105,6 +105,18 @@ namespace {
       return bit_string::from_bits(bits(older) + bits(newer));
     }
   };
+  struct concatenate_values {
+    bit_string operator()(bit_view older, bit_view newer) const {
+      return bit_string::from_bits(bits(older) + bits(newer));
+    }
+  };
+  struct throws_values {
+    bit_view operator()(bit_view, bit_view) const { throw std::runtime_error("value composition failed"); }
+  };
+  struct key_value {
+    bit_string operator()(bit_view key, bit_view, bit_view) const { return bit_string::copy(key); }
+    bit_string operator()(bit_view, bit_view newer) const { return bit_string::copy(newer); }
+  };
   struct throws {
     bit_view operator()(bit_view, bit_view, bit_view) const { throw std::runtime_error("composition failed"); }
   };
@@ -352,6 +364,101 @@ namespace {
     cursor_comparisons<P>(); frontier_cases<P>(); partial_moves<P>();
     malformed_input<P>(); late_callback_failure<P>();
   }
+  template <class P> void fragmented_prefixes() {
+    static_assert(native_merge_builder<P>::encoded_keys);
+    static_assert(native_merge_builder<P, profile_array<P>, concatenate_values>::encoded_keys);
+    static_assert(!native_merge_builder<P, profile_array<P>, concatenate>::encoded_keys);
+    static_assert(!native_merge_builder<P, profile_array<P>, key_value>::encoded_keys);
+    auto unit = std::string(P::bits_per_unit, '0');
+    auto higher = unit; higher.back() = '1';
+    std::set<std::string> keys{std::string{}};
+    std::string prefix;
+    // Each proper extension can add another retained literal span. The later
+    // branches truncate through those old fragments, often before the current
+    // frame's literal. The oracle owns the original complete bit strings.
+    for (unsigned depth = 0; depth != 257; ++depth) {
+      keys.insert(prefix + higher);
+      prefix += unit;
+      keys.insert(prefix);
+    }
+    std::vector<profile_record> older, newer;
+    unsigned ordinal = 0;
+    for (auto const & key : keys) {
+      auto value = [&](unsigned tag) {
+        if constexpr (!P::fixed_width)
+          if (ordinal % 5 == 0) return bit_string{};
+        return record<P>(key, tag).value;
+      };
+      if (ordinal % 3 != 1) older.push_back({bit_string::from_bits(key), value(1)});
+      if (ordinal % 4 != 2) newer.push_back({bit_string::from_bits(key), value(2)});
+      ++ordinal;
+    }
+    auto expected = dictionary(older), concatenated = expected, keyed = expected;
+    for (auto const & [key, value] : dictionary(newer)) {
+      expected[key] = value;
+      concatenated[key] += value;
+      if (keyed.contains(key)) keyed[key] = key;
+      else keyed[key] = value;
+    }
+    for (unsigned mode = 0; mode != 3; ++mode) {
+      std::vector<std::uint64_t> a_ceiling, b_ceiling;
+      if (mode == 1) {
+        for (std::size_t i = 0; i != older.size(); ++i) a_ceiling.push_back(i % 11);
+        for (std::size_t i = 0; i != newer.size(); ++i) b_ceiling.push_back(i % 7);
+      }
+      auto a = profile_array<P>::build(older, a_ceiling, mode == 2 ? 3 : 0);
+      auto b = profile_array<P>::build(newer, b_ceiling, mode == 2 ? 3 : 0);
+      check_output(merge(a, b), expected);
+      if constexpr (!P::fixed_width) {
+        check_output(merge(a, b, concatenate_values{}), concatenated);
+        check_output(merge(a, b, concatenate{}), concatenated);
+        check_output(merge(a, b, key_value{}), keyed);
+      }
+    }
+  }
+  void value_callback_failure() {
+    using P = storage_policy<profile_unit::bit>;
+    auto records = prefix_records<P>();
+    auto source = std::make_shared<profile_array<P> const>(profile_array<P>::build(records));
+    std::weak_ptr<profile_array<P> const> retained = source;
+    native_merge_builder<P, profile_array<P>, throws_values> builder(source, source);
+    source.reset();
+    rejects([&] { builder.step(); });
+    require(builder.failed() && !retained.expired(), "value callback failure lost input pins");
+    rejects([&] { builder.step(); });
+    rejects([&] { (void)builder.finish(); });
+  }
+  template <class P> void malformed_fragment() {
+    auto zero = std::string(P::bits_per_unit, '0'), one = zero;
+    one.back() = '1';
+    std::vector<profile_record> records;
+    for (auto const & key : {zero, zero + zero, zero + zero + zero,
+                            zero + zero + one, zero + one + zero})
+      records.push_back(record<P>(key, 1));
+    for (bool duplicate : {false, true}) {
+      auto bad = profile_array<P>::build(records);
+      auto prior = bad.view().encoded_at(3), changed = bad.view().encoded_at(4);
+      require(changed.retained < prior.retained, "fragment mutation must reach inherited prefix");
+      auto replacement = bit_string::from_bits(zero + (duplicate ? one : zero));
+      require(changed.suffix.size() == replacement.bit_size, "fragment mutation framing");
+      auto * bytes = const_cast<std::byte *>(changed.suffix.storage().data());
+      for (std::uint64_t i = 0; i != replacement.bit_size; ++i) {
+        auto at = changed.suffix.offset() + i;
+        auto mask = 1u << (7 - (at & 7));
+        auto old = std::to_integer<unsigned>(bytes[at >> 3]);
+        bytes[at >> 3] = std::byte(replacement.view().at(i) ? old | mask : old & ~mask);
+      }
+      auto source = std::make_shared<profile_array<P> const>(std::move(bad));
+      auto empty = std::make_shared<profile_array<P> const>(profile_array<P>::build({}));
+      for (bool left : {false, true}) {
+        native_merge_builder<P> builder(left ? source : empty, left ? empty : source);
+        require(builder.step(3).keys == 3, "fragment valid-prefix progress");
+        rejects([&] { builder.step(); });
+        require(builder.failed(), "inherited-prefix order failure did not poison merge");
+        rejects([&] { (void)builder.finish(); });
+      }
+    }
+  }
   void failure_and_pins() {
     using P = storage_policy<profile_unit::byte>;
     auto records = fixture<P>({1}, 1);
@@ -391,6 +498,12 @@ int main() {
     frontier_suite<storage_policy<profile_unit::bit, fixed_values<0>, 3, golomb<3>, 7>>();
     frontier_suite<storage_policy<profile_unit::bit, fixed_values<3>, 15, exponential_golomb<3>, 16>>();
     frontier_suite<storage_policy<profile_unit::bit, variable_values, 7, golomb<3>, 16>>();
+    fragmented_prefixes<storage_policy<profile_unit::byte>>();
+    fragmented_prefixes<storage_policy<profile_unit::bit>>();
+    fragmented_prefixes<storage_policy<profile_unit::bit, fixed_values<0>, 3, golomb<3>, 7>>();
+    value_callback_failure();
+    malformed_fragment<storage_policy<profile_unit::byte, variable_values, 7, exponential_golomb<0>, 4>>();
+    malformed_fragment<storage_policy<profile_unit::bit, fixed_values<0>, 3, golomb<3>, 4>>();
     std::cout << "native merge tests passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';
