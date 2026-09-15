@@ -53,52 +53,7 @@ namespace everett {
 
     // Keys must be strictly increasing. Input views need only survive this
     // call. A rejected append leaves the preceding committed records intact.
-    void append(bit_view key, bit_view value) {
-      require_active();
-      if (key.size() % P::bits_per_unit || value.size() % P::bits_per_unit)
-        throw std::invalid_argument("native writer record length disagrees with policy units");
-      auto value_units = value.size() / P::bits_per_unit;
-      if (common_ && value_units != *common_)
-        throw std::invalid_argument("native writer value disagrees with common width");
-      auto comparison = compare_common_bits(previous_.view(), key);
-      if (count_ && comparison.order >= 0)
-        throw std::invalid_argument("native writer keys must be strictly increasing");
-      auto next_count = profile_detail::add(count_, 1);
-      auto retained = comparison.common_bits / P::bits_per_unit;
-      auto previous_units = previous_.bit_size / P::bits_per_unit;
-      auto key_units = key.size() / P::bits_per_unit;
-      auto saved_bits = data_.bit_size;
-      auto saved_offsets = offsets_.size();
-      // Reserve before touching output; failures retain the logical
-      // predecessor. Its capacity is private and may grow on rejection.
-      auto next_bytes = profile_detail::byte_count(key.size());
-      if (next_bytes > previous_.bytes.max_size()) throw std::length_error("profile bit string too large");
-      previous_.bytes.reserve(static_cast<std::size_t>(next_bytes));
-      try {
-        if (count_ % P::codec_block_size == 0) {
-          auto stride = profile_detail::multiply(count_, common_.value_or(0));
-          offsets_.push_back(data_.bit_size / P::bits_per_unit - stride);
-          profile_detail::write_count<P>(data_, previous_units);
-        }
-        profile_detail::write_backspace<P>(data_, previous_units - retained);
-        profile_detail::write_count<P>(data_, key_units - retained);
-        if (!common_) profile_detail::write_count<P>(data_, value_units);
-        auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
-        profile_detail::append(data_, key.subview(retained_bits, key.size() - retained_bits));
-        profile_detail::append(data_, value);
-      } catch (...) {
-        profile_detail::resize(data_, saved_bits);
-        offsets_.resize(saved_offsets);
-        throw;
-      }
-      // All output writes succeeded. This resize cannot allocate; preserve
-      // whole-byte common prefixes for byte profiles and exact bits otherwise.
-      auto common_bits = comparison.common_bits - comparison.common_bits % P::bits_per_unit;
-      profile_detail::resize(previous_, key.size());
-      profile_detail::copy_into(previous_, common_bits,
-        key.subview(common_bits, key.size() - common_bits));
-      count_ = next_count;
-    }
+    void append(bit_view key, bit_view value) { append_impl(key, value, std::nullopt); }
     void append(profile_record const & record) { append(record.key.view(), record.value.view()); }
 
     // Finalizing Elias–Fano visits the staged block offsets. This operation
@@ -128,6 +83,62 @@ namespace everett {
     }
 
   private:
+    template <class, class, class> friend struct native_merge_builder;
+    // The merger supplies the exact output LCP and strict ordering. Keep this
+    // path private: bounds alone cannot certify an arbitrary prefix promise.
+    void append_impl(bit_view key, bit_view value, std::optional<std::uint64_t> known_prefix) {
+      require_active();
+      if (key.size() % P::bits_per_unit || value.size() % P::bits_per_unit)
+        throw std::invalid_argument("native writer record length disagrees with policy units");
+      auto value_units = value.size() / P::bits_per_unit;
+      if (common_ && value_units != *common_)
+        throw std::invalid_argument("native writer value disagrees with common width");
+      auto previous_units = previous_.bit_size / P::bits_per_unit;
+      auto key_units = key.size() / P::bits_per_unit;
+      std::uint64_t retained;
+      if (known_prefix) {
+        retained = *known_prefix;
+        if (retained > previous_units || retained > key_units || (count_ && retained == key_units))
+          throw std::invalid_argument("native writer invalid known prefix");
+      } else {
+        auto comparison = compare_common_bits(previous_.view(), key);
+        if (count_ && comparison.order >= 0)
+          throw std::invalid_argument("native writer keys must be strictly increasing");
+        retained = comparison.common_bits / P::bits_per_unit;
+      }
+      auto next_count = profile_detail::add(count_, 1);
+      auto saved_bits = data_.bit_size;
+      auto saved_offsets = offsets_.size();
+      // Reserve before touching output; failures retain the logical
+      // predecessor. Its capacity is private and may grow on rejection.
+      auto next_bytes = profile_detail::byte_count(key.size());
+      if (next_bytes > previous_.bytes.max_size()) throw std::length_error("profile bit string too large");
+      previous_.bytes.reserve(static_cast<std::size_t>(next_bytes));
+      try {
+        if (count_ % P::codec_block_size == 0) {
+          auto stride = profile_detail::multiply(count_, common_.value_or(0));
+          offsets_.push_back(data_.bit_size / P::bits_per_unit - stride);
+          profile_detail::write_count<P>(data_, previous_units);
+        }
+        profile_detail::write_backspace<P>(data_, previous_units - retained);
+        profile_detail::write_count<P>(data_, key_units - retained);
+        if (!common_) profile_detail::write_count<P>(data_, value_units);
+        auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
+        profile_detail::append(data_, key.subview(retained_bits, key.size() - retained_bits));
+        profile_detail::append(data_, value);
+      } catch (...) {
+        profile_detail::resize(data_, saved_bits);
+        offsets_.resize(saved_offsets);
+        throw;
+      }
+      // All output writes succeeded. This resize cannot allocate; preserve
+      // whole-byte common prefixes for byte profiles and exact bits otherwise.
+      auto common_bits = retained * P::bits_per_unit;
+      profile_detail::resize(previous_, key.size());
+      profile_detail::copy_into(previous_, common_bits,
+        key.subview(common_bits, key.size() - common_bits));
+      count_ = next_count;
+    }
     void require_active() const {
       if (finished_) throw std::logic_error("native profile writer is finished");
     }

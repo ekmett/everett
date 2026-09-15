@@ -864,7 +864,19 @@ namespace everett {
     }
     profile_item<P> peek() const && = delete;
 
-    void advance() {
+    void advance() { advance_impl(nullptr); }
+
+    // Compare the old and new keys from the retained FC prefix onward before
+    // replacing scratch. Ordinary FC needs only its first differing unit;
+    // redundant retained-prefix encodings remain correct. No result at EOF.
+    std::optional<bit_comparison> advance_comparison() {
+      bit_comparison result;
+      advance_impl(&result);
+      return done() ? std::nullopt : std::optional<bit_comparison>{result};
+    }
+
+  private:
+    void advance_impl(bit_comparison * comparison) {
       if (done()) throw std::out_of_range("profile cursor at end");
       if (ordinal_ + 1 == view_.size()) {
         if (record_.next_offset != view_.metadata_.extent)
@@ -875,6 +887,13 @@ namespace everett {
         return;
       }
       auto next = view_.next_record(record_, ordinal_ + 1);
+      if (comparison) {
+        auto retained_bits = profile_detail::multiply(next.retained, P::bits_per_unit);
+        auto previous = scratch_.view();
+        auto suffix = compare_common_bits(
+          previous.subview(retained_bits, previous.size() - retained_bits), next.suffix);
+        *comparison = {retained_bits + suffix.common_bits, suffix.order};
+      }
       profile_view<P, Role>::decode_into(next, std::numeric_limits<std::uint64_t>::max(), scratch_, context_);
       record_ = next;
       ++ordinal_;
