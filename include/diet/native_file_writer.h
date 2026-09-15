@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Streams ordinary front-coded native objects with bounded payload buffering.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -78,9 +80,3 @@ namespace diet {
     bit_string previous_;
   };
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Streams ordinary front-coded native objects with bounded payload buffering.
- */

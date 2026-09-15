@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Merges ordered native streams incrementally with policy-specific value composition.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -314,9 +316,3 @@ namespace diet {
     bool failed_ = false;
   };
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Merges ordered native streams incrementally with policy-specific value composition.
- */

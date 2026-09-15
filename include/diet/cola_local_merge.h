@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Stages one owning native merge and its exact COLA destination/carrier indexes.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -179,9 +181,3 @@ namespace diet {
     }
   };
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Stages one owning native merge and its exact COLA destination/carrier indexes.
- */

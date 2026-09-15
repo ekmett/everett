@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Encodes portable blob sections and retains mmap-backed profile directories.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -534,9 +536,3 @@ namespace diet {
     word_view cuts_;
   };
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Encodes portable blob sections and retains mmap-backed profile directories.
- */

@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Stores retained roots, timeline generations and exact file graphs in optional SQLite metadata.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -855,9 +857,3 @@ CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name),
     }
   };
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Stores retained roots, timeline generations and exact file graphs in optional SQLite metadata.
- */

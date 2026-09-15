@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Declares Diet's cola support.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -383,9 +385,3 @@ namespace diet {
   template <class V, class A, class H, class P>
   partition_round(reference_cola<V, A, H>, std::string, P) -> partition_round<V, A, H, P>;
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Declares Diet's cola support.
- */

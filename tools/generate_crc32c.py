@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
+# \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Regenerates Diet's pinned CRC32C backends.
+# \license
+# SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+# \endlicense
 
 """Regenerate the pinned Corsix CRC32C backends; consumers need not run this."""
 
@@ -88,7 +94,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# \file
-# \author Edward Kmett <ekmett@gmail.com>
-# \brief Regenerates Diet's pinned CRC32C backends.

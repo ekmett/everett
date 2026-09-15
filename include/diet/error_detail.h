@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Outlines exceptional check failures while preserving their types and messages.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -22,9 +24,3 @@ namespace diet::error_detail {
 #endif
   inline void raise(char const * message) { throw E(message); }
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Outlines exceptional check failures while preserving their types and messages.
- */

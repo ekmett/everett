@@ -1,5 +1,7 @@
 /**
  * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Binds mapped COLA main and secondary targets with exact immutable pins.
  * \license
  * SPDX-FileType: SOURCE
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
@@ -217,9 +219,3 @@ namespace diet {
     return mapped_cola_query_root<P>::adopt_prepared(std::move(pair));
   }
 }
-
-/**
- * \file
- * \author Edward Kmett <ekmett@gmail.com>
- * \brief Binds mapped COLA main and secondary targets with exact immutable pins.
- */
