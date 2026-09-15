@@ -153,6 +153,8 @@ namespace everett {
   // hard links and directory fsync. Sealed means our writer stops mutating it;
   // read-only permissions do not prevent an owner from changing them later.
   template <class P, class Ops = posix_object_ops> struct object_writer {
+    using policy_type = P;
+
     static object_seal_receipt seal(std::filesystem::path const & root,
         object_id const & id, object_attempt_id const & attempt, file_header<P> const & header,
         std::span<std::span<std::byte const> const> chunks, Ops & ops) {

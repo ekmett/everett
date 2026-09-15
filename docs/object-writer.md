@@ -22,6 +22,9 @@ auto sealed = everett::object_writer<P>::seal(
   std::span<std::byte const>(encoded_body));
 ```
 
+`multiverse<P>::seal_object` forwards the same operation through its existing
+root; `multiverse<P>::object_writer` names the policy-bound writer type.
+
 The body can instead be a span of borrowed byte spans, including empty spans.
 Their bytes must remain readable and immutable for the whole call. A retained
 mapping is suitable; the writer does not allocate or reconstruct the body. It

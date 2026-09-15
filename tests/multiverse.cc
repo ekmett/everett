@@ -34,6 +34,7 @@ namespace {
   static_assert(std::same_as<multiverse<bytes>::sort, sort<bytes>>);
   static_assert(std::same_as<multiverse<bytes>::blob, profile_blob<bytes>>);
   static_assert(std::same_as<multiverse<bytes>::file, file<bytes>>);
+  static_assert(std::same_as<multiverse<bytes>::object_writer, object_writer<bytes>>);
   static_assert(std::same_as<multiverse<bytes>::world, world<bytes>>);
   static_assert(std::same_as<multiverse<bytes>::timeline, timeline<bytes>>);
   static_assert(std::same_as<multiverse<bytes>::branch_point, branch_point<bytes>>);
@@ -181,6 +182,32 @@ namespace {
     trusted_kind.scan(); // Object bytes are valid; the trusted filename assertion was wrong.
   }
 
+  template <class P> void seal_objects() {
+#if defined(__APPLE__) || defined(__linux__)
+    temporary_directory temporary;
+    multiverse<P> store(temporary.path);
+    auto id = object_id("123456789abcdef0123456789abcdef0");
+    auto attempt = object_attempt_id("fedcba9876543210fedcba9876543210");
+    auto payload = bit_string::from_bytes("opaque encoded body");
+    for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
+      file_header<P> header{kind, payload.bit_size / P::bits_per_unit, 0,
+        kind == file_kind::fractional_index ? std::optional<std::uint64_t>{0} : P::value_width};
+      auto body = std::span<std::byte const>(payload.bytes);
+      std::array chunks{body.first(3), body.subspan(3)};
+      auto receipt = kind == file_kind::native_blob ? store.seal_object(id, attempt, header, body) :
+        store.seal_object(id, attempt, header, chunks);
+      auto object = store.open_object(id, kind);
+      object.scan();
+      auto mapped = object.body();
+      require(object.header() == header && std::ranges::equal(mapped.bytes(), body),
+              "multiverse sealing changed envelope or body");
+      require(receipt.path == store.root() / object_path(id, kind), "multiverse sealed outside its root");
+      rejects([&] { store.seal_object(id, attempt, header, body); });
+      require(std::ranges::equal(mapped.bytes(), body), "multiverse collision changed retained object");
+    }
+#endif
+  }
+
   template <class P> void trusted_objects() {
     temporary_directory temporary;
     auto id = object_id("0123456789abcdef0123456789abcdef");
@@ -231,6 +258,8 @@ int main() {
     sort_codes();
     roots_are_read_only();
     read_objects();
+    seal_objects<bytes>();
+    seal_objects<bits>();
     trusted_objects<bytes>();
     trusted_objects<bits>();
     trusted_objects<storage_policy<profile_unit::bit, variable_values, 15, golomb<3>>>();

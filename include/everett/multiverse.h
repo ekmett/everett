@@ -10,9 +10,11 @@
 #pragma once
 
 #include <everett/file.h>
+#include <everett/object_writer.h>
 #include <everett/query.h>
 
 #include <filesystem>
+#include <span>
 #include <stdexcept>
 #include <utility>
 
@@ -44,10 +46,9 @@ namespace everett {
     bit_string code_;
   };
 
-  // The working read side of the backing store. It holds a canonical existing
-  // root and opens immutable object envelopes, checked by default; it does not make
-  // directories, allocate IDs, update a metadata catalog, publish worlds or reclaim data.
-  // SQLite world/pin/progress metadata integration remains separate work.
+  // Holds an existing canonical object root. Reads check envelopes by default;
+  // sealing creates immutable files under caller-reserved identities. SQLite
+  // world/pin/progress metadata integration remains separate work.
   // Files/slices retain their mappings independently of this path holder.
   template <class P> struct multiverse {
     using policy_type = P;
@@ -58,6 +59,7 @@ namespace everett {
     using query_cursor = everett::query_cursor<P>;
     using query_context = everett::profile_query_context<P>;
     using file = everett::file<P>;
+    using object_writer = everett::object_writer<P>;
     using world = everett::world<P>;
     using timeline = everett::timeline<P>;
     using branch_point = everett::branch_point<P>;
@@ -72,6 +74,17 @@ namespace everett {
       if (mode == file_open_mode::checked && result.header().kind != kind)
         throw std::invalid_argument("unexpected Everett object kind");
       return result;
+    }
+
+    // The caller establishes root durability and reserves both identities.
+    // Sealing acknowledges object persistence operations, not world adoption.
+    object_seal_receipt seal_object(object_id const & id, object_attempt_id const & attempt,
+        file_header<P> const & header, std::span<std::byte const> body) const {
+      return object_writer::seal(root_, id, attempt, header, body);
+    }
+    object_seal_receipt seal_object(object_id const & id, object_attempt_id const & attempt,
+        file_header<P> const & header, std::span<std::span<std::byte const> const> chunks) const {
+      return object_writer::seal(root_, id, attempt, header, chunks);
     }
 
   private:

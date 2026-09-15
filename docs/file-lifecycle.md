@@ -2,8 +2,8 @@
 
 Updated 2026-09-15. SQLite manages catalog metadata; bulk data lives in two
 custom file kinds, `.kv` and `.index`. We have read-only mapping, checked object
-envelopes and typed codecs as implemented foundations. Serialized codec
-sections, the SQLite adapter, writers and recovery executor remain work. See
+envelopes, typed codecs and an immutable object writer as implemented foundations.
+Serialized codec sections, the SQLite adapter and recovery executor remain work. See
 [implementation status](implementation.md), the [catalog design](catalog.md)
 and the [failure and resumption protocol](durability.md).
 
@@ -106,8 +106,9 @@ example uncertain outputs; it does not automatically scan the whole database on
 every restart. A scrub can request the same operation.
 
 The header check establishes interpretation and bounds, not payload integrity.
-A writer or receiver can compute the checksum while streaming bytes, without
-reopening them for a second pass; that streaming writer API remains work.
+`object_writer<P>` computes the checksum while streaming borrowed chunks,
+without reopening them for a second pass. The [sealing protocol](object-writer.md)
+specifies exclusive construction, no-clobber installation and OS barriers.
 Checked partial reads will need a separate page/block integrity format, which
 is not implemented yet.
 
@@ -279,12 +280,13 @@ Merge checkpoints recover representation work and cannot replace update
 admission records. A catalog-only backup likewise omits the external objects;
 a complete backup must retain and transfer a consistent dependency closure.
 
-## Verification still required for the writer
+## Persistence verification
 
-Before treating the writer as durable, we need to check:
+The object writer's tests cover short writes, interruptions, disk-full errors,
+close errors and injected failure at each write/synchronization/install boundary.
+They preserve uncertain private and final outputs. Full storage-backend
+validation additionally needs:
 
-- Short writes, interruptions, disk-full errors, close errors and failure at
-  each synchronization/rename boundary.
 - Process termination at publication cuts, uncertain catalog commit outcomes,
   operation retry and recovery from both possible outcomes of a failed barrier.
 - Missing dependencies, corrupted bodies, invalid K/W or unit metadata, stale
@@ -298,6 +300,7 @@ Before treating the writer as durable, we need to check:
   stale liveness observations and directory synchronization failures.
 - Persistent recovery compared with an independent logical-world oracle.
 
-Our parser and mapping tests are useful now, and the protocol-model tests check
-the ordering decisions. We still need filesystem fault-injection and power-loss
-validation of the chosen backend; those tests answer different questions.
+Parser, mapping and writer tests exercise current implementations, and the
+protocol-model tests check publication decisions. The injected syscall failures
+do not simulate every filesystem's writeback behavior or physical power loss;
+those remain separate backend validation tasks.

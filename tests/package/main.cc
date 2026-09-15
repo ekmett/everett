@@ -15,6 +15,7 @@
 #include <everett/mapped_file.h>
 #include <everett/multiverse.h>
 #include <everett/object_path.h>
+#include <everett/object_writer.h>
 #include <everett/pins.h>
 #include <everett/policy.h>
 #include <everett/profile.h>
@@ -40,6 +41,7 @@ static_assert(std::is_same_v<store::blob::policy_type, policy>);
 static_assert(std::is_same_v<store::query_root, everett::query_root<policy>>);
 static_assert(std::is_same_v<store::query_cursor, everett::query_cursor<policy>>);
 static_assert(std::is_same_v<store::query_context, everett::profile_query_context<policy>>);
+static_assert(std::is_same_v<store::object_writer::policy_type, policy>);
 
 std::uint32_t crc32c_from_other_translation_unit(std::span<std::byte const> bytes);
 
@@ -81,6 +83,10 @@ int main() {
     ++matches;
   }
   if (matches != 2) return 9;
+  if (everett::crc32c(check.subspan(4), everett::crc32c(check.first(4))) != 0xe3069283u) return 10;
+  everett::file_header<policy> envelope{everett::file_kind::native_blob, 0, 0, 3};
+  auto encoded_header = everett::encode_file_header(envelope, 0);
+  if (everett::decode_file_header<policy>(encoded_header) != envelope) return 11;
   return 0;
 }
 

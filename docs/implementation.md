@@ -18,6 +18,7 @@ for integration. These are development responsibilities.
 | --- | --- | --- |
 | Navigation and recovery | `rank.h`, `rank15.h`, `select15.h`, `durability.h`; `tests/rank.cc`, `tests/durability.cc` | rank and sparse-offset oracles, counter transitions, publication ordering, failure and resumption cases |
 | Grouped navigation and object files | `rank_groups.h`, `select_groups.h`, `mapped_file.h`, `file.h`, `object_path.h`; group/mapping/file tests | policy groups, checked binary envelopes, retained mappings and canonical sharded paths |
+| Immutable object sealing | `object_writer.h`; `tests/object_writer.cc` | streamed CRC, exclusive creation, no-clobber installation, OS barrier ordering, failure identities and retained outputs |
 | Checksums | `crc32c.h`, generated backends, pinned generator and package notices; `tests/crc32c.cc` | independent CRC oracle, bounded loads, reproducible generation, target guards and multi-translation-unit installed consumption |
 | Key primitives | `key_detail.h`, `profile.h`; `tests/profile.cc`; [key policies](keys.md) | bounded comparisons, bit movement, count framing and independent bit-level oracles |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `multiverse.h`; profile/blob/multiverse tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
@@ -211,7 +212,19 @@ select uncertain objects for scanning without scanning every file on restart.
 Opening alone does not establish payload integrity; lazy block-level integrity
 checking is not implemented. The body is presently opaque: portable
 rank/select/profile section serialization remains work.
-`encode_file` is pure serialization, not a durable object writer.
+`encode_file` serializes a complete object; `encode_file_header` emits only its
+96-byte envelope from a caller-supplied body CRC. `crc32c(bytes, previous_crc)`
+continues a checksum over borrowed chunks without copying them.
+
+`object_writer<P>` streams borrowed chunks through a private file, synchronizes
+contents, installs its final name without replacement, then synchronizes the
+shard hierarchy and private-name removal. Linux uses `fsync`; macOS uses
+`F_FULLFSYNC` file barriers with directory `fsync`. The
+[object sealing contract](object-writer.md) covers reserved identities, same-device
+root assumptions and receipt scope. It performs no normal-path readback scan.
+Injected errors preserve surviving names and stop further writes or publication;
+short/interrupted writes are completed, while failed syncs and closes are never
+retried. This physical primitive does not implement catalog adoption or recovery.
 
 POSIX tests protect every payload page while exercising checked opening, and
 the entire mapping while exercising trusted construction and body slicing.
@@ -271,8 +284,9 @@ not substitutes. The intended network path copies received native object bytes
 unchanged, then builds receiver-specific fractional indexes as detailed in
 [network admission](network-admission.md).
 
-`multiverse<P>` is a working read-side object-directory owner. It exposes
-`sort = everett::sort<P>`, `blob`, `file` and forward-declared `world`, `timeline`
+`multiverse<P>` owns an existing object-directory path. It opens objects and
+forwards `seal_object` to the same-policy writer. It exposes
+`sort = everett::sort<P>`, `blob`, `file`, `object_writer` and forward-declared `world`, `timeline`
 and `branch_point` types. `sort<P>` validates one code's packing and unit
 alignment; it does not establish prefix freedom of an entire registry. Mapped
 files and slices outlive the reader object. There is no SQLite connection or
@@ -487,9 +501,9 @@ cmake --build build-sanitize --parallel 4
 ctest --test-dir build-sanitize --output-on-failure
 ```
 
-The sixteen component suites are `rank`, `groups`, `comparison_fc`, `profile`,
+The seventeen component suites are `rank`, `groups`, `comparison_fc`, `profile`,
 `profile_blob`, `sampling`, `index_builder`, `index_pipeline`, `query`, `world`, `pins`,
-`durability`, `mapped_file`, `files`, `multiverse` and `crc32c`. Two additional CTests
+`durability`, `mapped_file`, `files`, `object_writer`, `multiverse` and `crc32c`. Two additional CTests
 validate relocated installation and embedded CMake consumption, including
 typed headers and CRC calls across translation units. We record combined
 verification here after these commands run.
@@ -512,8 +526,12 @@ also reproduced all eight backends.
 All six complete README examples also compiled and ran with strict warnings
 and ASan/UBSan. Local Markdown links were checked, including heading anchors.
 Windows execution coverage is limited to the recorded rank component tests.
-A persistent SQLite backend, network transport, filesystem writer fault injection
-and physical power loss remain outside these checks.
+The object writer at `8214d4b` and its `multiverse` forwarding passed the six
+affected sanitizer CTests: CRC, files, writer, multiverse and both package
+consumers. They cover failure at every syscall position, short/interrupted
+writes, disk-full errors, uncertain installation, close failures and retained
+real outputs. A persistent SQLite backend, network transport and physical
+power loss remain outside these checks.
 
 The optional `EVERETT_BUILD_DOCS` configuration generates Doxygen HTML/XML and
 checks all file footers plus representative function/member ownership. A

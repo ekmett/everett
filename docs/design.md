@@ -29,9 +29,10 @@ First, some names for the intended aggregates:
 - A **branch point** is a retained point from which a timeline can continue or
   fork; `branch_point` is the intended API spelling.
 
-`multiverse<P>` implements the read side of an existing object directory and
-exposes `sort`, `blob`, `file`, `world`, `timeline` and `branch_point` associated
-types carrying the same policy. Persistent worlds/timelines remain design work;
+`multiverse<P>` opens and seals objects in an existing directory. It exposes
+`sort`, `blob`, `file`, `object_writer`, `world`, `timeline` and `branch_point`
+associated types carrying the same policy. The [sealing primitive](object-writer.md)
+uses reserved identities; world publication remains a separate catalog operation. Persistent worlds/timelines remain design work;
 their aggregate types are forward declarations. The semantic oracle is
 `reference_world`. The [SQLite catalog](catalog.md) is the selected home for
 worlds, pins and merge/index-rebuild progress.

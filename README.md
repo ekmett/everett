@@ -43,6 +43,7 @@ I call the backing store and its relationships the **multiverse**.
 | `sample_cursor`, `index_builder`, `index_pipeline` | Sampling an existing pair and building new index links incrementally. |
 | `query_root`, `query_root_builder`, `query_cursor` | Preparing a bounded search head and visiting matching native entries through an exact index chain. |
 | `mapped_file`, `file`, `multiverse` | Retained read-only mappings and policy-checked object access. |
+| `object_writer`, `multiverse::seal_object` | Streamed immutable object writes with explicit persistence barriers and retained failure identities. |
 | `reference_world`, `partition_round`, `pin_set` | Executable snapshot, update, fingerprint, and ownership semantics. |
 
 Immutability makes sharing straightforward. Two readers can retain the same
@@ -482,6 +483,15 @@ magic, version, policy and header CRC32C, without reading the body. An explicit
 or a scrub calls for it. Opening an object does not certify its payload.
 `multiverse<P>` opens these objects beneath an existing backing directory and
 exposes their associated policy-bound types.
+
+`multiverse<P>::seal_object` writes a body under caller-reserved object and
+attempt identities. It accepts a contiguous span or borrowed chunks, including
+mmap-backed input. The writer computes CRC32C while streaming, seals a private
+file, installs its name without replacing an existing object, and flushes the
+directory chain. A failed operation retains surviving outputs and reports its
+identities and last acknowledged stage. The [sealing protocol](docs/object-writer.md)
+spells out Linux/macOS barriers and the caller's recovery obligations. Sealing
+an object is one step toward publishing a world; SQLite adoption remains separate.
 
 For already trusted objects, pass `file_open_mode::trusted` to `open`,
 `from_slice`, or `multiverse<P>::open_object`. This avoids reading even the
