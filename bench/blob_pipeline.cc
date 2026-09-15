@@ -198,16 +198,17 @@ namespace {
     out.integer(offsets.record_count); out.integer(offsets.universe); out.integer(offsets.low_width);
     for (auto const & sample : offsets.samples) { out.integer(sample.first); out.integer(sample.sparse); }
   }
+  template <class B> void hash_blob(digest & result, B const & value) {
+    hash_array(result, value.native()); hash_array(result, value.borrowed());
+    result.words(value.interleave().classes);
+    result.words(value.interleave().checkpoints);
+    result.integer(value.interleave().total);
+    result.integer(value.virtual_size());
+    result.data(value.false_borrow_bits());
+  }
   template <class B> digest hash_chain(std::shared_ptr<B const> head) {
     digest result;
-    for (auto current = head; current; current = current->target()) {
-      hash_array(result, current->native()); hash_array(result, current->borrowed());
-      result.words(current->interleave().classes);
-      result.words(current->interleave().checkpoints);
-      result.integer(current->interleave().total);
-      result.integer(current->virtual_size());
-      result.data(current->false_borrow_bits());
-    }
+    for (auto current = head; current; current = current->target()) hash_blob(result, *current);
     return result;
   }
   double elapsed(clock_type::time_point first) {
@@ -219,6 +220,8 @@ namespace {
     auto head = input.build_chain();
     input.verify(head);
     auto signature = hash_chain(head);
+    digest base_signature;
+    hash_blob(base_signature, *input.sources[0]);
     std::array<double, 3> times{};
     std::uint64_t checksum = 0;
     for (unsigned round = 0; round != rounds; ++round) {
@@ -229,7 +232,9 @@ namespace {
           auto result = blob::build(input.records[0]);
           times[0] += elapsed(begin);
           digest check;
-          hash_array(check, result.native());
+          hash_blob(check, result);
+          require(!result.target() && check.value == base_signature.value && check.bytes == base_signature.bytes,
+                  "base encoding changed between rounds");
           checksum += check.value;
         } else if (selected == 1) {
           auto begin = clock_type::now();
