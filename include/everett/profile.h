@@ -111,6 +111,11 @@ namespace everett {
     inline void copy_bits(std::byte * target, std::uint64_t first, bit_view source) noexcept {
       auto count = source.size();
       if (!count) return;
+      if (((first | source.offset() | count) & 7) == 0) {
+        std::memmove(target + first / 8, source.storage().data() + source.offset() / 8,
+          static_cast<std::size_t>(count / 8));
+        return;
+      }
       // Detect overlapping storage without ordering unrelated C++ pointers.
       auto destination = reinterpret_cast<std::uintptr_t>(target + first / 8);
       auto origin = reinterpret_cast<std::uintptr_t>(source.storage().data() + source.offset() / 8);
@@ -192,6 +197,13 @@ namespace everett {
   };
   inline bit_comparison compare_common_bits(bit_view a, bit_view b) {
     auto count = std::min(a.size(), b.size());
+    // Most unrelated keys can differ immediately; do not load a whole word
+    // just to discover a mismatch in the first meaningful bit.
+    if (count) {
+      auto x = (std::to_integer<unsigned>(a.storage()[a.offset() / 8]) >> (7 - a.offset() % 8)) & 1;
+      auto y = (std::to_integer<unsigned>(b.storage()[b.offset() / 8]) >> (7 - b.offset() % 8)) & 1;
+      if (x != y) return {0, x ? 1 : -1};
+    }
     std::uint64_t at = 0;
     if (count >= 8 && a.offset() % 8 == 0 && b.offset() % 8 == 0) {
       at = 8 * key_detail::common_bytes(a.storage().data() + a.offset() / 8,
