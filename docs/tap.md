@@ -127,7 +127,7 @@ constructors and destructors must also avoid waiting for their own tap: their
 reservation is still held until they return, so a recursive submission or
 shutdown could wait on itself. Nonblocking snapshot access remains safe.
 
-An engine exception stops the worker, preserves the last published snapshot,
+By default, an engine exception stops the worker, preserves the last published snapshot,
 fails the active and queued tickets, and rejects new submissions. `failure()`
 returns its exception pointer, including failures during maintenance when no
 contribution ticket was active. Failed private
@@ -137,6 +137,15 @@ engine's lifetime. Durable uncertain attempts may still need catalog recovery;
 a tap exception is not a statement that an uncertain disk commit rolled back.
 Existing permanent catalog owners also mean a queue limit does not bound total
 retained history or implement garbage collection.
+
+An engine may additionally expose `bool failed() const noexcept`. After an
+exception from `contribute`, returning false certifies that the rejected request
+left its logical state unchanged and the engine can continue. The tap then
+fails only that ticket, refunds its reservation and processes later requests.
+This requires a cola type with a nonthrowing move constructor. Exceptions after
+`contribute` returns, or during maintenance, still stop the worker. A durable
+engine must report failure after an uncertain publication; it cannot treat that
+case as a harmless validation error.
 
 Engine contract
 ---------------

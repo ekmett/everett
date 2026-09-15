@@ -5,8 +5,8 @@ Updated 2026-09-15. Specification: [Diet design](design.md).
 This ledger records what works, what the tests establish, and what remains to
 be built. The C++20 foundations live in `include/diet/`, in
 namespace `diet`. Immutable files, mmap queries and saved catalog roots work;
-the mutable cola runtime and bounded redundant-level scheduler remain
-implementation work.
+the encoded mutable runtime now executes real carries. The bounded redundant-level
+scheduler remains separate implementation work.
 
 ## Ownership and acceptance
 
@@ -25,6 +25,8 @@ for integration. These are development responsibilities.
 | Key primitives | `key_detail.h`, `profile.h`; `tests/profile.cc`; [key policies](keys.md) | bounded comparisons, bit movement, count framing and independent bit-level oracles |
 | Sort registry | `registry.h`, `policy.h`; `tests/registry.cc`, `tests/registry_compat.cc` | typed discriminator dispatch, width/unit inference, stable-code extension, file-local framing and catalog reopen under broader defaults |
 | Mutable tap | `tap.h`; `tests/tap.cc` | serialized immutable publication, bounded accepted input, readiness backpressure, cancellation, shutdown, exact logical identity and worker failure |
+| Encoded runtime | `cola_runtime.h`; `tests/cola_runtime.cc` | chronological runs, real native/index/carrier work, immutable publication, budget partition, mmap restoration and failed continuation isolation |
+| Runtime persistence | `runtime_store.h`; `tests/sqlite_catalog_runtime.cc` | exact graph sealing, weak owner caches, named checkpoints, saved frontiers, mapped reopening and pending carry restart |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `fridge.h`; profile/blob/fridge tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
 | Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
 | Native construction and merging | `native_writer.h`, `native_merge.h`; native writer/merge tests | streaming record acceptance, preserved FC/EF bytes, chronological composition, input pins and failure state |
@@ -37,6 +39,32 @@ checks and remaining limits. Host-specific resource coordination stays outside
 this package.
 
 ## Implemented foundations
+
+### Active runtime and named frontiers
+
+`cola_runtime<P, Compose>` admits encoded records, creates a real private binary
+carry queue, and publishes completed equivalent layouts. Its immutable snapshots
+retain chronological admission intervals independently of duplicate collapse.
+`admission_ready`, `try_contribute`, `admission_cost` and `next_service_cost`
+separate new admission from existing debt. The next admission waits for the
+current carry; this is conservative backpressure, not the three-slot redundant
+schedule's worst-case update bound. Structural charges cover executed stages;
+codec finalization remains atomic and byte/callback costs remain separate.
+
+`runtime_store<P>` seals that exact graph, reuses known native owners during
+reindexing, and publishes its root plus small checkpoint through schema 4.
+Reopening maps the published files and validates frontier metadata without
+decoding payloads. Unfinished private work restarts from the published inputs.
+The focused ASan/UBSan suites check equivalent layouts, noncommutative merges,
+protected-payload restoration, historical snapshots, reopened carries and
+competing durable publishers. The [runtime persistence guide](runtime-store.md)
+states the current retention and identity-allocation boundaries.
+
+`tap<Engine>` provides serialized mutable publication and bounded accepted
+inputs. Optional readiness blocks new claims behind prior engine debt. An
+engine can certify a preflight rejection left state unchanged; only that ticket
+fails. Uncertain or partial execution failures stop the worker. Focused tests
+exercise both paths, shutdown during required service and old snapshot ownership.
 
 ### COLA main and secondary indexes
 

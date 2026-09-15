@@ -306,7 +306,29 @@ namespace diet {
             else if (closing_ && count_ == 0) break;
           }
           if (item) {
-            auto candidate = next(engine_->contribute(std::move(*item->input)), true);
+            std::optional<cola_type> produced;
+            try { produced.emplace(engine_->contribute(std::move(*item->input))); }
+            catch (...) {
+              // This optional contract certifies that a rejected contribution
+              // did not change logical state. Do not apply it to failures in
+              // next(), durability publication, or other work after contribute.
+              if constexpr (std::is_nothrow_move_constructible_v<cola_type> &&
+                  requires (Engine const & value) { { value.failed() } noexcept -> std::same_as<bool>; }) {
+                if (!engine_->failed()) {
+                  auto error = std::current_exception();
+                  pending = engine_->pending();
+                  item->input.reset();
+                  {
+                    std::lock_guard lock(mutex_);
+                    item->result.set_exception(error); unreserve(item->charge);
+                  }
+                  changed_.notify_all();
+                  continue;
+                }
+              }
+              throw;
+            }
+            auto candidate = next(std::move(*produced), true);
             item->input.reset();
             pending = engine_->pending();
             std::atomic_store_explicit(&current_, candidate, std::memory_order_release);

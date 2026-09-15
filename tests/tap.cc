@@ -195,6 +195,16 @@ namespace {
       return engine::contribute(std::move(value));
     }
   };
+  struct validating_engine : engine {
+    using engine::engine;
+    bool broken = false;
+    bool failed() const noexcept { return broken; }
+    cola_type contribute(contribution value) {
+      if (value.id < 0) throw std::invalid_argument("rejected before mutation");
+      try { return engine::contribute(std::move(value)); }
+      catch (...) { broken = true; throw; }
+    }
+  };
 
   contribution input(int id, std::uint64_t work = 1, std::uint64_t bytes = 1) {
     contribution value; value.id = id; value.work = work; value.bytes = bytes; return value;
@@ -467,12 +477,28 @@ namespace {
     pipe.shutdown();
     check(pipe.pending_count() == 0, "close left accepted work behind prerequisite service");
   }
+  void rejected_contribution() {
+    auto gate = std::make_shared<control>(); gate->blocked_id = 1;
+    tap<validating_engine> pipe(validating_engine(gate), {8, 8, 4, 1});
+    auto first = pipe.submit(input(1)); gate->wait_active();
+    auto rejected = pipe.submit(input(-1));
+    auto following = pipe.submit(input(2));
+    gate->release_active(); first.get();
+    rejects<std::invalid_argument>([&] { (void)rejected.get(); }, "preflight rejection was swallowed");
+    auto result = following.get();
+    check(result->cola->values == std::vector<int>({1, 2}) && result->generation == 2 && !pipe.failure(),
+      "preflight rejection poisoned healthy Engine or published a generation");
+    auto failing = input(3); failing.fail = true;
+    rejects<engine_failure>([&] { (void)pipe.apply(std::move(failing)); }, "execution error was swallowed");
+    check(bool(pipe.failure()) && pipe.snapshot() == result, "execution error was treated as safe rejection");
+    pipe.shutdown();
+  }
 }
 
 int main() {
   watchdog deadline;
   fifo(); maintenance(); admission(); cancellation(); failure(false); failure(true); maintenance_failure();
   concurrent_submission(); close_wakes_submitter(); capacity_wakes_submitter();
-  contribution_construction(); destruction_drains(); required_maintenance();
+  contribution_construction(); destruction_drains(); required_maintenance(); rejected_contribution();
   std::cout << "tap: publication, admission, cancellation and concurrency passed\n";
 }
