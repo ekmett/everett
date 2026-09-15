@@ -845,9 +845,11 @@ forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
-Combined verification through `df1cb2d` on 2026-09-15: AppleClang 21, C++20,
-Release with strict warnings and ASan/UBSan passed all **52 CTests**, including
-three package consumers and Doxygen. SQLite headers and runtime were 3.53.4.
+Combined verification through `4872d25` on 2026-09-15: AppleClang 21, C++20,
+Release with strict warnings and ASan/UBSan passed all **51 component/package
+CTests**, including three package consumers. The final Doxygen check passed
+separately. SQLite headers and runtime were 3.53.4. The RC suite and revised
+README snapshot example were rebuilt and passed after the dump-operation rename.
 This run covers ordinary-FC comparison, owning and mapped single/two-route
 queries, carried sampling/build frontiers, portable unaligned navigation,
 native construction, staged local merges and allocation failures, immutable
@@ -862,7 +864,9 @@ check actual writer death, including committed-but-unacknowledged operations.
 These tests do not establish behavior under physical power loss.
 
 Doxygen checked 42 public headers and 41 real declaration associations, with
-clean generation that removes obsolete pages. The proof checkpoint checked
+combined leading file metadata, six rejected metadata fixtures, and clean
+generation that removes obsolete pages. Metadata moves preserved code bodies;
+the generator reproduced all eight CRC backends. The proof checkpoint checked
 858 Lean declarations with only standard `propext`, `Quot.sound` and
 `Classical.choice` axioms.
 
