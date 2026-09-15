@@ -58,7 +58,7 @@ The historical names in the raw CSV mean:
 
 | CSV variant | Header / algorithm |
 | --- | --- |
-| `bitmap_rank` | Everett's full-bit-vector 2048/512 directory |
+| `bitmap_rank` | Diet's full-bit-vector 2048/512 directory |
 | `rank15_baseline` | `9f68e4d0fdecae73b7d28b748a0d062cc072fbfa`, portable fallback on x86 |
 | `rank_groups15_baseline` | the same revision's typed wrapper around that fallback |
 | `rank15_candidate` | SAD-first snapshot, SHA-256 `ed125be1898573ec2b926df930c96b909921fc506536d9c2e1c8b0363e0fb686` |

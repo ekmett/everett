@@ -47,7 +47,7 @@ The original compiler diagnostic is retained; no warning suppression was used.
 The suites exercise owning and mapped dual-route indexes, exact targets,
 metadata-only terminal construction, malformed sections, query results and
 local merge stages. This check does not cover SQLite, the complete package or
-Doxygen build, every Everett component, or every x86 SIMD target.
+Doxygen build, every Diet component, or every x86 SIMD target.
 
 Reproduction and evidence
 -------------------------

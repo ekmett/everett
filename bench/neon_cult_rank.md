@@ -8,7 +8,7 @@ The source and runner are [neon_cult_rank.cc](neon_cult_rank.cc) and
 
 ## What I measured
 
-* `neon_byte_first` is Everett's committed `aeaaa9d` header. It loads four
+* `neon_byte_first` is Diet's committed `aeaaa9d` header. It loads four
   128-bit vectors, masks the selected low/high nibbles, adds byte populations,
   and finishes with `vaddlvq_u8`.
 * `neon_qword_first` changes only that final reduction. After the four vectors
@@ -31,13 +31,13 @@ the benchmark's license does not relicense the external header.
 
 | Input | Revision / SHA-256 |
 | --- | --- |
-| Everett base revision | `aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06` |
-| Everett rank15 header | `80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c` |
+| Diet base revision | `aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06` |
+| Diet rank15 header | `80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c` |
 | Generated NEON qword candidate | `0eced9c87eeedf1f36e15251e221de346599a64692c90777ce25f18720a93fe7` |
 | Cult checkout revision | `ce97bdaea4a1f6134225eb613acc6b0d16981b45` |
 | External `src/cult/sandbox/rank.h` | `96773e2dbaa8dacd92c22173f97e63bb5bbc2604f1194541cfefe83eb1f79ed0` |
 
-The runner extracts the pinned Everett header from Git into its ignored build
+The runner extracts the pinned Diet header from Git into its ignored build
 directory and generates the candidate by changing that one reduction expression.
 Subsequent production-header changes therefore do not silently change this
 comparison. The source SHA, compiler version, flags, and run parameters are in
@@ -80,7 +80,7 @@ A separate read-only review found no correctness blocker in the benchmark.
 
 This is a fixed-universe comparison: each row within a case uses identical
 logical bits and query positions. I report exact encoded arrays and a separate
-terminal-count field. Everett's runtime view/vector objects, allocation
+terminal-count field. Diet's runtime view/vector objects, allocation
 bookkeeping/capacity slack, the shared query arrays, and the untimed source and
 oracle buffers are excluded. `shrink_to_fit` is requested for packed vectors,
 but these figures describe encoded sizes rather than allocator-resident bytes.

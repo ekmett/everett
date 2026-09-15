@@ -149,7 +149,7 @@ the two rounding terms $2(K-1)/K$ sum to two.
 Parameterized comparison
 ------------------------
 
-[space_accounting.py](space_accounting.py) reports measured Everett array bytes and
+[space_accounting.py](space_accounting.py) reports measured Diet array bytes and
 explicit scenarios. Its defaults are choices, not inferred paper constants.
 For the experimental COLA, with observed redundant/native ratio $r$:
 
@@ -169,7 +169,7 @@ $$
 $$
 
 This is a conditional model using a representation upper bound, **not a lower
-bound establishing Everett's savings**. The script uses our native key encoding as
+bound establishing Diet's savings**. The script uses our native key encoding as
 an explicitly named FC proxy; it is not the paper's specified bit-exact framing.
 PMA occupancies should ideally be separate for the three layers; the script's
 single density is a deliberately simplified sensitivity parameter. Test $h=2,3,4$

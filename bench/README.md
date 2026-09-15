@@ -1,10 +1,11 @@
 Benchmark evidence
 ==================
 
-I recorded the existing measurements before renaming this project from Everett
-to Diet. Their source snapshots, `everett` namespaces and include paths,
-commands, metadata names and raw results remain unchanged so the reports stay
-reproducible. They measure the revisions named in each report.
+The reports measure the exact Git revisions named in each experiment. I keep
+recorded source snapshots, commands, metadata names and raw results unchanged
+so those measurements remain reproducible. Some snapshots use the historical
+`everett` namespace and include paths; these are recorded inputs, not the
+current Diet API.
 
 Most runners extract their exact headers from Git. For a runner or standalone
 fixture that uses the current checkout, reproduce the report from its recorded
