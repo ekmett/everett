@@ -1,0 +1,119 @@
+{
+  "host_description": "Apple M2 Max",
+  "host_description_source": "bench/results/select_environment.json and prior same-host benchmark environment records",
+  "harness_method": "resident owning inputs; QoS requested without return check; no fixed affinity/frequency",
+  "runs": {
+    "frontier": {
+      "metadata_sha256": "5840c25e0368bfce3945fafb3c9e3bed4e48f3faafec3ed1af09ad5e91600e66",
+      "csv_sha256": "7602ad95f35451f2eccadbe556a0496389ef1a07aec2d228433586b929c85cba",
+      "harness_sha256": "def7ec472c20e2fb66530718196190d3011ed466413b943ccedcf72d07f21682",
+      "completed_utc": "2026-09-15T16:31:03.443527+00:00",
+      "row_count": 360,
+      "variants": {
+        "baseline": {
+          "revision": "e45e47f14b45a2f9726d23c80d1d19b33de7745a",
+          "executable_sha256": "df07d41eecdb3bea6a9502e0aa4c0f9b5ff44c596c31d3b846aead32f6c25c5a",
+          "executable_bytes": 300960
+        },
+        "candidate": {
+          "revision": "13c914d824551501a6ae7da6dda98d7f5620e78b",
+          "executable_sha256": "e4bd8a8e5f921656ae5b35196c3a2e47becf557c8f9fa3c608b34f9453f50ede",
+          "executable_bytes": 307552
+        }
+      }
+    },
+    "first_unit": {
+      "metadata_sha256": "ee96ed29197b18c770c27399788eb407cc1483a5058b9dc9ae6546483ecfa587",
+      "csv_sha256": "c1db1bfd92d87744b9e5401cd9772edae745257e1e1e02721312ef2efe128e51",
+      "harness_sha256": "d6d1825338c4c305dd269d704756d65a573533ae25cca2e13b28322d16019109",
+      "completed_utc": "2026-09-15T16:39:55.409344+00:00",
+      "row_count": 360,
+      "variants": {
+        "baseline": {
+          "revision": "e45e47f14b45a2f9726d23c80d1d19b33de7745a",
+          "executable_sha256": "676dc8faa23c44093ad2d4c090ac9f041aada6d8365795b1ddb305232b546c4a",
+          "executable_bytes": 300960
+        },
+        "candidate": {
+          "revision": "32923e761b45442b9e4e5f7893fe1bbda0e74fdb",
+          "executable_sha256": "90bc5cc01d427ce181d004a4e6c456cb4fff81ed23ca4524e5e03ff4a3b5cbc3",
+          "executable_bytes": 307552
+        }
+      }
+    },
+    "isolated_framing": {
+      "metadata_sha256": "826631695d7d8056a31b4f6041e375ba6392cd563951b0b5f0818fedce6dfbc9",
+      "csv_sha256": "b9286db6ecf2a3f5415cb13aea6ba8a6b8a47288934c552006ec87ea64675b61",
+      "harness_sha256": "d6d1825338c4c305dd269d704756d65a573533ae25cca2e13b28322d16019109",
+      "completed_utc": "2026-09-15T16:55:53.278312+00:00",
+      "row_count": 360,
+      "variants": {
+        "baseline": {
+          "revision": "9c2c3beeb0f5ce6cf3d81eb5963d41efdc22041e",
+          "executable_sha256": "79f98b0644f830a69d1c09b6e0400b4b37ad8023c92ab5afd048e45b14243546",
+          "executable_bytes": 312320
+        },
+        "candidate": {
+          "revision": "819578c53e67c839eab3bc285f0dca2217262fbb",
+          "executable_sha256": "171b267e694a5a8ece98266b5f1aabfbdcb982b12eda5bff975bd92e83cd1e57",
+          "executable_bytes": 303472
+        }
+      }
+    },
+    "integrated_final": {
+      "metadata_sha256": "4f8038390e50a1ee1b0b1c7a1233e259796c73f085266b9b4bc186aae1f84610",
+      "csv_sha256": "f8480bcd99258d52a12dae691111c9479f750d541a21849b0d2bc19143cbee0a",
+      "harness_sha256": "d6d1825338c4c305dd269d704756d65a573533ae25cca2e13b28322d16019109",
+      "completed_utc": "2026-09-15T16:57:24.877571+00:00",
+      "row_count": 360,
+      "variants": {
+        "baseline": {
+          "revision": "e45e47f14b45a2f9726d23c80d1d19b33de7745a",
+          "executable_sha256": "676dc8faa23c44093ad2d4c090ac9f041aada6d8365795b1ddb305232b546c4a",
+          "executable_bytes": 300960
+        },
+        "candidate": {
+          "revision": "4429df0a8507705a9c4ccc0f6366344cf543f396",
+          "executable_sha256": "a741e3cbfbd9ad38a985a4e7fcba3a0e202bde8ef7ea26f5240957bc8ea41887",
+          "executable_bytes": 302432
+        }
+      }
+    },
+    "wider_integration": {
+      "metadata_sha256": "1be379ea36e02e4f209ad6f2c7791694d279f4ecd63e2f941ac4db5b947a5b64",
+      "csv_sha256": "44ae44e25948006258c0c5e79095998b130c6333581afaf9f5eb682fca0a85c7",
+      "harness_sha256": "d6d1825338c4c305dd269d704756d65a573533ae25cca2e13b28322d16019109",
+      "completed_utc": "2026-09-15T16:56:52.120046+00:00",
+      "row_count": 360,
+      "variants": {
+        "baseline": {
+          "revision": "32923e761b45442b9e4e5f7893fe1bbda0e74fdb",
+          "executable_sha256": "90bc5cc01d427ce181d004a4e6c456cb4fff81ed23ca4524e5e03ff4a3b5cbc3",
+          "executable_bytes": 307552
+        },
+        "candidate": {
+          "revision": "819578c53e67c839eab3bc285f0dca2217262fbb",
+          "executable_sha256": "171b267e694a5a8ece98266b5f1aabfbdcb982b12eda5bff975bd92e83cd1e57",
+          "executable_bytes": 303472
+        }
+      }
+    }
+  },
+  "checked": "All stored input-header files and source snapshots match recorded hashes; all completed-run payload sizes and complete-output fingerprints agree for matching fixtures. Direct expected-array/key-value comparisons run in the harness.",
+  "framing_validation": {
+    "revision": "819578c53e67c839eab3bc285f0dca2217262fbb",
+    "gate_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-124938-zpzcraqb/output.log",
+    "ctests": [
+      "native_writer",
+      "native_writer_allocations",
+      "native_merge",
+      "native_merge_mapped",
+      "package.installed",
+      "package.embedded"
+    ],
+    "result": "6/6 passed",
+    "ctest_seconds": 18.01
+  },
+  "isolated_timing_gate_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-125531-em436y59/output.log",
+  "final_timing_gate_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-125702-yp4mkuzv/output.log"
+}
