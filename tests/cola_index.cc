@@ -148,9 +148,13 @@ namespace {
     for (unsigned route = 0; route != 2; ++route)
       for (std::size_t i = 0; i != result->samples[route].size(); ++i)
         result->catalog.push_back({result->samples[route][i], route + 1, i});
-    std::stable_sort(result->catalog.begin(), result->catalog.end(), [](auto const & a, auto const & b) {
+    // Each origin was appended in ordinal order. Naming that final tie break
+    // preserves the stable occurrence order without a temporary-buffer sort.
+    std::sort(result->catalog.begin(), result->catalog.end(), [](auto const & a, auto const & b) {
       auto order = compare(a.key.view(), b.key.view()).order;
-      return order ? order < 0 : a.origin < b.origin;
+      if (order) return order < 0;
+      if (a.origin != b.origin) return a.origin < b.origin;
+      return a.ordinal < b.ordinal;
     });
     cola_index_builder<P> builder(result->native, result->main ? result->main->encoded : nullptr, result->secondary);
     std::uint64_t consumed = 0, calls = 0;
