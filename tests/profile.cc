@@ -398,6 +398,7 @@ namespace {
   template <class P, stream_role Role> void check_cursor(profile_array<P, Role> const & array,
                                                         std::span<profile_record const> records) {
     auto cursor = array.view().cursor();
+    auto frames = array.view().encoded_cursor();
     for (std::size_t i = 0; i != records.size(); ++i) {
       require(!cursor.done() && cursor.ordinal() == i, "cursor ordinal before advance");
       auto item = cursor.peek();
@@ -405,6 +406,20 @@ namespace {
       require(item.key.full_units == records[i].key.bit_size / P::bits_per_unit, "cursor full key length");
       require(bit_string::copy(item.value) == records[i].value, "cursor value");
       auto encoded = array.view().encoded_at(i);
+      auto frame = frames.peek();
+      require(!frames.done() && frames.ordinal() == i && frame.retained == encoded.retained &&
+              frame.key_units == records[i].key.bit_size / P::bits_per_unit &&
+              frame.next_offset == encoded.next_offset, "encoded cursor framing");
+      auto previous = i ? records[i - 1].key.view() : bit_view{};
+      auto maximum = slow_compare(previous, records[i].key.view()).common_bits / P::bits_per_unit;
+      require(frame.retained <= maximum, "encoded retained prefix exceeds independent LCP");
+      auto first = frame.retained * P::bits_per_unit;
+      require(slow_compare(frame.suffix, records[i].key.view().subview(first, records[i].key.bit_size - first)).order == 0,
+              "encoded literal matches independent full key");
+      require(slow_compare(frame.value, records[i].value.view()).order == 0,
+              "encoded value matches independent oracle");
+      require(frame.suffix.storage().data() == array.bytes().data() &&
+              frame.value.storage().data() == array.bytes().data(), "encoded payload views retain original storage");
       require(item.value.storage().data() == array.bytes().data() &&
               item.value.storage().size() == array.bytes().size() &&
               item.value.offset() == encoded.value.offset() && item.value.size() == encoded.value.size(),
@@ -419,10 +434,17 @@ namespace {
         cursor = std::move(resumed);
       }
       cursor.advance();
+      auto saved = frames;
+      frames.advance();
+      require(saved.ordinal() == i && saved.peek().next_offset == frame.next_offset,
+              "copied encoded cursor preserves independent traversal state");
     }
     require(cursor.done() && cursor.ordinal() == records.size(), "cursor reaches exact terminal ordinal");
     rejects([&] { (void)cursor.peek(); });
     rejects([&] { cursor.advance(); });
+    require(frames.done() && frames.ordinal() == records.size(), "encoded cursor reaches EOF");
+    rejects([&] { (void)frames.peek(); });
+    rejects([&] { frames.advance(); });
   }
 
   template <class P> void same_borrowed(profile_array<P, stream_role::borrowed> const & a,
@@ -533,8 +555,8 @@ namespace {
       }
       auto record = view.encoded_at(i);
       auto previous = i ? records[i - 1].key.bit_size / P::bits_per_unit : 0;
-      require(record.previous_units == previous && record.backspace <= previous, "actual predecessor length");
-      require(record.retained == previous - record.backspace, "actual backspace count");
+      require(view.predecessor_units(i) == previous, "actual predecessor length");
+      require(record.retained <= previous, "retained prefix exceeds predecessor");
       auto last = std::min<std::uint64_t>(records.size(), i + P::group_size);
       auto anchor = i ? profile_anchor<P>::complete(records[i - 1].key.view()) : profile_anchor<P>{};
       std::uint64_t at = i;
@@ -637,10 +659,6 @@ namespace {
     for (std::uint64_t i = 0; i != records.size(); ++i) {
       auto record = view.encoded_at(i);
       auto position = i ? view.encoded_at(i - 1).next_offset : 0;
-      if (i % P::group_size == 0) {
-        auto packed = bit_view(array.bytes(), array.metadata().extent * P::bits_per_unit);
-        (void)profile_detail::read_count<P>(packed, position);
-      }
       if (!record.retained) { anchor = position; ++restarts; }
       else require(position - anchor <= 18 * record.key_units, "LPFC physical distance bound");
     }
@@ -865,15 +883,38 @@ namespace {
     std::vector<profile_record> bytes{{bit_string::from_bytes("ab"), {}},
                                       {bit_string::from_bytes("ac"), {}}};
     auto byte_array = profile_array<byte_policy>::build(bytes);
-    std::array<std::byte, 8> byte_expected{std::byte{0}, std::byte{0}, std::byte{2}, std::byte{'a'},
+    std::array<std::byte, 7> byte_expected{std::byte{0}, std::byte{2}, std::byte{'a'},
       std::byte{'b'}, std::byte{1}, std::byte{1}, std::byte{'c'}};
     require(std::ranges::equal(byte_array.bytes(), byte_expected), "default byte profile golden encoding");
     std::vector<profile_record> bits{{bit_string::from_bits("0010"), {}},
                                      {bit_string::from_bits("0011"), {}}};
     auto bit_array = profile_array<bit_policy>::build(bits);
-    auto bit_expected = bit_string::from_bits("1" "1" "00101" "0010" "010" "010" "1");
+    auto bit_expected = bit_string::from_bits("1" "00101" "0010" "010" "010" "1");
     require(bit_array.metadata().extent == bit_expected.bit_size &&
             std::ranges::equal(bit_array.bytes(), bit_expected.bytes), "default bit profile golden encoding");
+
+    using block_bytes = storage_policy<profile_unit::byte, fixed_values<0>, 3, exponential_golomb<0>, 2>;
+    std::vector<profile_record> boundary_bytes;
+    for (auto key : {"abcd", "abce", "abcf", "z"}) boundary_bytes.push_back({bit_string::from_bytes(key), {}});
+    auto byte_blocks = profile_array<block_bytes>::build(boundary_bytes);
+    std::array<std::byte, 15> block_expected{std::byte{0}, std::byte{4}, std::byte{'a'}, std::byte{'b'},
+      std::byte{'c'}, std::byte{'d'}, std::byte{1}, std::byte{1}, std::byte{'e'},
+      std::byte{3}, std::byte{1}, std::byte{'f'}, std::byte{4}, std::byte{1}, std::byte{'z'}};
+    require(std::ranges::equal(byte_blocks.bytes(), block_expected), "absolute byte block control golden encoding");
+    require(byte_blocks.view().block_offset(1) == 9 && byte_blocks.view().block_offset(2) == 15,
+            "absolute byte controls have no predecessor checkpoint");
+    check_cursor(byte_blocks, std::span<profile_record const>(boundary_bytes));
+
+    using block_bits = storage_policy<profile_unit::bit, fixed_values<0>, 3, golomb<1>, 2>;
+    std::vector<profile_record> boundary_bits;
+    for (auto key : {"0010", "0011", "0100", "0101"}) boundary_bits.push_back({bit_string::from_bits(key), {}});
+    auto bit_blocks = profile_array<block_bits>::build(boundary_bits);
+    // Absolute positions use exp0; relative backspaces use the policy's unary Golomb code.
+    auto block_bits_expected = bit_string::from_bits("1" "00101" "0010" "01" "010" "1"
+                                                   "010" "00100" "100" "01" "010" "1");
+    require(bit_blocks.metadata().extent == block_bits_expected.bit_size &&
+            std::ranges::equal(bit_blocks.bytes(), block_bits_expected.bytes), "absolute bit block control golden encoding");
+    check_cursor(bit_blocks, std::span<profile_record const>(boundary_bits));
   }
 
   template <class P> void coded_profiles() {
@@ -881,8 +922,7 @@ namespace {
     lpfc<P>();
     surrogate_anchor<P>();
     bit_string bad;
-    profile_detail::write_count<P>(bad, 0); // Group checkpoint retains exp0.
-    profile_detail::write_backspace<P>(bad, 1);
+    profile_detail::write_count<P>(bad, 1); // Absolute first retained position must be zero.
     profile_detail::write_count<P>(bad, 0); // Suffix length retains exp0.
     auto metadata = profile_detail::initial_metadata<P, stream_role::borrowed>();
     metadata.record_count = 1;
@@ -930,14 +970,14 @@ namespace {
       for (auto header : headers) profile_detail::write_count<P>(result, header);
       return result;
     };
-    auto backspace = encoded({0, 1, 0});
-    rejects([&] { make_view(backspace); });
-    auto missing_suffix = encoded({0, 0, 9});
+    auto missing_suffix = encoded({0, 9});
     rejects([&] { make_view(missing_suffix); });
-    auto predecessor = encoded({1, 0, 0});
+    auto predecessor = encoded({1, 0});
     rejects([&] { make_view(predecessor); });
-    auto trailing = encoded({0, 0, 0, 0});
+    auto trailing = encoded({0, 0, 0});
     rejects([&] { make_view(trailing); });
+    auto backspace = encoded({0, 0, 1, 0});
+    rejects([&] { make_view(backspace, 2); });
 
     auto records = fixture<P>();
     auto array = profile_array<P>::build(records);
@@ -956,23 +996,6 @@ namespace {
     rejects([&] { wrong_samples.visit_all([](auto) { return true; }); });
     rejects([&] {
       auto cursor = wrong_samples.cursor();
-      while (!cursor.done()) cursor.advance();
-    });
-    // Change only a group's predecessor checkpoint. Its encoded size and
-    // sampled address stay unchanged, so sequential context must reject it.
-    auto checkpoint_bytes = std::vector<std::byte>(array.bytes().begin(), array.bytes().end());
-    auto group_start = array.view().block_offset(1);
-    auto group_data = bit_view(checkpoint_bytes, array.metadata().extent * P::bits_per_unit);
-    auto after_checkpoint = group_start;
-    (void)profile_detail::read_count<P>(group_data, after_checkpoint);
-    if constexpr (P::unit == profile_unit::byte) checkpoint_bytes[group_start] ^= std::byte{1};
-    else {
-      auto bit = after_checkpoint - 1;
-      checkpoint_bytes[bit / 8] ^= static_cast<std::byte>(1u << (7 - bit % 8));
-    }
-    profile_view<P> wrong_checkpoint(checkpoint_bytes, array.group_offsets().view(), array.metadata());
-    rejects([&] {
-      auto cursor = wrong_checkpoint.cursor();
       while (!cursor.done()) cursor.advance();
     });
     auto bad_bytes = std::vector<std::byte>(array.bytes().begin(), array.bytes().end());
