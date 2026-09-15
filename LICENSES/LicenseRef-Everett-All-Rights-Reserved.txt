@@ -1,1 +1,0 @@
-Copyright 2026 Edward Kmett <ekmett@gmail.com>. All rights reserved.

@@ -9,7 +9,7 @@ The [implementation ledger](implementation.md) distinguishes executable
 components from the remaining storage and scheduling work.
 
 Locality-preserving front coding (LPFC) is the safe native-key baseline.
-The fractional index's known fifteen-entry boundaries allow a separately
+The fractional index's known group boundaries allow a separately
 rebuildable index codec to remove some reconstruction redundancy. Ordinary front
 coding (FC), native LPFC and conservative borrowed-prefix policies have different
 context contracts; their combined space and I/O costs must be measured and
@@ -26,8 +26,12 @@ The intended aggregate vocabulary is:
 - A **branch point** is a retained point from which a timeline can continue or
   fork; `branch_point` is the intended API spelling.
 
-These aggregate APIs remain design work. The implemented semantic prototype is
-`reference_world`; it does not yet provide a disk-backed multiverse or timeline.
+`multiverse<P>` implements the read side of an existing object directory and
+exposes `sort`, `blob`, `file`, `world`, `timeline` and `branch_point` associated
+types carrying the same policy. Persistent worlds/timelines remain design work;
+their aggregate types are forward declarations. The semantic oracle is
+`reference_world`. The [SQLite catalog](catalog.md) is the selected home for
+worlds, pins and merge/index-rebuild progress.
 
 Represent a world as a small collection of immutable, memory-mappable blobs.
 Updates produce small new blobs; merges produce new larger blobs. A snapshot or
@@ -38,8 +42,9 @@ kind of application state.
 The outer dynamization mechanism is not intrinsically a map. Its reusable
 requirements are a merge operation, a query operation, and rules relating them.
 Do not require an exact monoid/homomorphism interface before its consumers need
-one. The prototype specialization is a byte-string-keyed table with fixed-width
-values and tombstones. The intended key space is sort-qualified: each logical
+one. The typed blob specialization supports byte or bit keys and opaque fixed-
+or variable-width values. The replacement oracle uses fixed-width values and
+tombstones. The intended key space is sort-qualified: each logical
 key combines a sort identity with a key interpreted by that sort's policy.
 [Sorts and key policies](keys.md) specifies key units, canonical ordering,
 prefix-free coding and hash-policy selection. The byte-key encoding below is a
@@ -68,12 +73,12 @@ files, index versions, and completed compactions.
 | \(N\) | Number of live bindings in the selected world |
 | \(H\) | Historical updates; distinct from live size |
 | \(L\) | Number of active levels/catalogs |
-| \(K=15\) | Sampling and navigation group size |
+| \(K\) | Policy sampling/group size \(2^r-1\), default 15; 3, 7, 15 and 31 tested |
 | \(A\) | Sorted native key/value stream of one blob |
 | \(S\) | Sorted borrowed-key stream of its fractional index |
 | \(C\) | Virtual sorted interleaving of \(A\) and \(S\) |
-| \(U\) | Variable-byte extent used by an Elias–Fano encoding |
-| \(v\) | Fixed bytes contributed by each physical record |
+| \(U\) | Residual extent in policy units used by an Elias–Fano encoding |
+| \(v\) | Fixed value width in policy units, common across the indexed stream |
 
 “Fractal index” refers to this fractional-cascading index.
 An index targets the next catalog's **augmented** ordering, including borrowed
@@ -85,22 +90,22 @@ A blob is the following logical composite; the pieces need not occupy one file:
 
 1. A front-coded array of native \((K,V)\) records.
 2. A separately front-coded array of borrowed keys and routing information.
-3. One `rank15` describing their virtual interleaving.
-4. Two `select15` indexes, one for each physical stream.
+3. One `rank_groups<K>` describing their virtual interleaving.
+4. Two `select_groups<K>` indexes, one for each physical stream.
 5. One false-borrow flag per borrowed record.
 6. Exact immutable target identities and format information.
 
 ```mermaid
 flowchart TD
-  M["World manifest / pins"] --> B["Blob version"]
-  B --> A["Native front-coded K,V + select15"]
-  B --> S["Borrowed front-coded keys + select15"]
-  B --> R["rank15 + false-borrow flags"]
+  M["SQLite representation / pins"] --> B["Blob version"]
+  B --> A[".kv: native LPFC K,V + select groups"]
+  B --> S[".index: borrowed FC keys + select groups"]
+  B --> R[".index: rank groups + false-borrow flags"]
   S --> T["Exact downstream catalog version"]
 ```
 
 Native data can be shared by multiple fractional-index versions. Rebuilding an
-index does not inherently rewrite the native stream or its `select15`.
+index does not inherently rewrite the native stream or its sampled offsets.
 Pointers in persisted objects are relative positions or object references, not
 process addresses. File-per-object versus managed extents remains an allocation
 decision below this interface.
@@ -124,6 +129,12 @@ The [arrow design](arrows.md#logical-key-identity-and-multiplicity)
 distinguishes live keys, multiplicity, and their fingerprints.
 
 ## 3. Navigation
+
+The equations below work through the default \(K=15\), including the original
+`rank15`/`select15` prototypes. Typed codecs generalize them to policy groups;
+[sampling.md](sampling.md) proves the local \(K=3\) case and states the separate
+chain-size and scheduler assumptions. Offset units are bytes or bits according
+to the shared policy.
 
 ### rank15
 
@@ -222,7 +233,7 @@ Tests must place the native/borrowed equality pair on both sides of a group cut.
 
 ## 4. Front coding and decoding context
 
-The baseline record format is:
+The original byte-only prototype's record format is:
 
 ```text
 retained_prefix_length : unsigned variable-length integer
@@ -230,6 +241,16 @@ suffix_length          : unsigned variable-length integer
 suffix_bytes           : byte[suffix_length]
 value                   : fixed-width slot
 ```
+
+The typed profiles store the actual **backspace count** instead of the retained
+prefix length. One predecessor-length checkpoint per physical group supports
+decoding from a surrogate anchor without a full-length field on every record.
+Headers use byte varints or bit-level order-zero exponential-Golomb codes.
+Variable-width streams also encode value lengths; a proven common width removes
+that field and its fixed payload stride from sampled residual offsets.
+`profile_blob<P>` applies native LPFC (default factor 18) and the separately
+modified borrowed FC. These are encoded stream primitives; portable sections
+inside `.kv`/`.index` envelopes are not yet implemented.
 
 In this byte-profile format, retained-prefix and suffix lengths count bytes.
 For ordinary front coding, the retained length is the LCP with the previous
@@ -386,13 +407,23 @@ level. Small updates pay for later merging and index construction. Work may be
 performed during downtime as well as on arrivals; logical state does not depend
 on the amount of compaction already completed.
 
+Network admission retains received content-addressed `.kv` bytes unchanged,
+including their LPFC stream and sampled offsets. Build receiver-specific
+fractional indexes backward over the incoming prefix and retain the old suffix.
+Received `.index` objects are reusable only with matching exact source/target
+versions. Native re-encoding waits for a real merge. The
+[admission analysis](network-admission.md) gives the arbitrary-file-size entry
+bound and identifies the remaining scheduling and variable-key-byte obligations.
+No power-of-two physical-file requirement follows from the query argument;
+the original redundant-counter schedule still requires an admission proof.
+
 Separate these milestones:
 
 1. A merge recipe identifies exact inputs and resolution semantics.
-2. Its new native stream and native `select15` finish.
+2. Its new native stream and sampled offsets finish.
 3. A dependent pins that result.
-4. The dependent completes its own borrowed stream, rank15, and index select15.
-5. It publishes its replacement index/manifest and releases its old references.
+4. The dependent completes its own borrowed stream, group ranks and sampled offsets.
+5. It publishes its replacement index and SQLite representation, then releases its old references.
 
 String work needs explicit units: records visited, bytes compared, bytes emitted,
 and index work. A scheduler yielding once per record can still stall on a huge
@@ -411,6 +442,11 @@ extent can be known late. Spooling group offsets and finalizing the compact
 index after the data pass is a simple initial strategy.
 
 ## 6. Snapshots, saves, and shared work
+
+Manifest here means the logical selection recorded by SQLite rows, with exact
+immutable representation identity. There is no custom manifest/checkpoint file
+format. The [catalog](catalog.md) and [file lifecycle](file-lifecycle.md) separate
+transactional metadata from the `.kv` and `.index` objects it retains.
 
 A snapshot pins the exact blob/index graph needed to read its world. A durable
 save records that manifest and retains those pins across process lifetimes.
@@ -660,7 +696,7 @@ same-key chain must remain composable and chronologically ordered.
 
 The intended active level count is \(O(\log N)\), contingent on completed
 live-size accounting. A cascade examines \(O(K)\) entries per level with fixed
-\(K=15\), plus a constant number of frontier/header probes. Straightforward
+\(K\), default 15, plus a constant number of frontier/header probes. Straightforward
 partial decoding after bootstrap costs \(O(K(|q|+1)L)\) work; the extra logarithm
 in string work is accepted. A larger LPFC root also needs its initial search
 and independent reconstruction cost; a single-entry root avoids that additional

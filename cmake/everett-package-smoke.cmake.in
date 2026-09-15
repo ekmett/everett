@@ -1,3 +1,11 @@
+##
+# \file
+# \license
+# SPDX-FileType: SOURCE
+# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+# SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+# \endlicense
+
 cmake_minimum_required(VERSION 3.20)
 
 function(everett_run)
@@ -26,6 +34,17 @@ if(everett_smoke_mode STREQUAL "installed")
   # Remove the original prefix by moving it, so an accidentally hardcoded
   # install path cannot make the consumer appear relocatable.
   file(RENAME "${root}/original" "${root}/relocated")
+  foreach(notice IN ITEMS LICENSE LICENSES/BSD-2-Clause.txt LICENSES/Apache-2.0.txt)
+    set(installed_notice "${root}/relocated/@CMAKE_INSTALL_DATADIR@/everett/${notice}")
+    if(NOT EXISTS "${installed_notice}")
+      message(FATAL_ERROR "Installed package is missing ${notice}")
+    endif()
+    file(SHA256 "@PROJECT_SOURCE_DIR@/${notice}" source_hash)
+    file(SHA256 "${installed_notice}" installed_hash)
+    if(NOT source_hash STREQUAL installed_hash)
+      message(FATAL_ERROR "Installed license differs from source: ${notice}")
+    endif()
+  endforeach()
   list(APPEND mode_args "-DCMAKE_PREFIX_PATH=${root}/relocated"
     "-DEVERETT_EXPECTED_PREFIX=${root}/relocated"
     -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF -DCMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY=OFF)
@@ -49,10 +68,5 @@ everett_run("@CMAKE_CTEST_COMMAND@" --test-dir "${root}/consumer"
 
 ##
 # \file
-# \license
-# SPDX-FileType: SOURCE
-# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>. All rights reserved.
-# SPDX-License-Identifier: LicenseRef-Everett-All-Rights-Reserved
-# \endlicense
 # \author Edward Kmett <ekmett@gmail.com>
 # \brief Checks Everett package relocation and embedded consumption.

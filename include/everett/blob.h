@@ -1,3 +1,12 @@
+/**
+ * \file
+ * \license
+ * SPDX-FileType: SOURCE
+ * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+ * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+ * \endlicense
+ */
+
 #pragma once
 
 #include <everett/front.h>
@@ -304,11 +313,6 @@ namespace everett {
 
 /**
  * \file
- * \license
- * SPDX-FileType: SOURCE
- * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>. All rights reserved.
- * SPDX-License-Identifier: LicenseRef-Everett-All-Rights-Reserved
- * \endlicense
  * \author Edward Kmett <ekmett@gmail.com>
  * \brief Declares Everett's blob support.
  */

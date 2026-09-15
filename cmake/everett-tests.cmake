@@ -1,3 +1,11 @@
+##
+# \file
+# \license
+# SPDX-FileType: SOURCE
+# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+# SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+# \endlicense
+
 if(EVERETT_USE_CCACHE)
   find_program(everett_ccache NAMES ccache REQUIRED)
 endif()
@@ -19,13 +27,7 @@ if(EVERETT_SANITIZERS)
   everett_check_sanitizers()
 endif()
 
-set(everett_test_names rank groups front world pins durability mapped_file files)
-# Include profile and facade fixtures when present in the checkout.
-foreach(everett_optional_test IN ITEMS profile profile_blob multiverse)
-  if(EXISTS "${PROJECT_SOURCE_DIR}/tests/${everett_optional_test}.cc")
-    list(APPEND everett_test_names "${everett_optional_test}")
-  endif()
-endforeach()
+set(everett_test_names rank groups front profile profile_blob world pins durability mapped_file files multiverse)
 foreach(everett_test IN LISTS everett_test_names)
   add_executable(everett_test_${everett_test} "${PROJECT_SOURCE_DIR}/tests/${everett_test}.cc")
   target_link_libraries(everett_test_${everett_test} PRIVATE everett::everett)
@@ -58,10 +60,5 @@ endforeach()
 
 ##
 # \file
-# \license
-# SPDX-FileType: SOURCE
-# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>. All rights reserved.
-# SPDX-License-Identifier: LicenseRef-Everett-All-Rights-Reserved
-# \endlicense
 # \author Edward Kmett <ekmett@gmail.com>
 # \brief Configures Everett's test targets and package checks.

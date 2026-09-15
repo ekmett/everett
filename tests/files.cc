@@ -1,3 +1,12 @@
+/**
+ * \file
+ * \license
+ * SPDX-FileType: SOURCE
+ * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+ * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+ * \endlicense
+ */
+
 #include <everett/file.h>
 
 #include <algorithm>
@@ -160,7 +169,7 @@ namespace {
     }
     rejects([] { object_id::from_hex("ABCDEF0123456789abcdef0123456789"); });
     rejects([] { object_id::from_hex("abcdef0123456789abcdef012345678"); });
-    rejects([] { object_id::from_hex("player/entity/position"); });
+    rejects([] { object_id::from_hex("tenant/document/field"); });
     rejects([] { parse_object_path("ab/cd/ef0123456789abcdef0123456789.world"); });
     rejects([] { parse_object_path("ab/cd/ef0123456789abcdef0123456789.merge"); });
     require(crc32c(std::as_bytes(std::span("123456789", std::size_t{9}))) == 0xe3069283u, "CRC32C check vector");
@@ -184,11 +193,6 @@ int main() {
 
 /**
  * \file
- * \license
- * SPDX-FileType: SOURCE
- * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>. All rights reserved.
- * SPDX-License-Identifier: LicenseRef-Everett-All-Rights-Reserved
- * \endlicense
  * \author Edward Kmett <ekmett@gmail.com>
  * \brief Tests Everett's files behavior.
  */

@@ -19,10 +19,14 @@ architecture. Keep the design and implementation status distinct and current.
   Avoid virtual dispatch, PImpl and type-erased backend payloads.
 - Use standard attributes and facilities where practical. Individual named
   modifier macros are permitted; do not add variadic modifier-dispatch macros.
-- Retain author notices and the existing source-footer structure. Source files
-  carry SPDX-FileCopyrightText and SPDX-License-Identifier fields. The current
-  identifier is LicenseRef-Everett-All-Rights-Reserved; its notice is in LICENSES/.
+- Retain author notices. Place SPDX-FileCopyrightText and
+  SPDX-License-Identifier in a license comment before code (after a shebang,
+  if present). The identifier is BSD-2-Clause OR Apache-2.0, at the recipient's
+  choice; both complete texts are in LICENSES/ and the choice is stated in LICENSE.
   Do not change license terms without an explicit instruction.
+- File documentation stays in the existing footer form. The optional Doxygen
+  build uses the `ein` license aliases and checks declaration ownership; see
+  docs/doxygen.md before changing those commands or their placement.
 
 ## Work and verification
 

@@ -1,3 +1,11 @@
+##
+# \file
+# \license
+# SPDX-FileType: SOURCE
+# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+# SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+# \endlicense
+
 cmake_minimum_required(VERSION 3.20)
 project(everett VERSION 0.1.0 DESCRIPTION "Experimental persistent string storage" LANGUAGES CXX)
 
@@ -7,6 +15,7 @@ else()
   set(everett_top_level OFF)
 endif()
 option(EVERETT_BUILD_TESTS "Build Everett's tests" ${everett_top_level})
+option(EVERETT_BUILD_DOCS "Build and check Everett's Doxygen documentation" OFF)
 option(EVERETT_SANITIZERS "Enable address and undefined-behavior sanitizers on tests" OFF)
 option(EVERETT_USE_CCACHE "Use ccache when compiling Everett's tests" OFF)
 if(EVERETT_SANITIZERS AND NOT EVERETT_BUILD_TESTS)
@@ -41,6 +50,7 @@ install(EXPORT everett-targets FILE everett-targets.cmake
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/everett-config.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/everett-config-version.cmake"
   DESTINATION "${everett_config_dir}")
+install(FILES LICENSE DESTINATION "${CMAKE_INSTALL_DATADIR}/everett")
 install(DIRECTORY LICENSES/ DESTINATION "${CMAKE_INSTALL_DATADIR}/everett/LICENSES")
 
 if(EVERETT_BUILD_TESTS)
@@ -48,12 +58,11 @@ if(EVERETT_BUILD_TESTS)
   include(cmake/everett-tests.cmake)
 endif()
 
+if(EVERETT_BUILD_DOCS)
+  include(cmake/everett-docs.cmake)
+endif()
+
 ##
 # \file
-# \license
-# SPDX-FileType: SOURCE
-# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>. All rights reserved.
-# SPDX-License-Identifier: LicenseRef-Everett-All-Rights-Reserved
-# \endlicense
 # \author Edward Kmett <ekmett@gmail.com>
 # \brief Configures the Everett build.
