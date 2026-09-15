@@ -27,7 +27,7 @@ if(EVERETT_SANITIZERS)
   everett_check_sanitizers()
 endif()
 
-set(everett_test_names crc32c rank groups rank_groups_builder elias_fano profile borrowed_writer profile_blob comparison_fc sampling index_builder index_builder_allocations index_pipeline query native_writer native_writer_allocations native_file_writer profile_file_output native_merge native_merge_mapped world pins durability mapped_file files object_writer object_stream mapped_blob multiverse)
+set(everett_test_names crc32c rank groups rank_groups_builder elias_fano profile borrowed_writer profile_blob comparison_fc sampling index_builder index_builder_allocations index_pipeline query cola_index native_writer native_writer_allocations native_file_writer profile_file_output native_merge native_merge_mapped world pins durability mapped_file files object_writer object_stream mapped_blob multiverse)
 if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # These suites seal real mapped inputs through posix_object_ops throughout.
   # Model-ops writer tests above retain their platform-independent coverage.

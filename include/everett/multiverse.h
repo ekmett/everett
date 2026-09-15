@@ -12,6 +12,7 @@
 #include <everett/file.h>
 #include <everett/file_index_pipeline.h>
 #include <everett/mapped_blob.h>
+#include <everett/mapped_cola.h>
 #include <everett/native_merge.h>
 #include <everett/native_file_merge.h>
 #include <everett/object_writer.h>
@@ -86,6 +87,13 @@ namespace everett {
     using mapped_index = everett::mapped_index<P>;
     using mapped_blob = everett::mapped_blob<P>;
     using mapped_query_root = everett::mapped_query_root<P>;
+    using cola_index = everett::cola_index<P>;
+    using cola_index_builder = everett::cola_index_builder<P>;
+    using cola_query_root = everett::cola_query_root<P>;
+    using cola_query_cursor = everett::cola_query_cursor<P>;
+    using mapped_cola_index = everett::mapped_cola_index<P>;
+    using mapped_cola_blob = everett::mapped_cola_blob<P>;
+    using mapped_cola_query_root = everett::mapped_cola_query_root<P>;
     using world = everett::world<P>;
     using timeline = everett::timeline<P>;
     using branch_point = everett::branch_point<P>;
@@ -104,6 +112,9 @@ namespace everett {
 
     mapped_query_root open_query(blob_identity const & head) const {
       return everett::open_mapped_query<P>(root_, head);
+    }
+    mapped_cola_query_root open_cola_query(blob_identity const & head) const {
+      return everett::open_mapped_cola_query<P>(root_, head);
     }
 
     // The caller establishes root durability and reserves both identities.

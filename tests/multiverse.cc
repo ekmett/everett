@@ -34,6 +34,8 @@ namespace {
   static_assert(std::same_as<multiverse<bytes>::sort, sort<bytes>>);
   static_assert(std::same_as<multiverse<bytes>::blob, profile_blob<bytes>>);
   static_assert(std::same_as<multiverse<bytes>::file, file<bytes>>);
+  static_assert(std::same_as<multiverse<bytes>::cola_index, cola_index<bytes>>);
+  static_assert(std::same_as<multiverse<bits>::mapped_cola_query_root, mapped_cola_query_root<bits>>);
   static_assert(std::same_as<multiverse<bytes>::object_writer, object_writer<bytes>>);
   static_assert(std::same_as<multiverse<bytes>::world, world<bytes>>);
   static_assert(std::same_as<multiverse<bytes>::timeline, timeline<bytes>>);
