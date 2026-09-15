@@ -13,7 +13,8 @@ that declarations retain the right owners.
 
 ## Markdown pages and math
 
-The README is the main page. `AGENTS.md`, `docs/*.md` and the proof README are
+The README is the main page. `AGENTS.md`, `docs/*.md`, the proof README,
+`THIRD_PARTY.md`, and the vendored CRC provenance and license Markdown are
 included as pages alongside the API reference.
 
 Use `$...$` for inline math and `$$...$$` for display math in Markdown.
@@ -23,8 +24,9 @@ and indented code, escaped dollars and ordinary currency remain literal. The
 generated HTML uses MathJax; its default script is loaded from the configured CDN.
 
 GitHub-style heading IDs keep local section links usable. Doxygen 1.9.8 leaves
-some links to headings in other Markdown files unresolved; the build repairs
-those links in HTML and XML using the generated page and section IDs. The checks
+some links to headings in other Markdown files unresolved, and can link to an
+empty file compound when a Markdown page starts with a notice. The build repairs
+these links in HTML and XML using the generated page and section IDs. The checks
 verify page inclusion, formula contents, heading targets and code literals.
 Mermaid fences remain code in this Doxygen configuration.
 
@@ -36,8 +38,9 @@ ALIASES += "endlicense=@endcode"
 ```
 
 These aliases preserve the three SPDX notice lines as a code block. The author
-and file brief remain separate metadata. The notices record the repository's
-`BSD-2-Clause OR Apache-2.0` license choice.
+and file brief remain separate metadata. The public-header notices record Everett's
+`BSD-2-Clause OR Apache-2.0` license choice. Generated CRC kernels retain their
+upstream notices; see [third-party components](../THIRD_PARTY.md).
 Our fixture comparison checks both end-of-file placement and the split layout.
 Doxygen describes alias expansion in its
 [custom-command manual](https://www.doxygen.nl/manual/custcmd.html).
@@ -79,9 +82,9 @@ documentation target remains available but the CTest check is not registered.
 - A baseline without the aliases emits exactly the two expected unknown-command
   warnings per header. The configured run must emit no warnings.
 
-On 2026-09-15, Doxygen 1.9.8 passed these checks for all 21 public headers,
+On 2026-09-15, Doxygen 1.9.8 passed these checks for all 22 public headers,
 seven real function/overload cases and twelve fixture symbols in all three
-metadata layouts. The unconfigured baseline had 42 warnings, exclusively for
+metadata layouts. The unconfigured baseline had 44 warnings, exclusively for
 `\license` and `\endlicense`.
 
 These checks verify file metadata and the tested lexical associations. Some

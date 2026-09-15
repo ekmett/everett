@@ -18,6 +18,7 @@ for integration. These are development responsibilities.
 | --- | --- | --- |
 | Navigation and recovery | `rank.h`, `rank15.h`, `select15.h`, `durability.h`; `tests/rank.cc`, `tests/durability.cc` | rank and sparse-offset oracles, counter transitions, publication ordering, failure and resumption cases |
 | Grouped navigation and object files | `rank_groups.h`, `select_groups.h`, `mapped_file.h`, `file.h`, `object_path.h`; group/mapping/file tests | policy groups, checked binary envelopes, retained mappings and canonical sharded paths |
+| Checksums | `crc32c.h`, generated backends, pinned generator and package notices; `tests/crc32c.cc` | independent CRC oracle, bounded loads, reproducible generation, target guards and multi-translation-unit installed consumption |
 | Key codecs and blobs | `front.h`, `blob.h`; `tests/front.cc`; [key policies](keys.md) | partial-prefix lookup, false borrows, independent reindexing, conservative boundary contexts and sort contracts |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `multiverse.h`; profile/blob/multiverse tests | byte/bit and value-layout matrix, LPFC, modified borrowed FC, same-policy aliases and unchanged native allocation on reindex |
 | World semantics and ownership | `fingerprint.h`, `pins.h`, `world.h`; `tests/world.cc`, `tests/pins.cc` | disjoint batch permutations, snapshots, old-value validation, contributions, replay and reference export |
@@ -166,6 +167,52 @@ POSIX tests protect every payload page while exercising checked opening, and
 the entire mapping while exercising trusted construction and body slicing.
 Other fixtures verify deferred rejection of corrupt headers, wrong policies,
 invalid extents and padding, plus retained mappings after unlinking.
+
+CRC32C uses one pinned [Corsix generator](https://github.com/corsix/fast-crc32),
+with portable, ARM and x86 implementations checked in alongside the headers.
+The [parallel-folding explanation](https://www.corsix.org/content/fast-crc32c-4k)
+describes how independent CRC and carry-less-multiply work can share execution
+resources. I use generated kernels for this arithmetic. The C++ adaptation gives
+them inline linkage, bounded `memcpy` scalar loads, little-endian normalization
+and scoped helper macros. Length-based loops avoid forming pointers before the
+input. Header and body checks retain the same CRC32C result and file format.
+
+Selection follows the compiler target, with a portable fallback when no
+accelerated target is enabled. On ARM, inputs below 128 bytes use scalar CRC;
+PMULL handles larger inputs when available, and SHA3/EOR3 fusion takes over at
+64 KiB. Those thresholds were measured on an M2 Max. On x86, the eligible
+SSE4.2, PCLMUL and AVX512 variants follow the target's feature macros. I do not
+add runtime feature detection or export ISA flags to consumers. Source and
+installed builds remain header-only and offline. The
+[upstream record](../third_party/fast-crc32/UPSTREAM.md) describes regeneration
+and the separate MIT-or-zlib license terms.
+
+An independent ASan/UBSan check compared 88,726 buffers against a bit-at-a-time
+oracle, exercising the public wrapper and all four host backends, arbitrary
+continuation seeds, unaligned spans, and every length through 16 KiB ending at
+a protected page. Five x86 target configurations cross-compiled with strict
+warnings; x86 execution has not been tested here. The component suite retains
+known vectors, independent generated-backend comparisons, loop boundaries,
+incremental concatenation and protected-tail cases.
+
+On an Apple M2 Max with AppleClang 21, `-O3 -DNDEBUG`, seven-trial warm medians
+were:
+
+| Input | Previous bitwise implementation | Generated wrapper |
+| --- | ---: | ---: |
+| 96 bytes | 724 ns | 7.93 ns |
+| 4 KiB | 32.2 µs | 79.9 ns |
+| 1 MiB | 8.30 ms | 17.0 µs |
+
+For comparison, generated serial ARM CRC took 685 ns at 4 KiB; parallel folding
+accounts for the improvement beyond simply using the hardware CRC instruction.
+The final wrapper processed 4 KiB, 1 MiB and 8 MiB inputs at about 45, 52 and
+55 GB/s respectively while rotating through a 128 MiB allocation. Each trial
+made complete sweeps of that allocation. These measure resident-memory checksum
+work, excluding allocation, page faults and storage reads. `bench/crc32c.cc`
+reproduces the comparison; its optional argument selects a named backend such
+as `public` or `bitwise`. The observations do not establish tuning for other
+processors.
 
 Canonical sharded paths split the current experimental 128-bit opaque object
 ID into `ab/cd/<remaining-id>.<extension>`. Cryptographic content-ID calculation
@@ -344,16 +391,19 @@ cmake --build build-sanitize --parallel 4
 ctest --test-dir build-sanitize --output-on-failure
 ```
 
-The fourteen component suites are `rank`, `groups`, `front`, `profile`,
+The fifteen component suites are `rank`, `groups`, `front`, `profile`,
 `profile_blob`, `sampling`, `index_builder`, `index_pipeline`, `world`, `pins`,
-`durability`, `mapped_file`, `files` and `multiverse`. Two additional CTests
+`durability`, `mapped_file`, `files`, `multiverse` and `crc32c`. Two additional CTests
 validate relocated installation and embedded CMake consumption, including
-typed headers. We record combined verification here after these commands run.
+typed headers and CRC calls across translation units. We record combined
+verification here after these commands run.
 
 Combined verification on 2026-09-15: AppleClang 21, C++20, Release with strict
-warnings and ASan/UBSan passed **17/17 CTests**, including both package consumers
-and the optional Doxygen check. Installed license notices were checked byte for
-byte against the source bundle.
+warnings and ASan/UBSan passed all **18 CTests**, including both package consumers
+and the optional Doxygen check. The documentation check passed after correcting
+links to notice pages. Installed licenses and generated CRC includes were checked
+byte for byte against the source bundle; regenerating from the pinned generator
+also reproduced all eight backends.
 All five complete README examples also compiled and ran with strict warnings
 and ASan/UBSan. Local Markdown links were checked, including heading anchors.
 We haven't yet tested Windows execution, a persistent SQLite backend, network

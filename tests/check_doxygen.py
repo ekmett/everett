@@ -195,7 +195,7 @@ def check_actual_members(items, source):
         ("struct", "everett::mapped_slice", "bytes", "mapped_file.h", "rvalue", "no"),
         ("struct", "everett::profile_view", "reconstruct_at", "profile.h", None, "no"),
         ("namespace", "everett::file_detail", "get", "file.h", None, "no"),
-        ("namespace", "everett", "crc32c", "file.h", None, "no"),
+        ("namespace", "everett", "crc32c", "crc32c.h", None, "no"),
     ]
     for kind, owner, name, filename, qualifier, static in cases:
         compound = named_compound(items, kind, owner)
@@ -332,8 +332,10 @@ def check_markdown_adapter():
 
 def markdown_inputs(source):
     paths = [source / "README.md", source / "AGENTS.md", *sorted((source / "docs").glob("*.md"))]
-    if (source / "proof/README.md").is_file():
-        paths.append(source / "proof/README.md")
+    for name in ("proof/README.md", "THIRD_PARTY.md"):
+        if (source / name).is_file():
+            paths.append(source / name)
+    paths.extend(sorted((source / "third_party/fast-crc32").glob("*.md")))
     return paths
 
 
@@ -361,9 +363,27 @@ def repair_markdown_links(items, source, output):
     # locations and section IDs, without guessing Doxygen's filename escaping
     # or parsing Markdown links ourselves. Keep labels/children untouched.
     pages = markdown_pages(items, source)
+    file_pages = {}
+    for item in items:
+        if item.get("kind") != "file" or item.find("location") is None:
+            continue
+        path = Path(item.find("location").attrib["file"])
+        if path.is_absolute():
+            path = path.relative_to(source)
+        if path.as_posix() in pages:
+            file_pages[item.attrib["id"]] = pages[path.as_posix()]
     count = 0
     for name, page in pages.items():
         replacements = {}
+        # A leading notice/comment can make Doxygen resolve a Markdown link
+        # to its empty file compound instead of the page containing its text.
+        for link in page.findall(".//ref"):
+            file_id = link.get("refid")
+            if link.get("kindref") == "compound" and file_id in file_pages:
+                target = file_pages[file_id]
+                replacements[file_id + ".html"] = page_html(target)
+                link.set("refid", target.attrib["id"])
+                count += 1
         for link in page.findall(".//ulink"):
             url = link.attrib["url"]
             parts = urlsplit(url)
@@ -482,6 +502,10 @@ def check_markdown_pages(items, source, markdown, output):
         check_page_link(pages, source_name, target_name, output)
     for anchor in ("examples", "field-guide", "building"):
         check_page_anchor(pages, "README.md", anchor, output)
+    if "THIRD_PARTY.md" in pages:
+        check_page_link(pages, "README.md", "THIRD_PARTY.md", output)
+        for name in ("LICENSE.md", "LICENSE.MIT.md", "LICENSE.zlib.md", "UPSTREAM.md"):
+            check_page_link(pages, "THIRD_PARTY.md", "third_party/fast-crc32/" + name, output)
     return count
 
 
@@ -498,7 +522,7 @@ z=x+y
 $$
 
 [Child](docs/child.md), [numbered section](docs/child.md#7-numbered-section),
-[proof](proof/README.md), and [details](#details), and literal \\$5, $10, or a lone $.
+[proof](proof/README.md), [notices](THIRD_PARTY.md), and [details](#details), and literal \\$5, $10, or a lone $.
 
 `$inline_code$` and ``$code_with_`_tick$``.
 
@@ -520,19 +544,22 @@ An ordinary paragraph.
     child = directory / "docs/child.md"
     child.write_text("# Child page\n\n[Home](../README.md#details). Formula $q^2$.\n\n## 7. Numbered section\n", encoding="utf-8")
     (directory / "AGENTS.md").write_text("# Guidance\n", encoding="utf-8")
+    (directory / "THIRD_PARTY.md").write_text(
+        "<!-- A leading attribution notice. -->\n\nThird-party notices\n===================\n\nFixture text.\n",
+        encoding="utf-8")
     (directory / "proof/.lake/generated").mkdir(parents=True, exist_ok=True)
     (directory / "proof/README.md").write_text("# Proof notes\n\n[Home](../README.md).\n", encoding="utf-8")
     (directory / "proof/.lake/generated/README.md").write_text("# Not an input\n", encoding="utf-8")
     inputs = markdown_inputs(directory)
     require({path.relative_to(directory).as_posix() for path in inputs} ==
-            {"README.md", "AGENTS.md", "docs/child.md", "proof/README.md"}, "Wrong Markdown input discovery")
+            {"README.md", "AGENTS.md", "docs/child.md", "proof/README.md", "THIRD_PARTY.md"}, "Wrong Markdown input discovery")
     generated = output / "markdown-fixture-docs"
     run_doxygen(executable, directory, inputs, generated, aliases=True, html=True, markdown_main=readme)
     items = compounds(generated)
     repair_markdown_links(items, directory, generated)
     items = compounds(generated)
     pages = markdown_pages(items, directory)
-    require(set(pages) == {"README.md", "AGENTS.md", "docs/child.md", "proof/README.md"}, "Fixture pages missing")
+    require(set(pages) == {"README.md", "AGENTS.md", "docs/child.md", "proof/README.md", "THIRD_PARTY.md"}, "Fixture pages missing")
     require(len(pages["README.md"].findall(".//formula")) == 3 and
             len(pages["docs/child.md"].findall(".//formula")) == 1, "Fixture formula nodes missing")
     details = pages["README.md"].find("detaileddescription")
@@ -542,6 +569,7 @@ An ordinary paragraph.
     require("literal $5, $10, or a lone $." in text(details), "Literal currency dollars changed")
     check_page_link(pages, "README.md", "docs/child.md", generated)
     check_page_link(pages, "README.md", "proof/README.md", generated)
+    check_page_link(pages, "README.md", "THIRD_PARTY.md", generated)
     check_page_link(pages, "proof/README.md", "README.md", generated)
     check_page_link(pages, "docs/child.md", "README.md", generated)
     check_page_anchor(pages, "README.md", "details", generated)
@@ -592,7 +620,7 @@ def main():
     print(f"Checked {len(headers)} headers, seven real function/overload associations, "
           "and twelve fixture symbols with file metadata before/after/split around declarations.")
     print(f"Checked {len(markdown)} Markdown pages and {formula_count} dollar formulas with MathJax HTML, "
-          f"cross-page links ({repaired_links} repaired fragment links), and protected-code/currency fixtures.")
+          f"cross-page links ({repaired_links} repaired links), and protected-code/currency fixtures.")
     print(f"Reference documentation: {reference / 'html/index.html'}")
 
 

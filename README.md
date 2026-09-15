@@ -451,8 +451,13 @@ those boundaries explicitly.
 Building
 --------
 
-Use CMake 3.20 or later and a C++20 compiler. Codec headers use the standard
-library; the mapping backend uses the platform's native read-only mapping API.
+Use CMake 3.20 or later and a C++20 compiler. The mapping backend uses the
+platform's native read-only mapping API. I use one pinned
+[fast-crc32 generator](https://github.com/corsix/fast-crc32) for portable, ARM
+and x86 CRC32C kernels. Generated code ships with the headers, so a consumer
+build needs no download, generator, or additional linked library. The compiler
+target selects eligible kernels; buffers too small to benefit from parallel
+folding use a scalar path. The checksum and file format stay the same.
 
 ```sh
 cmake -S . -B build -DEVERETT_BUILD_TESTS=ON
@@ -529,10 +534,13 @@ compressed string merging, and live-size rebuilding. For a particular concern:
 License
 -------
 
-Copyright 2026 Edward Kmett. Everett is available under
+Copyright 2026 Edward Kmett. My code is available under
 [BSD-2-Clause](LICENSES/BSD-2-Clause.txt) **OR**
 [Apache-2.0](LICENSES/Apache-2.0.txt), at your option. Both complete license texts
 are included in source and installed packages; see [LICENSE](LICENSE).
+The CRC generator and its output retain Peter Cawley's **MIT OR zlib** terms;
+the [third-party notices](THIRD_PARTY.md) and complete upstream licenses ship
+with the package.
 
 Contact Information
 -------------------
