@@ -130,7 +130,8 @@ namespace everett {
       }
       return *this;
     }
-    static encoded_cola_sections from(cola_index<P> const & source, object_id const & native_id,
+    template <class Native, class Main>
+    static encoded_cola_sections from(cola_index<P, Native, Main> const & source, object_id const & native_id,
         std::optional<blob_identity> main_id = {}, std::optional<object_id> secondary_id = {}) {
       if (bool(source.main_target()) != bool(main_id) || bool(source.secondary_target()) != bool(secondary_id))
         error_detail::raise<std::invalid_argument>("COLA encoding needs exact target identities");
@@ -181,7 +182,8 @@ namespace everett {
       file_detail::validate_metadata(result.header_);
       return result;
     }
-    static encoded_cola_sections from(cola_index<P> const &&, object_id const &,
+    template <class Native, class Main>
+    static encoded_cola_sections from(cola_index<P, Native, Main> const &&, object_id const &,
         std::optional<blob_identity> = {}, std::optional<object_id> = {}) = delete;
 
     file_header<P> const & header() const & { require_active(); return header_; }
@@ -248,11 +250,12 @@ namespace everett {
     }
   };
 
-  template <class P> encoded_cola_sections<P> encode_cola_sections(cola_index<P> const & source,
+  template <class P, class Native, class Main> encoded_cola_sections<P> encode_cola_sections(
+      cola_index<P, Native, Main> const & source,
       object_id const & native_id, std::optional<blob_identity> main_id = {}, std::optional<object_id> secondary_id = {}) {
     return encoded_cola_sections<P>::from(source, native_id, std::move(main_id), std::move(secondary_id));
   }
-  template <class P> encoded_cola_sections<P> encode_cola_sections(cola_index<P> const &&,
+  template <class P, class Native, class Main> encoded_cola_sections<P> encode_cola_sections(cola_index<P, Native, Main> const &&,
       object_id const &, std::optional<blob_identity> = {}, std::optional<object_id> = {}) = delete;
 
   // Open touches the fixed envelope/directory, not FC, EF or rank contents.

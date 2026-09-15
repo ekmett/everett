@@ -177,6 +177,12 @@ namespace everett {
     }
   };
 
+  // Build only new borrowed payload/navigation while retaining received native
+  // bytes and exact mapped targets. Seal this artifact's IX03 sections, then
+  // bind the result as a mapped_cola_blob for homogeneous query traversal.
+  template <class P> using mapped_cola_artifact = cola_index<P, mapped_native<P>, mapped_cola_blob<P>>;
+  template <class P> using mapped_cola_index_builder = cola_index_builder<P, mapped_native<P>, mapped_cola_blob<P>>;
+
   template <class P> using mapped_cola_query_root = cola_query_root<P, mapped_cola_blob<P>>;
 
   // Resolves exact targets using fixed metadata; native mappings shared by

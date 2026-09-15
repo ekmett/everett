@@ -22,6 +22,7 @@
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -172,9 +173,9 @@ namespace everett {
     return result;
   }
 
-  template <class P> struct cola_index;
+  template <class P, class Native = profile_array<P>, class Main = void> struct cola_index;
   template <class P, class Target = cola_index<P>> struct cola_sample_cursor;
-  template <class P> struct cola_index_builder;
+  template <class P, class Native = profile_array<P>, class Main = void> struct cola_index_builder;
   template <class P> struct cola_sample_view {
     bit_view key;
     std::uint64_t target_ordinal = 0;
@@ -184,19 +185,27 @@ namespace everett {
 
   // Immutable main node with one recursive main edge and one native-only leaf.
   // This is a fractional-index representation, not a scheduler or chronology.
-  template <class P> struct cola_index {
+  // Default parameters own native arrays and a homogeneous main chain. A
+  // supplied Native/Main pair instead yields a construction artifact retaining
+  // those exact owners; its borrowed payload/navigation are newly built output.
+  // Persist such a mixed artifact before adopting a homogeneous mapped query.
+  template <class P, class Native, class Main> struct cola_index {
     using policy_type = P;
-    using native_array = profile_array<P>;
+    using native_array = Native;
+    using target_type = std::conditional_t<std::is_void_v<Main>, cola_index, Main>;
     using borrowed_array = profile_array<P, stream_role::borrowed>;
     using native_pointer = std::shared_ptr<native_array const>;
     using pair_type = std::shared_ptr<cola_index const>;
+    using main_pointer = std::shared_ptr<target_type const>;
     static constexpr auto group_size = P::group_size;
-    static cola_index build(std::span<profile_record const> records, pair_type main = {}, native_pointer secondary = {});
+    static cola_index build(std::span<profile_record const> records, main_pointer main = {}, native_pointer secondary = {})
+      requires (std::is_same_v<Native, profile_array<P>> && std::is_void_v<Main>);
     // The adopted array must be immutable, ordinary-FC and strictly sorted.
-    static cola_index adopt_native(native_pointer native, pair_type main = {}, native_pointer secondary = {});
+    static cola_index adopt_native(native_pointer native, main_pointer main = {}, native_pointer secondary = {});
     // Include both level-zero arrays, then add empty routing nodes until the
     // first augmented group suffices. Neither handle may be silently dropped.
-    static pair_type prepare_root(pair_type main = {}, native_pointer secondary = {});
+    static pair_type prepare_root(pair_type main = {}, native_pointer secondary = {})
+      requires (std::is_same_v<Native, profile_array<P>> && std::is_void_v<Main>);
     cola_index(cola_index const &) = delete;
     cola_index & operator=(cola_index const &) = delete;
     cola_index(cola_index &&) = default;
@@ -220,7 +229,7 @@ namespace everett {
     std::span<std::uint64_t const> cut_lcps(unsigned) const && = delete;
     std::span<std::uint64_t const> cut_lcps(cola_target route) const & { return cut_lcps(unsigned(route)); }
     std::span<std::uint64_t const> cut_lcps(cola_target) const && = delete;
-    pair_type main_target() const noexcept { return main_; }
+    main_pointer main_target() const noexcept { return main_; }
     native_pointer secondary_target() const noexcept { return secondary_; }
     std::uint64_t virtual_size() const noexcept { return native_ ? count_ : 0; }
     std::uint64_t group_count() const noexcept { auto n = virtual_size(); return n / group_size + (n % group_size != 0); }
@@ -238,9 +247,9 @@ namespace everett {
       return view().search_window(group, lower, native_work, borrowed_work);
     }
   private:
-    friend struct cola_index_builder<P>;
+    friend struct cola_index_builder<P, Native, Main>;
     native_pointer native_;
-    pair_type main_;
+    main_pointer main_;
     native_pointer secondary_;
     std::array<borrowed_array, 2> borrowed_;
     std::array<rank_groups<group_size>, 2> ranks_;
@@ -250,7 +259,7 @@ namespace everett {
     void require_active() const {
       if (!native_) error_detail::raise<std::logic_error>("moved-from COLA index");
     }
-    cola_index(native_pointer native, pair_type main, native_pointer secondary,
+    cola_index(native_pointer native, main_pointer main, native_pointer secondary,
         std::array<borrowed_array, 2> borrowed, std::array<rank_groups<group_size>, 2> ranks,
         std::array<std::vector<std::byte>, 2> flags, std::array<std::vector<std::uint64_t>, 2> cuts,
         std::uint64_t count)
@@ -315,12 +324,14 @@ namespace everett {
   // head advances its source by at most K occurrences, and bytes/comparison and
   // allocation remain additional work. Only current cursor/key contexts are
   // reconstructed; borrowed payload and compact navigation are output storage.
-  template <class P> struct cola_index_builder {
+  template <class P, class Native, class Main> struct cola_index_builder {
     using policy_type = P;
-    using index_type = cola_index<P>;
+    using index_type = cola_index<P, Native, Main>;
     using native_pointer = typename index_type::native_pointer;
     using pair_type = typename index_type::pair_type;
-    explicit cola_index_builder(native_pointer native, pair_type main = {}, native_pointer secondary = {})
+    using main_pointer = typename index_type::main_pointer;
+    using target_type = typename index_type::target_type;
+    explicit cola_index_builder(native_pointer native, main_pointer main = {}, native_pointer secondary = {})
       : native_(checked(std::move(native))), main_(std::move(main)), secondary_(std::move(secondary)),
         native_cursor_(native_->view()) {
       auto remaining = std::numeric_limits<std::uint64_t>::max() - native_->size();
@@ -393,10 +404,10 @@ namespace everett {
     }
   private:
     native_pointer native_;
-    pair_type main_;
+    main_pointer main_;
     native_pointer secondary_;
     profile_cursor<P> native_cursor_;
-    std::optional<cola_sample_cursor<P>> primary_cursor_;
+    std::optional<cola_sample_cursor<P, target_type>> primary_cursor_;
     std::optional<profile_cursor<P>> secondary_cursor_;
     std::array<profile_borrowed_writer<P>, 2> writers_;
     std::array<rank_groups_builder<P::group_size>, 2> ranks_;
@@ -429,19 +440,25 @@ namespace everett {
     }
   };
 
-  template <class P> cola_index<P> cola_index<P>::build(
-      std::span<profile_record const> records, pair_type main, native_pointer secondary) {
+  template <class P, class Native, class Main>
+  cola_index<P, Native, Main> cola_index<P, Native, Main>::build(
+      std::span<profile_record const> records, main_pointer main, native_pointer secondary)
+      requires (std::is_same_v<Native, profile_array<P>> && std::is_void_v<Main>) {
     profile_native_writer<P> writer;
     for (auto const & record : records) writer.append(record);
     return adopt_native(std::make_shared<native_array const>(writer.finish()), std::move(main), std::move(secondary));
   }
-  template <class P> cola_index<P> cola_index<P>::adopt_native(
-      native_pointer native, pair_type main, native_pointer secondary) {
-    cola_index_builder<P> builder(std::move(native), std::move(main), std::move(secondary));
+  template <class P, class Native, class Main>
+  cola_index<P, Native, Main> cola_index<P, Native, Main>::adopt_native(
+      native_pointer native, main_pointer main, native_pointer secondary) {
+    cola_index_builder<P, Native, Main> builder(std::move(native), std::move(main), std::move(secondary));
     while (!builder.done()) builder.step(4096);
     return builder.finish();
   }
-  template <class P> typename cola_index<P>::pair_type cola_index<P>::prepare_root(pair_type main, native_pointer secondary) {
+  template <class P, class Native, class Main>
+  typename cola_index<P, Native, Main>::pair_type cola_index<P, Native, Main>::prepare_root(
+      pair_type main, native_pointer secondary)
+      requires (std::is_same_v<Native, profile_array<P>> && std::is_void_v<Main>) {
     if (main && !secondary && main->virtual_size() <= group_size) return main;
     auto empty = std::make_shared<native_array const>(native_array::build({}));
     auto root = std::make_shared<cola_index const>(adopt_native(empty, std::move(main), std::move(secondary)));
