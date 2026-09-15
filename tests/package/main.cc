@@ -2,6 +2,7 @@
 #include <everett/durability.h>
 #include <everett/fingerprint.h>
 #include <everett/front.h>
+#include <everett/mapped_file.h>
 #include <everett/pins.h>
 #include <everett/rank.h>
 #include <everett/rank15.h>
