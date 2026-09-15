@@ -138,7 +138,7 @@ Final owning-array path</h1>
 <p>The <a href="source/bench/results/shared_query_fixed_m2max.csv">final CSV</a> and <a href="source/bench/results/shared_query_fixed_m2max.json">metadata</a> contain every result. Comparisons above are within each paired run. The runs do not support a precise percentage attribution between the intermediate and final candidates.</p>
 <p>All 120 release profile/trial rows passed the independent full-result and cross-variant checks. Encoded-array sizes are identical within each experiment. This accounting covers arrays reachable from one prepared root and excludes the separate warm root, capacities, fixed objects/view fields and allocation overhead; it does not establish unchanged total process memory. No encoded byte-hash equality check is claimed.</p>
 <p>The final candidate also passed focused CMake ASan/UBSan profile and query suites plus the installed-package consumer check. The <a href="source/bench/results/shared_query_checks.json">check record</a> identifies exact source hashes and test configuration. These checks are independent of release timing.</p>
-<h1><a class="anchor" id="reproduction-7"></a>
+<h1><a class="anchor" id="reproduction-8"></a>
 Reproduction</h1>
 <p>Run each command under the host's CPU/build-directory resource gate. The runner snapshots headers from the supplied commits and compiles one shared harness.</p>
 <div class="fragment"><div class="line">python3 bench/query_compare.py --baseline 8214d4b --candidate 3882d3c \</div>

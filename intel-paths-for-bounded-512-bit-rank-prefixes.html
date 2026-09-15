@@ -79,7 +79,39 @@ $(function() {
   <div class="headertitle"><div class="title">Intel paths for bounded 512-bit rank prefixes</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><code>rank_view::rank</code> now has compile-time Intel SIMD paths for complete readable 512-bit runs. The allocation check still requires eight words before selecting a vector path. A shorter final allocation uses the bounded portable prefix; an exact run boundary returns its directory answer before reading payload. The 512-bit population builder is unchanged.</p>
+<div class="textblock"><p>In the complete bitmap-rank benchmark on Ice Lake, our explicit VPOPCNTDQ path improves both independent throughput and dependent latency over the portable body compiled for the same ISA. AVX2 also improves those medians. AVX512BW improves throughput, with a roughly 2% dependent-latency regression under Clang; GCC favors the explicit BW path in both patterns.</p>
+<p>These are five-trial medians in ns/rank. Each pair compares the portable and explicit implementations within one compiler job and ISA, on an Intel Xeon Platinum 8375C (2.90 GHz nominal):</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">Ice Lake compiler   </th><th class="markdownTableHeadLeft">ISA   </th><th class="markdownTableHeadRight">Independent portable → explicit ns   </th><th class="markdownTableHeadRight">Dependent portable → explicit ns    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">Clang 20.1   </td><td class="markdownTableBodyLeft">AVX2   </td><td class="markdownTableBodyRight">12.565 → 8.870   </td><td class="markdownTableBodyRight">18.452 → 16.650    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">Clang 20.1   </td><td class="markdownTableBodyLeft">AVX512BW   </td><td class="markdownTableBodyRight">8.010 → 7.654   </td><td class="markdownTableBodyRight">15.994 → 16.315    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">Clang 20.1   </td><td class="markdownTableBodyLeft">AVX512VPOPCNTDQ   </td><td class="markdownTableBodyRight">7.011 → 5.892   </td><td class="markdownTableBodyRight">13.891 → 12.677    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">GCC 15.2   </td><td class="markdownTableBodyLeft">AVX2   </td><td class="markdownTableBodyRight">15.217 → 9.011   </td><td class="markdownTableBodyRight">19.441 → 17.870    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">GCC 15.2   </td><td class="markdownTableBodyLeft">AVX512BW   </td><td class="markdownTableBodyRight">15.084 → 8.059   </td><td class="markdownTableBodyRight">20.114 → 18.063    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">GCC 15.2   </td><td class="markdownTableBodyLeft">AVX512VPOPCNTDQ   </td><td class="markdownTableBodyRight">14.981 → 6.575   </td><td class="markdownTableBodyRight">19.953 → 15.120   </td></tr>
+</table>
+<p>All seven variants pass the independent full-result oracles. A second Clang process, using the unchanged source on another Ice Lake assignment, repeats the same tradeoffs:</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">ISA   </th><th class="markdownTableHeadRight">Independent portable → explicit ns   </th><th class="markdownTableHeadRight">Dependent portable → explicit ns    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">AVX2   </td><td class="markdownTableBodyRight">12.425 → 8.842   </td><td class="markdownTableBodyRight">18.452 → 16.624    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">AVX512BW   </td><td class="markdownTableBodyRight">7.983 → 7.646   </td><td class="markdownTableBodyRight">16.041 → 16.376    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">AVX512VPOPCNTDQ   </td><td class="markdownTableBodyRight">7.000 → 5.947   </td><td class="markdownTableBodyRight">13.901 → 12.681   </td></tr>
+</table>
+<p>These results support the current compile-time paths for these workloads. They do not establish a universal Intel speedup: an earlier Broadwell run favored target-POPCNT scalar for dependent queries, and we did not obtain a same-ISA complete-rank measurement on Broadwell. Shared-host outliers are retained and detailed below.</p>
+<h1><a class="anchor" id="implementation"></a>
+Implementation</h1>
+<p><code>rank_view::rank</code> selects Intel SIMD for complete readable 512-bit runs. It requires eight words before taking a vector path; a shorter final allocation uses the bounded portable prefix. At an exact run boundary, it returns the directory answer before reading payload. The 512-bit population builder is unchanged.</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadLeft">Target features   </th><th class="markdownTableHeadLeft">Prefix implementation    </th></tr>
@@ -92,20 +124,91 @@ $(function() {
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyLeft">ARM NEON / other targets   </td><td class="markdownTableBodyLeft">Existing NEON / portable paths   </td></tr>
 </table>
-<p>VPOPCNTDQ takes precedence over BW, then AVX2. There is no runtime feature dispatch and no new exported compiler flag. Compile each consumer for the instruction set it can execute.</p>
-<p>The direct helpers accept 0–512 prefix bits and require eight readable words. For AVX2, each selected byte contributes at most eight; adding both vectors before SAD gives at most sixteen per byte and 512 overall. AVX-512 selects full qword lanes plus the boundary lane, then masks the boundary's remaining bits. At 512 bits the full mask is <code>0xff</code> and the boundary mask is zero. At zero bits the boundary mask clears the first loaded word. No vector reads beyond the eight-word extent. Independent source review found no mask, reduction-width or feature-guard defect.</p>
-<h1><a class="anchor" id="validation-and-limits"></a>
-Validation and limits</h1>
-<p>The production checkpoint is <code>1b1446c</code>. The focused rank suite passes under ASan/UBSan on native ARM and translated scalar x86-64. It includes independent prefix oracles, all bit positions, partial tails and inaccessible guard pages. The new direct-helper assertions cover every prefix from 0 through 512 at eight uint64 alignments for zero, all-one and random words.</p>
+<p>VPOPCNTDQ takes precedence over BW, then AVX2. Selection is compile-time, with no runtime dispatch or new exported compiler flags. Compile each consumer for the instruction set it can execute.</p>
+<p>The vector helpers accept 0–512 bits and read within eight words. For AVX2, each selected byte contributes at most eight; adding both vectors before SAD gives at most sixteen per byte and 512 overall. AVX-512 selects full qword lanes and masks the boundary word. At 512 bits the full mask is <code>0xff</code> and the boundary mask is zero; at zero bits the mask clears the first loaded word. Independent review found no mask, reduction-width or feature-guard defect.</p>
+<h1><a class="anchor" id="measurement-and-verification"></a>
+Measurement and verification</h1>
+<p>We measure a standalone copy of the public rank arithmetic: the eight-byte block directory, stored 0/11/22 population lanes, superblock lookup, run-boundary return and eight-readable-word check. The prefix is forced inline into each target-specific rank function. In the final control, the portable body receives the same ISA flags as its explicit counterpart, allowing the compiler to unroll or vectorize it with the actual <code>position &amp; 511</code> bound.</p>
+<p>The timer includes position generation, one noinline function-pointer call to complete rank, and checksum accumulation. Each variant receives a 32,768-query warmup followed by five trials of 1,048,576 queries in rotating variant order. The fixture has 253,577 bits: 31,704 bitmap bytes and 1,000 directory bytes, plus 512 KiB of query seeds. Its short final run exercises the portable tail. It fits within one superblock; epoch transitions and cold mapped data are outside this timing experiment.</p>
+<p>A separate bit-at-a-time oracle builds the directories and checks every valid position for allocation lengths 0–1,088, plus out-of-range rejection. It also checks all 253,577 positions in the timing fixture and every generated query before timing. Every timed checksum must equal the oracle checksum.</p>
+<p>Compiler Explorer jobs can run on different CPUs. We compare variants within each job; the tables do not compare compilers or CPUs. There is no recorded CPU affinity, frequency control or exclusive-host guarantee. The five trials share one process; the Clang repeat is a separate process.</p>
+<p>All outliers remain in the CSV files. In the final same-ISA dataset, Clang's dependent AVX2 has two roughly 490 ns trials; its median is the middle of three ordinary and two very slow trials. GCC's independent portable BW has a 493 ns trial, and its separate target-POPCNT baseline has a 473 ns dependent trial. The Clang repeat contains a 488.656 ns portable-BW dependent trial. Other variation and the full ranges are available in the raw data; the cause of these stalls was not measured.</p>
+<p>The production checkpoint <code>1b1446c</code> passes the focused rank suite under ASan/UBSan on native ARM and translated scalar x86-64, including partial tails and inaccessible guard pages. Direct helper oracles cover every prefix from 0 through 512 at eight uint64 alignments for zero, all-one and random words. Native Compiler Explorer runs execute and validate AVX2, AVX512BW and AVX512VPOPCNTDQ. Rosetta advertises neither AVX2 nor AVX-512, so local runtime validation covers only scalar x86-64.</p>
 <p>All seven compile profiles pass strict Apple Clang 21 checks:</p>
 <ul>
 <li>Native ARM, scalar x86-64 and AVX2 compile and link with ASan/UBSan.</li>
-<li>AVX512F alone, F+VPOPCNTDQ, F+BW, and F+BW+VPOPCNTDQ compile the complete rank test translation unit. DQ and VL are explicitly disabled; the VPOPCNTDQ-only profile also disables BW, and the BW-only profile disables VPOPCNTDQ.</li>
-<li>Separate optimized assembly probes cover each x86 profile. Together with the capability probe, the driver records fourteen successful compiler calls.</li>
+<li>AVX512F alone, F+VPOPCNTDQ, F+BW, and F+BW+VPOPCNTDQ compile the complete rank test translation unit. DQ and VL are disabled; the VPOPCNTDQ-only profile also disables BW, and the BW-only profile disables VPOPCNTDQ.</li>
+<li>Optimized assembly probes cover each x86 profile. Including the capability probe, the driver records fourteen successful compiler calls.</li>
 </ul>
-<p><b>The Intel SIMD implementations have not been executed or timed here.</b> The local Rosetta capability probe advertises neither AVX2 nor AVX-512. Only the scalar x86-64 executable runs under translation; AVX2 and AVX-512 tests compile but do not run. Native Intel testing remains unavailable. No speedup is claimed for these Intel paths, and the <a class="el" href="stored-spacers-in-complete-bitmap-rank.html">stored-spacer M2 benchmark</a> measures an earlier revision without them.</p>
-<p>The VPOPCNTDQ assembly contains a mask-zeroed <code>vmovdqu64</code>, boundary masking and <code>vpopcntq</code>; Clang narrows the per-qword counts and reduces them with SAD. The AVX2 and BW paths contain nibble shuffles and SAD reductions. Compilation with DQ/VL disabled confirms those extra feature sets are not needed. Compiler vectorization may also turn the bounded scalar tail loop into masked vector loads; its source extent remains bounded by the number of contributing words.</p>
-<p>The checked header and committed header differ only by the two-line comment stating the prefix helper precondition. The artifact manifest records both hashes and verifies that removing those comment lines reproduces the tested header exactly. The existing <code>rank_bounds</code> benchmark adapter also passes its bounded oracle run after changing it to build the old bitmap directory from the original words; it no longer shares incompatible packed run bytes.</p>
+<p>VPOPCNTDQ assembly contains a mask-zeroed <code>vmovdqu64</code>, boundary masking and <code>vpopcntq</code>; Clang narrows the qword counts and reduces them with SAD. AVX2 and BW use nibble shuffles and SAD. The disabled-feature compile matrix confirms that DQ/VL are unnecessary. Compiler vectorization may turn the portable tail into bounded masked loads.</p>
+<p>The artifact manifests record the checked and committed header hashes; their only difference is the two-line helper-precondition comment. The <code>rank_bounds</code> adapter passes its oracle after independently building the old packed directory. The <a class="el" href="stored-spacers-in-complete-bitmap-rank.html">stored-spacer M2 benchmark</a> measures an earlier revision without these Intel paths.</p>
+<h1><a class="anchor" id="appendix-prefix-only-measurements"></a>
+Appendix: prefix-only measurements</h1>
+<p>These experiments measure the prefix helper before composition with rank. Their bitmap is 32 KiB, with 512 KiB of query seeds. Each query selects one of 512 runs and 0–512 prefix bits. The timer includes query generation, a noinline function-pointer call, AVX2 call/return transition handling, and checksum accumulation. Warmup, trial count and query count match the complete-rank test.</p>
+<p>The oracle checks all 0–512 prefixes at eight uint64 offsets across 66 zero/all-one/random patterns, then checks every generated independent and dependent query. All supported variants pass every oracle and timed checksum. The extra call and 0–512 range differ from the inlined complete-rank path, which returns at zero and calls the prefix with 1–511 bits.</p>
+<p>The initial noinline scalar loop does not receive an upper-bound assumption. Both jobs ran on Broadwell Xeon E5-2686 v4 (2.30 GHz nominal), with POPCNT and AVX2 available and AVX-512 skipped. Values are median ns/prefix, followed by min–max:</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">Compiler   </th><th class="markdownTableHeadLeft">Pattern   </th><th class="markdownTableHeadRight">Scalar POPCNT   </th><th class="markdownTableHeadRight">AVX2    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">Clang 20.1   </td><td class="markdownTableBodyLeft">Independent   </td><td class="markdownTableBodyRight">17.551 (17.130–17.697)   </td><td class="markdownTableBodyRight">9.122 (8.109–9.562)    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">Clang 20.1   </td><td class="markdownTableBodyLeft">Dependent   </td><td class="markdownTableBodyRight">19.748 (19.204–20.148)   </td><td class="markdownTableBodyRight">19.778 (19.419–20.511)    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">GCC 15.2   </td><td class="markdownTableBodyLeft">Independent   </td><td class="markdownTableBodyRight">19.973 (17.798–20.345)   </td><td class="markdownTableBodyRight">12.443 (12.036–13.717)    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">GCC 15.2   </td><td class="markdownTableBodyLeft">Dependent   </td><td class="markdownTableBodyRight">21.116 (20.559–21.898)   </td><td class="markdownTableBodyRight">22.163 (21.127–24.068)   </td></tr>
+</table>
+<p>The bounded source adds <code>scalar_bounded</code> with a <code>bits &lt;= 512</code> assumption. Clang again ran on Broadwell; GCC ran on Ice Lake with both AVX-512 variants available. The original scalar remains in every trial and in the raw results.</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">Host / compiler   </th><th class="markdownTableHeadLeft">Pattern   </th><th class="markdownTableHeadLeft">Variant   </th><th class="markdownTableHeadRight">Median ns   </th><th class="markdownTableHeadRight">Min–max ns    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">Broadwell / Clang 20.1   </td><td class="markdownTableBodyLeft">Independent   </td><td class="markdownTableBodyLeft">Scalar bounded   </td><td class="markdownTableBodyRight">15.481   </td><td class="markdownTableBodyRight">15.069–15.799    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">Broadwell / Clang 20.1   </td><td class="markdownTableBodyLeft">Independent   </td><td class="markdownTableBodyLeft">AVX2   </td><td class="markdownTableBodyRight">8.021   </td><td class="markdownTableBodyRight">7.254–8.612    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">Broadwell / Clang 20.1   </td><td class="markdownTableBodyLeft">Dependent   </td><td class="markdownTableBodyLeft">Scalar bounded   </td><td class="markdownTableBodyRight">17.361   </td><td class="markdownTableBodyRight">16.781–245.148    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">Broadwell / Clang 20.1   </td><td class="markdownTableBodyLeft">Dependent   </td><td class="markdownTableBodyLeft">AVX2   </td><td class="markdownTableBodyRight">19.726   </td><td class="markdownTableBodyRight">19.395–20.681    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">Ice Lake / GCC 15.2   </td><td class="markdownTableBodyLeft">Independent   </td><td class="markdownTableBodyLeft">Scalar bounded   </td><td class="markdownTableBodyRight">16.103   </td><td class="markdownTableBodyRight">15.761–16.742    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">Ice Lake / GCC 15.2   </td><td class="markdownTableBodyLeft">Independent   </td><td class="markdownTableBodyLeft">AVX2   </td><td class="markdownTableBodyRight">11.008   </td><td class="markdownTableBodyRight">10.610–11.565    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">Ice Lake / GCC 15.2   </td><td class="markdownTableBodyLeft">Independent   </td><td class="markdownTableBodyLeft">AVX512BW   </td><td class="markdownTableBodyRight">9.963   </td><td class="markdownTableBodyRight">9.805–10.049    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">Ice Lake / GCC 15.2   </td><td class="markdownTableBodyLeft">Independent   </td><td class="markdownTableBodyLeft">AVX512VPOPCNTDQ   </td><td class="markdownTableBodyRight">8.188   </td><td class="markdownTableBodyRight">8.074–9.352    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">Ice Lake / GCC 15.2   </td><td class="markdownTableBodyLeft">Dependent   </td><td class="markdownTableBodyLeft">Scalar bounded   </td><td class="markdownTableBodyRight">16.935   </td><td class="markdownTableBodyRight">16.673–17.322    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">Ice Lake / GCC 15.2   </td><td class="markdownTableBodyLeft">Dependent   </td><td class="markdownTableBodyLeft">AVX2   </td><td class="markdownTableBodyRight">16.773   </td><td class="markdownTableBodyRight">16.599–290.925    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">Ice Lake / GCC 15.2   </td><td class="markdownTableBodyLeft">Dependent   </td><td class="markdownTableBodyLeft">AVX512BW   </td><td class="markdownTableBodyRight">17.461   </td><td class="markdownTableBodyRight">17.011–18.203    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">Ice Lake / GCC 15.2   </td><td class="markdownTableBodyLeft">Dependent   </td><td class="markdownTableBodyLeft">AVX512VPOPCNTDQ   </td><td class="markdownTableBodyRight">13.795   </td><td class="markdownTableBodyRight">13.480–14.227   </td></tr>
+</table>
+<p>The 245.148 ns and 290.925 ns outliers remain in the ranges and raw data. AVX2 improves independent throughput against bounded scalar, while dependent latency is slower on Broadwell and close on Ice Lake. VPOPCNTDQ improves both patterns in this Ice Lake run. These helper results motivate the complete-rank and same-ISA controls presented first.</p>
+<h1><a class="anchor" id="appendix-complete-rank-against-target-popcnt-scalar"></a>
+Appendix: complete rank against target-POPCNT scalar</h1>
+<p>This source uses the complete-rank fixture and oracles described above, with a scalar baseline restricted to POPCNT. Its median ns/rank results were:</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadLeft">Host / compiler   </th><th class="markdownTableHeadLeft">Variant   </th><th class="markdownTableHeadRight">Independent   </th><th class="markdownTableHeadRight">Dependent    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">Broadwell / Clang 20.1   </td><td class="markdownTableBodyLeft">Scalar POPCNT   </td><td class="markdownTableBodyRight">16.416   </td><td class="markdownTableBodyRight">18.232    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">Broadwell / Clang 20.1   </td><td class="markdownTableBodyLeft">AVX2   </td><td class="markdownTableBodyRight">12.391   </td><td class="markdownTableBodyRight">21.993    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">Ice Lake / GCC 15.2   </td><td class="markdownTableBodyLeft">Scalar POPCNT   </td><td class="markdownTableBodyRight">15.251   </td><td class="markdownTableBodyRight">15.999    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">Ice Lake / GCC 15.2   </td><td class="markdownTableBodyLeft">AVX2   </td><td class="markdownTableBodyRight">8.989   </td><td class="markdownTableBodyRight">16.934    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyLeft">Ice Lake / GCC 15.2   </td><td class="markdownTableBodyLeft">AVX512BW   </td><td class="markdownTableBodyRight">8.094   </td><td class="markdownTableBodyRight">16.234    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyLeft">Ice Lake / GCC 15.2   </td><td class="markdownTableBodyLeft">AVX512VPOPCNTDQ   </td><td class="markdownTableBodyRight">6.474   </td><td class="markdownTableBodyRight">12.802   </td></tr>
+</table>
+<p>All supported variants pass the full-result oracles. Dependent AVX2 outliers of 116.084 ns on Broadwell and 446.954 ns on Ice Lake remain in the raw data. Because this scalar baseline has different compiler ISA flags from the SIMD paths, the final same-ISA comparison is the relevant control for a consumer compiled with those features.</p>
 <h1><a class="anchor" id="evidence"></a>
 Evidence</h1>
 <ul>
@@ -114,7 +217,15 @@ Evidence</h1>
 <li><a href="source/bench/results/intel_prefix_avx2.s.txt">AVX2 assembly</a>, <a href="source/bench/results/intel_prefix_avx512bw.s.txt">AVX512BW assembly</a> and <a href="source/bench/results/intel_prefix_vpopcnt.s.txt">VPOPCNTDQ assembly</a>.</li>
 <li><a href="source/bench/results/intel_prefix_artifacts.json">Artifact hashes and tested/committed header comparison</a>.</li>
 </ul>
-<p>The driver uses at most two compiler jobs and was run under the host's CPU and build-directory resource lease. All paths and commands used are in the manifest. </p>
+<p>Native execution records preserve the exact submitted source, request and response; the CSV files extract every timing row without discarding outliers. The request URLs are <code><a href="https://godbolt.org/api/compiler/clang2010/compile">https://godbolt.org/api/compiler/clang2010/compile</a></code> and <code><a href="https://godbolt.org/api/compiler/g152/compile">https://godbolt.org/api/compiler/g152/compile</a></code>, with user arguments <code>-O3 -std=c++20 -mpopcnt</code> and execution arguments <code>5 1048576</code>.</p>
+<ul>
+<li>Initial prefix: <a href="source/bench/results/intel_prefix_ce_initial.cc.txt">source</a>, <a href="source/bench/results/intel_prefix_ce_initial.csv">CSV</a>, <a href="source/bench/results/intel_prefix_ce_initial_clang_request.json">Clang request</a> / <a href="source/bench/results/intel_prefix_ce_initial_clang_result.json">response</a>, <a href="source/bench/results/intel_prefix_ce_initial_gcc_request.json">GCC request</a> / <a href="source/bench/results/intel_prefix_ce_initial_gcc_result.json">response</a>.</li>
+<li>Bounded prefix: <a href="source/bench/results/intel_prefix_ce_bounded.cc.txt">source</a>, <a href="source/bench/results/intel_prefix_ce_bounded.csv">CSV</a>, <a href="source/bench/results/intel_prefix_ce_bounded_clang_request.json">Clang request</a> / <a href="source/bench/results/intel_prefix_ce_bounded_clang_result.json">response</a>, <a href="source/bench/results/intel_prefix_ce_bounded_gcc_request.json">GCC request</a> / <a href="source/bench/results/intel_prefix_ce_bounded_gcc_result.json">response</a>.</li>
+<li>Complete rank: <a href="source/bench/results/intel_rank_ce_initial.cc.txt">source</a>, <a href="source/bench/results/intel_rank_ce_initial.csv">CSV</a>, <a href="source/bench/results/intel_rank_ce_initial_clang_request.json">Clang request</a> / <a href="source/bench/results/intel_rank_ce_initial_clang_result.json">response</a>, <a href="source/bench/results/intel_rank_ce_initial_gcc_request.json">GCC request</a> / <a href="source/bench/results/intel_rank_ce_initial_gcc_result.json">response</a>.</li>
+<li>Same-ISA complete rank: <a href="source/bench/results/intel_rank_ce_same_isa.cc.txt">source</a>, <a href="source/bench/results/intel_rank_ce_same_isa.csv">CSV</a>, <a href="source/bench/results/intel_rank_ce_same_isa_clang_request.json">Clang request</a> / <a href="source/bench/results/intel_rank_ce_same_isa_clang_result.json">response</a>, <a href="source/bench/results/intel_rank_ce_same_isa_gcc_request.json">GCC request</a> / <a href="source/bench/results/intel_rank_ce_same_isa_gcc_result.json">response</a>.</li>
+<li>Unchanged same-ISA Clang repeat: <a href="source/bench/results/intel_rank_ce_repeat.cc.txt">source</a>, <a href="source/bench/results/intel_rank_ce_repeat.csv">CSV</a>, <a href="source/bench/results/intel_rank_ce_repeat_clang_request.json">request</a> / <a href="source/bench/results/intel_rank_ce_repeat_clang_result.json">response</a>.</li>
+<li><a href="source/bench/results/intel_prefix_ce_artifacts.json">Native evidence hashes and local standalone checks</a>. </li>
+</ul>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->

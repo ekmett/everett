@@ -12,8 +12,9 @@ var searchData=
   ['refactor_9',['Complete queries after the rank and Elias–Fano refactor',['../complete-queries-after-the-rank-and-eliasfano-refactor.html',1,'']]],
   ['reservations_10',['Persistent SQLite roots and reservations',['../md_docs_2sqlite-catalog.html',1,'']]],
   ['resumption_11',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]],
-  ['reusing_20borrowed_20key_20prefixes_12',['Reusing borrowed-key prefixes',['../md_bench_2borrowed__prefix.html',1,'']]],
-  ['reusing_20native_20key_20prefixes_13',['Reusing native-key prefixes',['../md_bench_2native__prefix.html',1,'']]],
-  ['roots_14',['Mapped blobs and exact query roots',['../mapped-blobs-and-exact-query-roots.html',1,'']]],
-  ['roots_20and_20reservations_15',['Persistent SQLite roots and reservations',['../md_docs_2sqlite-catalog.html',1,'']]]
+  ['reuse_12',['Sampling comparisons and encoder reuse',['../md_bench_2sample__frontier.html',1,'']]],
+  ['reusing_20borrowed_20key_20prefixes_13',['Reusing borrowed-key prefixes',['../md_bench_2borrowed__prefix.html',1,'']]],
+  ['reusing_20native_20key_20prefixes_14',['Reusing native-key prefixes',['../md_bench_2native__prefix.html',1,'']]],
+  ['roots_15',['Mapped blobs and exact query roots',['../mapped-blobs-and-exact-query-roots.html',1,'']]],
+  ['roots_20and_20reservations_16',['Persistent SQLite roots and reservations',['../md_docs_2sqlite-catalog.html',1,'']]]
 ];

@@ -1,0 +1,37 @@
+{
+  "scope": "Independent integer-key model of frontier equality; prefix length does not affect these counts. Bit code equality adds three tail bits but preserves the equality decision. These are logical decisions, not measured instructions or cycles.",
+  "rows": [
+    {
+      "fixture": "interleaved",
+      "native_records": 4096,
+      "unit_bits": 1,
+      "equal_frontier_decisions": 4096,
+      "unequal_frontier_decisions": 8191,
+      "both_head_decisions": 12287
+    },
+    {
+      "fixture": "interleaved",
+      "native_records": 4096,
+      "unit_bits": 8,
+      "equal_frontier_decisions": 12224,
+      "unequal_frontier_decisions": 63,
+      "both_head_decisions": 12287
+    },
+    {
+      "fixture": "duplicates",
+      "native_records": 4096,
+      "unit_bits": 1,
+      "equal_frontier_decisions": 4096,
+      "unequal_frontier_decisions": 14461,
+      "both_head_decisions": 18557
+    },
+    {
+      "fixture": "duplicates",
+      "native_records": 4096,
+      "unit_bits": 8,
+      "equal_frontier_decisions": 8128,
+      "unequal_frontier_decisions": 10429,
+      "both_head_decisions": 18557
+    }
+  ]
+}

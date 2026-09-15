@@ -126,7 +126,7 @@ Native AArch64 results</h1>
 <td class="markdownTableBodyNone">Full bitmap, NEON   </td><td class="markdownTableBodyRight">25.207 → 23.863   </td><td class="markdownTableBodyRight">109.700 → 104.834   </td><td class="markdownTableBodyRight">—   </td><td class="markdownTableBodyRight">—   </td></tr>
 </table>
 <p>The larger ranges vary substantially. For example, <code>K=7</code> dependent paired queries range from 23.310–42.632 ns for selected NEON and 25.359–51.671 ns for the portable adapter, whose median is 27.616 ns. The bitmap dependent ranges are 101.308–114.275 ns baseline and 101.389–109.334 ns selected. I do not infer a universal large-working-set winner from these overlapping samples. These are resident-memory measurements, not page-fault, disk-I/O or whole-cascade results.</p>
-<h1><a class="anchor" id="validation-and-limits-1"></a>
+<h1><a class="anchor" id="validation-and-limits"></a>
 Validation and limits</h1>
 <ul>
 <li>Independent original-population prefix oracles cover every class boundary, isolated bits and complements, all-one populations, word/vector crossings, unaligned starts, short checkpoints and partial virtual groups. <code>K=63</code> checks the unchanged general fallback.</li>

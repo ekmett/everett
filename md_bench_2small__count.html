@@ -91,7 +91,7 @@ Method</h1>
 <p>The candidate is available on main at <code>1967b4911ab74e46cf944efa4990db7e75033a1c</code>; its measured query/navigation headers and focused profile tests match the candidate. Reproduction uses that reachable revision.</p>
 <p>There are five alternating baseline/candidate process trials for each case, 4,096 queries per process, and both byte and bit profiles. Each fresh process checks every expected native source, ordinal and full value before and after timing. The runner also checks catalog visits, match counts and value checksums across variants. This is a complete owning-query measurement, not an isolated count-decoder microbenchmark.</p>
 <p>Native M2 Max, AppleClang 21, C++20, <code>-O3 -DNDEBUG</code>, user-initiated QoS. Builds and timing hold the exclusive CPU/build-directory resource lease. There is no core pinning, fixed frequency or cold-storage measurement. Denied hardware probes are recorded as unavailable in the metadata.</p>
-<h1><a class="anchor" id="results-6"></a>
+<h1><a class="anchor" id="results-7"></a>
 Results</h1>
 <p>Times are microseconds per complete query. A negative change means less time.</p>
 <table class="markdownTable">
@@ -114,7 +114,7 @@ Results</h1>
 <p>Preparation timings remain mixed, particularly for the unchanged byte path; each process times one short root build. No general preparation improvement is claimed. The query fixture contains many small count fields, so it does not establish the same gain for workloads dominated by counts above 254. Such counts incur the additional bounded lookahead before falling back.</p>
 <p>All 60 release rows passed the full-result and cross-variant checks. The <a href="source/bench/results/small_count_m2max.csv">CSV</a> and <a href="source/bench/results/small_count_m2max.json">metadata</a> preserve every timing, process order, compiler command and source/header hash. Array sizes are identical across variants. This accounting covers encoded arrays reachable from one prepared root; it excludes the separate warm root, capacities, objects, fixture keys, results and allocation overhead.</p>
 <p>Focused CMake ASan/UBSan profile and query tests plus the installed-package consumer passed, 3/3. The <a href="source/bench/results/small_count_checks.json">check record</a> preserves the configuration, source hashes and CTest output. Sanitizer checks are separate from release timing. Native x86, mapped queries, page faults, disk I/O and recovery scans were not measured here.</p>
-<h1><a class="anchor" id="reproduction-8"></a>
+<h1><a class="anchor" id="reproduction-9"></a>
 Reproduction</h1>
 <p>Run under the host's CPU/build-directory resource gate. The runner snapshots headers from both commits and compiles one shared harness.</p>
 <div class="fragment"><div class="line">python3 bench/query_compare.py --baseline eafad7b --candidate 1967b49 \</div>
