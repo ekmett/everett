@@ -21,8 +21,10 @@
 #include <vector>
 
 namespace {
-  thread_local bool fail_allocation = false;
+  thread_local bool fail_allocation = false, count_allocations = false;
+  thread_local std::size_t allocation_calls = 0;
   void * allocate(std::size_t size) {
+    if (count_allocations) ++allocation_calls;
     if (std::exchange(fail_allocation, false)) throw std::bad_alloc();
     if (auto p = std::malloc(size ? size : 1)) return p;
     throw std::bad_alloc();
@@ -223,10 +225,23 @@ namespace {
       require(ops.calls.size() == calls, "finished writer performed I/O");
     }
   }
+  void growing_key_capacity() {
+    using P = storage_policy<profile_unit::bit, fixed_values<0>, 3, exponential_golomb<0>, 1024>;
+    std::vector<profile_record> input;
+    for (unsigned length = 1; length != 513; ++length)
+      input.push_back({bit_string::from_bits(std::string(length, '1')), {}});
+    model_ops ops;
+    native_file_writer<P, model_ops> writer("model-root", id(), attempt(), P::value_width, ops);
+    allocation_calls = 0; count_allocations = true;
+    for (auto const & record : input) writer.append(record);
+    count_allocations = false;
+    require(allocation_calls <= 12, "incrementally growing keys caused linear reallocations");
+    writer.finish(); oracle<P>(ops.bytes, input, P::value_width);
+  }
   void large_frames() {
     // Golomb(1) forces a unary run spanning multiple control/output buffers.
     std::vector<profile_record> input{
-      {bit_string::from_bits(std::string(140001, '0')), bit_string::from_bits("101")},
+      {bit_string::from_bits(std::string(600001, '0')), bit_string::from_bits("101")},
       {bit_string::from_bits("1"), bit_string::from_bits(std::string(1100001, '1'))},
       {bit_string::from_bits("10"), bit_string::from_bits("1")}};
     model_ops ops;
@@ -244,6 +259,62 @@ namespace {
     bytes.append(key.view(), large.view());
     require(direct.direct_source, "large aligned value was not forwarded directly");
     bytes.finish(); oracle<byte_policy>(direct.bytes, byte_input, std::nullopt);
+  }
+  struct concatenate {
+    bit_string operator()(bit_view older, bit_view newer) const {
+      auto result = bit_string::copy(older); profile_detail::append(result, newer); return result;
+    }
+  };
+  struct keyed_concatenate {
+    bit_string operator()(bit_view key, bit_view older, bit_view newer) const {
+      require(key.size() == 8, "key-aware file merge lost full key");
+      return concatenate{}(older, newer);
+    }
+  };
+  template <class Compose> void composition(Compose compose) {
+    using P = byte_policy;
+    std::vector<profile_record> old_rows{{bit_string::from_bytes("a"), bit_string::from_bytes("A")},
+                                       {bit_string::from_bytes("c"), bit_string::from_bytes("C")}};
+    std::vector<profile_record> new_rows{{bit_string::from_bytes("b"), bit_string::from_bytes("B")},
+                                       {bit_string::from_bytes("c"), bit_string::from_bytes("D")}};
+    auto expected = old_rows; expected.insert(expected.begin() + 1, new_rows.front());
+    expected.back().value = bit_string::from_bytes(std::is_same_v<Compose, replace_native_value> ? "D" : "CD");
+    auto build = [](auto const & rows) {
+      profile_native_writer<P> output;
+      for (auto const & row : rows) output.append(row);
+      return std::make_shared<profile_array<P> const>(output.finish());
+    };
+    auto older = build(old_rows), newer = build(new_rows);
+    std::weak_ptr<profile_array<P> const> old_pin = older, new_pin = newer;
+    model_ops ops;
+    {
+      native_file_merge<P, profile_array<P>, Compose, model_ops> merge("model-root", id(), attempt(), older, newer, ops, compose);
+      older.reset(); newer.reset();
+      while (!merge.done()) merge.step();
+      merge.finish(); oracle<P>(ops.bytes, expected, std::nullopt);
+      require(!old_pin.expired() && !new_pin.expired(), "sealed merge dropped pins while cursor views live");
+    }
+    require(old_pin.expired() && new_pin.expired(), "file merge leaked pins");
+  }
+  template<class Compose> void failed_composition(Compose compose) {
+    using P = storage_policy<profile_unit::byte, fixed_values<1>, 3, exponential_golomb<0>, 7>;
+    auto rows = records<P>(1, 1);
+    profile_native_writer<P> output;
+    for (auto const & row : rows) output.append(row);
+    auto source = std::make_shared<profile_array<P> const>(output.finish());
+    std::weak_ptr<profile_array<P> const> pin = source;
+    model_ops ops;
+    {
+      native_file_merge<P, profile_array<P>, Compose, model_ops> merge("model-root", id(), attempt(), source, source, ops, compose);
+      source.reset();
+      rejects([&] { merge.step(); });
+      require(merge.failed() && !merge.done() && !pin.expired(), "composition failure lost poison/pins");
+      auto calls = ops.calls.size();
+      rejects<std::logic_error>([&] { merge.finish(); });
+      rejects<std::logic_error>([&] { merge.step(); });
+      require(ops.calls.size() == calls && ops.private_exists && !ops.final_exists, "failed merge promoted output");
+    }
+    require(pin.expired(), "failed merge leaked pins");
   }
   void validation_and_failures() {
     auto input = records<byte_policy>(4, std::nullopt);
@@ -313,6 +384,68 @@ namespace {
     }
     ~temporary_directory() { std::error_code ignored; std::filesystem::remove_all(path, ignored); }
   };
+  void malformed_mapped_inputs() {
+    using P = byte_policy;
+    temporary_directory directory;
+    auto rows = records<P>(3, std::nullopt);
+    profile_native_writer<P> writer;
+    for (auto const & row : rows) writer.append(row);
+    auto array = writer.finish();
+    for (bool first : {false, true}) {
+      auto bytes = encode_native_sections(array).materialize();
+      auto header = decode_file_header<P>(bytes);
+      auto body = std::span<std::byte>(bytes).subspan(file_detail::header_bytes);
+      auto fc = file_detail::get(body, section_detail::native_descriptor_offset, 8);
+      auto at = first ? 1 : array.view().encoded_at(1).next_offset;
+      body[fc + at] = std::byte{127};
+      std::array<std::span<std::byte const>, 1> parts{body};
+      auto number = first ? 51u : 50u;
+      auto receipt = object_writer<P>::seal(directory.path, id(number), attempt(number), header, parts);
+      auto source = std::make_shared<mapped_native<P> const>(mapped_native<P>::open(receipt.path));
+      std::weak_ptr<mapped_native<P> const> pin = source;
+      model_ops ops;
+      if (first) {
+        rejects<std::invalid_argument>([&] {
+          native_file_merge<P, mapped_native<P>, replace_native_value, model_ops> bad(
+            "model-root", id(), attempt(), source, source, ops);
+        });
+        source.reset();
+      } else {
+        {
+          native_file_merge<P, mapped_native<P>, replace_native_value, model_ops> bad(
+            "model-root", id(), attempt(), source, source, ops);
+          source.reset(); std::filesystem::remove(receipt.path);
+          require(bad.step(1).keys == 1, "valid mapped first record failed");
+          rejects<std::invalid_argument>([&] { bad.step(1); });
+          require(bad.failed() && !bad.done() && !pin.expired(), "late mapped failure lost poison/pin");
+          auto calls = ops.calls.size();
+          rejects<std::logic_error>([&] { bad.finish(); });
+          require(ops.calls.size() == calls && !ops.final_exists, "malformed mapped input sealed output");
+        }
+      }
+      require(pin.expired(), "malformed mapped input leaked owner");
+      require(!ops.final_exists, "invalid input constructor promoted output");
+    }
+  }
+  void guarded_sources() {
+    auto page = std::size_t(::sysconf(_SC_PAGESIZE));
+    auto length = 17 * page;
+    auto address = ::mmap(nullptr, length + page, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    require(address != MAP_FAILED, "guarded input allocation");
+    auto data = static_cast<std::byte *>(address);
+    require(::mprotect(data + length, page, PROT_NONE) == 0, "guard input end");
+    for (std::size_t i = 0; i != length; ++i) data[i] = std::byte(i * 17);
+    auto source = bit_view(std::span<std::byte const>(data, length), length * 8 - 3, 3);
+    auto key = bit_string::from_bits("101");
+    std::vector<profile_record> expected{{key, bit_string::copy(source)}};
+    model_ops ops;
+    native_file_writer<bit_policy, model_ops> writer("model-root", id(), attempt(), std::nullopt, ops);
+    writer.append(key.view(), source);
+    require(::mprotect(address, length, PROT_NONE) == 0, "protect consumed value");
+    writer.finish();
+    require(::munmap(address, length + page) == 0, "unmap consumed value");
+    oracle<bit_policy>(ops.bytes, expected, std::nullopt);
+  }
   template <class P> void real_files() {
     temporary_directory directory;
     auto input = records<P>(35, P::value_width, 513);
@@ -323,6 +456,14 @@ namespace {
     auto mapped_bytes = mapping.slice(0, mapping.size());
     oracle<P>(mapped_bytes.bytes(), input, P::value_width);
     auto native = mapped_native<P>::open(receipt.path); native.scan();
+    {
+      native_file_writer<P> duplicate(directory.path, id(1), attempt(99));
+      rejects<object_write_error>([&] { duplicate.finish(); });
+      require(duplicate.failed() && std::filesystem::exists(duplicate.paths().private_output), "no-clobber lost uncertain attempt");
+      auto unchanged = mapped_file::open(receipt.path);
+      auto unchanged_bytes = unchanged.slice(0, unchanged.size());
+      oracle<P>(unchanged_bytes.bytes(), input, P::value_width);
+    }
     std::filesystem::remove(receipt.path);
     require(native.view().size() == input.size(), "unlinked native mapping lost input");
 
@@ -372,8 +513,12 @@ int main() {
     matrix<storage_policy<profile_unit::bit, fixed_values<0>, 3, exponential_golomb<3>, 16>>();
     matrix<storage_policy<profile_unit::bit, fixed_values<3>, 31, golomb<3>, 7>>();
     matrix<storage_policy<profile_unit::bit, variable_values, 3, exponential_golomb<63>, 7>>();
-    large_frames(); validation_and_failures();
+    growing_key_capacity(); large_frames(); validation_and_failures();
+    composition(replace_native_value{}); composition(concatenate{}); composition(keyed_concatenate{});
+    failed_composition([](bit_view, bit_view) -> bit_view { throw std::runtime_error("composition fixture"); });
+    failed_composition([](bit_view, bit_view) { return bit_string{}; });
 #if defined(__APPLE__) || defined(__linux__)
+    malformed_mapped_inputs(); guarded_sources();
     real_files<byte_policy>();
     real_files<storage_policy<profile_unit::bit, fixed_values<3>, 3, golomb<3>, 7>>();
 #endif

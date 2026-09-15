@@ -271,7 +271,11 @@ namespace everett {
       auto bytes = profile_detail::byte_count(key.size());
       if (bytes > previous_.bytes.max_size())
         error_detail::raise<std::length_error>("native file key is too large");
-      previous_.bytes.reserve(static_cast<std::size_t>(bytes));
+      if (bytes > previous_.bytes.capacity()) {
+        auto capacity = previous_.bytes.capacity(), maximum = previous_.bytes.max_size();
+        auto grown = capacity > maximum / 2 ? maximum : 2 * capacity;
+        previous_.bytes.reserve(std::max(static_cast<std::size_t>(bytes), grown));
+      }
       auto literal = key.subview(retained_bits, key.size() - retained_bits);
       output_.append(retained, literal, value);
       profile_detail::resize(previous_, key.size());
