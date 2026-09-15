@@ -1,0 +1,24 @@
+{
+  "log": "/Users/ekmett/cult/game/build-agent-logs/20260915-144612-lwr_fftd/output.log",
+  "source_sha256": "b873c5ff77553627d4e1698a328e379102239a0ca58c67d50e3e9ea591f81d71",
+  "commands": [
+    [
+      "build-native-encoded-check-final/baseline/native_encoded",
+      "128",
+      "0",
+      "1",
+      "ids",
+      "4096"
+    ],
+    [
+      "build-native-encoded-check-final/candidate/native_encoded",
+      "128",
+      "0",
+      "1",
+      "ids",
+      "4096"
+    ]
+  ],
+  "parent_metadata": "native_encoded_sanitizer_m2max.json",
+  "cross_variant_wire_checks": true
+}
