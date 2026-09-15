@@ -748,7 +748,7 @@ I require the implementation checks to include:
 - Delete/overwrite deltas match full recomputation; absent deletes earn no credit.
 - Snapshots and forks remain unchanged after updates and compactions.
 - Reused merge outputs leave old dependent indexes readable until adoption.
-- Persistence publication/recovery and mmap lifetime once the file layer exists.
+- Immutable-file sealing, publication/recovery, and mmap lifetime across unlink.
 
 ## 11. References and their roles
 
