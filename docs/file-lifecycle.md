@@ -30,8 +30,8 @@ file or metadata journal.
 
 ### Debug dumps
 
-`reference_cola::save` and `restore` provide a `.rc` debug dump: a fully resolved
-table with full keys in sorted order and codec-encoded values. Its eight-byte
+`reference_cola::debug_export` and `debug_import` provide a `.rc` debug dump:
+a fully resolved table with full keys in sorted order and codec-encoded values. Its eight-byte
 magic is `DIET.RC` followed by zero. Separate 64-bit little-endian fields carry
 the export version, value-codec tag and live-entry count. Each entry contains
 its 64-bit key byte length, key bytes and encoded value.
