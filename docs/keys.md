@@ -285,14 +285,62 @@ entries may need only a position, whereas FC entries use the prefix/comparison
 context appropriate to their exact stream. These are requirements for the mixed
 record format, not a decision to repeat a sort descriptor at every record.
 In the bit-tree case, the existing backspace can remove part of the sort-code
-prefix. Resume tree traversal from the retained prefix and consume new code
-bits until a leaf determines the key-and-value handler. The tree identifies the end of
+prefix. Resume selection from the retained prefix and consume new code
+bits until a leaf determines the key-and-value handler. The selector identifies the end of
 the sort code without a separate code-length field: there is no exponential-
 Golomb “descend this many bits” count. The backspace retains its count; descent
 ends at the prefix-free code's leaf. A backspace staying within
 a local key retains its current sort. This shares prefix compression with the
 sort path instead of repeating that path literally on every record. Mixed-codec
 sample entry and the byte-list framing still need their concrete contracts.
+
+### Sort selection is a protocol
+
+I keep sorts within one cola, but the store need not traverse a binary tree to
+select them. `bin` and `tip` describe a prefix-free family. A selector can compile
+that family to a nibble lookup table, a byte switch, or generated decoding code.
+The physical reader depends on the selection protocol, not that implementation.
+
+Conceptually, selection has this shape:
+
+```cpp
+selector.select(bits, [&]<class S>(std::type_identity<S>) {
+  // bits now begins S's key-and-value grammar.
+});
+```
+
+The selector consumes just the prefix-free code from a bit spigot and invokes
+a typed callback. Its complementary operation emits the code for a given `S`.
+Selection must also resume after backspacing into an already retained sort-code
+prefix. A selector-owned cursor is one possible implementation; it is not a
+required tree representation. There is still no suffix-length field for the
+sort code: reaching its leaf ends selection.
+
+The registry continues to describe physical units, common value width and
+schema compatibility. Those are interpretation traits, not instructions to
+redispatch every record. While we remain inside one FC key region, we retain
+the selected handler. Selection runs at a sort transition or at sampled entry
+when no handler is established.
+
+### Walking without reconstructing every key
+
+I require the initial sort bits and FC starting position to be available in the
+blob's own metadata. That gives us enough context to walk its controls, select
+each key-and-value grammar, skip values and follow sort transitions. It does
+not require storing the inherited key prefix there.
+
+An Elias–Fano jump lands at a legal continuation position with the corresponding
+committed prefix context. That position can be partway through a sort-code
+change or an FC region. The continuation must establish its selected handler
+and retained position; it must not invent missing key bytes from an unrelated
+query. The mixed-format implementation must make that context explicit.
+
+A blob can therefore be independently **walkable** while still needing the
+cola's routing context to reconstruct full keys. I do not want a full-key
+restart anchor added merely to make sequential grammar dispatch convenient.
+The existing opaque-profile codec and the standalone typed record codec are
+documented separately; neither is evidence that this entire mixed mapped
+continuation path is already implemented.
 
 ## 3. A framing illustration, not a wire format
 
