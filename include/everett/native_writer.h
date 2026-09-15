@@ -69,7 +69,11 @@ namespace everett {
       auto key_units = key.size() / P::bits_per_unit;
       auto saved_bits = data_.bit_size;
       auto saved_offsets = offsets_.size();
-      auto next_previous = bit_string::copy(key);
+      // Reserve before touching output; failures retain the logical
+      // predecessor. Its capacity is private and may grow on rejection.
+      auto next_bytes = profile_detail::byte_count(key.size());
+      if (next_bytes > previous_.bytes.max_size()) throw std::length_error("profile bit string too large");
+      previous_.bytes.reserve(static_cast<std::size_t>(next_bytes));
       try {
         if (count_ % P::codec_block_size == 0) {
           auto stride = profile_detail::multiply(count_, common_.value_or(0));
@@ -87,7 +91,12 @@ namespace everett {
         offsets_.resize(saved_offsets);
         throw;
       }
-      previous_ = std::move(next_previous);
+      // All output writes succeeded. This resize cannot allocate; preserve
+      // whole-byte common prefixes for byte profiles and exact bits otherwise.
+      auto common_bits = comparison.common_bits - comparison.common_bits % P::bits_per_unit;
+      profile_detail::resize(previous_, key.size());
+      profile_detail::copy_into(previous_, common_bits,
+        key.subview(common_bits, key.size() - common_bits));
       count_ = next_count;
     }
     void append(profile_record const & record) { append(record.key.view(), record.value.view()); }
