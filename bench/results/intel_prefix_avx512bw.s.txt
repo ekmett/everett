@@ -128,11 +128,11 @@ _rank_probe:                            ## @rank_probe
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register %rbp
 	popq	%rbp
-	jmp	__ZNK7everett9rank_view4rankEy  ## TAILCALL
+	jmp	__ZNK7diet9rank_view4rankEy  ## TAILCALL
 	.cfi_endproc
                                         ## -- End function
 	.section	__TEXT,__const
-	.p2align	6, 0x0                          ## -- Begin function _ZNK7everett9rank_view4rankEy
+	.p2align	6, 0x0                          ## -- Begin function _ZNK7diet9rank_view4rankEy
 LCPI2_0:
 	.quad	0                               ## 0x0
 	.quad	1                               ## 0x1
@@ -210,10 +210,10 @@ LCPI2_2:
 	.byte	3                               ## 0x3
 	.byte	4                               ## 0x4
 	.section	__TEXT,__text,regular,pure_instructions
-	.globl	__ZNK7everett9rank_view4rankEy
-	.weak_def_can_be_hidden	__ZNK7everett9rank_view4rankEy
+	.globl	__ZNK7diet9rank_view4rankEy
+	.weak_def_can_be_hidden	__ZNK7diet9rank_view4rankEy
 	.p2align	4
-__ZNK7everett9rank_view4rankEy:         ## @_ZNK7everett9rank_view4rankEy
+__ZNK7diet9rank_view4rankEy:         ## @_ZNK7diet9rank_view4rankEy
 Lfunc_begin0:
 	.cfi_startproc
 	.cfi_personality 155, ___gxx_personality_v0
@@ -357,7 +357,7 @@ Ltmp0:
 Ltmp1:
 ## %bb.2:
 	movq	%rbx, %rdi
-	callq	__ZNK7everett9rank_view4rankEy.cold.1
+	callq	__ZNK7diet9rank_view4rankEy.cold.1
 LBB2_3:
 Ltmp2:
 	movq	%rax, %r14
@@ -418,8 +418,8 @@ __ZNSt12out_of_rangeC1B9nqe210106EPKc:  ## @_ZNSt12out_of_rangeC1B9nqe210106EPKc
 	retq
 	.cfi_endproc
                                         ## -- End function
-	.p2align	4                               ## -- Begin function _ZNK7everett9rank_view4rankEy.cold.1
-__ZNK7everett9rank_view4rankEy.cold.1:  ## @_ZNK7everett9rank_view4rankEy.cold.1
+	.p2align	4                               ## -- Begin function _ZNK7diet9rank_view4rankEy.cold.1
+__ZNK7diet9rank_view4rankEy.cold.1:  ## @_ZNK7diet9rank_view4rankEy.cold.1
 	.cfi_startproc
 ## %bb.0:
 	pushq	%rbp

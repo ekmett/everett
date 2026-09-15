@@ -15,7 +15,7 @@
     {
       "test": "cola_index",
       "command": [
-        "/tmp/everett-cola-linux-YR37tcNZ/build/cola_index"
+        "/tmp/diet-cola-linux-YR37tcNZ/build/cola_index"
       ],
       "environment": {
         "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
@@ -26,7 +26,7 @@
     {
       "test": "mapped_cola",
       "command": [
-        "/tmp/everett-cola-linux-YR37tcNZ/build/mapped_cola"
+        "/tmp/diet-cola-linux-YR37tcNZ/build/mapped_cola"
       ],
       "environment": {
         "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
@@ -37,7 +37,7 @@
     {
       "test": "mapped_cola_builder",
       "command": [
-        "/tmp/everett-cola-linux-YR37tcNZ/build/mapped_cola_builder"
+        "/tmp/diet-cola-linux-YR37tcNZ/build/mapped_cola_builder"
       ],
       "environment": {
         "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
@@ -48,7 +48,7 @@
     {
       "test": "cola_terminal",
       "command": [
-        "/tmp/everett-cola-linux-YR37tcNZ/build/cola_terminal"
+        "/tmp/diet-cola-linux-YR37tcNZ/build/cola_terminal"
       ],
       "environment": {
         "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
@@ -59,7 +59,7 @@
     {
       "test": "cola_local_merge",
       "command": [
-        "/tmp/everett-cola-linux-YR37tcNZ/build/cola_local_merge"
+        "/tmp/diet-cola-linux-YR37tcNZ/build/cola_local_merge"
       ],
       "environment": {
         "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",

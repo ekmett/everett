@@ -1,8 +1,8 @@
 	.build_version macos, 26, 0	sdk_version 26, 5
 	.section	__TEXT,__text,regular,pure_instructions
-	.globl	__Z13subview_probeRKN7everett8bit_viewEyy ; -- Begin function _Z13subview_probeRKN7everett8bit_viewEyy
+	.globl	__Z13subview_probeRKN7diet8bit_viewEyy ; -- Begin function _Z13subview_probeRKN7diet8bit_viewEyy
 	.p2align	2
-__Z13subview_probeRKN7everett8bit_viewEyy: ; @_Z13subview_probeRKN7everett8bit_viewEyy
+__Z13subview_probeRKN7diet8bit_viewEyy: ; @_Z13subview_probeRKN7diet8bit_viewEyy
 	.cfi_startproc
 ; %bb.0:
 	ldr	x9, [x0, #24]
@@ -22,13 +22,13 @@ LBB0_2:
 	.cfi_def_cfa w29, 16
 	.cfi_offset w30, -8
 	.cfi_offset w29, -16
-	bl	__Z13subview_probeRKN7everett8bit_viewEyy.cold.1
+	bl	__Z13subview_probeRKN7diet8bit_viewEyy.cold.1
 	.cfi_endproc
                                         ; -- End function
-	.globl	__ZN7everett12error_detail5raiseISt12out_of_rangeEEvPKc ; -- Begin function _ZN7everett12error_detail5raiseISt12out_of_rangeEEvPKc
-	.weak_def_can_be_hidden	__ZN7everett12error_detail5raiseISt12out_of_rangeEEvPKc
+	.globl	__ZN7diet12error_detail5raiseISt12out_of_rangeEEvPKc ; -- Begin function _ZN7diet12error_detail5raiseISt12out_of_rangeEEvPKc
+	.weak_def_can_be_hidden	__ZN7diet12error_detail5raiseISt12out_of_rangeEEvPKc
 	.p2align	2
-__ZN7everett12error_detail5raiseISt12out_of_rangeEEvPKc: ; @_ZN7everett12error_detail5raiseISt12out_of_rangeEEvPKc
+__ZN7diet12error_detail5raiseISt12out_of_rangeEEvPKc: ; @_ZN7diet12error_detail5raiseISt12out_of_rangeEEvPKc
 Lfunc_begin0:
 	.cfi_startproc
 	.cfi_personality 155, ___gxx_personality_v0
@@ -121,8 +121,8 @@ Lloh5:
 	.loh AdrpLdrGot	Lloh4, Lloh5
 	.cfi_endproc
                                         ; -- End function
-	.p2align	2                               ; -- Begin function _Z13subview_probeRKN7everett8bit_viewEyy.cold.1
-__Z13subview_probeRKN7everett8bit_viewEyy.cold.1: ; @_Z13subview_probeRKN7everett8bit_viewEyy.cold.1
+	.p2align	2                               ; -- Begin function _Z13subview_probeRKN7diet8bit_viewEyy.cold.1
+__Z13subview_probeRKN7diet8bit_viewEyy.cold.1: ; @_Z13subview_probeRKN7diet8bit_viewEyy.cold.1
 	.cfi_startproc
 ; %bb.0:
 	stp	x29, x30, [sp, #-16]!           ; 16-byte Folded Spill
@@ -134,7 +134,7 @@ Lloh6:
 	adrp	x0, l_.str@PAGE
 Lloh7:
 	add	x0, x0, l_.str@PAGEOFF
-	bl	__ZN7everett12error_detail5raiseISt12out_of_rangeEEvPKc
+	bl	__ZN7diet12error_detail5raiseISt12out_of_rangeEEvPKc
 	.loh AdrpAdd	Lloh6, Lloh7
 	.cfi_endproc
                                         ; -- End function

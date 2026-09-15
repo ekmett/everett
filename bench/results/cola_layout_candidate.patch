@@ -1,8 +1,8 @@
-diff --git a/include/everett/cola_index.h b/include/everett/cola_index.h
+diff --git a/include/diet/cola_index.h b/include/diet/cola_index.h
 index 0c8cf48..eccac01 100644
---- a/include/everett/cola_index.h
-+++ b/include/everett/cola_index.h
-@@ -360,7 +360,10 @@ namespace everett {
+--- a/include/diet/cola_index.h
++++ b/include/diet/cola_index.h
+@@ -360,7 +360,10 @@ namespace diet {
            native_equal_ = !origin || (!adjacent.order && native_equal_);
            if (origin) {
              auto route = origin - 1;
@@ -14,47 +14,47 @@ index 0c8cf48..eccac01 100644
              auto ordinal = borrowed_count_[route]++;
              if (!(ordinal & 7)) flags_[route].push_back(std::byte{0});
              if (native_equal_) flags_[route].back() |= std::byte(1u << (ordinal & 7));
-diff --git a/include/everett/multiverse.h b/include/everett/multiverse.h
+diff --git a/include/diet/fridge.h b/include/diet/fridge.h
 index b22fc41..93abe41 100644
---- a/include/everett/multiverse.h
-+++ b/include/everett/multiverse.h
+--- a/include/diet/fridge.h
++++ b/include/diet/fridge.h
 @@ -12,6 +12,7 @@
- #include <everett/file.h>
- #include <everett/file_index_pipeline.h>
- #include <everett/mapped_blob.h>
-+#include <everett/mapped_cola.h>
- #include <everett/native_merge.h>
- #include <everett/native_file_merge.h>
- #include <everett/object_writer.h>
-@@ -86,6 +87,13 @@ namespace everett {
-     using mapped_index = everett::mapped_index<P>;
-     using mapped_blob = everett::mapped_blob<P>;
-     using mapped_query_root = everett::mapped_query_root<P>;
-+    using cola_index = everett::cola_index<P>;
-+    using cola_index_builder = everett::cola_index_builder<P>;
-+    using cola_query_root = everett::cola_query_root<P>;
-+    using cola_query_cursor = everett::cola_query_cursor<P>;
-+    using mapped_cola_index = everett::mapped_cola_index<P>;
-+    using mapped_cola_blob = everett::mapped_cola_blob<P>;
-+    using mapped_cola_query_root = everett::mapped_cola_query_root<P>;
-     using world = everett::world<P>;
-     using timeline = everett::timeline<P>;
-     using branch_point = everett::branch_point<P>;
-@@ -105,6 +113,9 @@ namespace everett {
+ #include <diet/file.h>
+ #include <diet/file_index_pipeline.h>
+ #include <diet/mapped_blob.h>
++#include <diet/mapped_cola.h>
+ #include <diet/native_merge.h>
+ #include <diet/native_file_merge.h>
+ #include <diet/object_writer.h>
+@@ -86,6 +87,13 @@ namespace diet {
+     using mapped_index = diet::mapped_index<P>;
+     using mapped_blob = diet::mapped_blob<P>;
+     using mapped_query_root = diet::mapped_query_root<P>;
++    using cola_index = diet::cola_index<P>;
++    using cola_index_builder = diet::cola_index_builder<P>;
++    using cola_query_root = diet::cola_query_root<P>;
++    using cola_query_cursor = diet::cola_query_cursor<P>;
++    using mapped_cola_index = diet::mapped_cola_index<P>;
++    using mapped_cola_blob = diet::mapped_cola_blob<P>;
++    using mapped_cola_query_root = diet::mapped_cola_query_root<P>;
+     using cola = diet::cola<P>;
+     using timeline = diet::timeline<P>;
+     using branch_point = diet::branch_point<P>;
+@@ -105,6 +113,9 @@ namespace diet {
      mapped_query_root open_query(blob_identity const & head) const {
-       return everett::open_mapped_query<P>(root_, head);
+       return diet::open_mapped_query<P>(root_, head);
      }
 +    mapped_cola_query_root open_cola_query(blob_identity const & head) const {
-+      return everett::open_mapped_cola_query<P>(root_, head);
++      return diet::open_mapped_cola_query<P>(root_, head);
 +    }
  
      // The caller establishes root durability and reserves both identities.
-     // Sealing acknowledges object persistence operations, not world adoption.
-diff --git a/include/everett/profile.h b/include/everett/profile.h
+     // Sealing acknowledges object persistence operations, not cola adoption.
+diff --git a/include/diet/profile.h b/include/diet/profile.h
 index 30cb7dc..702a41f 100644
---- a/include/everett/profile.h
-+++ b/include/everett/profile.h
-@@ -1198,8 +1198,9 @@ namespace everett {
+--- a/include/diet/profile.h
++++ b/include/diet/profile.h
+@@ -1198,8 +1198,9 @@ namespace diet {
  
    private:
      template <class, class, class> friend struct index_builder;
