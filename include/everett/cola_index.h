@@ -276,7 +276,7 @@ namespace everett {
     std::shared_ptr<Target const> target() const noexcept { return target_; }
     cola_sample_view<P> peek() const & {
       if (done()) error_detail::raise<std::out_of_range>("COLA sampler at end");
-      auto origin = choose();
+      auto origin = choose().origin;
       if (!origin) { auto item = native_.peek(); return {item.key.prefix, ordinal_, cola_origin::native, item.ordinal}; }
       auto item = borrowed_[origin - 1].peek();
       return {item.key.prefix, ordinal_, cola_origin(origin), item.ordinal};
@@ -286,8 +286,13 @@ namespace everett {
       if (done()) error_detail::raise<std::out_of_range>("COLA sampler at end");
       auto width = std::min<std::uint64_t>(P::group_size, count_ - ordinal_);
       for (std::uint64_t i = 0; i < width; ++i) {
-        auto origin = choose();
-        if (!origin) native_.advance(); else borrowed_[origin - 1].advance();
+        auto selected = choose();
+        prefixes_ = selected.common;
+        auto next = !selected.origin ? native_.advance_comparison() :
+          borrowed_[selected.origin - 1].advance_comparison();
+        if (next && (next->order > 0 || (!selected.origin && !next->order)))
+          error_detail::raise<std::invalid_argument>("COLA sample source order mismatch");
+        prefixes_[selected.origin] = next ? next->common_bits : 0;
         ++ordinal_;
       }
     }
@@ -297,6 +302,7 @@ namespace everett {
     std::shared_ptr<Target const> target_;
     profile_cursor<P> native_;
     std::array<borrowed_cursor, 2> borrowed_;
+    std::array<std::uint64_t, 3> prefixes_{};
     std::uint64_t count_, ordinal_ = 0;
     static binding bind(std::shared_ptr<Target const> target) {
       if (!target) error_detail::raise<std::invalid_argument>("null COLA sample target");
@@ -307,15 +313,42 @@ namespace everett {
       : target_(std::move(source.target)), native_(source.view.native()),
         borrowed_{borrowed_cursor(source.view.borrowed(0)), borrowed_cursor(source.view.borrowed(1))},
         count_(source.view.virtual_size()) {}
-    unsigned choose() const {
-      unsigned result = 3;
+    struct selection {
+      unsigned origin = 3;
+      std::array<std::uint64_t, 3> common{};
+    };
+    selection choose() const {
+      selection result;
       bit_view key;
-      if (!native_.done()) { result = 0; key = native_.peek().key.prefix; }
-      for (unsigned route = 0; route < 2; ++route) if (!borrowed_[route].done()) {
-        auto candidate = borrowed_[route].peek().key.prefix;
-        if (result == 3 || compare_bits(candidate, key) < 0) { result = route + 1; key = candidate; }
+      if (!native_.done()) {
+        result.origin = 0; key = native_.peek().key.prefix;
+        result.common[0] = key.size();
       }
-      if (result == 3) error_detail::raise<std::invalid_argument>("COLA sampler stream count mismatch");
+      for (unsigned route = 0; route < 2; ++route) if (!borrowed_[route].done()) {
+        auto origin = route + 1;
+        auto candidate = borrowed_[route].peek().key.prefix;
+        if (result.origin == 3) {
+          result.origin = origin; key = candidate; result.common[origin] = key.size();
+          continue;
+        }
+        auto first = prefixes_[origin], second = prefixes_[result.origin];
+        bit_comparison comparison;
+        if (first != second) comparison = {std::min(first, second), first > second ? -1 : 1};
+        else {
+          comparison = compare_common_bits(candidate.subview(first, candidate.size() - first),
+            key.subview(first, key.size() - first));
+          comparison.common_bits += first;
+        }
+        if (comparison.order < 0) {
+          // The new winner precedes every earlier candidate. Ordered-prefix
+          // convexity gives its LCP with each loser as the smaller frontier.
+          for (unsigned i = 0; i < origin; ++i)
+            result.common[i] = std::min(result.common[i], comparison.common_bits);
+          result.origin = origin; key = candidate;
+          result.common[origin] = key.size();
+        } else result.common[origin] = comparison.common_bits;
+      }
+      if (result.origin == 3) error_detail::raise<std::invalid_argument>("COLA sampler stream count mismatch");
       return result;
     }
   };
