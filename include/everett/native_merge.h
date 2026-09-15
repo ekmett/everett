@@ -12,6 +12,7 @@
 #include <everett/native_writer.h>
 
 #include <algorithm>
+#include <bit>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -65,6 +66,18 @@ namespace everett {
           auto previous = first - 1;
           if (previous->end_units <= retained) break;
           first = previous;
+        }
+        // Ordinary FC differs in the first remaining policy unit. Handle it
+        // directly; redundant controls fall through to the full fragment walk.
+        if (first != spans_.end() && !suffix.empty()) {
+          auto begin = first->end_units - (first->literal.size() >> P::unit_shift);
+          auto offset = (retained - begin) << P::unit_shift;
+          auto before = profile_detail::load_bits(first->literal, offset, P::bits_per_unit);
+          auto after = profile_detail::load_bits(suffix, 0, P::bits_per_unit);
+          if (before != after) {
+            auto common = unsigned(std::countl_zero(before ^ after)) - (64 - P::bits_per_unit);
+            return {(retained << P::unit_shift) + common, before < after ? -1 : 1};
+          }
         }
         auto position = retained;
         std::uint64_t compared = 0;
