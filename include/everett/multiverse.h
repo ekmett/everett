@@ -37,7 +37,7 @@ namespace everett {
 
     explicit sort(bit_string code) : code_(std::move(code)) {
       code_.validate();
-      if (code_.bit_size % P::bits_per_unit)
+      if (code_.bit_size & (P::bits_per_unit - 1))
         throw std::invalid_argument("sort code does not match policy units");
     }
     bit_view code() const & { return code_.view(); }

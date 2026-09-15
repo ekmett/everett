@@ -90,12 +90,12 @@ namespace everett {
           if (order < 0) {
             auto item = older_cursor_.peek();
             append(item.key.prefix, item.value, older_prefix_);
-            newer_prefix_ = comparison.common_bits / P::bits_per_unit;
+            newer_prefix_ = comparison.common_bits >> P::unit_shift;
             older_prefix_ = advance(older_cursor_);
           } else if (order > 0) {
             auto item = newer_cursor_.peek();
             append(item.key.prefix, item.value, newer_prefix_);
-            older_prefix_ = comparison.common_bits / P::bits_per_unit;
+            older_prefix_ = comparison.common_bits >> P::unit_shift;
             newer_prefix_ = advance(newer_cursor_);
           } else {
             auto older = older_cursor_.peek(), newer = newer_cursor_.peek();
@@ -149,7 +149,7 @@ namespace everett {
       if (!comparison) return 0;
       if (comparison->order >= 0)
         throw std::invalid_argument("native merge inputs must have unique sorted keys");
-      return comparison->common_bits / P::bits_per_unit;
+      return comparison->common_bits >> P::unit_shift;
     }
     static source_pointer checked(source_pointer source) {
       if (!source) throw std::invalid_argument("null native merge input");

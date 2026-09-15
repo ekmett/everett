@@ -57,14 +57,14 @@ namespace everett {
       // Input spans need only survive this call and must not alias private output.
       void append(std::uint64_t retained, bit_view literal, bit_view value) {
         require_active();
-        if (literal.size() % P::bits_per_unit || value.size() % P::bits_per_unit)
+        if ((literal.size() & (P::bits_per_unit - 1)) || (value.size() & (P::bits_per_unit - 1)))
           error_detail::raise<std::invalid_argument>("native writer record length disagrees with policy units");
-        auto value_units = value.size() / P::bits_per_unit;
+        auto value_units = value.size() >> P::unit_shift;
         if (common_ && value_units != *common_)
           error_detail::raise<std::invalid_argument>("native writer value disagrees with common width");
         if (retained > previous_units_ || (count_ && literal.empty()))
           error_detail::raise<std::invalid_argument>("native writer invalid known prefix");
-        auto literal_units = literal.size() / P::bits_per_unit;
+        auto literal_units = literal.size() >> P::unit_shift;
         auto key_units = retained + literal_units;
         auto next_count = add(count_, 1);
         auto saved_bits = data_.bit_size;
@@ -72,7 +72,7 @@ namespace everett {
         try {
           if (count_ % P::codec_block_size == 0) {
             auto stride = multiply(count_, common_.value_or(0));
-            offsets_.push_back(data_.bit_size / P::bits_per_unit - stride);
+            offsets_.push_back((data_.bit_size >> P::unit_shift) - stride);
             write_count<P>(data_, previous_units_);
           }
           write_backspace<P>(data_, previous_units_ - retained);
@@ -92,7 +92,7 @@ namespace everett {
       profile_array<P> finish() {
         require_active();
         profile_array<P> result;
-        auto extent = data_.bit_size / P::bits_per_unit;
+        auto extent = data_.bit_size >> P::unit_shift;
         auto stride = multiply(count_, common_.value_or(0));
         offsets_.push_back(extent - stride);
         try {
@@ -151,15 +151,15 @@ namespace everett {
     // call. A rejected append leaves the preceding committed records intact.
     void append(bit_view key, bit_view value) {
       output_.require_active();
-      if (key.size() % P::bits_per_unit || value.size() % P::bits_per_unit)
+      if ((key.size() & (P::bits_per_unit - 1)) || (value.size() & (P::bits_per_unit - 1)))
         error_detail::raise<std::invalid_argument>("native writer record length disagrees with policy units");
       auto common = output_.common_value_width();
-      if (common && value.size() / P::bits_per_unit != *common)
+      if (common && (value.size() >> P::unit_shift) != *common)
         error_detail::raise<std::invalid_argument>("native writer value disagrees with common width");
       auto comparison = compare_common_bits(previous_.view(), key);
       if (output_.size() && comparison.order >= 0)
         error_detail::raise<std::invalid_argument>("native writer keys must be strictly increasing");
-      auto retained = comparison.common_bits / P::bits_per_unit;
+      auto retained = comparison.common_bits >> P::unit_shift;
       auto retained_bits = retained * P::bits_per_unit;
       // Reserve before fallible output writes. Once the frame commits, updating
       // the logical predecessor cannot allocate or leave a partial bit string.

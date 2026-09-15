@@ -131,14 +131,14 @@ namespace everett {
           if (i + 1 == stages_.size()) {
             auto sample = stage.take_coded_output();
             emitted_suffix_units_[i] = profile_detail::add(
-              emitted_suffix_units_[i], sample.suffix.bit_size / P::bits_per_unit);
+              emitted_suffix_units_[i], (sample.suffix.bit_size >> P::unit_shift));
           } else {
             auto & next = *stages_[i + 1];
             if (!next.needs_input()) continue;
             auto sample = stage.take_coded_output();
             next.push(sample);
             emitted_suffix_units_[i] = profile_detail::add(
-              emitted_suffix_units_[i], sample.suffix.bit_size / P::bits_per_unit);
+              emitted_suffix_units_[i], (sample.suffix.bit_size >> P::unit_shift));
           }
           ++emitted_[i];
           return true;
@@ -153,7 +153,7 @@ namespace everett {
               auto coded = source_encoder_.encode(sample.key, sample.target_ordinal);
               stage.push(coded);
               source_suffix_units_ = profile_detail::add(
-                source_suffix_units_, coded.suffix.bit_size / P::bits_per_unit);
+                source_suffix_units_, (coded.suffix.bit_size >> P::unit_shift));
               source_.advance();
             }
             return true;
