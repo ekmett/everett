@@ -10,6 +10,7 @@
 #include <diet/file.h>
 
 #include <algorithm>
+#include <array>
 #include <fstream>
 #include <iostream>
 #include <random>
@@ -91,6 +92,23 @@ namespace {
       std::vector<std::byte> body(static_cast<std::size_t>(file_detail::body_bytes<P>(25)), std::byte{0xab});
       if constexpr (P::unit == profile_unit::bit) body.back() &= std::byte{0x80};
       auto encoded = encode_file(header, body);
+      constexpr std::array<std::byte, 8> native_magic{
+        std::byte{'D'}, std::byte{'I'}, std::byte{'E'}, std::byte{'T'},
+        std::byte{'.'}, std::byte{'K'}, std::byte{'V'}, std::byte{0}};
+      constexpr std::array<std::byte, 8> index_magic{
+        std::byte{'D'}, std::byte{'I'}, std::byte{'E'}, std::byte{'T'},
+        std::byte{'.'}, std::byte{'I'}, std::byte{'X'}, std::byte{0}};
+      auto const & expected_magic = kind == file_kind::native_blob ? native_magic : index_magic;
+      require(std::ranges::equal(std::span<std::byte const>(encoded).first(8), expected_magic),
+              "Diet kind signature differs from golden bytes");
+      auto incompatible = encoded;
+      incompatible[0] ^= std::byte{0x01};
+      incompatible[1] ^= std::byte{0x1f};
+      incompatible[2] ^= std::byte{0x17};
+      rehash_header(incompatible); // Reject the identifier, not a stale checksum.
+      rejects([&] { (void)decode_file_header<P>(incompatible); });
+      rejects([&] { (void)validate_file<P>(incompatible); });
+      rejects_open<P>(directory / ("incompatible" + std::string(file_extension(kind))), incompatible);
       auto split = body.size() / 2;
       auto accumulated = crc32c(std::span<std::byte const>(body).first(split));
       accumulated = crc32c(std::span<std::byte const>(body).subspan(split), accumulated);
@@ -172,9 +190,9 @@ namespace {
       std::byte{0x33}, std::byte{0x44}, std::byte{0x55}, std::byte{0x66}, std::byte{0x77}, std::byte{0x88}};
     // Fixed golden bytes from independent little-endian packing and bitwise CRC.
     constexpr std::string_view expected =
-      "455652542e4b5600010060000300000000010000100000000700000000000000"
+      "444945542e4b5600010060000300000000010000100000000700000000000000"
       "0300000000000000030000000000000009000000000000000200000000000000"
-      "54798ce3f68aeb51600000000000000069000000000000000000000000000000";
+      "54798ce3e3df1ecf600000000000000069000000000000000000000000000000";
     auto prefix = encode_file_header(header, crc32c(body));
     constexpr std::string_view digits = "0123456789abcdef";
     for (std::size_t i = 0; i != prefix.size(); ++i) {
@@ -242,6 +260,10 @@ namespace {
       auto bad = encoded;
       bad[0] ^= std::byte{1};
       check(bad, false, false);
+      bad = encoded;
+      bad[0] ^= std::byte{0x01}; bad[1] ^= std::byte{0x1f}; bad[2] ^= std::byte{0x17};
+      rehash_header(bad);
+      check(bad, false, false); // An incompatible identifier with a valid CRC.
       bad = encoded; bad[68] ^= std::byte{1};
       check(bad, false, false);
       bad = encoded; file_detail::put(bad, 24, 8, P::group_size == 15 ? 7 : 15);
@@ -572,8 +594,8 @@ int main() {
     temporary_directory directory;
     policy_matrix<3>(directory.path); policy_matrix<7>(directory.path);
     policy_matrix<15>(directory.path); policy_matrix<31>(directory.path);
-    test_default_headers<profile_unit::byte>({3574695498u, 1743753088u});
-    test_default_headers<profile_unit::bit>({3710642342u, 1876287852u});
+    test_default_headers<profile_unit::byte>({1273287519u, 4179286677u});
+    test_default_headers<profile_unit::bit>({1138671027u, 4045452409u});
     test_codec_width<profile_unit::byte, 1>(directory.path);
     test_codec_width<profile_unit::byte, 16>(directory.path);
     test_codec_width<profile_unit::byte, 64>(directory.path);

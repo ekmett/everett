@@ -220,6 +220,8 @@ namespace {
     std::ostringstream output(std::ios::binary);
     base.save(output);
     auto bytes = output.str();
+    require(bytes.size() >= 8 && bytes.substr(0, 8) == "DIETREF1",
+      "Diet reference signature differs from golden bytes");
     for (std::size_t size = 0; size < bytes.size(); ++size) {
       std::istringstream in(bytes.substr(0, size), std::ios::binary);
       rejects([&] { cola::restore(in); }, "truncated export rejected at every byte boundary");
@@ -228,6 +230,10 @@ namespace {
     invalid[0] = 'X';
     std::istringstream bad_magic(invalid, std::ios::binary);
     rejects([&] { cola::restore(bad_magic); }, "wrong file magic rejected");
+    invalid = bytes;
+    invalid[0] ^= 0x01; invalid[1] ^= 0x1f; invalid[2] ^= 0x17;
+    std::istringstream incompatible_magic(invalid, std::ios::binary);
+    rejects([&] { cola::restore(incompatible_magic); }, "incompatible export identifier rejected");
     invalid = bytes;
     invalid[8] = 2;
     std::istringstream bad_codec(invalid, std::ios::binary);
@@ -260,7 +266,14 @@ namespace {
     auto empty = cola{};
     std::ostringstream empty_bytes;
     empty.save(empty_bytes);
-    std::istringstream empty_input(empty_bytes.str());
+    constexpr std::array<unsigned char, 24> empty_golden{
+      'D', 'I', 'E', 'T', 'R', 'E', 'F', '1', 1, 0, 0, 0, 0, 0, 0, 0,
+      0, 0, 0, 0, 0, 0, 0, 0};
+    auto encoded_empty = empty_bytes.str();
+    require(encoded_empty.size() == empty_golden.size() &&
+      std::equal(empty_golden.begin(), empty_golden.end(), encoded_empty.begin()),
+      "empty reference export golden bytes changed");
+    std::istringstream empty_input(encoded_empty);
     auto empty_restored = cola::restore(empty_input);
     require(empty_restored.live_size() == 0 && empty_restored.signature() == 0 &&
       empty_restored.pins().empty(), "empty save round trip");

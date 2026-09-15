@@ -192,7 +192,7 @@ namespace diet {
     // Callers own atomic file replacement, durability and codec/hash agreement.
     template <class C = u64_cola_codec>
     void save(std::ostream & out, C codec = {}) const {
-      constexpr std::string_view magic = "EVRTREF1";
+      constexpr std::string_view magic = "DIETREF1";
       out.write(magic.data(), magic.size());
       cola_detail::write_u64(out, C::format_tag);
       cola_detail::write_u64(out, live_size());
@@ -209,7 +209,7 @@ namespace diet {
       cola_import_limits limits = {}) {
       std::array<char, 8> magic;
       in.read(magic.data(), magic.size());
-      if (!in || std::string_view(magic.data(), magic.size()) != "EVRTREF1")
+      if (!in || std::string_view(magic.data(), magic.size()) != "DIETREF1")
         throw std::runtime_error("invalid cola export header");
       if (cola_detail::read_u64(in) != C::format_tag)
         throw std::runtime_error("cola export value codec mismatch");

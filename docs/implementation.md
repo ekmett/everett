@@ -659,7 +659,7 @@ without duplicating ownership. No inherited SQLite connection is used.
 - Fingerprint policies use addition, subtraction and multiplication, without
   division. Wrapping 64-bit arithmetic and GF(2^8) are exercised policies.
 - `save`/`restore` use a versioned **resolved-table reference export**, with
-  magic `EVRTREF1`, an explicit value codec and binary-safe keys. This is not
+  magic `DIETREF1`, an explicit value codec and binary-safe keys. This is not
   the intended small manifest of pinned objects and does not establish crash
   durability.
 
@@ -866,11 +866,11 @@ against the source bundle, and the pinned generator reproduced all eight
 backends. Windows execution coverage is limited to the recorded rank component
 tests. Network transport and durable merge resumption remain separate work.
 
-The rename to Diet preserves the object formats and catalog schema. A separate
-compatibility check reopened a byte-profile, schema-3 store from the preceding
-build through `fridge`: both saved roots, the current timeline, reader-pin
-replay and twelve expected queries passed. Its logical catalog contents and
-all eight immutable object files remained unchanged.
+Object envelopes use the eight-byte `DIET.KV`/`DIET.IX` signatures with a
+terminating zero; resolved-table reference exports use `DIETREF1`. Independent
+golden checks cover these bytes and the envelope CRC. Header validation and
+reference restore reject incompatible signatures even with otherwise valid
+fields and checksums.
 
 The optional `DIET_BUILD_DOCS` configuration generates Doxygen HTML/XML and
 checks all file footers plus representative function/member ownership. A

@@ -66,8 +66,8 @@ namespace diet {
     }
     inline std::string_view magic(file_kind kind) {
       switch (kind) {
-        case file_kind::native_blob: return {"EVRT.KV\0", 8};
-        case file_kind::fractional_index: return {"EVRT.IX\0", 8};
+        case file_kind::native_blob: return {"DIET.KV\0", 8};
+        case file_kind::fractional_index: return {"DIET.IX\0", 8};
       }
       throw std::invalid_argument("unsupported Diet file kind");
     }

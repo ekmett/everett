@@ -73,11 +73,11 @@ integrity metadata. Kind-specific magic is:
 
 | Kind | Eight magic bytes |
 | --- | --- |
-| Native | `EVRT.KV` followed by zero |
-| Fractional index | `EVRT.IX` followed by zero |
+| Native | `DIET.KV` followed by zero |
+| Fractional index | `DIET.IX` followed by zero |
 
-These format signatures stay fixed across the project rename to Diet, so
-existing objects remain readable.
+Only these signatures identify Diet objects; checked readers reject every
+other magic value, even when the rest of the header and its CRC are valid.
 
 The extension helps people; the header establishes the object's actual kind.
 By default, `file<P>::open` and `from_slice` check the 96-byte header and exact file extent:
