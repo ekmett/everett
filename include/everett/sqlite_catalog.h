@@ -35,6 +35,20 @@ namespace everett {
   struct catalog_options { int busy_timeout_ms = 250; };
   struct catalog_object_reservation { object_id object; file_kind kind; };
   struct catalog_saved_root { blob_identity head; std::string owner; };
+  // Every generation has its own permanent root owner. Names and owners are
+  // arbitrary nonempty byte strings; generations never wrap or get reused.
+  struct catalog_timeline_head {
+    std::string name;
+    std::uint64_t generation;
+    blob_identity head;
+    std::string owner;
+    bool operator==(catalog_timeline_head const &) const = default;
+  };
+  struct catalog_timeline_publication {
+    bool published;
+    catalog_timeline_head head; // New generation, or the observed head on conflict.
+    bool operator==(catalog_timeline_publication const &) const = default;
+  };
   struct catalog_operation {
     std::string kind;
     std::vector<std::byte> request;
@@ -72,6 +86,35 @@ namespace everett {
     inline void pair(bytes & out, blob_identity const & value) {
       identity(out, value.native); identity(out, value.index);
     }
+    inline void timeline(bytes & out, catalog_timeline_head const & value) {
+      field(out, value.name); number(out, value.generation); pair(out, value.head); field(out, value.owner);
+    }
+    // Outcomes are decoded, rather than looking up today's mutable head during
+    // replay. These bounds also reject a malformed stored operation outcome.
+    struct outcome_reader {
+      std::span<std::byte const> data;
+      [[noreturn]] static void invalid() { throw catalog_error("invalid Everett timeline outcome", SQLITE_CORRUPT); }
+      std::uint64_t number() {
+        if (data.size() < 8) invalid();
+        std::uint64_t value = 0;
+        for (unsigned i = 0; i != 8; ++i) value |= std::uint64_t(std::to_integer<unsigned>(data[i])) << (8 * i);
+        data = data.subspan(8); return value;
+      }
+      std::string field() {
+        auto size = number();
+        if (size > data.size()) invalid();
+        std::string value(reinterpret_cast<char const *>(data.data()), static_cast<std::size_t>(size));
+        data = data.subspan(static_cast<std::size_t>(size)); return value;
+      }
+      catalog_timeline_head timeline() {
+        auto name = field(); auto generation = number();
+        auto native = field(); auto index = field(); auto owner = field();
+        if (name.empty() || owner.empty() || generation > std::uint64_t(std::numeric_limits<std::int64_t>::max())) invalid();
+        try { return {std::move(name), generation, {object_id(native), object_id(index)}, std::move(owner)}; }
+        catch (std::invalid_argument const &) { invalid(); }
+      }
+      void end() const { if (!data.empty()) invalid(); }
+    };
     inline void name(std::string_view value) {
       if (value.empty()) throw std::invalid_argument("empty Everett catalog name");
     }
@@ -141,6 +184,12 @@ namespace everett {
         if (!data && (size || sqlite3_errcode(db) == SQLITE_NOMEM)) fail(db, SQLITE_NOMEM);
         return size ? std::string(reinterpret_cast<char const *>(data), std::size_t(size)) : std::string{};
       }
+      std::string key(int column) const {
+        auto data = static_cast<char const *>(sqlite3_column_blob(value, column));
+        auto size = sqlite3_column_bytes(value, column);
+        if (!data && (size || sqlite3_errcode(db) == SQLITE_NOMEM)) fail(db, SQLITE_NOMEM);
+        return size ? std::string(data, std::size_t(size)) : std::string{};
+      }
       bytes blob(int column) const {
         auto data = static_cast<std::byte const *>(sqlite3_column_blob(value, column));
         auto size = sqlite3_column_bytes(value, column);
@@ -164,6 +213,24 @@ CREATE TABLE owner_roots(owner_kind TEXT NOT NULL, owner_id BLOB NOT NULL, nativ
 CREATE TABLE saves(name BLOB PRIMARY KEY, native_id TEXT NOT NULL, index_id TEXT NOT NULL, FOREIGN KEY(native_id,index_id) REFERENCES pairs(native_id,index_id)) STRICT;
 CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT NULL OR NEW.id<>OLD.id OR NEW.kind<>OLD.kind OR NEW.attempt<>OLD.attempt BEGIN SELECT RAISE(ABORT,'immutable object'); END;
 )sql";
+    // Version 1 is retained verbatim for old-catalog validation. No open path
+    // rewrites it. Only newly created catalogs use the version 2 extension.
+    inline std::string schema_for(unsigned version) {
+      std::string result = schema;
+      if (version == 1) return result;
+      if (version != 2) throw std::invalid_argument("unsupported Everett catalog version");
+      auto replace = [&](std::string_view before, std::string_view after) {
+        result.replace(result.find(before), before.size(), after);
+      };
+      replace("CHECK(version=1)", "CHECK(version=2)");
+      replace("IN('attempt','save','reader')", "IN('attempt','save','reader','timeline')");
+      result.insert(result.find("CREATE TRIGGER sealed_immutable"), R"sql(CREATE TABLE timelines(name BLOB PRIMARY KEY, source_name BLOB, source_generation INTEGER,
+ CHECK((source_name IS NULL)=(source_generation IS NULL)), FOREIGN KEY(source_name,source_generation) REFERENCES timeline_generations(name,generation)) STRICT;
+CREATE TABLE timeline_generations(name BLOB NOT NULL REFERENCES timelines(name), generation INTEGER NOT NULL CHECK(generation>=0), native_id TEXT NOT NULL, index_id TEXT NOT NULL, owner_kind TEXT NOT NULL CHECK(owner_kind='timeline'), owner_id BLOB NOT NULL UNIQUE,
+ PRIMARY KEY(name,generation), FOREIGN KEY(owner_kind,owner_id,native_id,index_id) REFERENCES owner_roots(owner_kind,owner_id,native_id,index_id)) STRICT;
+)sql");
+      return result;
+    }
   }
 
   // Insert-only durable metadata over an existing trusted local directory.
@@ -179,7 +246,7 @@ CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT N
     sqlite_catalog & operator=(sqlite_catalog const &) = delete;
     sqlite_catalog(sqlite_catalog && other) noexcept
       : db_(std::exchange(other.db_, nullptr)), root_(std::move(other.root_)),
-        ops_(std::move(other.ops_)), poisoned_(other.poisoned_) {}
+        ops_(std::move(other.ops_)), poisoned_(other.poisoned_), schema_version_(other.schema_version_) {}
     sqlite_catalog & operator=(sqlite_catalog &&) = delete;
     ~sqlite_catalog() { if (db_) sqlite3_close_v2(db_); }
 
@@ -196,11 +263,11 @@ CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT N
       if (::close(fd)) throw std::system_error(errno, std::generic_category(), "close new Everett catalog");
       auto result = connect(location, options, std::move(ops));
       result.transaction("", "initialize", {}, [&] {
-        catalog_detail::exec(result.db_, catalog_detail::schema);
-        catalog_detail::statement insert(result.db_, "INSERT INTO catalog_info VALUES(1,1,?,?)");
+        catalog_detail::exec(result.db_, catalog_detail::schema_for(2).c_str());
+        catalog_detail::statement insert(result.db_, "INSERT INTO catalog_info VALUES(1,2,?,?)");
         insert.text(1, identity.hex()); insert.blob(2, policy()); insert.done();
         // Immutable tables remain readable through ordinary SQL tooling.
-        for (auto table : {"catalog_info", "operations", "owners", "attempts", "pairs", "owner_objects", "owner_roots", "saves"}) {
+        for (auto table : immutable_tables) {
           for (auto action : {"UPDATE", "DELETE"}) {
             std::string sql = "CREATE TRIGGER immutable_" + std::string(table) + "_" + action +
               " BEFORE " + action + " ON " + table + " BEGIN SELECT RAISE(ABORT,'immutable catalog row'); END";
@@ -228,15 +295,17 @@ CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT N
     }
     static sqlite_catalog open(std::filesystem::path const & root, catalog_options options = {}, Ops ops = {}) {
       auto result = connect(std::filesystem::canonical(root), options, std::move(ops));
+      result.schema_version_ = result.detect_schema_version();
       result.validate_schema();
       catalog_detail::statement info(result.db_, "SELECT version,identity,policy FROM catalog_info WHERE singleton=1");
-      if (!info.row() || info.integer(0) != 1 || info.blob(2) != policy())
+      if (!info.row() || info.integer(0) != result.schema_version_ || info.blob(2) != policy())
         throw std::invalid_argument("Everett catalog schema or policy mismatch");
       (void)object_id(info.text(1));
       if (info.row()) throw std::invalid_argument("multiple Everett catalog identities");
       return result;
     }
     bool poisoned() const noexcept { return poisoned_; }
+    unsigned schema_version() const noexcept { return schema_version_; }
     static char const * runtime_version() noexcept { return sqlite3_libversion(); }
     static char const * source_id() noexcept { return sqlite3_sourceid(); }
     std::filesystem::path const & root() const & noexcept { return root_; }
@@ -407,15 +476,126 @@ CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT N
       return {*head, std::string(reader_owner)};
     }
 
+    std::optional<catalog_timeline_head> find_timeline(std::string_view name) const {
+      require_timelines(); catalog_detail::name(name);
+      return read([&] { return timeline_at(name); });
+    }
+
+    catalog_timeline_head create_timeline(std::string_view op, std::string_view name,
+        blob_identity const & head) {
+      require_timelines(); catalog_detail::name(op); catalog_detail::name(name);
+      catalog_detail::bytes request; catalog_detail::field(request, name); catalog_detail::pair(request, head);
+      auto outcome = transaction(op, "create_timeline", request, [&] {
+        require_prepared(head);
+        catalog_detail::statement insert(db_, "INSERT INTO timelines(name) VALUES(?)");
+        insert.key(1, name); insert.done();
+        auto result = add_generation(name, 0, head);
+        catalog_detail::bytes bytes; catalog_detail::timeline(bytes, result); return bytes;
+      });
+      return decode_timeline(outcome);
+    }
+
+    // Fork precisely the supplied historical generation. Advancing its source
+    // later cannot change the selected root or the result of operation replay.
+    catalog_timeline_head fork_timeline(std::string_view op, std::string_view name,
+        catalog_timeline_head const & source) {
+      require_timelines(); catalog_detail::name(op); catalog_detail::name(name);
+      validate_timeline(source);
+      catalog_detail::bytes request; catalog_detail::field(request, name); catalog_detail::timeline(request, source);
+      auto outcome = transaction(op, "fork_timeline", request, [&] {
+        auto actual = timeline_at(source.name, source.generation);
+        if (!actual || *actual != source) throw std::invalid_argument("fork source is not this exact timeline generation");
+        require_prepared(source.head);
+        catalog_detail::statement insert(db_, "INSERT INTO timelines VALUES(?,?,?)");
+        insert.key(1, name); insert.key(2, source.name); insert.integer(3, catalog_detail::integer(source.generation)); insert.done();
+        auto result = add_generation(name, 0, source.head);
+        catalog_detail::bytes bytes; catalog_detail::timeline(bytes, result); return bytes;
+      });
+      return decode_timeline(outcome);
+    }
+
+    // Compare the complete expected generation under the SQLite writer lock.
+    // A stale comparison is itself a committed, replay-stable outcome. Every
+    // successful publication appends a generation, even if the root is unchanged.
+    catalog_timeline_publication publish_timeline(std::string_view op,
+        catalog_timeline_head const & expected, blob_identity const & candidate) {
+      require_timelines(); catalog_detail::name(op); validate_timeline(expected);
+      catalog_detail::bytes request; catalog_detail::timeline(request, expected); catalog_detail::pair(request, candidate);
+      auto outcome = transaction(op, "publish_timeline", request, [&] {
+        auto current = timeline_at(expected.name);
+        if (!current) throw std::invalid_argument("unknown Everett timeline");
+        bool published = *current == expected;
+        if (published) {
+          require_prepared(candidate);
+          if (expected.generation == std::uint64_t(std::numeric_limits<std::int64_t>::max()))
+            throw std::length_error("Everett timeline generation exhausted");
+          current = add_generation(expected.name, expected.generation + 1, candidate);
+        }
+        catalog_detail::bytes bytes; catalog_detail::number(bytes, published); catalog_detail::timeline(bytes, *current); return bytes;
+      });
+      return read([&] {
+        catalog_detail::outcome_reader reader{outcome};
+        auto published = reader.number();
+        if (published > 1) reader.invalid();
+        auto head = reader.timeline(); reader.end();
+        return catalog_timeline_publication{published != 0, std::move(head)};
+      });
+    }
+
   private:
     sqlite3 * db_ = nullptr;
     std::filesystem::path root_;
     Ops ops_;
     mutable bool poisoned_ = false;
+    unsigned schema_version_ = 2;
+    inline static constexpr char const * immutable_tables[] = {
+      "catalog_info", "operations", "owners", "attempts", "pairs", "owner_objects", "owner_roots", "saves",
+      "timelines", "timeline_generations"
+    };
     sqlite_catalog(sqlite3 * db, std::filesystem::path root, Ops ops)
       : db_(db), root_(std::move(root)), ops_(std::move(ops)) {}
     void require_active() const {
       if (!db_ || poisoned_) throw std::logic_error("Everett catalog handle is inactive or poisoned");
+    }
+    void require_timelines() const {
+      require_active();
+      if (schema_version_ != 2) throw std::logic_error("Everett timelines require catalog version 2; no automatic migration");
+    }
+    static void validate_timeline(catalog_timeline_head const & value) {
+      catalog_detail::name(value.name); catalog_detail::name(value.owner);
+      (void)catalog_detail::integer(value.generation);
+    }
+    catalog_timeline_head decode_timeline(catalog_detail::bytes const & bytes) const {
+      return read([&] {
+        catalog_detail::outcome_reader reader{bytes};
+        auto head = reader.timeline(); reader.end(); return head;
+      });
+    }
+    std::optional<catalog_timeline_head> timeline_at(std::string_view name,
+        std::optional<std::uint64_t> generation = {}) const {
+      catalog_detail::statement query(db_, generation ?
+        "SELECT generation,native_id,index_id,owner_id FROM timeline_generations WHERE name=? AND generation=?" :
+        "SELECT generation,native_id,index_id,owner_id FROM timeline_generations WHERE name=? ORDER BY generation DESC LIMIT 1");
+      query.key(1, name);
+      if (generation) query.integer(2, catalog_detail::integer(*generation));
+      if (!query.row()) return std::nullopt;
+      return catalog_timeline_head{std::string(name), std::uint64_t(query.integer(0)),
+        {object_id(query.text(1)), object_id(query.text(2))}, query.key(3)};
+    }
+    void require_prepared(blob_identity const & head) const {
+      catalog_detail::statement query(db_, "SELECT virtual_count FROM pairs WHERE native_id=? AND index_id=?");
+      query.text(1, head.native.hex()); query.text(2, head.index.hex());
+      if (!query.row() || std::uint64_t(query.integer(0)) > P::group_size)
+        throw std::invalid_argument("timeline requires a registered prepared head");
+    }
+    catalog_timeline_head add_generation(std::string_view name, std::uint64_t generation, blob_identity const & head) {
+      catalog_detail::bytes encoded; catalog_detail::field(encoded, name); catalog_detail::number(encoded, generation);
+      std::string owner(reinterpret_cast<char const *>(encoded.data()), encoded.size());
+      add_owner("timeline", owner); add_root("timeline", owner, head);
+      catalog_detail::statement insert(db_, "INSERT INTO timeline_generations VALUES(?,?,?,?, 'timeline',?)");
+      insert.key(1, name); insert.integer(2, catalog_detail::integer(generation));
+      insert.text(3, head.native.hex()); insert.text(4, head.index.hex()); insert.key(5, owner); insert.done();
+      return {std::string(name), generation, head, std::move(owner)};
     }
     template<class F> auto read(F && action) const {
       try { return action(); }
@@ -471,10 +651,26 @@ CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT N
       if (!query.row() || query.text(0) != expected)
         throw std::invalid_argument("incompatible Everett catalog schema definition");
     }
+    unsigned detect_schema_version() const {
+      // Do not query an unrecognized replacement table/view to discover its
+      // version: establish the canonical bounded singleton shape first.
+      catalog_detail::statement query(db_, "SELECT sql FROM sqlite_schema WHERE type='table' AND name='catalog_info'");
+      if (query.row()) {
+        auto actual = query.text(0);
+        for (unsigned version : {1, 2}) {
+          auto expected = catalog_detail::schema_for(version);
+          auto first = expected.find("CREATE TABLE catalog_info");
+          auto last = expected.find(';', first);
+          if (actual == expected.substr(first, last - first)) return version;
+        }
+      }
+      throw std::invalid_argument("incompatible Everett catalog version table");
+    }
     void validate_schema() const {
       // Validate only a bounded schema description, never external payloads or
       // all catalog rows. SQLite preserves these canonical CREATE definitions.
-      std::string_view source = catalog_detail::schema;
+      auto schema = catalog_detail::schema_for(schema_version_);
+      std::string_view source = schema;
       while (true) {
         auto begin = source.find("CREATE TABLE ");
         if (begin == std::string_view::npos) break;
@@ -487,7 +683,8 @@ CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT N
       auto first = source.find("CREATE TRIGGER sealed_immutable");
       auto last = source.rfind("END;");
       definition("trigger", "sealed_immutable", source.substr(first, last + 3 - first));
-      for (auto table : {"catalog_info", "operations", "owners", "attempts", "pairs", "owner_objects", "owner_roots", "saves"}) {
+      for (auto table : immutable_tables) {
+        if (schema_version_ == 1 && (std::string_view(table) == "timelines" || std::string_view(table) == "timeline_generations")) continue;
         for (auto action : {"UPDATE", "DELETE"}) {
           std::string name = "immutable_" + std::string(table) + "_" + action;
           std::string sql = "CREATE TRIGGER " + name + " BEFORE " + action + " ON " + table +
@@ -496,8 +693,10 @@ CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT N
         }
       }
       definition("trigger", "objects_no_delete", "CREATE TRIGGER objects_no_delete BEFORE DELETE ON objects BEGIN SELECT RAISE(ABORT,'retained object'); END");
-      catalog_detail::statement triggers(db_, "SELECT count(*) FROM sqlite_schema WHERE type='trigger' AND tbl_name IN('catalog_info','operations','owners','attempts','objects','pairs','owner_objects','owner_roots','saves')");
-      if (!triggers.row() || triggers.integer(0) != 18)
+      catalog_detail::statement triggers(db_, schema_version_ == 1 ?
+        "SELECT count(*) FROM sqlite_schema WHERE type='trigger' AND tbl_name IN('catalog_info','operations','owners','attempts','objects','pairs','owner_objects','owner_roots','saves')" :
+        "SELECT count(*) FROM sqlite_schema WHERE type='trigger' AND tbl_name IN('catalog_info','operations','owners','attempts','objects','pairs','owner_objects','owner_roots','saves','timelines','timeline_generations')");
+      if (!triggers.row() || triggers.integer(0) != (schema_version_ == 1 ? 18 : 22))
         throw std::invalid_argument("unexpected trigger on Everett catalog tables");
     }
     void add_owner(std::string_view kind, std::string_view name) {
@@ -565,5 +764,5 @@ CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT N
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Stores immutable roots, reservations and exact file graphs in optional SQLite metadata.
+ * \brief Stores retained roots, timeline generations and exact file graphs in optional SQLite metadata.
  */

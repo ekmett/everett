@@ -4,11 +4,12 @@ I keep small mutable coordination metadata in SQLite and the encoded table in
 immutable `.kv` and `.index` files. The optional `sqlite_catalog<P>` implements
 an insert-only part of that boundary: I can reserve output identities, record
 successful seal receipts, register an exact prepared chain, name an immutable
-save, close the process, and reopen the save for mmap-backed queries.
+save, publish a named timeline generation, close the process, and reopen either
+root for mmap-backed queries.
 
 The component deliberately has no reclamation operation. Reservations, reader
-pins and saved roots remain durable until an explicit retirement protocol is
-implemented. This gives us useful persistent reads without guessing which old
+pins, saved roots and every timeline generation remain durable until an explicit
+retirement protocol is implemented. This gives us useful persistent reads without guessing which old
 owners have stopped using an external file.
 
 ## Build and use
@@ -130,6 +131,79 @@ before acquiring SQLite's write lock: CRCs, ordinary front coding, directory
 semantics, false-borrow flags, cut LCPs and every sampled target occurrence.
 Neither admission mode makes changes to the original native or index files.
 
+## Named timelines and durable generations
+
+I represent a mutable timeline as an append-only sequence of immutable root
+selections. A generation contains the timeline's binary name, its generation
+number, the exact native/index head identity, and a permanent owner ID. The
+highest generation is current. Publishing a new generation never updates or
+releases an old one.
+
+```cpp
+void move_timeline(catalog & metadata, everett::blob_identity const & prepared) {
+  // `prepared` was already sealed and admitted with register_chain.
+  auto first = metadata.create_timeline("create-main", "main", prepared);
+  auto branch = metadata.fork_timeline("fork-experiment", "experiment", first);
+
+  // Build and register a candidate before trying publication. This example
+  // reuses the same root: even that publication advances the generation.
+  auto result = metadata.publish_timeline("publish-main-1", first, prepared);
+  if (result.published) {
+    // result.head.generation == 1, with a new permanent generation owner.
+  } else {
+    // result.head is the head observed by this failed comparison.
+  }
+  (void)branch;
+}
+```
+
+The interface makes the selection explicit:
+
+| Operation | Result and contract |
+| --- | --- |
+| `find_timeline(name)` | Optional `catalog_timeline_head`: `name`, `generation`, `head`, `owner`. Reads the current generation through the `(name,generation)` index. |
+| `create_timeline(op,name,head)` | Creates generation zero of a fresh name, selecting an already registered prepared head. |
+| `fork_timeline(op,new_name,source)` | Creates generation zero from the **exact historical source record**, including name, generation, head and owner. The source may have advanced since it was read. |
+| `publish_timeline(op,expected,candidate)` | Compares every field of `expected` with the current record and returns `{published,head}`. Success appends the next generation; a stale comparison records the observed current head. |
+
+A candidate must already be a registered prepared root, including any routing
+prefix. These operations touch catalog metadata only: they do not construct a
+query graph, open external objects, scan key contents or copy directories.
+Publishing to an unknown timeline is an error. When the expected record is stale,
+publication
+returns a conflict without inspecting whether the candidate is registered; no
+candidate is installed. A successful same-root publication still increments
+the generation, so returning to an earlier object pair cannot disguise an
+intervening publication. Generation numbers range from zero through SQLite's
+maximum signed 64-bit integer; an exhausted timeline cannot append again.
+
+The comparison, new owner, exact root pin, generation row and operation outcome
+share one `BEGIN IMMEDIATE` transaction. SQLite serializes competing writers;
+only one publisher using the same expected generation can succeed. A conflict
+is also a committed operation outcome. Repeating its operation ID returns the
+**originally observed** head, even after later publications. Successful create,
+fork and publish replays likewise return their original generation, not today's
+current head. A new attempt after a conflict needs a new operation ID and a
+fresh expected record.
+
+Every generation has an immutable `timeline` owner with an injective binary
+encoding of its name and generation. Composite foreign keys bind that row to
+its exact retained root. `find_timeline` therefore selects an already retained
+root: a concurrent publication cannot remove the root before the caller opens
+it with `open_mapped_query`. Forking retains its selected historical root under
+a separate new owner. Immutable saves and existing reader owners remain
+independent. This is conservative retention, **not** pin retirement or garbage
+collection; an unbounded publication history retains an unbounded union of
+physical objects. [SQLite foreign-key contracts](https://sqlite.org/foreignkeys.html).
+
+New catalogs use schema version 2. Version 1 catalogs still open and support
+reservations, seals, graph registration, immutable saves and reader acquisition.
+Their timeline methods explicitly reject the unsupported capability.
+`schema_version()` exposes the distinction. Opening never migrates an old
+catalog, and the old version-1 implementation rejects a version-2 catalog.
+The catalog schema version is independent of the immutable file envelope and
+section-codec versions.
+
 ## Transactions and operation identities
 
 Every successful mutation records its operation kind, **exact canonical request
@@ -161,13 +235,15 @@ The tables are readable with ordinary SQLite tools:
 
 ```sql
 SELECT name, native_id, index_id FROM saves;
+SELECT hex(name), generation, native_id, index_id FROM timeline_generations;
 SELECT owner_kind, hex(owner_id), native_id, index_id FROM owner_roots;
 SELECT id, kind, attempt, bytes, crc, barrier FROM objects;
 SELECT hex(id), kind, length(request), length(outcome) FROM operations;
 ```
 
 The implemented schema separates `objects`, `pairs`, `owners`, `owner_objects`,
-`owner_roots`, `attempts`, `saves` and `operations`. Foreign keys express the exact
+`owner_roots`, `attempts`, `saves`, `timelines`, `timeline_generations` and
+`operations`. Foreign keys express the exact
 pair relationships. Immutable-row triggers reject updates and deletions; the
 one permitted object transition fills all seal metadata once. The catalog is
 trusted application metadata, not a sandbox for hostile SQL clients. External
@@ -192,8 +268,8 @@ A new connection can inspect whether an operation is visible and perform exact
 replay reconciliation after acknowledgment loss. That is **not** a recovery
 certificate following a real failed filesystem sync. Scanning readable pages,
 reopening SQLite, or observing an operation row cannot prove what survives the
-next reboot. Existing durable saves and reservations are never released by
-this adapter. Catalog creation also leaves an unsuccessful or uncertain new
+next reboot. Existing durable saves, timeline generations and reservations are
+never released by this adapter. Catalog creation also leaves an unsuccessful or uncertain new
 catalog name in place instead of automatically deleting and reusing it.
 
 The `sqlite_catalog_ops` COMMIT hook makes acknowledgment failure testable:
@@ -223,12 +299,23 @@ after another close/reopen. The old save remains readable at every cut. These
 tests cover process death and lost acknowledgment while the operating system
 continues running; physical power-loss behavior remains a separate property.
 
+The timeline suite exercises competing connections, exact historical forks,
+binary names and operation IDs, replay after an intervening publication, and
+old version-1 catalogs. It injects COMMIT errors before and after the actual
+commit for create, fork, successful publication and stale comparison. Eight
+additional process cuts kill a child at those same before/after boundaries,
+then verify complete outcomes, exact generation pins, old saves and mapped
+queries after reopen. A metadata-only fixture temporarily hides every object
+file after registration, so an accidental payload reopen in any timeline
+operation fails the test. These checks establish the tested transaction and
+process-restart behavior, not survival of physical power loss.
+
 ## Scope
 
 I can persist and reopen prepared mmap query chains, reserve their construction,
-and retain immutable saves and readers. This component does not yet move a
-mutable timeline head, release an owner, expire a reader lease, collect files,
-resume a merge, migrate a schema or apply categorical updates. The richer
+retain immutable saves and readers, and compare-and-publish named timeline
+heads. This component does not yet release an owner, expire a reader lease,
+collect files, resume a merge, migrate a schema or apply categorical updates. The richer
 [ownership and publication design](catalog.md) supplies those next contracts;
 [the durability model](durability.md) explains why external-file barriers and
 catalog commitment remain distinct.
