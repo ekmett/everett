@@ -11,6 +11,7 @@
 
 #include <everett/profile.h>
 #include <everett/rank_groups.h>
+#include <everett/word_view.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -54,6 +55,121 @@ namespace everett {
     using policy_type = P;
     std::optional<profile_blob_native_match<P>> native;
     std::optional<profile_blob_borrowed_predecessor<P>> borrowed_predecessor;
+  };
+
+  // A borrowed query view over one native/index pair. The backing sections
+  // must remain immutable and outlive the view. Construction checks shapes;
+  // query-time projection validates the selected ranks before subtraction.
+  // Exact sample keys, cut LCPs and dependency identities require admission
+  // validation by the owner; this view does not scan their contents.
+  template <class P>
+  struct profile_blob_view {
+    using policy_type = P;
+    static constexpr std::uint64_t group_size = P::group_size;
+    using native_view = profile_view<P, stream_role::native>;
+    using borrowed_view = profile_view<P, stream_role::borrowed>;
+
+    profile_blob_view(native_view native, borrowed_view borrowed,
+        rank_groups_view<group_size> interleave, std::span<std::byte const> false_borrows,
+        word_view cut_lcps, std::uint64_t virtual_count)
+      : native_(native), borrowed_(borrowed), interleave_(interleave),
+        false_borrows_(false_borrows), cut_lcps_(cut_lcps), virtual_count_(virtual_count) {
+      if (native.size() > std::numeric_limits<std::uint64_t>::max() - borrowed.size() ||
+          native.size() + borrowed.size() != virtual_count ||
+          interleave.size() != virtual_count || interleave.count() != borrowed.size() ||
+          false_borrows.size() != borrowed.size() / 8 + (borrowed.size() % 8 != 0) ||
+          cut_lcps.size() != group_count())
+        throw std::invalid_argument("profile blob section shape mismatch");
+    }
+
+    native_view const & native() const noexcept { return native_; }
+    borrowed_view const & borrowed() const noexcept { return borrowed_; }
+    rank_groups_view<group_size> const & interleave() const noexcept { return interleave_; }
+    std::span<std::byte const> false_borrow_bits() const noexcept { return false_borrows_; }
+    word_view cut_lcps() const noexcept { return cut_lcps_; }
+    std::uint64_t virtual_size() const noexcept { return virtual_count_; }
+    std::uint64_t group_count() const noexcept {
+      return virtual_count_ / group_size + (virtual_count_ % group_size != 0);
+    }
+
+    bool false_borrow(std::uint64_t ordinal) const {
+      if (ordinal >= borrowed_.size()) throw std::out_of_range("profile blob borrowed ordinal");
+      return (std::to_integer<unsigned>(false_borrows_[ordinal / 8]) >> (ordinal % 8)) & 1;
+    }
+
+    profile_blob_window project(std::uint64_t group) const {
+      if (group >= group_count()) throw std::out_of_range("profile blob virtual group");
+      auto first = group * group_size;
+      auto last = first + std::min<std::uint64_t>(group_size, virtual_count_ - first);
+      auto const & ranks = interleave_;
+      auto a = ranks.rank(group);
+      auto population = ranks.class_at(group);
+      if (a > first || a > borrowed_.size() || population > last - first ||
+          population > borrowed_.size() - a)
+        throw std::invalid_argument("invalid profile blob rank projection");
+      auto b = a + population;
+      if (last - b > native_.size())
+        throw std::invalid_argument("invalid profile blob native projection");
+      return {first - a, last - b, a, b};
+    }
+
+    // lower compares the exact sampled boundary to its owned query. At group
+    // zero an empty-key context suffices. The query must not precede lower.
+    profile_blob_window_result<P> search_window(
+        std::uint64_t group, profile_query_context<P> const & lower,
+        profile_comparison_work * native_work = nullptr,
+        profile_comparison_work * borrowed_work = nullptr) const {
+      if (lower.order() > 0) throw std::invalid_argument("query precedes its routed boundary");
+      auto window = project(group);
+      profile_blob_window_result<P> result;
+      native_.compare_window(window.native_first, window.native_last, lower,
+        [&](profile_comparison_item<P> item) {
+          auto order = item.comparison.order();
+          if (!order) result.native = profile_blob_native_match<P>{item.ordinal, bit_string::copy(item.value)};
+          return order < 0;
+        }, native_work);
+
+      auto remember = [&](std::uint64_t ordinal, profile_query_context<P> const & comparison) {
+        auto is_false = false_borrow(ordinal);
+        result.borrowed_predecessor = profile_blob_borrowed_predecessor<P>{
+          ordinal, checked_target_ordinal(ordinal), is_false, comparison};
+        if (!comparison.order() && is_false && !result.native) {
+          if (!window.native_first) throw std::invalid_argument("false borrow has no native predecessor");
+          auto native_ordinal = window.native_first - 1;
+          result.native = profile_blob_native_match<P>{
+            native_ordinal, bit_string::copy(native_.encoded_at(native_ordinal).value)};
+        }
+      };
+      std::uint64_t previous_units = 0;
+      borrowed_.compare_window(window.borrowed_first, window.borrowed_last, lower,
+        [&](profile_comparison_item<P> item) {
+          if (item.comparison.order() > 0) return false;
+          remember(item.ordinal, item.comparison);
+          return true;
+        }, borrowed_work, &previous_units);
+      if (!result.borrowed_predecessor && window.borrowed_first) {
+        // The cut LCP repairs comparison only. Its physical predecessor length
+        // comes from header replay or the terminal checkpoint, never key bytes.
+        auto comparison = lower.predecessor(cut_lcps_[group], previous_units);
+        remember(window.borrowed_first - 1, comparison);
+      }
+      return result;
+    }
+
+  private:
+    native_view native_;
+    borrowed_view borrowed_;
+    rank_groups_view<group_size> interleave_;
+    std::span<std::byte const> false_borrows_;
+    word_view cut_lcps_;
+    std::uint64_t virtual_count_;
+
+    static std::uint64_t checked_target_ordinal(std::uint64_t ordinal) {
+      if (ordinal > std::numeric_limits<std::uint64_t>::max() / group_size) {
+        throw std::overflow_error("borrowed target ordinal overflows");
+      }
+      return ordinal * group_size;
+    }
   };
 
   // Immutable native/index pair. P fixes key units and native value layout;
@@ -111,63 +227,19 @@ namespace everett {
       return virtual_count_ / group_size + (virtual_count_ % group_size != 0);
     }
 
-    bool false_borrow(std::uint64_t ordinal) const {
-      if (ordinal >= borrowed_.size()) throw std::out_of_range("profile blob borrowed ordinal");
-      return (std::to_integer<unsigned>(false_borrows_[ordinal / 8]) >> (ordinal % 8)) & 1;
+    profile_blob_view<P> view() const & {
+      return {native_->view(), borrowed_.view(), interleave_.view(), false_borrows_,
+        word_view(std::span<std::uint64_t const>(cut_lcps_)), virtual_count_};
     }
+    profile_blob_view<P> view() const && = delete;
 
-    profile_blob_window project(std::uint64_t group) const {
-      if (group >= group_count()) throw std::out_of_range("profile blob virtual group");
-      auto first = group * group_size;
-      auto last = first + std::min<std::uint64_t>(group_size, virtual_count_ - first);
-      auto ranks = interleave_.view();
-      auto a = ranks.rank(group);
-      // The stored population is exactly the difference of the two ranks.
-      auto b = a + ranks.class_at(group);
-      return {first - a, last - b, a, b};
-    }
-
-    // lower compares the exact sampled boundary to its owned query. At group
-    // zero an empty-key context suffices. The query must not precede lower.
+    bool false_borrow(std::uint64_t ordinal) const { return view().false_borrow(ordinal); }
+    profile_blob_window project(std::uint64_t group) const { return view().project(group); }
     profile_blob_window_result<P> search_window(
         std::uint64_t group, profile_query_context<P> const & lower,
         profile_comparison_work * native_work = nullptr,
         profile_comparison_work * borrowed_work = nullptr) const {
-      if (lower.order() > 0) throw std::invalid_argument("query precedes its routed boundary");
-      auto window = project(group);
-      profile_blob_window_result<P> result;
-      native_->view().compare_window(window.native_first, window.native_last, lower,
-        [&](profile_comparison_item<P> item) {
-          auto order = item.comparison.order();
-          if (!order) result.native = profile_blob_native_match<P>{item.ordinal, bit_string::copy(item.value)};
-          return order < 0;
-        }, native_work);
-
-      auto remember = [&](std::uint64_t ordinal, profile_query_context<P> const & comparison) {
-        auto is_false = false_borrow(ordinal);
-        result.borrowed_predecessor = profile_blob_borrowed_predecessor<P>{
-          ordinal, checked_target_ordinal(ordinal), is_false, comparison};
-        if (!comparison.order() && is_false && !result.native) {
-          if (!window.native_first) throw std::invalid_argument("false borrow has no native predecessor");
-          auto native_ordinal = window.native_first - 1;
-          result.native = profile_blob_native_match<P>{
-            native_ordinal, bit_string::copy(native_->view().encoded_at(native_ordinal).value)};
-        }
-      };
-      std::uint64_t previous_units = 0;
-      borrowed_.view().compare_window(window.borrowed_first, window.borrowed_last, lower,
-        [&](profile_comparison_item<P> item) {
-          if (item.comparison.order() > 0) return false;
-          remember(item.ordinal, item.comparison);
-          return true;
-        }, borrowed_work, &previous_units);
-      if (!result.borrowed_predecessor && window.borrowed_first) {
-        // The cut LCP repairs comparison only. Its physical predecessor length
-        // comes from header replay or the terminal checkpoint, never key bytes.
-        auto comparison = lower.predecessor(cut_lcps_.at(static_cast<std::size_t>(group)), previous_units);
-        remember(window.borrowed_first - 1, comparison);
-      }
-      return result;
+      return view().search_window(group, lower, native_work, borrowed_work);
     }
 
   private:
@@ -188,12 +260,6 @@ namespace everett {
       }
     }
 
-    static std::uint64_t checked_target_ordinal(std::uint64_t ordinal) {
-      if (ordinal > std::numeric_limits<std::uint64_t>::max() / group_size) {
-        throw std::overflow_error("borrowed target ordinal overflows");
-      }
-      return ordinal * group_size;
-    }
 
     static void build_index(profile_blob & result, std::span<profile_record const> native,
                             std::span<bit_string const> borrowed) {
