@@ -37,8 +37,8 @@ the export version, value-codec tag and live-entry count. Each entry contains
 its 64-bit key byte length, key bytes and encoded value.
 
 This is a debugging feature, not an intended access pattern. It materializes
-all live entries; ordinary saves and snapshots retain existing object roots
-through the catalog. These debug files are outside the fridge's `.kv` and
+all live entries. Catalog saves retain object roots; reference snapshots share
+their immutable state. These debug files are outside the fridge's `.kv` and
 `.index` object graph.
 
 I reserve `.fc` for a front-coded table dump. That encoding is a separate future
