@@ -320,6 +320,8 @@ namespace everett {
     }
     cola_sample_view<P> peek() const && = delete;
     void advance() { (void)advance_impl<false>(); }
+    // Exact old/new sampled-key comparison, accumulated across at most K
+    // adjacent transitions. EOF has no successor and returns nullopt.
     std::optional<bit_comparison> advance_comparison() { return advance_impl<true>(); }
 
   private:
