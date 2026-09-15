@@ -64,7 +64,7 @@ namespace {
     std::vector<std::string> calls;
     std::optional<std::size_t> fail_at;
     int fail_errno = EIO;
-    bool install_before_failure = false;
+    bool install_before_failure = false, header_before_failure = false;
     bool short_writes = false;
     bool interrupt_write = false, interrupt_header = false;
     bool zero_write = false, zero_header = false;
@@ -113,13 +113,14 @@ namespace {
     }
     std::ptrdiff_t write_at(int, std::span<std::byte const> data, std::uint64_t at) {
       ++headers;
-      if (!event("pwrite")) return -1;
+      bool acknowledged = event("pwrite");
+      if (!acknowledged && !header_before_failure) return -1;
       if (zero_header) return 0;
       if (std::exchange(interrupt_header, false)) { errno = EINTR; return -1; }
       auto count = short_writes ? std::min(std::size_t{3}, data.size()) : data.size();
       require(at + count <= bytes.size(), "header write exceeded reserved prefix");
       std::copy_n(data.begin(), count, bytes.begin() + std::ptrdiff_t(at));
-      return std::ptrdiff_t(count);
+      return acknowledged ? std::ptrdiff_t(count) : -1;
     }
     int make_read_only(int) {
       if (!event("chmod")) return -1;
@@ -165,6 +166,8 @@ namespace {
   static_assert(!std::is_copy_assignable_v<model_stream>);
   static_assert(!std::is_move_constructible_v<model_stream>);
   static_assert(!std::is_move_assignable_v<model_stream>);
+  template<class T> concept temporary_paths = requires(T & value) { std::move(value).paths(); };
+  static_assert(!temporary_paths<model_stream>);
 
   template<class F> void inactive(F && action) {
     bool rejected = false;
@@ -289,6 +292,133 @@ namespace {
     }
   }
 
+  void prefix_model_tests() {
+    auto prefix = body_bytes(128), suffix = body_bytes(79);
+    auto body = prefix; body.insert(body.end(), suffix.begin(), suffix.end());
+    auto provisional = std::vector<std::byte>(prefix.size());
+    provisional.insert(provisional.end(), suffix.begin(), suffix.end());
+    file_header<policy> header{file_kind::native_blob, body.size(), 5, std::nullopt};
+    model_ops baseline;
+    {
+      model_stream stream("root", id(), attempt(), header.kind, prefix.size(), baseline);
+      require(stream.body_bytes() == prefix.size() && stream.body_crc32c() == crc_oracle(std::vector<std::byte>(prefix.size())), "reserved prefix accounting");
+      require(baseline.bytes == std::vector<std::byte>(96 + prefix.size()), "prefix reservation not zero-filled");
+      stream.append(suffix);
+      require(stream.body_bytes() == body.size() && stream.body_crc32c() == crc_oracle(provisional), "provisional prefix CRC");
+      auto calls = baseline.calls.size();
+      rejects([&] { (void)stream.finish(header); });
+      rejects([&] { (void)stream.finish(header, std::span(prefix).first(prefix.size() - 1)); });
+      auto too_long = prefix; too_long.push_back(std::byte{});
+      rejects([&] { (void)stream.finish(header, too_long); });
+      auto bad = header; ++bad.extent;
+      rejects([&] { (void)stream.finish(bad, prefix); });
+      require(baseline.calls.size() == calls && !stream.failed(), "invalid prefix finish performed I/O");
+      auto receipt = stream.finish(header, prefix);
+      require(receipt.body_crc32c == crc_oracle(body) && stream.body_crc32c() == receipt.body_crc32c && stream.finished(), "final prefix CRC not installed");
+      require(baseline.bytes == encode_file(header, body), "prefix backpatch changed suffix or envelope");
+    }
+    auto expected = baseline.calls;
+    for (std::size_t cut = 0; cut != expected.size(); ++cut) {
+      model_ops failed; failed.fail_at = cut;
+      std::unique_ptr<model_stream> stream;
+      bool rejected = false;
+      try {
+        stream = std::make_unique<model_stream>("root", id(), attempt(), header.kind, prefix.size(), failed);
+        stream->append(suffix); (void)stream->finish(header, prefix);
+      } catch (object_write_error const & error) {
+        rejected = true;
+        require(error.code().value() == EIO && error.object == id() && error.attempt == attempt(), "prefix failure lost evidence");
+        if (stream) {
+          require(stream->failed() && !stream->finished(), "prefix failure did not poison");
+          auto calls = failed.calls.size();
+          inactive([&] { stream->append({}); }); inactive([&] { (void)stream->finish(header, prefix); });
+          require(failed.calls.size() == calls, "poisoned prefix stream resumed I/O");
+        }
+      }
+      require(rejected, "prefix syscall failure accepted"); stream.reset();
+      for (std::size_t i = cut + 1; i < failed.calls.size(); ++i)
+        require(failed.calls[i] == "close", "prefix failure resumed non-close I/O");
+      require(std::ranges::none_of(failed.opened, [](bool open) { return open; }), "prefix failure leaked descriptor");
+      if (cut > 5 && cut < std::size_t(std::find(expected.begin(), expected.end(), "unlink private") - expected.begin()))
+        require(failed.private_exists, "prefix failure removed private name");
+    }
+    for (bool acknowledge_effect : {false, true}) {
+      model_ops failed;
+      model_stream stream("root", id(), attempt(), header.kind, prefix.size(), failed);
+      stream.append(suffix);
+      failed.short_writes = true;
+      failed.fail_at = failed.calls.size() + 1; // One prefix pwrite succeeds, next fails.
+      failed.header_before_failure = acknowledge_effect;
+      try { (void)stream.finish(header, prefix); require(false, "partial prefix failure accepted"); }
+      catch (object_write_error const &) {
+        require(stream.failed() && failed.private_exists && !failed.final_exists, "partial prefix failure lost output");
+        auto written = acknowledge_effect ? 6u : 3u;
+        require(std::equal(prefix.begin(), prefix.begin() + written, failed.bytes.begin() + 96), "partial prefix writes were hidden");
+        require(std::ranges::all_of(std::span(failed.bytes).first(96), [](std::byte value) { return value == std::byte{}; }), "envelope written after prefix failure");
+      }
+    }
+    model_ops partial; partial.short_writes = partial.interrupt_write = partial.interrupt_header = true;
+    {
+      model_stream stream("root", id(), attempt(), header.kind, prefix.size(), partial);
+      stream.append(suffix); (void)stream.finish(header, prefix);
+    }
+    require(partial.bytes == baseline.bytes, "partial prefix/header retry changed final bytes");
+    if constexpr (std::numeric_limits<std::size_t>::max() > std::uint64_t(std::numeric_limits<std::int64_t>::max()) - 96) {
+      model_ops overflow;
+      bool rejected = false;
+      try { model_stream stream("root", id(), attempt(), header.kind, std::numeric_limits<std::size_t>::max(), overflow); }
+      catch (std::length_error const &) { rejected = true; }
+      require(rejected && overflow.calls.empty(), "unrepresentable prefix length reached I/O");
+    }
+  }
+  void prefix_length_matrix() {
+    for (std::size_t length : {std::size_t{0}, std::size_t{1}, std::size_t{127}, std::size_t{128},
+        std::size_t{129}, std::size_t{256}, std::size_t{4097}, std::size_t{65537}}) {
+      auto prefix = body_bytes(length);
+      for (bool empty_suffix : {false, true}) {
+        auto suffix = body_bytes(empty_suffix ? 0 : 19);
+        auto body = prefix; body.insert(body.end(), suffix.begin(), suffix.end());
+        auto provisional = std::vector<std::byte>(prefix.size());
+        provisional.insert(provisional.end(), suffix.begin(), suffix.end());
+        model_ops ops;
+        model_stream stream("root", id(), attempt(), file_kind::native_blob, length, ops);
+        stream.append(suffix);
+        require(stream.body_crc32c() == crc_oracle(provisional), "zero-prefix length CRC");
+        file_header<policy> header{file_kind::native_blob, body.size(), 0, std::nullopt};
+        auto receipt = stream.finish(header, prefix);
+        require(receipt.body_crc32c == crc_oracle(body) && ops.bytes == encode_file(header, body), "prefix length concatenation mismatch");
+      }
+    }
+  }
+  void prefix_bit_tests() {
+    for (bool suffix_present : {false, true}) {
+      model_ops ops;
+      object_stream<bit_policy, model_ops> stream("root", id(), attempt(), file_kind::fractional_index, 1, ops);
+      std::array prefix{std::byte{0xff}}, suffix{std::byte{0xe0}};
+      if (suffix_present) stream.append(suffix);
+      file_header<bit_policy> header{file_kind::fractional_index, suffix_present ? 11u : 3u, 0, 0};
+      if (!suffix_present) {
+        auto calls = ops.calls.size();
+        rejects([&] { (void)stream.finish(header, prefix); });
+        require(!stream.failed() && ops.calls.size() == calls, "prefix-only padding error changed state");
+        prefix[0] = std::byte{0xe0};
+      }
+      auto receipt = stream.finish(header, prefix);
+      std::vector<std::byte> body(prefix.begin(), prefix.end());
+      if (suffix_present) body.insert(body.end(), suffix.begin(), suffix.end());
+      require(receipt.body_crc32c == crc_oracle(body) && ops.bytes == encode_file(header, body), "prefix/suffix tail selection or CRC");
+    }
+    model_ops bad_suffix;
+    object_stream<bit_policy, model_ops> stream("root", id(), attempt(), file_kind::fractional_index, 1, bad_suffix);
+    std::array prefix{std::byte{0xe0}}, suffix{std::byte{0xff}};
+    stream.append(suffix);
+    auto calls = bad_suffix.calls.size();
+    rejects([&] { (void)stream.finish({file_kind::fractional_index, 11, 0, 0}, prefix); });
+    require(!stream.failed() && bad_suffix.calls.size() == calls, "padding checked prefix instead of final suffix");
+    auto receipt = stream.finish({file_kind::fractional_index, 16, 0, 0}, prefix);
+    std::array body{prefix[0], suffix[0]};
+    require(receipt.body_crc32c == crc_oracle(body), "corrected bit extent CRC");
+  }
   void identity_tests() {
     model_ops invalid;
     auto old_attempt = attempt();
@@ -430,6 +560,24 @@ namespace {
     auto bit_body = bit_file.body();
     require(std::ranges::equal(bit_body.bytes(), expected) && bit_receipt.body_crc32c == crc_oracle(expected), "guarded bit tail or lifetime failure");
 
+    allocation = ::mmap(nullptr, page * 4, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    require(allocation != MAP_FAILED, "prefix guard mmap"); bytes = static_cast<std::byte *>(allocation);
+    require(::mprotect(bytes + page, page, PROT_NONE) == 0 && ::mprotect(bytes + page * 3, page, PROT_NONE) == 0, "prefix guard mprotect");
+    auto guarded_prefix = std::span(bytes + page - 128, 128);
+    auto guarded_suffix = std::span(bytes + page * 3 - 79, 79);
+    std::copy_n(body.begin(), guarded_prefix.size(), guarded_prefix.begin());
+    std::copy_n(body.begin() + 128, guarded_suffix.size(), guarded_suffix.begin());
+    auto prefixed_body = std::vector<std::byte>(guarded_prefix.begin(), guarded_prefix.end());
+    prefixed_body.insert(prefixed_body.end(), guarded_suffix.begin(), guarded_suffix.end());
+    object_stream<policy> prefixed(directory.path, id(7), attempt(7), file_kind::native_blob, guarded_prefix.size());
+    prefixed.append(guarded_suffix);
+    require(::mprotect(bytes + page * 2, page, PROT_NONE) == 0, "hide appended suffix");
+    auto prefixed_receipt = prefixed.finish({file_kind::native_blob, prefixed_body.size(), 0, std::nullopt}, guarded_prefix);
+    require(::munmap(allocation, page * 4) == 0, "prefix guard munmap");
+    auto prefixed_file = file<policy>::open(prefixed_receipt.path); prefixed_file.scan();
+    auto prefixed_payload = prefixed_file.body();
+    require(std::ranges::equal(prefixed_payload.bytes(), prefixed_body) && prefixed_receipt.body_crc32c == crc_oracle(prefixed_body), "guarded prefix backpatch reread suffix or changed bytes");
+
     for (bool installed : {false, true}) {
       failed_sync_ops failed; failed.after_install = installed;
       auto object = id(installed ? 5 : 4); auto job = attempt(installed ? 5 : 4);
@@ -458,7 +606,7 @@ namespace {
 
 int main() {
   try {
-    model_tests(); identity_tests(); metadata_tests();
+    model_tests(); identity_tests(); metadata_tests(); prefix_model_tests(); prefix_length_matrix(); prefix_bit_tests();
 #if defined(__APPLE__) || defined(__linux__)
     real_tests();
 #endif
