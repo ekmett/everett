@@ -12,7 +12,9 @@
 #include <everett/profile_blob.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -30,6 +32,100 @@ namespace everett {
     std::uint64_t target_ordinal = 0;
     stream_role source_role = stream_role::native;
     std::uint64_t source_ordinal = 0;
+  };
+
+  // A typed in-memory handoff, not a serialized count-code format. Backspace
+  // counts P units from the previously emitted sample; suffix owns only the
+  // remaining key bits. The first sample is literal (backspace == 0).
+  template <class P> struct profile_coded_sample {
+    using policy_type = P;
+    std::uint64_t backspace = 0;
+    bit_string suffix;
+    std::uint64_t target_ordinal = 0;
+  };
+
+  namespace sampling_detail {
+    template <class P> void check_ordinal(std::uint64_t count, std::uint64_t ordinal) {
+      if (count > std::numeric_limits<std::uint64_t>::max() / P::group_size || ordinal != count * P::group_size)
+        throw std::invalid_argument("sample ordinals must be consecutive policy groups");
+    }
+
+    // Suffix must not alias context. Allocate before changing its retained
+    // prefix, then the bounded resize/copy operations cannot allocate or fail.
+    // Preserving a prefix does not copy it unless the buffer must grow; growth
+    // is geometric so gradually lengthening keys do not reallocate each time.
+    inline void replace_suffix(bit_string & context, std::uint64_t retained, bit_view suffix) {
+      auto bits = profile_detail::add(retained, suffix.size());
+      auto bytes = profile_detail::byte_count(bits);
+      if (bytes > context.bytes.max_size()) throw std::length_error("sample key is too large");
+      if (bytes > context.bytes.capacity()) {
+        auto capacity = context.bytes.capacity();
+        auto grown = capacity > context.bytes.max_size() / 2 ? context.bytes.max_size() : capacity * 2;
+        context.bytes.reserve(std::max(static_cast<std::size_t>(bytes), grown));
+      }
+      profile_detail::resize(context, retained);
+      profile_detail::append(context, suffix);
+    }
+  }
+
+  // One reusable reconstructed key per endpoint. Validation/allocation failure
+  // leaves the preceding accepted key and ordinal intact. key() borrows that
+  // context until the next successful encode/accept, move, or destruction.
+  template <class P> struct profile_sample_encoder {
+    using policy_type = P;
+
+    profile_coded_sample<P> encode(bit_view key, std::uint64_t target_ordinal) {
+      sampling_detail::check_ordinal<P>(count_, target_ordinal);
+      if (key.size() % P::bits_per_unit) throw std::invalid_argument("sample key unit mismatch");
+      auto previous = key_.view();
+      if (compare_bits(previous, key) > 0) throw std::invalid_argument("sample keys must be sorted");
+      auto retained = common_prefix_units<P>(previous, key);
+      auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
+      // Copy the transmitted suffix before editing context. Input may alias
+      // this encoder's current key, including a subview of that key.
+      profile_coded_sample<P> result{previous.size() / P::bits_per_unit - retained,
+        bit_string::copy(key.subview(retained_bits, key.size() - retained_bits)), target_ordinal};
+      sampling_detail::replace_suffix(key_, retained_bits, result.suffix.view());
+      ++count_;
+      return result;
+    }
+
+    bit_view key() const & { return key_.view(); }
+    bit_view key() const && = delete;
+    std::uint64_t size() const noexcept { return count_; }
+
+  private:
+    bit_string key_;
+    std::uint64_t count_ = 0;
+  };
+
+  template <class P> struct profile_sample_decoder {
+    using policy_type = P;
+
+    bit_view accept(profile_coded_sample<P> const & sample) {
+      sampling_detail::check_ordinal<P>(count_, sample.target_ordinal);
+      auto suffix = sample.suffix.view();
+      if (suffix.size() % P::bits_per_unit) throw std::invalid_argument("sample suffix unit mismatch");
+      auto previous = key_.view();
+      auto previous_units = previous.size() / P::bits_per_unit;
+      if (sample.backspace > previous_units) throw std::invalid_argument("sample backspace exceeds previous key");
+      auto retained = profile_detail::multiply(previous_units - sample.backspace, P::bits_per_unit);
+      // Both keys share the retained prefix. Comparing only the two remaining
+      // suffixes validates order without another full-key reconstruction.
+      if (compare_bits(suffix, previous.subview(retained, previous.size() - retained)) < 0)
+        throw std::invalid_argument("sample keys must be sorted");
+      sampling_detail::replace_suffix(key_, retained, suffix);
+      ++count_;
+      return key_.view();
+    }
+
+    bit_view key() const & { return key_.view(); }
+    bit_view key() const && = delete;
+    std::uint64_t size() const noexcept { return count_; }
+
+  private:
+    bit_string key_;
+    std::uint64_t count_ = 0;
   };
 
   struct sampling_work {

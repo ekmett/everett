@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <random>
 #include <stdexcept>
@@ -50,6 +51,19 @@ namespace {
     require(actual.size() == expected.bit_size, "sample key length differs from oracle");
     for (std::uint64_t i = 0; i != actual.size(); ++i)
       require(actual.at(i) == bit_at(expected, i), "sample key differs from oracle");
+  }
+
+  template <class P> void check_code(profile_coded_sample<P> const & code, bit_string const & current,
+                                     bit_string const & previous, std::uint64_t ordinal) {
+    std::uint64_t prefix = 0;
+    while (prefix != std::min(previous.bit_size, current.bit_size) &&
+           bit_at(previous, prefix) == bit_at(current, prefix)) ++prefix;
+    prefix -= prefix % P::bits_per_unit;
+    require(code.backspace == (previous.bit_size - prefix) / P::bits_per_unit &&
+            code.target_ordinal == ordinal, "coded sample header differs from independent oracle");
+    require(code.suffix.bit_size == current.bit_size - prefix, "coded sample suffix length");
+    for (std::uint64_t i = 0; i != code.suffix.bit_size; ++i)
+      require(bit_at(code.suffix, i) == bit_at(current, prefix + i), "coded sample suffix contents");
   }
 
   struct occurrence {
@@ -115,11 +129,20 @@ namespace {
             "sampler constructor decodes at most one record per stream");
 
     std::uint64_t at = 0, native_at = 0, borrowed_at = 0;
+    profile_sample_encoder<P> encoder;
+    profile_sample_decoder<P> decoder;
+    bit_string empty_key;
     while (!cursor->done()) {
       require(at < expected.size(), "sampler emitted an extra sample");
       auto const & entry = expected[static_cast<std::size_t>(at)];
       auto sample = cursor->peek();
       check_key(sample.key, entry.key);
+      auto code = encoder.encode(sample.key, sample.target_ordinal);
+      check_code(code, entry.key, at ? expected[static_cast<std::size_t>(at - P::group_size)].key : empty_key, at);
+      check_key(decoder.accept(code), entry.key);
+      check_key(encoder.key(), entry.key);
+      require(encoder.size() == at / P::group_size + 1 && decoder.size() == encoder.size(),
+              "coded stream progress");
       require(sample.target_ordinal == at && sample.source_role == entry.role
               && sample.source_ordinal == entry.source_ordinal, "sample tagged occurrence differs from oracle");
       auto before = cursor->counters();
@@ -173,7 +196,107 @@ namespace {
     require(weak.expired(), "sampler source pin leaked after destruction");
   }
 
+  template <class P> void check_coded_codec() {
+    profile_sample_encoder<P> encoder;
+    profile_sample_decoder<P> decoder;
+    require(encoder.size() == 0 && decoder.size() == 0 && encoder.key().empty() && decoder.key().empty(),
+            "empty coded stream context");
+    auto keys = keys_for<P>(70, 1025);
+    std::uint64_t ordinal = 0, full_bits = 0, sent_bits = 0;
+    bit_string previous;
+    for (auto const & key : keys) for (unsigned duplicate = 0; duplicate != 2; ++duplicate) {
+      auto encoder_address = encoder.key().storage().data();
+      auto decoder_address = decoder.key().storage().data();
+      auto code = encoder.encode(key.view(), ordinal);
+      check_code(code, key, previous, ordinal);
+      check_key(decoder.accept(code), key);
+      if (duplicate) {
+        require(code.backspace == 0 && code.suffix.bit_size == 0, "equal sample must carry no key suffix");
+        require(encoder.key().storage().data() == encoder_address && decoder.key().storage().data() == decoder_address,
+                "retaining a complete key must preserve context storage");
+      }
+      full_bits += key.bit_size;
+      sent_bits += code.suffix.bit_size;
+      previous = key;
+      ordinal += P::group_size;
+      // A pause and a move must preserve both independent link contexts.
+      if (ordinal % (3 * P::group_size) == 0) {
+        auto resumed_encoder = std::move(encoder);
+        auto resumed_decoder = std::move(decoder);
+        encoder = std::move(resumed_encoder);
+        decoder = std::move(resumed_decoder);
+      }
+    }
+    require(sent_bits < full_bits / 10, "long-prefix handoff still sends full keys");
+
+    auto reject_decode = [&](profile_coded_sample<P> const & bad) {
+      auto before = bit_string::copy(decoder.key());
+      auto count = decoder.size();
+      rejects([&] { (void)decoder.accept(bad); });
+      check_key(decoder.key(), before);
+      require(decoder.size() == count, "failed coded input changed decoder ordinal");
+    };
+    reject_decode({std::numeric_limits<std::uint64_t>::max(), {}, ordinal});
+    reject_decode({0, {}, ordinal + P::group_size});
+    reject_decode({previous.bit_size / P::bits_per_unit, {}, ordinal});
+    bit_string malformed;
+    malformed.bit_size = 1;
+    reject_decode({0, malformed, ordinal});
+    malformed = bit_string::from_bits("1");
+    malformed.bytes[0] |= std::byte{1};
+    reject_decode({0, malformed, ordinal});
+    if constexpr (P::unit == profile_unit::byte)
+      reject_decode({0, bit_string::from_bits("1"), ordinal});
+
+    auto reject_encode = [&](bit_view bad, std::uint64_t at) {
+      auto before = bit_string::copy(encoder.key());
+      auto count = encoder.size();
+      rejects([&] { (void)encoder.encode(bad, at); });
+      check_key(encoder.key(), before);
+      require(encoder.size() == count, "failed sample changed encoder ordinal");
+    };
+    reject_encode({}, ordinal);
+    reject_encode(previous.view(), ordinal + P::group_size);
+    if constexpr (P::unit == profile_unit::byte) {
+      auto unaligned = bit_string::from_bits("1");
+      reject_encode(unaligned.view(), ordinal);
+    }
+    // A failed event does not consume the expected ordinal.
+    auto continued = encoder.encode(encoder.key(), ordinal);
+    require(continued.backspace == 0 && continued.suffix.bit_size == 0, "aliased equal key coding");
+    check_key(decoder.accept(continued), previous);
+
+    // A sorted aliased subview may replace the key with a shorter one. Copying
+    // the suffix before resizing avoids retaining a dangling source view.
+    profile_sample_encoder<P> alias;
+    profile_sample_decoder<P> alias_decoder;
+    auto ab = bit_string::from_bytes("ab");
+    auto b = bit_string::from_bytes("b");
+    auto first = alias.encode(ab.view(), 0);
+    require(first.backspace == 0, "first coded event must be literal");
+    check_key(alias_decoder.accept(first), ab);
+    auto second = alias.encode(alias.key().subview(8, 8), P::group_size);
+    check_key(alias.key(), b);
+    check_key(alias_decoder.accept(second), b);
+    // Decoders also accept redundant backspacing and re-emission, provided
+    // the reconstructed sorted key is valid.
+    profile_coded_sample<P> redundant{b.bit_size / P::bits_per_unit, b, 2 * P::group_size};
+    check_key(alias_decoder.accept(redundant), b);
+
+    profile_sample_decoder<P> fresh;
+    rejects([&] { (void)fresh.accept({1, ab, 0}); });
+    rejects([&] { (void)fresh.accept({0, ab, P::group_size}); });
+    require(fresh.size() == 0 && fresh.key().empty(), "failed first input published context");
+    check_key(fresh.accept(first), ab);
+    profile_sample_encoder<P> fresh_encoder;
+    rejects([&] { (void)fresh_encoder.encode(ab.view(), P::group_size); });
+    require(fresh_encoder.size() == 0 && fresh_encoder.key().empty(), "failed first output published context");
+    rejects([] { sampling_detail::check_ordinal<P>(
+      std::numeric_limits<std::uint64_t>::max() / P::group_size + 1, 0); });
+  }
+
   template <class P> void check_policy() {
+    check_coded_codec<P>();
     rejects([] { sample_cursor<P> cursor(nullptr); });
     check_fixture<P>({}, {});
     auto keys = keys_for<P>(unsigned(P::group_size * 2 + 11));
