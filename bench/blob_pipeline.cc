@@ -202,7 +202,7 @@ namespace {
     hash_array(result, value.native()); hash_array(result, value.borrowed());
     result.words(value.interleave().classes);
     result.words(value.interleave().checkpoints);
-    result.integer(value.interleave().total);
+    result.integer(value.borrowed().size());
     result.integer(value.virtual_size());
     result.data(value.false_borrow_bits());
   }

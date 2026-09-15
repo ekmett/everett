@@ -133,7 +133,7 @@ namespace {
     auto const & rank = actual.interleave();
     auto const & reference = expected.interleave();
     require(rank.classes == reference.classes && rank.checkpoints == reference.checkpoints &&
-      rank.virtual_count == reference.virtual_count && rank.total == reference.total, "exact rank encoding");
+      rank.virtual_count == reference.virtual_count && rank.view().count() == reference.view().count(), "exact rank encoding");
     auto catalog = merge_order(native, borrowed);
     require(actual.cut_lcps().size() == actual.group_count(), "one LCP for every emitted cut");
     bit_view frontier;

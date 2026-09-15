@@ -76,7 +76,7 @@ namespace everett {
         false_borrows_(false_borrows), cut_lcps_(cut_lcps), virtual_count_(virtual_count) {
       if (native.size() > std::numeric_limits<std::uint64_t>::max() - borrowed.size() ||
           native.size() + borrowed.size() != virtual_count ||
-          interleave.size() != virtual_count || interleave.count() != borrowed.size() ||
+          interleave.size() != virtual_count ||
           false_borrows.size() != borrowed.size() / 8 + (borrowed.size() % 8 != 0) ||
           cut_lcps.size() != group_count())
         throw std::invalid_argument("profile blob section shape mismatch");

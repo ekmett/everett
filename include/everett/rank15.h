@@ -34,25 +34,32 @@ namespace everett {
   struct rank15_view {
     rank15_view(std::span<std::uint64_t const> classes,
                 std::span<std::uint64_t const> checkpoints,
-                std::uint64_t virtual_count, std::uint64_t total)
-      : rank15_view(word_view(classes), word_view(checkpoints), virtual_count, total) {}
+                std::uint64_t virtual_count)
+      : rank15_view(word_view(classes), word_view(checkpoints), virtual_count) {}
 
     template <class Words> requires std::is_same_v<Words, word_view>
     rank15_view(Words classes, Words checkpoints,
-                std::uint64_t virtual_count, std::uint64_t total)
+                std::uint64_t virtual_count)
       : classes_(classes), checkpoints_(checkpoints),
         virtual_count_(virtual_count),
-        group_count_(virtual_count / 15 + (virtual_count % 15 != 0)), total_(total) {
+        group_count_(virtual_count / 15 + (virtual_count % 15 != 0)) {
       auto groups = group_count();
       if (classes.size() != groups / 16 + (groups % 16 != 0) ||
-          checkpoints.size() != groups / 128 + (groups % 128 != 0) ||
-          total > virtual_count)
+          checkpoints.size() != groups / 128 + (groups % 128 != 0))
         throw std::invalid_argument("invalid rank15 spans");
     }
 
     std::uint64_t size() const noexcept { return virtual_count_; }
     std::uint64_t group_count() const noexcept { return group_count_; }
-    std::uint64_t count() const noexcept { return total_; }
+    // Derived from the final real group; no endpoint checkpoint is stored.
+    std::uint64_t count() const {
+      if (!group_count()) return 0;
+      auto last = group_count() - 1;
+      auto population = class_at(last);
+      if (population > virtual_count_ - last * 15)
+        throw std::invalid_argument("invalid rank15 final population");
+      return add_prefix(rank(last), population, virtual_count_);
+    }
 
     word_view class_words() const noexcept { return classes_; }
     word_view checkpoint_words() const noexcept { return checkpoints_; }
@@ -62,37 +69,37 @@ namespace everett {
       return unsigned((classes_[group / 16] >> (4 * (group % 16))) & 15);
     }
 
-    // rank(group) counts borrowed entries before virtual position 15*group;
-    // group_count() is the actual-length endpoint of a partial final group.
+    // rank(group) counts entries before the start of an existing group.
+    // An empty index has no valid rank query; count() handles its total.
     std::uint64_t rank(std::uint64_t group) const {
-      if (group > group_count()) throw std::out_of_range("rank15 group");
-      if (group == group_count()) return total_;
+      if (group >= group_count()) throw std::out_of_range("rank15 group");
       auto result = checkpoints_[group / 128];
-      if (group % 128 == 0) return add_prefix(result, 0);
+      auto limit = virtual_count_;
+      if (group % 128 == 0) return add_prefix(result, 0, limit);
       auto word = (group / 128) * 8;
 #if defined(__AVX512F__) && defined(__AVX512BW__)
       if (classes_.size() - word >= 8)
-        return add_prefix(result, prefix128_avx512(classes_.bytes().data() + word * 8, unsigned(group % 128)));
+        return add_prefix(result, prefix128_avx512(classes_.bytes().data() + word * 8, unsigned(group % 128)), limit);
 #elif defined(__AVX2__)
       if (classes_.size() - word >= 8)
-        return add_prefix(result, prefix128_avx2(classes_.bytes().data() + word * 8, unsigned(group % 128)));
+        return add_prefix(result, prefix128_avx2(classes_.bytes().data() + word * 8, unsigned(group % 128)), limit);
 #elif defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
       if (classes_.size() - word >= 8)
-        return add_prefix(result, prefix128_neon(classes_.bytes().data() + word * 8, unsigned(group % 128)));
+        return add_prefix(result, prefix128_neon(classes_.bytes().data() + word * 8, unsigned(group % 128)), limit);
 #endif
       // Each word contributes at most 30 to each byte. Eight words fit in
       // byte lanes (240), so we can accumulate before the horizontal sum.
       std::uint64_t pairs = 0;
       for (; word < group / 16; ++word) pairs += pair_nibbles(classes_[word]);
       auto tail = unsigned(group % 16);
-      // The endpoint returned above, so this word exists even for tail=0.
+      // group is an existing class, so this word exists even for tail=0.
       pairs += pair_nibbles(classes_[word] & ((std::uint64_t{1} << (4 * tail)) - 1));
-      return add_prefix(result, sum_bytes(pairs));
+      return add_prefix(result, sum_bytes(pairs), limit);
     }
 
   private:
-    std::uint64_t add_prefix(std::uint64_t checkpoint, unsigned prefix) const {
-      if (checkpoint > total_ || prefix > total_ - checkpoint)
+    static std::uint64_t add_prefix(std::uint64_t checkpoint, unsigned prefix, std::uint64_t limit) {
+      if (checkpoint > limit || prefix > limit - checkpoint)
         throw std::invalid_argument("invalid rank15 checkpoint or prefix");
       return checkpoint + prefix;
     }
@@ -181,7 +188,6 @@ namespace everett {
     word_view checkpoints_;
     std::uint64_t virtual_count_;
     std::uint64_t group_count_;
-    std::uint64_t total_;
   };
 
   struct rank15_index {
@@ -191,24 +197,24 @@ namespace everett {
       rank15_index result;
       result.virtual_count = count;
       result.classes.resize(groups / 16 + (groups % 16 != 0));
+      std::uint64_t total = 0;
       for (std::uint64_t i = 0; i < groups; ++i) {
         auto limit = i + 1 == groups && count % 15 ? count % 15 : 15;
         if (source[i] > limit) throw std::invalid_argument("rank15 class population");
-        if (i % 128 == 0) result.checkpoints.push_back(result.total);
+        if (i % 128 == 0) result.checkpoints.push_back(total);
         result.classes[i / 16] |= std::uint64_t(source[i]) << (4 * (i % 16));
-        result.total += source[i];
+        total += source[i];
       }
       return result;
     }
 
-    rank15_view view() const & { return {classes, checkpoints, virtual_count, total}; }
+    rank15_view view() const & { return {classes, checkpoints, virtual_count}; }
 
     rank15_view view() const && = delete;
 
     std::vector<std::uint64_t> classes;
     std::vector<std::uint64_t> checkpoints;
     std::uint64_t virtual_count = 0;
-    std::uint64_t total = 0;
   };
 }
 

@@ -350,7 +350,7 @@ namespace {
           require(indexes[i]->cut_lcps()[group] == expected.cuts[group], "persisted cut LCP mismatch");
           prefix_count += expected.classes[group];
         }
-        require(rank.rank(expected.classes.size()) == expected.borrowed.size(), "persisted final rank mismatch");
+        require(rank.count() == expected.borrowed.size(), "persisted final rank mismatch");
         auto flags = indexes[i]->false_borrow_bits();
         for (std::size_t b = 0; b < expected.false_borrows.size(); ++b)
           require(bool((std::to_integer<unsigned>(flags[b / 8]) >> (b % 8)) & 1) == expected.false_borrows[b],

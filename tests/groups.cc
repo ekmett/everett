@@ -87,8 +87,15 @@ namespace {
     auto view = index.view(); // Shape checks must not read the checkpoint.
     rejects([&] { (void)view.rank(0); });
     rejects([&] { (void)view.rank(1); });
-    index.checkpoints[0] = 2;
+    index.checkpoints[0] = index.virtual_count;
     rejects([&] { (void)index.view().rank(1); });
+    // The final physical group contains one entry, regardless of field width.
+    std::array<std::uint64_t, 1> classes{K}, checkpoints{0};
+    everett::rank_groups_view<K> partial(classes, checkpoints, 1);
+    require(partial.rank(0) == 0, "partial first boundary");
+    rejects([&] { (void)partial.count(); });
+    rejects([&] { (void)partial.rank(1); });
+
   }
 
   template <std::uint64_t K> void test_rank() {
@@ -107,8 +114,8 @@ namespace {
         }
         auto index = everett::rank_groups<K>::build(classes, count);
         auto view = index.view();
-        require(view.size() == count && view.group_count() == groups, "rank groups dimensions");
-        for (std::uint64_t i = 0; i <= groups; ++i)
+        require(view.size() == count && view.group_count() == groups && view.count() == oracle.back(), "rank groups dimensions");
+        for (std::uint64_t i = 0; i < groups; ++i)
           require(view.rank(i) == oracle[i], "rank groups prefix oracle");
         for (std::uint64_t i = 0; i < groups; ++i)
           require(view.class_at(i) == classes[i], "rank groups class oracle");
@@ -116,10 +123,12 @@ namespace {
           auto packed = little_words(index.classes, offset), checkpoints = little_words(index.checkpoints, offset);
           auto pc = everett::word_view::little_endian(std::span(packed).subspan(offset));
           auto cp = everett::word_view::little_endian(std::span(checkpoints).subspan(offset));
-          everett::rank_groups_view<K> mapped(pc, cp, count, index.total);
+          everett::rank_groups_view<K> mapped(pc, cp, count);
+          require(mapped.count() == oracle.back(), "mapped derived count");
+          rejects([&] { (void)mapped.rank(groups); });
           require(mapped.class_words().bytes().data() == packed.data() + offset &&
                   mapped.checkpoint_words().bytes().data() == checkpoints.data() + offset, "rank sections retained");
-          for (std::uint64_t i = 0; i <= groups; ++i)
+          for (std::uint64_t i = 0; i < groups; ++i)
             require(mapped.rank(i) == oracle[i], "unaligned mapped rank oracle");
           for (std::uint64_t i = 0; i < groups; ++i)
             require(mapped.class_at(i) == classes[i], "unaligned mapped class oracle");
@@ -132,7 +141,7 @@ namespace {
             require(((index.classes[position / 64] >> (position % 64)) & 1) == ((classes[i] >> bit) & 1),
                     "rank class packed bit mismatch");
           }
-        rejects([&] { view.rank(groups + 1); });
+        rejects([&] { view.rank(groups); });
         rejects([&] { view.class_at(groups); });
       }
     }
@@ -140,7 +149,8 @@ namespace {
     rejects([] { everett::rank_groups<K>::build(std::array<std::uint64_t, 1>{2}, 1); });
     rejects([] { everett::rank_groups<K>::build({}, K); });
     everett::rank_groups<K> empty;
-    require(empty.view().rank(0) == 0, "default rank groups");
+    require(empty.view().count() == 0, "default rank groups");
+    rejects([&] { (void)empty.view().rank(0); });
   }
 
   void test_rank15_agreement() {
@@ -166,24 +176,23 @@ namespace {
         auto policy = everett::rank_groups<15>::build(classes, count);
         auto fixed = everett::rank15_index::build(fixed_classes, count);
         require(policy.classes == fixed.classes && policy.checkpoints == fixed.checkpoints &&
-                policy.total == fixed.total, "rank15 policy encoding agreement");
+                policy.view().count() == fixed.view().count(), "rank15 policy encoding agreement");
         auto view = policy.view();
         auto fixed_view = fixed.view();
         static_assert(std::is_same_v<decltype(view.class_at(0)), std::uint64_t>);
         require(view.size() == count && view.group_count() == groups && view.count() == oracle.back(),
                 "rank15 policy view dimensions");
-        for (std::uint64_t i = 0; i <= groups; ++i) {
+        for (std::uint64_t i = 0; i < groups; ++i) {
           require(view.rank(i) == oracle[i] && fixed_view.rank(i) == oracle[i],
                   "rank15 policy prefix agreement");
           if (i < groups) require(view.class_at(i) == classes[i], "rank15 policy class agreement");
         }
       }
     }
-    rejects([] { everett::rank_groups_view<15>({}, {}, 15, 0); });
-    rejects([] { everett::rank_groups_view<15>({}, {}, 0, 1); });
+    rejects([] { everett::rank_groups_view<15>({}, {}, 15); });
     rejects([] {
       std::array<std::uint64_t, 1> classes{0};
-      everett::rank_groups_view<15>(classes, {}, 15, 0);
+      everett::rank_groups_view<15>(classes, {}, 15);
     });
   }
 
@@ -514,10 +523,12 @@ namespace {
       auto words = everett::word_view::little_endian(bytes);
       auto checkpoints = everett::word_view(index.checkpoints);
       require(mprotect(raw, page, PROT_NONE) == 0, "mapped rank shape guard");
-      everett::rank_groups_view<K> view(words, checkpoints, count, index.total);
+      everett::rank_groups_view<K> view(words, checkpoints, count);
       require(view.class_words().bytes().data() == start, "mapped rank shape retains pointer");
+      rejects([&] { (void)view.rank(groups); });
       require(mprotect(raw, page, PROT_READ | PROT_WRITE) == 0, "mapped rank shape unprotect");
-      for (std::uint64_t i = 0; i <= groups; ++i) {
+      require(view.count() == oracle.back(), "guarded mapped derived count");
+      for (std::uint64_t i = 0; i < groups; ++i) {
         require(view.rank(i) == oracle[i], "guarded mapped rank oracle");
         if (i < groups) require(view.class_at(i) == source[i], "guarded mapped class oracle");
       }
@@ -529,7 +540,7 @@ namespace {
     constexpr std::uint64_t k = (std::uint64_t{1} << 63) - 1;
     constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
     auto index = everett::rank_groups<k>::build(std::array<std::uint64_t, 3>{k, k, 1}, maximum);
-    require(index.view().rank(2) == maximum - 1 && index.view().rank(3) == maximum,
+    require(index.view().rank(2) == maximum - 1 && index.view().count() == maximum,
             "wide group counter overflow");
     require(index.view().class_at(1) == k && index.view().class_at(2) == 1, "63-bit packed classes");
     check_select<k>({0, 0, 0, 0}, maximum);

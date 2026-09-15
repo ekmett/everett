@@ -59,7 +59,7 @@ int main() {
   auto ranks = everett::rank15_index::build(classes, 16);
   std::array<std::uint64_t, 3> offsets{0, 33, 40};
   auto starts = everett::select15_index::build(offsets, 16);
-  if (ranks.view().rank(1) != 7 || ranks.view().rank(2) != 8) return 1;
+  if (ranks.view().rank(1) != 7 || ranks.view().count() != 8) return 1;
   if (starts.view().offset(1, 8) != 153 || starts.view().offset(2, 8) != 168) return 2;
   std::array<everett::profile_record, 1> records{{
     {everett::bit_string::from_bits("101"), everett::bit_string::from_bits("110")}

@@ -444,7 +444,7 @@ namespace everett {
       auto words = [&](std::size_t slot) { return word_view::little_endian(profile.section(slot)); };
       auto const & layout = profile.layout();
       rank_groups_view<P::group_size> ranks(words(section_detail::classes), words(section_detail::checkpoints),
-                                           layout.virtual_count, profile.size());
+                                           layout.virtual_count);
       auto cuts = words(section_detail::cut_lcps);
       auto groups = layout.virtual_count / P::group_size + (layout.virtual_count % P::group_size != 0);
       if (cuts.size() != groups || profile.section(section_detail::false_borrows).size() !=
@@ -483,7 +483,7 @@ namespace everett {
       classes.reserve(static_cast<std::size_t>(groups));
       for (std::uint64_t group = 0; group != groups; ++group) classes.push_back(ranks_.class_at(group));
       auto expected = rank_groups<P::group_size>::build(classes, virtual_size());
-      if (expected.total != borrowed().size()) throw std::invalid_argument("Everett rank total mismatch");
+      if (expected.view().count() != borrowed().size()) throw std::invalid_argument("Everett rank total mismatch");
       section_detail::equal_words(ranks_.class_words(), expected.classes, "Everett rank class words mismatch");
       section_detail::equal_words(ranks_.checkpoint_words(), expected.checkpoints, "Everett rank checkpoint mismatch");
       auto flags = false_borrow_bits();

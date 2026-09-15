@@ -90,8 +90,10 @@ namespace {
       if (i % 128 == 0) checkpoints.push_back(oracle[i]);
       oracle[i + 1] = oracle[i] + populations[i];
     }
-    everett::rank_groups_view<K> view(words, checkpoints, virtual_count, oracle.back());
-    for (std::size_t i = 0; i <= populations.size(); ++i) {
+    everett::rank_groups_view<K> view(words, checkpoints, virtual_count);
+    require(view.count() == oracle.back(), "group derived count oracle");
+    rejects([&] { (void)view.rank(populations.size()); });
+    for (std::size_t i = 0; i < populations.size(); ++i) {
       require(view.rank(i) == oracle[i], "group prefix oracle");
       if (i < populations.size()) {
         require(view.class_at(i) == populations[i], "group class oracle");
@@ -158,7 +160,7 @@ namespace {
       for (std::uint64_t bit = 0; bit < bits; ++bit)
         oracle[bit + 1] = oracle[bit] + ((source[bit / 64] >> (bit % 64)) & 1);
       auto index = everett::rank_index::build(source, bits);
-      require(index.total == oracle.back(), "partial block total");
+      require(index.view().count() == oracle.back(), "partial block total");
       require(index.supers == std::vector<std::uint64_t>{0}, "partial block epoch directory");
       for (std::uint64_t block = 0; block < index.blocks.size(); ++block) {
         require(index.blocks[block].before == oracle[block * 2048], "partial block prefix");
@@ -169,7 +171,7 @@ namespace {
                   "partial block run population");
         }
       }
-      require(index.view().rank(bits) == oracle.back(), "partial block endpoint");
+      require(index.view().count() == oracle.back(), "partial block endpoint");
       if (bits % 64) require(index.words.back() >> (bits % 64) == 0, "partial word masking");
     }
   }
@@ -230,9 +232,9 @@ namespace {
         auto index = everett::rank_index::build(source, bits);
         auto view = index.view();
         require(view.count() == oracle.back(), "rank total");
-        for (std::uint64_t i = 0; i <= bits; ++i)
+        for (std::uint64_t i = 0; i < bits; ++i)
           require(view.rank(i) == oracle[i], "rank prefix mismatch");
-        rejects([&] { view.rank(bits + 1); });
+        rejects([&] { view.rank(bits); });
         if (bits >= 2048 && pattern == 1)
           require(index.blocks[0].runs == (512u | (512u << 10) | (512u << 20)),
                   "packed runs must hold independent populations of 512");
@@ -240,7 +242,16 @@ namespace {
     }
     rejects([] { everett::rank_index::build({}, 1); });
     everett::rank_index empty;
-    require(empty.view().rank(0) == 0, "default rank");
+    require(empty.view().count() == 0, "default rank");
+    rejects([&] { (void)empty.view().rank(0); });
+  }
+
+  void test_rank15_malformed_tail() {
+    std::array<std::uint64_t, 1> classes{15}, checkpoints{0};
+    everett::rank15_view partial(classes, checkpoints, 1);
+    require(partial.rank(0) == 0, "rank15 partial first boundary");
+    rejects([&] { (void)partial.count(); });
+    rejects([&] { (void)partial.rank(1); });
   }
 
   void check_rank15_word(std::uint64_t value) {
@@ -249,9 +260,9 @@ namespace {
     std::array<unsigned, 17> oracle{};
     for (unsigned i = 0; i < 16; ++i)
       oracle[i + 1] = oracle[i] + unsigned((value >> (4 * i)) & 15);
-    // The extra group keeps rank(16) on the packed-word path, rather than
-    // returning the endpoint's stored total. Earlier queries mask every tail.
-    everett::rank15_view view(words, checkpoints, 17 * 15, oracle.back());
+    // The extra group makes rank(16) an existing group boundary.
+    // Earlier queries mask every tail.
+    everett::rank15_view view(words, checkpoints, 17 * 15);
     for (unsigned i = 0; i <= 16; ++i)
       require(view.rank(i) == oracle[i], "rank15 packed-word sum");
   }
@@ -280,8 +291,8 @@ namespace {
       for (unsigned i = 0; i < 129; ++i)
         oracle[i + 1] = oracle[i] + ((words[i / 16] >> (4 * (i % 16))) & 15);
       std::array<std::uint64_t, 2> checkpoints{0, oracle[128]};
-      everett::rank15_view view(words, checkpoints, 129 * 15, oracle.back());
-      for (unsigned i = 0; i <= 129; ++i)
+      everett::rank15_view view(words, checkpoints, 129 * 15);
+      for (unsigned i = 0; i < 129; ++i)
         require(view.rank(i) == oracle[i], "rank15 checkpoint accumulation");
     }
     // Every short final checkpoint must remain within the allocated words.
@@ -295,7 +306,7 @@ namespace {
       }
       auto index = everett::rank15_index::build(classes, groups * 15);
       auto view = index.view();
-      for (unsigned i = 0; i <= groups; ++i)
+      for (unsigned i = 0; i < groups; ++i)
         require(view.rank(i) == oracle[i], "rank15 short checkpoint");
     }
     // Borrowed classes need only uint64_t alignment, even for vector loads.
@@ -306,8 +317,8 @@ namespace {
       for (unsigned i = 0; i < 128; ++i)
         oracle[i + 1] = oracle[i] + ((shifted[offset + i / 16] >> (4 * (i % 16))) & 15);
       std::array<std::uint64_t, 1> checkpoints{0};
-      everett::rank15_view view(std::span(shifted).subspan(offset, 8), checkpoints, 128 * 15, oracle.back());
-      for (unsigned i = 0; i <= 128; ++i)
+      everett::rank15_view view(std::span(shifted).subspan(offset, 8), checkpoints, 128 * 15);
+      for (unsigned i = 0; i < 128; ++i)
         require(view.rank(i) == oracle[i], "rank15 unaligned checkpoint");
     }
   }
@@ -322,8 +333,10 @@ namespace {
       if (i % 128 == 0) checkpoints.push_back(oracle[i]);
       oracle[i + 1] = oracle[i] + populations[i];
     }
-    everett::rank15_view view(words, checkpoints, populations.size() * 15, oracle.back());
-    for (std::size_t i = 0; i <= populations.size(); ++i)
+    everett::rank15_view view(words, checkpoints, populations.size() * 15);
+    require(view.count() == oracle.back(), "rank15 derived count oracle");
+    rejects([&] { (void)view.rank(populations.size()); });
+    for (std::size_t i = 0; i < populations.size(); ++i)
       require(view.rank(i) == oracle[i], "rank15 targeted prefix oracle");
     for (std::size_t i = 0; i < populations.size(); ++i)
       require(view.class_at(i) == populations[i], "rank15 targeted class oracle");
@@ -397,8 +410,10 @@ namespace {
       if (bytes) std::memcpy(destination, source.data(), bytes);
       memory.protect(PROT_READ);
       std::span words{reinterpret_cast<std::uint64_t const *>(destination), source.size()};
-      everett::rank_view view(words, index.blocks, index.supers, bits, bits);
-      for (unsigned bit = 0; bit <= bits; ++bit)
+      everett::rank_view view(words, index.blocks, index.supers, bits);
+      require(view.count() == bits, "guarded bitmap derived count");
+      rejects([&] { (void)view.rank(bits); });
+      for (unsigned bit = 0; bit < bits; ++bit)
         require(view.rank(bit) == bit, "guarded bitmap prefix");
     }
     // A run boundary needs only the directory, even when the payload page is
@@ -411,9 +426,10 @@ namespace {
     std::memcpy(destination, source.data(), sizeof(source));
     memory.protect(PROT_NONE);
     everett::rank_view view({reinterpret_cast<std::uint64_t const *>(destination), source.size()},
-                           index.blocks, index.supers, 2048, 2048);
-    for (unsigned bit = 0; bit <= 2048; bit += 512)
+                           index.blocks, index.supers, 2048);
+    for (unsigned bit = 0; bit < 2048; bit += 512)
       require(view.rank(bit) == bit, "directory-only guarded boundary");
+    rejects([&] { (void)view.rank(2048); });
   }
 
   void test_rank15_guarded_tails() {
@@ -460,11 +476,11 @@ namespace {
         auto index = everett::rank15_index::build(classes, bits);
         auto view = index.view();
         require(view.group_count() == groups && view.count() == oracle.back(), "rank15 shape");
-        for (std::uint64_t i = 0; i <= groups; ++i)
+        for (std::uint64_t i = 0; i < groups; ++i)
           require(view.rank(i) == oracle[i], "rank15 prefix mismatch");
         for (std::uint64_t i = 0; i < groups; ++i)
           require(view.class_at(i) == classes[i], "rank15 packed class");
-        rejects([&] { view.rank(groups + 1); });
+        rejects([&] { view.rank(groups); });
         rejects([&] { view.class_at(groups); });
       }
     }
@@ -472,7 +488,8 @@ namespace {
     rejects([] { everett::rank15_index::build(std::array<std::uint8_t, 1>{16}, 15); });
     rejects([] { everett::rank15_index::build(std::array<std::uint8_t, 1>{2}, 1); });
     everett::rank15_index empty;
-    require(empty.view().rank(0) == 0, "default rank15");
+    require(empty.view().count() == 0, "default rank15");
+    rejects([&] { (void)empty.view().rank(0); });
   }
 
   everett::select15_index check_select(std::vector<std::uint64_t> const & offsets,
@@ -549,6 +566,7 @@ int main() {
     test_rank_directory();
     test_rank();
     test_rank_tails();
+    test_rank15_malformed_tail();
     test_rank15_words();
     test_rank15_lanes();
 #if defined(__unix__) || defined(__APPLE__)

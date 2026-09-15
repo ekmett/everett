@@ -71,7 +71,7 @@ namespace {
     require(std::ranges::equal(a.false_borrow_bits(), b.false_borrow_bits()), "pipeline false borrows");
     require(a.interleave().classes == b.interleave().classes &&
             a.interleave().checkpoints == b.interleave().checkpoints &&
-            a.interleave().total == b.interleave().total, "pipeline rank directory");
+            a.interleave().view().count() == b.interleave().view().count(), "pipeline rank directory");
     auto const & x = a.borrowed().group_offsets();
     auto const & y = b.borrowed().group_offsets();
     require(x.low == y.low && x.high == y.high && x.sparse == y.sparse &&

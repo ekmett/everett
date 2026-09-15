@@ -40,7 +40,9 @@ namespace {
 
   [[gnu::noinline]] std::uint64_t public_range(everett::rank15_view const & view,
                                             std::uint64_t first, std::uint64_t last) {
-    return view.rank(last) - view.rank(first);
+    if (first == last) return 0;
+    auto hi = view.rank(last - 1) + view.class_at(last - 1);
+    return hi - view.rank(first);
   }
 
   constexpr std::size_t repetitions = 1 << 20;

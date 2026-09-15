@@ -120,23 +120,26 @@ namespace everett {
     rank_view(std::span<std::uint64_t const> words,
               std::span<rank_block const> blocks,
               std::span<std::uint64_t const> supers,
-              std::uint64_t bit_count, std::uint64_t total)
+              std::uint64_t bit_count)
       : words_(words), blocks_(blocks), supers_(supers),
-        bit_count_(bit_count), total_(total) {
+        bit_count_(bit_count) {
       if (words.size() != bit_count / 64 + (bit_count % 64 != 0) ||
           blocks.size() != bit_count / 2048 + (bit_count % 2048 != 0) ||
-          supers.size() != (bit_count >> 32) + ((bit_count & 0xffffffffu) != 0) ||
-          total > bit_count)
+          supers.size() != (bit_count >> 32) + ((bit_count & 0xffffffffu) != 0))
         throw std::invalid_argument("invalid rank spans");
     }
 
     std::uint64_t size() const noexcept { return bit_count_; }
-    std::uint64_t count() const noexcept { return total_; }
+    // The final bit belongs to an existing word, including a partial tail.
+    std::uint64_t count() const {
+      if (!bit_count_) return 0;
+      auto last = bit_count_ - 1;
+      return rank(last) + ((words_[last / 64] >> (last % 64)) & 1);
+    }
 
-    // Exclusive rank. The endpoint is valid; positions beyond it are errors.
+    // Exclusive rank at an existing bit. Use count() for the total population.
     std::uint64_t rank(std::uint64_t position) const {
-      if (position > bit_count_) throw std::out_of_range("rank position");
-      if (position == bit_count_) return total_;
+      if (position >= bit_count_) throw std::out_of_range("rank position");
       auto block = blocks_[position / 2048];
       unsigned run = unsigned((position / 512) % 4);
       std::uint64_t result = supers_[position >> 32] + block.before;
@@ -156,7 +159,6 @@ namespace everett {
     std::span<rank_block const> blocks_;
     std::span<std::uint64_t const> supers_;
     std::uint64_t bit_count_;
-    std::uint64_t total_;
   };
 
   struct rank_index {
@@ -169,9 +171,10 @@ namespace everett {
       if (bits % 64) result.words.back() &= (std::uint64_t{1} << (bits % 64)) - 1;
       result.blocks.resize(bits / 2048 + (bits % 2048 != 0));
       rank_detail::directory_cursor cursor;
+      std::uint64_t total = 0;
       auto begin_block = [&](std::uint64_t block) -> rank_block & {
         auto & entry = result.blocks[block];
-        entry.before = cursor.before(block, result.total);
+        entry.before = cursor.before(block, total);
         if (cursor.starts_epoch(block)) result.supers.push_back(cursor.epoch_base);
         return entry;
       };
@@ -184,7 +187,7 @@ namespace everett {
         auto c = rank_detail::popcount512(words + 16);
         auto d = rank_detail::popcount512(words + 24);
         entry.runs = a | (b << 10) | (c << 20);
-        result.total += a + b + c + d;
+        total += a + b + c + d;
       }
       if (full_blocks != result.blocks.size()) {
         auto & entry = begin_block(full_blocks);
@@ -195,12 +198,12 @@ namespace everett {
         for (auto word = first; word < result.words.size(); ++word)
           counts[(word - first) / 8] += unsigned(std::popcount(result.words[word]));
         entry.runs = counts[0] | (counts[1] << 10) | (counts[2] << 20);
-        result.total += counts[0] + counts[1] + counts[2] + counts[3];
+        total += counts[0] + counts[1] + counts[2] + counts[3];
       }
       return result;
     }
 
-    rank_view view() const & { return {words, blocks, supers, bit_count, total}; }
+    rank_view view() const & { return {words, blocks, supers, bit_count}; }
 
     rank_view view() const && = delete;
 
@@ -210,7 +213,6 @@ namespace everett {
     std::vector<rank_block> blocks;
     std::vector<std::uint64_t> supers;
     std::uint64_t bit_count = 0;
-    std::uint64_t total = 0;
   };
 }
 

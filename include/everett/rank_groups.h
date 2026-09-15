@@ -124,24 +124,32 @@ namespace everett {
 
     rank_groups_view(std::span<std::uint64_t const> classes,
                      std::span<std::uint64_t const> checkpoints,
-                     std::uint64_t virtual_count, std::uint64_t total)
-      : rank_groups_view(word_view(classes), word_view(checkpoints), virtual_count, total) {}
+                     std::uint64_t virtual_count)
+      : rank_groups_view(word_view(classes), word_view(checkpoints), virtual_count) {}
 
     template <class Words> requires std::is_same_v<Words, word_view>
     rank_groups_view(Words classes, Words checkpoints,
-                     std::uint64_t virtual_count, std::uint64_t total)
-      : classes_(classes), checkpoints_(checkpoints), virtual_count_(virtual_count), total_(total) {
+                     std::uint64_t virtual_count)
+      : classes_(classes), checkpoints_(checkpoints), virtual_count_(virtual_count) {
       auto groups = group_count();
       if (groups > std::numeric_limits<std::uint64_t>::max() / class_bits)
         throw std::overflow_error("rank groups packed size");
       auto bits = groups * class_bits;
       if (classes.size() != bits / 64 + (bits % 64 != 0) ||
-          checkpoints.size() != groups / 128 + (groups % 128 != 0) || total > virtual_count)
+          checkpoints.size() != groups / 128 + (groups % 128 != 0))
         throw std::invalid_argument("invalid rank groups spans");
     }
 
     std::uint64_t size() const noexcept { return virtual_count_; }
-    std::uint64_t count() const noexcept { return total_; }
+    // Derived from the final real group, without an endpoint entry.
+    std::uint64_t count() const {
+      if (!group_count()) return 0;
+      auto last = group_count() - 1;
+      auto population = class_at(last);
+      if (population > virtual_count_ - last * K)
+        throw std::invalid_argument("invalid rank groups final population");
+      return add_prefix(rank(last), population, virtual_count_);
+    }
     std::uint64_t group_count() const noexcept {
       return virtual_count_ / K + (virtual_count_ % K != 0);
     }
@@ -151,14 +159,14 @@ namespace everett {
       if (group >= group_count()) throw std::out_of_range("rank groups class");
       return read_class(group);
     }
-    // Exclusive prefix at K*group, with the final endpoint clamped to actual N.
+    // Exclusive prefix at K*group for an existing group only.
     std::uint64_t rank(std::uint64_t group) const {
-      if (group > group_count()) throw std::out_of_range("rank groups boundary");
-      if (group == group_count()) return total_;
+      if (group >= group_count()) throw std::out_of_range("rank groups boundary");
       auto result = checkpoints_[group / 128];
+      auto limit = virtual_count_;
       if constexpr (K == 3 || K == 7 || K == 31) {
         auto count = unsigned(group % 128);
-        if (!count) return add_prefix(result, 0);
+        if (!count) return add_prefix(result, 0, limit);
         auto word = (group / 128) * (2 * class_bits);
 #if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
         // Two-bit broadword sums have lower dependent query latency. Wider
@@ -166,17 +174,17 @@ namespace everett {
         if constexpr (K != 3)
           if (classes_.size() - word >= 2 * class_bits)
             return add_prefix(result, vaddvq_u16(rank_groups_detail::prefix_vectors<class_bits>(
-              classes_.bytes().data() + word * 8, count * class_bits)));
+              classes_.bytes().data() + word * 8, count * class_bits)), limit);
 #endif
-        return add_prefix(result, rank_groups_detail::prefix_portable<class_bits>(classes_.subspan(word), count));
+        return add_prefix(result, rank_groups_detail::prefix_portable<class_bits>(classes_.subspan(word), count), limit);
       }
-      for (auto i = (group / 128) * 128; i < group; ++i) result = add_prefix(result, read_class(i));
-      return add_prefix(result, 0);
+      for (auto i = (group / 128) * 128; i < group; ++i) result = add_prefix(result, read_class(i), limit);
+      return add_prefix(result, 0, limit);
     }
 
   private:
-    std::uint64_t add_prefix(std::uint64_t checkpoint, std::uint64_t prefix) const {
-      if (checkpoint > total_ || prefix > total_ - checkpoint)
+    static std::uint64_t add_prefix(std::uint64_t checkpoint, std::uint64_t prefix, std::uint64_t limit) {
+      if (checkpoint > limit || prefix > limit - checkpoint)
         throw std::invalid_argument("invalid rank groups checkpoint or prefix");
       return checkpoint + prefix;
     }
@@ -191,7 +199,6 @@ namespace everett {
     word_view classes_;
     word_view checkpoints_;
     std::uint64_t virtual_count_;
-    std::uint64_t total_;
   };
 
   template <> struct rank_groups_view<15> {
@@ -200,19 +207,19 @@ namespace everett {
 
     rank_groups_view(std::span<std::uint64_t const> classes,
                      std::span<std::uint64_t const> checkpoints,
-                     std::uint64_t virtual_count, std::uint64_t total)
-      : view_(classes, checkpoints, virtual_count, total) {}
+                     std::uint64_t virtual_count)
+      : view_(classes, checkpoints, virtual_count) {}
 
     template <class Words> requires std::is_same_v<Words, word_view>
     rank_groups_view(Words classes, Words checkpoints,
-                     std::uint64_t virtual_count, std::uint64_t total)
-      : view_(classes, checkpoints, virtual_count, total) {}
+                     std::uint64_t virtual_count)
+      : view_(classes, checkpoints, virtual_count) {}
 
     word_view class_words() const noexcept { return view_.class_words(); }
     word_view checkpoint_words() const noexcept { return view_.checkpoint_words(); }
 
     std::uint64_t size() const noexcept { return view_.size(); }
-    std::uint64_t count() const noexcept { return view_.count(); }
+    std::uint64_t count() const { return view_.count(); }
     std::uint64_t group_count() const noexcept { return view_.group_count(); }
     std::uint64_t class_at(std::uint64_t group) const { return view_.class_at(group); }
     std::uint64_t rank(std::uint64_t group) const { return view_.rank(group); }
@@ -236,27 +243,27 @@ namespace everett {
       rank_groups result;
       result.virtual_count = count;
       result.classes.resize(bits / 64 + (bits % 64 != 0));
+      std::uint64_t total = 0;
       for (std::uint64_t i = 0; i < groups; ++i) {
         auto limit = i + 1 == groups && count % K ? count % K : K;
         auto value = source[i];
         if (value > limit) throw std::invalid_argument("rank groups population");
-        if (i % 128 == 0) result.checkpoints.push_back(result.total);
+        if (i % 128 == 0) result.checkpoints.push_back(total);
         auto bit = i * class_bits;
         unsigned shift = unsigned(bit % 64);
         result.classes[bit / 64] |= value << shift;
         if (shift + class_bits > 64) result.classes[bit / 64 + 1] |= value >> (64 - shift);
-        result.total += value;
+        total += value;
       }
       return result;
     }
 
-    rank_groups_view<K> view() const & { return {classes, checkpoints, virtual_count, total}; }
+    rank_groups_view<K> view() const & { return {classes, checkpoints, virtual_count}; }
     rank_groups_view<K> view() const && = delete;
 
     std::vector<std::uint64_t> classes;
     std::vector<std::uint64_t> checkpoints;
     std::uint64_t virtual_count = 0;
-    std::uint64_t total = 0;
   };
 }
 
