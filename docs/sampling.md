@@ -62,6 +62,50 @@ arrow evaluation: records can have long keys or values. Prefix decoding and
 payload access retain their work contracts from the [main design](design.md)
 and [categorical update model](arrows.md).
 
+### Constructing samples from a pinned pair
+
+The target is one exact, immutable `.kv` + `.index` pair. Its augmented order is
+a **tagged occurrence sequence**, not a set union: preserve all borrowed copies,
+including false borrows, with native entries before equal borrowed entries and
+equal borrowed entries in their original order. Sample positions `0, K, 2K, ...`
+in that sequence. The pair stays pinned; extraction neither compacts it nor
+requires a physically merged copy or re-encoded target.
+
+At cut \(t=jK\), let \(r(j)=R(j)\) be the borrowed population before that cut.
+The next native and borrowed ordinals are respectively
+\(jK-r(j)\) and \(r(j)\). The lesser available next key, using the same tie rule,
+is the sample. The two physical Elias–Fano indexes locate the containing groups;
+bounded header scans locate those records. They provide **locations**, not
+independent decoding context for borrowed FC. That stream has no LPFC restart
+bound: repeatedly calling `reconstruct_at` at successive sample positions can
+walk the same long prefix chain repeatedly.
+
+Prefer two sequential decoding cursors over the pinned streams, retaining their
+key contexts, advancing in merged order and emitting every Kth occurrence.
+Skip value payloads using their framing lengths. If the target index is being
+built, emit the samples from its existing merged-order walk while constructing
+rank classes and shared-cut prefix constraints; that avoids a separate pass.
+Charge visited headers, prefix/suffix decoding, key comparisons and emitted
+sample bytes. A separate streaming pass can visit all A augmented entries;
+producing only \(\lceil A/K\rceil\) samples does not make it O(A/K) work.
+
+Currently `profile_blob<P>::build` and `reindex` accept caller-supplied samples.
+The test helper `samples_for` materializes and sorts the augmented order only
+as an oracle. An encoded-pair sampler, streaming sample sink and validation
+binding each sample sequence to the exact target pair, P, K and target ordinals
+remain production work. Sorted sample keys alone do not establish that binding.
+
+**Unselected space/time option.** An ephemeral outgoing-sample sink avoids the
+second key-encoding pass only when a fresh target index and its upstream samples
+are built together. For an arbitrary existing pair, the baseline extractor performs the key scan
+described above; skipping values does not remove that scan. A retained, front-coded outgoing sample section within `.index` could
+let later forks reuse the export. That adds space beyond the original minimal
+blob, and sampling every Kth occurrence does not guarantee retaining only 1/K of
+the key bytes. Reusing that export requires the exact containing native/index pair and its
+sampling policy. A downstream-index change creates a new pair whose export must
+be rebuilt or validated anew; the native bytes stay unchanged. This is an option
+for measurement, not a selected format extension or implemented feature.
+
 ## 3. Per-level augmentation along one chain
 
 Index a nonempty chain of catalogs from small to large by \(i=0,\ldots,L-1\).
