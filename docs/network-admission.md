@@ -41,6 +41,12 @@ separately for an already mapped native object. We can seal it with
 `encode_index_sections` and bind the resulting pair while retaining the original
 native mapping and identity.
 
+The two-route COLA representation has the same terminal shortcut:
+`mapped_cola_index_builder<P>(native)` reads only the admitted count and builds
+both zero-population navigation directories. It retains the existing native
+EF directory and never accesses native payload pages. See the
+[COLA construction guide](cola-indexes.md).
+
 Direct adoption after validation needs a complete terminal representation,
 including navigation metadata. If anything is missing, construction must
 finish first. Validation itself may scan the received bytes. The current
@@ -138,11 +144,14 @@ fractional index. That affects local capacities even when total entry space
 is linear. Small-to-large schedules also keep repaired predecessors small
 relative to the downstream merge that changed their target.
 
-I am considering comparable-size merges and classes such as
-$\lfloor\log_2 b\rfloor$ as scheduling tools. Direct admission at arbitrary
-classes still needs an admission/repair proof; it does not inherit the original
-COLA schedule's worst-case theorem. We must specify whether $b$ measures
-records, encoded bytes or another work weight. Those choices do not establish
+I use the [standard COLA main/secondary/shadow arrangement](cola-scheduling.md)
+as the scheduling baseline. A main catalog indexes the next main catalog and
+the next secondary native array; only the main route continues. The formulas
+above describe a single-route prefix, not those two-route level capacities.
+Direct admission of arbitrary-sized files at arbitrary levels still needs an
+admission/repair proof; it does not inherit the original COLA schedule's
+worst-case theorem. We must specify whether a size class measures records,
+encoded bytes or another work weight. Those choices do not establish
 interchangeable bounds.
 
 ## 4. String bytes and peak retained space
@@ -177,24 +186,33 @@ $$
 
 The old and new generations have comparable live cardinalities during the
 [rebuild horizon](rebuild.md), so they use the same $h$ up to an additive constant.
-These counts cover exact retained index versions, including replacement outputs
-occupying the redundant working slots. The scheduler must enforce that budget;
-the current arbitrary-chain query API alone does not enforce it.
+This is a conditional budget for exact retained index versions, including
+replacement outputs occupying the redundant working slots. It requires the
+[closure and retirement invariant](cola-scheduling.md#current-world-object-closure):
+live jobs and private carriers must not retain dependencies outside those slots.
+The executable scheduler model checks that invariant on its tested histories;
+it is not yet an all-histories proof or a production scheduler guarantee.
+Terminal secondaries have no index of their own. Staging outside the working
+slots and retained historical roots need separate budgets.
 
-Let $\mathcal I$ be those distinct retained indexes, $S_i$ the borrowed-key
-sequence in index $i$, and $T_{\max}$ their largest first borrowed-key length,
-counting an empty stream as zero. Their first-literal storage satisfies
+Let $\mathcal I$ be those distinct retained index files, and $\mathcal J$ their
+separately encoded borrowed streams. IX03 has two streams per index, so
+$|\mathcal J|\le2|\mathcal I|$. Let $S_j$ be stream $j$'s borrowed-key sequence,
+and $T_{\max}$ their largest first borrowed-key length, counting an empty stream
+as zero. Their first-literal storage satisfies
 
 $$
 S_{\mathrm{first}}
-=\sum_{i\in\mathcal I}|\mathrm{first}(S_i)|
-\le |\mathcal I|T_{\max}
-\le (6h+O(1))T_{\max}.
+=\sum_{j\in\mathcal J}|\mathrm{first}(S_j)|
+\le |\mathcal J|T_{\max}
+\le 2|\mathcal I|T_{\max}
+\le (12h+O(1))T_{\max}.
 $$
 
-Without a rebuild the leading factor is three. Thus the repeated $T$-unit key
-contributes at most roughly $3T\log_2(N+1)$ live units for one snapshot, or
-$6T\log_2(N+1)$ while rebuilding. The unrestricted $qT$ construction cost
+Without a rebuild the conservative leading factor is six. Single-route IX02
+indexes use one stream per file and halve those coefficients. These bounds
+count streams independently; exact sharing and empty routes can reduce the
+actual storage. The unrestricted $qT$ construction cost
 cannot be charged as simultaneous storage for one scheduled snapshot after
 those index versions have been retired.
 
@@ -217,8 +235,9 @@ chain. Each separately front-coded borrowed stream therefore has literal size
 at most $F(D)$, giving
 
 $$
-S_{\mathrm{index}}\le |\mathcal I|F(D)
-\le (6h+O(1))F(D).
+S_{\mathrm{index}}\le |\mathcal J|F(D)
+\le 2|\mathcal I|F(D)
+\le (12h+O(1))F(D).
 $$
 
 The first-literal bound is part of this total, not an additional charge. Sampling
