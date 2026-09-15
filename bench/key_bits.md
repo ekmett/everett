@@ -27,17 +27,19 @@ python3 bench/key_bits.py --candidate d027162 --harness b208f18 \
 ```
 
 The runner needs Python's standard library, Git, and a C++20 compiler. It makes
-no network requests. `CXX` selects the compiler. By default, it compares complete
-header snapshots; omitting `--candidate` uses the working-tree headers. The
+no network requests. `CXX` selects the compiler. It can compare complete
+header snapshots; its working-tree mode requires a checkout with the historical
+include paths. Use the explicit candidate and harness above from a current Diet
+checkout. The
 explicit `--isolate-key-headers` switch preserves this historical experiment's
 three-header overlay. `--harness` selects the source revision independently and
 is required above to reproduce the recorded fixture. New JSON files record both
 resolved revisions, whether either snapshot used working-tree files, exact
 source/header hashes, flags, and host information.
 
-The current [fixture](key_bits.cc) uses typed profile comparisons when the
+The retained [fixture](key_bits.cc) uses typed profile comparisons when the
 untyped front-code header is absent. Its `front_order_and_lcp` row retains the
-label so output comparisons remain possible, but current runs are a different
+label so output comparisons remain possible, but those runs are a different
 API path; they do not replace the historical results below. Complete-header
 comparisons can also include changes outside the three measured key helpers.
 

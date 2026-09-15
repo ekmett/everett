@@ -129,8 +129,9 @@ Use separate build directories when retaining several runs, because header
 snapshots and per-trial files are replaced within the selected build directory.
 The output CSV retains every trial; each trial reports the mean of its three
 rounds. The console summary reports medians of those means and baseline/candidate
-ratios. `--candidate working-tree` captures the current
-header contents and records their hashes, including uncommitted changes.
+ratios. The runner's `--candidate working-tree` mode expects the historical
+include paths; use it only in a worktree of the measured revision. The explicit
+candidate above keeps the command independent of the current Diet headers.
 
 A small sanitizer check exercises the same independent oracle without treating
 instrumented timings as performance evidence:
@@ -138,5 +139,6 @@ instrumented timings as performance evidence:
 ```sh
 python3 bench/blob_pipeline.py --sanitize --records 128 --prefix 17 \
   --queries 64 --rounds 1 --trials 1 \
+  --candidate d0271623cd6af865ac39ef8e04fe39f899d399a2 \
   --build-dir build-blob-pipeline-check
 ```
