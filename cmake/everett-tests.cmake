@@ -28,9 +28,18 @@ if(EVERETT_SANITIZERS)
 endif()
 
 set(everett_test_names crc32c rank groups profile profile_blob comparison_fc sampling index_builder index_pipeline query world pins durability mapped_file files object_writer mapped_blob multiverse)
+if(EVERETT_ENABLE_SQLITE)
+  list(APPEND everett_test_names sqlite_catalog)
+  if(EXISTS "${PROJECT_SOURCE_DIR}/tests/sqlite_catalog_adversarial.cc")
+    list(APPEND everett_test_names sqlite_catalog_adversarial)
+  endif()
+endif()
 foreach(everett_test IN LISTS everett_test_names)
   add_executable(everett_test_${everett_test} "${PROJECT_SOURCE_DIR}/tests/${everett_test}.cc")
   target_link_libraries(everett_test_${everett_test} PRIVATE everett::everett)
+  if(everett_test MATCHES "^sqlite_catalog")
+    target_link_libraries(everett_test_${everett_test} PRIVATE everett::sqlite)
+  endif()
   set_target_properties(everett_test_${everett_test} PROPERTIES CXX_EXTENSIONS OFF)
   if(MSVC)
     target_compile_options(everett_test_${everett_test} PRIVATE /W4 /WX /UNDEBUG /permissive-)
@@ -46,6 +55,16 @@ foreach(everett_test IN LISTS everett_test_names)
   endif()
   add_test(NAME everett.${everett_test} COMMAND everett_test_${everett_test})
 endforeach()
+
+if(EVERETT_ENABLE_SQLITE)
+  configure_file("${PROJECT_SOURCE_DIR}/cmake/everett-sqlite-smoke.cmake.in"
+    "${PROJECT_BINARY_DIR}/everett-sqlite-smoke.cmake" @ONLY)
+  add_test(NAME everett.package.sqlite
+    COMMAND "${CMAKE_COMMAND}" "-Deverett_smoke_config=$<CONFIG>"
+      -P "${PROJECT_BINARY_DIR}/everett-sqlite-smoke.cmake")
+  set_tests_properties(everett.package.sqlite PROPERTIES
+    RESOURCE_LOCK everett_package_build TIMEOUT 180)
+endif()
 
 configure_file("${PROJECT_SOURCE_DIR}/cmake/everett-package-smoke.cmake.in"
   "${PROJECT_BINARY_DIR}/everett-package-smoke.cmake" @ONLY)

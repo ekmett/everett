@@ -15,6 +15,7 @@ else()
   set(everett_top_level OFF)
 endif()
 option(EVERETT_BUILD_TESTS "Build Everett's tests" ${everett_top_level})
+option(EVERETT_ENABLE_SQLITE "Build the optional SQLite catalog component" OFF)
 option(EVERETT_BUILD_DOCS "Build and check Everett's Doxygen documentation" OFF)
 option(EVERETT_SANITIZERS "Enable address and undefined-behavior sanitizers on tests" OFF)
 option(EVERETT_USE_CCACHE "Use ccache when compiling Everett's tests" OFF)
@@ -37,6 +38,14 @@ target_include_directories(everett INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
+if(EVERETT_ENABLE_SQLITE)
+  find_package(SQLite3 3.51.3 REQUIRED)
+  add_library(everett_sqlite INTERFACE)
+  add_library(everett::sqlite ALIAS everett_sqlite)
+  set_target_properties(everett_sqlite PROPERTIES EXPORT_NAME sqlite)
+  target_link_libraries(everett_sqlite INTERFACE everett::everett SQLite::SQLite3)
+endif()
+
 set(everett_config_dir "${CMAKE_INSTALL_LIBDIR}/cmake/everett")
 configure_package_config_file(cmake/everett-config.cmake.in
   "${CMAKE_CURRENT_BINARY_DIR}/everett-config.cmake"
@@ -47,6 +56,11 @@ install(TARGETS everett EXPORT everett-targets)
 install(DIRECTORY include/everett DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 install(EXPORT everett-targets FILE everett-targets.cmake
   NAMESPACE everett:: DESTINATION "${everett_config_dir}")
+if(EVERETT_ENABLE_SQLITE)
+  install(TARGETS everett_sqlite EXPORT everett-sqlite-targets)
+  install(EXPORT everett-sqlite-targets FILE everett-sqlite-targets.cmake
+    NAMESPACE everett:: DESTINATION "${everett_config_dir}")
+endif()
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/everett-config.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/everett-config-version.cmake"
   DESTINATION "${everett_config_dir}")
