@@ -845,9 +845,9 @@ namespace everett {
       if (!group && retained) error_detail::raise<std::invalid_argument>("first profile key is not literal");
       std::uint64_t previous = 0;
       for (auto i = group * P::codec_block_size; i < ordinal; ++i) {
-        auto record = parse_payload(at, retained);
-        previous = record.key_units;
-        at = record.next_offset;
+        auto [key_units, next_offset] = parse_payload<false>(at, retained);
+        previous = key_units;
+        at = next_offset;
         auto backspace = profile_detail::read_backspace<P>(data_, at);
         if (backspace > previous) error_detail::raise<std::invalid_argument>("profile backspace exceeds predecessor");
         retained = previous - backspace;
@@ -884,7 +884,8 @@ namespace everett {
       return parse_payload(at, previous - backspace);
     }
 
-    profile_encoded_record parse_payload(std::uint64_t at, std::uint64_t retained) const {
+    template <bool Views = true>
+    auto parse_payload(std::uint64_t at, std::uint64_t retained) const {
       auto suffix = profile_detail::read_count<P>(data_, at);
       auto value = metadata_.common_value_width ? *metadata_.common_value_width : profile_detail::read_count<P>(data_, at);
       if (at > metadata_.extent || suffix > metadata_.extent - at || value > metadata_.extent - at - suffix)
@@ -893,12 +894,18 @@ namespace everett {
       // inherit key_units <= the previous frame's end. Thus retained <= at and
       // the bounded suffix gives key_units <= extent, whose bit size was admitted.
       auto key_units = retained + suffix;
-      auto suffix_bits = profile_detail::multiply(suffix, P::bits_per_unit);
-      auto value_bits = profile_detail::multiply(value, P::bits_per_unit);
-      auto key_data = data_.subview(profile_detail::multiply(at, P::bits_per_unit), suffix_bits);
-      at += suffix;
-      auto value_data = data_.subview(profile_detail::multiply(at, P::bits_per_unit), value_bits);
-      return {retained, key_units, value, key_data, value_data, at + value};
+      if constexpr (Views) {
+        auto suffix_bits = profile_detail::multiply(suffix, P::bits_per_unit);
+        auto value_bits = profile_detail::multiply(value, P::bits_per_unit);
+        auto key_data = data_.subview(profile_detail::multiply(at, P::bits_per_unit), suffix_bits);
+        at += suffix;
+        auto value_data = data_.subview(profile_detail::multiply(at, P::bits_per_unit), value_bits);
+        return profile_encoded_record{retained, key_units, value, key_data, value_data, at + value};
+      } else {
+        // Skipped lanes need only framing. Do not construct literal/value views
+        // or return an encoded record when neither payload will be inspected.
+        return std::pair<std::uint64_t, std::uint64_t>{key_units, at + suffix + value};
+      }
     }
 
     profile_encoded_record next_record(profile_encoded_record const & previous, std::uint64_t ordinal) const {
