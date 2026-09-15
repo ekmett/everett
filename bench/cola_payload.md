@@ -40,7 +40,7 @@ Baseline: `df1cb2dce83280503d4c2276dffbcace4a26a914`. Candidate:
 C++20 `-O3 -DNDEBUG` and strict warnings. All heavy work used `cpu-heavy`,
 with at most two concurrent compiler processes.
 
-Each byte or partial-bit fixture uses K3/K15 and W16, 2,048 local native records,
+Each byte or partial-bit [fixture](cola_payload.cc) uses K3/K15 and W16, 2,048 local native records,
 a 4,096-record main target with a deeper main and secondary, and a 4,096-record
 secondary target. Keys share either 0 or 4,096 prefix bytes. Original integer IDs
 independently determine every full-query match multiplicity; all values are
@@ -146,7 +146,8 @@ python3 /Users/ekmett/cult/game/tools/resource_run.py --resource cpu-heavy \
   --build-dir build-payload-reproduce --trials 5 --rounds 3
 ```
 
-The reproduction runner applies the archived one-header patch only inside its
+The [reproduction runner](cola_payload.py) applies the
+[archived one-header patch](results/cola_payload/candidate.patch) only inside its
 private candidate snapshot, then verifies **every** reconstructed header hash
 against the measured candidate before compiling. No experimental Git ref is
 needed in a fresh clone. The [original measured runner](results/cola_payload/measured_runner.py)
