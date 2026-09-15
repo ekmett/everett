@@ -128,6 +128,8 @@ namespace {
             "sampler constructor decodes at most one record per stream");
 
     std::uint64_t at = 0, native_at = 0, borrowed_at = 0;
+    std::uint64_t comparisons = !native.empty() && !borrowed.empty();
+    require(cursor->counters().key_comparisons == comparisons, "constructor comparison count");
     profile_sample_encoder<P> encoder;
     profile_sample_decoder<P> decoder;
     bit_string empty_key;
@@ -164,9 +166,26 @@ namespace {
       require(!weak.expired(), "moving a sampler lost its source pin");
 
       auto next = std::min<std::uint64_t>(expected.size(), at + P::group_size);
+      // A copied cursor has independent traversal state and decoded-key buffers.
+      // Advance it without consuming or invalidating the original peek.
+      {
+        auto copied = *cursor;
+        copied.advance();
+        require(copied.done() == (next == expected.size()), "copied sampler completion");
+        if (!copied.done()) {
+          auto item = copied.peek();
+          auto const & wanted = expected[static_cast<std::size_t>(next)];
+          check_key(item.key, wanted.key);
+          require(item.source_role == wanted.role && item.source_ordinal == wanted.source_ordinal &&
+                  item.target_ordinal == next, "copied sampler occurrence differs from oracle");
+        }
+        require(cursor->counters().consumed_entries() == at, "copy advance consumed original sampler");
+        check_key(cursor->peek().key, entry.key);
+      }
       for (auto i = at; i != next; ++i) {
         if (expected[static_cast<std::size_t>(i)].role == stream_role::native) ++native_at;
         else ++borrowed_at;
+        if (native_at != native.size() && borrowed_at != borrowed.size()) ++comparisons;
       }
       cursor->advance();
       auto after = cursor->counters();
@@ -176,8 +195,8 @@ namespace {
               "source-consumption counts differ from the independent merge oracle");
       require(after.decoded_entries == next + std::uint64_t(native_at != native.size())
               + std::uint64_t(borrowed_at != borrowed.size()), "each source entry must decode exactly once");
-      require(after.key_comparisons - before.key_comparisons <= next - at,
-              "advance repeated a merged-order comparison");
+      require(after.key_comparisons == comparisons,
+              "key-comparison counter differs from the independent occurrence oracle");
       at = next;
     }
     require(at == expected.size() && cursor->counters().decoded_entries == expected.size(),
@@ -342,6 +361,42 @@ namespace {
     check_fixture<P>(native, borrowed);
   }
 
+  template <class P> void prefix_and_tie_cases() {
+    // Proper prefixes, empty keys, all within-byte mismatch positions and
+    // repeated borrowed equals crossing several independently sized cuts.
+    std::vector<bit_string> keys;
+    auto unit = std::string(P::bits_per_unit, '0');
+    auto one = unit; one.back() = '1';
+    for (auto const & bits : {std::string{}, unit, unit + unit, unit + one,
+                              one, one + unit, one + one})
+      keys.push_back(bit_string::from_bits(bits));
+    for (auto prefix : {std::string{}, std::string(4096, '1')}) {
+      for (unsigned n = 0; n != 130; ++n) {
+        std::string tail(8, '0');
+        for (unsigned bit = 0; bit != 8; ++bit) tail[bit] = (n >> (7 - bit)) & 1 ? '1' : '0';
+        keys.push_back(bit_string::from_bits(prefix + tail));
+        if (n % 17 == 0) keys.push_back(bit_string::from_bits(prefix + tail + unit));
+      }
+    }
+    std::sort(keys.begin(), keys.end(), [](auto const & a, auto const & b) { return key_order(a, b) < 0; });
+    keys.erase(std::unique(keys.begin(), keys.end()), keys.end());
+    std::vector<profile_record> native;
+    std::vector<bit_string> borrowed;
+    for (std::size_t i = 0; i != keys.size(); ++i) {
+      if (i % 3 != 1) native.push_back({keys[i], value_for<P>(unsigned(i))});
+      auto copies = i % 11 == 0 ? 2 * P::group_size + 1 : i % 3;
+      for (std::uint64_t copy = 0; copy != copies; ++copy) borrowed.push_back(keys[i]);
+    }
+    check_fixture<P>(native, borrowed);
+    // Reverse which stream supplies disjoint keys and the one-sided suffix.
+    native.clear(); borrowed.clear();
+    for (std::size_t i = 0; i != keys.size(); ++i) {
+      if (i % 3 == 1) native.push_back({keys[i], value_for<P>(unsigned(i))});
+      else borrowed.push_back(keys[i]);
+    }
+    check_fixture<P>(native, borrowed);
+  }
+
   template <std::uint64_t K> void check_groups() {
     check_policy<storage_policy<profile_unit::byte, variable_values, K>>();
     check_policy<storage_policy<profile_unit::byte, fixed_values<3>, K>>();
@@ -356,6 +411,10 @@ int main() {
     check_groups<7>();
     check_groups<15>();
     check_groups<31>();
+    prefix_and_tie_cases<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 16>>();
+    prefix_and_tie_cases<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 15>>();
+    prefix_and_tie_cases<storage_policy<profile_unit::bit, variable_values, 15, golomb<3>, 7>>();
+    prefix_and_tie_cases<storage_policy<profile_unit::bit, fixed_values<3>, 31, exponential_golomb<3>, 16>>();
     std::cout << "sampling tests passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';
