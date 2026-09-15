@@ -64,7 +64,8 @@ The storage policy belongs in the type:
 
 ```cpp
 using bytes = everett::storage_policy<
-  everett::profile_unit::byte, everett::fixed_values<8>, 15>;
+  everett::profile_unit::byte, everett::fixed_values<8>, 15,
+  everett::exponential_golomb<0>, 16>;
 using bits = everett::storage_policy<
   everett::profile_unit::bit, everett::variable_values, 7, everett::golomb<3>>;
 ```
@@ -95,6 +96,11 @@ $p$, the backspace count is $\ell-p$. It refers to the physical predecessor's
 length, even when a fractional search supplies a different prefix-compatible
 anchor.
 
+The fifth policy parameter is the physical codec block width W and defaults to
+K, the third parameter. `P::codec_block_size` exposes W; its range is 1 through
+the largest unsigned 32-bit value. This count is independent of the virtual
+sampling interval `P::group_size`.
+
 The fourth policy parameter defaults to `exponential_golomb<0>`.
 `golomb<M>` requires $M>0$; `exponential_golomb<Order>` accepts orders 0 through
 63. Byte policies retain the default parameter and encode counts with varints.
@@ -109,8 +115,8 @@ order-zero code, followed by the low `Order` bits. With order zero, the counts
 
 A fixed Golomb modulus can be compact for a concentrated backspace distribution,
 but a large backspace costs a long unary quotient. Exponential-Golomb gives
-logarithmic code lengths as the count grows. LPFC restart decisions and sampled
-offsets use the actual encoded extent, including the selected count code.
+logarithmic code lengths as the count grows. Sampled physical offsets use the
+actual encoded extent, including the selected count code.
 In particular, a short key following a long predecessor can spend
 $\Theta(b/M)$ bits just to backspace, even when emitted literally. Under a
 Golomb policy, reconstruction work must include those codeword bits; it cannot
@@ -122,8 +128,9 @@ Each encoded stream must carry explicit interpretation metadata:
 
 - Profile and format version, key/value units, and count-code parameters.
 - Prefix/backspace units and physical offset units.
-- Sampling group size, record count, meaningful encoded extent, bit order,
-  and padding rules.
+- Virtual sampling interval K, physical codec block width W, record count,
+  meaningful encoded extent, bit order, and padding rules.
+- The final key length, used when an end sentinel is also a physical block boundary.
 - Either a proven common fixed value width across the **whole indexed stream**,
   or a variable-value declaration.
 
@@ -184,11 +191,12 @@ the pair codec must preserve that alignment. Framing contributes to the encoded
 length: in the illustration above, $m$ logical bytes occupy $9m$ key-code bits,
 excluding the final marker and sort code.
 
-The conservative boundary rule also needs one declared alphabet. Its retained
-prefix is a copy length, which may be shorter than an exact LCP. The known
-frontier must supply those exact encoded bits, or an equivalent complete-unit
-prefix under the selected policy. Counts retain that interpretation across sort
-boundaries.
+Ordinary FC retains the exact adjacent LCP in complete policy units. Query
+comparison has a finer contract: `common_bits()` and the per-virtual-cut LCP
+counts are exact bit lengths even under a byte policy. A mismatch inside a byte
+must not be rounded down to a byte boundary. The query state also keeps the
+compared key's actual full length and ordering, since a content-prefix match
+does not distinguish equality from a proper-prefix endpoint.
 
 A common encoded-bit order preserves the interval argument used by cascading:
 if $a\le b\le c$, the middle encoding shares the common prefix of the outer
@@ -198,25 +206,29 @@ different sort does not qualify.
 
 ## 6. Sampling counts entries, addressing counts profile units
 
-The policy selects a group size $K=2^n-1$. The current generic codecs accept
+The policy selects a virtual sampling interval $K=2^n-1$. The codecs accept
 $K\ge3$, including 3, 7, 15 and 31; 15 is the default. The class width is
 $n=\log_2(K+1)$ bits because a full group's borrowed population ranges from
 zero through $K$. `rank_groups<K>` describes the virtual interleaving at
-these boundaries. `select_groups<K>` locates physical records `0, K, 2K, ...`,
-plus the actual-length end sentinel.
+these boundaries. Its count and subtraction give the borrowed and native
+ordinals at a cut.
 
-These counts are independent of whether keys use bits or bytes. Increasing
-$K$ lowers class metadata per entry and samples fewer physical offsets;
-it also scans more records per projected window. The Elias–Fano sample count
-shrinks; its universe remains the measured residual stream extent, which can
-also change when group framing changes. Neither navigation primitive grants
-permission to interpret a sort with the wrong codec. Local codec correctness
-at $K=3$ is separate from the chosen redundant-level schedule's catalog-size
-and merge-work bounds.
+A separate physical block width W selects records `0, W, 2W, ...` and the
+actual-length end sentinel. The two `select_groups<W>` structures locate those
+positions, one per stream. W may be a power of two; for example K = 15, W = 16
+keeps four-bit rank classes while aligning physical blocks to sixteen records.
+No offset directory is needed for the virtual merged order.
+
+Increasing K reduces samples, rank classes and exact cut-LCP metadata, while
+allowing more forward candidate records per window. Increasing W reduces
+physical offset/checkpoint metadata while allowing more controls to be parsed
+before the selected lane. These are separate tradeoffs. Their counts do not
+change when the policy uses bits instead of bytes. Local correctness at K = 3
+also remains separate from redundant-level catalog-size and merge-work bounds.
 
 Physical addressing still needs an explicit unit:
 
-- The byte profile uses byte-aligned records and `select_groups<K>` byte offsets.
+- The byte profile uses byte-aligned records and `select_groups<W>` byte offsets.
 - The bit profile packs records without inter-record padding and uses bit positions.
   For bit position $p$, the containing byte is $\lfloor p/8\rfloor$ and
   the bit offset is $p\bmod8$. A byte position alone loses information.
@@ -234,11 +246,11 @@ byte offset at ordinal $i$. For bit offsets the same contribution is $8iv$.
 The writer tracks whether **all** values have the same physical width,
 including empty values, tombstones where supported, every represented sort,
 and the final partial group. At sampled group $j$, the entry ordinal is
-$Kj$; the final sentinel instead uses the actual record count. A common
+$Wj$; the final sentinel instead uses the actual record count. A common
 fixed width of zero is valid and differs from variable width. This removes
-the direct value-payload contribution. A restart rule that measures physical
-encoded distance can still emit more literal keys when larger values separate
-them, indirectly changing the residual key/framing extent.
+the direct value-payload contribution. Ordinary FC chooses key prefixes from
+adjacent keys, independently of the widths of intervening values; their width
+does not induce extra literal-key restarts.
 
 If each sort has a different fixed value width, there is no single global
 $v$: the initial rule treats that stream as variable-width. Correct cumulative
@@ -314,47 +326,64 @@ Hash seeds or domains that affect a state fingerprint are part of that context.
 A merge, borrowed index, replay, or checkpoint must retain the exact versions
 under which its keys and contributions were interpreted. An unknown sort cannot
 be guessed to mean bytes. Changing ordering, encoding, hashing, or category
-selection requires an explicit migration with the appropriate re-encoding,
-index reconstruction, and contribution recomputation. Compatibility may be
-established explicitly; merely reusing the same numeric sort ID is insufficient.
+selection requires the appropriate re-encoding, index reconstruction, and
+contribution recomputation. Compatibility may be established explicitly; merely reusing the same numeric sort ID is insufficient.
 
 ## 9. Implementation boundary and checks
 
-`profile_array<P, Role>` and `profile_view<P, Role>` implement both typed byte
-and bit streams. They support fixed/variable values, actual backspace counts,
-partial-prefix windows and native LPFC reconstruction. A sort registry and
-final prefix-free pair encoder remain to be supplied.
+`profile_array<P, Role>` and `profile_view<P, Role>` implement typed byte
+and bit streams with fixed/variable values and actual backspace counts. The
+blob uses ordinary FC in both roles. A sort registry and final prefix-free pair
+encoder remain to be supplied.
 
-Each physical group starts with one count-coded **actual predecessor key
-length**, followed by up to $K$ records. A record stores its backspace count,
+Each physical block starts with one count-coded **actual predecessor key
+length**, followed by up to W records. A record stores its backspace count,
 suffix length, a value length when values are variable, then suffix and value
-payloads. The group checkpoint lets a sampled lookup recover actual predecessor
-lengths while scanning at most $K-1$ headers; there is no full-key-length or
-record-offset array with one machine word per key. Group checkpoints are part
-of the residual Elias–Fano extent.
+payloads. Reaching a selected lane parses at most W − 1 controls from its
+checkpoint. This recovers positions and lengths without reconstructing or
+comparing those preceding keys. There is no full-key-length or record-offset
+array with one machine word per key. Block checkpoints are part of the residual
+Elias–Fano extent, and `terminal_key_units` stores the final key length separately.
 
 In the byte profile all counts and payloads use byte positions. In the bit
 profile the policy selects the backspace code; other counts use order-zero
 exponential-Golomb. Payloads concatenate without inter-record padding, and
-physical offsets count bits. Bits are most significant
-first; unused low bits of the final storage byte must be zero. Metadata records
-and checks the profile, policy, role and group size. It is a logical descriptor,
-not a finalized portable serialization of the header and its sections.
+physical offsets count bits. Bits are most significant first; unused low bits
+of the final storage byte must be zero. Metadata records and checks the profile,
+policy, role, K and W. It is a logical descriptor, not a finalized portable
+serialization of all codec sections.
 
-The native builder accepts an LPFC restart factor and emits a literal key when
-the previous literal becomes too distant in encoded profile units. A partial
-query reconstructs only its requested prefix; parsing its counts still costs
-the selected codeword lengths. The separately supplied borrowed
-prefix ceilings can shorten a copy prefix and re-emit erased units, without
-changing native bytes. The decoded retained prefix is an absolute copy length;
-it is not presumed to equal LCP with an incoming surrogate frontier. Values
-returned by independent reconstruction are copied in full; view callbacks borrow
-their encoded value span and an ephemeral key-prefix scratch buffer.
+`profile_query_context<P>` owns the query and carries exact bit agreement,
+full key length and comparison direction. `with_key` establishes the comparison
+of a supplied key against that query. At a projected stream's first candidate,
+the known virtual boundary supplies the retained-prefix comparison; the actual
+physical predecessor length still determines its backspace arithmetic. Later
+records transfer the comparison in physical order. No inherited prefix needs
+to be materialized merely to compare the next literal suffix.
 
-`encoded_at` parses from a bounded group checkpoint. Full traversal additionally
-checks predecessor continuity, sampled group offsets and the terminal extent. The borrowed views check
-metadata, section bounds, padding and parsed counts; they do not authenticate
-objects or prove an arbitrary caller-supplied anchor shares the required prefix.
+The index's `cut_lcps()` stores one exact bit LCP per virtual group. For preceding
+borrowed key C and boundary B with C ≤ B ≤ Q, its minimum with the incoming
+LCP of B and Q gives the exact LCP of C and Q. Full lengths then resolve
+endpoints. C is absent iff borrowed rank is zero; borrowed rank equal to a
+nonempty stream's length still names the final preceding key. The
+[comparison design](comparison-fc.md) derives these cases.
+
+`profile_blob<P>::build` and `reindex` have one ordinary-FC contract; reindexing
+shares the native allocation while replacing borrowed data, cut LCPs, ranks and
+false-borrow flags. Sequential cursors retain complete key contexts for
+construction and sample emission. Arbitrary `reconstruct_at` calls may walk a
+prefix chain under ordinary FC. The standalone array's optional locality-preserving
+restart facility serves callers needing that separate operation; the cascade
+does not depend on it. Reconstruction copies returned values, while view
+callbacks borrow value spans and ephemeral key scratch.
+
+`encoded_at` parses from a bounded physical checkpoint. Full traversal also
+checks predecessor continuity, sampled block offsets and terminal extent. The
+views check metadata, section bounds, padding and parsed counts; they do not
+authenticate objects or certify that arbitrary caller-supplied samples came from
+the named target. The high-level pipeline retains the exact pair that produced
+its samples. Query preparation checks navigation shape once; content provenance
+remains an explicit trusted-construction or validation requirement.
 
 `multiverse<P>` supplies the current read side of the backing store: it holds
 an existing object directory and opens checked `file<P>` envelopes under
@@ -379,7 +408,8 @@ Codec acceptance must cover:
 - Prefix-related unit sequences, exact termination, and prefix-free sort codes.
 - Bit keys of every tail length, including sort/key joins inside a byte.
 - Agreement between semantic comparison and canonical encoded-bit order.
-- Groups and conservative prefix contexts crossing sort boundaries.
+- Virtual cuts and independent physical blocks crossing sort boundaries.
+- Exact bit agreement inside bytes, control-only pre-lane scans, and terminal frontiers.
 - Meaningful-length and padding rules in comparison, hashing, and checkpoints.
 - Compatible and incompatible registry versions during merge and replay.
 - Heterogeneous hashing strategies with a common additive contribution algebra.

@@ -10,13 +10,13 @@ Public headers are under `include/everett/`; the
 [implementation ledger](implementation.md) distinguishes executable components
 from the remaining storage and scheduling work.
 
-For string keys, locality-preserving front coding (LPFC) gives us an independently
-searchable native representation. A fractional index knows more: it knows the
-group boundaries at which a search enters. We can exploit that context in a
-separately rebuildable index codec. Ordinary front coding (FC), native LPFC and
-conservative borrowed-prefix policies consequently have different contracts.
-The local decoding arguments below are a start; their combined space and I/O
-costs still need measurement and justification.
+I use ordinary front coding in both the native and borrowed streams. A search
+carries a comparison against its query rather than reconstructing inherited key
+prefixes. An exact LCP at each virtual sampling cut repairs the preceding
+borrowed context. That small piece of index-local metadata lets native bytes
+remain independent of the fractional index built over them. The
+[comparison argument](comparison-fc.md) gives the detailed transfer laws;
+entry, string, and I/O costs remain separate throughout this design.
 
 ## 1. Purpose and abstraction
 
@@ -76,7 +76,8 @@ files, index versions, and completed compactions.
 | $N$ | Number of live bindings in the selected world |
 | $H$ | Historical updates; distinct from live size |
 | $L$ | Number of active levels/catalogs |
-| $K$ | Policy sampling/group size $2^r-1$, default 15; 3, 7, 15 and 31 tested |
+| $K$ | Virtual sampling interval $2^r-1$, default 15; 3, 7, 15 and 31 supported |
+| $W$ | Physical codec block width, independent of $K$; defaults to $K$ |
 | $A$ | Sorted native key/value stream of one blob |
 | $S$ | Sorted borrowed-key stream of its fractional index |
 | $C$ | Virtual sorted interleaving of $A$ and $S$ |
@@ -94,16 +95,17 @@ need not occupy one file:
 1. A front-coded array of native $(K,V)$ records.
 2. A separately front-coded array of borrowed keys and routing information.
 3. One `rank_groups<K>` describing their virtual interleaving.
-4. Two `select_groups<K>` indexes, one for each physical stream.
+4. Two `select_groups<W>` indexes, one for each physical stream.
 5. One false-borrow flag per borrowed record.
-6. Exact immutable target identities and format information.
+6. One exact bit-LCP count per virtual cut, describing its preceding borrowed key.
+7. Exact immutable target identities, physical length checkpoints, and format information.
 
 ```mermaid
 flowchart TD
   M["SQLite representation / pins"] --> B["Blob version"]
-  B --> A[".kv: native LPFC K,V + select groups"]
-  B --> S[".index: borrowed FC keys + select groups"]
-  B --> R[".index: rank groups + false-borrow flags"]
+  B --> A[".kv: native FC K,V + physical offsets"]
+  B --> S[".index: borrowed FC keys + physical offsets"]
+  B --> R[".index: rank groups + cut LCPs + false-borrow flags"]
   S --> T["Exact downstream catalog version"]
 ```
 
@@ -113,7 +115,7 @@ Pointers in persisted objects are relative positions or object references, not
 process addresses. File-per-object versus managed extents remains an allocation
 decision below this interface.
 
-The current byte-key instance has a specified unsigned-byte lexicographic order,
+The byte-key instance has a specified unsigned-byte lexicographic order,
 including empty keys and embedded zero bytes. Encoded records carry lengths;
 zero bytes need not be reserved as terminators. General sort-qualified keys must
 also satisfy the canonical ordering and framing contract in [keys.md](keys.md);
@@ -140,7 +142,9 @@ chain-size and scheduler assumptions. Offset units are bytes or bits according
 to the shared policy.
 
 The policy API spells these structures `rank_groups<P::group_size>` and
-`select_groups<P::group_size>`. `multiverse<P>::blob` uses that policy throughout.
+`select_groups<P::codec_block_size>`. `multiverse<P>::blob` uses that policy
+throughout. Rank boundaries count virtual occurrences; offset checkpoints count
+physical records. They need not have the same interval.
 The helpers in `rank15.h` and `select15.h` have a fixed interval of fifteen; they
 do not fix the store's policy to fifteen. The `rank_groups<15>` view shares rank15's
 SIMD implementation. Groups of three use packed scalar sums; seven and thirty-one
@@ -198,34 +202,39 @@ directory must specify its own aligned units; a class cannot answer an arbitrary
 cut through its fifteen bits. The first implementation makes this distinction
 explicit rather than storing unneeded origin patterns.
 
-### select15 and fixed-width values
+### Physical offsets and fixed-width values
 
-For each stream, mark physical records $0,15,30,\ldots$ and the end sentinel.
-We store their normalized byte positions using Elias–Fano.
-For record ordinal $i_g=\min(15g,n)$:
+For each stream, mark physical records $0,W,2W,\ldots$ and the end sentinel.
+We store their normalized positions in policy units using Elias–Fano.
+For record ordinal $i_g=\min(Wg,n)$:
 
 $$
 F_g=\mathrm{physicalOffset}(i_g)-i_gv,\qquad
-\mathrm{select15}(g)=\mathrm{base}+F_g+i_gv.
+\mathrm{select}_W(g)=\mathrm{base}+F_g+i_gv.
 $$
 
 The Elias–Fano universe $U$ measures the variable encoding, excluding fixed
 value slots and any other fixed stride removed this way. The width $v$ must
 be common to the entire indexed stream; widths fixed only within individual
-sorts do not establish one global stride. The terminal sentinel
-uses $n$, not fifteen times a rounded-up group count. Residual offsets may be
-equal; the encoding accepts nondecreasing sequences.
+sorts do not establish one global stride. The terminal sentinel uses $n$, not
+$W$ times a rounded-up block count. Residual offsets may be equal; the encoding
+accepts nondecreasing sequences. Borrowed records have value width zero.
 
 With $m$ marked offsets, the representation uses approximately
 $m\log_2\max(1,U/m)+O(m)$ bits plus its access support.
 [Vigna's description](https://vigna.di.unimi.it/ftp/papers/QuasiSuccinctIndices.pdf)
 explains the high/low-bit encoding and its use for prefix sums.
-The address operation `select15` is separate from the rank-only origin backend.
+This address operation is separate from the rank-only origin backend.
 
-A virtual window projects to arbitrary physical ordinals. We find the preceding
-physical group with $\lfloor i/15\rfloor$, then inspect at most fourteen record
-headers, skipping payloads by length. Each projected slice touches at most two
-physical groups. These marks are navigation points, not full-string restarts.
+A virtual window projects to arbitrary physical ordinals. For first ordinal
+$i$, we find block $\lfloor i/W\rfloor$ and parse at most $W-1$ preceding
+record controls, skipping payloads by length. We then process the projected
+candidates in order. The two candidate counts sum to at most $K$. A nonempty
+physical slice of length $m$ can cross at most
+$\lceil(W-1+m)/W\rceil$ blocks; the familiar two-block bound requires
+$W\ge K$. We do not reconstruct or compare the earlier physical records from
+the incoming virtual boundary. These checkpoints locate and frame records;
+they are not full-key restarts.
 
 ### False borrows and equality
 
@@ -243,10 +252,16 @@ query contract. A flag establishes existence; recovering the value must use
 bounded ordinal/window arithmetic rather than silently starting a full search.
 Tests must place the native/borrowed equality pair on both sides of a group cut.
 
-## 4. Front coding and decoding context
+## 4. Front coding and comparison context
 
-Each physical group begins with its predecessor's key length. Within a group,
-records have the following fields:
+I encode both streams with ordinary FC: each record retains its longest common
+prefix with the previous physical key and emits the remaining suffix. Native
+keys and borrowed keys have separate predecessor chains. Reindexing changes the
+borrowed stream and its navigation metadata while sharing the exact native
+allocation.
+
+Each physical block begins with its predecessor's actual full key length.
+Within a block, records have the following fields:
 
 ```text
 backspace_count : encoded unsigned count
@@ -256,167 +271,139 @@ suffix          : suffix_length profile units
 value           : value_length profile units
 ```
 
-The **backspace count** tells us how many units to remove from the physical
-predecessor. The group checkpoint supports decoding from a surrogate anchor
-without a full-length field on every record. Byte counts use unsigned varints.
-Bit backspaces use the policy's Golomb or exponential-Golomb code; other bit
-counts use order-zero exponential-Golomb.
-Golomb's unary quotient can be long when a short key follows a long predecessor,
-including at a literal LPFC restart. Its decoding cost must be charged to the
-encoded count, rather than bounded by the short key's length alone.
-Variable-width streams also encode value lengths; a proven common width removes
-that field and its fixed payload stride from sampled residual offsets.
-`profile_blob<P>` applies native LPFC (default factor 18) and the separately
-modified borrowed FC. These are encoded stream primitives; portable sections
-inside `.kv`/`.index` envelopes are not yet implemented.
+If the actual predecessor has length $a$, a backspace of $b$ retains $a-b$
+units. Adding the suffix length gives the next full length. These arithmetic
+operations do not require the predecessor's key contents. Byte counts use
+unsigned varints. Bit backspaces use the policy's Golomb or exponential-Golomb
+code; other bit counts use order-zero exponential-Golomb. A large Golomb unary
+quotient can dominate the work even when the next key is short, so count
+parsing is charged to the encoded controls.
 
-Lengths count bytes or bits according to the policy.
-For ordinary front coding, the retained length is the LCP with the previous
-physical key. For a redundant representation it may be shorter; the erased
-letters are explicitly re-emitted. Such a retained length must never be
-mislabelled as an exact LCP.
+The block checkpoint stores a length, not a key. For a physical ordinal at the
+start of a block, it directly gives that record's predecessor length. For an
+ordinal inside the block, we parse controls from its start. At the stream's end,
+`terminal_key_units` gives the final key length even when the end sentinel is
+block-aligned. No preceding-block scan is needed just to recover that length.
+Fixed-width values remove their length fields and direct payload stride from
+the residual offsets; they do not influence which key prefix ordinary FC retains.
 
-To compare with $q$, we reconstruct at most
-$\min(|q|,|s|)$ units of a candidate $s$. If those prefixes agree, stored
-lengths resolve ordering/equality. We therefore retain three pieces of partial-key
-state: the known prefix, the full length, and the comparison context.
+### A comparison belongs to one query
 
-### Anchored decoding and its limits
+`profile_query_context<P>` owns a shared immutable query and records:
 
-A cascaded window starts with a key already known from above. This supplies
-forward-decoding context. If a physical predecessor is $x$, the incoming
-anchor is $a$, and the next physical key is $y$, then
-$x\le a\le y$ implies that $a$ contains the common prefix of $x$ and $y$.
-The argument works independently for both projected streams.
+- The exact common-prefix length **in bits**, including for a byte policy.
+- The compared key's actual full length in policy units.
+- Its ordering relative to the query.
 
-For this local forward window, a lookup need not walk backward to an older
-full-string restart. It visits at most fifteen candidate entries, materializing
-only query-relevant prefixes. I accept an extra factor of the number of levels
-in string work: the target is $O(|q|L)$ key-unit work, with count parsing charged
-separately. An arbitrary Golomb policy can make that additional cost dominant.
+Its constructor starts with the comparison of the empty key. `with_key` can
+establish a context from a known key; normal cascading transfers the context
+without copying that key's inherited prefix. `query()`, `common_bits()`,
+`full_units()` and `order()` expose the corresponding quantities. A comparison
+from one query cannot silently become an anchor for another.
 
-That local argument is not by itself the complete context-transfer protocol.
-If no borrowed key in the window precedes the query, the outgoing borrowed
-predecessor may be just before the window. Its ordinal is known, but its prefix
-need not equal the incoming anchor. A cascade must retain or repair that
-borrowed-frontier context, not silently decode from the beginning of the file.
+Byte FC retains whole bytes, but two unequal bytes can share several leading
+bits. Keeping an exact bit LCP avoids throwing that information away. Endpoints
+remain separate: a full-prefix match means equality only when both full lengths
+also agree. Empty keys and proper prefixes follow the same rule.
 
-We can bootstrap with a small root, or use LPFC in the first catalog. The working
+### Entering a projected stream
+
+Let $B$ be the known virtual boundary key, $A$ the physical predecessor in one
+stream, and $D$ its first candidate at or after the cut. Sorted order gives
+$A\le B\le D$. Every key in this interval shares the prefix retained by
+$D$ from $A$. We can therefore compare $D$ using the comparison of $B$ and the
+literal suffix, without reconstructing $A$ or the inherited prefix of $D$.
+
+The stored backspace still refers to $A$'s length. It does not claim that its
+retained count is the exact LCP of $B$ and $D$. For example, with actual
+predecessor `aa`, boundary `ab`, candidate `abc`, and query `abd`, the stored
+retained length is one byte while the boundary/query LCP is two bytes. The
+candidate is below the query. Treating the retained count as an exact LCP with
+the surrogate boundary would lose that result.
+
+Physical controls before the selected lane only establish locations and full
+lengths. We start comparison transfer at the selected lane; applying the
+boundary comparison to earlier physical records would violate the interval
+premise. After that first record, each stream advances from its actual previous
+comparison. A missing predecessor uses the literal first record, and an empty
+projected slice requires no forward key comparison.
+
+### Repairing the preceding borrowed frontier
+
+At virtual cut $q=Kg$, let $i=R(g)$ count borrowed occurrences before the cut.
+If $i>0$, the preceding borrowed key is $C=S_{i-1}$. It may be the outgoing
+predecessor even when no borrowed record inside the window precedes the query.
+Forward comparison transfer cannot recover it from $B$, since it lies on the
+other side of that boundary.
+
+The index stores one exact scalar for this cut:
+
+$$
+\ell_g=\mathrm{lcp}_{\mathrm{bits}}(C,B).
+$$
+
+For a routed boundary, $C\le B\le Q$, so ordered-prefix convexity gives
+
+$$
+\mathrm{lcp}_{\mathrm{bits}}(C,Q)
+=\min\bigl(\ell_g,\mathrm{lcp}_{\mathrm{bits}}(B,Q)\bigr).
+$$
+
+Together with $C$'s full length, this supplies its exact query comparison.
+The borrowed predecessor is absent precisely when $i=0$, at any cut. We store
+zero in that unused cut-LCP slot. Conversely, $i=|S|>0$ is a valid terminal
+frontier, with its length supplied by the stream's terminal metadata. A native
+false-borrow match before the projected range still needs a separate value
+probe at the rank-derived native ordinal; it does not need key reconstruction.
+
+`cut_lcps()` exposes these counts as unsigned 64-bit integers, one per virtual
+group. They belong to the exact index version,
+including its target pair and native-before-borrowed tie order. One borrowed key
+can precede several cuts with different LCPs. We retain each cut's exact count,
+not a minimum shared between those cuts. The builder has both keys in its
+merged-order walk and emits the scalar alongside the rank class. The keys
+remain in two physical streams; there is no third interleaved key copy.
+
+### Construction, queries, and their separate costs
+
+`profile_blob<P>::build` and `reindex` use ordinary FC for both streams. The
+streaming index builder records cut LCPs while merging native keys with incoming
+samples, and emits every Kth augmented occurrence for the next stage. Reindexing
+preserves native bytes and their physical offset index. Retained snapshots keep
+their previous index and exact target dependencies.
+
+`search_window(group, context)` returns the native match, when present, and a
+borrowed predecessor with its query-bound `comparison`. It carries the target
+ordinal and false-borrow flag alongside that comparison. The complete
+`query_cursor<P>` follows exact target pins and yields every matching native
+segment; it does not infer chronological arrow order from catalog order.
+
 `query_root<P>` adds empty-native routing catalogs until its head fits in one
-policy group. That first window starts from the literal first record of each
-physical stream; later windows carry the sampled context forward. Preparation
-retains the existing chain and is paid once when building the root. The
-[complete-query contract](query.md) gives its work bounds and ownership rules.
+virtual group. Its initial comparison is against the empty key. Preparation is
+paid once for that root; each query can then use the same local comparison
+protocol throughout the chain. See [complete queries](query.md).
 
-The original LPFC construction is in
-[Bender, Farach-Colton, and Kuszmaul, §3.2](https://people.csail.mit.edu/bradley/papers/BenderFaKu06.pdf#page=6).
-It provides independent local reconstruction through selective full-key copies.
-The paper's printed $c=2+\varepsilon/2$ disagrees with its charging equation
-$2/(c-2)=\varepsilon$; the latter gives $c=2+2/\varepsilon$.
+For each physical stream, navigation parses at most $W-1$ controls before its
+first selected lane, then at most $K$ forward records. The two forward ranges
+contain at most $K$ records in total. Cut-LCP repair and the extra false-borrow
+value probe have separate bounded addressing work. With $W=O(K)$ this retains
+an $O(K)$ entry/control bound per catalog. Encoded count lengths, compared
+literal bits, requested values, allocation, and arrow evaluation are additional
+charges; an entry budget is not a byte or I/O bound.
 
-### The first-record LCP distinction
+Sequential construction and sampling retain actual key contexts and decode each
+stream in order. Arbitrary full-key reconstruction is a different operation:
+ordinary FC may need to traverse an earlier prefix chain. The low-level
+`profile_array` can provide opt-in locality-preserving restarts for that use,
+but those restarts are not part of the blob's encoding or cascade proof.
 
-Consider:
-
-```text
-actual native predecessor  aa
-incoming boundary key      ab
-first native candidate     abc
-query                      abd
-```
-
-The stored prefix length is one; the query/anchor LCP is two. The candidate is
-still below the query. An optimization that treats the incoming anchor as the
-actual predecessor could incorrectly conclude the opposite.
-
-The correct baseline compares the first candidate using the supplied prefix
-and its suffix. Once advancing through consecutive records of that physical
-stream, exact-predecessor optimizations become available. This is a correctness
-rule, not a reason to restore full-key reconstruction.
-
-### Current candidate: native LPFC, conservative index front coding
-
-The data file may know its initial borrowed-key layout when it is created.
-However, rebuilding an index farther along the chain can change that layout.
-The native encoding must remain usable when these dependent boundaries move.
-
-This gives us a useful division of labor:
-
-- Full LPFC supplies native restart decisions independent of any particular
-  fractional-index version.
-- The conservative fifteen-entry common-prefix rule supplies fractional-index
-  context. We can rewrite that index when its exact target/index dependencies change.
-- Ordinary anchored decoding remains the fast path when its context is already
-  available, and supplies a simple correctness baseline.
-
-LPFC is the safe fallback. The index rule exploits the known windows to repeat
-only the prefix material required for context transfer. The construction below
-provides a concrete independently rebuildable candidate.
-
-### Conservative common-prefix alignment
-
-A conservative alignment rule backspaces to the common prefix of the
-two string sets at each shared fifteen-entry boundary, re-emitting removed
-letters as needed. This aligns the two decoding contexts. These are boundaries
-in the virtual interleaving, not unrelated physical group boundaries.
-
-The two keys are the **native and borrowed frontier keys at the cut**.
-They are not the first and last keys of the upcoming window. For a boundary
-prefix ceiling $c$ and an ordinary retained length $p$, a
-redundant encoding may retain $\min(p,c)$ and emit the remaining letters.
-The retained length describes an edit; comparison shortcuts still require a
-proved exact LCP or a separately established comparison context.
-
-Both frontier contexts matter: the preceding borrowed key may be needed for the
-next descent even when the current projected borrowed slice is empty.
-Copying a long prefix every fifteen native entries could be expensive if an
-unchanged, distant borrowed frontier has an unrelated key. We need to count the
-actual replay bytes and skip alignment work whose context is not needed.
-
-Native files must remain independently reusable when an index changes.
-Full native LPFC is the conservative choice above. A more aggressive alternative
-is an index-local bridge: when $p>c$, we could keep the replayed
-$s[c:p]$ bytes in the new index, followed logically by the unchanged native
-suffix. We would charge those bridge bytes to that index version. I am still
-evaluating the exact boundary-edit representation and redundancy bound; it must
-preserve native-file independence.
-
-### A concrete index-only construction
-
-Let $a_j=\mathrm{lcp}(S_{j-1},S_j)$, with $a_0=0$.
-We can obtain a simple conservative encoding by retaining
-$\min(a_j,a_{j+1})$ bytes of borrowed record $S_j$; define
-$a_m=0$ for the last record's right boundary. It can decode that record from
-either a lower anchor between its predecessor and itself, or an upper anchor
-between itself and its successor. The last borrowed record is literal.
-
-For the troublesome preceding borrowed key, the incoming window anchor is on
-that upper side. One additional record probe reconstructs its query-relevant
-prefix without a backward prefix-chain walk. This repairs the outgoing context
-while leaving the native stream unchanged. The first post-cut borrowed key still
-decodes from the same anchor in the usual forward direction.
-
-The sharper version applies this rule only at actual virtual fifteen-entry
-cuts. A cut at $15g$ whose borrowed rank is $j+1$ may need $S_j$ as its
-preceding borrowed key. Let $b_j$ be the rightmost such cut's boundary key.
-We retain $\min(a_j,\mathrm{lcp}(S_j,b_j))$; if no such cut exists, we retain
-the ordinary $a_j$. Prefix convexity makes the rightmost cut the tightest
-constraint. The borrowed builder knows these cuts when it merges native and
-borrowed keys, and can recompute them when the index changes.
-
-We can derive a simple suffix-byte bound for this candidate. Ordinary borrowed FC
-emits $F=\sum_j(|S_j|-a_j)$ bytes. The two-sided rule adds
-$D=\sum_j\max(0,a_j-a_{j+1})$. With zero endpoints, total falls equal total
-rises, and every rise $a_{j+1}-a_j$ is at most $|S_j|-a_j$. Thus
-$D\le F$, so at most $2F$ borrowed suffix bytes are emitted. The actual-cut
-rule is no more redundant: each applicable cut lies before the next borrowed
-key. Header sizes, rank/offset support, and any extra caller-imposed prefix
-ceilings are charged separately. This is our derivation for this design, not a
-theorem attributed to the COSB-tree paper.
-
-The implementation ledger records which policies are tested. This establishes
-local context transfer and a borrowed-suffix bound; it does not establish a
-complete persistent-store space or I/O theorem.
+The LPFC construction in
+[Bender, Farach-Colton, and Kuszmaul, §3.2](https://people.csail.mit.edu/bradley/papers/BenderFaKu06.pdf#page=6)
+is useful background for independent reconstruction through selective full-key
+copies. Our query uses ordinary FC and comparison transfer instead. The
+[comparison design](comparison-fc.md) and [Lean proof guide](../proof/README.md)
+distinguish the checked ordered-string laws from the remaining encoded-codec,
+scheduler and filesystem proof obligations.
 
 ## 5. Redundant levels and merge work
 
@@ -433,8 +420,8 @@ performed during downtime as well as on arrivals; logical state does not depend
 on the amount of compaction already completed.
 
 Network admission retains received content-addressed `.kv` bytes unchanged,
-including their LPFC stream and sampled offsets. We build receiver-specific
-fractional indexes backward over the incoming prefix and retain the old suffix.
+including their ordinary FC stream and physical sampled offsets. We build
+receiver-specific fractional indexes backward over the incoming prefix and retain the old suffix.
 Received `.index` objects are reusable only with matching exact source/target
 versions. Native re-encoding waits for a real merge. The
 [admission analysis](network-admission.md) gives the arbitrary-file-size entry
@@ -447,7 +434,7 @@ There are several distinct points at which work becomes reusable:
 1. A merge recipe identifies exact inputs and resolution semantics.
 2. Its new native stream and sampled offsets finish.
 3. A dependent pins that result.
-4. The dependent completes its own borrowed stream, group ranks and sampled offsets.
+4. The dependent completes its own borrowed stream, cut LCPs, group ranks and sampled offsets.
 5. It publishes its replacement index and SQLite representation, then releases its old references.
 
 String work needs explicit units: records visited, bytes compared, bytes emitted,
@@ -721,13 +708,14 @@ same-key chain must remain composable and chronologically ordered.
 ## 10. Bounds and acceptance
 
 I target an active level count of $O(\log N)$, contingent on completed
-live-size accounting. A cascade examines $O(K)$ entries per level with fixed
-$K$, default 15, plus a constant number of frontier/header probes. Straightforward
-partial decoding after bootstrap costs $O(K(|q|+1)L)$ work; I accept the extra
-logarithm in string work. A larger LPFC root also needs its initial search
-and independent reconstruction cost; a single-entry root avoids that additional
-bootstrap issue. LPFC's byte-local bound depends on the stored key length and
-does not automatically shrink to the query-prefix length.
+live-size accounting. After root preparation, a cascade examines $O(K+W)$
+entries/controls per catalog, including its bounded frontier/value probes. For
+fixed $K$ and $W$, this is $O(L)$ navigation work. Literal comparison work is
+bounded separately by the query length and records visited; count parsing must
+also include the selected codeword lengths. I accept repeating query-prefix
+work across levels, without requiring full inherited keys to be reconstructed.
+The prepared root bounds bootstrap work; it does not prove that an arbitrarily
+deep received chain satisfies the level invariant.
 
 With arbitrary update arrows, these are navigation bounds. Arrow access,
 composition and observation add their own costs. Constant-time construction of
@@ -735,8 +723,8 @@ a composite expression does not establish constant-time evaluation or bounded
 retained history. A logarithmic total bound requires explicit policy contracts.
 
 Space accounting separately reports native key encoding, fixed values, borrowed
-keys, false-borrow bits, rank metadata, both offset indexes, optional boundary
-bridges, unfinished outputs, and objects retained only by historical pins.
+keys, false-borrow bits, rank metadata, both offset indexes, exact cut-LCP
+counts, physical length checkpoints, unfinished outputs, and objects retained only by historical pins.
 The ordinary front-compression size of the global logical union is not the sum
 of independently encoded files; prefix duplication across runs is real.
 We cannot transfer the COSB-tree's complete optimal I/O theorem to this composition.
@@ -747,8 +735,9 @@ I require the implementation checks to include:
 - EF repeated offsets, large gaps, normalized fixed strides, and partial tails.
 - Empty, binary, prefix-related, and long-prefix strings.
 - False borrows and equality exactly across virtual and physical group cuts.
-- First-record decoding with an anchor different from the true predecessor.
-- Bounded prefix materialization and bounded navigation for each window.
+- First-record comparison with a boundary different from the true predecessor.
+- Exact cut LCPs, absent/terminal borrowed frontiers, and query-bound contexts.
+- Independent K/W boundaries, control-only pre-lane parsing, and bounded loads.
 - Every permutation of small disjoint partition batches gives equal resolved
   records and composite keys.
 - Delete/overwrite deltas match full recomputation; absent deletes earn no credit.
@@ -816,5 +805,6 @@ I collect filesystem references and failure-model evidence in the
 
 Ferragina and Grossi's
 [The String B-Tree](https://www.inf.fu-berlin.de/lehre/SS01/biodaten-seminar/papers/String-B-tree.pdf)
-provides additional string-index background. The LPFC construction used here is
-from Bender, Farach-Colton, and Kuszmaul's 2006 COSB-tree paper.
+provides additional string-index background. Bender, Farach-Colton, and
+Kuszmaul's 2006 COSB-tree paper supplies the LPFC reference; the blob and cascade
+described here use ordinary FC with exact comparison context.

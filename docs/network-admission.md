@@ -18,19 +18,22 @@ pinned until a replacement index is complete.
 
 A standalone base has no downstream catalog to sample. It still needs native
 navigation structures and a terminal index representation. In the
-intended format, a complete `.kv` already includes its native LPFC stream,
-decoding checkpoints and Elias–Fano sampled-offset directory. We can receive
+intended format, a complete `.kv` includes its ordinary front-coded native
+stream, W-spaced predecessor-length checkpoints, final key length, and
+Elias–Fano sampled-offset directory. We can receive
 and reuse those structures together. Receiving only the record stream instead
 requires scanning its framing, collecting sampled offsets and constructing EF;
 validation does not supply missing navigation metadata.
 
 At the terminal catalog, the borrowed stream and false-borrow flags are empty,
-and the borrowed offset directory has only its empty-stream endpoint. Origin
+and the borrowed offset directory has only its empty-stream endpoint. Every
+virtual cut has zero borrowed rank and therefore an unused zero cut-LCP scalar. Origin
 bits are zero for native entries and one for borrowed entries, so every grouped
 rank is zero. An implicit all-native representation could answer these ranks
 without storing a zero directory. The current `rank_groups<K>` representation
-requires packed zero classes and checkpoints, using $O(n/K)$ directory work and
-space for $n$ native entries at fixed $K$. The general `profile_blob<P>` index
+requires packed zero classes and checkpoints; exact cut LCPs also occupy one
+slot per virtual group. These take $O(n/K)$ work and space for $n$ native
+entries, separately from W-spaced physical checkpoints. The general `profile_blob<P>` index
 builder also walks those $n$ entries; it has no terminal fast path yet.
 
 Direct adoption after validation needs a complete terminal representation,
@@ -97,15 +100,24 @@ worst-case work allowance. We need to distinguish prepayment from completion tim
 
 ## 3. Query bounds and scheduling obligations
 
-With valid outgoing contexts, search can start in any first catalog using
-$O(\log(A_0+1))$ entry comparisons and visit at most $K$ candidates per
-remaining catalog. For chain depth $D$, the abstract entry bound is
-$O(\log(A_0+1)+KD)$; key reconstruction, values and arrow evaluation are
-separate work. A large first fractional index does not add another logarithm.
-Monotone file sizes are not needed for this local correctness argument.
+`query_root` prepares a complete query path by adding empty-native routing
+catalogs until the first augmented catalog has at most K entries. For original
+head size $A_0>K$, this adds $O(\log_K A_0)$ catalogs. The preparation scans
+the original head to extract samples and then streams their successively smaller
+outputs; it is paid once when preparing that immutable root.
+
+Each subsequent query transfers exact, query-bound comparison state through the
+prepared chain. Per catalog it processes at most K forward occurrences, at most
+W − 1 earlier controls per physical stream, and bounded borrowed-frontier/native-
+value probes. For original depth D, the entry/control bound is
+$O((K+W)(D+\log_K(A_0+1)))$. With fixed K and W, this is
+$O(D+\log(A_0+1))$. Encoded control lengths, literal comparisons, values and
+arrow evaluation are separate work. No arbitrary full-key reconstruction or
+independent binary search over an FC stream is assumed by this API.
+Monotone file sizes are not needed for its local correctness argument.
 
 A complete chain with $R$ native entries has $A_0\le R$. To conclude
-$O(\log(R+1))$ search for fixed $K$, its published depth must also be
+$O(\log(R+1))$ navigation for fixed $K$ and $W$, its published depth must also be
 $O(\log(R+1))$. Live bindings $N$ replace $R$ only after the
 [history-to-live-size rebuilding invariant](rebuild.md) is established.
 
@@ -141,7 +153,8 @@ copy of the $T$-unit key. The new indexes emit $\Theta(qT)$ key units,
 although $S=q$, $c=1$, and the borrowed-entry bound is just $B=q$.
 The incoming short keys take only $O(q\log(q+1))$ units. Ordinary prefix
 compression within each independent stream cannot remove its first literal.
-Neither native LPFC nor fixed-value stride subtraction resolves this example.
+Exact cut-LCP metadata and fixed-value stride subtraction do not remove these
+independent first literals.
 
 We therefore have no bound on actual index bytes or string reconstruction work
 from the entry recurrence alone. Emitted key/framing units and their reads need
@@ -153,7 +166,8 @@ its own codec, query and pin-lifetime proof. **The choice remains open.**
 
 Pending received files and unfinished index/merge work may exist in an ingestion
 state. A published world needs a completed exact-target dependency chain with
-the promised depth, or a separately justified bounded fallback query path.
+the promised depth and its prepared query root, or a separately justified bounded
+fallback query path.
 Unbounded independent searches over pending files are not that fallback.
 
 The completion rule must preserve the previous readable root while work is

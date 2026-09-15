@@ -11,8 +11,8 @@ and the [failure and resumption protocol](durability.md).
 
 | Extension | Intended encoded contents | Exact dependencies recorded in the catalog |
 | --- | --- | --- |
-| `.kv` | Immutable native LPFC keys, values and native sampled offsets | Any objects required by the value/arrow representation |
-| `.index` | Modified front-coded borrowed keys, borrowed sampled offsets, origin ranks and false-borrow flags | Its native source and exact downstream blob/index versions |
+| `.kv` | Immutable ordinary-FC native keys, values, W-spaced length checkpoints, final key length and native sampled offsets | Any objects required by the value/arrow representation |
+| `.index` | Ordinary-FC borrowed keys, physical length/offset metadata, K-spaced origin ranks, exact bit-LCP counts and false-borrow flags | Its native source and exact downstream blob/index versions |
 
 Separating a fractional index from its native file lets several index versions
 share the same native bytes. We select compatible objects, their
@@ -64,7 +64,7 @@ immutable-object interface.
 
 ## Object envelope
 
-The initial portable envelope has a 96-byte explicitly little-endian header.
+The portable envelope has a 96-byte explicitly little-endian header.
 We encode its fields individually, so the representation does not depend on a
 C++ struct's memory layout. The header binds kind, format version, length, policy and
 integrity metadata. Kind-specific magic is:
@@ -76,7 +76,7 @@ integrity metadata. Kind-specific magic is:
 
 The extension helps people; the header establishes the object's actual kind.
 By default, `file<P>::open` and `from_slice` check the 96-byte header and exact file extent:
-magic, version, reserved fields, policy unit, group size, fixed-width descriptor,
+magic, version, reserved fields, policy unit, K, W, fixed-width descriptor,
 backspace code and parameter, and header CRC32C. They do not read body pages or
 inspect the final padding byte.
 CRC32C detects accidental corruption; it is not authentication and is separate
@@ -121,16 +121,20 @@ The backspace descriptor uses header byte 18 for the code and bytes 88–95 for
 its little-endian parameter: code 0 selects exponential-Golomb with an order
 from 0 through 63; code 1 selects Golomb with a positive modulus. Byte profiles
 require descriptor `(0, 0)` and use varints. The reader checks the descriptor
-against `P` before interpreting the body. Bytes 19–23 remain reserved zero.
+against `P` before interpreting the body. Byte 19 remains reserved zero. Bytes
+20–23 encode physical block width W as an unsigned little-endian 32-bit count;
+zero is invalid, and the reader checks it against `P::codec_block_size`. Virtual
+sampling interval K is checked separately. Both counts describe records, not
+byte or bit lengths.
 
 The policy's fixed-value descriptor and a stream's actual common width are
 different metadata. A borrowed-key stream has no value payload, even when the
 shared policy says native values have fixed width. For a native stream with
 common width `v`, sampled residual positions remove `ordinal * v`; add the same
 stride back when locating the record. A width constant only within each sort
-does not suffice for a single shared stride. The LPFC restart rule can still
-change key redundancy when record widths change: only the direct fixed-payload
-contribution is removed from the Elias–Fano universe.
+does not suffice for a single shared stride. Ordinary FC selects key prefixes
+from adjacent keys, independently of value widths. The residual universe still
+includes variable key/framing data and physical length checkpoints.
 
 The envelope currently accepts an opaque body. It is not yet a serialized
 `profile_blob<P>`. Codec sections still need checked offsets, versions and exact
@@ -146,8 +150,8 @@ use lengths and relative offsets, not unchecked pointer arithmetic. Empty
 files need no zero-length mapping. Never truncate, overwrite or recycle a file
 while a reader can still reach it.
 
-The intended LPFC/FC and rank/select sections should be navigable directly from
-mappings.
+The intended ordinary-FC, cut-LCP and rank/select sections should be navigable
+directly from mappings.
 Opaque whole-file compression would require another decompressed allocation
 before those structures can be used. LevelDB similarly avoids a second cached
 copy when an uncompressed block already resides in stable mapped memory; its
@@ -242,8 +246,13 @@ in-memory-only payloads under this durability contract.
 
 Small versioned merge/index continuations live in SQLite BLOBs referring to
 durable sealed ranges of `.kv` or `.index` outputs. We store exact P, byte/bit
-address units, group size K, record counts, input identities and sufficient
-prefix contexts. Counts of records are not byte or bit offsets. Commit a
+address units, virtual interval K, physical width W, record counts, input
+identities and sufficient coding/comparison contexts. A query comparison binds
+its exact query, bit agreement, full key length and direction; a construction
+cursor instead needs the actual prior key used to decode or emit its next suffix.
+Index continuations retain their cut ordinal, borrowed rank and cut-LCP state,
+while physical continuations retain predecessor and terminal length accounting.
+Counts of records are not byte or bit offsets. Commit a
 checkpoint only after the ranges it names are durable, and preserve the prior
 checkpoint until the new one has committed. Full key contexts can be large;
 charge their storage and encoding work. See
@@ -278,8 +287,10 @@ Before treating the writer as durable, we need to check:
   each synchronization/rename boundary.
 - Process termination at publication cuts, uncertain catalog commit outcomes,
   operation retry and recovery from both possible outcomes of a failed barrier.
-- Missing dependencies, corrupted bodies, invalid policy metadata, stale merge
-  cursors and noncanonical bit padding.
+- Missing dependencies, corrupted bodies, invalid K/W or unit metadata, stale
+  merge cursors and noncanonical bit padding.
+- Cut LCPs inconsistent with the exact paired streams, incorrect terminal key
+  lengths, and comparison contexts attached to a different query.
 - Reader lifetime and reclamation races, abandoned builders, retained snapshots
   and adoption of somebody else's completed merge; catalog acquisition must
   beat a GC claim or reject cleanly.
