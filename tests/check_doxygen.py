@@ -7,14 +7,20 @@
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 # \endlicense
 
-"""Generate reference documentation and verify Doxygen's XML associations."""
+"""Generate API/Markdown documentation and verify Doxygen associations and math."""
 
 import argparse
+from collections import Counter
+import html as html_module
 from pathlib import Path
 import re
+import shlex
 import subprocess
 import sys
+from urllib.parse import unquote, urlsplit
 import xml.etree.ElementTree as xml
+
+from doxygen_markdown import adapt_markdown
 
 
 def require(condition, message):
@@ -36,7 +42,7 @@ def quote(value):
     return '"' + str(value).replace("\\", "/").replace('"', '\\"') + '"'
 
 
-def run_doxygen(executable, source, inputs, output, aliases, html=False):
+def run_doxygen(executable, source, inputs, output, aliases, html=False, markdown_main=None):
     output.mkdir(parents=True, exist_ok=True)
     warnings = output / "warnings.log"
     warnings.write_text("", encoding="utf-8")
@@ -45,7 +51,9 @@ def run_doxygen(executable, source, inputs, output, aliases, html=False):
         "OUTPUT_DIRECTORY = " + quote(output),
         "INPUT = " + " ".join(quote(path) for path in inputs),
         "STRIP_FROM_PATH = " + quote(source),
-        "FILE_PATTERNS = *.h",
+        "FILE_PATTERNS = *.h *.md",
+        "MARKDOWN_SUPPORT = YES",
+        "MARKDOWN_ID_STYLE = GITHUB",
         "RECURSIVE = YES",
         "EXTRACT_ALL = YES",
         "EXTRACT_PRIVATE = YES",
@@ -53,6 +61,7 @@ def run_doxygen(executable, source, inputs, output, aliases, html=False):
         "XML_PROGRAMLISTING = NO",
         "GENERATE_HTML = " + ("YES" if html else "NO"),
         "GENERATE_LATEX = NO",
+        "USE_MATHJAX = YES",
         "HAVE_DOT = NO",
         "QUIET = YES",
         "WARNINGS = YES",
@@ -62,6 +71,11 @@ def run_doxygen(executable, source, inputs, output, aliases, html=False):
         "WARN_AS_ERROR = NO",
         "WARN_LOGFILE = " + quote(warnings),
     ]
+    if markdown_main is not None:
+        helper = Path(__file__).with_name("doxygen_markdown.py").resolve()
+        command = shlex.join([sys.executable, str(helper)])
+        config += ["USE_MDFILE_AS_MAINPAGE = " + quote(markdown_main),
+                   "FILTER_PATTERNS = " + quote("*.md=" + command)]
     if aliases:
         # Match ekmett/ein doc/Doxyfile.in: preserve the SPDX text as a code
         # block, ending it explicitly before author and brief metadata.
@@ -129,10 +143,10 @@ def metadata_fields(path, split=False):
     return normalize(briefs[0]), normalize(authors[0]), [" ".join(value.split()) for value in notices]
 
 
-def check_file_metadata(items, headers, aliases=True, split=False):
+def check_file_metadata(items, headers, aliases=True, split=False, markdown=()):
     files = {item.findtext("compoundname"): item for item in items
              if item.attrib["kind"] == "file"}
-    require(set(files) == {path.name for path in headers}, "Unexpected documented file set")
+    require(set(files) == {path.name for path in [*headers, *markdown]}, "Unexpected documented file set")
     briefs = []
     for path in headers:
         brief, author, notices = metadata_fields(path, split=split)
@@ -158,7 +172,7 @@ def check_file_metadata(items, headers, aliases=True, split=False):
                     f"Unterminated SPDX code block: {path}")
     for item in items:
         checked = list(item.findall("./sectiondef/memberdef"))
-        if item.attrib["kind"] != "file":
+        if item.attrib["kind"] not in ("file", "page", "dir"):
             checked.append(item)
         for entity in checked:
             docs = description(entity)
@@ -289,6 +303,249 @@ def check_fixtures(items, expected):
     return found
 
 
+
+def check_markdown_adapter():
+    cases = [
+        ("Inline $x+1$ and $y$.", r"Inline \f$x+1\f$ and \f$y\f$.", 2),
+        ("$$\nx^2+y^2\n$$\n", "\\f[\nx^2+y^2\n\\f]\n", 1),
+        ("$$x+y$$", r"\f[x+y\f]", 1),
+        ("$a+\nb$", "\\f$a+\nb\\f$", 1),
+        (r"Literal \$5 and unmatched $ or $5 and $10; math $x$.",
+         r"Literal \$5 and unmatched $ or $5 and $10; math \f$x\f$.", 1),
+        (r"$a+\$b$", r"\f$a+\$b\f$", 1),
+        ("`$code$` and ``$code with ` ticks$``", "`$code$` and ``$code with ` ticks$``", 0),
+        ("``multi\n$code$``\n", "``multi\n$code$``\n", 0),
+        ("```text\n$fenced$\n$$display$$\n```\n", "```text\n$fenced$\n$$display$$\n```\n", 0),
+        ("````text\n```\n$fenced$\n````\n", "````text\n```\n$fenced$\n````\n", 0),
+        ("~~~text\n$fenced$\n~~~\n", "~~~text\n$fenced$\n~~~\n", 0),
+        ("    $indented$\n\t$tabbed$\n", "    $indented$\n\t$tabbed$\n", 0),
+        (r"Existing \f$x\f$ and \f[y\f]", r"Existing \f$x\f$ and \f[y\f]", 0),
+        ("Unmatched $$ and $x", "Unmatched $$ and $x", 0),
+    ]
+    for original, expected, count in cases:
+        converted, formulas = adapt_markdown(original)
+        require(converted == expected, f"Markdown filter changed literals: {original!r}: {converted!r}")
+        require(len(formulas) == count, f"Wrong converted formula count: {original!r}")
+        require(converted.count("\n") == original.count("\n"), "Markdown filter changed source line count")
+        require(adapt_markdown(converted)[0] == converted, f"Markdown filter is not idempotent: {original!r}")
+
+
+def markdown_inputs(source):
+    paths = [source / "README.md", source / "AGENTS.md", *sorted((source / "docs").glob("*.md"))]
+    if (source / "proof/README.md").is_file():
+        paths.append(source / "proof/README.md")
+    return paths
+
+
+def markdown_pages(items, source):
+    pages = {}
+    for item in items:
+        if item.get("kind") != "page":
+            continue
+        location = item.find("location")
+        require(location is not None, "Markdown page has no source location")
+        path = Path(location.attrib["file"])
+        if path.is_absolute():
+            path = path.relative_to(source)
+        pages[path.as_posix()] = item
+    return pages
+
+
+def page_html(page):
+    return "index.html" if page.attrib["id"] == "indexpage" else page.attrib["id"] + ".html"
+
+
+def repair_markdown_links(items, source, output):
+    # Doxygen 1.9.8 resolves .md pages and local #headings, but leaves
+    # cross-page .md#heading URLs literal. Resolve those from generated page
+    # locations and section IDs, without guessing Doxygen's filename escaping
+    # or parsing Markdown links ourselves. Keep labels/children untouched.
+    pages = markdown_pages(items, source)
+    count = 0
+    for name, page in pages.items():
+        replacements = {}
+        for link in page.findall(".//ulink"):
+            url = link.attrib["url"]
+            parts = urlsplit(url)
+            if parts.scheme or parts.netloc or not parts.path.endswith(".md"):
+                continue
+            require(not parts.query, f"Local Markdown links cannot have a query: {name}: {url}")
+            target_path = (source / name).parent.joinpath(unquote(parts.path)).resolve()
+            require(target_path.is_relative_to(source), f"Markdown link leaves the input tree: {name}: {url}")
+            target_name = target_path.relative_to(source).as_posix()
+            require(target_name in pages, f"Markdown target is not an input page: {name}: {url}")
+            target = pages[target_name]
+            fragment = unquote(parts.fragment)
+            refid, kind = target.attrib["id"], "compound"
+            if fragment:
+                # Even GITHUB mode prefixes number-leading section IDs in
+                # Doxygen 1.9.8. Resolve against the actual generated ID.
+                anchors = [(element.get("id"), spelling)
+                           for spelling in (fragment, "autotoc_md" + fragment)
+                           for element in target.iter()
+                           if element.get("id", "").endswith("_1" + spelling)]
+                require(len(anchors) == 1, f"Missing or ambiguous Markdown heading: {name}: {url}")
+                (refid, fragment), kind = anchors[0], "member"
+            destination = page_html(target) + (("#" + fragment) if fragment else "")
+            target_html = (output / "html" / page_html(target)).read_text(encoding="utf-8")
+            require(not fragment or f'id="{fragment}"' in target_html or f'name="{fragment}"' in target_html,
+                    f"Generated Markdown heading is missing: {name}: {url}")
+            replacements[url] = destination
+            link.tag = "ref"
+            link.attrib.clear()
+            link.attrib.update(refid=refid, kindref=kind)
+            count += 1
+        if not replacements:
+            continue
+        html_path = output / "html" / page_html(page)
+        rendered = html_path.read_text(encoding="utf-8")
+        found = set()
+        def replace(match):
+            url = html_module.unescape(match.group(1))
+            if url not in replacements:
+                return match.group(0)
+            found.add(url)
+            return 'href="' + html_module.escape(replacements[url], quote=True) + '"'
+        rendered = re.sub(r'href="([^"]+)"', replace, rendered)
+        require(found == set(replacements), f"Markdown link absent from HTML: {name}: {set(replacements) - found}")
+        html_path.write_text(rendered, encoding="utf-8")
+        xml_path = output / "xml" / (page.attrib["id"] + ".xml")
+        tree = xml.parse(xml_path)
+        tree.getroot().remove(tree.getroot().find("compounddef"))
+        tree.getroot().append(page)
+        tree.write(xml_path, encoding="utf-8", xml_declaration=True)
+    return count
+
+
+def check_page_link(pages, source_name, target_name, output):
+    source, target = pages[source_name], pages[target_name]
+    target_ids = {target.attrib["id"]}
+    if target.attrib["id"] == "indexpage":
+        target_ids.add("index")
+    require(any(ref.get("refid") in target_ids or any(ref.get("refid", "").startswith(key + "_1")
+                for key in target_ids) for ref in source.findall(".//ref")),
+            f"Missing XML page reference: {source_name} -> {target_name}")
+    rendered = (output / "html" / page_html(source)).read_text(encoding="utf-8")
+    links = [html_module.unescape(value) for value in re.findall(r'href="([^"]+)"', rendered)]
+    matching = [value for value in links if value.split("#", 1)[0] == page_html(target)]
+    require(bool(matching), f"Missing rendered page link: {source_name} -> {target_name}")
+    target_html = (output / "html" / page_html(target)).read_text(encoding="utf-8")
+    for link in matching:
+        if "#" in link:
+            fragment = link.split("#", 1)[1]
+            require(f'id="{fragment}"' in target_html or f'name="{fragment}"' in target_html,
+                    f"Missing rendered target anchor: {source_name} -> {link}")
+
+
+def check_page_anchor(pages, name, anchor, output):
+    page = pages[name]
+    ids = {element.get("id") for element in page.iter() if element.get("id", "").endswith("_1" + anchor)}
+    require(bool(ids) and any(ref.get("refid") in ids for ref in page.findall(".//ref")),
+            f"Missing XML heading reference: {name}#{anchor}")
+    rendered = (output / "html" / page_html(page)).read_text(encoding="utf-8")
+    require(f'id="{anchor}"' in rendered and f'href="{page_html(page)}#{anchor}"' in rendered,
+            f"Missing rendered heading reference: {name}#{anchor}")
+
+
+def check_markdown_pages(items, source, markdown, output):
+    pages = markdown_pages(items, source)
+    expected_paths = {path.relative_to(source).as_posix() for path in markdown}
+    require(set(pages) == expected_paths, f"Unexpected Markdown page set: {set(pages) ^ expected_paths}")
+    require(pages["README.md"].attrib["id"] == "indexpage", "README is not the main page")
+    count = 0
+    for path in markdown:
+        original = path.read_text(encoding="utf-8")
+        converted, formulas = adapt_markdown(original)
+        require(original.count("\n") == converted.count("\n"), f"Filter changed source lines: {path}")
+        page = pages[path.relative_to(source).as_posix()]
+        expected = Counter(" ".join((("$" + body + "$") if kind == "inline" else
+                                     (r"\[" + body + r"\]")).split()) for kind, body in formulas)
+        actual = Counter(text(formula) for formula in page.findall(".//formula"))
+        require(actual == expected, f"Formula contents/count changed: {path}: {actual - expected}; missing {expected - actual}")
+        require(not page.findall(".//programlisting//formula") and not page.findall(".//computeroutput//formula"),
+                f"Code literal became a formula: {path}")
+        rendered = (output / "html" / page_html(page)).read_text(encoding="utf-8")
+        require("MathJax" in rendered, f"MathJax script missing: {path}")
+        decoded_html = html_module.unescape(rendered)
+        for kind, pattern in (("inline", r"\\\((.*?)\\\)"), ("display", r"\\\[(.*?)\\\]")):
+            wanted = Counter(" ".join(body.split()) for mode, body in formulas if mode == kind)
+            present = Counter(" ".join(body.split()) for body in re.findall(pattern, decoded_html, re.S))
+            require(not (wanted - present), f"Rendered {kind} MathJax formula payloads missing: {path}")
+        require(rendered.count('class="formulaDsp"') >= sum(kind == "display" for kind, _ in formulas),
+                f"Rendered display formula elements missing: {path}")
+        count += len(formulas)
+    require(count > 0, "No Markdown formulas were checked")
+    for source_name, target_name in (("README.md", "docs/design.md"),
+                                     ("docs/keys.md", "docs/arrows.md"),
+                                     ("docs/sampling.md", "docs/durability.md"),
+                                     ("docs/network-admission.md", "docs/rebuild.md")):
+        check_page_link(pages, source_name, target_name, output)
+    for anchor in ("examples", "field-guide", "building"):
+        check_page_anchor(pages, "README.md", anchor, output)
+    return count
+
+
+def check_markdown_fixture(executable, output):
+    directory = output / "markdown fixture"
+    (directory / "docs").mkdir(parents=True, exist_ok=True)
+    readme = directory / "README.md"
+    readme.write_text("""# Markdown fixture
+
+Inline $x+1$ and $y_2$.
+
+$$
+z=x+y
+$$
+
+[Child](docs/child.md), [numbered section](docs/child.md#7-numbered-section),
+[proof](proof/README.md), and [details](#details), and literal \\$5, $10, or a lone $.
+
+`$inline_code$` and ``$code_with_`_tick$``.
+
+```text
+$fenced_code$
+$$fenced_display$$
+```
+
+~~~text
+$tilde_code$
+~~~
+
+    $indented_code$
+
+## Details
+
+An ordinary paragraph.
+""", encoding="utf-8")
+    child = directory / "docs/child.md"
+    child.write_text("# Child page\n\n[Home](../README.md#details). Formula $q^2$.\n\n## 7. Numbered section\n", encoding="utf-8")
+    (directory / "AGENTS.md").write_text("# Guidance\n", encoding="utf-8")
+    (directory / "proof/.lake/generated").mkdir(parents=True, exist_ok=True)
+    (directory / "proof/README.md").write_text("# Proof notes\n\n[Home](../README.md).\n", encoding="utf-8")
+    (directory / "proof/.lake/generated/README.md").write_text("# Not an input\n", encoding="utf-8")
+    inputs = markdown_inputs(directory)
+    require({path.relative_to(directory).as_posix() for path in inputs} ==
+            {"README.md", "AGENTS.md", "docs/child.md", "proof/README.md"}, "Wrong Markdown input discovery")
+    generated = output / "markdown-fixture-docs"
+    run_doxygen(executable, directory, inputs, generated, aliases=True, html=True, markdown_main=readme)
+    items = compounds(generated)
+    repair_markdown_links(items, directory, generated)
+    items = compounds(generated)
+    pages = markdown_pages(items, directory)
+    require(set(pages) == {"README.md", "AGENTS.md", "docs/child.md", "proof/README.md"}, "Fixture pages missing")
+    require(len(pages["README.md"].findall(".//formula")) == 3 and
+            len(pages["docs/child.md"].findall(".//formula")) == 1, "Fixture formula nodes missing")
+    details = pages["README.md"].find("detaileddescription")
+    code = " ".join(text(value) for value in details.findall(".//programlisting") + details.findall(".//computeroutput") + details.findall(".//verbatim"))
+    for literal in ("$inline_code$", "$code_with_`_tick$", "$fenced_code$", "$$fenced_display$$", "$tilde_code$", "$indented_code$"):
+        require(literal in code, f"Fixture code literal changed: {literal}")
+    require("literal $5, $10, or a lone $." in text(details), "Literal currency dollars changed")
+    check_page_link(pages, "README.md", "docs/child.md", generated)
+    check_page_link(pages, "README.md", "proof/README.md", generated)
+    check_page_link(pages, "proof/README.md", "README.md", generated)
+    check_page_link(pages, "docs/child.md", "README.md", generated)
+    check_page_anchor(pages, "README.md", "details", generated)
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--doxygen", required=True)
@@ -308,11 +565,19 @@ def main():
     check_file_metadata(baseline_items, headers, aliases=False, split=True)
     check_actual_members(baseline_items, source)
 
+    check_markdown_adapter()
+    markdown = markdown_inputs(source)
+    require(all(path.is_file() for path in markdown), "Missing Markdown input")
     reference = output / "reference"
-    run_doxygen(args.doxygen, source, headers, reference, aliases=True, html=True)
+    run_doxygen(args.doxygen, source, [*headers, *markdown], reference, aliases=True, html=True,
+                markdown_main=source / "README.md")
     items = compounds(reference)
-    check_file_metadata(items, headers, split=True)
+    check_file_metadata(items, headers, split=True, markdown=markdown)
     check_actual_members(items, source)
+    repaired_links = repair_markdown_links(items, source, reference)
+    items = compounds(reference)
+    formula_count = check_markdown_pages(items, source, markdown, reference)
+    check_markdown_fixture(args.doxygen, output)
     fixture_results = []
     for placement in ("before", "after", "split"):
         inputs = output / ("fixture-" + placement)
@@ -326,6 +591,8 @@ def main():
             "Moving or splitting file metadata changed symbol documentation")
     print(f"Checked {len(headers)} headers, seven real function/overload associations, "
           "and twelve fixture symbols with file metadata before/after/split around declarations.")
+    print(f"Checked {len(markdown)} Markdown pages and {formula_count} dollar formulas with MathJax HTML, "
+          f"cross-page links ({repaired_links} repaired fragment links), and protected-code/currency fixtures.")
     print(f"Reference documentation: {reference / 'html/index.html'}")
 
 

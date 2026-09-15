@@ -10,12 +10,12 @@ find_package(Doxygen 1.9.8 REQUIRED COMPONENTS doxygen)
 find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
 
 # Documentation tools remain optional development dependencies. The checker
-# generates both the reference HTML/XML and isolated association fixtures.
+# generates API/Markdown HTML/XML and checks associations, math, and links.
 add_custom_target(everett_docs
   COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/check_doxygen.py"
     --doxygen "${DOXYGEN_EXECUTABLE}" --source "${PROJECT_SOURCE_DIR}"
     --output "${PROJECT_BINARY_DIR}/docs"
-  COMMENT "Generate Everett documentation and check XML ownership"
+  COMMENT "Generate Everett API and Markdown documentation; check ownership, math, and links"
   VERBATIM)
 if(EVERETT_BUILD_TESTS)
   add_test(NAME everett.doxygen

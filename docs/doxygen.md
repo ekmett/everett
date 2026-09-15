@@ -1,19 +1,34 @@
 # Doxygen metadata and declaration ownership
 
-I put each public header's SPDX notices in a Doxygen file block before
-the code, with its author and brief in a second file block at the end. Each
-SPDX field appears once. This follows the
+Each public header has its SPDX notices in a Doxygen file block before the code,
+and its author and brief in a second file block at the end. Each SPDX field
+appears once. This follows the
 [REUSE recommendation to place licensing information near the top](https://reuse.software/spec-3.3/#comment-headers).
 The `\file` command attaches each block to its containing file; it does not
-attach the trailing block to the last namespace, structure or function. Doxygen's
+attach the trailing block to the last namespace, structure or function.
+Doxygen's
 [structural-command documentation](https://www.doxygen.nl/manual/docblocks.html#structuralcommands)
-describes this explicit association. I also check the generated XML to verify
-that the declarations end up with the right owners.
+describes this explicit association. The generated XML is also checked to verify
+that declarations retain the right owners.
+
+## Markdown pages and math
+
+The README is the main page. `AGENTS.md`, `docs/*.md` and the proof README are
+included as pages alongside the API reference.
+
+Use `$...$` for inline math and `$$...$$` for display math in Markdown.
+`tests/doxygen_markdown.py` adapts those delimiters to Doxygen's formula commands
+without changing line counts or rewriting the source files. Code spans, fenced
+and indented code, escaped dollars and ordinary currency remain literal. The
+generated HTML uses MathJax; its default script is loaded from the configured CDN.
+
+GitHub-style heading IDs keep local section links usable. Doxygen 1.9.8 leaves
+some links to headings in other Markdown files unresolved; the build repairs
+those links in HTML and XML using the generated page and section IDs. The checks
+verify page inclusion, formula contents, heading targets and code literals.
+Mermaid fences remain code in this Doxygen configuration.
 
 ## Configuration
-
-I borrowed the license commands from
-[my `ein` Doxygen configuration](https://github.com/ekmett/ein/blob/50e9533700c065790a0c532fd69edafbd2a49932/doc/Doxyfile.in#L128):
 
 ```text
 ALIASES = "license=@code{.spdx}"
@@ -23,10 +38,8 @@ ALIASES += "endlicense=@endcode"
 These aliases preserve the three SPDX notice lines as a code block. The author
 and file brief remain separate metadata. The notices record the repository's
 `BSD-2-Clause OR Apache-2.0` license choice.
-`ein` supplies the command definitions; its representative `src/ein/wait.hpp`
-puts the file block at the top, so our fixture comparison independently
-checks both end-of-file placement and the split layout. Doxygen describes alias
-expansion in its
+Our fixture comparison checks both end-of-file placement and the split layout.
+Doxygen describes alias expansion in its
 [custom-command manual](https://www.doxygen.nl/manual/custcmd.html).
 
 Documentation tooling is optional and requires Doxygen 1.9.8 or newer and
@@ -71,9 +84,9 @@ seven real function/overload cases and twelve fixture symbols in all three
 metadata layouts. The unconfigured baseline had 42 warnings, exclusively for
 `\license` and `\endlicense`.
 
-These checks verify file metadata and the tested lexical associations. I haven't
-documented every API in prose. `EXTRACT_ALL=YES` exposes
-declarations for inspection; ordinary `//` implementation comments do not
+These checks verify file metadata and the tested lexical associations. Some
+APIs still lack prose descriptions. `EXTRACT_ALL=YES` exposes declarations for
+inspection; ordinary `//` implementation comments do not
 automatically become Doxygen member descriptions. The reference includes
 private declarations to make ownership inspectable; that does not make them
 public API. The check does not parse CMake or Python source metadata and is not
