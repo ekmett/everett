@@ -40,6 +40,7 @@ namespace everett {
   // seal_next finalizes one stage, target outward. It does not publish a catalog
   // root: record each receipt and register the dependencies before publication.
   // Failures preserve earlier receipts and surviving names for reconciliation.
+  // A supplied Ops owner must outlive this nonmovable pipeline.
   template <class P, class Ops = posix_object_ops>
   struct file_index_pipeline
       : index_detail::pipeline_driver<P, mapped_blob<P>, file_index_builder<P, mapped_native<P>, Ops>> {

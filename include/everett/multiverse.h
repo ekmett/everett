@@ -10,6 +10,7 @@
 #pragma once
 
 #include <everett/file.h>
+#include <everett/file_index_pipeline.h>
 #include <everett/mapped_blob.h>
 #include <everett/native_merge.h>
 #include <everett/native_file_merge.h>
@@ -68,6 +69,10 @@ namespace everett {
     using index = everett::profile_index<P>;
     template <class Native = native_array>
     using index_builder = everett::index_builder<P, Native>;
+    template <class Native = native_array>
+    using file_index_builder = everett::file_index_builder<P, Native>;
+    using file_index_stage = everett::file_index_stage<P>;
+    using file_index_pipeline = everett::file_index_pipeline<P>;
     template <class Target = blob>
     using sample_cursor = everett::sample_cursor<P, Target>;
     using query_root = everett::query_root<P>;

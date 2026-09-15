@@ -219,6 +219,9 @@ def check_actual_members(items, source):
         ("struct", "everett::native_file_merge", "step", "native_file_merge.h", None, "no"),
         ("struct", "everett::profile_index", "native_only", "profile_index.h", None, "yes"),
         ("struct", "everett::index_builder", "finish_index", "index_builder.h", None, "no"),
+        ("struct", "everett::file_index_builder", "finish", "file_index_builder.h", None, "no"),
+        ("struct", "everett::file_index_pipeline", "seal_next", "file_index_pipeline.h", None, "no"),
+        ("struct", "everett::index_detail::pipeline_driver", "step", "index_pipeline_detail.h", None, "no"),
         ("struct", "everett::sample_cursor", "advance", "sampling.h", None, "no"),
         ("struct", "everett::elias_fano_view", "select", "elias_fano.h", None, "no"),
         ("struct", "everett::profile_view", "block_offset", "profile.h", None, "no"),
@@ -259,7 +262,9 @@ def check_actual_members(items, source):
                               ("everett::native_file_writer", ["P", "Ops"]),
                               ("everett::native_file_merge", ["P", "Native", "Compose", "Ops"]),
                               ("everett::profile_index", ["P"]),
-                              ("everett::index_builder", ["P", "Native"]),
+                              ("everett::index_builder", ["P", "Native", "Output"]),
+                              ("everett::file_index_builder", ["P", "Native", "Ops"]),
+                              ("everett::file_index_pipeline", ["P", "Ops"]),
                               ("everett::sample_cursor", ["P", "Target"]),
                               ("everett::sqlite_catalog", ["P", "Ops"])):
         item = named_compound(items, "struct", owner)
