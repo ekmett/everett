@@ -462,7 +462,6 @@ base while preparing their assigned writes.
 
 ```cpp
 #include <diet/cola.h>
-#include <sstream>
 
 int main() {
   using namespace diet;
@@ -487,18 +486,15 @@ int main() {
 
   auto compacted = next.compact();
   if (compacted.signature() != next.signature()) return 1;
-  std::stringstream export_stream;
-  compacted.save(export_stream);
-  auto restored = reference_cola<>::restore(export_stream);
-  return restored.resolved() == next.resolved() ? 0 : 1;
+  return compacted.resolved() == next.resolved() ? 0 : 1;
 }
 ```
 
 Admission checks old values, partition ownership, overlap, and the advertised
 fingerprint contribution. Identical batch replay is recognized. Calls to a
 receiver's `apply()` are serialized; preparing disjoint batches can happen
-independently. The reference `save`/`restore` pair exports a resolved table,
-while `snapshot()` shares the existing immutable state.
+independently. `snapshot()` shares the existing immutable state; compaction
+preserves both the resolved entries and their fingerprint.
 
 Incremental Native Merges
 -------------------------
