@@ -422,10 +422,19 @@ scheduler and filesystem proof obligations.
 
 For scheduling, start with
 [Cache-Oblivious Streaming B-trees, §3](https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf).
-Its deamortized COLA uses redundant arrays and prioritizes small unsafe levels.
-Data merging and lookahead construction both participate in becoming safe and in
-switching visibility. Its exact schedule and bounds are useful starting points,
-not a proof for arbitrary extra compactions or persistent retention.
+I adopt its main/secondary/shadow arrangement and smallest-unsafe-level service
+as the baseline. Data merging and lookahead construction both participate in
+becoming safe and switching visibility. A main catalog routes to the next
+main and terminal secondary; only the main route continues. Everett's
+`cola_index` implements this topology with two borrowed FC streams and two
+rank directories over one three-way virtual order. The native FC and offsets
+remain unchanged. The [COLA guide](cola-indexes.md) describes construction,
+queries and IX03 files.
+
+The [scheduling model](cola-scheduling.md) separates logical unmerged slots,
+root visibility and physical snapshot pins. It checks fixed-admission
+transitions and slot-reuse deadlines. Arbitrary extra compaction, received-file
+admission and persistent retention still need their corresponding bounds.
 
 I want the store to keep $O(\log N)$ active blobs, with a bounded number per
 level. Small updates pay for later merging and index construction. Work may be

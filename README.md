@@ -47,8 +47,10 @@ I call the backing store and its relationships the **multiverse**.
 | `sample_cursor`, `index_builder`, `index_pipeline` | Sampling an existing pair and building new index links incrementally. |
 | `file_index_builder`, `file_index_pipeline` | Streaming those index links to files while retaining the original mapped native data. |
 | `query_root`, `query_root_builder`, `query_cursor` | Preparing a bounded search head and visiting matching native entries through an exact index chain. |
+| `cola_index`, `cola_index_builder`, `cola_query_root` | Two-route main/secondary catalogs, incremental construction and all matching native contributions. |
 | `mapped_file`, `file`, `multiverse` | Retained read-only mappings and policy-checked object access. |
 | `encode_native_sections`, `encode_index_sections`, `mapped_blob`, `mapped_query_root` | Portable blob files and queries over exact pinned mmap chains. |
+| `encode_cola_sections`, `mapped_cola_blob`, `mapped_cola_query_root` | IX03 indexes over unchanged native files, with one recursive main route and one terminal secondary route. |
 | `object_writer`, `object_stream`, `multiverse::seal_object` | Immutable object construction with explicit persistence barriers and retained failure identities. |
 | `sqlite_catalog` | Durable reservations, exact file graphs, named saves, timeline generations and reader pins. |
 | `reference_world`, `partition_round`, `pin_set` | Executable snapshot, update, fingerprint, and ownership semantics. |
@@ -95,6 +97,15 @@ index space; a larger group spreads the metadata over more records. Group size a
 level growth are separate choices. The [sampling analysis](docs/sampling.md)
 explains their interaction, including why sampling counts augmented occurrences
 rather than distinct keys.
+
+For redundant COLA levels, a main catalog borrows from two targets. The main
+target continues the cascade; the secondary target ends at its native array.
+We keep two borrowed streams and two population directories over their shared
+three-way order. Native rank follows by subtracting both borrowed counts. This
+lets a query visit at most two arrays per level while shadow construction
+proceeds separately. The [COLA guide](docs/cola-indexes.md) includes a complete
+two-target example and the mapped file layout; the
+[scheduling design](docs/cola-scheduling.md) explains visibility and work.
 
 ### String compression and offsets
 

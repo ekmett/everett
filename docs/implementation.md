@@ -36,6 +36,31 @@ this package.
 
 ## Implemented foundations
 
+### COLA main and secondary indexes
+
+`cola_index<P>` and its incremental builder construct two borrowed streams over
+an unchanged native array. Main samples the next augmented main catalog;
+secondary samples a terminal native array. Two packed rank directories refer
+to one three-way virtual order. Each borrowed stream has its own FC/EF, flags
+and cut LCPs. `cola_query_root` includes both level-zero arrays and the cursor
+preserves matching native contributions from both roles.
+
+`encode_cola_sections`, `mapped_cola_index`, `mapped_cola_blob` and
+`open_mapped_cola_query` implement IX03 encoding and metadata-only mapped
+opening with exact main/secondary pins. Explicit `scan` validates payloads and
+target samples. The [COLA guide](cola-indexes.md) describes the layout and API.
+The independent eight-policy core tests passed strict O3 ASan/UBSan; the mapped
+format has passed a two-policy seal/reopen/scan/query smoke check, with broader
+independent mapped validation in progress.
+
+The separate [scheduler model](cola-scheduling.md) executes fixed-admission
+main/secondary/shadow transitions with immutable identities and explicit work
+counts. At `b11957d`, strict O3 ASan/UBSan and Release checks covered 131,072
+admissions, 131,047 completed merges and 32,743 hidden merge inputs. Independent
+event replay checked intermediate roots, chronological coverage, slot reuse,
+snapshot unions and budget splitting. This is an executable count model;
+production scheduling, byte/I/O service and durable continuation remain work.
+
 ### Rank and sparse offsets
 
 `rank_groups<K>` stores one borrowed-entry population per virtual group of
