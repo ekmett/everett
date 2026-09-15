@@ -118,7 +118,7 @@ predictions:
 | [Other grouped / bitmap rank](../bench/other_rank.md) | Groups 3, 7 and 31 and complete bitmap queries |
 | [Rank without cached totals](../bench/rank_bounds.md) | Existing-position queries, whole-query timing and view size |
 | [Stored spacer lanes](../bench/rank_spacers.md) | Complete bitmap queries with the gaps written during construction |
-| [Intel prefix paths](../bench/intel_prefix.md) | ISA guards, bounded loads, compiler output and execution coverage |
+| [Intel prefix paths](../bench/intel_prefix.md) | Bounded SIMD prefixes and complete bitmap rank on Broadwell/Ice Lake, including same-ISA portable controls and dependent queries |
 | [Combined query refactor](../bench/query_refactor.md) | Complete byte/bit queries and root preparation after rank, Elias–Fano and exception outlining changes |
 | [Codec arithmetic integration](../bench/query_rounding.md) | Complete queries after explicit unit shifts and additive rounding |
 | [Elias–Fano construction / select](../bench/select_compare.md) | Tiled writing, narrowing, validation and scalar/SIMD select candidates |
