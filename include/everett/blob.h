@@ -239,8 +239,10 @@ namespace everett {
       if (group >= group_count()) throw std::out_of_range("blob virtual group");
       auto first = group * 15;
       auto last = first + std::min<std::uint64_t>(15, virtual_count_ - first);
-      auto a = interleave_.view().rank(group);
-      auto b = interleave_.view().rank(group + 1);
+      auto ranks = interleave_.view();
+      auto a = ranks.rank(group);
+      // The stored population is exactly the difference of the two ranks.
+      auto b = a + ranks.class_at(group);
       return {first - a, last - b, a, b};
     }
 

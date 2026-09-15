@@ -37,9 +37,10 @@ this package.
 - The lane sum uses word-parallel arithmetic, widening ten-bit lanes to eleven
   bits before addition. Tests exercise counter transitions at `2^32` and `2^33`
   source bits without allocating those payloads.
-- Separate rank15 codec: four bits per class, a 64-bit prefix checkpoint every
-  128 classes, and at most eight packed-word sums per query. Those are 1920
-  virtual-entry checkpoints, distinct from the 512/2048-bit rank layout.
+- Separate rank15 codec: four bits per class and a 64-bit prefix checkpoint
+  every 128 classes. A query accumulates at most eight packed words before one
+  horizontal sum. Those are 1920 virtual-entry checkpoints, distinct from the
+  512/2048-bit rank layout.
 - Elias–Fano over sparse residual offsets, with dense/sparse sampled access
   support. Dense select scans at most 4096 high bits; sparse groups store direct
   exception positions. This is bounded pragmatic support, not a tuned succinct
@@ -51,11 +52,71 @@ this package.
 `rank_groups<K>` and `select_groups<K>` now support policy-sized groups
 `K = 2^r - 1`, including 3, 7, 15 and 31. Packed class widths are respectively
 2, 3, 4 and 5 bits. The generic rank directory reads at most 127 classes after
-a checkpoint; it does not yet use the fixed-15 packed-word summation fast path.
+a checkpoint. The `K=15` view shares the packed rank15 implementation.
 Offsets and fixed strides share the caller's byte/bit unit. Shape validation
 is not a substitute for complete validation of a serialized rank/select section.
 The [sampling analysis](sampling.md) distinguishes local correctness from
 per-level capacity and whole-chain storage bounds.
+
+On little-endian AArch64, rank15 loads a complete checkpoint with four NEON
+vectors, masks the low and high nybbles at the requested boundary, and combines
+the byte lanes before one widening horizontal reduction. A bounded scalar path
+handles short final checkpoints and other targets. The view caches its group
+count, adding eight bytes to the view without changing the stored classes or
+checkpoints. Both blob APIs project a window with one rank query and the group's
+population: the upper rank is the lower rank plus that population.
+
+The query checks cover maximum populations, every prefix cut, short final
+checkpoints, random packed words and every eight-byte alignment within a cache
+line. Typed `K=15` views retain the same encoded layout and use the same query
+implementation; other group sizes retain the generic loop.
+
+I compared the packed queries with the full bitvector directory and a CPU/NEON
+translation of [my Poppy shader](https://github.com/ekmett/vr/blob/master/shaders/poppy.glsl).
+That translation keeps the 2048/512-bit directory and loads all four vectors of
+the selected run, masks at the query position, and reduces their populations.
+It is a benchmark backend, not the current `rank_view` query implementation.
+Every variant sees the same bitmap and queries at the same fifteen-entry cuts.
+
+For a 253,440-bit universe on an M2 Max, AppleClang 21 `-O3 -DNDEBUG`, the
+five-trial medians were:
+
+| Rank implementation | Data plus directory | Independent random rank | Dependent random rank |
+| --- | ---: | ---: | ---: |
+| Full bitvector, current `rank_view` | 32,680 B | 14.86 ns | 23.26 ns |
+| Full bitvector, 512-bit NEON translation | 32,680 B | 4.89 ns | 18.77 ns |
+| Previous packed rank15 | 9,504 B | 15.78 ns | 19.96 ns |
+| Previous generic `rank_groups<15>` | 9,504 B | 43.78 ns | 45.53 ns |
+| Packed rank15, NEON | 9,504 B | 5.38 ns | 17.12 ns |
+
+The packed representation uses about 29% of the full representation's space
+including their directories. For the adjacent endpoint pair used by window
+projection, two queries through the previous generic path took 78.67 ns; one
+SIMD rank plus the class took 6.56 ns. The full-bitvector NEON translation's
+corresponding rank-plus-fifteen-bit-popcount pair took 7.34 ns. These are rank
+primitive timings, including a common indirect call, not complete string lookups.
+The dependent stream derives its next position from the preceding answer and
+includes that address-generation cost.
+
+Both data arrays were 64-byte aligned in this comparison. Queries were generated
+before timing, independently checked, and shared across variants; allocation,
+construction and the oracle are excluded. Larger cases include about 96 MiB of
+packed storage versus 330 MiB of full storage for the same universe. Their
+trial ranges overlap substantially, especially for dependent queries, so these
+measurements do not establish a large-working-set winner. The reproducible
+benchmark ([method](../bench/rank_compare.md), [runner](../bench/rank_compare.sh), [source](../bench/rank_compare.cc),
+[measurements](../bench/results/rank_compare_m2max.csv)) retains sizes,
+alignments, checksums and minimum/median/maximum times.
+These are resident-memory measurements on one processor, excluding page faults
+and file I/O.
+
+The SIMD and typed-view changes were reviewed at `d55fefba` and `b06798d`, and
+the comparison at `ef26e25`, in isolated component work. Combined ASan/UBSan
+verification passed all 18 CTests, including the blob projections, package
+consumers and Doxygen. Component checks also exercised the forced-portable rank
+and grouped-rank paths. The full-vector comparison remains
+a benchmark backend; only packed `K=15` queries gain a handwritten SIMD path in
+this change.
 
 Rank construction now separates complete 2048-bit blocks from the bounded tail.
 A full block uses four 512-bit popcounts; AArch64 NEON sums four byte-popcount
@@ -400,8 +461,9 @@ verification here after these commands run.
 
 Combined verification on 2026-09-15: AppleClang 21, C++20, Release with strict
 warnings and ASan/UBSan passed all **18 CTests**, including both package consumers
-and the optional Doxygen check. The documentation check passed after correcting
-links to notice pages. Installed licenses and generated CRC includes were checked
+and the optional Doxygen check, after the SIMD rank and window-projection changes.
+The documentation includes the benchmark method and bundles its runner, source
+and measurements. Installed licenses and generated CRC includes were checked
 byte for byte against the source bundle; regenerating from the pinned generator
 also reproduced all eight backends.
 All five complete README examples also compiled and ran with strict warnings

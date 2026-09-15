@@ -13,7 +13,7 @@ that declarations retain the right owners.
 
 ## Markdown pages and math
 
-The README is the main page. `AGENTS.md`, `docs/*.md`, the proof README,
+The README is the main page. `AGENTS.md`, `docs/*.md`, `bench/*.md`, the proof README,
 `THIRD_PARTY.md`, and the vendored CRC provenance and license Markdown are
 included as pages alongside the API reference.
 

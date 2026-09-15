@@ -138,8 +138,10 @@ namespace everett {
       if (group >= group_count()) throw std::out_of_range("profile blob virtual group");
       auto first = group * group_size;
       auto last = first + std::min<std::uint64_t>(group_size, virtual_count_ - first);
-      auto a = interleave_.view().rank(group);
-      auto b = interleave_.view().rank(group + 1);
+      auto ranks = interleave_.view();
+      auto a = ranks.rank(group);
+      // The stored population is exactly the difference of the two ranks.
+      auto b = a + ranks.class_at(group);
       return {first - a, last - b, a, b};
     }
 
