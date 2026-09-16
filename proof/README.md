@@ -59,6 +59,7 @@ Field guide
 | [Framing](Everett/Framing.lean) | Retained prefixes and reconstructed key lengths stay within physical stream extents; admitted extent bounds imply bounded conversion to bits |
 | [Frontier](Everett/Frontier.lean) | Merge-head ordering from carried LCP lengths, suffix-only comparison at equal lengths, and exact new frontier lengths |
 | [Transfer](Everett/Transfer.lean) | Content-mismatch transfers, the literal-position invariant, composition and associative ordered summaries |
+| [RetainedFloor](Everett/RetainedFloor.lean) | Constructed retained-prefix caps; exact canceled-owner literal aliases; arbitrary fragment-gather preservation; extra literal growth charged to canceled FC payloads |
 | [NativeMerge](Everett/NativeMerge.lean) | Executable two-way merging of strictly ordered native runs; unique sorted output; optional pointwise lookup composition; chronological reassociation and disjoint-support commutation |
 | [CarriedChain](Everett/CarriedChain.lean) | Bottom-up coherent chain builder; exact target/next-parent correspondence; carried aligned windows and explicit empty-node traversal; one answer per node |
 | [CarriedRoute](Everett/CarriedRoute.lean) | Concrete parent/sample builder; carried parent windows through stored rank checkpoints and one sample lookup; exact target-window search for one edge |
@@ -276,6 +277,53 @@ The missing bridge is from the origin-filtered cut to these string hypotheses,
 then from the encoded length/LCP metadata and literal comparisons to the
 abstract state. Complete cascade composition, block access bounds and the C++
 implementation remain separate refinements.
+
+Canceled literal owners
+-----------------------
+
+Deleting a record does not erase its contribution to a later key's inherited
+prefix. In [RetainedFloor](Everett/RetainedFloor.lean), I give the replacing
+tombstone enough literal material to stand in for its exact canceled record.
+Let $r$ be that record's stored retained-prefix position and $n$ the tombstone's
+ordinary retained position. I construct the tombstone with
+
+$$
+t=\min(n,r), \qquad \Delta=n-t=\max(0,n-r).
+$$
+
+`target_literal_covered` proves that the tombstone's literal suffix contains the
+entire target literal suffix. For an owned key position $j\ge r$,
+`alias_lookup` proves that the replacement address is exactly $j-t$;
+`alias_in_bounds` proves that address is in bounds whenever the original key
+position is. No omitted prefix is reconstructed by these definitions.
+
+`literal_growth` proves that $\Delta$ is exactly the increase in literal units.
+`extra_le_target_literal` bounds it by $|k|-r$, the canceled record's existing
+literal payload. `batch_charge` sums this bound over admitted certificates.
+Charging each physical record once additionally requires distinct target
+identities; `admitted_once` states that obligation. These are literal-unit
+bounds, excluding count controls, values, indexes, allocation and I/O costs.
+
+One tombstone need not contain every inherited fragment exposed by a run of
+deletions. `fragments_covered` instead proves that any supplied finite gather
+schedule returns the same units after each original owner is redirected to its
+own certificate. The adjacent-owner example obtains separate fragments from
+two tombstones. A GPU implementation still has to find those owners and split
+copies at ownership boundaries; a machine-word boundary alone is insufficient.
+
+The certificate names a file, record ordinal and exact stored retention.
+`changed_retention_rejected` shows why an equivalent re-encoding cannot silently
+replace that target. Source immutability, identity non-reuse, pin lifetime and
+same-key admission remain obligations of the surrounding catalog and codec.
+The construction receives the known complete target key; a fingerprint does not
+stand in for that knowledge.
+
+No survivor mask is assumed by the coverage theorem, so adjacent deletions do
+not invalidate it. Its caller must establish that each requested fragment really
+belongs to that original owner, and that its extent is valid. The module does
+not prove the owner-tree algorithm, deletion visibility, shader accesses or a
+complete parallel merge. It also does not implement or verify the tighter
+single-bridge encoding that depends on a frozen survivor mask.
 
 Native run merging
 ------------------
