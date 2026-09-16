@@ -70,5 +70,6 @@ var searchData=
   ['contains_3c_20s_2c_20registry_5fdetail_3a_3asorts_3c_20t_2e_2e_2e_20_3e_20_3e_67',['contains&lt; S, registry_detail::sorts&lt; T... &gt; &gt;',['../structeverett_1_1sort__codec__detail_1_1contains_3_01_s_00_01registry__detail_1_1sorts_3_01_t_8_8_8_01_4_01_4.html',1,'everett::sort_codec_detail']]],
   ['context_5fpin_68',['context_pin',['../structeverett_1_1sort__runtime__context_1_1context__pin.html',1,'everett::sort_runtime_context']]],
   ['continuation_69',['continuation',['../structeverett_1_1cola__runtime_1_1continuation.html',1,'everett::cola_runtime']]],
-  ['count_5fpolicy_70',['count_policy',['../structeverett_1_1sort__codec__detail_1_1count__policy.html',1,'everett::sort_codec_detail']]]
+  ['contribution_5ftype_70',['contribution_type',['../structeverett_1_1persistent__engine_1_1contribution__type.html',1,'everett::persistent_engine']]],
+  ['count_5fpolicy_71',['count_policy',['../structeverett_1_1sort__codec__detail_1_1count__policy.html',1,'everett::sort_codec_detail']]]
 ];

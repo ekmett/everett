@@ -23,9 +23,10 @@ var searchData=
   ['prefixes_20bit_20copies_20and_20framing_20',['Key prefixes, bit copies, and framing',['../md_bench_2key__bits.html',1,'']]],
   ['preparation_21',['Publication preparation',['../publication-preparation.html',1,'']]],
   ['prepared_20chain_20queries_22',['Complete prepared-chain queries',['../md_bench_2query__chain.html',1,'']]],
-  ['profile_20count_20decoding_23',['Small bit-profile count decoding',['../md_bench_2small__count.html',1,'']]],
-  ['proof_20core_24',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
-  ['publication_25',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
-  ['publication_20and_20merge_20resumption_26',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]],
-  ['publication_20preparation_27',['Publication preparation',['../publication-preparation.html',1,'']]]
+  ['private_20nurseries_23',['Transactions and private nurseries',['../transactions-and-private-nurseries.html',1,'']]],
+  ['profile_20count_20decoding_24',['Small bit-profile count decoding',['../md_bench_2small__count.html',1,'']]],
+  ['proof_20core_25',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
+  ['publication_26',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
+  ['publication_20and_20merge_20resumption_27',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]],
+  ['publication_20preparation_28',['Publication preparation',['../publication-preparation.html',1,'']]]
 ];

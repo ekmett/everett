@@ -17,6 +17,7 @@ var searchData=
   ['tombstones_20and_20complete_20coverage_20cleanup_14',['Conservative tombstones and complete-coverage cleanup',['../conservative-tombstones-and-complete-coverage-cleanup.html',1,'']]],
   ['toolchain_15',['Everett shader toolchain',['../everett-shader-toolchain.html',1,'']]],
   ['totals_16',['Bounded rank without cached totals',['../bounded-rank-without-cached-totals.html',1,'']]],
-  ['tree_20experiment_17',['Optional tiled prefix-tree experiment',['../optional-tiled-prefix-tree-experiment.html',1,'']]],
-  ['typed_20worlds_20and_20contributions_18',['Typed worlds and contributions',['../typed-worlds-and-contributions.html',1,'']]]
+  ['transactions_20and_20private_20nurseries_17',['Transactions and private nurseries',['../transactions-and-private-nurseries.html',1,'']]],
+  ['tree_20experiment_18',['Optional tiled prefix-tree experiment',['../optional-tiled-prefix-tree-experiment.html',1,'']]],
+  ['typed_20worlds_20and_20contributions_19',['Typed worlds and contributions',['../typed-worlds-and-contributions.html',1,'']]]
 ];

@@ -120,6 +120,17 @@ Saved Tables</h1>
 </div><!-- fragment --><p>The two sessions can now evolve independently while the saved snapshot stays fixed. <code>load</code> returns an optional snapshot; it leaves the live session where it is. Save names are immutable, and a fork needs an unused session name. <code>save(name)</code> and <code>fork(name)</code> use the current snapshot.</p>
 <p>Snapshots also expose <code>live_count()</code> and <code>signature()</code>. The signature describes logical contents independently of the physical merge layout. I use it to notice disagreement between replicas; it is a sanity check, not a cryptographic commitment.</p>
 <p>Current catalogs retain historical generations and pins, so disk use includes retained history. Automatic reclamation remains future work.</p>
+<h1><a class="anchor" id="transactions"></a>
+Transactions</h1>
+<p>Use a transaction to publish several edits together:</p>
+<div class="fragment"><div class="line"><span class="keyword">auto</span> tx = db.begin();</div>
+<div class="line">tx.put(<span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;Everett&quot;</span>);</div>
+<div class="line">tx.put(<span class="stringliteral">&quot;version&quot;</span>, <span class="stringliteral">&quot;one&quot;</span>);</div>
+<div class="line"><span class="keyword">auto</span> before = tx.snapshot();</div>
+<div class="line">tx.put(<span class="stringliteral">&quot;version&quot;</span>, <span class="stringliteral">&quot;two&quot;</span>);</div>
+<div class="line">tx.commit();</div>
+<div class="line"><span class="comment">// before.get(&quot;version&quot;) is still &quot;one&quot;.</span></div>
+</div><!-- fragment --><p>Transaction reads see its own edits. Subsequent reads through <code>db</code> see the committed edits; retained snapshots stay fixed and can branch. The <a class="el" href="transactions-and-private-nurseries.html">transaction guide</a> covers private flushes, conflicts, abort and recovery.</p>
 <h1><a class="anchor" id="concurrent-updates"></a>
 Concurrent Updates</h1>
 <p>Several threads can submit writes through one connection. Its worker applies them in queue order and keeps merging between updates. Asynchronous writes return tickets:</p>

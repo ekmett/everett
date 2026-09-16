@@ -13,5 +13,6 @@ var searchData=
   ['native_20windows_20packed_20rank_20comparison_10',['Native Windows packed-rank comparison',['../md_bench_2rank__compare__windows.html',1,'']]],
   ['native_20writing_20and_20merging_11',['Incremental native writing and merging',['../md_docs_2native-merges.html',1,'']]],
   ['navigation_20views_12',['Owning queries with shared navigation views',['../md_bench_2shared__query.html',1,'']]],
-  ['neon_20reductions_20and_20the_20bitmap512_20rank_13',['NEON reductions and the Bitmap512 rank',['../md_bench_2neon__bitmap__rank.html',1,'']]]
+  ['neon_20reductions_20and_20the_20bitmap512_20rank_13',['NEON reductions and the Bitmap512 rank',['../md_bench_2neon__bitmap__rank.html',1,'']]],
+  ['nurseries_14',['Transactions and private nurseries',['../transactions-and-private-nurseries.html',1,'']]]
 ];

@@ -156,6 +156,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ac0d8c708576cdc4a7daedf8f9f48d432"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1ddffb07f9ff1cea280602436cc0f507" id="r_a1ddffb07f9ff1cea280602436cc0f507"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structeverett_1_1runtime__store.html#aef20f226d45d718ea3d273aece7a37cb">stored_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1runtime__store.html#a1ddffb07f9ff1cea280602436cc0f507">find_save</a> (std::string_view name)</td></tr>
 <tr class="separator:a1ddffb07f9ff1cea280602436cc0f507"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a59bd73b9e9173e7d8b39a5a2f2b88988" id="r_a59bd73b9e9173e7d8b39a5a2f2b88988"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1runtime__store.html#a59bd73b9e9173e7d8b39a5a2f2b88988">prepare</a> (<a class="el" href="structeverett_1_1runtime__store.html#a564b5ba7e408e98beff5d50b1cd9f9ca">snapshot_type</a> const &amp;source)</td></tr>
+<tr class="separator:a59bd73b9e9173e7d8b39a5a2f2b88988"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a219c77fde45af1db6985d7f7cf5cc27c" id="r_a219c77fde45af1db6985d7f7cf5cc27c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1runtime__store.html#aef20f226d45d718ea3d273aece7a37cb">stored_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1runtime__store.html#a219c77fde45af1db6985d7f7cf5cc27c">create_session</a> (std::string_view name, <a class="el" href="structeverett_1_1runtime__store.html#a564b5ba7e408e98beff5d50b1cd9f9ca">snapshot_type</a> const &amp;source, std::span&lt; std::byte const &gt; semantic={})</td></tr>
 <tr class="separator:a219c77fde45af1db6985d7f7cf5cc27c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a098dc7e6805d68ff3e78a158921ad059" id="r_a098dc7e6805d68ff3e78a158921ad059"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1runtime__store.html#aef20f226d45d718ea3d273aece7a37cb">stored_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1runtime__store.html#a098dc7e6805d68ff3e78a158921ad059">publish</a> (<a class="el" href="structeverett_1_1catalog__session__head.html">catalog_session_head</a> const &amp;expected, <a class="el" href="structeverett_1_1runtime__store.html#a564b5ba7e408e98beff5d50b1cd9f9ca">snapshot_type</a> const &amp;source, std::span&lt; std::byte const &gt; semantic={})</td></tr>
@@ -969,6 +971,34 @@ template&lt;class P , class Ids  = random_object_ids, class Ops  = sqlite_catalo
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a59bd73b9e9173e7d8b39a5a2f2b88988" name="a59bd73b9e9173e7d8b39a5a2f2b88988"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a59bd73b9e9173e7d8b39a5a2f2b88988">&#9670;&#160;</a></span>prepare()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class P , class Ids  = random_object_ids, class Ops  = sqlite_catalog_ops, class Family  = binary_runtime_family&lt;P&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="structeverett_1_1runtime__store.html">everett::runtime_store</a>&lt; P, Ids, Ops, Family &gt;::prepare </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1runtime__store.html#a564b5ba7e408e98beff5d50b1cd9f9ca">snapshot_type</a> const &amp;&#160;</td>
+          <td class="paramname"><em>source</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">

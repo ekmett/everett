@@ -100,11 +100,11 @@ $(function() {
 <div class="line">  .work = 1&#39;000&#39;000, .bytes = 64 * 1024 * 1024,</div>
 <div class="line">  .contributions = 64, .maintenance_budget = 4096</div>
 <div class="line">});</div>
-<div class="line"><span class="keyword">auto</span> after = current.<a class="code hl_function" href="structeverett_1_1session.html#a63e47dc95b4de134121dfbfaccbab4f6">apply</a>(engine_type::put(<span class="stringliteral">&quot;name&quot;</span>, std::string(<span class="stringliteral">&quot;Everett&quot;</span>)));</div>
+<div class="line"><span class="keyword">auto</span> after = current.<a class="code hl_function" href="structeverett_1_1session.html#a2e174cc91075df6f4f6b91ea0a3acdef">apply</a>(engine_type::put(<span class="stringliteral">&quot;name&quot;</span>, std::string(<span class="stringliteral">&quot;Everett&quot;</span>)));</div>
 <div class="line"><span class="comment">// apply waits for publication; submit returns a ticket instead.</span></div>
 <div class="line">current.shutdown();</div>
 <div class="ttc" id="astructeverett_1_1session_html"><div class="ttname"><a href="structeverett_1_1session.html">everett::session</a></div><div class="ttdef"><b>Definition</b> session.h:71</div></div>
-<div class="ttc" id="astructeverett_1_1session_html_a63e47dc95b4de134121dfbfaccbab4f6"><div class="ttname"><a href="structeverett_1_1session.html#a63e47dc95b4de134121dfbfaccbab4f6">everett::session::apply</a></div><div class="ttdeci">snapshot_type apply(C &amp;&amp;input)</div><div class="ttdef"><b>Definition</b> session.h:134</div></div>
+<div class="ttc" id="astructeverett_1_1session_html_a2e174cc91075df6f4f6b91ea0a3acdef"><div class="ttname"><a href="structeverett_1_1session.html#a2e174cc91075df6f4f6b91ea0a3acdef">everett::session::apply</a></div><div class="ttdeci">snapshot_type apply(C &amp;&amp;input)</div><div class="ttdef"><b>Definition</b> session.h:135</div></div>
 </div><!-- fragment --><h1><a class="anchor" id="contributions-and-batches"></a>
 Contributions and batches</h1>
 <p>A contribution owns its encoded changed records. The engine's static <code>put</code>, <code>erase</code>, <code>change</code> and <code>batch</code> factories create ordinary mutable commands. They are evaluated against the current state when the engine applies them. Two queued writes to the same key therefore take effect in queue order.</p>

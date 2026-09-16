@@ -100,6 +100,7 @@ $(function() {
 <h1><a class="anchor" id="reads-writes-and-snapshots"></a>
 Reads, writes and snapshots</h1>
 <p><code>put</code>, <code>erase</code>, and <code>change</code> wait until their contribution has been published durably. They return an owning snapshot of their result. <code>get</code> reads whichever durable snapshot was current when the read began.</p>
+<p><code>begin()</code> starts a <a class="el" href="transactions-and-private-nurseries.html">transaction</a> with a private nursery. It supports read-your-writes snapshots, branches, private flushes and one checked durable commit for the resulting state.</p>
 <div class="fragment"><div class="line"><span class="keyword">auto</span> before = db.snapshot();</div>
 <div class="line"><span class="keyword">auto</span> after = db.put(<span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;Persistent snapshots&quot;</span>);</div>
 <div class="line"><span class="comment">// before.get(&quot;name&quot;) still returns &quot;Everett&quot;.</span></div>

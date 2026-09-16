@@ -27,6 +27,7 @@ var searchData=
   ['everett_3a_3asort_5fprofile_5fdetail_24',['sort_profile_detail',['../namespaceeverett_1_1sort__profile__detail.html',1,'everett']]],
   ['everett_3a_3asort_5fprofile_5ffile_5fdetail_25',['sort_profile_file_detail',['../namespaceeverett_1_1sort__profile__file__detail.html',1,'everett']]],
   ['everett_3a_3asort_5fruntime_5fdetail_26',['sort_runtime_detail',['../namespaceeverett_1_1sort__runtime__detail.html',1,'everett']]],
-  ['everett_3a_3atyped_5fdetail_27',['typed_detail',['../namespaceeverett_1_1typed__detail.html',1,'everett']]],
-  ['everett_3a_3aworld_5fdetail_28',['world_detail',['../namespaceeverett_1_1world__detail.html',1,'everett']]]
+  ['everett_3a_3atransaction_5fdetail_27',['transaction_detail',['../namespaceeverett_1_1transaction__detail.html',1,'everett']]],
+  ['everett_3a_3atyped_5fdetail_28',['typed_detail',['../namespaceeverett_1_1typed__detail.html',1,'everett']]],
+  ['everett_3a_3aworld_5fdetail_29',['world_detail',['../namespaceeverett_1_1world__detail.html',1,'everett']]]
 ];

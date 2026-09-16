@@ -132,6 +132,18 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a4fa7aa3715292f12f0a9e8d5455c86aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c048c2f184bf0ef60bb4bc36dac4f7a" id="r_a3c048c2f184bf0ef60bb4bc36dac4f7a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1session.html#ad4a35dde87f49c7fd5b613fa6cb89a9e">snapshot_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1session.html#a3c048c2f184bf0ef60bb4bc36dac4f7a">snapshot</a> () const noexcept</td></tr>
 <tr class="separator:a3c048c2f184bf0ef60bb4bc36dac4f7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a64bcfb3d25d352c8b9b11d9a7e93da17" id="r_a64bcfb3d25d352c8b9b11d9a7e93da17"><td class="memTemplParams" colspan="2">template&lt;class C &gt; <br />
+requires (!std::same_as&lt;std::remove_cvref_t&lt;C&gt;, <a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;) &amp;&amp; requires(C &amp;&amp; input) { { Engine::borrow_contribution(std::forward&lt;C&gt;(input)) } -&gt; std::same_as&lt;<a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;; }</td></tr>
+<tr class="memitem:a64bcfb3d25d352c8b9b11d9a7e93da17"><td class="memTemplItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structeverett_1_1session_1_1ticket.html">ticket</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1session.html#a64bcfb3d25d352c8b9b11d9a7e93da17">try_submit</a> (C &amp;&amp;input)</td></tr>
+<tr class="separator:a64bcfb3d25d352c8b9b11d9a7e93da17"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3aad1c6d9a6e4170acc262a914ee777c" id="r_a3aad1c6d9a6e4170acc262a914ee777c"><td class="memTemplParams" colspan="2">template&lt;class C &gt; <br />
+requires (!std::same_as&lt;std::remove_cvref_t&lt;C&gt;, <a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;) &amp;&amp; requires(C &amp;&amp; input) { { Engine::borrow_contribution(std::forward&lt;C&gt;(input)) } -&gt; std::same_as&lt;<a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;; }</td></tr>
+<tr class="memitem:a3aad1c6d9a6e4170acc262a914ee777c"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1session_1_1ticket.html">ticket</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1session.html#a3aad1c6d9a6e4170acc262a914ee777c">submit</a> (C &amp;&amp;input)</td></tr>
+<tr class="separator:a3aad1c6d9a6e4170acc262a914ee777c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e174cc91075df6f4f6b91ea0a3acdef" id="r_a2e174cc91075df6f4f6b91ea0a3acdef"><td class="memTemplParams" colspan="2">template&lt;class C &gt; <br />
+requires (!std::same_as&lt;std::remove_cvref_t&lt;C&gt;, <a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;) &amp;&amp; requires(C &amp;&amp; input) { { Engine::borrow_contribution(std::forward&lt;C&gt;(input)) } -&gt; std::same_as&lt;<a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;; }</td></tr>
+<tr class="memitem:a2e174cc91075df6f4f6b91ea0a3acdef"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1session.html#ad4a35dde87f49c7fd5b613fa6cb89a9e">snapshot_type</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1session.html#a2e174cc91075df6f4f6b91ea0a3acdef">apply</a> (C &amp;&amp;input)</td></tr>
+<tr class="separator:a2e174cc91075df6f4f6b91ea0a3acdef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5b34ed4a919c54e707f158c164b908a" id="r_af5b34ed4a919c54e707f158c164b908a"><td class="memTemplParams" colspan="2">template&lt;class C &gt; <br />
 requires std::same_as&lt;std::remove_cvref_t&lt;C&gt;, <a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;</td></tr>
 <tr class="memitem:af5b34ed4a919c54e707f158c164b908a"><td class="memTemplItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structeverett_1_1session_1_1ticket.html">ticket</a> &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1session.html#af5b34ed4a919c54e707f158c164b908a">try_submit</a> (C &amp;&amp;input)</td></tr>
@@ -381,8 +393,39 @@ template&lt;class Engine &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a2e174cc91075df6f4f6b91ea0a3acdef" name="a2e174cc91075df6f4f6b91ea0a3acdef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e174cc91075df6f4f6b91ea0a3acdef">&#9670;&#160;</a></span>apply() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Engine &gt; </div>
+<div class="memtemplate">
+template&lt;class C &gt; <br />
+requires (!std::same_as&lt;std::remove_cvref_t&lt;C&gt;, <a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;) &amp;&amp; requires(C &amp;&amp; input) { { Engine::borrow_contribution(std::forward&lt;C&gt;(input)) } -&gt; std::same_as&lt;<a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;; }</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structeverett_1_1session.html#ad4a35dde87f49c7fd5b613fa6cb89a9e">snapshot_type</a> <a class="el" href="structeverett_1_1session.html">everett::session</a>&lt; Engine &gt;::apply </td>
+          <td>(</td>
+          <td class="paramtype">C &amp;&amp;&#160;</td>
+          <td class="paramname"><em>input</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a63e47dc95b4de134121dfbfaccbab4f6" name="a63e47dc95b4de134121dfbfaccbab4f6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a63e47dc95b4de134121dfbfaccbab4f6">&#9670;&#160;</a></span>apply()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a63e47dc95b4de134121dfbfaccbab4f6">&#9670;&#160;</a></span>apply() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -857,8 +900,39 @@ template&lt;class Engine &gt; </div>
 
 </div>
 </div>
+<a id="a3aad1c6d9a6e4170acc262a914ee777c" name="a3aad1c6d9a6e4170acc262a914ee777c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3aad1c6d9a6e4170acc262a914ee777c">&#9670;&#160;</a></span>submit() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Engine &gt; </div>
+<div class="memtemplate">
+template&lt;class C &gt; <br />
+requires (!std::same_as&lt;std::remove_cvref_t&lt;C&gt;, <a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;) &amp;&amp; requires(C &amp;&amp; input) { { Engine::borrow_contribution(std::forward&lt;C&gt;(input)) } -&gt; std::same_as&lt;<a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;; }</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structeverett_1_1session_1_1ticket.html">ticket</a> <a class="el" href="structeverett_1_1session.html">everett::session</a>&lt; Engine &gt;::submit </td>
+          <td>(</td>
+          <td class="paramtype">C &amp;&amp;&#160;</td>
+          <td class="paramname"><em>input</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="adede8b0c1e7f6f48babcc435f2023543" name="adede8b0c1e7f6f48babcc435f2023543"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adede8b0c1e7f6f48babcc435f2023543">&#9670;&#160;</a></span>submit()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#adede8b0c1e7f6f48babcc435f2023543">&#9670;&#160;</a></span>submit() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -888,8 +962,39 @@ requires std::same_as&lt;std::remove_cvref_t&lt;C&gt;, <a class="el" href="struc
 
 </div>
 </div>
+<a id="a64bcfb3d25d352c8b9b11d9a7e93da17" name="a64bcfb3d25d352c8b9b11d9a7e93da17"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a64bcfb3d25d352c8b9b11d9a7e93da17">&#9670;&#160;</a></span>try_submit() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Engine &gt; </div>
+<div class="memtemplate">
+template&lt;class C &gt; <br />
+requires (!std::same_as&lt;std::remove_cvref_t&lt;C&gt;, <a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;) &amp;&amp; requires(C &amp;&amp; input) { { Engine::borrow_contribution(std::forward&lt;C&gt;(input)) } -&gt; std::same_as&lt;<a class="el" href="structeverett_1_1session.html#ad4b585dd4b7a666dd0cbf01c167fed4a">contribution_type</a>&gt;; }</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt; <a class="el" href="structeverett_1_1session_1_1ticket.html">ticket</a> &gt; <a class="el" href="structeverett_1_1session.html">everett::session</a>&lt; Engine &gt;::try_submit </td>
+          <td>(</td>
+          <td class="paramtype">C &amp;&amp;&#160;</td>
+          <td class="paramname"><em>input</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="af5b34ed4a919c54e707f158c164b908a" name="af5b34ed4a919c54e707f158c164b908a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af5b34ed4a919c54e707f158c164b908a">&#9670;&#160;</a></span>try_submit()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#af5b34ed4a919c54e707f158c164b908a">&#9670;&#160;</a></span>try_submit() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">

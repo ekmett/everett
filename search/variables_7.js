@@ -6,7 +6,7 @@ var searchData=
   ['header_5f_3',['header_',['../structeverett_1_1encoded__cola__sections.html#a52ae971828ffbcddef11118fa798b73c',1,'everett::encoded_cola_sections::header_'],['../structeverett_1_1file.html#a1db6374ba2fb4d849bdc751bbd287207',1,'everett::file::header_'],['../structeverett_1_1encoded__sections.html#a771a9fd3f09b83b48d3eec46aa1539b9',1,'everett::encoded_sections::header_'],['../structeverett_1_1encoded__sort__sections.html#aa98aefc01875d0c538d8296b4ccce631',1,'everett::encoded_sort_sections::header_']]],
   ['header_5fbytes_4',['header_bytes',['../namespaceeverett_1_1file__detail.html#afb2a778a2817f34d023c89a282786e81',1,'everett::file_detail']]],
   ['heap_5f_5',['heap_',['../structeverett_1_1typed__scan.html#a455d5615c85b7cc72a0e97508c99403f',1,'everett::typed_scan']]],
-  ['height_6',['height',['../structeverett_1_1redundant__runtime_1_1execution.html#aa0f070175c8f009f90908dcf745f2cc9',1,'everett::redundant_runtime::execution']]],
+  ['height_6',['height',['../structeverett_1_1nursery__map_1_1node.html#a70313cce9761eda2118dff66c84ec5b0',1,'everett::nursery_map::node::height'],['../structeverett_1_1redundant__runtime_1_1execution.html#aa0f070175c8f009f90908dcf745f2cc9',1,'everett::redundant_runtime::execution::height']]],
   ['hex_5f_7',['hex_',['../structeverett_1_1object__id.html#a664ed8cd4c9f5a808a9c17c3372d2b7f',1,'everett::object_id']]],
   ['high_8',['high',['../structeverett_1_1elias__fano.html#a13f657b12fa2326a59ff9a6ecec542f9',1,'everett::elias_fano::high'],['../namespaceeverett_1_1section__detail.html#a5674a731c880c6b7d0ab6b1e633db74a',1,'everett::section_detail::high']]],
   ['high_5f_9',['high_',['../structeverett_1_1elias__fano__view.html#a022a5c29863bbaf15f22e1a5fb6bd5a7',1,'everett::elias_fano_view']]],

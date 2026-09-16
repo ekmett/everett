@@ -11,5 +11,6 @@ var searchData=
   ['native_5fprefix_2emd_8',['native_prefix.md',['../native__prefix_8md.html',1,'']]],
   ['native_5fwriter_2eh_9',['native_writer.h',['../native__writer_8h.html',1,'']]],
   ['neon_5fbitmap_5frank_2emd_10',['neon_bitmap_rank.md',['../neon__bitmap__rank_8md.html',1,'']]],
-  ['network_2dadmission_2emd_11',['network-admission.md',['../network-admission_8md.html',1,'']]]
+  ['network_2dadmission_2emd_11',['network-admission.md',['../network-admission_8md.html',1,'']]],
+  ['nursery_5fmap_2eh_12',['nursery_map.h',['../nursery__map_8h.html',1,'']]]
 ];

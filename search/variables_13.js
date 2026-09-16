@@ -13,5 +13,7 @@ var searchData=
   ['tiny_5fconversion_5fcharged_10',['tiny_conversion_charged',['../structeverett_1_1replacement__rebuild__work.html#a1b581529b36ba06ef7ccb4bf08057cf9',1,'everett::replacement_rebuild_work']]],
   ['tiny_5fgenerations_11',['tiny_generations',['../structeverett_1_1replacement__rebuild__work.html#afc7ebcb9afd857c9fc00cadb44d0649c',1,'everett::replacement_rebuild_work']]],
   ['tiny_5findexes_12',['tiny_indexes',['../structeverett_1_1replacement__rebuild__work.html#ab3a1669db864050324e4bceac37f65c9',1,'everett::replacement_rebuild_work']]],
-  ['tiny_5frecord_5flimit_13',['tiny_record_limit',['../structeverett_1_1replacement__rebuild__engine.html#a02b0dbfb895d90251c902f125a54689c',1,'everett::replacement_rebuild_engine']]]
+  ['tiny_5frecord_5flimit_13',['tiny_record_limit',['../structeverett_1_1replacement__rebuild__engine.html#a02b0dbfb895d90251c902f125a54689c',1,'everett::replacement_rebuild_engine']]],
+  ['transaction_14',['transaction',['../structeverett_1_1transaction_1_1snapshot__type.html#a81b23603f5c41ae746befc945d5fb9bc',1,'everett::transaction::snapshot_type']]],
+  ['transaction_5ftype_15',['transaction_type',['../structeverett_1_1connection.html#a6310566eed954abe0822ec1c3963d8da',1,'everett::connection']]]
 ];

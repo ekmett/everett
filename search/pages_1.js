@@ -39,12 +39,13 @@ var searchData=
   ['and_20output_36',['Optional GPU merge: direct compressed input and output',['../optional-gpu-merge-direct-compressed-input-and-output.html',1,'']]],
   ['and_20packed_20rank_20comparison_37',['Full-vector and packed-rank comparison',['../md_bench_2rank__compare.html',1,'']]],
   ['and_20pipeline_20performance_38',['Blob and pipeline performance',['../blob-and-pipeline-performance.html',1,'']]],
-  ['and_20publication_39',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
-  ['and_20rank_20experiment_40',['Collision bitmap and rank experiment',['../collision-bitmap-and-rank-experiment.html',1,'']]],
-  ['and_20reservations_41',['Persistent SQLite roots and reservations',['../md_docs_2sqlite-catalog.html',1,'']]],
-  ['and_20stringlike_20keys_42',['Sorts and stringlike keys',['../md_docs_2keys.html',1,'']]],
-  ['and_20the_20bitmap512_20rank_43',['NEON reductions and the Bitmap512 rank',['../md_bench_2neon__bitmap__rank.html',1,'']]],
-  ['and_20the_20choice_20of_20k_44',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]],
-  ['arithmetic_20cleanup_45',['Complete queries after bit-arithmetic cleanup',['../md_bench_2query__rounding.html',1,'']]],
-  ['avx2_20packed_20rank_20comparison_46',['Native AVX2 packed-rank comparison',['../native-avx2-packed-rank-comparison.html',1,'']]]
+  ['and_20private_20nurseries_39',['Transactions and private nurseries',['../transactions-and-private-nurseries.html',1,'']]],
+  ['and_20publication_40',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
+  ['and_20rank_20experiment_41',['Collision bitmap and rank experiment',['../collision-bitmap-and-rank-experiment.html',1,'']]],
+  ['and_20reservations_42',['Persistent SQLite roots and reservations',['../md_docs_2sqlite-catalog.html',1,'']]],
+  ['and_20stringlike_20keys_43',['Sorts and stringlike keys',['../md_docs_2keys.html',1,'']]],
+  ['and_20the_20bitmap512_20rank_44',['NEON reductions and the Bitmap512 rank',['../md_bench_2neon__bitmap__rank.html',1,'']]],
+  ['and_20the_20choice_20of_20k_45',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]],
+  ['arithmetic_20cleanup_46',['Complete queries after bit-arithmetic cleanup',['../md_bench_2query__rounding.html',1,'']]],
+  ['avx2_20packed_20rank_20comparison_47',['Native AVX2 packed-rank comparison',['../native-avx2-packed-rank-comparison.html',1,'']]]
 ];

@@ -19,12 +19,13 @@ var searchData=
   ['load_5fbits_16',['load_bits',['../namespaceeverett_1_1profile__detail.html#ae85dd0828073706459af3cd8f651f2bb',1,'everett::profile_detail']]],
   ['load_5flittle_17',['load_little',['../namespaceeverett_1_1crc32c__detail.html#a4a46ceaf46514195b2a4f5ea5f01c062',1,'everett::crc32c_detail']]],
   ['locate_18',['locate',['../structeverett_1_1profile__view.html#a58511b7dc1eaa0d6843c25bf53a5a192',1,'everett::profile_view::locate()'],['../structeverett_1_1catalog__bindings.html#ab42fb932adf1c385d2658b00a1c6fcb6',1,'everett::catalog_bindings::locate()']]],
-  ['lookup_5foperation_19',['lookup_operation',['../structeverett_1_1sqlite__catalog.html#a159301477849024ee5a2b489bcfe74b3',1,'everett::sqlite_catalog']]],
-  ['low_5fcomponent_20',['low_component',['../namespaceeverett_1_1elias__fano__detail.html#a4ccb681fa8f46746fa7b806c428571f0',1,'everett::elias_fano_detail']]],
-  ['low_5fmask_21',['low_mask',['../namespaceeverett_1_1profile__detail.html#abc12d53cf449fb1deeecf85832230cbc',1,'everett::profile_detail']]],
-  ['low_5fpackers_22',['low_packers',['../namespaceeverett_1_1elias__fano__detail.html#acdac77f14b932d45daa34849b0644561',1,'everett::elias_fano_detail']]],
-  ['low_5ftile_23',['low_tile',['../namespaceeverett_1_1elias__fano__detail.html#a49d826f26edd49acd9ae1c91f5415be7',1,'everett::elias_fano_detail']]],
-  ['low_5fwidth_24',['low_width',['../structeverett_1_1elias__fano__view.html#a626ea51fa136d3716f4c672c968dec4c',1,'everett::elias_fano_view']]],
-  ['low_5fword_25',['low_word',['../namespaceeverett_1_1elias__fano__detail.html#ad0caa5509fcefaeed30850d798e53c42',1,'everett::elias_fano_detail']]],
-  ['low_5fwords_26',['low_words',['../structeverett_1_1elias__fano__view.html#a8b61ced2b0f32f65f424456e3f44a3f2',1,'everett::elias_fano_view']]]
+  ['logical_5fidentity_19',['logical_identity',['../structeverett_1_1stored__world.html#a8a469156b051a15757c386836065b317',1,'everett::stored_world']]],
+  ['lookup_5foperation_20',['lookup_operation',['../structeverett_1_1sqlite__catalog.html#a159301477849024ee5a2b489bcfe74b3',1,'everett::sqlite_catalog']]],
+  ['low_5fcomponent_21',['low_component',['../namespaceeverett_1_1elias__fano__detail.html#a4ccb681fa8f46746fa7b806c428571f0',1,'everett::elias_fano_detail']]],
+  ['low_5fmask_22',['low_mask',['../namespaceeverett_1_1profile__detail.html#abc12d53cf449fb1deeecf85832230cbc',1,'everett::profile_detail']]],
+  ['low_5fpackers_23',['low_packers',['../namespaceeverett_1_1elias__fano__detail.html#acdac77f14b932d45daa34849b0644561',1,'everett::elias_fano_detail']]],
+  ['low_5ftile_24',['low_tile',['../namespaceeverett_1_1elias__fano__detail.html#a49d826f26edd49acd9ae1c91f5415be7',1,'everett::elias_fano_detail']]],
+  ['low_5fwidth_25',['low_width',['../structeverett_1_1elias__fano__view.html#a626ea51fa136d3716f4c672c968dec4c',1,'everett::elias_fano_view']]],
+  ['low_5fword_26',['low_word',['../namespaceeverett_1_1elias__fano__detail.html#ad0caa5509fcefaeed30850d798e53c42',1,'everett::elias_fano_detail']]],
+  ['low_5fwords_27',['low_words',['../structeverett_1_1elias__fano__view.html#a8b61ced2b0f32f65f424456e3f44a3f2',1,'everett::elias_fano_view']]]
 ];

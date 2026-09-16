@@ -140,6 +140,16 @@ Variables</h2></td></tr>
 <tr class="separator:a4f759c74781231299318834bd75475c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabf09800ce2ac7867979c9ca0dc96791" id="r_aabf09800ce2ac7867979c9ca0dc96791"><td class="memItemLeft" align="right" valign="top">constexpr char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#aabf09800ce2ac7867979c9ca0dc96791">native_merges_schema</a> []</td></tr>
 <tr class="separator:aabf09800ce2ac7867979c9ca0dc96791"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1dee99b504bdd398e855f3c93c1235c" id="r_ae1dee99b504bdd398e855f3c93c1235c"><td class="memItemLeft" align="right" valign="top">constexpr char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#ae1dee99b504bdd398e855f3c93c1235c">private_scopes_schema</a> []</td></tr>
+<tr class="separator:ae1dee99b504bdd398e855f3c93c1235c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5426d29e50c49aa4ceb23e58a9f68ab4" id="r_a5426d29e50c49aa4ceb23e58a9f68ab4"><td class="memItemLeft" align="right" valign="top">constexpr char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#a5426d29e50c49aa4ceb23e58a9f68ab4">private_attempts_schema</a> []</td></tr>
+<tr class="separator:a5426d29e50c49aa4ceb23e58a9f68ab4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afae258f3e12cff2ae5a12a9f91d31d0b" id="r_afae258f3e12cff2ae5a12a9f91d31d0b"><td class="memItemLeft" align="right" valign="top">constexpr char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#afae258f3e12cff2ae5a12a9f91d31d0b">released_private_scopes_schema</a> []</td></tr>
+<tr class="separator:afae258f3e12cff2ae5a12a9f91d31d0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96344c072502ec473bb3b3ebe2bd3a33" id="r_a96344c072502ec473bb3b3ebe2bd3a33"><td class="memItemLeft" align="right" valign="top">constexpr char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#a96344c072502ec473bb3b3ebe2bd3a33">live_owner_objects_schema</a> []</td></tr>
+<tr class="separator:a96344c072502ec473bb3b3ebe2bd3a33"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d194093eb4d332e8863e88d4c6361d9" id="r_a7d194093eb4d332e8863e88d4c6361d9"><td class="memItemLeft" align="right" valign="top">constexpr char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#a7d194093eb4d332e8863e88d4c6361d9">live_owner_roots_schema</a> []</td></tr>
+<tr class="separator:a7d194093eb4d332e8863e88d4c6361d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Typedef Documentation</h2>
 <a id="af77b3ba3d6c8ca4fbb10fdc6bc18402b" name="af77b3ba3d6c8ca4fbb10fdc6bc18402b"></a>
@@ -658,6 +668,54 @@ Variables</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Variable Documentation</h2>
+<a id="a96344c072502ec473bb3b3ebe2bd3a33" name="a96344c072502ec473bb3b3ebe2bd3a33"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a96344c072502ec473bb3b3ebe2bd3a33">&#9670;&#160;</a></span>live_owner_objects_schema</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr char everett::catalog_detail::live_owner_objects_schema[]</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">      <span class="stringliteral">&quot;CREATE VIEW live_owner_objects AS SELECT p.* FROM owner_objects p WHERE p.owner_kind&lt;&gt;&#39;attempt&#39; OR NOT EXISTS(SELECT 1 FROM attempts a JOIN private_attempts s ON s.attempt=a.id JOIN released_private_scopes r ON r.scope=s.scope WHERE a.owner=p.owner_id)&quot;</span></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a7d194093eb4d332e8863e88d4c6361d9" name="a7d194093eb4d332e8863e88d4c6361d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d194093eb4d332e8863e88d4c6361d9">&#9670;&#160;</a></span>live_owner_roots_schema</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr char everett::catalog_detail::live_owner_roots_schema[]</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">      <span class="stringliteral">&quot;CREATE VIEW live_owner_roots AS SELECT p.* FROM owner_roots p WHERE p.owner_kind&lt;&gt;&#39;attempt&#39; OR NOT EXISTS(SELECT 1 FROM attempts a JOIN private_attempts s ON s.attempt=a.id JOIN released_private_scopes r ON r.scope=s.scope WHERE a.owner=p.owner_id)&quot;</span></div>
+</div><!-- fragment -->
+</div>
+</div>
 <a id="aabf09800ce2ac7867979c9ca0dc96791" name="aabf09800ce2ac7867979c9ca0dc96791"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aabf09800ce2ac7867979c9ca0dc96791">&#9670;&#160;</a></span>native_merges_schema</h2>
 
@@ -679,6 +737,78 @@ Variables</h2></td></tr>
 </div><div class="memdoc">
 <b>Initial value:</b><div class="fragment"><div class="line">=</div>
 <div class="line">      <span class="stringliteral">&quot;CREATE TABLE completed_native_merges(domain BLOB NOT NULL,older TEXT NOT NULL REFERENCES objects(id),newer TEXT NOT NULL REFERENCES objects(id),output TEXT NOT NULL REFERENCES objects(id),owner_kind TEXT NOT NULL CHECK(owner_kind=&#39;reader&#39;),owner_id BLOB NOT NULL UNIQUE,PRIMARY KEY(domain,older,newer),FOREIGN KEY(owner_kind,owner_id,output) REFERENCES owner_objects(owner_kind,owner_id,object_id)) STRICT&quot;</span></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="a5426d29e50c49aa4ceb23e58a9f68ab4" name="a5426d29e50c49aa4ceb23e58a9f68ab4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5426d29e50c49aa4ceb23e58a9f68ab4">&#9670;&#160;</a></span>private_attempts_schema</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr char everett::catalog_detail::private_attempts_schema[]</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">      <span class="stringliteral">&quot;CREATE TABLE private_attempts(attempt TEXT PRIMARY KEY REFERENCES attempts(id),scope TEXT NOT NULL REFERENCES private_scopes(id)) STRICT&quot;</span></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="ae1dee99b504bdd398e855f3c93c1235c" name="ae1dee99b504bdd398e855f3c93c1235c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae1dee99b504bdd398e855f3c93c1235c">&#9670;&#160;</a></span>private_scopes_schema</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr char everett::catalog_detail::private_scopes_schema[]</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">      <span class="stringliteral">&quot;CREATE TABLE private_scopes(id TEXT PRIMARY KEY CHECK(length(id)=32)) STRICT&quot;</span></div>
+</div><!-- fragment -->
+</div>
+</div>
+<a id="afae258f3e12cff2ae5a12a9f91d31d0b" name="afae258f3e12cff2ae5a12a9f91d31d0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afae258f3e12cff2ae5a12a9f91d31d0b">&#9670;&#160;</a></span>released_private_scopes_schema</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">constexpr char everett::catalog_detail::released_private_scopes_schema[]</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<b>Initial value:</b><div class="fragment"><div class="line">=</div>
+<div class="line">      <span class="stringliteral">&quot;CREATE TABLE released_private_scopes(scope TEXT PRIMARY KEY REFERENCES private_scopes(id)) STRICT&quot;</span></div>
 </div><!-- fragment -->
 </div>
 </div>

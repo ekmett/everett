@@ -168,8 +168,8 @@ Public Member Functions</h2></td></tr>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a35808fda52f84dde4b8a8dda5b06bb51" id="r_a35808fda52f84dde4b8a8dda5b06bb51"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="structeverett_1_1sort__file__runtime__storage.html">sort_file_runtime_storage</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__file__runtime__storage.html#a35808fda52f84dde4b8a8dda5b06bb51">open</a> (std::filesystem::path const &amp;root, Ids ids={}, <a class="el" href="structeverett_1_1catalog__options.html">catalog_options</a> options={}, CatalogOps catalog_ops={}, FileOps file_ops={}, <a class="el" href="structeverett_1_1runtime__output__options.html">runtime_output_options</a> outputs={})</td></tr>
 <tr class="separator:a35808fda52f84dde4b8a8dda5b06bb51"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:add22e6cc858fc9a90eeb23ade921f2d7" id="r_add22e6cc858fc9a90eeb23ade921f2d7"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="structeverett_1_1sort__file__runtime__storage.html">sort_file_runtime_storage</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__file__runtime__storage.html#add22e6cc858fc9a90eeb23ade921f2d7">open_for_schema</a> (std::filesystem::path const &amp;root, std::string_view schema)</td></tr>
-<tr class="separator:add22e6cc858fc9a90eeb23ade921f2d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c892b6f65102859398e22156485edb9" id="r_a6c892b6f65102859398e22156485edb9"><td class="memItemLeft" align="right" valign="top">static <a class="el" href="structeverett_1_1sort__file__runtime__storage.html">sort_file_runtime_storage</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__file__runtime__storage.html#a6c892b6f65102859398e22156485edb9">open_for_schema</a> (std::filesystem::path const &amp;root, std::string_view schema, <a class="el" href="structeverett_1_1catalog__options.html">catalog_options</a> options={})</td></tr>
+<tr class="separator:a6c892b6f65102859398e22156485edb9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_static_methods_structeverett_1_1sort__runtime__storage"><td colspan="2" onclick="javascript:toggleInherit('pub_static_methods_structeverett_1_1sort__runtime__storage')"><img src="closed.png" alt="-"/>&#160;Static Public Member Functions inherited from <a class="el" href="structeverett_1_1sort__runtime__storage.html">everett::sort_runtime_storage&lt; P, Selector &gt;</a></td></tr>
 <tr class="memitem:a8dc96ce1ff48e70f71838a2ac14d364c inherit pub_static_methods_structeverett_1_1sort__runtime__storage" id="r_a8dc96ce1ff48e70f71838a2ac14d364c"><td class="memItemLeft" align="right" valign="top">static auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__runtime__storage.html#a8dc96ce1ff48e70f71838a2ac14d364c">encode_native</a> (<a class="el" href="structeverett_1_1sort__profile__array.html">sort_profile_array</a>&lt; P, Selector &gt; const &amp;value)</td></tr>
 <tr class="separator:a8dc96ce1ff48e70f71838a2ac14d364c inherit pub_static_methods_structeverett_1_1sort__runtime__storage"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -656,8 +656,8 @@ template&lt;class P , class Selector  = registry_selector&lt;typename P::registr
 
 </div>
 </div>
-<a id="add22e6cc858fc9a90eeb23ade921f2d7" name="add22e6cc858fc9a90eeb23ade921f2d7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#add22e6cc858fc9a90eeb23ade921f2d7">&#9670;&#160;</a></span>open_for_schema()</h2>
+<a id="a6c892b6f65102859398e22156485edb9" name="a6c892b6f65102859398e22156485edb9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6c892b6f65102859398e22156485edb9">&#9670;&#160;</a></span>open_for_schema()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -677,7 +677,13 @@ template&lt;class P , class Selector  = registry_selector&lt;typename P::registr
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">std::string_view&#160;</td>
-          <td class="paramname"><em>schema</em>&#160;</td>
+          <td class="paramname"><em>schema</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1catalog__options.html">catalog_options</a>&#160;</td>
+          <td class="paramname"><em>options</em> = <code>{}</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

@@ -1,11 +1,25 @@
 var searchData=
 [
-  ['u64_5ftable_5fhash_0',['u64_table_hash',['../structeverett_1_1u64__table__hash.html',1,'everett']]],
-  ['u64_5fworld_5fcodec_1',['u64_world_codec',['../structeverett_1_1u64__world__codec.html',1,'everett']]],
-  ['unique_2',['unique',['../structeverett_1_1registry__detail_1_1unique.html',1,'everett::registry_detail']]],
-  ['unique_3c_20sorts_3c_20a_2c_20b_2e_2e_2e_20_3e_20_3e_3',['unique&lt; sorts&lt; A, B... &gt; &gt;',['../structeverett_1_1registry__detail_1_1unique_3_01sorts_3_01_a_00_01_b_8_8_8_01_4_01_4.html',1,'everett::registry_detail']]],
-  ['unique_3c_20sorts_3c_3e_20_3e_4',['unique&lt; sorts&lt;&gt; &gt;',['../structeverett_1_1registry__detail_1_1unique_3_01sorts_3_4_01_4.html',1,'everett::registry_detail']]],
-  ['unsigned_5fkey_5',['unsigned_key',['../structeverett_1_1unsigned__key.html',1,'everett']]],
-  ['unsigned_5fvalue_6',['unsigned_value',['../structeverett_1_1unsigned__value.html',1,'everett']]],
-  ['unsorted_7',['unsorted',['../structeverett_1_1unsorted.html',1,'everett']]]
+  ['table_5ffingerprint_0',['table_fingerprint',['../structeverett_1_1table__fingerprint.html',1,'everett']]],
+  ['ticket_1',['ticket',['../structeverett_1_1session_1_1ticket.html',1,'everett::session']]],
+  ['timeline_2',['timeline',['../structeverett_1_1timeline.html',1,'everett']]],
+  ['tip_3',['tip',['../structeverett_1_1tip.html',1,'everett']]],
+  ['tombstone_5fpredicate_4',['tombstone_predicate',['../structeverett_1_1typed__detail_1_1tombstone__predicate.html',1,'everett::typed_detail']]],
+  ['tombstone_5fpredicate_3c_20p_2c_20profile_5fkey_5ftransport_3c_20p_20_3e_20_3e_5',['tombstone_predicate&lt; P, profile_key_transport&lt; P &gt; &gt;',['../structeverett_1_1typed__detail_1_1tombstone__predicate.html',1,'everett::typed_detail']]],
+  ['tombstone_5fvalue_6',['tombstone_value',['../structeverett_1_1tombstone__value.html',1,'everett']]],
+  ['transaction_7',['transaction',['../structeverett_1_1transaction.html',1,'everett']]],
+  ['transaction_5fconflict_8',['transaction_conflict',['../structeverett_1_1transaction__conflict.html',1,'everett']]],
+  ['transport_9',['transport',['../structeverett_1_1typed__detail_1_1transport.html',1,'everett::typed_detail']]],
+  ['transport_3c_20p_2c_20family_2c_20std_3a_3avoid_5ft_3c_20typename_20family_3a_3akey_5ftransport_20_3e_20_3e_10',['transport&lt; P, Family, std::void_t&lt; typename Family::key_transport &gt; &gt;',['../structeverett_1_1typed__detail_1_1transport_3_01_p_00_01_family_00_01std_1_1void__t_3_01typenameb475100b6d351b4236d7c23b044a053f.html',1,'everett::typed_detail']]],
+  ['typed_5fbatch_11',['typed_batch',['../structeverett_1_1typed__batch.html',1,'everett']]],
+  ['typed_5fcontribution_12',['typed_contribution',['../structeverett_1_1typed__contribution.html',1,'everett']]],
+  ['typed_5fengine_13',['typed_engine',['../structeverett_1_1typed__engine.html',1,'everett']]],
+  ['typed_5frow_14',['typed_row',['../structeverett_1_1typed__row.html',1,'everett']]],
+  ['typed_5fscan_15',['typed_scan',['../structeverett_1_1typed__scan.html',1,'everett']]],
+  ['typed_5fworld_16',['typed_world',['../structeverett_1_1typed__world.html',1,'everett']]],
+  ['typed_5fworld_3c_20string_5fpolicy_2c_20wrapping_5ffingerprint_5falgebra_2c_20binary_5fruntime_5ffamily_3c_20string_5fpolicy_20_3e_20_3e_17',['typed_world&lt; string_policy, wrapping_fingerprint_algebra, binary_runtime_family&lt; string_policy &gt; &gt;',['../structeverett_1_1typed__world.html',1,'everett']]],
+  ['typed_5fworld_3c_20string_5fpolicy_2c_20wrapping_5ffingerprint_5falgebra_2c_20redundant_5fruntime_5ffamily_3c_20string_5fpolicy_20_3e_20_3e_18',['typed_world&lt; string_policy, wrapping_fingerprint_algebra, redundant_runtime_family&lt; string_policy &gt; &gt;',['../structeverett_1_1typed__world.html',1,'everett']]],
+  ['typed_5fworld_5fmetadata_19',['typed_world_metadata',['../structeverett_1_1typed__world__metadata.html',1,'everett']]],
+  ['typed_5fworld_5fmetadata_3c_20a_20_3e_20',['typed_world_metadata&lt; A &gt;',['../structeverett_1_1typed__world__metadata.html',1,'everett']]],
+  ['typed_5fworld_5fmetadata_3c_20wrapping_5ffingerprint_5falgebra_20_3e_21',['typed_world_metadata&lt; wrapping_fingerprint_algebra &gt;',['../structeverett_1_1typed__world__metadata.html',1,'everett']]]
 ];

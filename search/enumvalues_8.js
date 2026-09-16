@@ -6,5 +6,6 @@ var searchData=
   ['merge_5fstart_3',['merge_start',['../structeverett_1_1cola__runtime.html#a60cf9931db48b386f1b733d45699aeeba1807dc41215b1ebcbe01ed2c5909e883',1,'everett::cola_runtime']]],
   ['merge_5fstep_4',['merge_step',['../structeverett_1_1cola__runtime.html#a60cf9931db48b386f1b733d45699aeebac783a48aaa28f2eaa50157bf34f3e127',1,'everett::cola_runtime']]],
   ['metadata_5',['metadata',['../structeverett_1_1redundant__runtime.html#a3093dd07e84022343807d0660830e97fa9f81f3c07476a0d97f6793673dd8e475',1,'everett::redundant_runtime']]],
-  ['msb_5ffirst_6',['msb_first',['../namespaceeverett.html#ad2d1d3146c44d78081f558521afb800da0d142fa5ab9b24b770ea5c3e73da6e1a',1,'everett']]]
+  ['missing_6',['missing',['../structeverett_1_1sqlite__catalog.html#a19ee318c0732c7a8741a8687716e721eaea21841da70e6405af19fabc4ff8bdd9',1,'everett::sqlite_catalog']]],
+  ['msb_5ffirst_7',['msb_first',['../namespaceeverett.html#ad2d1d3146c44d78081f558521afb800da0d142fa5ab9b24b770ea5c3e73da6e1a',1,'everett']]]
 ];
