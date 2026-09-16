@@ -10,6 +10,7 @@
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
 #include <everett/elias_fano.h>
+#include "fixtures.h"
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -31,6 +32,10 @@ using u32 = std::uint32_t;
 using u64 = std::uint64_t;
 using key = std::array<u32, 4>;
 static_assert(std::endian::native == std::endian::little);
+using fixed_fixture::record;
+using fixed_fixture::fixture;
+using fixed_fixture::make_fixture;
+using fixed_fixture::value_shape;
 using clock_type = std::chrono::steady_clock;
 double elapsed(clock_type::time_point start) {
   return std::chrono::duration<double, std::milli>(clock_type::now() - start).count();
@@ -172,6 +177,52 @@ struct input_view {
   std::byte const *payload() const { return reinterpret_cast<std::byte const *>(words) + words[5]; }
 };
 
+// Forward-only EF decoding ignores the select directory. Consecutive value
+// ranges reuse their shared boundary; cancellation gaps skip whole high words
+// by popcount and need not decode the discarded low fields.
+struct value_cursor {
+  input_view const &source;
+  u32 next_boundary = 0, high_word = 0, next_record = 0, previous_end = 0;
+  u64 remaining = 0;
+  bool have_previous = false;
+  explicit value_cursor(input_view const &input) : source(input) {
+    if (source.words[2]) remaining = source.ef.high_words()[0];
+  }
+  u32 boundary(u32 ordinal) {
+    auto skip = ordinal - next_boundary;
+    while (skip) {
+      auto population = u32(std::popcount(remaining));
+      if (skip >= population) {
+        skip -= population;
+        remaining = source.ef.high_words()[++high_word];
+      } else {
+        do { remaining &= remaining - 1; } while (--skip);
+      }
+    }
+    while (!remaining) remaining = source.ef.high_words()[++high_word];
+    auto position = u64(high_word) * 64 + std::countr_zero(remaining);
+    remaining &= remaining - 1;
+    auto width = source.words[11];
+    u64 low = 0;
+    if (width) {
+      auto bit = u64(ordinal) * width, word = bit >> 6;
+      auto shift = unsigned(bit & 63);
+      low = source.ef.low_words()[word] >> shift;
+      if (shift + width > 64) low |= source.ef.low_words()[word + 1] << (64 - shift);
+      low &= (u64{1} << width) - 1;
+    }
+    next_boundary = ordinal + 1;
+    return u32(((position - ordinal) << width) | low);
+  }
+  std::pair<u32, u32> range(u32 ordinal) {
+    if (!source.words[2]) return {ordinal * 16, (ordinal + 1) * 16};
+    auto start = have_previous && ordinal == next_record ? previous_end : boundary(ordinal);
+    previous_end = boundary(ordinal + 1);
+    next_record = ordinal + 1; have_previous = true;
+    return {start, previous_end};
+  }
+};
+
 void write_ef(std::byte *out, layout const &l, everett::elias_fano const &ef) {
   auto copy = [&](u32 word_offset, auto const &data) {
     if (!data.empty()) std::memcpy(out + word_offset * 4, data.data(), data.size() * sizeof(data[0]));
@@ -179,7 +230,6 @@ void write_ef(std::byte *out, layout const &l, everett::elias_fano const &ef) {
   copy(l.h[7], ef.low); copy(l.h[8], ef.high); copy(l.h[9], ef.samples); copy(l.h[10], ef.sparse);
 }
 
-struct record { key k; std::vector<std::byte> value; };
 std::vector<std::byte> encode(std::vector<record> const &records, bool variable, u32 identity) {
   std::vector<u64> offsets{0};
   for (auto const &r : records) offsets.push_back(offsets.back() + r.value.size());
@@ -196,6 +246,7 @@ std::vector<std::byte> encode(std::vector<record> const &records, bool variable,
   return out;
 }
 
+template <bool Forward = false>
 u32 cpu_merge(input_view const &a, input_view const &b, u32 const *due, std::byte *out) {
   auto na = a.words[3], nb = b.words[3], nc = due[1], n = na + nb - nc;
   auto bytes = a.words[6] + b.words[6] - due[4];
@@ -203,6 +254,7 @@ u32 cpu_merge(input_view const &a, input_view const &b, u32 const *due, std::byt
   auto keys = reinterpret_cast<key *>(out + 256);
   std::vector<u64> offsets;
   if (a.words[2]) offsets.reserve(n + 1);
+  value_cursor ac(a), bc(b);
   u32 ai = 0, bi = 0, ci = 0, oi = 0, written = 0;
   while (ai < na || bi < nb) {
     if (ci < nc && ai == due[8 + ci]) { ++ci; ++ai; continue; }
@@ -210,7 +262,11 @@ u32 cpu_merge(input_view const &a, input_view const &b, u32 const *due, std::byt
     auto const &source = take_a ? a : b;
     auto i = take_a ? ai++ : bi++;
     keys[oi++] = source.key_at(i);
-    auto start = source.offset(i), end = source.offset(i + 1);
+    u32 start, end;
+    if constexpr (Forward) {
+      auto range = (take_a ? ac : bc).range(i);
+      start = range.first; end = range.second;
+    } else { start = source.offset(i); end = source.offset(i + 1); }
     if (a.words[2]) offsets.push_back(written);
     if (end > start) std::memcpy(out + l.h[5] + written, source.payload() + start, end - start);
     written += end - start;
@@ -303,46 +359,6 @@ timing gpu_merge(gpu &g, id<MTLBuffer> a, id<MTLBuffer> b, id<MTLBuffer> due,
   return result;
 }
 
-struct fixture {
-  std::string name;
-  bool variable;
-  std::vector<record> a, b;
-  std::vector<u32> due;
-};
-key make_key(u32 n) { return {0xf0000000u + (n >> 18), (n >> 12) & 63, 0x80000000u + ((n >> 6) & 63), n & 63}; }
-record make_record(u32 ordinal, u32 length, u32 salt) {
-  record result{make_key(ordinal), std::vector<std::byte>(length)};
-  for (u32 i = 0; i < length; ++i) result.value[i] = std::byte((ordinal * 17 + i * 31 + salt) & 255);
-  return result;
-}
-fixture make_fixture(std::string name, bool variable, u32 na, u32 nb, u32 cancel_percent,
-                     bool giant = false, bool scattered = false) {
-  fixture f{std::move(name), variable, {}, {}, {0x31434445u, 0, na, 1001, 0, 0, 0, 0}};
-  auto length = [&](u32 i, u32 salt) { return variable ? (i * 107 + salt * 19) % 513 : 16; };
-  for (u32 i = 0; i < na; ++i) f.a.push_back(make_record(i * 2, length(i, 1), 1));
-  // A contiguous deletion run covers long canceled ranges, including starts
-  // and ends. Half of B's available entries replace these exact canceled keys.
-  auto nc = u32(u64(na) * cancel_percent / 100);
-  for (u32 i = 0; i < nc; ++i) {
-    auto target = scattered ? u32(u64(i) * na / nc) : i;
-    f.due.push_back(target); f.due[4] += u32(f.a[target].value.size());
-  }
-  f.due[1] = nc;
-  auto replacements = std::min(nc, nb / 2);
-  for (u32 i = 0; i < replacements; ++i) f.b.push_back(make_record(f.due[8 + i] * 2, length(i, 2), 2));
-  for (u32 i = replacements; i < nb; ++i) f.b.push_back(make_record((i - replacements) * 2 + 1, length(i, 2), 2));
-  std::sort(f.b.begin(), f.b.end(), [](auto const &a, auto const &b) { return a.k < b.k; });
-  if (giant) {
-    // Thousands of zero-length values and one large gap force sparse EF
-    // exceptions, including in the merged output, not only in an input.
-    for (auto &r : f.a) r.value.clear();
-    for (auto &r : f.b) r.value.clear();
-    if (!f.a.empty()) f.a[std::min<std::size_t>(7, f.a.size() - 1)].value.assign(1 << 20, std::byte{0xa5});
-    f.due[4] = 0;
-    for (u32 i = 0; i < nc; ++i) f.due[4] += u32(f.a[f.due[8 + i]].value.size());
-  }
-  return f;
-}
 
 double median(std::vector<double> values) {
   std::sort(values.begin(), values.end()); return values[values.size() / 2];
@@ -359,16 +375,18 @@ void run_case(gpu &g, fixture const &f, std::filesystem::path const &directory, 
   mapping a_map(directory / "input-a.tmp", a_data.size()), b_map(directory / "input-b.tmp", b_data.size());
   mapping due_map(directory / "due.tmp", f.due.size() * 4);
   mapping cpu_map(directory / "cpu.tmp", output_layout.capacity()), gpu_map(directory / "gpu.tmp", output_layout.capacity());
+  mapping forward_map(directory / "forward.tmp", output_layout.capacity());
   std::memcpy(a_map.data, a_data.data(), a_data.size()); std::memcpy(b_map.data, b_data.data(), b_data.size());
   std::memcpy(due_map.data, f.due.data(), f.due.size() * 4);
   auto a = g.import(a_map), b = g.import(b_map), due = g.import(due_map), output = g.import(gpu_map);
   auto setup_ms = elapsed(setup_start);
   input_view av(a_map.words()), bv(b_map.words());
-  std::vector<double> cpu_times, gpu_times, device_times;
+  std::vector<double> cpu_times, forward_times, gpu_times, device_times;
   timing result;
-  auto cpu = [&] {
+  auto cpu = [&](bool forward) {
     auto start = clock_type::now();
-    auto size = cpu_merge(av, bv, due_map.words(), cpu_map.bytes());
+    auto size = forward ? cpu_merge<true>(av, bv, due_map.words(), forward_map.bytes())
+                        : cpu_merge<false>(av, bv, due_map.words(), cpu_map.bytes());
     auto ms = elapsed(start);
     return std::pair(size, ms);
   };
@@ -379,27 +397,36 @@ void run_case(gpu &g, fixture const &f, std::filesystem::path const &directory, 
       for (u32 i = 0; i < size; ++i) if (cpu_map.bytes()[i] != gpu_map.bytes()[i])
         throw std::runtime_error(f.name + ": output mismatch at byte " + std::to_string(i));
     }
+    require(std::memcmp(cpu_map.data, forward_map.data, size) == 0, "forward CPU output mismatch");
     if (f.variable) {
       input_view check(gpu_map.words());
       require(check.offset(n) == bytes, "GPU output EOF select");
     }
   };
-  auto warm_cpu = cpu(); result = gpu_run(); compare(warm_cpu.first);
-  // Alternate order so one side does not always inherit the other's warm input.
+  auto warm_cpu = cpu(false); auto warm_forward = cpu(true);
+  require(warm_cpu.first == warm_forward.first, "forward CPU output extent");
+  result = gpu_run(); compare(warm_cpu.first);
+  // Rotate all three orders so no path always inherits the warmest inputs.
   for (unsigned i = 0; i < repeats; ++i) {
-    std::pair<u32, double> c;
-    if (i & 1) { result = gpu_run(); c = cpu(); } else { c = cpu(); result = gpu_run(); }
-    compare(c.first); cpu_times.push_back(c.second); gpu_times.push_back(result.total_ms); device_times.push_back(result.gpu_ms);
+    std::pair<u32, double> c, fwd;
+    if (i % 3 == 0) { c = cpu(false); fwd = cpu(true); result = gpu_run(); }
+    else if (i % 3 == 1) { fwd = cpu(true); result = gpu_run(); c = cpu(false); }
+    else { result = gpu_run(); c = cpu(false); fwd = cpu(true); }
+    require(c.first == fwd.first, "forward CPU output extent");
+    compare(c.first); cpu_times.push_back(c.second); forward_times.push_back(fwd.second);
+    gpu_times.push_back(result.total_ms); device_times.push_back(result.gpu_ms);
   }
   auto clip_start = clock_type::now();
-  cpu_map.clip(result.bytes); gpu_map.clip(result.bytes);
+  cpu_map.clip(result.bytes); gpu_map.clip(result.bytes); forward_map.clip(result.bytes);
   auto clip_ms = elapsed(clip_start);
   std::cout << f.name << ',' << (f.variable ? "fv" : "ff") << ',' << (f.variable ? g.value_tile_words : 1) << ',' << ah[3] << ',' << bh[3] << ','
       << f.due[1] << ',' << n << ',' << bytes << ',' << result.bytes << ',' << result.sparse << ','
       << median(cpu_times) << ',' << median(gpu_times) << ',' << median(device_times) << ','
       << fixture_ms << ',' << setup_ms << ',' << clip_ms << ',' << repeats << ','
       << *std::min_element(cpu_times.begin(), cpu_times.end()) << ',' << *std::max_element(cpu_times.begin(), cpu_times.end()) << ','
-      << *std::min_element(gpu_times.begin(), gpu_times.end()) << ',' << *std::max_element(gpu_times.begin(), gpu_times.end()) << '\n';
+      << *std::min_element(gpu_times.begin(), gpu_times.end()) << ',' << *std::max_element(gpu_times.begin(), gpu_times.end()) << ','
+      << median(forward_times) << ',' << *std::min_element(forward_times.begin(), forward_times.end()) << ','
+      << *std::max_element(forward_times.begin(), forward_times.end()) << '\n';
 }
 
 int main(int argc, char **argv) {
@@ -409,7 +436,7 @@ int main(int argc, char **argv) {
       std::filesystem::path directory(argv[2]); std::filesystem::create_directories(directory);
       auto compile_start = clock_type::now(); gpu g(argv[1]);
       std::cerr << "device=" << g.device.name.UTF8String << " pipeline_load_ms=" << elapsed(compile_start) << '\n';
-      std::cout << "case,layout,value_tile_words,older,newer,canceled,output_records,payload_bytes,file_bytes,sparse_entries,cpu_ms,gpu_total_ms,gpu_device_ms,fixture_encode_ms,map_import_ms,clip_ms,repeats,cpu_min_ms,cpu_max_ms,gpu_min_ms,gpu_max_ms\n";
+      std::cout << "case,layout,value_tile_words,older,newer,canceled,output_records,payload_bytes,file_bytes,sparse_entries,cpu_ms,gpu_total_ms,gpu_device_ms,fixture_encode_ms,map_import_ms,clip_ms,repeats,cpu_min_ms,cpu_max_ms,gpu_min_ms,gpu_max_ms,cpu_forward_ms,cpu_forward_min_ms,cpu_forward_max_ms\n";
       for (bool variable : {false, true}) {
         for (auto counts : {std::array<u32, 3>{0, 0, 0}, {0, 33, 0}, {33, 0, 0}, {31, 0, 100},
                             {257, 263, 0}, {513, 257, 50}, {513, 19, 90}, {31, 1009, 50}})
@@ -431,7 +458,7 @@ int main(int argc, char **argv) {
       g.value_tile_words = 4;
       if (argc >= 4 && std::string(argv[3]) == "bench") {
         for (bool variable : {false, true})
-          for (u32 n : {4096u, 65536u, 262144u})
+          for (u32 n : {4096u, 16384u, 32768u, 65536u, 131072u, 262144u})
             for (u32 percent : {0u, 50u, 90u})
               run_case(g, make_fixture("balanced-" + std::to_string(n) + "-" + std::to_string(percent), variable, n, n, percent), directory, 5);
         for (bool variable : {false, true})
@@ -439,6 +466,14 @@ int main(int argc, char **argv) {
             run_case(g, make_fixture("skew-" + std::to_string(counts[0]), variable, counts[0], counts[1], 50), directory, 5);
         for (bool variable : {false, true})
           run_case(g, make_fixture("scattered-262144", variable, 262144, 262144, 50, false, true), directory, 5);
+        for (u32 n : {4096u, 16384u, 32768u, 65536u, 131072u, 262144u})
+          for (u32 percent : {0u, 50u})
+            run_case(g, make_fixture("tiny-" + std::to_string(n) + "-" + std::to_string(percent),
+                true, n, n, percent, false, false, value_shape::tiny), directory, 5);
+        for (u32 n : {4096u, 16384u, 32768u})
+          for (u32 percent : {0u, 50u})
+            run_case(g, make_fixture("large-" + std::to_string(n) + "-" + std::to_string(percent),
+                true, n, n, percent, false, false, value_shape::large), directory, 5);
         g.value_tile_words = 1;
         for (u32 percent : {0u, 50u})
           run_case(g, make_fixture("word-balanced-262144-" + std::to_string(percent), true, 262144, 262144, percent), directory, 5);

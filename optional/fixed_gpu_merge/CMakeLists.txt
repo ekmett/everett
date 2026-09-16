@@ -17,7 +17,7 @@ add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/prototype" "${CMAKE_BINARY_DIR}/k
   COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/build.py"
     --build "${CMAKE_BINARY_DIR}" --dxc "${EVERETT_DXC}"
     --spirv-val "${EVERETT_SPIRV_VAL}" --spirv-cross "${EVERETT_SPIRV_CROSS}"
-  DEPENDS build.py prototype.mm kernels.hlsl ${helper_shaders}
+  DEPENDS build.py prototype.mm fixtures.h kernels.hlsl ${helper_shaders}
     ../gpu_merge/shader_compile.py ../../include/everett/elias_fano.h
     ../../include/everett/word_view.h ../../include/everett/error_detail.h
   VERBATIM)

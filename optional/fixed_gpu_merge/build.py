@@ -46,6 +46,7 @@ def main():
         '-Werror', '-fobjc-arc', f'-I{root / "include"}', here / 'prototype.mm',
         '-framework', 'Foundation', '-framework', 'Metal', '-o', out / 'prototype')
     sources = list(here.glob('*.py')) + list(here.glob('*.mm')) + list(here.glob('*.hlsl'))
+    sources += list(here.glob('*.h')) + [here / 'CMakeLists.txt']
     sources += list((here.parent / 'gpu_merge').glob('*.hlsl'))
     sources += [here.parent / 'gpu_merge/shader_compile.py']
     sources += [root / 'include/everett' / name for name in ('elias_fano.h', 'word_view.h', 'error_detail.h')]

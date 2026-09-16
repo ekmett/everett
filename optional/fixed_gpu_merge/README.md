@@ -87,18 +87,20 @@ payload copying, EF construction, constant-sized host checks and envelope
 assembly. `gpu_device_ms` is the sum of the two Metal command-buffer intervals;
 it is diagnostic, not the complete latency.
 
-`cpu_ms` is a single-thread streaming merge over the same mapped inputs and
-due ordinals, writing the equivalent output. It includes temporary offset and
-EF allocations and their destruction. It uses the production EF encoder.
-The CPU is a straightforward baseline, not a claim about the best possible
-parallel CPU merge.
+`cpu_ms` retains the initial single-thread baseline, using random-access EF
+selection for each value's two boundaries. `cpu_forward_ms` uses a forward
+high-bit cursor, clears its lowest set bit for each decoded boundary, skips
+whole canceled words by popcount, and caches the shared boundary of adjacent
+values. Both stream the same keys and due ordinals and write identical output.
+Both include temporary offsets and EF allocation/reclamation and use the
+production EF output encoder. Neither is a parallel CPU merge.
 
-Both output mappings are reused. Fixture encoding, mapping/import setup,
+All three output mappings are reused. Fixture encoding, mapping/import setup,
 pipeline compilation/loading, file clipping and output comparison are outside
 the steady merge columns and reported separately. The setup column includes
 copying generated fixture bytes into the initial mappings. Inputs and outputs
-are resident after one warmup. Timed iterations alternate CPU/GPU execution
-order; benchmark rows report medians and ranges of five iterations. Small
+are resident after one warmup. Timed iterations rotate the order of both CPU
+variants and the GPU; benchmark rows report medians and ranges of five iterations. Small
 correctness rows use one iteration and are not crossover measurements.
 
 There is **no `msync`, `fsync`, checksum, content-address computation or catalog
@@ -124,14 +126,17 @@ build-fixed-gpu/prototype build-fixed-gpu/kernels.metallib \
 ```
 
 Use a disposable scratch directory: the executable replaces `input-a.tmp`,
-`input-b.tmp`, `due.tmp`, `cpu.tmp` and `gpu.tmp` there. It requires a Metal
+`input-b.tmp`, `due.tmp`, `cpu.tmp`, `forward.tmp` and `gpu.tmp` there. It requires a Metal
 device. The build writes `source-hashes.json` next to the executable.
 
 The correctness suite covers empty inputs, full cancellation, replacement
 collisions, prefix and scattered cancellation sets, highly unequal sizes,
 values of length zero through 512, output words crossing value boundaries,
 all four key lanes, and a large payload gap forcing real EF sparse exceptions.
-Both payload tile widths are checked. Every measured output is compared in
-full against the CPU oracle.
+Both payload tile widths are checked. Every measured output, including the
+forward CPU variant, is compared in full against the original CPU oracle.
+Benchmark mode adds intermediate sizes, tiny values from zero through six
+bytes, and larger values from 2048 through 4096 bytes. `fixtures.h` provides the
+exact logical generator for comparisons with other physical formats.
 
 -Edward Kmett
