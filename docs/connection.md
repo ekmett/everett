@@ -29,8 +29,11 @@ without keeping a fridge object.
 The ordinary `active_engine<P>` uses the redundant scheduler. Bit registries
 write sort-owned native records and stream both native merges and fractional
 indexes to files. Byte registries use the same scheduler with byte-aligned
-opaque records. Each admitted item pays structural merge and index work;
-[the storage context](sort-runtime-context.md) describes its buffers and barriers.
+opaque records. Each admitted item pays structural merge and index work. A
+registry containing only the optional-string sort also [rebuilds obsolete history](replacement-rebuild.md),
+so deletion reduces the current table's physical generation as well as its live
+count. Saved snapshots keep their own files.
+[The storage context](sort-runtime-context.md) describes its buffers and barriers.
 
 Enable the SQLite component when building Diet, then link its CMake target:
 
@@ -120,9 +123,17 @@ the other submission path waits for capacity. `cancel(ticket)` can cancel a
 queued command before the worker claims it. Dropping a ticket does not cancel it.
 
 The defaults allow 64 outstanding contributions, 64 MiB of retained encoded
-input, and 128 million reserved structural work units. These can be changed in
-`connection_options::limits`. The limits cover admitted queue input and its
-structural reservation, including the command currently executing. They do not
+input, and the selected engine's structural quote for 1024 records. Those records
+can be grouped into batches; the queue reserves their total until each command
+finishes. For the ordinary string table this is 41,330,608,128 structural units.
+It is a conservative work allowance, not a count of disk operations or bytes.
+
+`connection_options::limits` is optional. An omitted value selects these
+engine-specific defaults once when connecting; `db.limits()` returns the resolved
+values. Supplying a `tap_limits` value preserves every explicit limit exactly,
+including a zero work or byte limit. A fork retains its parent's resolved limits.
+The limits cover admitted queue input and its structural reservation, including
+the command currently executing. They do not
 bound mapped snapshots retained by readers, rewritten bytes, user-defined
 callbacks, fsync latency, or the total size of the table.
 
@@ -215,3 +226,21 @@ Normal reopening checks metadata and schema compatibility. Full integrity scans
 remain explicit recovery operations. These guarantees use the file sealing and
 SQLite publication rules in the [runtime storage guide](runtime-store.md) and
 [catalog guide](sqlite-catalog.md).
+
+Extending a registry
+--------------------
+
+A reserved sort-code hole can acquire new sorts while keeping the existing sort
+codes and record grammars compatible. Open the expanded registry with the same
+explicit schema identity. A generic `active_engine` accepts the old string
+table's replacement checkpoint, validates its generation against the stored
+admission mass, and keeps its signature, live count and schema. Pending physical
+merge jobs remain part of the restored frontier.
+
+The expanded generic executor does not claim the string-only cleanup bound.
+Its next publication stores ordinary typed metadata, shedding the old rebuild
+generation. Named saves and forks can still retain and reopen the earlier
+replacement checkpoint through this forward adapter. I distinguish the two
+metadata layouts by their exact length for the expected schema, not by guessing
+from the table fingerprint. An ordinary typed checkpoint cannot be opened as a
+replacement generation without its clean-base and mutation accounting.

@@ -138,7 +138,8 @@ namespace diet {
       "replacement rebuild requires replacement state/arrow types");
     using engine_type = typed_engine<P, A, DepthLimit, Family>;
     using runtime_type = typename engine_type::runtime_type;
-    static_assert(engine_type::charged_service, "replacement rebuild requires charged redundant service");
+    static constexpr bool charged_service = engine_type::charged_service;
+    static_assert(charged_service, "replacement rebuild requires charged redundant service");
     using runtime_family = Family;
     using metadata_type = replacement_metadata<A>;
     using typed_cola_type = typename engine_type::cola_type;
@@ -237,8 +238,7 @@ namespace diet {
     }
     // Accepted input allowance only. Recovery of already published history is
     // separately serviced behind admission_ready(), before a tap claims input.
-    static tap_reservation reservation(contribution_type const & input) {
-      auto quote = engine_type::reservation(input);
+    static std::uint64_t reservation_work(std::uint64_t records) {
       auto h = std::min<std::uint64_t>(64, DepthLimit - 3);
       auto g = action_bound(h), c = runtime_type::local_charge_bound;
       constexpr std::uint64_t runs = 128, scan = 32, setup = runs * (scan + 8) + 32;
@@ -249,7 +249,11 @@ namespace diet {
       auto query = mul(mul(64, add(DepthLimit, 1)), add(add(P::group_size, P::codec_block_size), 16));
       auto extra = add(add(std::max(large, small), query), runs * 8 + 32);
       if constexpr (replacement_detail::clean_family<Family>::enabled) extra = add(extra, tiny_conversion_bound());
-      quote.work = add(quote.work, mul(input.records().size(), extra));
+      return add(engine_type::reservation_work(records), mul(records, extra));
+    }
+    static tap_reservation reservation(contribution_type const & input) {
+      auto quote = engine_type::reservation(input);
+      quote.work = reservation_work(input.records().size());
       return quote;
     }
 

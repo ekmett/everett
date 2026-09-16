@@ -263,7 +263,7 @@ namespace {
   void creation_checks() {
     temporary directory;
     connection_options invalid;
-    invalid.limits.contributions = 0;
+    invalid.limits = tap_limits{128'000'000, 64 * 1024 * 1024, 0, 4096};
     rejects([&] { (void)connect(directory.root, "x", invalid); });
     rejects([&] { (void)connect(directory.root, ""); });
     rejects([&] { (void)connect(directory.root / "missing", "x"); });

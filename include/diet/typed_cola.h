@@ -356,8 +356,11 @@ namespace diet {
     erase(typed_detail::key_t<S> const & key) requires typed_detail::replacement<S> {
       auto result = batch(); result.template erase<S>(key); return std::move(result).finish();
     }
+    static std::uint64_t reservation_work(std::uint64_t records) {
+      return profile_detail::multiply(records, admission_allowance);
+    }
     static tap_reservation reservation(contribution_type const & input) {
-      tap_reservation result{profile_detail::multiply(input.records().size(), admission_allowance), 0};
+      tap_reservation result{reservation_work(input.records().size()), 0};
       for (auto const & record : input.records())
         result.bytes = profile_detail::add(result.bytes, profile_detail::add(record.key.bytes.size(), record.value.bytes.size()));
       return result;

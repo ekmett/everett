@@ -36,7 +36,9 @@ namespace diet {
     // stable identity for their ordering, codecs, hashing and semantics.
     std::string schema_id{};
     bool create_if_missing = true;
-    tap_limits limits{128'000'000, 64 * 1024 * 1024, 64, 4096};
+    // Omitted limits use this Core's quote for 1024 record-equivalents.
+    // Explicit limits are honored exactly, including a zero work/byte limit.
+    std::optional<tap_limits> limits{};
   };
 
   template <class Cola> struct stored_cola : Cola {
@@ -47,6 +49,18 @@ namespace diet {
   private:
     std::shared_ptr<catalog_tap_head const> head_;
   };
+
+  namespace connection_detail {
+    template <class Core> auto restore_checkpoint(typename Core::runtime_family::snapshot_type runtime,
+        std::span<std::byte const> semantic, std::string_view schema) {
+      if constexpr (requires { Core::restore_checkpoint(std::move(runtime), semantic, schema); })
+        return Core::restore_checkpoint(std::move(runtime), semantic, schema);
+      else {
+        auto metadata = Core::metadata_type::decode(semantic);
+        return Core::cola_type::restore(std::move(runtime), std::move(metadata), schema);
+      }
+    }
+  }
 
   // Single-threaded durable Engine for tap. Core owns interpretation and
   // private merge continuations; the published snapshot is always mmap-backed.
@@ -140,8 +154,7 @@ namespace diet {
       return store_type::create(root, std::move(ids));
     }
     static cola_type restore(typename store_type::stored_type saved, std::string_view schema) {
-      auto metadata = metadata_type::decode(saved.semantic);
-      auto cola = typed_cola_type::restore(std::move(saved.snapshot), std::move(metadata), schema);
+      auto cola = connection_detail::restore_checkpoint<Core>(std::move(saved.snapshot), saved.semantic, schema);
       return {std::move(cola), std::move(saved.head)};
     }
     cola_type publish(typed_cola_type updated) {
@@ -187,13 +200,14 @@ namespace diet {
 
     connection(std::filesystem::path const & root, std::string_view name, connection_options options = {})
       : root_(std::filesystem::canonical(root)), options_(checked_options(std::move(options))),
-        tap_(engine_type::connect(root_, name, options_), options_.limits) {}
+        tap_(engine_type::connect(root_, name, options_), *options_.limits) {}
     connection(connection const &) = delete;
     connection & operator=(connection const &) = delete;
     connection(connection &&) = delete;
     connection & operator=(connection &&) = delete;
 
     cola_type snapshot() const { return tap_.snapshot()->cola; }
+    tap_limits limits() const noexcept { return *options_.limits; }
     publication_type publication() const noexcept { return tap_.snapshot(); }
     std::filesystem::path const & root() const & noexcept { return root_; }
     std::filesystem::path const & root() const && = delete;
@@ -241,8 +255,7 @@ namespace diet {
       auto storage = store_type::open(root_);
       auto saved = storage.find_save(name);
       if (!saved) return std::nullopt;
-      auto metadata = Core::metadata_type::decode(saved->semantic);
-      auto cola = Core::cola_type::restore(std::move(saved->snapshot), std::move(metadata),
+      auto cola = connection_detail::restore_checkpoint<Core>(std::move(saved->snapshot), saved->semantic,
         tap_.snapshot()->cola.metadata().schema_id);
       return cola_type(std::move(cola), std::move(saved->head));
     }
@@ -257,7 +270,12 @@ namespace diet {
     }
   private:
     static connection_options checked_options(connection_options options) {
-      if (!options.limits.contributions || !options.limits.maintenance_budget)
+      if (!options.limits) {
+        std::uint64_t work = 128'000'000;
+        if constexpr (requires { Core::reservation_work(std::uint64_t{}); }) work = Core::reservation_work(1024);
+        options.limits = tap_limits{work, 64 * 1024 * 1024, 64, 4096};
+      }
+      if (!options.limits->contributions || !options.limits->maintenance_budget)
         throw std::invalid_argument("connection needs a positive contribution limit and maintenance budget");
       return options;
     }

@@ -17,29 +17,28 @@ while (table.pending()) table.advance(4096);
 ```
 
 The initial interface supports one occupied replacement sort. Key transport follows
-the selected runtime family, including the opt-in sort-owned native format.
+the selected runtime family, including the sort-owned native format.
 The default is the bit-oriented optional-string table. A custom sort must have the same state
 and arrow type, declare replacement semantics, and provide
 `clean(key, state)` to encode a resolved state as a replacement arrow. I check
 that applying this arrow to the initial state reproduces the scanned state.
 Type equality alone does not supply that semantic law.
 
-The executor also satisfies the `tap` and `persistent_engine` contracts. It is
-opt-in; the default connection alias is unchanged:
+The executor also satisfies the `tap` and `persistent_engine` contracts. The
+ordinary named connection selects it when the registry contains only the
+optional-string sort:
 
 ```cpp
-#include <diet/replacement_rebuild.h>
 #include <diet/connection.h>
 
-using core = diet::replacement_rebuild_engine<>;
-diet::connection<core> table(existing_directory, "earth-616");
+auto table = diet::connect(existing_directory, "earth-616");
 table.put("name", "Edward");
 auto saved = table.snapshot();
 table.save("before-edit", saved);
 ```
 
-For streamed native merges, select `streaming_sort_runtime_family<P>` from
-`<diet/sort_runtime_context.h>` as the engine's `Family`. The connection opens
+The ordinary bit-profile connection selects `streaming_sort_runtime_family<P>`
+from `<diet/sort_runtime_context.h>` as its `Family`. The connection opens
 a catalog-bound storage context and shares it between the foreground and every
 large cleanup candidate. Completed native and fractional-index outputs are
 sealed and mapped. Bounded small cleanups use the in-memory construction below
@@ -220,10 +219,13 @@ generation, fewer than 256 physical input occurrences. Its bound is
 $T+321S+130G(7)+512(C+32)$. The quote takes the larger ceiling, adds the
 freeze allowance 1056 and a depth-limited preflight query allowance, then adds
 the foreground typed engine quote. The default policy's resulting single-record
-quote is 40,164,546 structural units, within the connection's 128,000,000-unit
-accepted-input limit. A streamed family that enables small owning construction
-adds its explicit conversion allowance; at the recommended policy the quote is
-40,361,922 units. Arithmetic is checked. Restored generations
+quote is 40,164,546 structural units for the owning family. A streamed family
+that enables small owning construction adds its explicit conversion allowance;
+at the recommended policy the quote is 40,361,922 units. `reservation_work(n)`
+prices $n$ records with the same arithmetic used by `reservation(input)`.
+The ordinary connection's omitted work limit is the quote for 1024 records,
+41,330,608,128 units here. An explicit caller limit is never raised to fit a
+batch. Arithmetic is checked. Restored generations
 must pass the same mass/trigger validation that justifies these ratios.
 
 These deliberately generous quotes are separate from `work()`'s actual runtime
