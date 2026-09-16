@@ -82,6 +82,20 @@ records. All five selected held-out cases clear the predeclared 10% margin,
 with median speedups of 2.03–5.79 times. This fitted threshold is an empirical
 construction heuristic, not a universal crossover or durable-write benchmark.
 
+The [tiled prefix-tree experiment](../optional/gpu_merge/prefix-tiles-report.md)
+preserves the complete minimum tree while building up to eight levels per
+dispatch. Whole-tree oracles and complete outputs agree. Paired measurements
+have mixed total-time results, so tiling remains opt-in and the calibrated
+default remains unchanged.
+
+The [output-plan experiment](../optional/gpu_merge/output-plan-report.md)
+computes the output extent and sparse EF plan in one GPU submission, reducing
+blocking handoffs from five to four. All 16 optional checks pass, including
+plan-only and combined tiled/plan full-file oracles. Paired complete-path
+measurements remain mixed, with one disjoint regression, so this path also
+remains opt-in. Its source and binary identities differ from the calibrated
+default; the existing calibration is not silently reused.
+
 ### Active runtime and named frontiers
 
 `multiverse<>::create(path).connect(name)` opens a default bit-profile string table.

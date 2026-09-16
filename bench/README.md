@@ -36,6 +36,11 @@ The [M2 Max results](../optional/gpu_merge/cutover-report.md) retain the complet
 The [Vulkan qualification](../optional/gpu_merge/vulkan-qualification.md) records
 150 successful native correctness runs on an RTX 4090; it contains no performance
 claim.
+The [tiled-prefix comparison](../optional/gpu_merge/prefix-tiles-report.md)
+reduces tree-construction dispatches but has mixed complete-path results, so
+the tiled path remains an explicit experiment.
+The [output-plan comparison](../optional/gpu_merge/output-plan-report.md)
+removes one host wait, with mixed complete-path results. It also remains opt-in.
 
 This is a separate opt-in Metal program. It does not publish durable catalog
 updates, and the ordinary library has no shader-toolchain dependency.

@@ -139,20 +139,22 @@ encoder, including repeated offsets, sub-word fields and the exact dense/sparse
 threshold. The complete-path measurements include these kernels; the earlier
 staging measurements retain their original CPU EF cost.
 
-The separate [prefix-cache helper](prefix_cache.hlsl) is an unmeasured extension.
+The optimized path uses the [prefix-cache helper](prefix_cache.hlsl).
 It resolves eight bytes after the GPU-proven common prefix once per record and
 stores two big-endian words in unused descriptor fields. Comparisons check those
 words before resolving later bytes. Zero padding plus the original length keeps
 proper-prefix order exact; LCP clamps the leading-equal-bit count to the shorter
 key. Same-source comparisons can use ordinals because each input is strictly
 sorted. This cache needs no expanded key arena. Its fill pass belongs in the
-whole-path time, and the uncached resolver remains an independent oracle.
+whole-path time in the [measurements](report.md), and the uncached resolver
+remains an independent oracle. These whole-path comparisons do not isolate the
+cache's contribution from the other emitter changes.
 
 The separate rank construction kernels reproduce the existing packed layouts.
 For rank15, each class counts one 15-occurrence group; sixteen classes occupy a
 little-endian 64-bit word and every 128 classes have an exclusive checkpoint.
 Classes, checkpoints and final padding are checked against CPU output. The
-source-only fused-origin pass described below extends that experiment; complete
+checked fused-origin pass described below extends that experiment; complete
 fractional-index construction remains separate work.
 
 The separate [collision experiment](collision_rank.md) uses temporary bitmap
@@ -183,12 +185,13 @@ A shader implementation needs an explicit contract for each of these parts:
 | Registry | Actual prefix-free selector codes and schema interpretation, independent of C++ type names |
 | Physical output | KV/IX revision, K/W, padding, navigation and descriptor ABI |
 
-The registered shader modules implement parsing, key comparison/LCP, composition
-size and emission. Built-in modules can generate the HLSL specialization. A
-custom sort can provide an explicitly registered HLSL implementation with the
-same contract and CPU/GPU oracle fixtures. This is not translation of arbitrary
-C++ handlers. Unsupported sorts, selectors, compositions, devices or input
-bounds select the ordinary CPU implementation before starting an output. A GPU
+The proposed registered shader modules would implement parsing, key
+comparison/LCP, composition size and emission. Built-in modules could generate
+the HLSL specialization; a custom sort could supply an explicitly registered
+HLSL implementation with the same contract and CPU/GPU oracle fixtures. This
+would require explicit shader implementations for C++ handlers. A future
+dispatcher must select the ordinary CPU implementation for unsupported sorts,
+selectors, compositions, devices or input bounds before starting an output. A GPU
 execution failure remains a failed private construction, not permission to
 publish a partially written file.
 
@@ -258,16 +261,17 @@ borrows equal to tombstone-bearing native keys. The native merge's keep-newer
 deduplication pass cannot be reused. Each borrowed occurrence retains its route
 ordinal; that ordinal times fifteen names the target window.
 
-The next concrete pass is [index_rank.hlsl](index_rank.hlsl). Given the completed
-augmented origin stream (0/1/2), it constructs both route class sections in one
+The [index-rank pass](index_rank.hlsl) takes the completed
+augmented origin stream (0/1/2) and constructs both route class sections in one
 read of those origins. Each invocation owns two packed 32-bit words and counts
 eight 15-occurrence groups. A second pass sums each route's 128-class blocks;
 the existing GPU scans and LE64 checkpoint emitter finish the rank directories.
-False borrows contribute normally to populations. This source-only helper avoids
+False borrows contribute normally to populations. This helper avoids
 two full origin bitmaps and CPU class staging; it does not produce the augmented
-order. [Its proposed checks](index_rank_test.h) compare exact CPU classes and
-checkpoints, tails and empty inputs, and use real CPU COLA graphs with ties.
-No GPU speedup or executed-test result is claimed for this helper yet.
+order. [Its checks](index_rank_test.h) pass exact CPU class and checkpoint
+comparisons for 39 synthetic tails/patterns and four real CPU COLA graph
+fixtures, including ties; an invalid origin is rejected. This is construction
+correctness evidence, not a measured whole-index speedup.
 
 Completing GPU index reconstruction requires the following additional work:
 
@@ -322,8 +326,10 @@ and completion synchronization remain part of the resource contract.
 
 The standalone build uses HLSL 2021 → DXC SPIR-V → `spirv-val` →
 SPIRV-Cross MSL → Metal compiler pipeline. Tool locations are explicit build
-arguments; Everett's ordinary CMake targets gain no GPU dependency. A Vulkan
-backend is not implemented. Its
+arguments; Everett's ordinary CMake targets gain no GPU dependency. This package
+supplies the Metal host. A separate Windows Vulkan adapter has
+[qualified the earlier frozen implementation](vulkan-qualification.md); it is
+not included here and has no performance qualification yet. Vulkan's
 [host-memory import extension](https://docs.vulkan.org/refpages/latest/refpages/source/VkImportMemoryHostPointerInfoEXT.html)
 has alignment, lifetime and synchronization requirements and permits
 platform-specific import rejection; a successful Metal probe does not prove

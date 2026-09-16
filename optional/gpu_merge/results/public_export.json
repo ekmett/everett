@@ -6,7 +6,7 @@
   "normalization": "The main benchmark snapshot normalizer relabels project/API names and wire signatures. The report describes the optional directory rather than a development branch. Algorithms and numerical observations are unchanged.",
   "hash_semantics": {
     "original_sha256": "Frozen source subtree bytes before this export.",
-    "normalized_sha256": "Published copy bytes after normalization.",
+    "normalized_sha256": "Current published bytes after normalization and the explicitly recorded integration edits; original measurement identities stay unchanged.",
     "existing_measurement_hashes": "All existing measured source, binary, wire and result hashes are retained verbatim and identify original measured bytes, not normalized copies."
   },
   "validation": {
@@ -23,7 +23,7 @@
     {
       "path": "optional/gpu_merge/CMakeLists.txt",
       "original_sha256": "8f18614e2573071de04d96de2a3b6a84d905d9f996b11fbbf0f1d086adbce0e8",
-      "normalized_sha256": "2a063b2a710068c704596555faa82be7e0e82df70a41971e2190c2145218cbc3",
+      "normalized_sha256": "6c24cc28e55df931e85c4b09ea3f957a42d0852e8b89979436a9d5193f1a7f63",
       "export_sha256": "3ea9c3313261565db076c319f5e15c622daec1d61c1e4ea5938b6a84cf0429cf"
     },
     {
@@ -34,7 +34,8 @@
     {
       "path": "optional/gpu_merge/build.py",
       "original_sha256": "4e8653d729adf207bc3d63301c6f6d28280039c1e560d56b45fa56d329a35cf3",
-      "normalized_sha256": "1e805da4894385f4b65ab55726c5488b3c82bbfe02d93319497fb64598e4a57f"
+      "normalized_sha256": "dd95c68ffb77aa84e7a5b6ac45999b520d6c5321da88949e096a2ff2745449db",
+      "export_sha256": "1e805da4894385f4b65ab55726c5488b3c82bbfe02d93319497fb64598e4a57f"
     },
     {
       "path": "optional/gpu_merge/calibrate_cutover.py",
@@ -95,7 +96,7 @@
     {
       "path": "optional/gpu_merge/design.md",
       "original_sha256": "5e051c88a04beaa948760f16acca20f1f25afa2e9af2d2654505c352c07db1d4",
-      "normalized_sha256": "b3bdf05fa1911627861da992e6beef6a22d58129e9bda0512f69452e29bdffd1",
+      "normalized_sha256": "4353889ca625dd159981044f736eddea993a3aea1a5feebafc1e45b5a0d91980",
       "export_sha256": "89350dcef5c6d3f3d85e338f478a59d0b6d118e381f2f624d3880a2ce1219648"
     },
     {
@@ -141,7 +142,8 @@
     {
       "path": "optional/gpu_merge/kernels.hlsl",
       "original_sha256": "39e6f6e08308ac77956144e053a678fca057d1595735943c014e0b85436e5191",
-      "normalized_sha256": "098c65f8b710f2b64812ece22c2007cbc6acf25a94dc2876432039976dff5d9e"
+      "normalized_sha256": "47c421974f55547d7615c518c23c1203699728cd06713b6e7afd60abc6f4b740",
+      "export_sha256": "098c65f8b710f2b64812ece22c2007cbc6acf25a94dc2876432039976dff5d9e"
     },
     {
       "path": "optional/gpu_merge/parse_input.hlsl",
@@ -156,7 +158,8 @@
     {
       "path": "optional/gpu_merge/prefix_owner.hlsl",
       "original_sha256": "8e83ee0650a734bd71c614683aadda67d6949056f929114e26b0092583e1db5c",
-      "normalized_sha256": "8e83ee0650a734bd71c614683aadda67d6949056f929114e26b0092583e1db5c"
+      "normalized_sha256": "4930035eecee124cfa7a7593aca14738274950a204e0fa2a5ba465ad916aac5f",
+      "export_sha256": "8e83ee0650a734bd71c614683aadda67d6949056f929114e26b0092583e1db5c"
     },
     {
       "path": "optional/gpu_merge/prepared_input.h",
@@ -166,7 +169,8 @@
     {
       "path": "optional/gpu_merge/prototype.mm",
       "original_sha256": "b10b30f19d95881ca55500743692c676639d9eb5260cc130d803d13bba4c2b93",
-      "normalized_sha256": "cdeedb9531df19c68f33f7bfa5427122d836681884b3995e5b3679ac6ffa640a"
+      "normalized_sha256": "94fb945f6e81ff80e20837ee334233f289b8f91d89170140a11f57cca0c3a279",
+      "export_sha256": "cdeedb9531df19c68f33f7bfa5427122d836681884b3995e5b3679ac6ffa640a"
     },
     {
       "path": "optional/gpu_merge/rank512.hlsl",
@@ -187,7 +191,8 @@
     {
       "path": "optional/gpu_merge/report.md",
       "original_sha256": "9ac0e375f7e12409335cf61febbd700a72018455cd82823edf30d10f686cd1ca",
-      "normalized_sha256": "5d375dc36cbfc998edf20d4c7f6a8ba1edac7e937cddc0aa416a183d78ef45c1"
+      "normalized_sha256": "132f6916a4109e1f3737d4b3a26306104f1fd5129056ca35ae0e9fd4022e583e",
+      "export_sha256": "5d375dc36cbfc998edf20d4c7f6a8ba1edac7e937cddc0aa416a183d78ef45c1"
     },
     {
       "path": "optional/gpu_merge/results/adversarial-v1.log",
@@ -371,10 +376,15 @@
     }
   ],
   "integration_edits": {
-    "optional/gpu_merge/CMakeLists.txt": "Register the existing selector, calibration, shader-helper and scalar-oracle tests in CTest.",
-    "optional/gpu_merge/design.md": "Clarify that fresh output storage is zero-initialized; the optimized path does not clear the entire mapped output with a host memset.",
+    "optional/gpu_merge/CMakeLists.txt": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure.",
+    "optional/gpu_merge/design.md": "Update current status of measured prefix caching, checked fused-origin rank construction, and separately qualified Vulkan adapter; original measurement identities and observations are unchanged.",
     "optional/gpu_merge/rank512_notice.txt": "Remove trailing whitespace while retaining the complete original notice.",
-    "optional/gpu_merge/cutover.md": "Link the subsequent final-named calibration; its qualified source hash retains the pre-link guide bytes."
+    "optional/gpu_merge/cutover.md": "Link the subsequent final-named calibration; its qualified source hash retains the pre-link guide bytes.",
+    "optional/gpu_merge/build.py": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure.",
+    "optional/gpu_merge/prefix_owner.hlsl": "Add the separately measured opt-in tiled prefix-tree path and its independent whole-tree oracle; the levelwise default is retained.",
+    "optional/gpu_merge/prototype.mm": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure.",
+    "optional/gpu_merge/kernels.hlsl": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure.",
+    "optional/gpu_merge/report.md": "Update current status of measured prefix caching, checked fused-origin rank construction, and separately qualified Vulkan adapter; original measurement identities and observations are unchanged."
   },
   "post_export_validation": {
     "source_revision": "6c1bbd2e1e1bb364389dd9f2b6977caf02a92527",
@@ -385,5 +395,19 @@
     "measured_pairs": 150,
     "heldout_passed": true,
     "generated_header_parity_passed": true
-  }
+  },
+  "post_export_development": [
+    {
+      "source_revision": "ac6e05665946bd74827f6e97da6ea2911715df03",
+      "scope": "Optional tiled prefix-tree construction, separately qualified and measured; no default-path switch.",
+      "report": "../prefix-tiles-report.md",
+      "metadata": "prefix-tiles/metadata.json"
+    },
+    {
+      "source_revision": "79a6e7ab7c390ee91dde954027450dda6bb5cd7a",
+      "scope": "Optional fused output planning removes one host wait; separately qualified and measured with no default-path switch.",
+      "report": "../output-plan-report.md",
+      "metadata": "output-plan/metadata.json"
+    }
+  ]
 }

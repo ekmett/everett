@@ -24,7 +24,7 @@
     {
       "path": "bench/README.md",
       "pre_rename_sha256": "58bfcf60e14cbea648a99b1d8d857e7e1845c692a490b4d0d881659d5dbe1d77",
-      "normalized_sha256": "1b546eb0c72bc1fb84c3fb589e6c4e34399ce3c009004898c6ff468491ba3c96"
+      "normalized_sha256": "f3608608d74b9d5b9392e65ada4cbbf3c21a32808abeede63eeb125afff4bdd1"
     },
     {
       "path": "bench/bitmap512.h",
@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "0d29ab0aae1ceadc675277107769fa957a745912acd02a885f8be5c5956eac30"
+      "normalized_sha256": "8ea2b6a33446bf001297b283360f6171b10c522faf86883f09f8aff2829515a6"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "64687e575a00ef02de19607376db6eaee25b234fad7168bc088e7d0ebc8037cb"
+      "normalized_sha256": "22b9732faf307a4129db51c91068bb32410ed4eb92c677d575cfd4e28e53e38f"
     }
   ],
   "subsequent_updates": [
@@ -970,6 +970,22 @@
     },
     {
       "scope": "Document coherent fractional-index chains, current sort grammar and restart behavior, and independently reviewed Vulkan correctness qualification. Original measurements and fingerprints are unchanged.",
+      "artifacts": [
+        "bench/README.md",
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link the separately measured opt-in tiled prefix-tree experiment. Original benchmark observations and fingerprints are unchanged.",
+      "artifacts": [
+        "bench/README.md",
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link the separately reviewed fused output-plan experiment. Original benchmark observations and measurement fingerprints are unchanged.",
       "artifacts": [
         "bench/README.md",
         "bench/results/publication_normalization.json",

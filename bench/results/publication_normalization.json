@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "64687e575a00ef02de19607376db6eaee25b234fad7168bc088e7d0ebc8037cb"
+      "normalized_sha256": "22b9732faf307a4129db51c91068bb32410ed4eb92c677d575cfd4e28e53e38f"
     }
   ],
   "checks": {
@@ -507,6 +507,18 @@
     },
     {
       "scope": "Document coherent fractional-index chains, current sort grammar and restart behavior, and independently reviewed Vulkan correctness qualification. Original measurements and fingerprints are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link the separately measured opt-in tiled prefix-tree experiment. Original benchmark observations and fingerprints are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link the separately reviewed fused output-plan experiment. Original benchmark observations and measurement fingerprints are unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

@@ -14,6 +14,15 @@ counts, output fingerprint and result, together with the original report and
 adapter identities. The baseline uses MSVC 19.44.35228.0 and portable CRC32C.
 The raw Vulkan driver version is 2559967232.
 
+A separate host AddressSanitizer runner passed three selected cases:
+`empty-key-tombstone`, `proper-prefix-and-binary`, and `boundary-mixed-257`.
+Complete output, input preservation, guards and Vulkan validation all passed;
+the 43 artifact pins and 949 frozen-file pins stayed unchanged. The qualification
+record retains this runner's separate identity and results. This covers three
+host cases, not the entire corpus or shader-memory instrumentation. The exported
+evidence includes the report and pinned build configuration; I have not
+independently inspected the runner's binary instrumentation or raw sanitizer logs.
+
 These are guarded correctness runs, not performance measurements. The adapter
 stages mapped input into device memory and reads the complete output back; it
 does not assume zero-copy host memory. Its eventual complete-path measurements

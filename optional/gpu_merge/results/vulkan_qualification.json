@@ -1298,5 +1298,57 @@
       "output_count": 513,
       "output_bytes": 9864
     }
-  ]
+  ],
+  "host_address_sanitizer": {
+    "scope": "Three selected host AddressSanitizer cases, not the complete 75-case corpus. The report and pinned build configuration identify the instrumented runner; binary instrumentation and raw sanitizer logs were not independently inspected in this exported evidence. No shader-memory instrumentation or performance claim.",
+    "source_report_sha256": "383946688f14b04edff40dfa6eaf536501eeca9de55da324e743dcd68da21bed",
+    "adapter_executable_sha256": "662d658db4c15bbc2be4f91c2f26936e07af575190107f3e1c374417447ea80a",
+    "source_and_artifact_pins_unchanged": true,
+    "frozen_inputs_unchanged": true,
+    "artifact_pin_count": 43,
+    "frozen_file_pin_count": 949,
+    "passed_processes": 3,
+    "total_processes": 3,
+    "cases": [
+      {
+        "name": "empty-key-tombstone",
+        "exit_code": 0,
+        "exact_output": true,
+        "input_and_guards_preserved": true,
+        "validation_errors": 0,
+        "validation_warnings": 0,
+        "output_sha256": "3504805f684c1ad715737425c8b309124594127cef508c62fbbb59631ce17680",
+        "older_count": 0,
+        "newer_count": 1,
+        "output_count": 1,
+        "output_bytes": 352
+      },
+      {
+        "name": "proper-prefix-and-binary",
+        "exit_code": 0,
+        "exact_output": true,
+        "input_and_guards_preserved": true,
+        "validation_errors": 0,
+        "validation_warnings": 0,
+        "output_sha256": "9a0c3bc0b58e199279d84f5ced3f46942044d8ac256267fee8ae34c18af85300",
+        "older_count": 11,
+        "newer_count": 5,
+        "output_count": 11,
+        "output_bytes": 408
+      },
+      {
+        "name": "boundary-mixed-257",
+        "exit_code": 0,
+        "exact_output": true,
+        "input_and_guards_preserved": true,
+        "validation_errors": 0,
+        "validation_warnings": 0,
+        "output_sha256": "778f49ed0b3008e3f147b922d04ab0dac496ac3333252766c935d43bd88b1b49",
+        "older_count": 257,
+        "newer_count": 171,
+        "output_count": 257,
+        "output_bytes": 3808
+      }
+    ]
+  }
 }
