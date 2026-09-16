@@ -4,7 +4,7 @@ Per-file offset directories
 Design proposal; the production formats currently store Elias–Fano offsets.
 I want the representation to be a choice for each file, independent of its sort
 registry. I have not selected a replacement default. The next comparison must
-measure complete file size and complete query time across a range of sizes.
+qualify runtime format selection against the complete-query measurements below.
 
 Why make this a file choice?
 ---------------------------
@@ -15,6 +15,13 @@ faster in that isolated operation. The extra bytes can still be a small part of
 a native file because we store one offset per physical codec block, not one per
 record. Those measurements do not establish the best complete-file choice or
 the resulting query speed.
+
+The [whole-query comparison](../optional/search_compare/report.md) measures
+mapped native/index chains with identical record streams. Packed absolute
+positions retain most of direct offsets' measured throughput gain for much
+less complete-file growth. The geometric-size panel also increases the query
+working set. These experiments specialize each executable to one representation;
+the eventual per-file dispatch still needs measurement.
 
 The same schema should be able to read a small file with direct offsets and a
 large file with EF offsets. A native file and its fractional index can make

@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "5e9f80ae646b0ddfec8378c077b37483961db663ddb46c01392f12fe949d729a"
+      "normalized_sha256": "6d2d98b951e616039ae2f7990cb2e34a94e98e603863f3d16debeec835f27088"
     }
   ],
   "checks": {
@@ -603,6 +603,12 @@
     },
     {
       "scope": "Link complete-query offset measurements and their limits; original measurement identities remain unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link the matched complete byte/bit chain measurements; original measurement identities and values are unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

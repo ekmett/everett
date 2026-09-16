@@ -88,3 +88,18 @@ keys with sixteen-byte values, and about 1% more for those keys with larger
 variable values. The hash-like cases are slightly smaller in byte form. These
 are properties of the tested key and value distributions, not a universal space
 ordering between the codecs. The report retains exact file sizes and all trials.
+
+The [complete-chain space comparison](../optional/profile_space_compare/report.md)
+also counts fractional indexes and compares fixed-width integer sorts. It
+covers the same logical records at 1,024, 8,192, 32,768 and 131,072 rows.
+For the largest all-present string fixtures with sixteen-byte values, giving
+the low-level byte writer their common seventeen-byte encoded width changes
+the complete-file tradeoff to 5.42% more space for decimal-ending keys, 1.38%
+less for those keys followed by `/state`, and 2.65% less for binary keys.
+That hint includes the presence tag; `connection` does not infer it automatically.
+
+Bit front coding can retain part of the last shared byte, so ordinary byte
+string keys already benefit from some bit compression. Fixed-width key grammar,
+value framing and the key distribution matter independently of alignment.
+The comparison keeps these effects separate and models terminated suffixes
+without presenting them as an implemented format.

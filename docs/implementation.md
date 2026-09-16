@@ -142,6 +142,13 @@ typed-bit controls have mixed results, so I do not attribute a general speedup
 to the forward EF cursor. The report compares complete byte/bit output sizes
 for identical logical records and states the native-construction timing boundary.
 
+The [complete-chain space study](../optional/profile_space_compare/report.md)
+compares 1,800 serialized native/index files across forty matched logical
+fixtures. It separates actual typed byte/bit formats, identical-grammar controls
+and the byte writer's explicit common-width hint. Independent file decoding,
+component totals and logical hashes agree. The report measures space only;
+its terminated-suffix alternative is an exact stream model, not a new codec.
+
 ### Optional offset-selection measurements
 
 The [select comparison](../optional/select_compare/README.md) preserves the
