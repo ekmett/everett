@@ -170,7 +170,7 @@ namespace {
     rejects([&]{e.advance(1000000);});rejects([&]{e.contribute(E::put("c","three"));});
     auto moved=std::move(e);rejects([&]{(void)e.snapshot();});check(moved.failed(),"failed move lost poison");
     auto recovered=E::from_clean(old);recovered.contribute(E::put("c","three"));check(recovered.snapshot().get("c")=="three","old snapshot recovery");
-    using raw=typed_engine<string_policy,wrapping_fingerprint_algebra,256,redundant_runtime_family<string_policy>>;
+    using raw=engine::engine_type;
     raw dirty;dirty.contribute(raw::put("k","one"));dirty.contribute(raw::put("k","two"));
     rejects([&]{(void)engine::from_clean(dirty.snapshot());});
   }
