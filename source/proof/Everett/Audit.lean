@@ -12,6 +12,8 @@ import Everett.Frontier
 import Everett.Transfer
 import Everett.NativeMerge
 import Everett.Navigation
+import Everett.CarriedRoute
+import Everett.CarriedChain
 import Lean
 
 open Lean Elab Command

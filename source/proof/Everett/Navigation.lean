@@ -318,7 +318,7 @@ theorem owner_eof (count spacing extent width base : Nat) (offset : Nat → Nat)
     width base (group_count count spacing) positive fits ordered inside
   simpa only [eof] using recovered
 
-/-- The owner's complete in-range convention agrees with min(block*K,N),
+/-- The owner's complete in-range convention agrees with min(block*W,N),
 including a partial block's EOF. Selecting EOF never expands the EF API. -/
 theorem owner_select (count spacing extent width base index : Nat) (offset : Nat → Nat)
     (positive_base : 0 < base) (positive_spacing : 0 < spacing)
@@ -525,7 +525,7 @@ example : (List.range 4).map (decode (encode 1 [0, 0, 3, 3])) =
 example : (List.range 5).map (decode (encode 8 [0, 7, 8, 8, 65])) =
     [some 0, some 7, some 8, some 8, some 65] := by decide
 example : decode (encode 1 []) 0 = none := rfl
--- K=15, 17 records: EOF ordinal is 17, not the rounded block ordinal 30.
+-- W=15, 17 records: EOF ordinal is 17, not the rounded block ordinal 30.
 example : physical_select (encode 4 ([⟨0, 0⟩, ⟨15, 65⟩, ⟨17, 76⟩].map
     (residual 3))) 3 17 2 = some 76 := by decide
 -- An empty owner may explicitly encode its one real EOF offset.

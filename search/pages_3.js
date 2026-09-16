@@ -51,8 +51,9 @@ var searchData=
   ['copies_48',['Encoded literals without full-key copies',['../encoded-literals-without-full-key-copies.html',1,'']]],
   ['copies_20and_20framing_49',['Key prefixes, bit copies, and framing',['../md_bench_2key__bits.html',1,'']]],
   ['core_50',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
-  ['count_20decoding_51',['Small bit-profile count decoding',['../md_bench_2small__count.html',1,'']]],
-  ['cpu_20gpu_20cutover_52',['Header-based CPU/GPU cutover',['../header-based-cpugpu-cutover.html',1,'']]],
-  ['cursor_20advancement_53',['Specializing cursor advancement',['../md_bench_2sample__advance.html',1,'']]],
-  ['cutover_54',['cutover',['../header-based-cpugpu-cutover.html',1,'Header-based CPU/GPU cutover'],['../header-only-gpu-cutover.html',1,'Header-only GPU cutover']]]
+  ['correctness_20qualification_51',['Vulkan correctness qualification',['../vulkan-correctness-qualification.html',1,'']]],
+  ['count_20decoding_52',['Small bit-profile count decoding',['../md_bench_2small__count.html',1,'']]],
+  ['cpu_20gpu_20cutover_53',['Header-based CPU/GPU cutover',['../header-based-cpugpu-cutover.html',1,'']]],
+  ['cursor_20advancement_54',['Specializing cursor advancement',['../md_bench_2sample__advance.html',1,'']]],
+  ['cutover_55',['cutover',['../header-based-cpugpu-cutover.html',1,'Header-based CPU/GPU cutover'],['../header-only-gpu-cutover.html',1,'Header-only GPU cutover']]]
 ];
