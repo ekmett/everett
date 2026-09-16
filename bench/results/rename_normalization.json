@@ -909,7 +909,7 @@
     {
       "path": "bench/snapshot.py",
       "pre_rename_sha256": "0c0ec0d37244c0fa069cec17180c65093707e5a765a6b95f21c3ac541f10eb88",
-      "normalized_sha256": "7d16bea3f384c6765fd9b7c5fe1e07ab424e2cfa16c2ae7ae4454a0f77dad884"
+      "normalized_sha256": "936054e1367dd8a596a389b8b64b1d789a026bc39b47e59216686c28be874f3b"
     },
     {
       "path": "bench/space_accounting.cc",
@@ -939,6 +939,12 @@
         "bench/README.md",
         "bench/results/publication_normalization.json",
         "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Add checked succinct-navigation proofs and correct independent empty-envelope fixture checksums for the restored signature. Original benchmark observations and original fingerprints are unchanged.",
+      "artifacts": [
+        "bench/snapshot.py"
       ]
     }
   ]

@@ -596,8 +596,8 @@ int main() {
     temporary_directory directory;
     policy_matrix<3>(directory.path); policy_matrix<7>(directory.path);
     policy_matrix<15>(directory.path); policy_matrix<31>(directory.path);
-    test_default_headers<profile_unit::byte>({1273287519u, 4179286677u});
-    test_default_headers<profile_unit::bit>({1138671027u, 4045452409u});
+    test_default_headers<profile_unit::byte>({3574695498u, 1743753088u});
+    test_default_headers<profile_unit::bit>({3710642342u, 1876287852u});
     test_codec_width<profile_unit::byte, 1>(directory.path);
     test_codec_width<profile_unit::byte, 16>(directory.path);
     test_codec_width<profile_unit::byte, 64>(directory.path);

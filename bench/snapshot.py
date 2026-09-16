@@ -124,6 +124,22 @@ def normalize(repo, data, path=None):
     reference_world = re.search(r'\bstruct\s+(?:reference_cola|cola_record)\b', text)
     pairs, signatures = replacements(str(Path(repo).resolve()))
     text = wire_names(text, *signatures)
+    if path is not None and Path(path).as_posix() == 'tests/files.cc':
+        # These four independent checksums name canonical empty 96-byte
+        # envelopes. Only their four signature bytes changed; the body CRC
+        # and malformed-header fixtures retain their original values.
+        empty_headers = {
+            ('byte', '1273287519', '4179286677'): ('3574695498', '1743753088'),
+            ('bit', '1138671027', '4045452409'): ('3710642342', '1876287852'),
+        }
+        def empty_header_crc(match):
+            values = empty_headers.get(match.group(1, 2, 3))
+            if values is None:
+                return match.group()
+            return ('test_default_headers<profile_unit::' + match.group(1) +
+                    '>({' + values[0] + 'u, ' + values[1] + 'u})')
+        text = re.sub(r'test_default_headers<profile_unit::(byte|bit)>\(\{(\d+)u,\s*(\d+)u\}\)',
+                      empty_header_crc, text)
     if path is not None and Path(path).as_posix() == 'tests/replacement_rebuild.cc':
         # This fixture checks just the first byte of the RB envelope. Keep the
         # rewrite local to that assertion; ordinary character payloads do not
