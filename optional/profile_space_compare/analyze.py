@@ -75,6 +75,10 @@ def main():
                     extra_bytes_per_record=(byte['total_bytes'] - bit['total_bytes']) / count))
     (root / 'summary.json').write_text(json.dumps(list(summaries.values()), indent=2) + '\n')
     (root / 'comparisons.json').write_text(json.dumps(comparisons, indent=2) + '\n')
+    with (root / 'comparisons.csv').open('w', newline='') as stream:
+        writer = csv.DictWriter(stream, fieldnames=comparisons[0].keys())
+        writer.writeheader()
+        writer.writerows(comparisons)
     checks = dict(complete_files=len(rows), matched_logical_fixtures=len(fixtures),
                   accounting=True, canonical_matches_raw=True, matched_sha256=True,
                   record_totals=True, unchanged_graph_file_counts=True,

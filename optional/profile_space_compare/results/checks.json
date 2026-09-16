@@ -1,0 +1,11 @@
+{
+  "complete_files": 1800,
+  "matched_logical_fixtures": 40,
+  "accounting": true,
+  "canonical_matches_raw": true,
+  "matched_sha256": true,
+  "record_totals": true,
+  "unchanged_graph_file_counts": true,
+  "production_reader_scan_and_decoded_equality": true,
+  "prepared_cascade_probes": true
+}

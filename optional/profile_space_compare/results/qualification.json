@@ -1,0 +1,20 @@
+{
+  "source_revision": "9fbf906",
+  "production_header_revision": "b2b893c",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+  "release": {
+    "tests": 5,
+    "rows_per_fixture": 1024,
+    "fixtures_per_test": 10,
+    "passed": true,
+    "binary_sha256": "247cb876a30eff8cf4e559b62f92a8af2875c0e563596ea32cec3197f54e2d95"
+  },
+  "asan_ubsan": {
+    "tests": 5,
+    "rows_per_fixture": 1024,
+    "fixtures_per_test": 10,
+    "passed": true,
+    "binary_sha256": "98e33843934863dcb08a994008034d20876918aa4b79f27aa9b8f51740c447c4"
+  },
+  "performance_timings": false
+}
