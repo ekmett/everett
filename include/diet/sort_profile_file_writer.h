@@ -20,6 +20,20 @@ namespace diet {
       static constexpr std::size_t buffer_bytes = 64 * 1024;
       explicit file_bit_sink(Stream & stream) : stream_(stream) {}
       std::uint64_t position() const noexcept { return bits_; }
+      std::uint64_t buffered_bits() const noexcept { return buffered_; }
+      // The unfinished physical byte is high aligned. Its unused low bits
+      // need not be zero; bit_string::copy produces a canonical owning tail.
+      bit_view buffered_payload() const & noexcept { return {buffer_, buffered_}; }
+      bit_view buffered_payload() const && = delete;
+      // A metadata limit can force a spill between records. Do not pad a
+      // partial byte in the middle of the payload: keep its bits for append.
+      void flush_complete() {
+        auto bytes = buffered_ >> 3;
+        if (!bytes) return;
+        stream_.append(std::span(buffer_).first(static_cast<std::size_t>(bytes)));
+        buffered_ &= 7;
+        if (buffered_) buffer_[0] = buffer_[bytes];
+      }
       void append(bit_view source) {
         auto next = profile_detail::add(bits_, source.size());
         if (next > std::numeric_limits<std::uint64_t>::max() - 7)
@@ -115,6 +129,40 @@ namespace diet {
         buffered_ = 0;
       }
     };
+    // Framing is complete before either concrete writer emits the shared KV03 sections.
+    template <class P, class Selector, class Sink, class Stream>
+    object_seal_receipt seal(encoder<P, Selector> const & encoder, Sink & sink, Stream & stream) {
+      auto const & ef = encoder.offsets;
+      std::array<std::byte, 192> directory{};
+      for (unsigned i = 0; i != 4; ++i) directory[i] = std::byte("KV03"[i]);
+      file_detail::put(directory, 4, 2, 3); file_detail::put(directory, 6, 2, 8);
+      file_detail::put(directory, 8, 8, encoder.metadata.extent);
+      file_detail::put(directory, 16, 8, encoder.metadata.terminal_key_units);
+      file_detail::put(directory, 24, 8, ef.universe);
+      file_detail::put(directory, 32, 8, encoder.dictionary.bit_size);
+      file_detail::put(directory, 40, 8, encoder.seeds.bit_size);
+      directory[48] = std::byte(ef.low_width);
+      std::array<std::uint64_t, 8> lengths{profile_detail::byte_count(sink.position()),
+        profile_detail::multiply(ef.low.size(), 8), profile_detail::multiply(ef.high.size(), 8),
+        profile_detail::multiply(ef.samples.size(), 16), profile_detail::multiply(ef.sparse.size(), 8),
+        encoder.dictionary.bytes.size(), profile_detail::multiply(encoder.dictionary_offsets.size(), 8), encoder.seeds.bytes.size()};
+      std::uint64_t end = directory.size();
+      for (std::size_t i = 0; i != lengths.size(); ++i) {
+        auto start = (profile_detail::add(end, 7)) & ~std::uint64_t{7}; end = profile_detail::add(start, lengths[i]);
+        file_detail::put(directory, 64 + 16 * i, 8, start); file_detail::put(directory, 72 + 16 * i, 8, lengths[i]);
+      }
+      file_header<P> header{file_kind::native_blob, profile_detail::multiply(end, 8), encoder.size(), encoder.metadata.common_value_width};
+      file_detail::validate_metadata(header);
+      sink.finish_payload();
+      sink.align(); sink.words(ef.low);
+      sink.align(); sink.words(ef.high);
+      sink.align(); sink.samples(ef.samples);
+      sink.align(); sink.words(ef.sparse);
+      sink.align(); stream.append(encoder.dictionary.bytes);
+      sink.align(); sink.words(encoder.dictionary_offsets);
+      sink.align(); stream.append(encoder.seeds.bytes);
+      return stream.finish(header, directory);
+    }
   }
 
   // Values and literal spans are consumed synchronously. The payload uses one
@@ -166,36 +214,7 @@ namespace diet {
       require_active();
       try {
         encoder_.finish(sink_.position());
-        auto const & ef = encoder_.offsets;
-        std::array<std::byte, 192> directory{};
-        for (unsigned i = 0; i != 4; ++i) directory[i] = std::byte("KV03"[i]);
-        file_detail::put(directory, 4, 2, 3); file_detail::put(directory, 6, 2, 8);
-        file_detail::put(directory, 8, 8, encoder_.metadata.extent);
-        file_detail::put(directory, 16, 8, encoder_.metadata.terminal_key_units);
-        file_detail::put(directory, 24, 8, ef.universe);
-        file_detail::put(directory, 32, 8, encoder_.dictionary.bit_size);
-        file_detail::put(directory, 40, 8, encoder_.seeds.bit_size);
-        directory[48] = std::byte(ef.low_width);
-        std::array<std::uint64_t, 8> lengths{profile_detail::byte_count(sink_.position()),
-          profile_detail::multiply(ef.low.size(), 8), profile_detail::multiply(ef.high.size(), 8),
-          profile_detail::multiply(ef.samples.size(), 16), profile_detail::multiply(ef.sparse.size(), 8),
-          encoder_.dictionary.bytes.size(), profile_detail::multiply(encoder_.dictionary_offsets.size(), 8), encoder_.seeds.bytes.size()};
-        std::uint64_t end = directory.size();
-        for (std::size_t i = 0; i != lengths.size(); ++i) {
-          auto start = (profile_detail::add(end, 7)) & ~std::uint64_t{7}; end = profile_detail::add(start, lengths[i]);
-          file_detail::put(directory, 64 + 16 * i, 8, start); file_detail::put(directory, 72 + 16 * i, 8, lengths[i]);
-        }
-        file_header<P> header{file_kind::native_blob, profile_detail::multiply(end, 8), size(), encoder_.metadata.common_value_width};
-        file_detail::validate_metadata(header);
-        sink_.finish_payload();
-        sink_.align(); sink_.words(ef.low);
-        sink_.align(); sink_.words(ef.high);
-        sink_.align(); sink_.samples(ef.samples);
-        sink_.align(); sink_.words(ef.sparse);
-        sink_.align(); stream_.append(encoder_.dictionary.bytes);
-        sink_.align(); sink_.words(encoder_.dictionary_offsets);
-        sink_.align(); stream_.append(encoder_.seeds.bytes);
-        return stream_.finish(header, directory);
+        return sort_profile_detail::seal<P>(encoder_, sink_, stream_);
       } catch (...) { failed_ = true; throw; }
     }
   private:

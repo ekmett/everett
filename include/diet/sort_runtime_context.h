@@ -16,12 +16,17 @@
 #include <diet/sort_profile_file_merge.h>
 #include <diet/cola_file_index.h>
 #include <diet/runtime_graph_sealer.h>
+#include <diet/output_budget.h>
 
 namespace diet {
+  struct runtime_output_options {
+    std::size_t retained_bytes = std::size_t{8} << 20;
+    std::size_t object_bytes = std::size_t{128} << 10;
+  };
   // One serialized worker owns this concrete context. Storage handles share
   // its lifetime when an equivalent mapped publication rebases the core; they
-  // do not add concurrent access or locks. Catalog and file operations stay
-  // outside the merge's per-record loop.
+  // do not add concurrent access or locks. The first output spill may reserve
+  // files while appending a record; subsequent appends reuse that attempt.
   template <class P, class Selector = registry_selector<typename P::registry_type>, class Ids = random_object_ids,
             class CatalogOps = sqlite_catalog_ops, class FileOps = posix_object_ops>
   struct sort_runtime_context : std::enable_shared_from_this<sort_runtime_context<P, Selector, Ids, CatalogOps, FileOps>> {
@@ -47,10 +52,11 @@ namespace diet {
             std::move(older), std::move(newer), owner->file_ops_, std::move(compose)) {}
     };
     static std::shared_ptr<sort_runtime_context> open(std::filesystem::path const & root, Ids ids = {},
-        catalog_options options = {}, CatalogOps catalog_ops = {}, FileOps file_ops = {}) {
+        catalog_options options = {}, CatalogOps catalog_ops = {}, FileOps file_ops = {},
+        runtime_output_options outputs = {}) {
       auto catalog = catalog_type::open(root, options, std::move(catalog_ops));
       if (catalog.schema_version() != 4) throw std::invalid_argument("streamed runtime requires a named catalog");
-      return std::shared_ptr<sort_runtime_context>(new sort_runtime_context(std::move(catalog), std::move(ids), std::move(file_ops)));
+      return std::shared_ptr<sort_runtime_context>(new sort_runtime_context(std::move(catalog), std::move(ids), std::move(file_ops), outputs));
     }
     sort_runtime_context(sort_runtime_context const &) = delete;
     sort_runtime_context & operator=(sort_runtime_context const &) = delete;
@@ -60,6 +66,8 @@ namespace diet {
     void poison() noexcept { failed_ = true; }
     std::uint64_t sealed_outputs() const noexcept { return sealed_outputs_; }
     std::uint64_t sealed_indexes() const noexcept { return sealed_indexes_; }
+    std::size_t retained_output_bytes() const noexcept { return budget_.used(); }
+    std::size_t output_limit() const noexcept { return budget_.limit(); }
     native_pointer empty() const noexcept { return empty_; }
     object_id const & catalog_identity() const & noexcept { return identity_; }
     object_id const & catalog_identity() const && = delete;
@@ -149,12 +157,15 @@ namespace diet {
     Ids ids_;
     FileOps file_ops_;
     posix_index_spool_ops spool_ops_;
+    runtime_output_options outputs_;
+    output_budget budget_;
     native_pointer empty_ = sort_runtime_storage<P, Selector>::empty();
     object_id identity_;
     std::uint64_t sealed_outputs_ = 0, sealed_indexes_ = 0;
     bool failed_ = false;
-    sort_runtime_context(catalog_type catalog, Ids ids, FileOps file_ops)
-      : catalog_(std::move(catalog)), ids_(std::move(ids)), file_ops_(std::move(file_ops)), identity_(catalog_.identity()) {}
+    sort_runtime_context(catalog_type catalog, Ids ids, FileOps file_ops, runtime_output_options outputs)
+      : catalog_(std::move(catalog)), ids_(std::move(ids)), file_ops_(std::move(file_ops)), outputs_(outputs),
+        budget_(outputs.retained_bytes), identity_(catalog_.identity()) {}
     void require_active() const { if (failed()) throw std::logic_error("failed sort runtime context"); }
   };
 
@@ -171,8 +182,9 @@ namespace diet {
       if (!context_) throw std::invalid_argument("null sort runtime context");
     }
     static sort_file_runtime_storage open(std::filesystem::path const & root, Ids ids = {},
-        catalog_options options = {}, CatalogOps catalog_ops = {}, FileOps file_ops = {}) {
-      return sort_file_runtime_storage(context_type::open(root, std::move(ids), options, std::move(catalog_ops), std::move(file_ops)));
+        catalog_options options = {}, CatalogOps catalog_ops = {}, FileOps file_ops = {},
+        runtime_output_options outputs = {}) {
+      return sort_file_runtime_storage(context_type::open(root, std::move(ids), options, std::move(catalog_ops), std::move(file_ops), outputs));
     }
     std::shared_ptr<context_type> context() const noexcept { return context_; }
     native_pointer empty() const { return context_ ? context_->empty() : sort_runtime_storage<P, Selector>::empty(); }
