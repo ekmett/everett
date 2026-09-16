@@ -192,6 +192,9 @@ metadata to distinguish a shorter valid stream from a missing final record.
 The focused test exercises mixed sorts, deep code changes, partial-byte FC
 prefixes, every packed-bit tail length, borrowed streams, direct integer
 fields, both tombstone forms, restart anchors, comparison transfer, and malformed
-input. Integration with sampled offsets, mapped native files and the active
-merge scheduler is a separate step; the stream does not claim those guarantees
-merely because it can encode their records.
+input. The [sort-owned profile](sort-profiles.md) supplies sampled offsets and
+mapped native framing for these leaf grammars. `sort_runtime_family` connects
+them to the redundant scheduler and [typed semantics](typed-cola.md), while the
+[storage context](sort-runtime-context.md) supplies durable merge output.
+The mixed-sort catalog tests combine string replacements, integer additions
+and chronological string arrows through repeated close/reopen cycles.

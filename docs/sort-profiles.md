@@ -23,10 +23,13 @@ auto sections = diet::encoded_sort_sections<policy>::from(native);
 // sections.seal(root, object_id, attempt_id) uses the normal durable writer.
 ```
 
-This stream is opt-in. The existing opaque `profile_array` API and the active
-runtime still use their existing format. The sort-profile path already supports
-sealed native files, fractional-index construction, mapped cascading queries,
-and native merges. Connecting it to the mutable runtime is a separate step.
+Bit registries use this stream through the ordinary `active_engine` and named
+[connection](connection.md). `sort_runtime_family<P>` connects its key/value
+grammars to typed reads, chronological composition and the redundant scheduler.
+The [execution-owned storage context](sort-runtime-context.md) retains small
+outputs or streams larger ones through the durable writer. Saved snapshots,
+forks and reopened connections keep their exact mapped native/index graph.
+Byte registries currently use the opaque `profile_array` transport.
 
 One continuation count
 -----------------------

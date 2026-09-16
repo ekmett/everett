@@ -102,8 +102,8 @@ string.
 The sort's `encoding::unit` covers both key and value requirements. Whole-byte
 values alone do not make a sort byte-oriented when its keys require bit
 addressing. The ordinary profile reader implements the FC-string grammar.
-The opt-in [sort-owned profile](sort-profiles.md) supplies a separate mapped
-reader, writer and merge path for heterogeneous key/value grammars.
+The [sort-owned profile](sort-profiles.md) supplies the active bit registry's
+mapped reader, writer and merge path for heterogeneous key/value grammars.
 
 ## 2. Byte and bit profiles
 
