@@ -194,6 +194,25 @@ False borrows and equality</h2>
 <h1><a class="anchor" id="autotoc_md4-front-coding-and-comparison-context"></a>
 4. Front coding and comparison context</h1>
 <p>I encode both streams with ordinary FC: each record retains its longest common prefix with the previous physical key and emits the remaining suffix. Native keys and borrowed keys have separate predecessor chains. Reindexing changes the borrowed stream and its navigation metadata while sharing the exact native allocation.</p>
+<h2><a class="anchor" id="file-order-key-order-and-decoding-boundaries"></a>
+File order, key order and decoding boundaries</h2>
+<p>Each native file is sorted by logical key, including the sort code. Different files can cover overlapping key ranges. Their places in the COLA graph follow update history and the merge schedule; concatenating them does not produce a sorted stream. A neighboring file therefore supplies no implicit FC predecessor.</p>
+<p>I distinguish four boundaries:</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Boundary   </th><th class="markdownTableHeadNone">Meaning    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Native file   </td><td class="markdownTableBodyNone">An immutable sorted run with a complete first key    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Codec block   </td><td class="markdownTableBodyNone">Up to \(W\) physical records; its first retained position permits framing to resume, without supplying the inherited prefix bytes    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Sampling group   </td><td class="markdownTableBodyNone">\(K\) augmented occurrences used by fractional indexing    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Memory page   </td><td class="markdownTableBodyNone">An operating-system mapping unit, independent of \(K\) and \(W\)   </td></tr>
+</table>
+<p>The defaults use \(K=W=15\), but these are separate parameters. In the direct sort-owned grammar, changing sorts also resets the key-local prefix, while the sort code itself may share prefix bits. A full forward cursor preserves its key context across codec blocks, including records omitted from a merge's output. An isolated block needs that context to reconstruct keys; its retained position alone only permits parsing. File boundaries currently provide a full restart. Cross-file inheritance would require an explicit retained decoding dependency and cannot be inferred from chronological file order.</p>
+<h2><a class="anchor" id="record-controls"></a>
+Record controls</h2>
 <p>The first record of each physical block starts with an absolute retained-prefix length. Other records start with a backspace relative to their physical predecessor. The remaining fields are the same:</p>
 <div class="fragment"><div class="line">retained_length : encoded unsigned count at block start</div>
 <div class="line">backspace_count : encoded unsigned count otherwise</div>
