@@ -140,12 +140,12 @@ namespace {
       "reindex changed native identity");
     check(combined.snapshot, {{"a", "left"}, {"b", "right"}});
   }
-  struct restore_failure {
+  struct hidden_after_commit {
     bool armed = false, renamed = false;
     std::filesystem::path source, hidden;
   };
-  struct restore_failure_ops {
-    std::shared_ptr<restore_failure> state;
+  struct hide_after_commit_ops {
+    std::shared_ptr<hidden_after_commit> state;
     int commit(sqlite3 * db) noexcept {
       auto code = sqlite3_exec(db, "COMMIT", nullptr, nullptr, nullptr);
       if (code == SQLITE_OK && state->armed) {
@@ -155,30 +155,34 @@ namespace {
       return code;
     }
   };
-  void failure_after_publication() {
+  void mapped_publication_retains_owner() {
     temporary dir;
     auto normal = store::create(dir.root);
     runtime engine;
     auto first = normal.create_tap("earth-616", engine.contribute(record("a", "value"), 0));
-    auto state = std::make_shared<restore_failure>();
+    auto state = std::make_shared<hidden_after_commit>();
     state->source = dir.root / object_path(first.head.timeline.head.index, file_kind::fractional_index);
     state->hidden = state->source.string() + ".held";
-    using faulty_store = runtime_store<P, random_object_ids, restore_failure_ops>;
-    auto faulty = faulty_store::open(dir.root, {}, {}, restore_failure_ops{state});
+    using faulty_store = runtime_store<P, random_object_ids, hide_after_commit_ops>;
+    auto faulty = faulty_store::open(dir.root, {}, {}, hide_after_commit_ops{state});
     auto source = faulty.find("earth-616");
     std::array metadata{std::byte{42}};
     state->armed = true;
-    rejects([&] { (void)faulty.publish(source->head, source->snapshot, metadata); });
-    require(state->renamed && faulty.failed(), "post-publication mapping failure was not exercised");
+    auto published = faulty.publish(source->head, source->snapshot, metadata);
+    require(state->renamed && !faulty.failed(), "publication did not retain its existing mapping");
+    require(published.snapshot.query_root().head() == source->snapshot.query_root().head(),
+      "publication rebuilt an already retained mapped suffix");
+    require(get(published.snapshot, "a") == bit_string::from_bytes("value"), "retained mapping stopped answering");
+    rejects([&] { (void)store::open(dir.root).find("earth-616"); });
     require(::rename(state->hidden.c_str(), state->source.c_str()) == 0, "restore fixture file");
     auto reopened = store::open(dir.root).find("earth-616");
     require(reopened && reopened->head.timeline.generation == source->head.timeline.generation + 1 &&
       reopened->head.timeline.head == source->head.timeline.head && reopened->semantic == std::vector<std::byte>{std::byte{42}},
-      "reopen lost committed root/checkpoint after mapping failure");
-    require(get(source->snapshot, "a") == bit_string::from_bytes("value"), "failed return invalidated old mapping");
+      "reopen lost committed root/checkpoint after restoring its filename");
+    require(get(source->snapshot, "a") == bit_string::from_bytes("value"), "publication invalidated old mapping");
   }
 }
 int main() {
-  try { lifecycle(); reindex_native_reuse(); failure_after_publication(); }
+  try { lifecycle(); reindex_native_reuse(); mapped_publication_retains_owner(); }
   catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }

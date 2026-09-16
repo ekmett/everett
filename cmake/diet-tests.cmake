@@ -33,13 +33,13 @@ set(diet_test_names registry registry_compat crc32c rank groups rank_groups_buil
 if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # These suites seal real mapped inputs through posix_object_ops throughout.
   # Model-ops writer tests above retain their platform-independent coverage.
-  list(APPEND diet_test_names mapped_index_builder file_index_builder file_index_pipeline mapped_cola mapped_cola_builder cola_terminal)
+  list(APPEND diet_test_names mapped_index_builder file_index_builder file_index_pipeline mapped_cola mapped_cola_builder cola_terminal cola_file_index)
 endif()
 list(APPEND diet_test_names cola_local_merge cola_local_merge_failure cola_runtime redundant_runtime sort_codec sort_profile sort_profile_file_writer sort_runtime typed_cola typed_redundant typed_scan replacement_rebuild tap)
 if(DIET_ENABLE_SQLITE)
   list(APPEND diet_test_names sqlite_catalog sqlite_catalog_adversarial sqlite_catalog_vfs sqlite_catalog_restart sqlite_catalog_timeline sqlite_catalog_streamed)
   if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    list(APPEND diet_test_names sqlite_catalog_cola sqlite_catalog_taps sqlite_catalog_runtime sqlite_catalog_redundant sqlite_catalog_connection sqlite_catalog_scan sqlite_catalog_owner_cache sqlite_catalog_graphs sqlite_catalog_sort_runtime sqlite_catalog_snapshot sqlite_catalog_rebuild sqlite_catalog_seals sort_runtime_context)
+    list(APPEND diet_test_names sqlite_catalog_cola sqlite_catalog_taps sqlite_catalog_runtime sqlite_catalog_redundant sqlite_catalog_connection sqlite_catalog_scan sqlite_catalog_bindings sqlite_catalog_graphs sqlite_catalog_sort_runtime sqlite_catalog_snapshot sqlite_catalog_rebuild sqlite_catalog_seals sqlite_catalog_pair sqlite_catalog_streaming_runtime sort_runtime_context)
   endif()
 endif()
 foreach(diet_test IN LISTS diet_test_names)

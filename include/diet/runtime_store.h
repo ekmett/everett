@@ -12,10 +12,10 @@
 #pragma once
 
 #include <diet/runtime_checkpoint.h>
+#include <diet/runtime_graph_sealer.h>
 #include <diet/sqlite_catalog.h>
 
 #include <array>
-#include <map>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -24,58 +24,6 @@
 #endif
 
 namespace diet {
-  namespace runtime_store_detail {
-    // Owner identity, not a mapped address, determines reuse. A rotating
-    // cursor bounds housekeeping even when callers retain many snapshots.
-    template <class T, class V> struct owner_cache {
-      using key_type = std::weak_ptr<T const>;
-      using map_type = std::map<key_type, V, std::owner_less<key_type>>;
-      using iterator = typename map_type::iterator;
-
-      owner_cache() : next_(entries_.end()) {}
-      owner_cache(owner_cache const &) = delete;
-      owner_cache & operator=(owner_cache const &) = delete;
-      owner_cache(owner_cache && other) noexcept : owner_cache() { swap(other); }
-      owner_cache & operator=(owner_cache && other) noexcept {
-        if (this != &other) { owner_cache moved(std::move(other)); swap(moved); }
-        return *this;
-      }
-      void swap(owner_cache & other) noexcept {
-        auto at_end = next_ == entries_.end(), other_at_end = other.next_ == other.entries_.end();
-        entries_.swap(other.entries_);
-        std::swap(next_, other.next_);
-        // Element iterators survive map::swap, but past-end iterators do not
-        // transfer to the other container's sentinel.
-        if (other_at_end) next_ = entries_.end();
-        if (at_end) other.next_ = other.entries_.end();
-      }
-      iterator find(key_type const & key) { return entries_.find(key); }
-      iterator end() noexcept { return entries_.end(); }
-      V const & at(key_type const & key) const { return entries_.at(key); }
-      std::size_t size() const noexcept { return entries_.size(); }
-      void insert_or_assign(key_type key, V value) {
-        // New facade owners bring their own small cleanup allowance. A large
-        // restored frontier cannot grow the cache faster than it is inspected.
-        prune(2);
-        entries_.insert_or_assign(std::move(key), std::move(value));
-      }
-      std::size_t prune(std::size_t budget = 16) {
-        if (next_ == entries_.end()) next_ = entries_.begin();
-        std::size_t examined = 0;
-        while (examined != budget && next_ != entries_.end()) {
-          auto current = next_++;
-          if (current->first.expired()) entries_.erase(current);
-          ++examined;
-        }
-        return examined;
-      }
-
-    private:
-      map_type entries_;
-      iterator next_;
-    };
-  }
-
   // Physical and operation identities use OS entropy; semantic fingerprints
   // are unrelated. Catalog reservations and exclusive installation still
   // reject a collision instead of replacing an existing object.
@@ -157,10 +105,10 @@ namespace diet {
       try {
         auto id = persist(source);
         auto checkpoint = codec_type::encode(source, semantic,
-          [&](pair_type const & pair) { return nodes_.at(pair); },
-          [&](native_pointer const & native) { return natives_.at(native); });
+          [&](pair_type const & pair) { return sealer().pair_id(pair); },
+          [&](native_pointer const & native) { return sealer().native_id(native); });
         auto op = operation();
-        return restore(catalog_.create_tap(op, name, id.head, checkpoint, id.auxiliary));
+        return restore(catalog_.create_tap(op, name, id.head, checkpoint, id.auxiliary), &source);
       } catch (...) { failed_ = true; throw; }
     }
     stored_type publish(catalog_tap_head const & expected, snapshot_type const & source,
@@ -169,12 +117,12 @@ namespace diet {
       try {
         auto id = persist(source);
         auto checkpoint = codec_type::encode(source, semantic,
-          [&](pair_type const & pair) { return nodes_.at(pair); },
-          [&](native_pointer const & native) { return natives_.at(native); });
+          [&](pair_type const & pair) { return sealer().pair_id(pair); },
+          [&](native_pointer const & native) { return sealer().native_id(native); });
         auto op = operation();
         auto published = catalog_.publish_tap(op, expected, id.head, checkpoint, id.auxiliary);
         if (!published.published) throw std::runtime_error("named Diet tap was advanced by another connection");
-        return restore(std::move(published.head));
+        return restore(std::move(published.head), &source);
       } catch (...) { failed_ = true; throw; }
     }
     stored_type fork(std::string_view name, catalog_tap_head const & source) {
@@ -190,18 +138,15 @@ namespace diet {
     std::string const & last_operation() const noexcept { return last_operation_; }
 
   private:
-    template <class T, class V> using cache = std::map<std::weak_ptr<T const>, V,
-      std::owner_less<std::weak_ptr<T const>>>;
     catalog_type catalog_;
     Ids ids_;
-    runtime_store_detail::owner_cache<node_type, blob_identity> nodes_;
-    runtime_store_detail::owner_cache<native_type, object_id> natives_;
     bool failed_ = false;
     std::string last_operation_;
 
     runtime_store(catalog_type catalog, Ids ids) : catalog_(std::move(catalog)), ids_(std::move(ids)) {}
     void require_active() const { if (failed()) throw std::logic_error("failed Diet runtime store; reopen it"); }
     std::string operation() { last_operation_ = ids_().hex(); return last_operation_; }
+    auto sealer() { return runtime_store_detail::graph_sealer<P, Ids, Ops, Family>(catalog_, ids_, &last_operation_); }
     // Mapping one checkpoint shares physical mappings and typed facades across
     // every visible and hidden root, preserving exact immutable dependencies.
     struct resolver {
@@ -216,17 +161,19 @@ namespace diet {
         if (found == natives.end()) {
           if (restricted) throw std::invalid_argument("checkpoint native has no durable pin");
           auto value = native_type::from_mapped(mapped.native(id));
-          store.natives_.insert_or_assign(value, id);
+          store.sealer().bind_native(value, id);
           found = natives.emplace(id.hex(), std::move(value)).first;
         }
         return found->second;
       }
       pair_type pair(blob_identity const & id) {
-        if (restricted) {
-          auto found = pairs.find(id.index.hex());
-          if (found == pairs.end() || found->second->mapped()->identity() != id)
-            throw std::invalid_argument("checkpoint pair has no durable pin");
+        if (auto found = pairs.find(id.index.hex()); found != pairs.end()) {
+          if (found->second->mapped()->identity() != id)
+            throw std::invalid_argument("checkpoint index has another native identity");
           return found->second;
+        }
+        if (restricted) {
+          throw std::invalid_argument("checkpoint pair has no durable pin");
         }
         auto physical = mapped.pair(id);
         std::vector<mapped_pointer> pending;
@@ -240,14 +187,47 @@ namespace diet {
           result = node_type::from_mapped_parts(p, native(p->identity().native), result,
             p->index_object()->secondary_id() ? native(*p->index_object()->secondary_id()) : native_pointer{});
           pairs.emplace(p->identity().index.hex(), result);
-          store.nodes_.insert_or_assign(result, p->identity());
+          store.sealer().bind_pair(result, p->identity());
         }
         return result;
       }
+      bool seed_native(object_id const & id, native_pointer value) {
+        auto [found, inserted] = natives.try_emplace(id.hex(), value);
+        return inserted || found->second == value;
+      }
+      bool seed_pair(pair_type value) {
+        auto const & id = value->mapped()->identity();
+        auto [found, inserted] = pairs.try_emplace(id.index.hex(), value);
+        if (!inserted) return found->second == value;
+        bool coherent = seed_native(id.native, value->native_owner());
+        if (auto main = value->main_target()) coherent = seed_pair(std::move(main)) && coherent;
+        if (auto secondary = value->secondary_target())
+          coherent = seed_native(*value->mapped()->index_object()->secondary_id(), std::move(secondary)) && coherent;
+        return coherent;
+      }
     };
-    stored_type restore(catalog_tap_head head) {
-      nodes_.prune(); natives_.prune();
+    stored_type restore(catalog_tap_head head, snapshot_type const * source = nullptr) {
+      if (source) {
+        resolver loaded(*this);
+        auto graph = sealer();
+        bool coherent = true;
+        codec_type::collect(*source, [&](pair_type const & pair) {
+            if (pair) coherent = loaded.seed_pair(graph.mapped_pair(pair)) && coherent;
+          }, [&](native_pointer const & native) {
+            if (native) coherent = loaded.seed_native(graph.native_id(native), graph.mapped_native(native)) && coherent;
+          });
+        // Imported frontiers can contain distinct facade owners for one file
+        // identity. Reopen those through the canonical resolver rather than
+        // mixing two pointer graphs. Ordinary publications share their suffix.
+        if (coherent) {
+          loaded.restricted = true;
+          return restore(std::move(head), loaded);
+        }
+      }
       resolver loaded(*this);
+      return restore(std::move(head), loaded);
+    }
+    stored_type restore(catalog_tap_head head, resolver & loaded) {
       // Load retained roots first, both to validate every durable pin and to
       // make all subsequent checkpoint references share their exact owners.
       (void)loaded.pair(head.timeline.head);
@@ -259,13 +239,8 @@ namespace diet {
     }
     struct persisted { blob_identity head; catalog_auxiliary_roots auxiliary; };
     persisted persist(snapshot_type const & source) {
-      nodes_.prune(); natives_.prune();
-      std::vector<pair_type> roots, outputs;
-      std::vector<native_pointer> native_roots, native_outputs;
-      cache<node_type, blob_identity> planned_pairs;
-      cache<native_type, object_id> planned_natives;
-      std::vector<catalog_object_reservation> reservations;
-      std::vector<blob_identity> inputs;
+      std::vector<pair_type> roots;
+      std::vector<native_pointer> native_roots;
       std::unordered_set<node_type const *> seen_pairs;
       std::unordered_set<native_type const *> seen_natives;
       codec_type::collect(source, [&](pair_type value) {
@@ -273,78 +248,17 @@ namespace diet {
         }, [&](native_pointer value) {
           if (value && seen_natives.insert(value.get()).second) native_roots.push_back(std::move(value));
         });
-      auto plan_native = [&](native_pointer const & native) {
-        if (auto known = natives_.find(native); known != natives_.end()) return known->second;
-        if (auto known = planned_natives.find(native); known != planned_natives.end()) return known->second;
-        if (native) {
-          if constexpr (requires { native->sealed(); }) if (auto seal = native->sealed()) {
-            if (!native->mapped() || seal->catalog != catalog_.identity())
-              throw std::invalid_argument("sealed native belongs to another backing catalog");
-            catalog_.verify_sealed(seal->receipt, file_kind::native_blob);
-            planned_natives.emplace(native, seal->receipt.object);
-            return seal->receipt.object;
-          }
-        }
-        if (!native || !native->owned()) throw std::invalid_argument("mapped native was not opened by this store");
-        auto id = ids_(); planned_natives.emplace(native, id); native_outputs.push_back(native);
-        reservations.push_back({id, file_kind::native_blob}); return id;
-      };
-      std::unordered_set<node_type const *> visiting;
-      auto plan_pair = [&](auto && self, pair_type const & pair) -> blob_identity {
-        if (auto known = nodes_.find(pair); known != nodes_.end()) { inputs.push_back(known->second); return known->second; }
-        if (auto known = planned_pairs.find(pair); known != planned_pairs.end()) return known->second;
-        if (!pair || !pair->built()) throw std::invalid_argument("mapped runtime snapshot was not opened by this store");
-        if (!visiting.insert(pair.get()).second) throw std::invalid_argument("cyclic runtime pair graph");
-        if (pair->main_target()) (void)self(self, pair->main_target());
-        if (pair->secondary_target()) (void)plan_native(pair->secondary_target());
-        blob_identity id{plan_native(pair->native_owner()), ids_()};
-        planned_pairs.emplace(pair, id); reservations.push_back({id.index, file_kind::fractional_index});
-        outputs.push_back(pair); visiting.erase(pair.get()); return id;
-      };
-      for (auto const & pair : roots) (void)plan_pair(plan_pair, pair);
-      for (auto const & native : native_roots) (void)plan_native(native);
-      if (!reservations.empty()) {
-        object_attempt_id attempt(ids_().hex()); auto owner = ids_().hex();
-        std::sort(inputs.begin(), inputs.end(), [](auto const & a, auto const & b) { return a.index.hex() < b.index.hex(); });
-        inputs.erase(std::unique(inputs.begin(), inputs.end()), inputs.end());
-        auto op = operation(); catalog_.reserve(op, attempt, owner, inputs, reservations);
-        for (auto const & native : native_outputs) {
-          auto encoded = [&] {
-            if constexpr (requires { typename Family::storage_type; }) return Family::storage_type::encode_native(*native->owned());
-            else return encode_native_sections(*native->owned());
-          }();
-          auto receipt = encoded.seal(root(), planned_natives.at(native), attempt);
-          op = operation(); catalog_.record_sealed(op, receipt);
-        }
-        auto native_id = [&](native_pointer const & native) {
-          auto found = planned_natives.find(native); return found == planned_natives.end() ? natives_.at(native) : found->second;
-        };
-        auto pair_id = [&](pair_type const & pair) {
-          auto found = planned_pairs.find(pair); return found == planned_pairs.end() ? nodes_.at(pair) : found->second;
-        };
-        for (auto const & pair : outputs) {
-          auto id = pair_id(pair);
-          auto encoded = encode_cola_sections(*pair->built(), id.native,
-            pair->main_target() ? std::optional<blob_identity>(pair_id(pair->main_target())) : std::nullopt,
-            pair->secondary_target() ? std::optional<object_id>(native_id(pair->secondary_target())) : std::nullopt);
-          auto receipt = encoded.seal(root(), id.index, attempt);
-          op = operation(); catalog_.record_sealed(op, receipt);
-        }
-        mapped_resolver loaded(root());
-        std::vector<mapped_pointer> graphs;
-        for (auto const & pair : roots) graphs.push_back(loaded.pair(pair_id(pair)));
-        if (!graphs.empty()) {
-          op = operation(); catalog_.template register_graphs<mapped_type>(op, graphs);
-        }
-      }
-      // A newly sealed hidden native can arrive without any new pair output.
-      // Its validated attestation still participates in the checkpoint's pins.
-      for (auto const & [weak, id] : planned_pairs) nodes_.insert_or_assign(weak, id);
-      for (auto const & [weak, id] : planned_natives) natives_.insert_or_assign(weak, id);
-      auto primary = nodes_.at(source.query_root().head());
+      auto graph = sealer();
+      // Each new owner resolves its immediate dependencies once. An existing
+      // bound suffix stops this walk, irrespective of how many roots share it.
+      // Finish one root before starting another: no unrelated binding locks
+      // are held together across independently publishing backends.
+      for (auto const & pair : roots) (void)graph.ensure_pair(pair);
+      for (auto const & native : native_roots) (void)graph.ensure_native(native);
+      auto primary = graph.pair_id(source.query_root().head());
       catalog_auxiliary_roots retained;
-      for (auto const & pair : roots) retained.pairs.push_back(nodes_.at(pair));
-      for (auto const & native : native_roots) retained.natives.push_back(natives_.at(native));
+      for (auto const & pair : roots) retained.pairs.push_back(graph.pair_id(pair));
+      for (auto const & native : native_roots) retained.natives.push_back(graph.native_id(native));
       return {primary, catalog_detail::canonical_auxiliary(std::move(retained), primary)};
     }
   };

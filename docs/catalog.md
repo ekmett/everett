@@ -130,13 +130,14 @@ its outgoing retention until its release work commits, so interruption cannot
 make reachable files reclaimable. Ownership follows required file dependencies;
 keeping a new cola does not implicitly retain every earlier cola on its timeline.
 
-The sealed file identity and its backing-catalog identity can live with this
+The sealed file identity and its backing-catalog identity live with this
 shared owner as an immutable record. Reuse then follows the owner's lifetime,
 instead of requiring a separate table of weak owners to be scanned for expiry.
 A binding to another catalog needs its own sealed record even when it shares
-the same immutable bytes. Current in-memory query nodes already share their
-dependency owners; lifetime-coupled seal records and durable retirement are
-integration work, not a claim that catalog garbage collection is complete.
+the same immutable bytes. Current query nodes share their dependency owners,
+acknowledged seal records and mapped counterparts. Durable retirement remains
+separate work; the catalog still retains historical generations and construction
+attempts.
 
 ### Operations and background work
 

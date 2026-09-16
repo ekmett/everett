@@ -37,19 +37,24 @@ Publication walks new graph nodes in dependency order, reserves their identities
 seals their files, records the receipts and registers the complete graph. It
 then commits the root and checkpoint atomically. Unchanged native owners reuse
 their existing `.kv` identity when an index changes. A wholly unchanged graph
-needs only a new catalog generation. The weak caches retain neither native
-data nor dead snapshots, and reopening reconstructs those caches from metadata.
-Their cleanup cursor inspects a bounded number of owners per operation and
-per insertion; it does not scan all retained snapshots on every write. Expired
-cache entries can remain until that cursor reaches them.
-Mapped inputs must have been opened by this adapter; an unrelated mapped owner
-cannot silently substitute an object under a known identity.
+needs only a new catalog generation. Each shared owner carries its acknowledged
+file identity and mapped representation. The first sealing walks its immediate
+dependencies; an already bound suffix stops that walk. These records disappear
+with their owners, so there is no weak-owner table to sweep.
 
-I register a checkpoint's roots together. They often share a long suffix, so
-the registration walks and records each distinct pair once. Root identities
-are sorted and deduplicated before recording the operation; passing the same
-set in a different order replays the same registration. This does not change
-which roots and hidden artifacts the checkpoint pins.
+Bindings distinguish both catalog identity and canonical local directory. A
+copied catalog can share its identity with the original while naming a different
+set of local files. Concurrent adapters sharing the same owner serialize only
+its first sealing into a given store. Lookup and merge record loops do not use
+these locks. Import checks the completed receipt and current envelope; an
+unrelated mapped owner cannot silently substitute an object under a known name.
+Reopening reconstructs bindings from the exact catalog graph.
+
+Each newly sealed pair registers over already registered immediate targets.
+Registration validates this pair's metadata and the main target's stored
+counts without reopening the suffix. The separate bulk registration API
+interns a set of imported roots together and canonicalizes their order for
+operation replay. Both paths preserve the complete checkpoint's exact pins.
 
 The default physical identity allocator uses OS randomness. These are opaque
 reserved names, separate from semantic signatures; this adapter does not yet
