@@ -1,0 +1,2 @@
+Observed expected original Sux Half verification failure at span 65536; fixed candidate passed
+All select candidates match independent offsets across 26 fixtures

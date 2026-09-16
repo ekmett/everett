@@ -1,0 +1,6 @@
+{
+  "hw.model": "Mac14,5",
+  "hw.memsize": 103079215104,
+  "machdep.cpu.brand_string": "Apple M2 Max",
+  "source": "read-only sysctl -n after sandboxed sysctl was denied"
+}

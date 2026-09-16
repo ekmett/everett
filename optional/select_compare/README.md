@@ -23,7 +23,9 @@ Candidates
   validation and mapped/native accessor machinery while retaining ordinal and
   decoded-value checks. Its difference is not solely the cost of error checks.
 - `ef-sub32` adds a 16-bit position every 32 high ones, within the existing
-  256-one groups, with exact positions for the same long-span exceptions.
+  256-one groups, with exact positions for the same long-span exceptions. Its
+  measured constructor scans high ones; direct construction from original
+  residual positions could reduce that cost.
 - `ef-high-direct64` stores every high-one position: an intentionally expensive
   speed bound.
 - `ef-sux-simple1` and `ef-sux-simple2` use Vigna's actual `SimpleSelect`, with
@@ -151,3 +153,11 @@ raw bitvectors as a denominator and should not be substituted for total EF space
 The [PDEP word-select study](https://arxiv.org/abs/1706.00990) distinguishes
 word-select speed from end-to-end bitvector speed; Everett already has a BMI2
 word-select path. This ARM experiment does not measure that path.
+
+Retained results
+----------------
+
+The [Apple M2 Max run](results/2026-09-16-m2max/report.md) retains all 315
+processes, including excluded warmups and correctness failures. Its
+[evidence guide](results/2026-09-16-m2max/README.md) explains how to verify and
+regenerate the tables.

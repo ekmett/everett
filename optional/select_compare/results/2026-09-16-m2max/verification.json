@@ -1,0 +1,29 @@
+{
+  "measured_source": "960d5c578dd78438edaed256094f0fd6627a4d52",
+  "release_ctest": {
+    "passed": 1,
+    "failed": 0,
+    "elapsed_seconds": 0.37
+  },
+  "asan_ubsan_ctest": {
+    "passed": 1,
+    "failed": 0,
+    "elapsed_seconds": 0.52
+  },
+  "correctness_fixtures": 26,
+  "half_boundary_spans": [
+    65535,
+    65536,
+    65537
+  ],
+  "sanitized_export": "case0, all four encodings and all four native/index roles",
+  "sanitized_access_smoke": [
+    "case-0.typed-bit.index-main",
+    "case-0.typed-byte.native-output"
+  ],
+  "release_binary_sha256": "953e526c126b3728d0bd0c774ea75199146b39334fd3f45ad3d525f98c1dad2c",
+  "sanitized_binary_sha256": "15e4818f98c85af0cf507b87ac904ee42543d528a44be0c8cbfbed3dbb1bc6b5",
+  "sanitizers": "address,undefined; Debug; AppleClang21.0.0",
+  "report_analyzer_sha256": "800456df1f361187dd997ef0fcdbcbe8b94f211a06aff865a85b6c9917b46b51",
+  "post_measurement_changes": "Report presentation and README constructor caveat only; candidate code, exporter and executable are unchanged from measured source."
+}

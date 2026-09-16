@@ -114,7 +114,23 @@ for candidate in candidates[1:]:
         rr = ratios(candidate, access)
         cells.append(f"{geomean(rr):.2f}× ({min(rr):.2f}–{max(rr):.2f})")
     report.append("| " + candidate + " | " + " | ".join(cells) + " |")
-report.extend(["", "Same-data space example", "-----------------------", ""])
+report.extend(["", "Representative space/time frontier", "----------------------------------", "",
+    "Array deltas are divided by the actual native-record count, or by borrowed-record count for an index. This is an estimated directory-array change per record, not a claimed new persisted file size. Repeated offsets remain valid. $U/n$ below describes the offset universe; it is distinct from high-bit density and from the mean gap $U/(n-1)$ in these zero-based sequences.", ""])
+for sequence in ("case-2.raw-byte.native-output", "case-11.typed-bit.native-output", "case-2.raw-byte.index-main", "case-11.typed-bit.index-main"):
+    meta = sequences[sequence]
+    records = int(meta["records"])
+    kind = "borrowed" if ".index-" in sequence else "native"
+    report.extend([f"`{sequence}`: {records} {kind} records, {meta['count']} offsets.", "",
+      "| Candidate | Array bytes (auxiliary) | Resident bytes | Extra bytes/record | Random ns/select | Dependent ns/select | Build ns/offset |",
+      "| --- | ---: | ---: | ---: | ---: | ---: | ---: |"])
+    for candidate in ("ef-current", "ef-sub32", "ef-sux-simple2", "ef-sux-half-fixed", "direct32", "packed-absolute"):
+        x = lookup[(sequence, candidate, "random-throughput")]
+        baseline = spaces[(sequence, "ef-current")]["array_bytes"]
+        dependent = lookup[(sequence, candidate, "dependent-latency")]["ns_per_call"]
+        report.append(f"| {candidate} | {x['array_bytes']} ({x['auxiliary_bytes']}) | {x['resident_bytes']} | {(x['array_bytes']-baseline)/records:+.4f} | {x['ns_per_call']:.2f} | {dependent:.2f} | {x['whole_build_ns']/meta['count']:.2f} |")
+    report.append("")
+report.extend(["The trusted owning-array control is essentially tied with production across the real sequences. Sub32's measured layout benefit therefore remains when compared with that control; it is not explained by removing directory validation. The much larger direct-array throughput gain includes the benefit of independent tiny cached loads, while the dependent-latency column is a better bound for a serialized query chain.", "",
+    "Same-data space detail", "----------------------", ""])
 for sequence in ("case-2.raw-byte.native-output", "case-11.typed-bit.index-main"):
     meta = sequences[sequence]
     report.extend([f"`{sequence}`: {meta['count']} offsets, inclusive universe {meta['universe']}, EF low width {meta['low_width']}; $U/n={meta['universe']/meta['count']:.3f}$ and high-bit density $n/H={meta['count']/meta['high_bits']:.3f}$.", "",
@@ -133,7 +149,7 @@ for sequence in sorted(s for s, m in sequences.items() if m["kind"] == "syntheti
         cells.append(f"{x['ns_per_call']:.2f}" if x else "ineligible")
     report.append("| " + sequence + " | " + " | ".join(cells) + " |")
 report.extend(["", "Construction and scanning", "-------------------------", "",
-    "`summary.json` reports whole construction and alternative index-only construction separately, in nanoseconds. The whole builder includes low/high arrays; the isolated alternative builder does not build unused production samples. Batch destruction is outside construction timing. Production EF has no isolated-directory builder entry point, represented by -1 rather than an invented comparable number.", "",
+    "`summary.json` reports whole construction and alternative index-only construction separately, in nanoseconds. The whole builder includes low/high arrays; the isolated alternative builder does not build unused production samples. Batch destruction is outside construction timing. Production EF has no isolated-directory builder entry point, represented by -1 rather than an invented comparable number. The sub32 constructor currently scans all high ones; a builder given original offsets could construct its subinventory directly. Its measured build cost is this implementation, not an intrinsic lower bound.", "",
     "| Example | Current build ns/offset | Simple2 build ns/offset | Simple2 index ns/offset | Current forward ns/offset | Current indexed scan ns/offset |", "| --- | ---: | ---: | ---: | ---: | ---: |"])
 for sequence in ("case-2.raw-byte.native-output", "case-11.typed-bit.index-main", "replay-case-2.raw-byte.native-output-22"):
     n = sequences[sequence]["count"]

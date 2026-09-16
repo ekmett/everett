@@ -1,0 +1,89 @@
+{
+  "processes": 315,
+  "rows": 71535,
+  "summary_rows": 5960,
+  "same_sequence_checksums": 2940,
+  "failures": [
+    {
+      "sequence": "synthetic-half-boundary-65536",
+      "candidate": "ef-sux-half",
+      "process": 0,
+      "status": "failed-verification"
+    },
+    {
+      "sequence": "synthetic-half-boundary-65536",
+      "candidate": "ef-sux-half",
+      "process": 1,
+      "status": "failed-verification"
+    },
+    {
+      "sequence": "synthetic-half-boundary-65536",
+      "candidate": "ef-sux-half",
+      "process": 2,
+      "status": "failed-verification"
+    }
+  ],
+  "unavailable": [
+    {
+      "sequence": "replay-case-11.typed-bit.index-main-22",
+      "candidate": "direct32",
+      "process": 0
+    },
+    {
+      "sequence": "replay-case-11.typed-bit.index-main-22",
+      "candidate": "direct32",
+      "process": 1
+    },
+    {
+      "sequence": "replay-case-11.typed-bit.index-main-22",
+      "candidate": "direct32",
+      "process": 2
+    },
+    {
+      "sequence": "replay-case-11.typed-bit.native-output-22",
+      "candidate": "direct32",
+      "process": 0
+    },
+    {
+      "sequence": "replay-case-11.typed-bit.native-output-22",
+      "candidate": "direct32",
+      "process": 1
+    },
+    {
+      "sequence": "replay-case-11.typed-bit.native-output-22",
+      "candidate": "direct32",
+      "process": 2
+    },
+    {
+      "sequence": "replay-case-5.typed-byte.native-output-22",
+      "candidate": "direct32",
+      "process": 0
+    },
+    {
+      "sequence": "replay-case-5.typed-byte.native-output-22",
+      "candidate": "direct32",
+      "process": 1
+    },
+    {
+      "sequence": "replay-case-5.typed-byte.native-output-22",
+      "candidate": "direct32",
+      "process": 2
+    },
+    {
+      "sequence": "replay-case-8.raw-bit.native-output-22",
+      "candidate": "direct32",
+      "process": 0
+    },
+    {
+      "sequence": "replay-case-8.raw-bit.native-output-22",
+      "candidate": "direct32",
+      "process": 1
+    },
+    {
+      "sequence": "replay-case-8.raw-bit.native-output-22",
+      "candidate": "direct32",
+      "process": 2
+    }
+  ],
+  "validation": "All raw hashes, result groups, sequence extents, per-candidate spaces, checksums and query counts verified"
+}
