@@ -169,6 +169,7 @@ namespace everett {
     // Include everett/connection.h and link everett::sqlite for these operations.
     session connect(std::string_view name) const;
     session connect(std::string_view name, connection_options const & options) const;
+    std::size_t recover_transactions() const;
 
     file open_object(object_id const & id, file_kind kind, file_open_mode mode = file_open_mode::checked) const {
       auto result = file::open(root_ / object_path(id, kind), mode);
