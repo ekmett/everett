@@ -156,7 +156,7 @@ auto together = db.apply(std::move(changes).finish());
 
 Batch keys must be distinct; `finish()` sorts them and rejects duplicates.
 `submit` accepts the same finished batch for asynchronous publication. The
-ordinary bit-profile table constructs a power-of-two prefix of an initial batch
+ordinary table constructs a power-of-two prefix of an initial batch
 directly, then admits any remaining records through ordinary charged admission.
 The complete batch is validated first and published together. Existing tables
 use ordinary charged admission throughout. The

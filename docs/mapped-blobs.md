@@ -39,8 +39,9 @@ the encoder and expire if it moves or dies. `materialize()` explicitly copies a
 complete envelope and body into a vector, useful for small fixtures or transports
 requiring contiguous storage.
 
-The source must use ordinary FC. Encoding does not rescan every key to certify
-that precondition. An index encoder records the supplied identities; those
+The source must use sorted FC records with valid retained prefixes. Conservative
+prefixes may repeat literal material. Encoding does not rescan every key to
+certify those properties. An index encoder records the supplied identities; those
 declarations do not prove the sampled keys agree with a target. The explicit
 semantic scan below checks both properties.
 
@@ -155,11 +156,12 @@ The existing `file_open_mode::trusted` operation still creates an envelope
 handle without reading mapped bytes. Converting that handle to a typed mapped
 profile is a separate, explicit metadata read; it validates the envelope then.
 
-`mapped_native::scan()` verifies CRC, padding, sequential framing, ordinary-FC
+`mapped_native::scan()` verifies CRC, padding, sequential framing, FC
 order/uniqueness, physical checkpoints, terminal length and the canonical EF
 arrays rebuilt from record positions. The scanner validates a changed prefix
-by examining its first new unit, then updates its key buffer in place; it does
-not copy the inherited prefix for every record.
+by examining its first new unit. When a conservative prefix repeats that unit,
+it compares the remaining explicit tails to establish order. It then updates
+its key buffer in place; it does not copy the inherited prefix for every record.
 
 `mapped_index::scan()` adds canonical rank classes/checkpoints and flag padding.
 `mapped_blob::scan()` scans the complete pinned chain, recomputes each actual

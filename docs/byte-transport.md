@@ -117,3 +117,15 @@ string keys already benefit from some bit compression. Fixed-width key grammar,
 value framing and the key distribution matter independently of alignment.
 The comparison keeps these effects separate and models terminated suffixes
 without presenting them as an implemented format.
+
+Byte GPU Construction
+---------------------
+
+The optional [byte GPU driver](../optional/byte_gpu_merge/README.md) reads the
+same mapped KV02 files directly. The GPU finds sampled offsets, parses frames,
+merges records and writes a complete byte-profile output with Elias–Fano
+navigation. It needs no CPU key reconstruction pass. Metal tests compare the
+entire output against the CPU writer, including its checksum and padding.
+This is a native-file merge experiment; ordinary connections still use the
+CPU, and the driver does not perform durable publication or strong-delete
+cleanup.

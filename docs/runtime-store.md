@@ -217,7 +217,7 @@ streamed completions; it never forces small adaptive outputs to acquire files.
 
 `streaming_sort_runtime_family` keeps small native merges and fractional indexes
 owned until publication, and streams larger outputs into KV03 and IX03 files.
-This is the ordinary bit-profile connection backend. The typed core carries one
+This is the connection backend selected by an explicit bit policy. The typed core carries one
 concrete storage context through equivalent snapshot replacements:
 
 ```cpp

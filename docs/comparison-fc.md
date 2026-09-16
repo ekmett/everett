@@ -222,8 +222,8 @@ empty projections and the preceding-frontier counterexample. Protected pages
 verify that control-only entry skips key payloads and borrowed-frontier repair
 does not replay the preceding block. Reindexing preserves native bytes and pins the exact new
 index dependencies. Construction reconstructs sequentially. The explicit
-[mapped codec scan](mapped-blobs.md) verifies sequential FC framing, ordinary
-prefix retention, navigation directories, cut LCPs and exact target samples.
+[mapped codec scan](mapped-blobs.md) verifies sequential FC framing, valid
+prefix retention and ordering, navigation directories, cut LCPs and exact target samples.
 `file<P>::scan` supplies the lower-level envelope, CRC and padding check.
 
 `profile_view::reconstruct_at` is a separate full-reconstruction operation.

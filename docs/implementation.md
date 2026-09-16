@@ -200,6 +200,20 @@ isolated benchmark formats with exact-value and mapped-selection checks.
 
 ### Optional GPU construction
 
+The [byte-profile GPU driver](../optional/byte_gpu_merge/README.md) constructs
+complete KV02 files from mapped byte inputs. GPU passes select the existing
+Elias–Fano checkpoints, parse LEB128 frames, merge keys, retain newer values,
+infer a common value width and emit both front-coded records and their offset
+directory. The CPU supplies metadata and resources, then writes the envelope
+and checksum. It does not decode input records before dispatch.
+
+This opt-in driver supports the tagless optional-string sort, replacement
+composition and 15-record sampling. It retains tombstones; strong-delete
+cleanup and conservative tombstone-depth preservation are separate contracts.
+Complete-file comparisons run on Metal. Its shared HLSL also compiles to
+validated Vulkan SPIR-V, without a tested Vulkan host driver. It is not yet
+connected to durable publication or automatic GPU selection.
+
 The separate [fixed-key experiment](../optional/fixed_gpu_merge/README.md)
 constructs complete candidate `.ff` and `.fv` outputs from mapped inputs.
 The Metal path performs scheduled cancellation, survivor compaction, Merge Path,
@@ -227,7 +241,7 @@ structured fixture and less for the hash-like fixture. All 216 timed outputs
 match their canonical files and cross-format logical hashes. These are
 standalone native merges, without fractional indexes or durable publication.
 
-The separate [GPU experiment](../optional/gpu_merge/design.md) merges default
+The separate [GPU experiment](../optional/gpu_merge/design.md) merges explicit
 bit-profile string replacement files through Metal. GPU passes select input
 Elias–Fano offsets, parse compressed frames, recover inherited prefixes, merge
 records, scan exact output lengths and write the compressed payload and
@@ -278,7 +292,7 @@ default; the existing calibration is not silently reused.
 
 ### Active runtime and named frontiers
 
-`multiverse<>::create(path).connect(name)` opens a default bit-profile string table.
+`multiverse<>::create(path).connect(name)` opens a byte-profile string table.
 The [connection](connection.md) serializes mutable commands, publishes durable
 mapped results and services merge work in the background. Its synchronous
 `persistent_engine` is also available to caller-owned scheduling loops. Tests
@@ -382,17 +396,19 @@ engine can certify a preflight rejection left state unchanged; only that ticket
 fails. Uncertain or partial execution failures stop the worker. Focused tests
 exercise both paths, shutdown during required service and old snapshot ownership.
 
-`active_engine<>` supplies the ordinary bit-profile optional-string table.
-Its redundant scheduler uses streamed sort-owned records, with replacement
-rebuilding to clean obsolete history. Other registries use the generic typed
+`active_engine<>` supplies the ordinary byte-profile optional-string table.
+Its redundant scheduler uses byte-aligned records, with replacement rebuilding
+to clean obsolete history. `active_engine<string_policy>` selects streamed
+sort-owned bit records explicitly. Other registries use the generic typed
 executor. A compatible registry extension validates the previous replacement
 checkpoint before projecting its metadata; the generic executor makes no
 live-size cleanup promise. Default queue capacity uses the selected engine's
 reservation for 1024 records, and explicit admission limits are kept exactly.
 The lower-level
-`typed_engine<>` also remains available with its binary runtime default. Its
-registry reserves code one for extension and assigns code zero to the current
-sort. Static command factories support ordinary mutable writes; snapshot
+`typed_engine<>` also remains available with its binary runtime default and
+tagless byte registry. The explicit `string_policy` instead reserves code one
+for extension and assigns code zero to the current sort. Static command
+factories support ordinary mutable writes; snapshot
 factories validate each touched old value, allowing disjoint contributions from
 one base in either order. Sorts supply chronological composition and hashing;
 dispatch bits never enter the signature. Tests include a noncommutative append
@@ -863,13 +879,19 @@ identities, shares repeated native owners, rejects cycles and missing targets,
 and adopts an already-bounded head. The caller's catalog authenticates the
 physical object identities; opaque IDs alone are not content digests.
 
-Explicit `scan()` operations verify CRC, canonical section padding, ordinary-FC
+Explicit `scan()` operations verify CRC, canonical section padding, FC
 framing/order, physical checkpoints and rebuilt EF/rank directories. A mapped
 pair's scan also recomputes its interleaving, false-borrow bits and cut LCPs,
 then checks borrowed samples against the exact target's augmented stream.
 These semantic scans can reconstruct and compare keys; normal queries do not
 silently scan untouched data. Successful readback is not evidence that an
 earlier failed persistence barrier became durable.
+
+Conservative retained prefixes may repeat literal material. The scanner keeps
+the ordinary first-unit ordering check and compares explicit tails only when
+that unit is equal. It still rejects decreasing keys and duplicate native keys;
+borrowed duplicates remain valid. Byte and partial-bit regressions cover long
+prefixes across block cuts and all ordered pairs of a small independent key set.
 
 The independent mapped suite covers byte/bit and fixed/variable policies,
 independent physical/virtual widths, exact match/source/value oracles,

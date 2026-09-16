@@ -29,7 +29,7 @@ exact old-value validation; the engine's static command factories apply to the
 current state. Disjoint contributions from one base retain the same composite
 signature in either order.
 
-Ordinary bit-profile connections select this grammar with streamed native and
+Explicit bit-profile connections select this grammar with streamed native and
 index output. The example above selects its owning in-memory family explicitly.
 `typed_engine<>` and the opaque binary and redundant families retain their
 own formats. The default string

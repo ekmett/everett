@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "eaf18004ff17807f09e6239214a007859592aaf6740a2e04f74e1eb91294b09c"
+      "normalized_sha256": "aa86d7c7b9695c2b10764f695e0e4c12494532408a2cdea2e2fa553f32b3f987"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "5068b00290040ded8522eba20e9d3ecf78323a71fdeccdd1191d32f528b17826"
+      "normalized_sha256": "5b7bafd0ed3e11f3fc2b8b5264b28b56a67bd81bf90b19733d68225371ce2227"
     }
   ],
   "subsequent_updates": [
@@ -1114,6 +1114,13 @@
       "scope": "Document byte defaults and the current matched lookup measurements, and record the future column-value and secondary-index design. Original measurement identities are unchanged.",
       "artifacts": [
         "bench/README.md",
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Update byte-default backend descriptions, optional byte GPU construction, and conservative front-coding scan semantics. Original measurement identities are unchanged.",
+      "artifacts": [
         "bench/results/publication_normalization.json",
         "docs/implementation.md"
       ]
