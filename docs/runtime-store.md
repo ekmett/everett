@@ -42,6 +42,26 @@ file identity and mapped representation. The first sealing walks its immediate
 dependencies; an already bound suffix stops that walk. These records disappear
 with their owners, so there is no weak-owner table to sweep.
 
+Each adapter also retains its latest restored frontier in a local identity
+registry. Acquiring an owner already present there increments its local count;
+we do not revisit its native, main or secondary dependencies. A newly live owner
+acquires those immediate dependencies once, and the final local release retires
+them. Normal publication bookkeeping therefore follows its roots and the edges
+that enter or leave the retained graph, rather than its unchanged suffix. The
+registry holds no older frontiers and releases its entries when the adapter is
+destroyed. Other snapshots keep their own immutable owners independently.
+
+New roots are acquired before old roots are released. Allocation failures and
+conflicting facade identities roll back the acquisitions. Before checkpoint
+decoding, the registry contains exactly the acknowledged head and auxiliary
+roots' closure: a previous larger frontier cannot supply a missing durable pin.
+Distinct owners for one physical identity, even deep inside a new prefix, take
+the full canonical mapping path. That exceptional import and the first open
+still inspect the complete incoming graph. Ordinary roots, checkpoint encoding
+and scheduler metadata still require work; this does not make publication
+constant time. The entry count follows the current retained graph; spare hash
+buckets shrink geometrically when allocation succeeds.
+
 Bindings distinguish both catalog identity and canonical local directory. A
 copied catalog can share its identity with the original while naming a different
 set of local files. Concurrent adapters sharing the same owner serialize only

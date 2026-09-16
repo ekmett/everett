@@ -156,12 +156,22 @@ namespace {
     assert(matches(retained->snapshot, "key") ==
       (std::vector{bit_string::from_bytes("new"), bit_string::from_bytes("old")}));
     retained.reset();
-    // The adapter is still alive. It must not keep any owner or mapping cache.
+    // The adapter retains exactly its latest restored frontier. Replacing
+    // that frontier releases its old owners without disturbing saved pins.
+    for (auto const & weak : mapped_pairs) assert(!weak.expired());
+    { (void)adapter.create_tap("replacement", singleton()); }
     for (auto const & weak : mapped_pairs) assert(weak.expired());
     for (auto const & weak : mapped_natives) assert(weak.expired());
     for (auto const & weak : physical_pairs) assert(weak.expired());
     for (auto const & weak : physical_natives) assert(weak.expired());
     assert(adapter.find("lifetime")); // Durable pins survive the last in-memory owner.
+    std::weak_ptr<node const> adapter_owner;
+    {
+      auto separate = store::open(dir.root);
+      { auto loaded = separate.find("lifetime"); adapter_owner = loaded->snapshot.query_root().head(); }
+      assert(!adapter_owner.expired());
+    }
+    assert(adapter_owner.expired());
   }
 
   void distinct_facades() {
@@ -174,26 +184,36 @@ namespace {
     auto main = right->snapshot.query_root().head();
     assert(own != main->native_owner() && own->mapped() != main->native_owner()->mapped());
     auto parent = node::from_built(node::built_type::adopt_native(own, main));
-    std::array intervals{cola_runtime_interval{0, 1}, cola_runtime_interval{1, 2}};
+    // The conflicting native is below several new owners, beyond root-only
+    // identity checks. A previously cached copy must not hide this collision.
+    for (unsigned n = 0; n != 6; ++n) parent = pair("padding-" + std::to_string(n), "padding", parent);
+    std::array<cola_runtime_interval, 8> intervals;
+    std::uint64_t ordinal = 0;
+    for (std::size_t n = 0; n != intervals.size(); ++n) {
+      auto width = n < 7 ? std::uint64_t(64) >> n : 1;
+      intervals[n] = {ordinal, ordinal + width}; ordinal += width;
+    }
     auto source = snapshot::restore(parent, intervals);
     auto natives = files(dir.root, ".kv"), indexes = files(dir.root, ".index");
     auto combined = adapter.create_tap("combined", source);
-    assert(files(dir.root, ".kv") == natives && files(dir.root, ".index") == indexes + 1);
+    assert(files(dir.root, ".kv") == natives + 6 && files(dir.root, ".index") == indexes + 7);
     auto canonical = combined.snapshot.query_root().head();
+    for (unsigned n = 0; n != 6; ++n) canonical = canonical->main_target();
     assert(canonical->main_target() && canonical->native_owner() == canonical->main_target()->native_owner());
     assert(canonical->mapped()->native_object() == canonical->main_target()->mapped()->native_object());
     assert(canonical->main_target() != main && canonical->native_owner() != own);
-    assert(combined.snapshot.runs().size() == 2 && combined.snapshot.admissions() == 2);
+    assert(combined.snapshot.runs().size() == 8 && combined.snapshot.admissions() == 128);
     auto expected = std::vector{bit_string::from_bytes("value"), bit_string::from_bytes("value")};
     assert(matches(combined.snapshot, "key") == expected);
     auto reopened = store::open(dir.root).find("combined");
     assert(reopened && reopened->head == combined.head && matches(reopened->snapshot, "key") == expected);
     auto reloaded = reopened->snapshot.query_root().head();
+    for (unsigned n = 0; n != 6; ++n) reloaded = reloaded->main_target();
     assert(reloaded->native_owner() == reloaded->main_target()->native_owner());
     adapter.save("twice", combined.head);
     auto forked = adapter.fork("branch", combined.head);
     assert(forked.head.auxiliary == combined.head.auxiliary && matches(forked.snapshot, "key") == expected);
-    assert(files(dir.root, ".kv") == natives && files(dir.root, ".index") == indexes + 1);
+    assert(files(dir.root, ".kv") == natives + 6 && files(dir.root, ".index") == indexes + 7);
   }
 }
 int main() {

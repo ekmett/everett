@@ -13,6 +13,7 @@
 
 #include <diet/runtime_checkpoint.h>
 #include <diet/runtime_graph_sealer.h>
+#include <diet/runtime_registry.h>
 #include <diet/sqlite_catalog.h>
 
 #include <array>
@@ -138,6 +139,8 @@ namespace diet {
     std::string const & last_operation() const noexcept { return last_operation_; }
 
   private:
+    using registry_type = runtime_store_detail::runtime_registry<node_type>;
+    registry_type retained_;
     catalog_type catalog_;
     Ids ids_;
     bool failed_ = false;
@@ -195,46 +198,96 @@ namespace diet {
         auto [found, inserted] = natives.try_emplace(id.hex(), value);
         return inserted || found->second == value;
       }
-      bool seed_pair(pair_type value) {
+      bool seed_root(pair_type value) {
         auto const & id = value->mapped()->identity();
         auto [found, inserted] = pairs.try_emplace(id.index.hex(), value);
-        if (!inserted) return found->second == value;
-        bool coherent = seed_native(id.native, value->native_owner());
-        if (auto main = value->main_target()) coherent = seed_pair(std::move(main)) && coherent;
-        if (auto secondary = value->secondary_target())
-          coherent = seed_native(*value->mapped()->index_object()->secondary_id(), std::move(secondary)) && coherent;
-        return coherent;
+        return inserted || found->second == value;
       }
     };
+    struct roots {
+      std::vector<pair_type> pairs;
+      std::vector<typename registry_type::native_root> natives;
+    };
+    template <class Resolver> static std::optional<roots> retained_roots(catalog_tap_head const & head, Resolver & loaded) {
+      roots result;
+      result.pairs.reserve(head.auxiliary.pairs.size() + 1);
+      result.natives.reserve(head.auxiliary.natives.size());
+      auto pair = loaded.pair(head.timeline.head);
+      if (!pair) return std::nullopt;
+      result.pairs.push_back(std::move(pair));
+      for (auto const & id : head.auxiliary.pairs) {
+        pair = loaded.pair(id);
+        if (!pair) return std::nullopt;
+        result.pairs.push_back(std::move(pair));
+      }
+      for (auto const & id : head.auxiliary.natives) {
+        auto native = loaded.native(id);
+        if (!native) return std::nullopt;
+        result.natives.emplace_back(id, std::move(native));
+      }
+      return result;
+    }
+    struct pinned_resolver {
+      registry_type const & retained;
+      pair_type pair(blob_identity const & id) const {
+        auto value = retained.pair(id);
+        if (!value) throw std::invalid_argument("checkpoint pair has no durable pin");
+        return value;
+      }
+      native_pointer native(object_id const & id) const {
+        auto value = retained.native(id);
+        if (!value) throw std::invalid_argument("checkpoint native has no durable pin");
+        return value;
+      }
+    };
+    stored_type decode_retained(catalog_tap_head head) {
+      pinned_resolver loaded{retained_};
+      try {
+        auto restored = codec_type::decode(head.checkpoint, head.timeline.head, loaded);
+        return {std::move(head), std::move(restored.snapshot), std::move(restored.semantic)};
+      } catch (...) {
+        // A failed checkpoint never leaves an ambiguous authorization cache.
+        retained_.clear(); throw;
+      }
+    }
     stored_type restore(catalog_tap_head head, snapshot_type const * source = nullptr) {
       if (source) {
-        resolver loaded(*this);
+        resolver candidates(*this);
         auto graph = sealer();
         bool coherent = true;
         codec_type::collect(*source, [&](pair_type const & pair) {
-            if (pair) coherent = loaded.seed_pair(graph.mapped_pair(pair)) && coherent;
+            if (pair) coherent = candidates.seed_root(graph.mapped_pair(pair)) && coherent;
           }, [&](native_pointer const & native) {
-            if (native) coherent = loaded.seed_native(graph.native_id(native), graph.mapped_native(native)) && coherent;
+            if (native) coherent = candidates.seed_native(graph.native_id(native), graph.mapped_native(native)) && coherent;
           });
-        // Imported frontiers can contain distinct facade owners for one file
-        // identity. Reopen those through the canonical resolver rather than
-        // mixing two pointer graphs. Ordinary publications share their suffix.
+        // Candidate roots provide owners, not authority. Only the roots in the
+        // acknowledged catalog head acquire registry references. Shared live
+        // owners stop at their local count; new edges are checked once.
         if (coherent) {
-          loaded.restricted = true;
-          return restore(std::move(head), loaded);
+          candidates.restricted = true;
+          auto selected = retained_roots(head, candidates);
+          if (!selected) throw std::logic_error("published root has no prepared owner");
+          if (retained_.replace(std::move(selected->pairs), std::move(selected->natives)))
+            return decode_retained(std::move(head));
         }
+      } else if (auto selected = retained_roots(head, retained_)) {
+        if (retained_.replace(std::move(selected->pairs), std::move(selected->natives)))
+          return decode_retained(std::move(head));
       }
+      // An imported graph may contain distinct owners for the same physical
+      // identity, even deep in a new prefix. Intern the entire incoming graph
+      // afresh in that exceptional case. The old registry remains intact until
+      // this new closure has been validated and decoded.
       resolver loaded(*this);
-      return restore(std::move(head), loaded);
-    }
-    stored_type restore(catalog_tap_head head, resolver & loaded) {
-      // Load retained roots first, both to validate every durable pin and to
-      // make all subsequent checkpoint references share their exact owners.
-      (void)loaded.pair(head.timeline.head);
-      for (auto const & pair : head.auxiliary.pairs) (void)loaded.pair(pair);
-      for (auto const & native : head.auxiliary.natives) (void)loaded.native(native);
+      auto selected = retained_roots(head, loaded);
+      if (!selected) throw std::logic_error("durable root has no mapped owner");
       loaded.restricted = true;
-      auto restored = codec_type::decode(head.checkpoint, head.timeline.head, loaded);
+      registry_type replacement;
+      if (!replacement.replace(std::move(selected->pairs), std::move(selected->natives)))
+        throw std::invalid_argument("mapped checkpoint has conflicting facade identities");
+      pinned_resolver pinned{replacement};
+      auto restored = codec_type::decode(head.checkpoint, head.timeline.head, pinned);
+      retained_ = std::move(replacement);
       return {std::move(head), std::move(restored.snapshot), std::move(restored.semantic)};
     }
     struct persisted { blob_identity head; catalog_auxiliary_roots auxiliary; };

@@ -97,7 +97,11 @@ namespace {
           if (now == 2) pins.natives.clear(); else pins.pairs.clear();
           (void)catalog.publish_tap(name + "-publish", forged, forged.timeline.head, forged.checkpoint, pins);
           auto invalid = store::open(dir.root);
+          // Prime this adapter with the larger valid closure first. A later
+          // restricted decode must not borrow the omitted pins from its cache.
+          assert(invalid.find("stages"));
           rejects([&] { (void)invalid.find(name); }, name);
+          assert(invalid.find("stages")); // Rejected decoding did not poison read-only recovery.
         }
         if (!seen) {
           reopened.save("initial-carry", saved->head);
