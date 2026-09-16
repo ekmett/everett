@@ -48,8 +48,10 @@ namespace {
   template <class E> auto contribute(E & engine, typename E::contribution_type input) {
     auto quote = E::reservation(input);
     auto prior = charge(engine);
+    auto records = input.records().size();
     auto result = engine.contribute(std::move(input));
-    assert(charge(engine) - prior <= quote.work);
+    // The legacy empty contribution checkpoints without an admission quote.
+    assert(!records || charge(engine) - prior <= quote.work);
     return result;
   }
   template <class E> void drain(E & engine) {
@@ -102,7 +104,7 @@ namespace {
           auto work = engine.work();
           assert(work.charged <= work.granted && work.admissions == size);
           assert(work.native_inputs == 2 * size - 2 && work.native_outputs == 3 * size - 2);
-          assert(work.merges == std::bit_width(size) - 1 && work.indexes && work.index_occurrences);
+          assert(work.merges == std::uint64_t(std::bit_width(size) - 1) && work.indexes && work.index_occurrences);
         }
         assert(!engine.pending() && engine.admission_ready());
         assert(initial.runtime().frontier().service_due == 0);
