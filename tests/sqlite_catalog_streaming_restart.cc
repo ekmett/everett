@@ -31,13 +31,13 @@ namespace {
   }
   enum class stage { admission, logical_publication, service, equivalent_publication };
   enum class event : unsigned {
-    admission_native, admission_index, admission_pair, logical_publication,
-    service_native, service_index, service_pair, equivalent_publication,
+    admission_native, admission_index_pair, logical_publication,
+    service_native, service_index_pair, equivalent_publication,
     native_barrier, index_barrier, count
   };
   constexpr std::array<char const *, unsigned(event::count)> names{
-    "admission native seal", "admission index seal", "admission pair registration", "logical publication",
-    "service native seal", "service index seal", "service pair registration", "equivalent publication",
+    "admission native seal", "admission index seal/registration", "logical publication",
+    "service native seal", "service index seal/registration", "equivalent publication",
     "native final barrier", "index final barrier"};
   struct notice {
     std::uint64_t generation = 0;
@@ -98,13 +98,11 @@ namespace {
       std::optional<event> point;
       auto phase = state->current;
       if (std::strcmp(kind, "seal") == 0 && (phase == stage::admission || phase == stage::service)) {
-        if (native != 0 && native != 1) ::_exit(95);
-        point = phase == stage::admission
-          ? (native == 0 ? event::admission_native : event::admission_index)
-          : (native == 0 ? event::service_native : event::service_index);
-      } else if (std::strcmp(kind, "register_cola_pair") == 0) {
-        if (phase == stage::admission) point = event::admission_pair;
-        if (phase == stage::service) point = event::service_pair;
+        if (native != 0) ::_exit(95);
+        point = phase == stage::admission ? event::admission_native : event::service_native;
+      } else if (std::strcmp(kind, "seal_cola_pair") == 0) {
+        if (phase == stage::admission) point = event::admission_index_pair;
+        if (phase == stage::service) point = event::service_index_pair;
       } else if (std::strcmp(kind, "publish_tap") == 0) {
         if (phase == stage::logical_publication) point = event::logical_publication;
         if (phase == stage::equivalent_publication) point = event::equivalent_publication;
@@ -389,7 +387,7 @@ int main() {
         std::cerr << names[n] << (after ? " after\n" : " before\n");
         run_case(baseline.root, event(n), after);
       }
-    std::cout << "20 streamed sort-owned process interruption cuts passed\n";
+    std::cout << "16 streamed sort-owned process interruption cuts passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';
     return 1;

@@ -121,6 +121,23 @@ namespace {
     for (auto op : {"absent-main", "wrong-main", "main-samples", "secondary-samples"})
       assert(!catalog.lookup_operation(op));
     catalog.template register_pair<mapped>("still-healthy", child_id);
+    // The combined path checks the same exact two-target layout, without
+    // reopening the already registered main suffix, and retains its mapping.
+    auto fresh = id(serial++); object_attempt_id attempt(id(serial++).hex());
+    std::array outputs{catalog_object_reservation{fresh, file_kind::fractional_index}};
+    catalog.reserve("atomic-reserve", attempt, "atomic-owner", {}, outputs);
+    auto receipt = encode_cola_sections(*child->built(), own_id, main_id, secondary_id).seal(dir.root, fresh, attempt);
+    blob_identity atomic{own_id, fresh};
+    {
+      hidden_file hidden(dir.root / object_path(main_id.index, file_kind::fractional_index));
+      auto admitted = catalog.template seal_pair<mapped>("atomic", atomic, receipt);
+      assert(admitted->main_id() == main_id && admitted->secondary_id() == secondary_id);
+      admitted->scan();
+      catalog.template seal_pair<mapped>("atomic", atomic, receipt)->scan();
+    }
+    mapped_cola_resolver<P, mapped> atomic_resolver(dir.root);
+    auto loaded_atomic = atomic_resolver.pair(atomic); loaded_atomic->scan();
+    catalog.register_graph("atomic-complete", loaded_atomic, catalog_admission::scan);
   }
 }
 int main() {

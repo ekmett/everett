@@ -223,7 +223,7 @@ namespace {
   using faulty_family = streaming_sort_runtime_family<P, registry_selector<string_registry>, random_object_ids, catalog_ops, file_ops>;
   using faulty_core = typed_engine<P, wrapping_fingerprint_algebra, 256, faulty_family>;
   void failures() {
-    for (unsigned mode = 0; mode != 16; ++mode) {
+    for (unsigned mode = 0; mode != 14; ++mode) {
       temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
       auto state = std::make_shared<failure_state>();
       auto disk = faulty_family::storage_type::open(dir.root, {}, {}, catalog_ops(state), file_ops(state));

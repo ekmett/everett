@@ -460,38 +460,10 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
 
     void record_sealed(std::string_view op, object_seal_receipt const & receipt) {
       require_active(); catalog_detail::name(op);
-      catalog_detail::bytes request;
-      catalog_detail::identity(request, receipt.object);
-      catalog_detail::identity(request, object_id(receipt.attempt.hex()));
-      catalog_detail::number(request, receipt.bytes); catalog_detail::number(request, receipt.body_crc32c);
-      auto barrier = static_cast<unsigned>(receipt.barrier);
-      if (barrier > 1) throw std::invalid_argument("unsupported seal barrier");
-      catalog_detail::number(request, barrier);
       auto path = std::filesystem::canonical(receipt.path);
-      // Store a relative path in replay descriptors so relocating the complete
-      // backing directory does not turn the same receipt into a new operation.
-      catalog_detail::field(request, path.lexically_relative(root_).generic_string());
+      catalog_detail::bytes request; append_seal_request(request, receipt, path);
       transaction(op, "seal", request, [&] {
-        catalog_detail::statement reserved(db_, "SELECT kind,attempt,bytes FROM objects WHERE id=?");
-        reserved.text(1, receipt.object.hex());
-        if (!reserved.row() || reserved.text(1) != receipt.attempt.hex() || !reserved.is_null(2))
-          throw std::invalid_argument("object is not this attempt's unsealed reservation");
-        auto expected = reserved.integer(0) == 0 ? file_kind::native_blob : file_kind::fractional_index;
-        if (path != root_ / object_path(receipt.object, expected))
-          throw std::invalid_argument("seal receipt names another catalog path");
-        // Header-only evidence check. A caller's successful barrier receipt is
-        // an attestation; reading bytes cannot establish or repair durability.
-        auto mapping = mapped_file::open(path);
-        auto slice = mapping.slice(0, mapping.size());
-        auto bytes = slice.bytes();
-        auto header = decode_file_header<P>(bytes);
-        if (header.kind != expected || receipt.bytes != bytes.size() ||
-            file_detail::total_bytes<P>(header.extent) != bytes.size() ||
-            file_detail::get(bytes, 64, 4) != receipt.body_crc32c)
-          throw std::invalid_argument("seal receipt disagrees with object envelope");
-        catalog_detail::statement update(db_, "UPDATE objects SET bytes=?,crc=?,barrier=? WHERE id=?");
-        update.integer(1, catalog_detail::integer(receipt.bytes)); update.integer(2, receipt.body_crc32c);
-        update.integer(3, barrier); update.text(4, receipt.object.hex()); update.done();
+        record_sealed_row(receipt, path);
         return catalog_detail::bytes{};
       });
     }
@@ -637,47 +609,34 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
     // main row is sufficient: its files and descendants are never reopened.
     // This is metadata admission; explicit recovery scans remain separate.
     template <class Mapped> void register_pair(std::string_view op, blob_identity const & id) {
-      static_assert(std::is_same_v<P, typename Mapped::policy_type>);
       require_active(); catalog_detail::name(op);
-      if (schema_version_ < 3) throw std::logic_error("COLA admission requires catalog version 3");
-      using native_type = typename Mapped::native_type;
-      using index_type = typename Mapped::index_type;
-      using view_type = decltype(std::declval<Mapped const &>().view());
-      auto index = index_type::open(root_ / object_path(id.index, file_kind::fractional_index));
-      if (index.native_id() != id.native) throw std::invalid_argument("COLA pair native identity mismatch");
-      auto native = native_type::open(root_ / object_path(id.native, file_kind::native_blob));
-      std::optional<native_type> secondary;
-      if (index.secondary_id()) secondary.emplace(native_type::open(root_ / object_path(*index.secondary_id(), file_kind::native_blob)));
-      auto main_samples = read([&]() -> std::uint64_t {
-        if (!index.main_id()) return 0;
-        auto const & main = *index.main_id();
-        catalog_detail::statement row(db_, "SELECT native_id,virtual_count,layout FROM pairs WHERE index_id=?");
-        row.text(1, main.index.hex());
-        if (!row.row() || row.text(0) != main.native.hex() || row.integer(2) != 3 || row.integer(1) < 0)
-          throw std::invalid_argument("COLA main target is not this registered pair");
-        auto count = std::uint64_t(row.integer(1));
-        return count / P::group_size + (count % P::group_size != 0);
-      });
-      auto secondary_count = secondary ? secondary->size() : 0;
-      if (index.borrowed(0).size() != main_samples || index.borrowed(1).size() !=
-          secondary_count / P::group_size + (secondary_count % P::group_size != 0))
-        throw std::invalid_argument("COLA pair sample count disagrees with registered target");
-      view_type view{native.view(), {index.borrowed(0), index.borrowed(1)},
-        {index.interleave(0), index.interleave(1)}, {index.false_borrow_bits(0), index.false_borrow_bits(1)},
-        {index.cut_lcps(0), index.cut_lcps(1)}, index.virtual_size()};
-      cola_pair_descriptor descriptor{id, index.main_id(), index.secondary_id(), view.native().size(),
-        view.borrowed(0).size(), view.borrowed(1).size(), secondary_count, view.virtual_size()};
-      catalog_detail::bytes request;
-      catalog_detail::pair(request, id); catalog_detail::number(request, bool(descriptor.main));
-      if (descriptor.main) catalog_detail::pair(request, *descriptor.main);
-      catalog_detail::number(request, bool(descriptor.secondary));
-      if (descriptor.secondary) catalog_detail::identity(request, *descriptor.secondary);
-      for (auto count : {descriptor.native_count, descriptor.main_samples, descriptor.secondary_samples,
-                        descriptor.secondary_count, descriptor.virtual_count}) catalog_detail::number(request, count);
+      auto prepared = prepare_cola_pair<Mapped>(id);
+      catalog_detail::bytes request; append_pair_request(request, prepared.descriptor);
       transaction(op, "register_cola_pair", request, [&] {
-        register_cola_row(descriptor);
+        insert_cola_row(prepared.descriptor);
         catalog_detail::bytes result; catalog_detail::pair(result, id); return result;
       });
+    }
+
+    // File barriers have already completed. Acknowledge the index seal and
+    // its exact registered pair in one transaction, then return the mapping
+    // used for metadata validation. No binding escapes an uncertain commit.
+    template <class Mapped> auto seal_pair(std::string_view op, blob_identity const & id,
+        object_seal_receipt const & receipt) {
+      require_active(); catalog_detail::name(op);
+      if (receipt.object != id.index) throw std::invalid_argument("pair receipt names another index");
+      auto path = std::filesystem::canonical(receipt.path);
+      catalog_detail::bytes request; append_seal_request(request, receipt, path);
+      if (path != root_ / object_path(receipt.object, file_kind::fractional_index))
+        throw std::invalid_argument("seal receipt names another catalog path");
+      auto prepared = prepare_cola_pair<Mapped>(id, &receipt);
+      append_pair_request(request, prepared.descriptor);
+      transaction(op, "seal_cola_pair", request, [&] {
+        record_sealed_row(receipt, path, &prepared.files.index);
+        insert_cola_row(prepared.descriptor);
+        catalog_detail::bytes result; catalog_detail::pair(result, id); return result;
+      });
+      return std::move(prepared.index);
     }
 
     void save(std::string_view op, std::string_view name, blob_identity const & head) {
@@ -889,10 +848,105 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
       std::optional<object_id> secondary;
       std::uint64_t native_count, main_samples, secondary_samples, secondary_count, virtual_count;
     };
+    struct cola_pair_files { mapped_slice native, index, secondary; };
+    template <class Mapped> struct prepared_cola_pair {
+      std::shared_ptr<typename Mapped::index_type const> index;
+      cola_pair_files files;
+      cola_pair_descriptor descriptor;
+    };
+    mapped_slice open_object_bytes(object_id const & id, file_kind expected) const {
+      auto mapping = mapped_file::open(root_ / object_path(id, expected));
+      return mapping.slice(0, mapping.size());
+    }
+    template <class Mapped> prepared_cola_pair<Mapped> prepare_cola_pair(blob_identity const & id,
+        object_seal_receipt const * receipt = nullptr) const {
+      return read([&]() -> prepared_cola_pair<Mapped> {
+        static_assert(std::is_same_v<P, typename Mapped::policy_type>);
+        if (schema_version_ < 3) throw std::logic_error("COLA admission requires catalog version 3");
+        using native_type = typename Mapped::native_type;
+        using index_type = typename Mapped::index_type;
+        using view_type = decltype(std::declval<Mapped const &>().view());
+        cola_pair_files files;
+        files.index = open_object_bytes(id.index, file_kind::fractional_index);
+        auto index = std::make_shared<index_type const>(index_type::open(file<P>::from_slice(files.index)));
+        if (index->native_id() != id.native) throw std::invalid_argument("COLA pair native identity mismatch");
+        if (receipt) check_object_envelope(file_kind::fractional_index, receipt->bytes, receipt->body_crc32c, files.index.bytes());
+        else require_sealed(id.index, file_kind::fractional_index, &files.index);
+        files.native = open_object_bytes(id.native, file_kind::native_blob);
+        auto native = native_type::open(file<P>::from_slice(files.native));
+        require_sealed(id.native, file_kind::native_blob, &files.native);
+        std::optional<native_type> secondary;
+        if (index->secondary_id()) {
+          files.secondary = open_object_bytes(*index->secondary_id(), file_kind::native_blob);
+          secondary.emplace(native_type::open(file<P>::from_slice(files.secondary)));
+          require_sealed(*index->secondary_id(), file_kind::native_blob, &files.secondary);
+        }
+        auto main_samples = read([&]() -> std::uint64_t {
+          if (!index->main_id()) return 0;
+          auto const & main = *index->main_id();
+          catalog_detail::statement row(db_, "SELECT native_id,virtual_count,layout FROM pairs WHERE index_id=?");
+          row.text(1, main.index.hex());
+          if (!row.row() || row.text(0) != main.native.hex() || row.integer(2) != 3 || row.integer(1) < 0)
+            throw std::invalid_argument("COLA main target is not this registered pair");
+          auto count = std::uint64_t(row.integer(1));
+          return count / P::group_size + (count % P::group_size != 0);
+        });
+        auto secondary_count = secondary ? secondary->size() : 0;
+        if (index->borrowed(0).size() != main_samples || index->borrowed(1).size() !=
+            secondary_count / P::group_size + (secondary_count % P::group_size != 0))
+          throw std::invalid_argument("COLA pair sample count disagrees with registered target");
+        view_type view{native.view(), {index->borrowed(0), index->borrowed(1)},
+          {index->interleave(0), index->interleave(1)}, {index->false_borrow_bits(0), index->false_borrow_bits(1)},
+          {index->cut_lcps(0), index->cut_lcps(1)}, index->virtual_size()};
+        cola_pair_descriptor descriptor{id, index->main_id(), index->secondary_id(), view.native().size(),
+          view.borrowed(0).size(), view.borrowed(1).size(), secondary_count, view.virtual_size()};
+        return {std::move(index), std::move(files), std::move(descriptor)};
+      });
+    }
+    static void append_pair_request(catalog_detail::bytes & request, cola_pair_descriptor const & descriptor) {
+      catalog_detail::pair(request, descriptor.id); catalog_detail::number(request, bool(descriptor.main));
+      if (descriptor.main) catalog_detail::pair(request, *descriptor.main);
+      catalog_detail::number(request, bool(descriptor.secondary));
+      if (descriptor.secondary) catalog_detail::identity(request, *descriptor.secondary);
+      for (auto count : {descriptor.native_count, descriptor.main_samples, descriptor.secondary_samples,
+                        descriptor.secondary_count, descriptor.virtual_count}) catalog_detail::number(request, count);
+    }
+    void append_seal_request(catalog_detail::bytes & request, object_seal_receipt const & receipt,
+        std::filesystem::path const & path) const {
+      catalog_detail::identity(request, receipt.object);
+      catalog_detail::identity(request, object_id(receipt.attempt.hex()));
+      catalog_detail::number(request, receipt.bytes); catalog_detail::number(request, receipt.body_crc32c);
+      auto barrier = static_cast<unsigned>(receipt.barrier);
+      if (barrier > 1) throw std::invalid_argument("unsupported seal barrier");
+      catalog_detail::number(request, barrier);
+      // Relative replay descriptors survive relocation of the backing store.
+      catalog_detail::field(request, path.lexically_relative(root_).generic_string());
+    }
+    void record_sealed_row(object_seal_receipt const & receipt, std::filesystem::path const & path,
+        mapped_slice const * evidence = nullptr) {
+      catalog_detail::statement reserved(db_, "SELECT kind,attempt,bytes FROM objects WHERE id=?");
+      reserved.text(1, receipt.object.hex());
+      if (!reserved.row() || reserved.text(1) != receipt.attempt.hex() || !reserved.is_null(2))
+        throw std::invalid_argument("object is not this attempt's unsealed reservation");
+      auto expected = reserved.integer(0) == 0 ? file_kind::native_blob : file_kind::fractional_index;
+      if (path != root_ / object_path(receipt.object, expected))
+        throw std::invalid_argument("seal receipt names another catalog path");
+      // A barrier receipt is an attestation; re-reading cannot prove durability.
+      auto opened = evidence ? mapped_slice{} : open_object_bytes(receipt.object, expected);
+      check_object_envelope(expected, receipt.bytes, receipt.body_crc32c, (evidence ? *evidence : opened).bytes());
+      catalog_detail::statement update(db_, "UPDATE objects SET bytes=?,crc=?,barrier=? WHERE id=?");
+      update.integer(1, catalog_detail::integer(receipt.bytes)); update.integer(2, receipt.body_crc32c);
+      update.integer(3, static_cast<unsigned>(receipt.barrier)); update.text(4, receipt.object.hex()); update.done();
+    }
     void register_cola_row(cola_pair_descriptor const & value) {
       require_sealed(value.id.native, file_kind::native_blob);
       require_sealed(value.id.index, file_kind::fractional_index);
       if (value.secondary) require_sealed(*value.secondary, file_kind::native_blob);
+      insert_cola_row(value);
+    }
+    // Call only with sealed rows checked against pinned immutable envelopes.
+    // New index seal rows may have been written earlier in this transaction.
+    void insert_cola_row(cola_pair_descriptor const & value) {
       catalog_detail::statement old(db_, "SELECT native_id,target_native,target_index,native_count,borrowed_count,virtual_count,layout,secondary_native,secondary_native_count,secondary_borrowed_count FROM pairs WHERE index_id=?");
       old.text(1, value.id.index.hex());
       if (old.row()) {
@@ -1207,17 +1261,20 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
       catalog_detail::statement insert(db_, "INSERT INTO owner_roots VALUES(?,?,?,?)");
       insert.text(1, kind); insert.key(2, owner); insert.text(3, pair.native.hex()); insert.text(4, pair.index.hex()); insert.done();
     }
-    void require_sealed(object_id const & id, file_kind expected) const {
+    void require_sealed(object_id const & id, file_kind expected, mapped_slice const * evidence = nullptr) const {
       catalog_detail::statement query(db_, "SELECT kind,bytes,crc FROM objects WHERE id=?");
       query.text(1, id.hex());
       if (!query.row() || query.integer(0) != kind(expected) || query.is_null(1))
         throw std::invalid_argument("chain refers to an unsealed or wrongly typed object");
-      verify_object_envelope(id, expected, std::uint64_t(query.integer(1)), std::uint64_t(query.integer(2)));
+      if (evidence) check_object_envelope(expected, std::uint64_t(query.integer(1)), std::uint64_t(query.integer(2)), evidence->bytes());
+      else verify_object_envelope(id, expected, std::uint64_t(query.integer(1)), std::uint64_t(query.integer(2)));
     }
     void verify_object_envelope(object_id const & id, file_kind expected, std::uint64_t size, std::uint64_t crc) const {
-      auto mapping = mapped_file::open(root_ / object_path(id, expected));
-      auto slice = mapping.slice(0, mapping.size());
-      auto bytes = slice.bytes();
+      auto bytes = open_object_bytes(id, expected);
+      check_object_envelope(expected, size, crc, bytes.bytes());
+    }
+    static void check_object_envelope(file_kind expected, std::uint64_t size, std::uint64_t crc,
+        std::span<std::byte const> bytes) {
       auto header = decode_file_header<P>(bytes);
       if (header.kind != expected || size != bytes.size() ||
           file_detail::total_bytes<P>(header.extent) != bytes.size() || crc != file_detail::get(bytes, 64, 4))

@@ -80,9 +80,7 @@ namespace diet::runtime_store_detail {
           main ? std::optional<blob_identity>(main->identity) : std::nullopt,
           secondary ? std::optional<object_id>(secondary->receipt.object) : std::nullopt);
         auto receipt = encoded.seal(catalog_.root(), id.index, attempt);
-        catalog_.record_sealed(operation(), receipt);
-        catalog_.template register_pair<mapped_type>(operation(), id);
-        auto index = std::make_shared<typename mapped_type::index_type const>(mapped_type::index_type::open(receipt.path));
+        auto index = catalog_.template seal_pair<mapped_type>(operation(), id, receipt);
         auto mapped = mapped_type::bind(id, native->mapped, std::move(index),
           main ? main->mapped : nullptr, secondary ? secondary->mapped : nullptr,
           secondary ? std::optional<object_id>(secondary->receipt.object) : std::nullopt);

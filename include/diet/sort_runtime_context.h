@@ -130,14 +130,13 @@ namespace diet {
         using family = sort_runtime_family<P, Selector, typename Node::storage_type>;
         using mapped_type = typename family::storage_type::mapped_pair_type;
         if (index.owner_.get() != this) throw std::invalid_argument("index belongs to another runtime context");
-        auto receipt = index.finish(); catalog_.record_sealed(ids_().hex(), receipt);
+        auto receipt = index.finish();
         auto native = index.native_owner(); auto main = index.main_target(); auto secondary = index.secondary_target();
         // Construction already acknowledged these exact dependencies. The job
         // retains their authority and mappings along with its source facades.
         auto const & n = index.native_; auto const & m = index.main_; auto const & s = index.secondary_;
         blob_identity identity{n->receipt.object, receipt.object};
-        catalog_.template register_pair<mapped_type>(ids_().hex(), identity);
-        auto mapped_index = std::make_shared<typename mapped_type::index_type const>(mapped_type::index_type::open(receipt.path));
+        auto mapped_index = catalog_.template seal_pair<mapped_type>(ids_().hex(), identity, receipt);
         auto mapped = mapped_type::bind(identity, n->mapped, std::move(mapped_index), m ? m->mapped : nullptr,
           s ? s->mapped : nullptr, s ? std::optional<object_id>(s->receipt.object) : std::nullopt);
         auto binding = std::make_shared<pair_binding<mapped_type> const>(pair_seal{identity_, identity, std::move(receipt)}, std::move(mapped));

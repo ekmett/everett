@@ -39,6 +39,15 @@ buffer, seals its envelope, and performs its file and directory barriers. Only
 after `record_sealed` acknowledges its transaction does the context construct a
 mapped native owner carrying an immutable `native_seal` descriptor.
 
+For a fractional index, `seal_pair` acknowledges the completed index and its
+exact pair registration in one catalog transaction. It checks the receipt's
+path, attempt, extent, checksum field and barrier, and checks the native and
+secondary envelopes against their sealed rows. Its prepared mapping stays
+pinned through the transaction and becomes the returned index owner. The
+registered main suffix is checked by its immutable row, without reopening its
+files. Exact operation replay revalidates these envelopes but does not repeat
+row changes. A failed or uncertain commit installs no owner binding.
+
 The descriptor records the catalog identity and exact seal receipt. Its private
 factory opens the expected object path itself. A caller cannot give an arbitrary
 mapping a trusted receipt. When the persistence adapter encounters this owner,
