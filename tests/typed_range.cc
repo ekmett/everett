@@ -188,7 +188,7 @@ namespace {
   // must not invoke this fallback at all.
   template <class P> struct counted_family : binary_runtime_family<P> {
     using original = binary_runtime_family<P>;
-    inline static unsigned queries = 0;
+    inline static unsigned queries = 0, sweeps = 0;
     struct snapshot_type {
       typename original::snapshot_type source;
       struct query_type {
@@ -197,7 +197,7 @@ namespace {
       };
       auto query_root() const { return query_type{source.query_root()}; }
       auto cursor_owned(bit_string && key) const { ++queries; return source.cursor_owned(std::move(key)); }
-      auto runs() const { return source.runs(); }
+      auto runs() const { ++sweeps; return source.runs(); }
       auto admissions() const { return source.admissions(); }
       bool same_layout(snapshot_type const & other) const { return source.same_layout(other.source); }
     };
@@ -221,8 +221,14 @@ namespace {
     family::queries = 0;
     auto deletion = erase_range(engine.snapshot(), std::string("prefix/1"), std::string("prefix/4"));
     assert(family::queries == 0 && deletion.records().size() > 1);
+    engine.contribute(engine_type::put("outside", "disjoint"));
+    family::queries = family::sweeps = 0;
     engine.contribute(std::move(deletion));
-    assert(family::queries == 0);
+    assert(family::queries == 0 && family::sweeps == 1);
+    auto same_layout = erase_range(engine.snapshot(), std::string("prefix/4"));
+    family::queries = family::sweeps = 0;
+    engine.contribute(std::move(same_layout));
+    assert(family::queries == 0 && family::sweeps == 0);
   }
 }
 int main() {
