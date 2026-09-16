@@ -97,6 +97,26 @@ persisted file format; its reported array contents are not labeled a serialized
 Everett file. Each row includes raw byte counts so percentages can use an explicit
 denominator: total representation, intrinsic EF payload, or raw high bitvector.
 
+For scale, the following directories index these actual encoded record streams
+in the retained fixtures. Percentages divide directory array bytes by record
+stream bytes, including values but excluding the directory and file envelope.
+Bit extents are rounded up to bytes. These are different datasets, so their
+percentages are not a matched byte-versus-bit comparison.
+
+| Fixture | Records | Encoded data bytes | Current EF | EF with sub32 | Direct32 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `case-2.raw-byte.native-output` | 524288 | 9994763 | 34688 (0.347%) | 36880 (0.369%) | 139816 (1.399%) |
+| `case-11.typed-bit.native-output` | 262144 | 72117631 | 38272 (0.053%) | 39376 (0.055%) | 69912 (0.097%) |
+
+In the first example, sub32 adds 2192 bytes: about 0.022% of the encoded data.
+The existing select-only auxiliary directory already uses 2192 bytes; the rest
+of the EF representation is its low/high payload. These figures concern the
+sampled offset directory. They do not count an entire fractional index's
+borrowed keys, rank directories, flags or cut-prefix metadata. The retained
+`sequences.json` supplies the encoded stream `extent` and `offset_unit`; its
+`file_bytes` field measures an exported offset-sequence fixture, not a native
+Everett data file.
+
 External source and boundary regression
 ---------------------------------------
 
