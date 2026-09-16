@@ -419,7 +419,7 @@ def markdown_inputs(source):
     paths.extend(sorted((source / "optional/fixed_kv_compare").glob("*.md")))
     paths.extend(sorted((source / "optional/cpu_profile_compare").glob("*.md")))
     paths.extend(sorted((source / "optional/select_compare").rglob("*.md")))
-    for name in ("bit_reservoir", "search_compare", "space_compare"):
+    for name in ("bit_reservoir", "search_compare", "profile_space_compare"):
         paths.extend(sorted((source / "optional" / name).rglob("*.md")))
     for name in ("proof/README.md", "THIRD_PARTY.md"):
         if (source / name).is_file():

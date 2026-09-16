@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "ced32986d6328f9336cd7c325b6b93c34035cc009e01460e734b8016d5c6f6f9"
+      "normalized_sha256": "5e9f80ae646b0ddfec8378c077b37483961db663ddb46c01392f12fe949d729a"
     }
   ],
   "checks": {
@@ -597,6 +597,12 @@
     },
     {
       "scope": "Document fractional-cascade range positioning and the measured bit-reader reservoir tradeoff. Refresh current documentation fingerprints; original measured identities are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link complete-query offset measurements and their limits; original measurement identities remain unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

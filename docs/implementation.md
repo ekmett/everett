@@ -159,6 +159,19 @@ observations, per-sequence statistics, space accounting and the retained load
 loop in the measured binary. The original upstream Half selector's exact-span
 failure is explicit; its separately corrected comparator keeps a distinct name.
 
+The [whole-search comparison](../optional/search_compare/report.md) then runs
+real mapped native/index chains. On the measured M2 Max fixtures, direct32
+improves geometric-mean query throughput by 11.0% for byte files and 5.5% for
+bit files; packed absolute offsets improve it by 9.4% and 4.1%. Packed offsets
+add 0.016–0.245% to complete serialized file space. The internal sub32 selector
+has no useful aggregate whole-query gain. These resident-query measurements
+use a frozen decoder from before the reservoir change and compile-time codec
+selection. They do not establish the cost of production runtime dispatch.
+
+The [per-file offset design](offset-directories.md) keeps this choice independent
+of sort semantics. Persistent files still use Elias–Fano; the alternatives are
+isolated benchmark formats with exact-value and mapped-selection checks.
+
 ### Optional GPU construction
 
 The separate [fixed-key experiment](../optional/fixed_gpu_merge/README.md)

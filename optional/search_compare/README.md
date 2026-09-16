@@ -132,3 +132,19 @@ integer vector, including empty streams, repeated offsets, 32/256-one
 boundaries, clustering and sparse exceptions. Run it against each generated
 tree with ASan/UBSan. Complete-query fixtures also compare exact values before
 timing and validate measured checksums afterward.
+
+Plotting
+--------
+
+With Matplotlib installed, regenerate the complete-file tradeoff plot from the
+retained summary rows:
+
+```sh
+python3 optional/search_compare/plot.py \
+  optional/search_compare/results/2026-09-16-m2max/primary-summary.csv \
+  optional/search_compare/results/2026-09-16-m2max/alternatives-summary.csv \
+  build-search/whole-search
+```
+
+This writes PNG and SVG copies plus the input and script fingerprints. Each
+point is one workload median; the plot does not pool latencies across fixtures.

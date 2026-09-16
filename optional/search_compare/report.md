@@ -5,6 +5,11 @@ The useful comparison is whole-search throughput against growth in complete
 file size. Elias–Fano can be much smaller than a direct directory while that
 difference is still a small fraction of the encoded table. I measure both.
 
+The [space-versus-throughput plot](results/2026-09-16-m2max/whole-search.svg)
+shows every workload median in the primary comparisons. The
+[PNG copy](results/2026-09-16-m2max/whole-search.png) and
+[plot provenance](results/2026-09-16-m2max/whole-search.json) are retained too.
+
 Whole-search results
 --------------------
 
