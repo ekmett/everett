@@ -175,9 +175,10 @@ equal keys compose to a tombstone, I use the smaller of both input positions.
 A live replacement resumes ordinary FC. The unary predicate takes precedence
 and the default optional-string sort reads only its presence tag (one byte in
 the byte profile, one bit in the bit profile); key-dependent
-predicates may reconstruct the key. The opaque native merger may also need a
-temporary reconstructed key when its new literal begins before the chosen
-source literal; the direct sort merger emits from its existing prefix spans.
+predicates may reconstruct the key. For equal encoded keys, the native merger
+chooses the input with the smaller retained-prefix depth, so the needed
+conservative suffix is already present. The direct sort merger emits from its
+existing prefix spans.
 
 These limits remain deliberately conservative. A singleton starts with a
 complete key, and preserving its stored position can keep more literal material

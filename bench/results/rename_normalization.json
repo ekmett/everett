@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "b07e97e7eb491d38a64afa153bc8d024dcc6cd755bb730b9d93fe9c4a59e6ce0"
+      "normalized_sha256": "bc1b582854f8621f25d95dfd5318c440790bdd89922828bec050de926a7648cf"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "f381ae2236dc0c04b2d9961c8ca4053a02c4f446306713255bc16dc11f36deeb"
+      "normalized_sha256": "c113da08cb4c8a593a6d1c2b43f2805f075c68ab6c5cc4fef734276cf6d342b6"
     }
   ],
   "subsequent_updates": [
@@ -1046,6 +1046,13 @@
     },
     {
       "scope": "Expose byte string tables in the API guides and distinguish framed raw keys from standalone prefix-free codes.",
+      "artifacts": [
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Document conservative equal-key literal reuse and its allocation regression.",
       "artifacts": [
         "bench/results/publication_normalization.json",
         "docs/implementation.md"

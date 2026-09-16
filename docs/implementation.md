@@ -71,6 +71,11 @@ transactions, rebuilding and durable reopening.
 The byte native writer encodes each frame's LEB128 controls into bounded scratch,
 grows the destination once and copies literals and values to their final byte
 positions. Failure tests check allocation rollback and unaligned source views.
+Equal-key encoded merges choose the input with the smaller retained-prefix
+depth. This avoids rebuilding a complete key when a conservative tombstone
+already carries the required suffix. A 128-KiB-key regression detects that
+allocation on the preceding implementation and verifies its removal, with
+identical serialized output in bit and byte profiles.
 
 ### Optional GPU construction
 
