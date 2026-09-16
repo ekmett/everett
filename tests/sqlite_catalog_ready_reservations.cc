@@ -177,6 +177,26 @@ namespace {
     assert(scalar(dir.root, "SELECT count(*) FROM operations WHERE kind='seal_native_cola_pair'") == 18);
   }
 
+  void secondary_alias() {
+    using Storage = sort_runtime_storage<P>;
+    temporary dir; ids next;
+    auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    sealer<Storage> graph(catalog, next);
+    auto shared = native<Storage>("shared");
+    auto alias = pair<Storage>(shared, {}, shared);
+    auto left = pair<Storage>(native<Storage>("left"));
+    auto right = pair<Storage>(native<Storage>("right"));
+    std::array roots{alias, left, right}; std::array natives{shared};
+    assert(graph.prepare_ready(roots, natives) == 2);
+    assert(files(dir.root) == 4);
+    rejects([&] { (void)graph.native_id(shared); });
+    auto result = graph.ensure_pair(alias);
+    assert(result->mapped->native_object() == result->mapped->secondary_target());
+    assert(files(dir.root) == 6);
+    assert(scalar(dir.root, "SELECT count(*) FROM operations WHERE kind='seal_native_cola_pair'") == 2);
+    assert(scalar(dir.root, "SELECT count(*) FROM operations WHERE kind='seal'") == 1);
+  }
+
   struct fault_state {
     std::string kind;
     unsigned remaining = 1;
@@ -294,6 +314,7 @@ int main() {
   independent<profile_runtime_storage<P>>(); independent<sort_runtime_storage<P>>();
   aliases_and_unready<sort_runtime_storage<P>>();
   bounded_batch();
+  secondary_alias();
   failures<sort_runtime_storage<P>>(); concurrent<sort_runtime_storage<P>>();
   std::cout << "Ready reservation batches passed\n";
 }
