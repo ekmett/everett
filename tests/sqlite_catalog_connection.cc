@@ -22,7 +22,7 @@
 namespace {
   using namespace diet;
   using core = typed_engine<>;
-  using engine = persistent_engine<>;
+  using engine = persistent_engine<core>;
   struct temporary {
     std::filesystem::path root;
     temporary() {
@@ -54,7 +54,7 @@ namespace {
     temporary directory;
     auto pantry = fridge<>::create(directory.root / "nested" / "pantry");
     static_assert(std::same_as<decltype(pantry)::policy_type, string_policy>);
-    auto current = pantry.connect("earth-616");
+    auto current = connect<core>(pantry.root(), "earth-616");
     assert(!current.get("name"));
     auto first = current.put("name", "Diet");
     assert(first.get("name") == "Diet" && first.live_count() == 1);
@@ -89,7 +89,7 @@ namespace {
     current.put("still", "healthy");
     assert(current.get("still") == "healthy");
     current.shutdown(); branch.shutdown();
-    auto opened = pantry.connect("earth-616", {.create_if_missing = false});
+    auto opened = connect<core>(pantry.root(), "earth-616", {.create_if_missing = false});
     assert(!opened.get("name") && opened.get("still") == "healthy");
     assert(opened.snapshot().live_count() == 2);
     auto old = opened.load("first");
@@ -98,8 +98,8 @@ namespace {
 
   void queued_commands() {
     temporary directory;
-    auto current = connect(directory.root, "commands");
-    std::vector<connection<>::ticket> tickets;
+    auto current = connect<core>(directory.root, "commands");
+    std::vector<connection<core>::ticket> tickets;
     for (unsigned i = 0; i != 20; ++i) tickets.push_back(current.put_async("same", std::to_string(i)));
     for (unsigned i = 0; i != tickets.size(); ++i) assert(tickets[i].get()->cola.get("same") == std::to_string(i));
     assert(current.get("same") == "19");

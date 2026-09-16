@@ -507,6 +507,16 @@ save records that manifest and retains those pins across process lifetimes.
 Readers hold references protecting their mappings; replacing a manifest does
 not invalidate an in-flight read.
 
+I retain a shared owner for the head, and each node owns its immediate
+immutable dependencies. Sharing an already retained head increments that
+reference count; it does not recursively retain the suffix again. This is
+the shared-tail idea behind my
+[online LCA structure](https://www.schoolofhaskell.com/user/edwardk/online-lca),
+without needing its ancestor queries. A newly sealed owner records its exact
+file identity and mapped counterpart, so another adapter can stop at that
+acknowledged suffix. Durable catalog pins still need their own retirement
+protocol; a C++ reference count alone cannot survive a process restart.
+
 Suppose a dependent indexes old targets $X,Y$, while another branch finishes
 $Z=\mathrm{merge}(X,Y)$. The dependent continues using $X,Y$: its
 fractional index describes those exact layouts. It may immediately pin $Z$,

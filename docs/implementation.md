@@ -1,6 +1,6 @@
 # Diet implementation status
 
-Updated 2026-09-15. Specification: [Diet design](design.md).
+Updated 2026-09-16. Specification: [Diet design](design.md).
 
 This ledger records what works, what the tests establish, and what remains to
 be built. The C++20 foundations live in `include/diet/`, in
@@ -95,17 +95,21 @@ engine can certify a preflight rejection left state unchanged; only that ticket
 fails. Uncertain or partial execution failures stop the worker. Focused tests
 exercise both paths, shutdown during required service and old snapshot ownership.
 
-`typed_engine<>` supplies the default bit-profile optional-string table. Its
+`active_engine<>` supplies the ordinary bit-profile optional-string table.
+Its redundant scheduler uses streamed sort-owned records. The lower-level
+`typed_engine<>` also remains available with its binary runtime default. Its
 registry reserves code one for extension and assigns code zero to the current
 sort. Static command factories support ordinary mutable writes; snapshot
 factories validate each touched old value, allowing disjoint contributions from
 one base in either order. Sorts supply chronological composition and hashing;
 dispatch bits never enter the signature. Tests include a noncommutative append
 sort, different sort-code layouts with matching signatures, and byte/bit map
-oracles. The default backend transports canonical ordered keys and arrow
-payloads through the ordinary FC profile. The opt-in `sort_runtime_family`
-uses each sort's key and value grammar directly in KV03 files, with the same
-redundant scheduler, cascading queries and prefix-preserving merges.
+oracles. The binary backend transports canonical ordered keys and arrow
+payloads through the ordinary FC profile. `sort_runtime_family` uses each
+sort's key and value grammar directly in KV03 files, with the same redundant
+scheduler, cascading queries and prefix-preserving merges. Its streamed
+variant is selected by `active_engine` for bit registries; byte registries
+use the redundant scheduler with the byte-aligned opaque transport.
 `sort_runtime_store` persists and restores its complete frontier, including
 hidden completed outputs. Its normal open validates metadata; explicit scans
 check the payload and cross-file samples.
@@ -115,8 +119,13 @@ through a 64 KiB buffer. Sparse offsets, block seeds and the file's sort
 dictionary remain in memory until finalization. Tests compare complete bytes
 with the owning encoder, bound allocation for large values and unary controls,
 and preserve mapped inputs while builders pause or their filenames are unlinked.
-Connecting these file writers to runtime execution is separate from the
-completed owning-runtime and durable-publication path.
+The execution-owned `sort_runtime_context` now connects these writers and
+the dual-stream IX03 writer to the runtime. An acknowledged output retains
+its mapped representation through a shared owner binding. Native payloads
+use a 64 KiB buffer; indexes use two such buffers and a private secondary
+spool. Sparse navigation metadata remains in memory. The
+[context guide](sort-runtime-context.md) gives the exact memory and failure
+boundaries.
 
 ### COLA main and secondary indexes
 
@@ -979,6 +988,15 @@ forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
+Integration checks on 2026-09-16 passed under AppleClang 21, strict warnings,
+O2 and ASan/UBSan for shared owner bindings, seal acknowledgment failures,
+mapping lifetimes, canonical fallback, runtime publication and streamed native
+admission. The ordinary active API test covers bit-profile saves, forks,
+disjoint updates, binary strings, custom chronological arrows and byte-registry
+fallback. The streamed rebuild suite and both existing rebuild suites passed;
+Doxygen passed with the new public engine header. These focused checks do not
+replace the complete package run recorded below.
+
 Verification through `09903de` on 2026-09-15: AppleClang 21, C++20, Release
 with strict warnings and ASan/UBSan passed all **67 component/package CTests**,
 including Doxygen and the installed named-connection example. The complete run
@@ -1040,7 +1058,7 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 
 | Work item | Dependencies | Concrete acceptance |
 | --- | --- | --- |
-| Streamed active runtime | direct sort-owned runtime, KV03 file writer and durable complete-frontier adapter | runtime-owned file construction context, sealed mapped merge outputs and bounded native-payload memory during ordinary writes |
+| Active runtime overhead | streamed native/index output and shared owner bindings | fewer repeated metadata opens and graph enumerations, measured transaction costs, bounded tiny-table rebuilding |
 | General arrow policy coverage | replacement and noncommutative append instances, source validation and per-sort endpoint deltas | additional categories, bounded composition dependencies, observation costs and persisted schema migration |
 | Comparison block encoding | ordinary FC, exact cut LCP and scalar comparison transfers | transposed count/literal layouts, ordered SIMD transfer scans, bounded tails and independently measured time/space tradeoffs |
 | Object identity and integrity | portable sections, mmap queries and immutable writer | cryptographic content addressing, durable catalog publication and lazy block-integrity strategy |

@@ -77,12 +77,14 @@ the catalog's exact generation comparison; a stale writer cannot replace the
 winner. Current catalog generations and reservations remain pinned, so this is
 not yet a garbage-collection policy.
 
-The default [encoded runtime](cola-runtime.md) uses one pending binary carry
+The low-level `runtime_store<P>` default,
+[the binary encoded runtime](cola-runtime.md), uses one pending binary carry
 and blocks later admissions until it is serviced. It provides a complete
 searchable update path with explicit structural charges, but it does not give
 the redundant scheduler's worst-case update guarantee. The runtime-store tests
 exercise writes, unchanged-file reuse, snapshot saves, forks, process-equivalent
-reopen, interrupted carry restart and competing publication.
+reopen, interrupted carry restart and competing publication. Ordinary
+`connect()` instead selects the streamed redundant family described below.
 
 Complete redundant frontiers
 ----------------------------
@@ -166,11 +168,12 @@ interleave rank metadata, false-borrow flags, and the actual keys selected from
 both downstream routes. A `mapped_cola_scan<Mapped>` context can scan several
 hidden roots without repeatedly checking their shared suffixes.
 
-Streaming native merges
------------------------
+Streaming native and index output
+---------------------------------
 
-`streaming_sort_runtime_family` sends completed native merges directly to KV03
-files. The typed core carries one concrete storage context through equivalent
+`streaming_sort_runtime_family` sends native merges directly to KV03 files
+and fractional indexes to IX03 files. This is the ordinary bit-profile
+connection backend. The typed core carries one concrete storage context through equivalent
 snapshot replacements:
 
 ```cpp

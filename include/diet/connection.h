@@ -12,6 +12,7 @@
 #pragma once
 
 #include <diet/fridge.h>
+#include <diet/active_engine.h>
 #include <diet/runtime_store.h>
 #include <diet/redundant_checkpoint.h>
 #include <diet/sort_runtime_store.h>
@@ -49,7 +50,7 @@ namespace diet {
 
   // Single-threaded durable Engine for tap. Core owns interpretation and
   // private merge continuations; the published snapshot is always mmap-backed.
-  template <class Core = typed_engine<>, class Ids = random_object_ids> struct persistent_engine {
+  template <class Core = active_engine<>, class Ids = random_object_ids> struct persistent_engine {
     using core_type = Core;
     using family_type = typename Core::runtime_family;
     using policy_type = typename Core::policy_type;
@@ -157,7 +158,7 @@ namespace diet {
   // Ordinary callers use the mutable connection; snapshots retain the same
   // conditional update API as typed_cola. Catalog operations below open their
   // own connection and never touch the worker's SQLite handle.
-  template <class Core = typed_engine<>> struct connection {
+  template <class Core = active_engine<>> struct connection {
     using core_type = Core;
     using policy_type = typename Core::policy_type;
     using engine_type = persistent_engine<Core>;
@@ -249,7 +250,7 @@ namespace diet {
     tap_type tap_;
   };
 
-  template <class Core = typed_engine<>> connection<Core> connect(
+  template <class Core = active_engine<>> connection<Core> connect(
       std::filesystem::path const & root, std::string_view name, connection_options options = {}) {
     return connection<Core>(root, name, std::move(options));
   }

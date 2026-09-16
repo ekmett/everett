@@ -26,6 +26,12 @@ table and code one remains reserved.
 The free function `diet::connect(directory, name)` provides the same operation
 without keeping a fridge object.
 
+The ordinary `active_engine<P>` uses the redundant scheduler. Bit registries
+write sort-owned native records and stream both native merges and fractional
+indexes to files. Byte registries use the same scheduler with byte-aligned
+opaque records. Each admitted item pays structural merge and index work;
+[the storage context](sort-runtime-context.md) describes its buffers and barriers.
+
 Enable the SQLite component when building Diet, then link its CMake target:
 
 ```cmake
@@ -162,7 +168,7 @@ Custom sorts and synchronous engines
 Pass an explicit typed core to `connect` when using another registry:
 
 ```cpp
-using core = diet::typed_engine<my_policy>;
+using core = diet::active_engine<my_policy>;
 auto db = diet::connect<core>(directory, "records", {
   .schema_id = "my-application/records/v1"
 });
@@ -171,7 +177,8 @@ db.change<my_sort>(key, arrow);
 
 The schema identity is checked on reopen. It describes the registry's ordering,
 codecs, hash functions, and semantics; changing it does not perform a migration.
-The built-in string registry uses `diet.optional-string/code0/v1` automatically.
+The built-in bit string registry uses
+`diet.optional-string/code0/sort-profile-v1` automatically.
 Other registries require an explicit stable identity. The durable metadata
 codec currently supports the 64-bit fingerprint element.
 

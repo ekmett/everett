@@ -18,6 +18,7 @@ namespace diet {
   // Scratch bytes are never objects or durable checkpoints. Unlink the unique
   // private name immediately after opening it; the descriptor owns its life.
   struct posix_index_spool_ops {
+#if defined(__APPLE__) || defined(__linux__)
     int create(std::filesystem::path const & path) noexcept {
       return ::open(path.c_str(), O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC | O_NOFOLLOW, 0600);
     }
@@ -27,6 +28,7 @@ namespace diet {
       return ::pread(fd, bytes.data(), bytes.size(), static_cast<off_t>(at));
     }
     int close(int fd) noexcept { return ::close(fd); }
+#endif
   };
   struct cola_file_dependencies {
     object_id native;

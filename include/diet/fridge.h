@@ -41,8 +41,7 @@ namespace diet {
   template <class P> struct cola;
   template <class P> struct timeline;
   template <class P> struct branch_point;
-  template <class P> struct binary_runtime_family;
-  template <class P, class A, std::uint64_t DepthLimit, class Family> struct typed_engine;
+  template <class P> struct active_engine;
   template <class Core> struct connection;
   struct connection_options;
 
@@ -118,7 +117,7 @@ namespace diet {
     using cola = diet::cola<P>;
     using timeline = diet::timeline<P>;
     using branch_point = diet::branch_point<P>;
-    using active_engine = diet::typed_engine<P, wrapping_fingerprint_algebra, 256, binary_runtime_family<P>>;
+    using active_engine = diet::active_engine<P>;
     using tap = diet::connection<active_engine>;
 
     explicit fridge(std::filesystem::path root) : root_(checked_root(std::move(root))) {}
