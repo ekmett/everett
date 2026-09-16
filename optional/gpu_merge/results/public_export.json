@@ -74,7 +74,8 @@
     {
       "path": "optional/gpu_merge/cutover.md",
       "original_sha256": "e599803e08dd9738aeab69b85f29c9a292f99ddd5880942802a8b6a0302ffecd",
-      "normalized_sha256": "e599803e08dd9738aeab69b85f29c9a292f99ddd5880942802a8b6a0302ffecd"
+      "normalized_sha256": "e31e2c0832d76685142547345bf9ab5fa6b61acad9c7a249ac546a3cc74aaf1b",
+      "export_sha256": "e599803e08dd9738aeab69b85f29c9a292f99ddd5880942802a8b6a0302ffecd"
     },
     {
       "path": "optional/gpu_merge/cutover_calibration_test.py",
@@ -372,6 +373,17 @@
   "integration_edits": {
     "optional/gpu_merge/CMakeLists.txt": "Register the existing selector, calibration, shader-helper and scalar-oracle tests in CTest.",
     "optional/gpu_merge/design.md": "Clarify that fresh output storage is zero-initialized; the optimized path does not clear the entire mapped output with a host memset.",
-    "optional/gpu_merge/rank512_notice.txt": "Remove trailing whitespace while retaining the complete original notice."
+    "optional/gpu_merge/rank512_notice.txt": "Remove trailing whitespace while retaining the complete original notice.",
+    "optional/gpu_merge/cutover.md": "Link the subsequent final-named calibration; its qualified source hash retains the pre-link guide bytes."
+  },
+  "post_export_validation": {
+    "source_revision": "6c1bbd2e1e1bb364389dd9f2b6977caf02a92527",
+    "qualification": "cutover/qualification.json",
+    "calibration": "cutover/calibration.json",
+    "original_metadata_sha256": "bb7d854713ca3272b486a4efa327679fe537ae44589645af70e65d96630e5030",
+    "passed_ctests": 13,
+    "measured_pairs": 150,
+    "heldout_passed": true,
+    "generated_header_parity_passed": true
   }
 }

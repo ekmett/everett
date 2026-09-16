@@ -1,0 +1,787 @@
+{
+  "backend": "metal",
+  "variant": "c7042a4fdd4d9207e106916f9fdc97fc0b058ba7fb89a2bc9a8ab4493a5f4653",
+  "variant_label": "everett-optimized-cache-word-emit",
+  "artifacts": [
+    {
+      "path": "prototype",
+      "sha256": "8206e2fd4a49e91438a752267177ddb8c26b599a52dc4d62eb8f25a5c4e827b2"
+    },
+    {
+      "path": "kernels.metallib",
+      "sha256": "1af9ecde98985c57d861be3a6b261fdcf34269e2093131f6986a758ae6574763"
+    }
+  ],
+  "command_template": [
+    "prototype",
+    "kernels.metallib",
+    "{directory}",
+    "cutover",
+    "{case}",
+    "{trials}"
+  ],
+  "seed": 20260916,
+  "trials": 3,
+  "case_order": [
+    22,
+    26,
+    49,
+    21,
+    47,
+    48,
+    31,
+    38,
+    0,
+    3,
+    7,
+    29,
+    45,
+    19,
+    9,
+    18,
+    5,
+    1,
+    39,
+    4,
+    12,
+    16,
+    46,
+    27,
+    30,
+    25,
+    14,
+    20,
+    17,
+    8,
+    13,
+    11,
+    33,
+    40,
+    34,
+    35,
+    44,
+    36,
+    28,
+    37,
+    15,
+    32,
+    23,
+    6,
+    41,
+    10,
+    24,
+    43,
+    2,
+    42
+  ],
+  "cpu_model": "Apple M2 Max",
+  "os_version": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "driver": "OS-provided; see os_version",
+  "logical_cpus": 12,
+  "started_utc": "2026-09-16T05:48:54Z",
+  "warmups_per_case": 1,
+  "timeout_seconds": 180,
+  "runs": [
+    {
+      "case": 22,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-22",
+        "cutover",
+        "22",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 1.0281992909731343
+    },
+    {
+      "case": 26,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-26",
+        "cutover",
+        "26",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.962018291989807
+    },
+    {
+      "case": 49,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-49",
+        "cutover",
+        "49",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.3459287090227008
+    },
+    {
+      "case": 21,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-21",
+        "cutover",
+        "21",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.39703737501986325
+    },
+    {
+      "case": 47,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-47",
+        "cutover",
+        "47",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.6323403340065852
+    },
+    {
+      "case": 48,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-48",
+        "cutover",
+        "48",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 1.4283611249993555
+    },
+    {
+      "case": 31,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-31",
+        "cutover",
+        "31",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 2.4513000000151806
+    },
+    {
+      "case": 38,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-38",
+        "cutover",
+        "38",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.12402737501543015
+    },
+    {
+      "case": 0,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-00",
+        "cutover",
+        "0",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.0867520829779096
+    },
+    {
+      "case": 3,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-03",
+        "cutover",
+        "3",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.16057004098547623
+    },
+    {
+      "case": 7,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-07",
+        "cutover",
+        "7",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.09387679200153798
+    },
+    {
+      "case": 29,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-29",
+        "cutover",
+        "29",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.8260190830333158
+    },
+    {
+      "case": 45,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-45",
+        "cutover",
+        "45",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.14519637502962723
+    },
+    {
+      "case": 19,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-19",
+        "cutover",
+        "19",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.33544787496794015
+    },
+    {
+      "case": 9,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-09",
+        "cutover",
+        "9",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.09143758396385238
+    },
+    {
+      "case": 18,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-18",
+        "cutover",
+        "18",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.332433832983952
+    },
+    {
+      "case": 5,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-05",
+        "cutover",
+        "5",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.9924768750206567
+    },
+    {
+      "case": 1,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-01",
+        "cutover",
+        "1",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.07831354101654142
+    },
+    {
+      "case": 39,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-39",
+        "cutover",
+        "39",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.11504775000503287
+    },
+    {
+      "case": 4,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-04",
+        "cutover",
+        "4",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.3139449579757638
+    },
+    {
+      "case": 12,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-12",
+        "cutover",
+        "12",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.09917383402353153
+    },
+    {
+      "case": 16,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-16",
+        "cutover",
+        "16",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.2092427079915069
+    },
+    {
+      "case": 46,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-46",
+        "cutover",
+        "46",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.6700437089893967
+    },
+    {
+      "case": 27,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-27",
+        "cutover",
+        "27",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 1.0630864590057172
+    },
+    {
+      "case": 30,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-30",
+        "cutover",
+        "30",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 1.3273062499938533
+    },
+    {
+      "case": 25,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-25",
+        "cutover",
+        "25",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.644724708981812
+    },
+    {
+      "case": 14,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-14",
+        "cutover",
+        "14",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.1063081250176765
+    },
+    {
+      "case": 20,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-20",
+        "cutover",
+        "20",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.2732119159772992
+    },
+    {
+      "case": 17,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-17",
+        "cutover",
+        "17",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.3148490829626098
+    },
+    {
+      "case": 8,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-08",
+        "cutover",
+        "8",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.10259887500433251
+    },
+    {
+      "case": 13,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-13",
+        "cutover",
+        "13",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.14278954197652638
+    },
+    {
+      "case": 11,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-11",
+        "cutover",
+        "11",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.10467087500728667
+    },
+    {
+      "case": 33,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-33",
+        "cutover",
+        "33",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.7607135410071351
+    },
+    {
+      "case": 40,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-40",
+        "cutover",
+        "40",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.17408791702473536
+    },
+    {
+      "case": 34,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-34",
+        "cutover",
+        "34",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.09728095796890557
+    },
+    {
+      "case": 35,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-35",
+        "cutover",
+        "35",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.0965157090104185
+    },
+    {
+      "case": 44,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-44",
+        "cutover",
+        "44",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.42120124999200925
+    },
+    {
+      "case": 36,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-36",
+        "cutover",
+        "36",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.10396012500859797
+    },
+    {
+      "case": 28,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-28",
+        "cutover",
+        "28",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 1.1514083329821005
+    },
+    {
+      "case": 37,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-37",
+        "cutover",
+        "37",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.10272920795250684
+    },
+    {
+      "case": 15,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-15",
+        "cutover",
+        "15",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.24513850000221282
+    },
+    {
+      "case": 32,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-32",
+        "cutover",
+        "32",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.9090933749685064
+    },
+    {
+      "case": 23,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-23",
+        "cutover",
+        "23",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.29763229202944785
+    },
+    {
+      "case": 6,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-06",
+        "cutover",
+        "6",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.09536087501328439
+    },
+    {
+      "case": 41,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-41",
+        "cutover",
+        "41",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.1135859580244869
+    },
+    {
+      "case": 10,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-10",
+        "cutover",
+        "10",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.1034373749862425
+    },
+    {
+      "case": 24,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-24",
+        "cutover",
+        "24",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.7065829170169309
+    },
+    {
+      "case": 43,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-43",
+        "cutover",
+        "43",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.23856445896672085
+    },
+    {
+      "case": 2,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-02",
+        "cutover",
+        "2",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.10851195798022673
+    },
+    {
+      "case": 42,
+      "command": [
+        "prototype",
+        "kernels.metallib",
+        "case-42",
+        "cutover",
+        "42",
+        "3"
+      ],
+      "returncode": 0,
+      "timed_out": false,
+      "wall_seconds": 0.23128779098624364
+    }
+  ],
+  "artifacts_unchanged": true
+}

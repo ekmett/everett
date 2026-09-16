@@ -31,6 +31,8 @@ navigation construction and checksums. The
 temporary cancellation bitmaps; the production rank formats stay unchanged.
 The [calibration guide](../optional/gpu_merge/cutover.md) describes a measured
 CPU/GPU choice using headers and file sizes.
+The [M2 Max results](../optional/gpu_merge/cutover-report.md) retain the complete
+50-case calibration and its five successful held-out GPU selections.
 
 This is a separate opt-in Metal program. It does not publish durable catalog
 updates, and the ordinary library has no shader-toolchain dependency.

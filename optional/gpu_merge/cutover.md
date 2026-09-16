@@ -7,6 +7,9 @@ the optional selector also uses payload bytes, complete file bytes, their
 imbalance, fixed value-width metadata, and the terminal key length. It never
 walks records, selects EF offsets, reconstructs keys, or reads value payloads.
 
+The [M2 Max calibration](cutover-report.md) records all 50 measured cases and
+the resulting frozen rule, including its held-out checks and execution identity.
+
 The terminal key length is one observed header field. It is not a maximum over
 all keys. The selected backend still checks framing and resource bounds. A
 successful selection is a performance heuristic, not permission to skip those

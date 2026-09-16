@@ -75,6 +75,13 @@ publication, and arbitrary sort handlers do not run as shaders. The
 device and implementation calibration. Unknown or unvalidated configurations
 fall back to the CPU.
 
+The [M2 Max calibration](../optional/gpu_merge/cutover-report.md) checks 34
+training and 16 held-out cases. Within its measured feature envelope and exact
+execution identity, the frozen rule selects GPU above 51,200 combined input
+records. All five selected held-out cases clear the predeclared 10% margin,
+with median speedups of 2.03–5.79 times. This fitted threshold is an empirical
+construction heuristic, not a universal crossover or durable-write benchmark.
+
 ### Active runtime and named frontiers
 
 `multiverse<>::create(path).connect(name)` opens a default bit-profile string table.

@@ -1,0 +1,6 @@
+device,Apple M2 Max,unified,1,max_buffer,62620631040,page,16384,mmap_no_copy,passed
+cutover_device,Apple M2 Max|registryID=4294968459
+kind,case,split,n,ratio,prefix,overlap,value_bytes,fixed_values,trial,cpu_first,a_records,b_records,a_payload_bits,b_payload_bits,a_file_bytes,b_file_bytes,a_common_value_bits,b_common_value_bits,a_terminal_key_bits,b_terminal_key_bits,cpu_merge_ms,cpu_all_ms,gpu_all_ms,gpu_command_ms,parse_ms,prepare_ms,order_ms,size_ms,emit_ms,assembly_ms,survivors,output_bits,output_bytes,output_crc32c
+cutover,18,train,65536,1,256,50,8,0,0,1,65536,65536,8224310,8224407,1035656,1035672,-1,-1,2113,2113,26.904667,27.939667,6.875541,4.80795832118,1.182666,0.041709,4.54575,0.337125,0.385833,0.382292,98286,12099751,1523704,439435349
+cutover,18,train,65536,1,256,50,8,0,1,0,65536,65536,8224310,8224407,1035656,1035672,-1,-1,2113,2113,26.832417,27.831584,8.958708,5.60370838502,1.000916,0.06875,4.985291,0.358583,0.464417,2.080458,98286,12099751,1523704,439435349
+cutover,18,train,65536,1,256,50,8,0,2,1,65536,65536,8224310,8224407,1035656,1035672,-1,-1,2113,2113,26.699458,27.308,9.68325,7.00362503994,1.17575,0.043125,6.737125,0.41525,0.759042,0.552708,98286,12099751,1523704,439435349
