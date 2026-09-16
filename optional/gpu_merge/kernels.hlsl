@@ -90,6 +90,7 @@ uint population15(uint first, uint bits) {
 [[vk::binding(8)]] StructuredBuffer<uint> prefix_data;
 [[vk::binding(9)]] StructuredBuffer<uint> prefix_tree;
 #include "ef_output.hlsl"
+#include "output_plan.hlsl"
 #include "index_rank.hlsl"
 #include "parse_input.hlsl"
 #ifdef COMPRESSED_INPUT

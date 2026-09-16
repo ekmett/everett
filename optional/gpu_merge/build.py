@@ -32,7 +32,7 @@ def main():
         "scan_blocks", "scan_add", "rank_count", "rank_finish", "rank15_count",
         "rank15_finish", "probe_copy", "merge_order", "merge_keep", "merge_compact",
         "merge_sizes", "merge_emit", "rank15_classes", "parse_input", "parse_ef_probe",
-        "ef_output_sparse_count", "ef_output_low", "ef_output_high", "ef_output_samples", "ef_output_sparse",
+        "ef_output_sparse_plan", "ef_output_sparse_count", "ef_output_low", "ef_output_high", "ef_output_samples", "ef_output_sparse",
         "index_rank_classes", "index_rank_blocks",
     ]
     jobs = [(entry, entry, False, False) for entry in entries]

@@ -18,7 +18,7 @@ add_custom_command(
     --dxc "${EVERETT_DXC}" --spirv-val "${EVERETT_SPIRV_VAL}" --spirv-cross "${EVERETT_SPIRV_CROSS}"
   DEPENDS build.py shader_compile.py prototype.mm adversarial.h kernels.hlsl prepared_input.h
     parse_input.hlsl prefix_owner.hlsl prefix_tree_test.h prefix_cache.hlsl emit_word.hlsl
-    ef_input_test.h ef_output.hlsl ef_output_test.h emit_word_test.h rank_shared.h cutover_cases.h gpu_sort.h
+    ef_input_test.h ef_output.hlsl ef_output_test.h output_plan.hlsl output_plan_test.h emit_word_test.h rank_shared.h cutover_cases.h gpu_sort.h
     index_rank.hlsl index_rank_test.h collision_rank.hlsl collision_rank_test.h rank512.hlsl
     ${EVERETT_GPU_CPU_HEADERS}
   VERBATIM)
@@ -62,3 +62,9 @@ endforeach()
 add_test(NAME gpu_merge_prefix_tiles_adversarial COMMAND "${CMAKE_CURRENT_BINARY_DIR}/prototype"
   "${CMAKE_CURRENT_BINARY_DIR}/kernels.metallib" "${CMAKE_CURRENT_BINARY_DIR}/prefix-tiles-check" optimized-tiles)
 set_tests_properties(gpu_merge_prefix_tiles_adversarial PROPERTIES RUN_SERIAL TRUE)
+
+foreach(mode IN ITEMS optimized-plan optimized-tiles-plan)
+  add_test(NAME "gpu_merge_${mode}_adversarial" COMMAND "${CMAKE_CURRENT_BINARY_DIR}/prototype"
+    "${CMAKE_CURRENT_BINARY_DIR}/kernels.metallib" "${CMAKE_CURRENT_BINARY_DIR}/${mode}-check" "${mode}")
+  set_tests_properties("gpu_merge_${mode}_adversarial" PROPERTIES RUN_SERIAL TRUE)
+endforeach()

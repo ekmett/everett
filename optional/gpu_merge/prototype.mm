@@ -144,6 +144,7 @@ struct gpu {
 };
 #include "collision_rank_test.h"
 #include "prefix_tree_test.h"
+#include "output_plan_test.h"
 #include "ef_input_test.h"
 #include "ef_output_test.h"
 #include "emit_word_test.h"
@@ -266,6 +267,7 @@ using everett_gpu::compressed_descriptor;
 bool compressed_inputs = false;
 bool use_prefix_cache = false;
 bool use_prefix_tiles = false;
+bool use_output_plan = false;
 bool use_word_emitter = false;
 bool gpu_output_ef = false;
 bool verify_compressed_descriptors = false;
@@ -594,14 +596,24 @@ merge_result gpu_merge(gpu &context, native const &a, native const &b,
     }
   }
   phase = clock_type::now();
+  auto status_bytes = use_output_plan ? 20u : 4u;
   auto lengths = context.buffer(survivors * 4), frames = context.buffer(survivors * 12),
-       status = context.buffer(4);
-  std::memset(status.contents, 0, 4);
+       status = context.buffer(status_bytes);
+  std::memset(status.contents, 0, status_bytes);
+  std::uint32_t ef_entries = (survivors + 14) / 15 + 1, sample_count = (ef_entries + 255) / 256;
+  id<MTLBuffer> sparse_counts = nil, sparse_starts = nil;
   command = [context.queue commandBuffer];
   context.dispatch(command, kernel("merge_sizes"), survivors, arena, lengths, status, survivors,
                    desc, compact, frames, 0, 0, shared_prefix, delta_a, delta_b, tree_base, other,
                    prefix, tree);
   auto offsets = context.scan(command, lengths, survivors);
+  if (use_output_plan) {
+    sparse_counts = context.buffer(std::size_t(sample_count) * 4);
+    context.dispatch(command, "ef_output_sparse_plan", sample_count, offsets, sparse_counts,
+                     status, survivors, lengths, compact, status, descriptor_words, 0, 0, 0, 0, 0,
+                     desc);
+    sparse_starts = context.scan(command, sparse_counts, sample_count);
+  }
   gpu::finish(command);
   auto starts = static_cast<std::uint32_t const *>(offsets.contents),
        lens = static_cast<std::uint32_t const *>(lengths.contents);
@@ -618,22 +630,27 @@ merge_result gpu_merge(gpu &context, native const &a, native const &b,
   std::array<std::size_t, 8> part_sizes{};
   part_sizes[0] = (result.bits + 7) / 8;
   everett::elias_fano ef;
-  id<MTLBuffer> sparse_counts = nil, sparse_starts = nil;
-  std::uint32_t ef_entries = (survivors + 14) / 15 + 1, sample_count = (ef_entries + 255) / 256;
   if (gpu_output_ef) {
     auto fixed = std::uint64_t(survivors) * common.value_or(0);
     require(fixed <= result.bits, "GPU EF common stride extent");
     ef.universe = result.bits - fixed;
     auto quotient = ef.universe / ef_entries;
     ef.low_width = quotient ? unsigned(std::bit_width(quotient) - 1) : 0;
-    sparse_counts = context.buffer(std::size_t(sample_count) * 4);
-    auto plan = [context.queue commandBuffer];
-    context.dispatch(plan, "ef_output_sparse_count", sample_count, offsets, sparse_counts, nil,
-                     survivors, nil, nil, nil, result.bits, std::uint32_t(common.value_or(0)),
-                     ef.low_width);
-    sparse_starts = context.scan(plan, sparse_counts, sample_count);
-    gpu::finish(plan);
-    result.gpu_ms += (plan.GPUEndTime - plan.GPUStartTime) * 1000;
+    if (use_output_plan) {
+      auto plan = static_cast<std::uint32_t const *>(status.contents);
+      require(plan[1] == result.bits && plan[2] == common.value_or(0) &&
+                  plan[3] == ef.universe && plan[4] == ef.low_width,
+              "GPU output plan disagrees with checked extent");
+    } else {
+      sparse_counts = context.buffer(std::size_t(sample_count) * 4);
+      auto plan = [context.queue commandBuffer];
+      context.dispatch(plan, "ef_output_sparse_count", sample_count, offsets, sparse_counts, nil,
+                       survivors, nil, nil, nil, result.bits, std::uint32_t(common.value_or(0)),
+                       ef.low_width);
+      sparse_starts = context.scan(plan, sparse_counts, sample_count);
+      gpu::finish(plan);
+      result.gpu_ms += (plan.GPUEndTime - plan.GPUStartTime) * 1000;
+    }
     auto last = sample_count - 1;
     auto sparse_count = static_cast<std::uint32_t const *>(sparse_counts.contents)[last] +
                         static_cast<std::uint32_t const *>(sparse_starts.contents)[last];
@@ -803,6 +820,10 @@ int main(int argc, char **argv) {
         use_prefix_tiles = true;
         mode.erase(tile_option, 6);
       }
+      if (auto plan_option = mode.find("-plan"); plan_option != std::string::npos) {
+        use_output_plan = true;
+        mode.erase(plan_option, 5);
+      }
       auto quick = argc > 3;
       if (mode == "rank-shared") {
         (void)context.pipeline("rank15_classes");
@@ -831,6 +852,7 @@ int main(int argc, char **argv) {
         use_word_emitter = collision_mode || mode.starts_with("optimized") || mode == "cutover";
         gpu_output_ef = use_prefix_cache || mode.starts_with("complete");
         compressed_inputs = gpu_output_ef || mode.starts_with("compressed");
+        require(!use_output_plan || gpu_output_ef, "output-plan mode requires GPU output EF");
         verify_compressed_descriptors =
             compressed_inputs && !mode.ends_with("-bench") && mode != "cutover";
         if (gpu_output_ef)
@@ -843,6 +865,8 @@ int main(int argc, char **argv) {
                             "compressed_probe", "compressed_merge_order", "compressed_merge_keep",
                             "compressed_merge_sizes", "compressed_merge_emit"})
             (void)context.pipeline(name);
+        if (use_output_plan)
+          (void)context.pipeline("ef_output_sparse_plan");
         if (use_prefix_cache)
           for (auto name : {"compressed_cache", "cached_merge_order", "cached_merge_keep",
                             "cached_merge_sizes"})
@@ -887,6 +911,8 @@ int main(int argc, char **argv) {
           }
           if (use_prefix_tiles)
             prefix_tree_adversarial(context);
+          if (use_output_plan)
+            output_plan_adversarial(context);
           ef_input_test(context);
           if (gpu_output_ef)
             ef_output_adversarial(context);
