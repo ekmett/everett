@@ -1,0 +1,2282 @@
+[
+  {
+    "case": 0,
+    "levelwise": {
+      "cpu_all_ms": {
+        "process_medians": [
+          0.312125,
+          0.28175,
+          0.273333
+        ],
+        "median": 0.28175,
+        "min": 0.273333,
+        "max": 0.312125
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          5.580959,
+          5.614125,
+          5.035958
+        ],
+        "median": 5.580959,
+        "min": 5.035958,
+        "max": 5.614125
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          3.29708331265,
+          2.85599997733,
+          3.63325001672
+        ],
+        "median": 3.29708331265,
+        "min": 2.85599997733,
+        "max": 3.63325001672
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.099708,
+          1.061125,
+          1.104333
+        ],
+        "median": 1.099708,
+        "min": 1.061125,
+        "max": 1.104333
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.0145,
+          0.01475,
+          0.01175
+        ],
+        "median": 0.0145,
+        "min": 0.01175,
+        "max": 0.01475
+      },
+      "order_ms": {
+        "process_medians": [
+          1.443625,
+          1.263667,
+          1.441417
+        ],
+        "median": 1.441417,
+        "min": 1.263667,
+        "max": 1.443625
+      },
+      "size_ms": {
+        "process_medians": [
+          0.328834,
+          0.552041,
+          0.260875
+        ],
+        "median": 0.328834,
+        "min": 0.260875,
+        "max": 0.552041
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.237375,
+          0.250625,
+          0.253875
+        ],
+        "median": 0.250625,
+        "min": 0.237375,
+        "max": 0.253875
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.313416,
+          0.305958,
+          0.370709
+        ],
+        "median": 0.313416,
+        "min": 0.305958,
+        "max": 0.370709
+      }
+    },
+    "tiled": {
+      "cpu_all_ms": {
+        "process_medians": [
+          0.2925,
+          0.249333,
+          0.260416
+        ],
+        "median": 0.260416,
+        "min": 0.249333,
+        "max": 0.2925
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          4.685709,
+          2.719958,
+          1.8715
+        ],
+        "median": 2.719958,
+        "min": 1.8715,
+        "max": 4.685709
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          2.86175007932,
+          0.918875040952,
+          0.790791702457
+        ],
+        "median": 0.918875040952,
+        "min": 0.790791702457,
+        "max": 2.86175007932
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.10775,
+          0.4925,
+          0.513042
+        ],
+        "median": 0.513042,
+        "min": 0.4925,
+        "max": 1.10775
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.013666,
+          0.011375,
+          0.014042
+        ],
+        "median": 0.013666,
+        "min": 0.011375,
+        "max": 0.014042
+      },
+      "order_ms": {
+        "process_medians": [
+          1.412,
+          1.121292,
+          0.693416
+        ],
+        "median": 1.121292,
+        "min": 0.693416,
+        "max": 1.412
+      },
+      "size_ms": {
+        "process_medians": [
+          0.215416,
+          0.358,
+          0.210208
+        ],
+        "median": 0.215416,
+        "min": 0.210208,
+        "max": 0.358
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.231916,
+          0.205042,
+          0.199917
+        ],
+        "median": 0.205042,
+        "min": 0.199917,
+        "max": 0.231916
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.277083,
+          0.271958,
+          0.263625
+        ],
+        "median": 0.271958,
+        "min": 0.263625,
+        "max": 0.277083
+      }
+    },
+    "whole_percent_lower": 51.26360899623166,
+    "whole_ranges_disjoint_tiled_faster": true,
+    "whole_ranges_disjoint_levelwise_faster": false
+  },
+  {
+    "case": 1,
+    "levelwise": {
+      "cpu_all_ms": {
+        "process_medians": [
+          0.59825,
+          0.706792,
+          0.605916
+        ],
+        "median": 0.605916,
+        "min": 0.59825,
+        "max": 0.706792
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          5.276,
+          2.030125,
+          5.561875
+        ],
+        "median": 5.276,
+        "min": 2.030125,
+        "max": 5.561875
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          3.63512500189,
+          0.923083396628,
+          3.47862497438
+        ],
+        "median": 3.47862497438,
+        "min": 0.923083396628,
+        "max": 3.63512500189
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.115833,
+          0.581291,
+          3.222417
+        ],
+        "median": 1.115833,
+        "min": 0.581291,
+        "max": 3.222417
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.014167,
+          0.015917,
+          0.021125
+        ],
+        "median": 0.015917,
+        "min": 0.014167,
+        "max": 0.021125
+      },
+      "order_ms": {
+        "process_medians": [
+          1.603,
+          0.701416,
+          1.2845
+        ],
+        "median": 1.2845,
+        "min": 0.701416,
+        "max": 1.603
+      },
+      "size_ms": {
+        "process_medians": [
+          0.383125,
+          0.241291,
+          0.250166
+        ],
+        "median": 0.250166,
+        "min": 0.241291,
+        "max": 0.383125
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.267791,
+          0.2095,
+          0.240917
+        ],
+        "median": 0.240917,
+        "min": 0.2095,
+        "max": 0.267791
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.444458,
+          0.281791,
+          0.271708
+        ],
+        "median": 0.281791,
+        "min": 0.271708,
+        "max": 0.444458
+      }
+    },
+    "tiled": {
+      "cpu_all_ms": {
+        "process_medians": [
+          0.6255,
+          0.640333,
+          0.587959
+        ],
+        "median": 0.6255,
+        "min": 0.587959,
+        "max": 0.640333
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          3.066959,
+          5.533958,
+          5.064625
+        ],
+        "median": 5.064625,
+        "min": 3.066959,
+        "max": 5.533958
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          1.3236667146,
+          3.55395826045,
+          2.89966654964
+        ],
+        "median": 2.89966654964,
+        "min": 1.3236667146,
+        "max": 3.55395826045
+      },
+      "parse_ms": {
+        "process_medians": [
+          0.943375,
+          1.019875,
+          1.051625
+        ],
+        "median": 1.019875,
+        "min": 0.943375,
+        "max": 1.051625
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.017375,
+          0.019,
+          0.01725
+        ],
+        "median": 0.017375,
+        "min": 0.01725,
+        "max": 0.019
+      },
+      "order_ms": {
+        "process_medians": [
+          0.978541,
+          1.61825,
+          2.981167
+        ],
+        "median": 1.61825,
+        "min": 0.978541,
+        "max": 2.981167
+      },
+      "size_ms": {
+        "process_medians": [
+          0.229958,
+          0.278125,
+          0.332875
+        ],
+        "median": 0.278125,
+        "min": 0.229958,
+        "max": 0.332875
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.216209,
+          0.259333,
+          0.254042
+        ],
+        "median": 0.254042,
+        "min": 0.216209,
+        "max": 0.259333
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.242334,
+          0.284708,
+          0.292375
+        ],
+        "median": 0.284708,
+        "min": 0.242334,
+        "max": 0.292375
+      }
+    },
+    "whole_percent_lower": 4.006349507202412,
+    "whole_ranges_disjoint_tiled_faster": false,
+    "whole_ranges_disjoint_levelwise_faster": false
+  },
+  {
+    "case": 2,
+    "levelwise": {
+      "cpu_all_ms": {
+        "process_medians": [
+          1.86275,
+          1.972916,
+          1.769917
+        ],
+        "median": 1.86275,
+        "min": 1.769917,
+        "max": 1.972916
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          2.546333,
+          6.378792,
+          4.243209
+        ],
+        "median": 4.243209,
+        "min": 2.546333,
+        "max": 6.378792
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          1.04283337714,
+          4.59812494228,
+          2.38750001881
+        ],
+        "median": 2.38750001881,
+        "min": 1.04283337714,
+        "max": 4.59812494228
+      },
+      "parse_ms": {
+        "process_medians": [
+          0.996333,
+          2.442333,
+          1.226459
+        ],
+        "median": 1.226459,
+        "min": 0.996333,
+        "max": 2.442333
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.032292,
+          0.038167,
+          0.027416
+        ],
+        "median": 0.032292,
+        "min": 0.027416,
+        "max": 0.038167
+      },
+      "order_ms": {
+        "process_medians": [
+          0.827333,
+          1.49625,
+          1.075458
+        ],
+        "median": 1.075458,
+        "min": 0.827333,
+        "max": 1.49625
+      },
+      "size_ms": {
+        "process_medians": [
+          0.22975,
+          0.348834,
+          0.731167
+        ],
+        "median": 0.348834,
+        "min": 0.22975,
+        "max": 0.731167
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.226334,
+          0.272709,
+          0.264959
+        ],
+        "median": 0.264959,
+        "min": 0.226334,
+        "max": 0.272709
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.2835,
+          0.427001,
+          0.331125
+        ],
+        "median": 0.331125,
+        "min": 0.2835,
+        "max": 0.427001
+      }
+    },
+    "tiled": {
+      "cpu_all_ms": {
+        "process_medians": [
+          1.873292,
+          1.84625,
+          1.787958
+        ],
+        "median": 1.84625,
+        "min": 1.787958,
+        "max": 1.873292
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          3.489209,
+          2.476833,
+          3.480459
+        ],
+        "median": 3.480459,
+        "min": 2.476833,
+        "max": 3.489209
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          2.05591670237,
+          1.00487505551,
+          2.09275004454
+        ],
+        "median": 2.05591670237,
+        "min": 1.00487505551,
+        "max": 2.09275004454
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.316666,
+          0.946916,
+          1.219292
+        ],
+        "median": 1.219292,
+        "min": 0.946916,
+        "max": 1.316666
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.037791,
+          0.027625,
+          0.028333
+        ],
+        "median": 0.028333,
+        "min": 0.027625,
+        "max": 0.037791
+      },
+      "order_ms": {
+        "process_medians": [
+          1.158709,
+          0.806458,
+          1.462042
+        ],
+        "median": 1.158709,
+        "min": 0.806458,
+        "max": 1.462042
+      },
+      "size_ms": {
+        "process_medians": [
+          0.260542,
+          0.237791,
+          0.241625
+        ],
+        "median": 0.241625,
+        "min": 0.237791,
+        "max": 0.260542
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.273875,
+          0.223333,
+          0.265833
+        ],
+        "median": 0.265833,
+        "min": 0.223333,
+        "max": 0.273875
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.315541,
+          0.310126,
+          0.260083
+        ],
+        "median": 0.310126,
+        "min": 0.260083,
+        "max": 0.315541
+      }
+    },
+    "whole_percent_lower": 17.975782008380925,
+    "whole_ranges_disjoint_tiled_faster": false,
+    "whole_ranges_disjoint_levelwise_faster": false
+  },
+  {
+    "case": 3,
+    "levelwise": {
+      "cpu_all_ms": {
+        "process_medians": [
+          6.747792,
+          6.802958,
+          6.886042
+        ],
+        "median": 6.802958,
+        "min": 6.747792,
+        "max": 6.886042
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          6.626959,
+          4.237667,
+          5.365917
+        ],
+        "median": 5.365917,
+        "min": 4.237667,
+        "max": 6.626959
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          3.68529156549,
+          2.53833329771,
+          3.54762497591
+        ],
+        "median": 3.54762497591,
+        "min": 2.53833329771,
+        "max": 3.68529156549
+      },
+      "parse_ms": {
+        "process_medians": [
+          3.368042,
+          1.676834,
+          1.39525
+        ],
+        "median": 1.676834,
+        "min": 1.39525,
+        "max": 3.368042
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.029875,
+          0.028541,
+          0.04275
+        ],
+        "median": 0.029875,
+        "min": 0.028541,
+        "max": 0.04275
+      },
+      "order_ms": {
+        "process_medians": [
+          1.644834,
+          1.236709,
+          1.669958
+        ],
+        "median": 1.644834,
+        "min": 1.236709,
+        "max": 1.669958
+      },
+      "size_ms": {
+        "process_medians": [
+          0.320459,
+          0.3075,
+          0.319458
+        ],
+        "median": 0.319458,
+        "min": 0.3075,
+        "max": 0.320459
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.326208,
+          0.596583,
+          0.332666
+        ],
+        "median": 0.332666,
+        "min": 0.326208,
+        "max": 0.596583
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.401375,
+          0.334959,
+          0.375792
+        ],
+        "median": 0.375792,
+        "min": 0.334959,
+        "max": 0.401375
+      }
+    },
+    "tiled": {
+      "cpu_all_ms": {
+        "process_medians": [
+          6.896792,
+          6.927833,
+          6.919542
+        ],
+        "median": 6.919542,
+        "min": 6.896792,
+        "max": 6.927833
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          3.003667,
+          3.714333,
+          4.118042
+        ],
+        "median": 3.714333,
+        "min": 3.003667,
+        "max": 4.118042
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          1.32387498161,
+          2.013416728,
+          1.37162493775
+        ],
+        "median": 1.37162493775,
+        "min": 1.32387498161,
+        "max": 2.013416728
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.04425,
+          1.185333,
+          2.3255
+        ],
+        "median": 1.185333,
+        "min": 1.04425,
+        "max": 2.3255
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.037167,
+          0.025583,
+          0.033084
+        ],
+        "median": 0.033084,
+        "min": 0.025583,
+        "max": 0.037167
+      },
+      "order_ms": {
+        "process_medians": [
+          1.007833,
+          1.647708,
+          1.005583
+        ],
+        "median": 1.007833,
+        "min": 1.005583,
+        "max": 1.647708
+      },
+      "size_ms": {
+        "process_medians": [
+          0.249209,
+          0.264375,
+          0.254917
+        ],
+        "median": 0.254917,
+        "min": 0.249209,
+        "max": 0.264375
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.288542,
+          0.33,
+          0.281083
+        ],
+        "median": 0.288542,
+        "min": 0.281083,
+        "max": 0.33
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.365041,
+          0.354291,
+          0.314749
+        ],
+        "median": 0.354291,
+        "min": 0.314749,
+        "max": 0.365041
+      }
+    },
+    "whole_percent_lower": 30.77915666604608,
+    "whole_ranges_disjoint_tiled_faster": true,
+    "whole_ranges_disjoint_levelwise_faster": false
+  },
+  {
+    "case": 4,
+    "levelwise": {
+      "cpu_all_ms": {
+        "process_medians": [
+          27.070791,
+          27.455958,
+          26.1535
+        ],
+        "median": 27.070791,
+        "min": 26.1535,
+        "max": 27.455958
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          8.154667,
+          4.691083,
+          4.954042
+        ],
+        "median": 4.954042,
+        "min": 4.691083,
+        "max": 8.154667
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          5.10508340085,
+          2.20095837722,
+          1.844750077
+        ],
+        "median": 2.20095837722,
+        "min": 1.844750077,
+        "max": 5.10508340085
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.495334,
+          1.14225,
+          1.114083
+        ],
+        "median": 1.14225,
+        "min": 1.114083,
+        "max": 1.495334
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.031375,
+          0.033417,
+          0.042083
+        ],
+        "median": 0.033417,
+        "min": 0.031375,
+        "max": 0.042083
+      },
+      "order_ms": {
+        "process_medians": [
+          2.181542,
+          1.973041,
+          1.409333
+        ],
+        "median": 1.973041,
+        "min": 1.409333,
+        "max": 2.181542
+      },
+      "size_ms": {
+        "process_medians": [
+          0.398583,
+          0.383417,
+          0.677
+        ],
+        "median": 0.398583,
+        "min": 0.383417,
+        "max": 0.677
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.64025,
+          0.737583,
+          0.682042
+        ],
+        "median": 0.682042,
+        "min": 0.64025,
+        "max": 0.737583
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.633666,
+          0.475291,
+          0.975875
+        ],
+        "median": 0.633666,
+        "min": 0.475291,
+        "max": 0.975875
+      }
+    },
+    "tiled": {
+      "cpu_all_ms": {
+        "process_medians": [
+          26.980875,
+          27.497291,
+          27.389
+        ],
+        "median": 27.389,
+        "min": 26.980875,
+        "max": 27.497291
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          4.340209,
+          6.690875,
+          6.76925
+        ],
+        "median": 6.690875,
+        "min": 4.340209,
+        "max": 6.76925
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          2.16229166836,
+          4.27349994425,
+          3.65712499479
+        ],
+        "median": 3.65712499479,
+        "min": 2.16229166836,
+        "max": 4.27349994425
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.073334,
+          1.3955,
+          1.732583
+        ],
+        "median": 1.3955,
+        "min": 1.073334,
+        "max": 1.732583
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.04275,
+          0.042875,
+          0.032708
+        ],
+        "median": 0.04275,
+        "min": 0.032708,
+        "max": 0.042875
+      },
+      "order_ms": {
+        "process_medians": [
+          1.995792,
+          3.096583,
+          2.006292
+        ],
+        "median": 2.006292,
+        "min": 1.995792,
+        "max": 3.096583
+      },
+      "size_ms": {
+        "process_medians": [
+          0.446833,
+          0.456708,
+          0.6795
+        ],
+        "median": 0.456708,
+        "min": 0.446833,
+        "max": 0.6795
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.720292,
+          0.575625,
+          0.593458
+        ],
+        "median": 0.593458,
+        "min": 0.575625,
+        "max": 0.720292
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.491333,
+          0.507624,
+          0.571501
+        ],
+        "median": 0.507624,
+        "min": 0.491333,
+        "max": 0.571501
+      }
+    },
+    "whole_percent_lower": -35.05890745375191,
+    "whole_ranges_disjoint_tiled_faster": false,
+    "whole_ranges_disjoint_levelwise_faster": false
+  },
+  {
+    "case": 5,
+    "levelwise": {
+      "cpu_all_ms": {
+        "process_medians": [
+          110.374417,
+          107.420041,
+          110.116709
+        ],
+        "median": 110.116709,
+        "min": 107.420041,
+        "max": 110.374417
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          8.730958,
+          10.661083,
+          8.305875
+        ],
+        "median": 8.730958,
+        "min": 8.305875,
+        "max": 10.661083
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          4.9186667311,
+          6.78645831067,
+          5.27466664789
+        ],
+        "median": 5.27466664789,
+        "min": 4.9186667311,
+        "max": 6.78645831067
+      },
+      "parse_ms": {
+        "process_medians": [
+          2.777333,
+          2.341666,
+          3.068875
+        ],
+        "median": 2.777333,
+        "min": 2.341666,
+        "max": 3.068875
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.050041,
+          0.049375,
+          0.044459
+        ],
+        "median": 0.049375,
+        "min": 0.044459,
+        "max": 0.050041
+      },
+      "order_ms": {
+        "process_medians": [
+          2.59925,
+          5.478208,
+          3.141291
+        ],
+        "median": 3.141291,
+        "min": 2.59925,
+        "max": 5.478208
+      },
+      "size_ms": {
+        "process_medians": [
+          0.555625,
+          0.590125,
+          0.547833
+        ],
+        "median": 0.555625,
+        "min": 0.547833,
+        "max": 0.590125
+      },
+      "emit_ms": {
+        "process_medians": [
+          1.358083,
+          1.206708,
+          0.8485
+        ],
+        "median": 1.206708,
+        "min": 0.8485,
+        "max": 1.358083
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.748333,
+          0.834958,
+          0.750792
+        ],
+        "median": 0.750792,
+        "min": 0.748333,
+        "max": 0.834958
+      }
+    },
+    "tiled": {
+      "cpu_all_ms": {
+        "process_medians": [
+          111.56025,
+          109.064209,
+          110.430625
+        ],
+        "median": 110.430625,
+        "min": 109.064209,
+        "max": 111.56025
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          9.032125,
+          10.203792,
+          8.194459
+        ],
+        "median": 9.032125,
+        "min": 8.194459,
+        "max": 10.203792
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          4.86300006742,
+          5.62829163391,
+          4.1921249358
+        ],
+        "median": 4.86300006742,
+        "min": 4.1921249358,
+        "max": 5.62829163391
+      },
+      "parse_ms": {
+        "process_medians": [
+          2.253209,
+          2.4,
+          2.383209
+        ],
+        "median": 2.383209,
+        "min": 2.253209,
+        "max": 2.4
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.043167,
+          0.045375,
+          0.072542
+        ],
+        "median": 0.045375,
+        "min": 0.043167,
+        "max": 0.072542
+      },
+      "order_ms": {
+        "process_medians": [
+          3.058583,
+          2.462125,
+          2.597125
+        ],
+        "median": 2.597125,
+        "min": 2.462125,
+        "max": 3.058583
+      },
+      "size_ms": {
+        "process_medians": [
+          0.557917,
+          0.806416,
+          0.615958
+        ],
+        "median": 0.615958,
+        "min": 0.557917,
+        "max": 0.806416
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.978,
+          0.895917,
+          1.110042
+        ],
+        "median": 0.978,
+        "min": 0.895917,
+        "max": 1.110042
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.778666,
+          0.870126,
+          0.849625
+        ],
+        "median": 0.849625,
+        "min": 0.778666,
+        "max": 0.870126
+      }
+    },
+    "whole_percent_lower": -3.4494152875320427,
+    "whole_ranges_disjoint_tiled_faster": false,
+    "whole_ranges_disjoint_levelwise_faster": false
+  },
+  {
+    "case": 9,
+    "levelwise": {
+      "cpu_all_ms": {
+        "process_medians": [
+          1.8625,
+          1.889708,
+          1.920666
+        ],
+        "median": 1.889708,
+        "min": 1.8625,
+        "max": 1.920666
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          4.019792,
+          6.935958,
+          8.154125
+        ],
+        "median": 6.935958,
+        "min": 4.019792,
+        "max": 8.154125
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          2.68295838032,
+          5.44529163744,
+          6.66258332785
+        ],
+        "median": 5.44529163744,
+        "min": 2.68295838032,
+        "max": 6.66258332785
+      },
+      "parse_ms": {
+        "process_medians": [
+          0.948125,
+          1.203458,
+          1.250667
+        ],
+        "median": 1.203458,
+        "min": 0.948125,
+        "max": 1.250667
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.031333,
+          0.028833,
+          0.037833
+        ],
+        "median": 0.031333,
+        "min": 0.028833,
+        "max": 0.037833
+      },
+      "order_ms": {
+        "process_medians": [
+          2.40525,
+          4.82275,
+          5.845666
+        ],
+        "median": 4.82275,
+        "min": 2.40525,
+        "max": 5.845666
+      },
+      "size_ms": {
+        "process_medians": [
+          0.242375,
+          0.300291,
+          0.293542
+        ],
+        "median": 0.293542,
+        "min": 0.242375,
+        "max": 0.300291
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.208,
+          0.575917,
+          0.294708
+        ],
+        "median": 0.294708,
+        "min": 0.208,
+        "max": 0.575917
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.264751,
+          0.351542,
+          0.4145
+        ],
+        "median": 0.351542,
+        "min": 0.264751,
+        "max": 0.4145
+      }
+    },
+    "tiled": {
+      "cpu_all_ms": {
+        "process_medians": [
+          1.746584,
+          1.857375,
+          1.872666
+        ],
+        "median": 1.857375,
+        "min": 1.746584,
+        "max": 1.872666
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          5.209417,
+          6.024709,
+          8.287708
+        ],
+        "median": 6.024709,
+        "min": 5.209417,
+        "max": 8.287708
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          4.00333327707,
+          3.9817916695,
+          3.90358333243
+        ],
+        "median": 3.9817916695,
+        "min": 3.90358333243,
+        "max": 4.00333327707
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.248167,
+          1.2115,
+          1.138917
+        ],
+        "median": 1.2115,
+        "min": 1.138917,
+        "max": 1.248167
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.025834,
+          0.026167,
+          0.037125
+        ],
+        "median": 0.026167,
+        "min": 0.025834,
+        "max": 0.037125
+      },
+      "order_ms": {
+        "process_medians": [
+          3.278375,
+          2.945292,
+          2.968625
+        ],
+        "median": 2.968625,
+        "min": 2.945292,
+        "max": 3.278375
+      },
+      "size_ms": {
+        "process_medians": [
+          0.218042,
+          0.308334,
+          0.727459
+        ],
+        "median": 0.308334,
+        "min": 0.218042,
+        "max": 0.727459
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.209791,
+          0.263958,
+          0.61075
+        ],
+        "median": 0.263958,
+        "min": 0.209791,
+        "max": 0.61075
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.260042,
+          0.310291,
+          0.751375
+        ],
+        "median": 0.310291,
+        "min": 0.260042,
+        "max": 0.751375
+      }
+    },
+    "whole_percent_lower": 13.138040916626093,
+    "whole_ranges_disjoint_tiled_faster": false,
+    "whole_ranges_disjoint_levelwise_faster": false
+  },
+  {
+    "case": 11,
+    "levelwise": {
+      "cpu_all_ms": {
+        "process_medians": [
+          1.552584,
+          1.429709,
+          1.324792
+        ],
+        "median": 1.429709,
+        "min": 1.324792,
+        "max": 1.552584
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          5.856458,
+          4.893833,
+          4.215167
+        ],
+        "median": 4.893833,
+        "min": 4.215167,
+        "max": 5.856458
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          3.59745835885,
+          3.12870839844,
+          1.79299991578
+        ],
+        "median": 3.12870839844,
+        "min": 1.79299991578,
+        "max": 3.59745835885
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.556292,
+          2.090875,
+          2.090042
+        ],
+        "median": 2.090042,
+        "min": 1.556292,
+        "max": 2.090875
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.03275,
+          0.034292,
+          0.030584
+        ],
+        "median": 0.03275,
+        "min": 0.030584,
+        "max": 0.034292
+      },
+      "order_ms": {
+        "process_medians": [
+          1.569042,
+          1.503917,
+          0.922459
+        ],
+        "median": 1.503917,
+        "min": 0.922459,
+        "max": 1.569042
+      },
+      "size_ms": {
+        "process_medians": [
+          0.272875,
+          0.281458,
+          0.286375
+        ],
+        "median": 0.281458,
+        "min": 0.272875,
+        "max": 0.286375
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.29125,
+          0.292666,
+          0.232708
+        ],
+        "median": 0.29125,
+        "min": 0.232708,
+        "max": 0.292666
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.444875,
+          0.314875,
+          0.248082
+        ],
+        "median": 0.314875,
+        "min": 0.248082,
+        "max": 0.444875
+      }
+    },
+    "tiled": {
+      "cpu_all_ms": {
+        "process_medians": [
+          1.324084,
+          1.404375,
+          1.3535
+        ],
+        "median": 1.3535,
+        "min": 1.324084,
+        "max": 1.404375
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          2.925166,
+          3.605167,
+          3.78075
+        ],
+        "median": 3.605167,
+        "min": 2.925166,
+        "max": 3.78075
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          1.2090416858,
+          2.30700004613,
+          1.93237501662
+        ],
+        "median": 1.93237501662,
+        "min": 1.2090416858,
+        "max": 2.30700004613
+      },
+      "parse_ms": {
+        "process_medians": [
+          0.939083,
+          1.393375,
+          0.840542
+        ],
+        "median": 0.939083,
+        "min": 0.840542,
+        "max": 1.393375
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.026583,
+          0.034541,
+          0.0255
+        ],
+        "median": 0.026583,
+        "min": 0.0255,
+        "max": 0.034541
+      },
+      "order_ms": {
+        "process_medians": [
+          0.890708,
+          1.451083,
+          1.459334
+        ],
+        "median": 1.451083,
+        "min": 0.890708,
+        "max": 1.459334
+      },
+      "size_ms": {
+        "process_medians": [
+          0.236042,
+          0.28325,
+          0.2335
+        ],
+        "median": 0.236042,
+        "min": 0.2335,
+        "max": 0.28325
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.217458,
+          0.255167,
+          0.24425
+        ],
+        "median": 0.24425,
+        "min": 0.217458,
+        "max": 0.255167
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.269834,
+          0.354542,
+          0.266792
+        ],
+        "median": 0.269834,
+        "min": 0.266792,
+        "max": 0.354542
+      }
+    },
+    "whole_percent_lower": 26.332447388376355,
+    "whole_ranges_disjoint_tiled_faster": true,
+    "whole_ranges_disjoint_levelwise_faster": false
+  },
+  {
+    "case": 13,
+    "levelwise": {
+      "cpu_all_ms": {
+        "process_medians": [
+          2.99625,
+          3.122333,
+          3.006542
+        ],
+        "median": 3.006542,
+        "min": 2.99625,
+        "max": 3.122333
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          6.919209,
+          3.816917,
+          5.5005
+        ],
+        "median": 5.5005,
+        "min": 3.816917,
+        "max": 6.919209
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          4.85487497644,
+          1.84462504694,
+          2.663833322
+        ],
+        "median": 2.663833322,
+        "min": 1.84462504694,
+        "max": 4.85487497644
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.500834,
+          1.469209,
+          1.203417
+        ],
+        "median": 1.469209,
+        "min": 1.203417,
+        "max": 1.500834
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.03225,
+          0.053583,
+          0.037417
+        ],
+        "median": 0.037417,
+        "min": 0.03225,
+        "max": 0.053583
+      },
+      "order_ms": {
+        "process_medians": [
+          1.577166,
+          1.177625,
+          1.741542
+        ],
+        "median": 1.577166,
+        "min": 1.177625,
+        "max": 1.741542
+      },
+      "size_ms": {
+        "process_medians": [
+          0.263875,
+          0.311292,
+          0.276792
+        ],
+        "median": 0.276792,
+        "min": 0.263875,
+        "max": 0.311292
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.616458,
+          0.508416,
+          0.539625
+        ],
+        "median": 0.539625,
+        "min": 0.508416,
+        "max": 0.616458
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.508459,
+          0.524166,
+          0.548707
+        ],
+        "median": 0.524166,
+        "min": 0.508459,
+        "max": 0.548707
+      }
+    },
+    "tiled": {
+      "cpu_all_ms": {
+        "process_medians": [
+          3.040875,
+          3.170292,
+          3.01475
+        ],
+        "median": 3.040875,
+        "min": 3.01475,
+        "max": 3.170292
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          5.253917,
+          5.530375,
+          4.469083
+        ],
+        "median": 5.253917,
+        "min": 4.469083,
+        "max": 5.530375
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          2.41224997444,
+          2.92850000551,
+          2.48812494101
+        ],
+        "median": 2.48812494101,
+        "min": 2.41224997444,
+        "max": 2.92850000551
+      },
+      "parse_ms": {
+        "process_medians": [
+          2.034125,
+          1.34875,
+          1.606875
+        ],
+        "median": 1.606875,
+        "min": 1.34875,
+        "max": 2.034125
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.051917,
+          0.044875,
+          0.0485
+        ],
+        "median": 0.0485,
+        "min": 0.044875,
+        "max": 0.051917
+      },
+      "order_ms": {
+        "process_medians": [
+          1.316958,
+          1.518875,
+          1.264459
+        ],
+        "median": 1.316958,
+        "min": 1.264459,
+        "max": 1.518875
+      },
+      "size_ms": {
+        "process_medians": [
+          0.263666,
+          0.278,
+          0.551166
+        ],
+        "median": 0.278,
+        "min": 0.263666,
+        "max": 0.551166
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.668375,
+          0.54925,
+          0.60225
+        ],
+        "median": 0.60225,
+        "min": 0.54925,
+        "max": 0.668375
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.693334,
+          0.537167,
+          0.953708
+        ],
+        "median": 0.693334,
+        "min": 0.537167,
+        "max": 0.953708
+      }
+    },
+    "whole_percent_lower": 4.482919734569569,
+    "whole_ranges_disjoint_tiled_faster": false,
+    "whole_ranges_disjoint_levelwise_faster": false
+  },
+  {
+    "case": 34,
+    "levelwise": {
+      "cpu_all_ms": {
+        "process_medians": [
+          1.14275,
+          1.189875,
+          1.106541
+        ],
+        "median": 1.14275,
+        "min": 1.106541,
+        "max": 1.189875
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          4.966291,
+          3.016375,
+          2.821959
+        ],
+        "median": 3.016375,
+        "min": 2.821959,
+        "max": 4.966291
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          2.51800008118,
+          1.65329169249,
+          1.38529163087
+        ],
+        "median": 1.65329169249,
+        "min": 1.38529163087,
+        "max": 2.51800008118
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.360833,
+          0.823167,
+          1.06175
+        ],
+        "median": 1.06175,
+        "min": 0.823167,
+        "max": 1.360833
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.031625,
+          0.032792,
+          0.031
+        ],
+        "median": 0.031625,
+        "min": 0.031,
+        "max": 0.032792
+      },
+      "order_ms": {
+        "process_medians": [
+          1.270625,
+          1.295916,
+          1.098542
+        ],
+        "median": 1.270625,
+        "min": 1.098542,
+        "max": 1.295916
+      },
+      "size_ms": {
+        "process_medians": [
+          0.348208,
+          0.256916,
+          0.212375
+        ],
+        "median": 0.256916,
+        "min": 0.212375,
+        "max": 0.348208
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.21575,
+          0.24325,
+          0.224542
+        ],
+        "median": 0.224542,
+        "min": 0.21575,
+        "max": 0.24325
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.289584,
+          0.371417,
+          0.281667
+        ],
+        "median": 0.289584,
+        "min": 0.281667,
+        "max": 0.371417
+      }
+    },
+    "tiled": {
+      "cpu_all_ms": {
+        "process_medians": [
+          1.141334,
+          1.16475,
+          1.169416
+        ],
+        "median": 1.16475,
+        "min": 1.141334,
+        "max": 1.169416
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          3.278833,
+          3.15675,
+          3.961542
+        ],
+        "median": 3.278833,
+        "min": 3.15675,
+        "max": 3.961542
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          1.39879167546,
+          1.56154169235,
+          2.37025000388
+        ],
+        "median": 1.56154169235,
+        "min": 1.39879167546,
+        "max": 2.37025000388
+      },
+      "parse_ms": {
+        "process_medians": [
+          0.942916,
+          1.180125,
+          0.977375
+        ],
+        "median": 0.977375,
+        "min": 0.942916,
+        "max": 1.180125
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.025584,
+          0.036458,
+          0.032292
+        ],
+        "median": 0.032292,
+        "min": 0.025584,
+        "max": 0.036458
+      },
+      "order_ms": {
+        "process_medians": [
+          1.192958,
+          1.258125,
+          1.61675
+        ],
+        "median": 1.258125,
+        "min": 1.192958,
+        "max": 1.61675
+      },
+      "size_ms": {
+        "process_medians": [
+          0.6695,
+          0.209333,
+          0.628333
+        ],
+        "median": 0.628333,
+        "min": 0.209333,
+        "max": 0.6695
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.21825,
+          0.211458,
+          0.30825
+        ],
+        "median": 0.21825,
+        "min": 0.211458,
+        "max": 0.30825
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.243459,
+          0.261541,
+          0.302459
+        ],
+        "median": 0.261541,
+        "min": 0.243459,
+        "max": 0.302459
+      }
+    },
+    "whole_percent_lower": -8.701106460569385,
+    "whole_ranges_disjoint_tiled_faster": false,
+    "whole_ranges_disjoint_levelwise_faster": false
+  },
+  {
+    "case": 38,
+    "levelwise": {
+      "cpu_all_ms": {
+        "process_medians": [
+          3.894959,
+          3.869125,
+          4.001541
+        ],
+        "median": 3.894959,
+        "min": 3.869125,
+        "max": 4.001541
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          3.398792,
+          4.300792,
+          2.993833
+        ],
+        "median": 3.398792,
+        "min": 2.993833,
+        "max": 4.300792
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          1.8092499231,
+          1.79604161531,
+          1.66037504096
+        ],
+        "median": 1.79604161531,
+        "min": 1.66037504096,
+        "max": 1.8092499231
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.09375,
+          1.0385,
+          0.74175
+        ],
+        "median": 1.0385,
+        "min": 0.74175,
+        "max": 1.09375
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.034125,
+          0.02975,
+          0.026208
+        ],
+        "median": 0.02975,
+        "min": 0.026208,
+        "max": 0.034125
+      },
+      "order_ms": {
+        "process_medians": [
+          1.335625,
+          1.439125,
+          1.410291
+        ],
+        "median": 1.410291,
+        "min": 1.335625,
+        "max": 1.439125
+      },
+      "size_ms": {
+        "process_medians": [
+          0.258917,
+          0.271584,
+          0.260666
+        ],
+        "median": 0.260666,
+        "min": 0.258917,
+        "max": 0.271584
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.320458,
+          0.271125,
+          0.275792
+        ],
+        "median": 0.275792,
+        "min": 0.271125,
+        "max": 0.320458
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.327249,
+          0.28675,
+          0.333625
+        ],
+        "median": 0.327249,
+        "min": 0.28675,
+        "max": 0.333625
+      }
+    },
+    "tiled": {
+      "cpu_all_ms": {
+        "process_medians": [
+          4.038583,
+          4.053291,
+          4.157
+        ],
+        "median": 4.053291,
+        "min": 4.038583,
+        "max": 4.157
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          6.996375,
+          3.626958,
+          3.221667
+        ],
+        "median": 3.626958,
+        "min": 3.221667,
+        "max": 6.996375
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          4.67041652882,
+          1.73154164804,
+          1.68825004948
+        ],
+        "median": 1.73154164804,
+        "min": 1.68825004948,
+        "max": 4.67041652882
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.300041,
+          1.025208,
+          1.033
+        ],
+        "median": 1.033,
+        "min": 1.025208,
+        "max": 1.300041
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.027667,
+          0.031042,
+          0.034083
+        ],
+        "median": 0.031042,
+        "min": 0.027667,
+        "max": 0.034083
+      },
+      "order_ms": {
+        "process_medians": [
+          2.393375,
+          1.321917,
+          1.402292
+        ],
+        "median": 1.402292,
+        "min": 1.321917,
+        "max": 2.393375
+      },
+      "size_ms": {
+        "process_medians": [
+          0.306041,
+          0.25125,
+          0.27825
+        ],
+        "median": 0.27825,
+        "min": 0.25125,
+        "max": 0.306041
+      },
+      "emit_ms": {
+        "process_medians": [
+          0.636708,
+          0.2795,
+          0.275542
+        ],
+        "median": 0.2795,
+        "min": 0.275542,
+        "max": 0.636708
+      },
+      "assembly_ms": {
+        "process_medians": [
+          0.336917,
+          0.330958,
+          0.331125
+        ],
+        "median": 0.331125,
+        "min": 0.330958,
+        "max": 0.336917
+      }
+    },
+    "whole_percent_lower": -6.713149848534439,
+    "whole_ranges_disjoint_tiled_faster": false,
+    "whole_ranges_disjoint_levelwise_faster": false
+  },
+  {
+    "case": 44,
+    "levelwise": {
+      "cpu_all_ms": {
+        "process_medians": [
+          16.831291,
+          16.828834,
+          15.894875
+        ],
+        "median": 16.828834,
+        "min": 15.894875,
+        "max": 16.831291
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          5.773792,
+          6.122375,
+          6.857834
+        ],
+        "median": 6.122375,
+        "min": 5.773792,
+        "max": 6.857834
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          2.27954174625,
+          1.56391668133,
+          2.33283330454
+        ],
+        "median": 2.27954174625,
+        "min": 1.56391668133,
+        "max": 2.33283330454
+      },
+      "parse_ms": {
+        "process_medians": [
+          1.823083,
+          1.291791,
+          1.724709
+        ],
+        "median": 1.724709,
+        "min": 1.291791,
+        "max": 1.823083
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.037791,
+          0.039041,
+          0.045875
+        ],
+        "median": 0.039041,
+        "min": 0.037791,
+        "max": 0.045875
+      },
+      "order_ms": {
+        "process_medians": [
+          0.57775,
+          1.0325,
+          0.945958
+        ],
+        "median": 0.945958,
+        "min": 0.57775,
+        "max": 1.0325
+      },
+      "size_ms": {
+        "process_medians": [
+          0.299833,
+          0.278458,
+          0.608042
+        ],
+        "median": 0.299833,
+        "min": 0.278458,
+        "max": 0.608042
+      },
+      "emit_ms": {
+        "process_medians": [
+          1.486375,
+          1.3855,
+          1.548417
+        ],
+        "median": 1.486375,
+        "min": 1.3855,
+        "max": 1.548417
+      },
+      "assembly_ms": {
+        "process_medians": [
+          1.528209,
+          1.692209,
+          1.749166
+        ],
+        "median": 1.692209,
+        "min": 1.528209,
+        "max": 1.749166
+      }
+    },
+    "tiled": {
+      "cpu_all_ms": {
+        "process_medians": [
+          16.300375,
+          16.660458,
+          17.7355
+        ],
+        "median": 16.660458,
+        "min": 16.300375,
+        "max": 17.7355
+      },
+      "gpu_all_ms": {
+        "process_medians": [
+          10.047875,
+          6.19025,
+          7.374292
+        ],
+        "median": 7.374292,
+        "min": 6.19025,
+        "max": 10.047875
+      },
+      "gpu_command_ms": {
+        "process_medians": [
+          5.18762494903,
+          1.86170829693,
+          3.03295830963
+        ],
+        "median": 3.03295830963,
+        "min": 1.86170829693,
+        "max": 5.18762494903
+      },
+      "parse_ms": {
+        "process_medians": [
+          2.158084,
+          1.221125,
+          2.730375
+        ],
+        "median": 2.158084,
+        "min": 1.221125,
+        "max": 2.730375
+      },
+      "prepare_ms": {
+        "process_medians": [
+          0.039375,
+          0.039042,
+          0.040084
+        ],
+        "median": 0.039375,
+        "min": 0.039042,
+        "max": 0.040084
+      },
+      "order_ms": {
+        "process_medians": [
+          1.052875,
+          0.904959,
+          0.7965
+        ],
+        "median": 0.904959,
+        "min": 0.7965,
+        "max": 1.052875
+      },
+      "size_ms": {
+        "process_medians": [
+          0.553458,
+          0.276208,
+          0.633083
+        ],
+        "median": 0.553458,
+        "min": 0.276208,
+        "max": 0.633083
+      },
+      "emit_ms": {
+        "process_medians": [
+          4.747084,
+          1.438,
+          1.652
+        ],
+        "median": 1.652,
+        "min": 1.438,
+        "max": 4.747084
+      },
+      "assembly_ms": {
+        "process_medians": [
+          1.455166,
+          1.271,
+          1.467167
+        ],
+        "median": 1.455166,
+        "min": 1.271,
+        "max": 1.467167
+      }
+    },
+    "whole_percent_lower": -20.448224749382394,
+    "whole_ranges_disjoint_tiled_faster": false,
+    "whole_ranges_disjoint_levelwise_faster": false
+  }
+]
