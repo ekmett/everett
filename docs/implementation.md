@@ -610,13 +610,23 @@ sort-owned pair validates and caches its combined navigation view when binding
 the exact native/index owners. Search steps reuse that view. Returned matches
 still own their values.
 
+Typed replacement reads decode the selected value while its native owner is
+pinned, avoiding an intermediate encoded-value copy. The returned application
+value remains owned. The shared window search keeps native, secondary and main
+precedence, including false-borrow recovery; a tombstone stops the search.
+Generic arrow reads still enumerate every occurrence through the owning cursor.
+Custom query roots without the internal capture interface keep that cursor
+fallback. Tests check decoder backing addresses, mapping retirement, tombstones,
+false-borrow boundaries, decoding failures and noncommutative composition.
+
 The [query contract](query.md) separates entry/header bounds from string bytes,
 preparation and scheduler costs. Shape validation rejects cycles, missing
 targets and mismatched sample counts, but does not authenticate manually pushed
 sample keys. The existing exact-sampler precondition and immutable-alias contract
-remain in force. The shared query machinery retrieves entries from owning
-encoded pairs or mapped pairs; it does not evaluate arrows or publish durable
-colas. `adopt_prepared` checks an existing bounded chain without sampling it.
+remain in force. The low-level cursor retrieves entries from owning encoded
+pairs or mapped pairs; typed handlers interpret those values. Querying does not
+publish durable colas. `adopt_prepared` checks an existing bounded chain without
+sampling it.
 
 The [whole-query comparison](../bench/query_compare.md) includes query
 creation, five- or six-catalog traversal and owned values. On this M2 Max,
