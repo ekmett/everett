@@ -1,0 +1,751 @@
+{
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "source_commit": "b6987f1c0e75a3ed010cf46d507507be9329e3c0",
+  "arguments": {
+    "processes": 3,
+    "queries": 1024,
+    "loops": 2,
+    "trials": 3,
+    "variants": [
+      "base",
+      "packed",
+      "direct64"
+    ],
+    "compiled_bench_sha256": "60515e6eba56c82304e84c9f4034cacca391aa6005bf8093158e46ab58d5ba2a"
+  },
+  "sources": {
+    "bench.cc": "893839c61b7359e0aefb2cb7edb3a54770f5b7c772bb0be33d88b0869827e946",
+    "prepare.py": "90e955d1056b17cb48f5697fdb0ca2e67239f061e49d0c2537a123fd70f1a29f",
+    "telemetry.h": "290d6ff724310f0b7b7aa0462d2802e2c0224c35bd74e74437503b7576c77ee9",
+    "run.py": "b5e5b9614c83f51b6615a000282015413de7af6394f7b2213581e867eeba668f"
+  },
+  "compiled_bench_sha256": "60515e6eba56c82304e84c9f4034cacca391aa6005bf8093158e46ab58d5ba2a",
+  "binaries": {
+    "base": "d77525be35f7e0a46b3e6a6167bd98f430c90709e9914fbce6b944f6c8c04e80",
+    "packed": "9bbafcc2ae7293aa762a56d2e466946285ac1201ec0309e4ea8016cf3f91b57f",
+    "direct64": "bb697f1ca7c3ce3e2682f5252794bedfee5d10dfdbab750a01b584163429f0a0"
+  },
+  "execution_order": [
+    {
+      "name": "0-base-bit-131072-128-hash",
+      "started": 1789578063.794891,
+      "elapsed": 0.7059969902038574
+    },
+    {
+      "name": "0-packed-bit-131072-128-hash",
+      "started": 1789578064.501745,
+      "elapsed": 0.7050871849060059
+    },
+    {
+      "name": "0-direct64-bit-131072-128-hash",
+      "started": 1789578065.207705,
+      "elapsed": 0.6965351104736328
+    },
+    {
+      "name": "0-packed-bit-8192-128-hash",
+      "started": 1789578065.905379,
+      "elapsed": 0.30289196968078613
+    },
+    {
+      "name": "0-direct64-bit-8192-128-hash",
+      "started": 1789578066.209093,
+      "elapsed": 0.30416393280029297
+    },
+    {
+      "name": "0-base-bit-8192-128-hash",
+      "started": 1789578066.5140438,
+      "elapsed": 0.316364049911499
+    },
+    {
+      "name": "0-direct64-bit-131072-128-structured",
+      "started": 1789578066.831244,
+      "elapsed": 0.4591848850250244
+    },
+    {
+      "name": "0-base-bit-131072-128-structured",
+      "started": 1789578067.291262,
+      "elapsed": 0.47152113914489746
+    },
+    {
+      "name": "0-packed-bit-131072-128-structured",
+      "started": 1789578067.764021,
+      "elapsed": 0.4661240577697754
+    },
+    {
+      "name": "0-base-bit-8192-16-structured",
+      "started": 1789578068.231023,
+      "elapsed": 0.273561954498291
+    },
+    {
+      "name": "0-packed-bit-8192-16-structured",
+      "started": 1789578068.5053802,
+      "elapsed": 0.2635467052459717
+    },
+    {
+      "name": "0-direct64-bit-8192-16-structured",
+      "started": 1789578068.771156,
+      "elapsed": 0.27179384231567383
+    },
+    {
+      "name": "0-packed-byte-8192-128-hash",
+      "started": 1789578069.043803,
+      "elapsed": 0.14499497413635254
+    },
+    {
+      "name": "0-direct64-byte-8192-128-hash",
+      "started": 1789578069.189653,
+      "elapsed": 0.14432001113891602
+    },
+    {
+      "name": "0-base-byte-8192-128-hash",
+      "started": 1789578069.334742,
+      "elapsed": 0.15809106826782227
+    },
+    {
+      "name": "0-direct64-bit-131072-16-hash",
+      "started": 1789578069.493707,
+      "elapsed": 0.48548102378845215
+    },
+    {
+      "name": "0-base-bit-131072-16-hash",
+      "started": 1789578069.980027,
+      "elapsed": 0.5026059150695801
+    },
+    {
+      "name": "0-packed-bit-131072-16-hash",
+      "started": 1789578070.483422,
+      "elapsed": 0.48783302307128906
+    },
+    {
+      "name": "0-base-byte-131072-128-hash",
+      "started": 1789578070.97211,
+      "elapsed": 0.41547703742980957
+    },
+    {
+      "name": "0-packed-byte-131072-128-hash",
+      "started": 1789578071.38885,
+      "elapsed": 0.5079379081726074
+    },
+    {
+      "name": "0-direct64-byte-131072-128-hash",
+      "started": 1789578071.897801,
+      "elapsed": 0.39076995849609375
+    },
+    {
+      "name": "0-packed-byte-131072-128-structured",
+      "started": 1789578072.289563,
+      "elapsed": 0.21737217903137207
+    },
+    {
+      "name": "0-direct64-byte-131072-128-structured",
+      "started": 1789578072.5079958,
+      "elapsed": 0.21737027168273926
+    },
+    {
+      "name": "0-base-byte-131072-128-structured",
+      "started": 1789578072.726347,
+      "elapsed": 0.23380303382873535
+    },
+    {
+      "name": "0-direct64-byte-131072-16-structured",
+      "started": 1789578072.96103,
+      "elapsed": 0.21164393424987793
+    },
+    {
+      "name": "0-base-byte-131072-16-structured",
+      "started": 1789578073.173545,
+      "elapsed": 0.2235870361328125
+    },
+    {
+      "name": "0-packed-byte-131072-16-structured",
+      "started": 1789578073.398082,
+      "elapsed": 0.20851802825927734
+    },
+    {
+      "name": "0-base-bit-131072-16-structured",
+      "started": 1789578073.6073952,
+      "elapsed": 0.4575836658477783
+    },
+    {
+      "name": "0-packed-bit-131072-16-structured",
+      "started": 1789578074.065838,
+      "elapsed": 0.44799280166625977
+    },
+    {
+      "name": "0-direct64-bit-131072-16-structured",
+      "started": 1789578074.51471,
+      "elapsed": 0.43250322341918945
+    },
+    {
+      "name": "0-packed-byte-131072-16-hash",
+      "started": 1789578074.948769,
+      "elapsed": 0.2510688304901123
+    },
+    {
+      "name": "0-direct64-byte-131072-16-hash",
+      "started": 1789578075.200703,
+      "elapsed": 0.2529122829437256
+    },
+    {
+      "name": "0-base-byte-131072-16-hash",
+      "started": 1789578075.45455,
+      "elapsed": 0.27268505096435547
+    },
+    {
+      "name": "0-direct64-bit-8192-128-structured",
+      "started": 1789578075.728108,
+      "elapsed": 0.261721134185791
+    },
+    {
+      "name": "0-base-bit-8192-128-structured",
+      "started": 1789578075.990806,
+      "elapsed": 0.2748599052429199
+    },
+    {
+      "name": "0-packed-bit-8192-128-structured",
+      "started": 1789578076.266582,
+      "elapsed": 0.26415205001831055
+    },
+    {
+      "name": "0-base-bit-8192-16-hash",
+      "started": 1789578076.531599,
+      "elapsed": 0.2693667411804199
+    },
+    {
+      "name": "0-packed-bit-8192-16-hash",
+      "started": 1789578076.8018281,
+      "elapsed": 0.26177263259887695
+    },
+    {
+      "name": "0-direct64-bit-8192-16-hash",
+      "started": 1789578077.065423,
+      "elapsed": 0.26703500747680664
+    },
+    {
+      "name": "0-packed-byte-8192-128-structured",
+      "started": 1789578077.333498,
+      "elapsed": 0.12330889701843262
+    },
+    {
+      "name": "0-direct64-byte-8192-128-structured",
+      "started": 1789578077.4576719,
+      "elapsed": 0.12024402618408203
+    },
+    {
+      "name": "0-base-byte-8192-128-structured",
+      "started": 1789578077.5791528,
+      "elapsed": 0.13221502304077148
+    },
+    {
+      "name": "0-direct64-byte-8192-16-structured",
+      "started": 1789578077.712587,
+      "elapsed": 0.11762285232543945
+    },
+    {
+      "name": "0-base-byte-8192-16-structured",
+      "started": 1789578077.831129,
+      "elapsed": 0.1256110668182373
+    },
+    {
+      "name": "0-packed-byte-8192-16-structured",
+      "started": 1789578077.957651,
+      "elapsed": 0.11819314956665039
+    },
+    {
+      "name": "0-base-byte-8192-16-hash",
+      "started": 1789578078.076781,
+      "elapsed": 0.13363003730773926
+    },
+    {
+      "name": "0-packed-byte-8192-16-hash",
+      "started": 1789578078.2113101,
+      "elapsed": 0.12486886978149414
+    },
+    {
+      "name": "0-direct64-byte-8192-16-hash",
+      "started": 1789578078.337377,
+      "elapsed": 0.12527680397033691
+    },
+    {
+      "name": "1-packed-bit-8192-16-hash",
+      "started": 1789578078.463539,
+      "elapsed": 0.25981712341308594
+    },
+    {
+      "name": "1-direct64-bit-8192-16-hash",
+      "started": 1789578078.7241988,
+      "elapsed": 0.2581312656402588
+    },
+    {
+      "name": "1-base-bit-8192-16-hash",
+      "started": 1789578078.983111,
+      "elapsed": 0.2629561424255371
+    },
+    {
+      "name": "1-direct64-byte-8192-128-structured",
+      "started": 1789578079.247156,
+      "elapsed": 0.11927604675292969
+    },
+    {
+      "name": "1-base-byte-8192-128-structured",
+      "started": 1789578079.3673012,
+      "elapsed": 0.12617278099060059
+    },
+    {
+      "name": "1-packed-byte-8192-128-structured",
+      "started": 1789578079.494289,
+      "elapsed": 0.11900711059570312
+    },
+    {
+      "name": "1-base-byte-131072-16-structured",
+      "started": 1789578079.614052,
+      "elapsed": 0.2152540683746338
+    },
+    {
+      "name": "1-packed-byte-131072-16-structured",
+      "started": 1789578079.830086,
+      "elapsed": 0.20461201667785645
+    },
+    {
+      "name": "1-direct64-byte-131072-16-structured",
+      "started": 1789578080.03546,
+      "elapsed": 0.2057781219482422
+    },
+    {
+      "name": "1-packed-byte-131072-128-structured",
+      "started": 1789578080.2420118,
+      "elapsed": 0.2107713222503662
+    },
+    {
+      "name": "1-direct64-byte-131072-128-structured",
+      "started": 1789578080.453865,
+      "elapsed": 0.22120285034179688
+    },
+    {
+      "name": "1-base-byte-131072-128-structured",
+      "started": 1789578080.675914,
+      "elapsed": 0.23549103736877441
+    },
+    {
+      "name": "1-direct64-byte-8192-16-hash",
+      "started": 1789578080.91252,
+      "elapsed": 0.12493205070495605
+    },
+    {
+      "name": "1-base-byte-8192-16-hash",
+      "started": 1789578081.038579,
+      "elapsed": 0.13417601585388184
+    },
+    {
+      "name": "1-packed-byte-8192-16-hash",
+      "started": 1789578081.173794,
+      "elapsed": 0.12351703643798828
+    },
+    {
+      "name": "1-base-bit-8192-16-structured",
+      "started": 1789578081.2984571,
+      "elapsed": 0.2782578468322754
+    },
+    {
+      "name": "1-packed-bit-8192-16-structured",
+      "started": 1789578081.577562,
+      "elapsed": 0.2585179805755615
+    },
+    {
+      "name": "1-direct64-bit-8192-16-structured",
+      "started": 1789578081.837399,
+      "elapsed": 0.2622339725494385
+    },
+    {
+      "name": "1-packed-byte-8192-128-hash",
+      "started": 1789578082.1006699,
+      "elapsed": 0.1456911563873291
+    },
+    {
+      "name": "1-direct64-byte-8192-128-hash",
+      "started": 1789578082.247395,
+      "elapsed": 0.14551615715026855
+    },
+    {
+      "name": "1-base-byte-8192-128-hash",
+      "started": 1789578082.3938181,
+      "elapsed": 0.16070985794067383
+    },
+    {
+      "name": "1-direct64-bit-131072-16-structured",
+      "started": 1789578082.555768,
+      "elapsed": 0.45798683166503906
+    },
+    {
+      "name": "1-base-bit-131072-16-structured",
+      "started": 1789578083.014807,
+      "elapsed": 0.44841980934143066
+    },
+    {
+      "name": "1-packed-bit-131072-16-structured",
+      "started": 1789578083.464086,
+      "elapsed": 0.4344618320465088
+    },
+    {
+      "name": "1-base-byte-131072-16-hash",
+      "started": 1789578083.899341,
+      "elapsed": 0.2702357769012451
+    },
+    {
+      "name": "1-packed-byte-131072-16-hash",
+      "started": 1789578084.170824,
+      "elapsed": 0.25983715057373047
+    },
+    {
+      "name": "1-direct64-byte-131072-16-hash",
+      "started": 1789578084.431562,
+      "elapsed": 0.2594640254974365
+    },
+    {
+      "name": "1-packed-byte-131072-128-hash",
+      "started": 1789578084.691856,
+      "elapsed": 0.429750919342041
+    },
+    {
+      "name": "1-direct64-byte-131072-128-hash",
+      "started": 1789578085.122568,
+      "elapsed": 0.39066505432128906
+    },
+    {
+      "name": "1-base-byte-131072-128-hash",
+      "started": 1789578085.514125,
+      "elapsed": 0.407351016998291
+    },
+    {
+      "name": "1-direct64-bit-131072-128-hash",
+      "started": 1789578085.922325,
+      "elapsed": 0.6711430549621582
+    },
+    {
+      "name": "1-base-bit-131072-128-hash",
+      "started": 1789578086.5943658,
+      "elapsed": 0.6931641101837158
+    },
+    {
+      "name": "1-packed-bit-131072-128-hash",
+      "started": 1789578087.2885242,
+      "elapsed": 0.6691598892211914
+    },
+    {
+      "name": "1-base-bit-131072-16-hash",
+      "started": 1789578087.958656,
+      "elapsed": 0.5085067749023438
+    },
+    {
+      "name": "1-packed-bit-131072-16-hash",
+      "started": 1789578088.468064,
+      "elapsed": 0.48663973808288574
+    },
+    {
+      "name": "1-direct64-bit-131072-16-hash",
+      "started": 1789578088.9558668,
+      "elapsed": 0.48918604850769043
+    },
+    {
+      "name": "1-packed-bit-131072-128-structured",
+      "started": 1789578089.446162,
+      "elapsed": 0.45770692825317383
+    },
+    {
+      "name": "1-direct64-bit-131072-128-structured",
+      "started": 1789578089.904943,
+      "elapsed": 0.4563159942626953
+    },
+    {
+      "name": "1-base-bit-131072-128-structured",
+      "started": 1789578090.362176,
+      "elapsed": 0.4721059799194336
+    },
+    {
+      "name": "1-direct64-bit-8192-128-hash",
+      "started": 1789578090.835136,
+      "elapsed": 0.30550098419189453
+    },
+    {
+      "name": "1-base-bit-8192-128-hash",
+      "started": 1789578091.1415691,
+      "elapsed": 0.3168628215789795
+    },
+    {
+      "name": "1-packed-bit-8192-128-hash",
+      "started": 1789578091.45935,
+      "elapsed": 0.30477476119995117
+    },
+    {
+      "name": "1-base-bit-8192-128-structured",
+      "started": 1789578091.7650208,
+      "elapsed": 0.2746732234954834
+    },
+    {
+      "name": "1-packed-bit-8192-128-structured",
+      "started": 1789578092.040729,
+      "elapsed": 0.2654080390930176
+    },
+    {
+      "name": "1-direct64-bit-8192-128-structured",
+      "started": 1789578092.307047,
+      "elapsed": 0.26952505111694336
+    },
+    {
+      "name": "1-packed-byte-8192-16-structured",
+      "started": 1789578092.5775402,
+      "elapsed": 0.11694073677062988
+    },
+    {
+      "name": "1-direct64-byte-8192-16-structured",
+      "started": 1789578092.6958652,
+      "elapsed": 0.1137547492980957
+    },
+    {
+      "name": "1-base-byte-8192-16-structured",
+      "started": 1789578092.810451,
+      "elapsed": 0.12790489196777344
+    },
+    {
+      "name": "2-direct64-byte-8192-128-structured",
+      "started": 1789578092.939293,
+      "elapsed": 0.11904096603393555
+    },
+    {
+      "name": "2-base-byte-8192-128-structured",
+      "started": 1789578093.0591009,
+      "elapsed": 0.1294691562652588
+    },
+    {
+      "name": "2-packed-byte-8192-128-structured",
+      "started": 1789578093.189409,
+      "elapsed": 0.11869096755981445
+    },
+    {
+      "name": "2-base-byte-131072-128-hash",
+      "started": 1789578093.3088472,
+      "elapsed": 0.40715599060058594
+    },
+    {
+      "name": "2-packed-byte-131072-128-hash",
+      "started": 1789578093.716834,
+      "elapsed": 0.39310288429260254
+    },
+    {
+      "name": "2-direct64-byte-131072-128-hash",
+      "started": 1789578094.11081,
+      "elapsed": 0.38527607917785645
+    },
+    {
+      "name": "2-packed-bit-8192-128-structured",
+      "started": 1789578094.497309,
+      "elapsed": 0.26843690872192383
+    },
+    {
+      "name": "2-direct64-bit-8192-128-structured",
+      "started": 1789578094.766618,
+      "elapsed": 0.26411986351013184
+    },
+    {
+      "name": "2-base-bit-8192-128-structured",
+      "started": 1789578095.031614,
+      "elapsed": 0.2807037830352783
+    },
+    {
+      "name": "2-direct64-bit-8192-16-structured",
+      "started": 1789578095.313148,
+      "elapsed": 0.2621338367462158
+    },
+    {
+      "name": "2-base-bit-8192-16-structured",
+      "started": 1789578095.576145,
+      "elapsed": 0.2727389335632324
+    },
+    {
+      "name": "2-packed-bit-8192-16-structured",
+      "started": 1789578095.8497422,
+      "elapsed": 0.255051851272583
+    },
+    {
+      "name": "2-base-byte-8192-128-hash",
+      "started": 1789578096.105715,
+      "elapsed": 0.15259695053100586
+    },
+    {
+      "name": "2-packed-byte-8192-128-hash",
+      "started": 1789578096.25918,
+      "elapsed": 0.14458179473876953
+    },
+    {
+      "name": "2-direct64-byte-8192-128-hash",
+      "started": 1789578096.4045901,
+      "elapsed": 0.14028286933898926
+    },
+    {
+      "name": "2-packed-bit-8192-16-hash",
+      "started": 1789578096.546064,
+      "elapsed": 0.2593052387237549
+    },
+    {
+      "name": "2-direct64-bit-8192-16-hash",
+      "started": 1789578096.806197,
+      "elapsed": 0.2574620246887207
+    },
+    {
+      "name": "2-base-bit-8192-16-hash",
+      "started": 1789578097.064516,
+      "elapsed": 0.27007174491882324
+    },
+    {
+      "name": "2-direct64-bit-131072-16-structured",
+      "started": 1789578097.335422,
+      "elapsed": 0.43804097175598145
+    },
+    {
+      "name": "2-base-bit-131072-16-structured",
+      "started": 1789578097.774483,
+      "elapsed": 0.4513990879058838
+    },
+    {
+      "name": "2-packed-bit-131072-16-structured",
+      "started": 1789578098.226858,
+      "elapsed": 0.443148136138916
+    },
+    {
+      "name": "2-base-bit-131072-16-hash",
+      "started": 1789578098.671319,
+      "elapsed": 0.5105841159820557
+    },
+    {
+      "name": "2-packed-bit-131072-16-hash",
+      "started": 1789578099.182663,
+      "elapsed": 0.48448824882507324
+    },
+    {
+      "name": "2-direct64-bit-131072-16-hash",
+      "started": 1789578099.667968,
+      "elapsed": 0.4888498783111572
+    },
+    {
+      "name": "2-packed-bit-131072-128-structured",
+      "started": 1789578100.157674,
+      "elapsed": 0.45857882499694824
+    },
+    {
+      "name": "2-direct64-bit-131072-128-structured",
+      "started": 1789578100.6170502,
+      "elapsed": 0.4545307159423828
+    },
+    {
+      "name": "2-base-bit-131072-128-structured",
+      "started": 1789578101.072504,
+      "elapsed": 0.4658520221710205
+    },
+    {
+      "name": "2-direct64-bit-131072-128-hash",
+      "started": 1789578101.539211,
+      "elapsed": 0.6653289794921875
+    },
+    {
+      "name": "2-base-bit-131072-128-hash",
+      "started": 1789578102.205593,
+      "elapsed": 0.6775250434875488
+    },
+    {
+      "name": "2-packed-bit-131072-128-hash",
+      "started": 1789578102.88398,
+      "elapsed": 0.6715579032897949
+    },
+    {
+      "name": "2-base-byte-131072-16-structured",
+      "started": 1789578103.556462,
+      "elapsed": 0.22093892097473145
+    },
+    {
+      "name": "2-packed-byte-131072-16-structured",
+      "started": 1789578103.7782788,
+      "elapsed": 0.2088639736175537
+    },
+    {
+      "name": "2-direct64-byte-131072-16-structured",
+      "started": 1789578103.9880111,
+      "elapsed": 0.2255856990814209
+    },
+    {
+      "name": "2-packed-bit-8192-128-hash",
+      "started": 1789578104.214635,
+      "elapsed": 0.30716514587402344
+    },
+    {
+      "name": "2-direct64-bit-8192-128-hash",
+      "started": 1789578104.5229702,
+      "elapsed": 0.30511474609375
+    },
+    {
+      "name": "2-base-bit-8192-128-hash",
+      "started": 1789578104.829345,
+      "elapsed": 0.3130669593811035
+    },
+    {
+      "name": "2-direct64-byte-8192-16-structured",
+      "started": 1789578105.14324,
+      "elapsed": 0.11809206008911133
+    },
+    {
+      "name": "2-base-byte-8192-16-structured",
+      "started": 1789578105.26259,
+      "elapsed": 0.1278531551361084
+    },
+    {
+      "name": "2-packed-byte-8192-16-structured",
+      "started": 1789578105.391377,
+      "elapsed": 0.11932897567749023
+    },
+    {
+      "name": "2-base-byte-131072-128-structured",
+      "started": 1789578105.511523,
+      "elapsed": 0.2323300838470459
+    },
+    {
+      "name": "2-packed-byte-131072-128-structured",
+      "started": 1789578105.7452009,
+      "elapsed": 0.2172260284423828
+    },
+    {
+      "name": "2-direct64-byte-131072-128-structured",
+      "started": 1789578105.963295,
+      "elapsed": 0.22742509841918945
+    },
+    {
+      "name": "2-packed-byte-8192-16-hash",
+      "started": 1789578106.1917062,
+      "elapsed": 0.12630176544189453
+    },
+    {
+      "name": "2-direct64-byte-8192-16-hash",
+      "started": 1789578106.318893,
+      "elapsed": 0.12302613258361816
+    },
+    {
+      "name": "2-base-byte-8192-16-hash",
+      "started": 1789578106.442893,
+      "elapsed": 0.12963414192199707
+    },
+    {
+      "name": "2-direct64-byte-131072-16-hash",
+      "started": 1789578106.5734751,
+      "elapsed": 0.25624585151672363
+    },
+    {
+      "name": "2-base-byte-131072-16-hash",
+      "started": 1789578106.8306282,
+      "elapsed": 0.2670097351074219
+    },
+    {
+      "name": "2-packed-byte-131072-16-hash",
+      "started": 1789578107.098461,
+      "elapsed": 0.25228214263916016
+    }
+  ]
+}

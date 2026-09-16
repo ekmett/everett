@@ -4,9 +4,12 @@
 """Generate isolated benchmark overlays; never change production headers."""
 import argparse
 import hashlib
+import io
 import json
 from pathlib import Path
 import shutil
+import subprocess
+import tarfile
 
 root = Path(__file__).resolve().parents[2]
 parser = argparse.ArgumentParser()
@@ -16,10 +19,23 @@ parser.add_argument("--direct32", action="store_true")
 parser.add_argument("--direct64", action="store_true")
 parser.add_argument("--packed", action="store_true")
 parser.add_argument("--audit", action="store_true")
+parser.add_argument("--revision", default="cb2b029a657d2bbcd7135265cb3060b2b11cd961")
 args = parser.parse_args()
 target = args.output.resolve()
 target.mkdir(parents=True, exist_ok=True)
-shutil.copytree(root / "include", target / "include", dirs_exist_ok=True)
+revision = subprocess.check_output(["git", "rev-parse", "--verify", args.revision + "^{commit}"],
+                                   cwd=root, text=True).strip()
+archive = subprocess.check_output(["git", "archive", revision, "include"], cwd=root)
+with tarfile.open(fileobj=io.BytesIO(archive)) as headers:
+    for item in headers:
+        if not item.isfile():
+            continue
+        relative = Path(item.name)
+        if relative.is_absolute() or ".." in relative.parts or relative.parts[0] != "include":
+            raise RuntimeError("unexpected archived header path")
+        path = target / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(headers.extractfile(item).read())
 hashes = {}
 
 
@@ -157,6 +173,6 @@ if args.audit:
 
 all_headers = {str(p.relative_to(target / "include")): hashlib.sha256(p.read_bytes()).hexdigest()
                for p in sorted((target / "include").rglob("*.h"))}
-(target / "headers.json").write_text(json.dumps({"candidate": args.candidate, "direct32": args.direct32,
+(target / "headers.json").write_text(json.dumps({"source_revision": revision, "candidate": args.candidate, "direct32": args.direct32,
     "direct64": args.direct64, "packed": args.packed, "audit": args.audit,
     "modified": hashes, "headers": all_headers}, indent=2) + "\n")

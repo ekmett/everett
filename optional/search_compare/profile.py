@@ -23,7 +23,15 @@ def ref(e):
     return ids[e.attrib["ref"]] if "ref" in e.attrib else e
 
 
-def classify(name):
+def classify(frame):
+    name = frame["name"]
+    # The frozen harness puts the inlined typed codec calls on these lines.
+    # These locations recover samples whose outer symbol was linker-folded.
+    if frame.get("file") == "bench.cc":
+        if frame.get("line") == "182":
+            return "value_materialization"
+        if frame.get("line") in ["178", "179"]:
+            return "query_encoding"
     if "everett::elias_fano_" in name:
         return "ef_select"
     if "everett::rank15_view::" in name or re.search(r"::project\(", name):
@@ -73,11 +81,12 @@ if not samples:
     raise RuntimeError("No attributable query samples")
 # The benchmark repeats queries for a known duration immediately before exit.
 # Select a strict suffix shorter than that duration, excluding setup/oracles.
-last = max(x["time_ns"] for x in samples)
-samples = [x for x in samples if x["time_ns"] >= last - args.seconds * 1e9]
+last = max(x["time_ns"] for x in samples if any(
+    f.get("file") == "bench.cc" and f.get("line") == "200" for f in x["frames"]))
+samples = [x for x in samples if last - args.seconds * 1e9 <= x["time_ns"] <= last]
 exclusive, inclusive, leaves = Counter(), Counter(), Counter()
 for sample in samples:
-    categories = [classify(f["name"]) for f in sample["frames"]]
+    categories = [classify(f) for f in sample["frames"]]
     scopes = [x for x in categories if x]
     exclusive[scopes[0] if scopes else "routing_and_other"] += sample["weight_ns"]
     for scope in set(scopes):
