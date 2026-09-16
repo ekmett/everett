@@ -75,9 +75,13 @@ observations reject the whole batch, while keys inserted after selection
 survive. Tests cover byte and bit profiles, equivalent layouts, accounting,
 saved roots, reopening, and a counted-query regression.
 
-Range initialization still walks native prefixes to reach the lower bound.
-It stops at the upper bound but does not yet perform an indexed seek. The
-[range guide](typed-scan.md) describes that cost and iterator-copy behavior.
+Range initialization uses the fractional cascade to find each native lower
+bound, then seeds its FC cursor from the query's retained prefix. The cursors
+remain open across codec blocks. Changed-layout tombstone validation starts
+the same way at the first observed key. Opt-in work counters and sorted
+oracles check bounded setup, false-borrow equality, terminal secondary runs,
+sort boundaries and end positions. The [range guide](typed-scan.md) describes
+entry, string and iterator-copy costs separately.
 
 ### Fixed-key search windows
 
@@ -88,6 +92,27 @@ short tails, arbitrary alignments, empty spans and valid page crossings.
 AVX2 and AVX-512 tails use fault-suppressing masked loads; NEON and SSE2 read
 only valid tail bytes. These primitives are available independently; complete
 `.ff`/`.fv` fractional-index readers remain future work.
+The [bounded search measurements](../bench/fixed_search.md) select NEON and
+AVX2 cases from complete short-window sweeps, retaining explicit scalar and
+SIMD paths. The final NEON dispatch has a separate timing run; AVX-512 has
+compile coverage but no measured crossover.
+
+### Bit-reader reservoir
+
+The sort-owned bit reader retains up to 64 unread MSB-first bits and refills
+with bounded loads. Short fields reuse the word; longer payload skips advance
+without reading the skipped bytes. Byte-aligned refill boundaries keep a full
+refill to eight bytes. Wire bytes and failure positions remain unchanged.
+Independent differential and protected-page tests cover arbitrary starting
+offsets, truncated fields, 64-bit reads, maximal counts and general Golomb
+remainders.
+
+The [matched reservoir comparison](../optional/bit_reservoir/results/2026-09-16-m2max/report.md)
+measures real KV03 parsing and native merges. Frame-scan throughput improves
+7.5–23.2% and wide-value merge throughput improves 8.4–14.3% in the retained fixtures. Tiny-value
+merges slow 2.3–6.2%, and the modulus-seven count loop slows 5.5%. I accept
+that tradeoff for the larger decoding and wide-value gains. Stateless KV02
+and fractional-index header decoders retain their existing implementation.
 
 ### Byte string tables
 

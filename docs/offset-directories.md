@@ -66,7 +66,7 @@ struct offset_view {
   std::uint64_t size() const;
   std::uint64_t universe() const;
   std::uint64_t select(std::uint64_t ordinal) const;
-  offset_cursor cursor() const;
+  offset_cursor cursor(std::uint64_t ordinal = 0) const;
 };
 
 struct offset_cursor {
@@ -78,7 +78,8 @@ struct offset_cursor {
 
 The view is a small tagged, non-owning value over mapped sections. The cursor
 retains the existing EF forward-decoding state when appropriate; direct and
-packed cursors advance an ordinal. Copies retain independent cursor positions.
+packed cursors advance an ordinal. A cursor can start at a selected ordinal for
+range positioning. Copies retain independent cursor positions.
 There is no virtual allocation or registry-specific offset decoder.
 
 An owning directory builder accepts a monotone residual sequence and a format

@@ -20,6 +20,11 @@ Elias–Fano universe includes the value payload extent, not the fixed key array
 This directory samples every value, so its select latency and storage tradeoff
 differ from the current every-$W$ record directory.
 
+The [offset-directory design](offset-directories.md) makes the representation
+a per-file choice: Elias–Fano, packed absolute positions or direct positions.
+The sort registry still owns record semantics. That format choice remains a
+design proposal; current persistent files use Elias–Fano.
+
 The [fixed-key Metal experiment](../optional/fixed_gpu_merge/README.md) constructs
 complete native outputs for candidate `.fv` and `.ff` layouts. Its fixture
 envelope is experimental; these formats are not yet persistent runtime choices.

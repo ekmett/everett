@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "cdb2377647ba0245f253dfe3e8d39b142b16a16c0841c6d76f0eafab2bf99232"
+      "normalized_sha256": "cd1526d2296f45d572432bcf87e80955fdc0459cfb7846f7749f4b84d7c2fe65"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "35b98b89f235f9fb0b122c0fc9c17433c9eadc3b333f39467eeebb4463ae086e"
+      "normalized_sha256": "ced32986d6328f9336cd7c325b6b93c34035cc009e01460e734b8016d5c6f6f9"
     }
   ],
   "subsequent_updates": [
@@ -1078,6 +1078,13 @@
       "scope": "Add forward ranges and sweep deletion plus measured bounded fixed-key searches. Refresh current documentation fingerprints; original benchmark measurement identities are unchanged.",
       "artifacts": [
         "bench/README.md",
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Document fractional-cascade range positioning and the measured bit-reader reservoir tradeoff. Refresh current documentation fingerprints; original measured identities are unchanged.",
+      "artifacts": [
         "bench/results/publication_normalization.json",
         "docs/implementation.md"
       ]
