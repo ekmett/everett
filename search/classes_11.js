@@ -50,7 +50,7 @@ var searchData=
   ['replacement_5frebuild_5fstatus_47',['replacement_rebuild_status',['../structeverett_1_1replacement__rebuild__status.html',1,'everett']]],
   ['replacement_5frebuild_5fwork_48',['replacement_rebuild_work',['../structeverett_1_1replacement__rebuild__work.html',1,'everett']]],
   ['replacement_5fworld_49',['replacement_world',['../structeverett_1_1replacement__world.html',1,'everett']]],
-  ['replacement_5fworld_3c_20string_5fpolicy_2c_20wrapping_5ffingerprint_5falgebra_2c_20redundant_5fruntime_5ffamily_3c_20string_5fpolicy_20_3e_20_3e_50',['replacement_world&lt; string_policy, wrapping_fingerprint_algebra, redundant_runtime_family&lt; string_policy &gt; &gt;',['../structeverett_1_1replacement__world.html',1,'everett']]],
+  ['replacement_5fworld_3c_20storage_5fpolicy_3c_3e_2c_20wrapping_5ffingerprint_5falgebra_2c_20redundant_5fruntime_5ffamily_3c_20storage_5fpolicy_3c_3e_20_3e_20_3e_50',['replacement_world&lt; storage_policy&lt;&gt;, wrapping_fingerprint_algebra, redundant_runtime_family&lt; storage_policy&lt;&gt; &gt; &gt;',['../structeverett_1_1replacement__world.html',1,'everett']]],
   ['request_51',['request',['../structeverett_1_1session_1_1request.html',1,'everett::session']]],
   ['resolver_52',['resolver',['../structeverett_1_1runtime__store_1_1resolver.html',1,'everett::runtime_store']]],
   ['result_53',['result',['../structeverett_1_1registry__detail_1_1result.html',1,'everett::registry_detail']]],

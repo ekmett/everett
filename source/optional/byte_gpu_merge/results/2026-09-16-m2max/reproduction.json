@@ -1,0 +1,16 @@
+{
+  "measured_revision": "0ae73ea288ffbe8677a4216ae7f2d8569b8e8fc6",
+  "integration_revision": "a234b89",
+  "optional_driver_and_shader_hashes_match": true,
+  "integration_header_differences": [
+    "include/everett/active_engine.h",
+    "include/everett/multiverse.h",
+    "include/everett/policy.h",
+    "include/everett/replacement_rebuild.h",
+    "include/everett/typed_world.h"
+  ],
+  "note": "The integration also changes common API default aliases to bytes. This experiment spells its byte policy and the shared helpers' bit policy explicitly; those aliases are not used by the driver. Original measured header hashes remain in metadata.json.",
+  "measured_headers_patch": "measured-headers.patch",
+  "measured_headers_patch_sha256": "cf012c9b649fd898f175a054aa29324c1e7fc8e77a0608a6c5c5f30d986b433b",
+  "reconstruct": "Start from integration_revision, then git apply measured-headers.patch; the resulting recorded source files match the measured metadata hashes."
+}

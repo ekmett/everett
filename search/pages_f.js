@@ -26,9 +26,11 @@ var searchData=
   ['prepared_20chain_20queries_23',['Complete prepared-chain queries',['../md_bench_2query__chain.html',1,'']]],
   ['private_20nurseries_24',['Transactions and private nurseries',['../transactions-and-private-nurseries.html',1,'']]],
   ['profile_20count_20decoding_25',['Small bit-profile count decoding',['../md_bench_2small__count.html',1,'']]],
-  ['profile_20merges_26',['Matched CPU profile merges',['../matched-cpu-profile-merges.html',1,'']]],
-  ['proof_20core_27',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
-  ['publication_28',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
-  ['publication_20and_20merge_20resumption_29',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]],
-  ['publication_20preparation_30',['Publication preparation',['../publication-preparation.html',1,'']]]
+  ['profile_20gpu_20merge_26',['Byte-profile GPU merge',['../byte-profile-gpu-merge.html',1,'']]],
+  ['profile_20merges_27',['Matched CPU profile merges',['../matched-cpu-profile-merges.html',1,'']]],
+  ['profile_20metal_20merge_20measurements_28',['Byte-profile Metal merge measurements',['../byte-profile-metal-merge-measurements.html',1,'']]],
+  ['proof_20core_29',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
+  ['publication_30',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
+  ['publication_20and_20merge_20resumption_31',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]],
+  ['publication_20preparation_32',['Publication preparation',['../publication-preparation.html',1,'']]]
 ];

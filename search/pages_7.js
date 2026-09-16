@@ -3,8 +3,9 @@ var searchData=
   ['generated_20space_20tables_0',['Generated Space Tables',['../generated-space-tables.html',1,'']]],
   ['gpu_20construction_20experiment_1',['GPU construction experiment',['../gpu-construction-experiment.html',1,'']]],
   ['gpu_20cutover_2',['gpu cutover',['../header-based-cpugpu-cutover.html',1,'Header-based CPU/GPU cutover'],['../header-only-gpu-cutover.html',1,'Header-only GPU cutover']]],
-  ['gpu_20merge_3a_20direct_20compressed_20input_20and_20output_3',['Optional GPU merge: direct compressed input and output',['../optional-gpu-merge-direct-compressed-input-and-output.html',1,'']]],
-  ['gpu_20output_20planning_4',['Optional fused GPU output planning',['../optional-fused-gpu-output-planning.html',1,'']]],
-  ['group_20and_20bitmap_20rank_20reductions_5',['Packed group and bitmap rank reductions',['../packed-group-and-bitmap-rank-reductions.html',1,'']]],
-  ['groups_20and_20the_20choice_20of_20k_6',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]]
+  ['gpu_20merge_3',['Byte-profile GPU merge',['../byte-profile-gpu-merge.html',1,'']]],
+  ['gpu_20merge_3a_20direct_20compressed_20input_20and_20output_4',['Optional GPU merge: direct compressed input and output',['../optional-gpu-merge-direct-compressed-input-and-output.html',1,'']]],
+  ['gpu_20output_20planning_5',['Optional fused GPU output planning',['../optional-fused-gpu-output-planning.html',1,'']]],
+  ['group_20and_20bitmap_20rank_20reductions_6',['Packed group and bitmap rank reductions',['../packed-group-and-bitmap-rank-reductions.html',1,'']]],
+  ['groups_20and_20the_20choice_20of_20k_7',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]]
 ];

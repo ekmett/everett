@@ -17,8 +17,8 @@ var searchData=
   ['typed_5frow_14',['typed_row',['../structeverett_1_1typed__row.html',1,'everett']]],
   ['typed_5fscan_15',['typed_scan',['../structeverett_1_1typed__scan.html',1,'everett']]],
   ['typed_5fworld_16',['typed_world',['../structeverett_1_1typed__world.html',1,'everett']]],
-  ['typed_5fworld_3c_20string_5fpolicy_2c_20wrapping_5ffingerprint_5falgebra_2c_20binary_5fruntime_5ffamily_3c_20string_5fpolicy_20_3e_20_3e_17',['typed_world&lt; string_policy, wrapping_fingerprint_algebra, binary_runtime_family&lt; string_policy &gt; &gt;',['../structeverett_1_1typed__world.html',1,'everett']]],
-  ['typed_5fworld_3c_20string_5fpolicy_2c_20wrapping_5ffingerprint_5falgebra_2c_20redundant_5fruntime_5ffamily_3c_20string_5fpolicy_20_3e_20_3e_18',['typed_world&lt; string_policy, wrapping_fingerprint_algebra, redundant_runtime_family&lt; string_policy &gt; &gt;',['../structeverett_1_1typed__world.html',1,'everett']]],
+  ['typed_5fworld_3c_20storage_5fpolicy_3c_3e_2c_20wrapping_5ffingerprint_5falgebra_2c_20binary_5fruntime_5ffamily_3c_20storage_5fpolicy_3c_3e_20_3e_20_3e_17',['typed_world&lt; storage_policy&lt;&gt;, wrapping_fingerprint_algebra, binary_runtime_family&lt; storage_policy&lt;&gt; &gt; &gt;',['../structeverett_1_1typed__world.html',1,'everett']]],
+  ['typed_5fworld_3c_20storage_5fpolicy_3c_3e_2c_20wrapping_5ffingerprint_5falgebra_2c_20redundant_5fruntime_5ffamily_3c_20storage_5fpolicy_3c_3e_20_3e_20_3e_18',['typed_world&lt; storage_policy&lt;&gt;, wrapping_fingerprint_algebra, redundant_runtime_family&lt; storage_policy&lt;&gt; &gt; &gt;',['../structeverett_1_1typed__world.html',1,'everett']]],
   ['typed_5fworld_5fmetadata_19',['typed_world_metadata',['../structeverett_1_1typed__world__metadata.html',1,'everett']]],
   ['typed_5fworld_5fmetadata_3c_20a_20_3e_20',['typed_world_metadata&lt; A &gt;',['../structeverett_1_1typed__world__metadata.html',1,'everett']]],
   ['typed_5fworld_5fmetadata_3c_20wrapping_5ffingerprint_5falgebra_20_3e_21',['typed_world_metadata&lt; wrapping_fingerprint_algebra &gt;',['../structeverett_1_1typed__world__metadata.html',1,'everett']]]

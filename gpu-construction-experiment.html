@@ -114,7 +114,7 @@ Compressed-input path</h1>
 <p>The separate <a class="el" href="collision-bitmap-and-rank-experiment.html">collision experiment</a> uses temporary bitmap rank to remove older native duplicates and assign survivor positions. That scratch directory can be discarded after ordering; it is not a replacement for the final packed rank15 sections or their CPU query implementation. GPU construction of final rank15 and temporary collision rank serve different stages of the pipeline.</p>
 <h1><a class="anchor" id="explicit-shader-capabilities"></a>
 Explicit shader capabilities</h1>
-<p>I make GPU support an opt-in property of a concrete sort, selector and merge operation. <a href="source/optional/gpu_merge/gpu_sort.h">gpu_sort.h</a> sketches this gate outside the installed library: unknown types are disabled, and its sole enabled registry is the exact default string policy with the known replacement operation. The helper is not yet wired into runtime selection. A matching key type or <code>replacement=true</code> alone is insufficient evidence about a user-defined callback.</p>
+<p>I make GPU support an opt-in property of a concrete sort, selector and merge operation. <a href="source/optional/gpu_merge/gpu_sort.h">gpu_sort.h</a> sketches this gate outside the installed library: unknown types are disabled, and its sole enabled registry is the exact bit <code>string_policy</code> with the known replacement operation. The helper is not yet wired into runtime selection. A matching key type or <code>replacement=true</code> alone is insufficient evidence about a user-defined callback.</p>
 <p>A shader implementation needs an explicit contract for each of these parts:</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">

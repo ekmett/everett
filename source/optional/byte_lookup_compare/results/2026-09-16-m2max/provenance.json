@@ -1,0 +1,36 @@
+{
+  "header_revision": "384f8443a102334539226f4e6e2a6a4a8b63300b",
+  "harness_revision": "99dce20",
+  "header_modifications": [],
+  "host": "Apple M2 Max",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+  "release_flags": [
+    "-O3",
+    "-g",
+    "-DNDEBUG",
+    "-Wall",
+    "-Wextra",
+    "-Werror"
+  ],
+  "cpp_standard": "C++20",
+  "ctest": {
+    "configuration": "Debug, ASan/UBSan",
+    "tests": 3,
+    "passed": 3,
+    "changed_value_tombstone_miss_checks": 16384,
+    "timings_used": false,
+    "binaries": {
+      "bench": "aa9b05cf5f384a8ca6b638db797f7be023c4e9246f1baa949d3420a6e749aff6",
+      "check": "b2d83389aa295ab6c4e3bb5fe514809d762572e3a0f8ea3309679edbd3200478"
+    }
+  },
+  "observations": 972,
+  "processes": 54,
+  "matched_cases": 54,
+  "all_observations_retained": true,
+  "scheduling": "USER_INITIATED requested and verified on benchmark thread only",
+  "byte_policy": "storage_policy<unsorted<optional<string>>,15,exponential_golomb<0>,15>",
+  "bit_policy": "storage_policy<bin<tip<unsorted<optional<string>>>,sort_undefined>,15,exponential_golomb<0>,15>",
+  "value_semantics": "ordinary optional<string> grammar with32byte live values, not a fixed-value-width codec",
+  "equivalence": "Matched logical and query fingerprints plus exact-value oracles and every timed query-count/checksum pair agree across profiles. Encoded-stream fingerprints are intentionally profile-specific."
+}
