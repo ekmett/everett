@@ -446,6 +446,74 @@ namespace {
     action(mapped_index<P>::from_slice(mapping.slice(displacement, bytes.size())));
   }
 
+  template <class P> void conservative_scan_tests() {
+    // Forced restarts and partial retained prefixes cross physical block cuts.
+    // These limits are also used by deletion records before their merge.
+    std::vector<profile_record> records;
+    for (unsigned i = 0; i != 97; ++i) {
+      std::string key(4096, 'p');
+      key.push_back(char(i));
+      auto bits = bit_string::from_bytes(key);
+      if constexpr (P::unit == profile_unit::bit)
+        for (unsigned j = 0; j != i % 7; ++j) append_bit(bits, (i >> j) & 1);
+      records.push_back({std::move(bits), value_for<P>(i)});
+      if (i % 7 == 0) records.back().retained_limit_bits = 0;
+      else if (i % P::codec_block_size == 0) records.back().retained_limit_bits = 9;
+    }
+    auto source = profile_array<P>::build(records);
+    auto encoded = encode_native_sections(source).materialize();
+    with_native<P>(encoded, [&](auto mapped) {
+      mapped.scan();
+      auto cursor = mapped.view().cursor();
+      std::size_t ordinal = 0;
+      while (!cursor.done()) {
+        auto const & expected = records.at(ordinal++);
+        require(same_bits(cursor.peek().key.prefix, expected.key.view()), "conservative scan changed key");
+        require(same_bits(cursor.peek().value, expected.value.view()), "conservative scan changed value");
+        cursor.advance();
+      }
+      require(ordinal == records.size(), "conservative scan lost records");
+    });
+
+    // Encode every ordered pair with zero retention, including intentionally
+    // descending keys. Equal initial units must not hide a later mismatch,
+    // a shortened proper prefix, or a duplicate native key. Borrowed streams
+    // may repeat keys, including a fully repeated literal.
+    std::vector<bit_string> candidates;
+    for (std::string key : {"", "a", "aa", "ab", "aba", "abb", "b"})
+      candidates.push_back(bit_string::from_bytes(key));
+    if constexpr (P::unit == profile_unit::bit)
+      for (std::string key : {"0", "01", "010", "011", "1", "10"})
+        candidates.push_back(bit_string::from_bits(key));
+    auto check = [&]<stream_role Role>(bit_string const & a, bit_string const & b) {
+      bit_string data;
+      profile_detail::write_count<P>(data, 0);
+      profile_detail::write_count<P>(data, a.bit_size / P::bits_per_unit);
+      profile_detail::append(data, a.view());
+      profile_detail::write_backspace<P>(data, a.bit_size / P::bits_per_unit);
+      profile_detail::write_count<P>(data, b.bit_size / P::bits_per_unit);
+      profile_detail::append(data, b.view());
+      auto metadata = profile_detail::initial_metadata<P, Role>();
+      metadata.record_count = 2;
+      metadata.common_value_width = 0;
+      metadata.extent = data.bit_size / P::bits_per_unit;
+      metadata.terminal_key_units = b.bit_size / P::bits_per_unit;
+      std::array positions{std::uint64_t{0}, metadata.extent};
+      auto offsets = elias_fano::build(positions);
+      auto view = profile_view<P, Role>::from_sections(data.bytes, offsets.view(), metadata);
+      bool accepted = true;
+      try { section_detail::scan_profile(view); }
+      catch (std::invalid_argument const &) { accepted = false; }
+      auto order = compare_original(a.view(), b.view()).order;
+      require(accepted == (Role == stream_role::native ? order < 0 : order <= 0),
+        "conservative ordering scan disagrees with original keys");
+    };
+    for (auto const & a : candidates) for (auto const & b : candidates) {
+      check.template operator()<stream_role::native>(a, b);
+      check.template operator()<stream_role::borrowed>(a, b);
+    }
+  }
+
   template <class P> void shape_tests(persisted_fixture<P> const & fixture) {
     auto layer = fixture.routing_layers();
     auto const & native = fixture.native_bytes[layer];
@@ -593,7 +661,7 @@ namespace {
           return true;
         });
         require(ordinal == records.size(), "redundant FC lost keys");
-        rejects([&] { mapped.scan(); });
+        mapped.scan();
       });
     }
     {
@@ -752,8 +820,9 @@ namespace {
 
   // CRC-valid mutations exercise the semantic reader, not just its checksum.
   // Accepted native changes must round-trip through a separate sequential
-  // decoder/writer. A bound index has only one canonical encoding for its
-  // unchanged native and target owners, so accepted index bytes must agree.
+  // decoder/writer preserving their retained-prefix limits. A bound index
+  // must retain the same sample keys for its unchanged native/target pair;
+  // conservative retention may change its bytes without changing those keys.
   template <class P> void mutation_tests(persisted_fixture<P> const & fixture) {
     auto layer = fixture.routing_layers();
     std::size_t accepted_native = 0, changed_native = 0, rejected_native = 0, rejected_index = 0;
@@ -769,14 +838,15 @@ namespace {
           std::uint64_t count = 0;
           while (!cursor.done()) {
             auto item = cursor.peek();
-            writer.append(item.key.prefix, item.value);
+            writer.append(item.key.prefix, item.value,
+              view.encoded_at(count).retained * P::bits_per_unit);
             cursor.advance();
             require(++count <= view.size(), "accepted native mutation decoder exceeded count");
           }
           require(count == view.size(), "accepted native mutation decoder lost records");
           auto rebuilt = writer.finish();
           require(encode_native_sections(rebuilt).materialize() == bytes,
-                  "accepted native mutation was not canonical round-trip output");
+                  "accepted native mutation did not preserve its retained prefixes");
           ++accepted_native;
           changed_native += bytes != fixture.native_bytes[layer];
         });
@@ -797,7 +867,15 @@ namespace {
                                            std::move(owner), fixture.pairs[layer + 1]);
           pair->scan();
           scanned = true;
-          require(bytes == fixture.index_bytes[layer], "accepted index mutation changed its exact pair");
+          auto actual = pair->borrowed().cursor();
+          auto expected = fixture.pairs[layer]->borrowed().cursor();
+          while (!actual.done() && !expected.done()) {
+            require(same_bits(actual.peek().key.prefix, expected.peek().key.prefix),
+              "accepted index mutation changed a sample key");
+            actual.advance();
+            expected.advance();
+          }
+          require(actual.done() && expected.done(), "accepted index mutation changed sample count");
         });
       } catch (std::logic_error const &) {
         if (scanned) throw;
@@ -1018,6 +1096,8 @@ int main() {
     using bit_var = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 7, exponential_golomb<0>, 15>;
     run_policy<byte_var>(true);
     run_policy<bit_var>(true);
+    conservative_scan_tests<byte_var>();
+    conservative_scan_tests<bit_var>();
     empty_test<byte_var>();
     empty_test<bit_var>();
     run_policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 15, exponential_golomb<0>, 16>>(false);

@@ -212,15 +212,23 @@ namespace everett {
             value_bits > data.size() - start_bits - suffix_bits)
           throw std::invalid_argument("truncated Everett profile record");
         auto retained_bits = profile_detail::multiply(retained, P::bits_per_unit);
-        // The retained prefix is already equal. Ordinary FC must differ at
-        // the first new unit, or extend the entire predecessor; no inherited
-        // prefix needs copying or comparison to establish maximality/order.
+        // The retained prefix is already equal. Ordinary FC differs at the
+        // first new unit, so keep that constant-time check. A conservative
+        // prefix may repeat equal units; compare only the explicit tails.
         if (retained < previous_units) {
           if (!suffix) throw std::invalid_argument("Everett profile key precedes its predecessor");
           auto before = profile_detail::load_bits(previous.view(), retained_bits, P::bits_per_unit);
           auto after = profile_detail::load_bits(data, start_bits, P::bits_per_unit);
-          if (after <= before)
-            throw std::invalid_argument("Everett profile is not sorted ordinary front coding");
+          if (after < before)
+            throw std::invalid_argument("Everett profile keys are not sorted");
+          if (after == before) {
+            auto order = compare_bits(previous.view().subview(retained_bits + P::bits_per_unit,
+              previous.view().size() - retained_bits - P::bits_per_unit),
+              data.subview(start_bits + P::bits_per_unit, suffix_bits - P::bits_per_unit));
+            if (order > 0) throw std::invalid_argument("Everett profile keys are not sorted");
+            if (order == 0 && Role == stream_role::native)
+              throw std::invalid_argument("Everett native profile keys must be unique");
+          }
         } else if (ordinal && !suffix && Role == stream_role::native)
           throw std::invalid_argument("Everett native profile keys must be unique");
         profile_detail::resize(previous, retained_bits);
