@@ -24,6 +24,45 @@ namespace diet {
   // also distinguishes their file namespaces. This cache performs no I/O.
   template <class T> struct catalog_bindings {
     using pointer = std::shared_ptr<T const>;
+  private:
+    struct slot {
+      object_id catalog;
+      std::filesystem::path root;
+      std::mutex mutex;
+      pointer value;
+      slot(object_id id, std::filesystem::path path) : catalog(std::move(id)), root(std::move(path)) {}
+    };
+  public:
+    // Prepare every slot before acquiring a batch. Once any claim is held,
+    // try_lock is the only permitted acquisition: unrelated producers may be
+    // holding a parent while waiting for one of our dependencies.
+    struct producer {
+      producer(producer const &) = delete;
+      producer & operator=(producer const &) = delete;
+      producer(producer &&) noexcept = default;
+      producer & operator=(producer &&) = delete;
+      bool try_lock() { return lock_.try_lock(); }
+      pointer value() const {
+        if (!lock_.owns_lock()) throw std::logic_error("unclaimed catalog owner");
+        return entry_->value;
+      }
+      void release() noexcept { if (lock_.owns_lock()) lock_.unlock(); }
+      void install(pointer value) {
+        if (!lock_.owns_lock() || entry_->value || !value)
+          throw std::logic_error("invalid catalog owner installation");
+        entry_->value = std::move(value);
+        lock_.unlock();
+      }
+    private:
+      friend struct catalog_bindings;
+      std::shared_ptr<slot> entry_;
+      std::unique_lock<std::mutex> lock_;
+      explicit producer(std::shared_ptr<slot> entry)
+        : entry_(std::move(entry)), lock_(entry_->mutex, std::defer_lock) {}
+    };
+    producer prepare(object_id const & catalog, std::filesystem::path const & root) const {
+      return producer(locate(catalog, root, true));
+    }
     catalog_bindings() = default;
     catalog_bindings(catalog_bindings const &) = delete;
     catalog_bindings & operator=(catalog_bindings const &) = delete;
@@ -52,13 +91,6 @@ namespace diet {
     }
 
   private:
-    struct slot {
-      object_id catalog;
-      std::filesystem::path root;
-      std::mutex mutex;
-      pointer value;
-      slot(object_id id, std::filesystem::path path) : catalog(std::move(id)), root(std::move(path)) {}
-    };
     mutable std::mutex mutex_;
     mutable std::vector<std::shared_ptr<slot>> entries_;
 

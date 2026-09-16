@@ -302,10 +302,11 @@ namespace diet {
           if (value && seen_natives.insert(value.get()).second) native_roots.push_back(std::move(value));
         });
       auto graph = sealer();
+      (void)graph.prepare_ready(roots, native_roots);
       // Each new owner resolves its immediate dependencies once. An existing
       // bound suffix stops this walk, irrespective of how many roots share it.
-      // Finish one root before starting another: no unrelated binding locks
-      // are held together across independently publishing backends.
+      // Finish each remaining root before starting another. The ready batch
+      // has released every claim before this blocking dependency walk.
       for (auto const & pair : roots) (void)graph.ensure_pair(pair);
       for (auto const & native : native_roots) (void)graph.ensure_native(native);
       auto primary = graph.pair_id(source.query_root().head());
