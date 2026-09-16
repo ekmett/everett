@@ -51,6 +51,7 @@ namespace diet {
   // private merge continuations; the published snapshot is always mmap-backed.
   template <class Core = typed_engine<>, class Ids = random_object_ids> struct persistent_engine {
     using core_type = Core;
+    using family_type = typename Core::runtime_family;
     using policy_type = typename Core::policy_type;
     using typed_cola_type = typename Core::cola_type;
     using cola_type = stored_cola<typed_cola_type>;
@@ -73,7 +74,11 @@ namespace diet {
         found.emplace(store.create_tap(name, initial.runtime(), initial.metadata().encode()));
       }
       auto current = restore(std::move(*found), schema);
-      auto core = Core::from_snapshot(current);
+      auto core = [&] {
+        if constexpr (requires { family_type::open_storage(store.root()); })
+          return Core::from_snapshot(current, family_type::open_storage(store.root()));
+        else return Core::from_snapshot(current);
+      }();
       return persistent_engine(std::move(store), std::move(core), std::move(current), std::move(schema));
     }
     persistent_engine(persistent_engine const &) = delete;
@@ -96,10 +101,10 @@ namespace diet {
       // this ticket; publication failures may never take that path.
       auto updated = [&] {
         try { return core_.contribute(std::move(input)); }
-        catch (...) { if (core_.failed()) failed_ = true; throw; }
+        catch (...) { if (core_.failed()) poison(); throw; }
       }();
       try { return publish(std::move(updated)); }
-      catch (...) { failed_ = true; throw; }
+      catch (...) { poison(); throw; }
     }
     std::optional<cola_type> advance(std::uint64_t budget) {
       require_active();
@@ -107,7 +112,7 @@ namespace diet {
         auto updated = core_.advance(budget);
         if (!updated) return std::nullopt;
         return publish(std::move(*updated));
-      } catch (...) { failed_ = true; throw; }
+      } catch (...) { poison(); throw; }
     }
 
   private:
@@ -135,11 +140,18 @@ namespace diet {
       auto mapped = restore(std::move(saved), schema_);
       // Keep partial builders alive until their carry completes. Restarting the
       // Core on every equivalent publication would discard paid private work.
-      if (!core_.pending()) core_ = Core::from_snapshot(mapped);
+      if (!core_.pending()) {
+        if constexpr (requires { core_.rebase(mapped); }) core_.rebase(mapped);
+        else core_ = Core::from_snapshot(mapped);
+      }
       current_ = std::move(mapped);
       return current_;
     }
     void require_active() const { if (failed()) throw std::logic_error("failed persistent Diet engine; reconnect it"); }
+    void poison() noexcept {
+      failed_ = true;
+      if constexpr (requires { { core_.poison() } noexcept; }) core_.poison();
+    }
   };
 
   // Ordinary callers use the mutable connection; snapshots retain the same

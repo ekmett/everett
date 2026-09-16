@@ -16,8 +16,8 @@
 #include <diet/runtime_store.h>
 
 namespace diet {
-  template <class P, class Selector> struct runtime_storage_codec<sort_runtime_family<P, Selector>>
-    : runtime_storage_codec<redundant_runtime_family<P, sort_runtime_storage<P, Selector>>> {};
+  template <class P, class Selector, class Storage> struct runtime_storage_codec<sort_runtime_family<P, Selector, Storage>>
+    : runtime_storage_codec<redundant_runtime_family<P, Storage>> {};
 
   template <class P = string_policy, class Selector = registry_selector<typename P::registry_type>,
     class Ids = random_object_ids, class Ops = sqlite_catalog_ops>

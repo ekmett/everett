@@ -160,3 +160,44 @@ explicit recovery operation: it checks file checksums, native ordering, the
 interleave rank metadata, false-borrow flags, and the actual keys selected from
 both downstream routes. A `mapped_cola_scan<Mapped>` context can scan several
 hidden roots without repeatedly checking their shared suffixes.
+
+Streaming native merges
+-----------------------
+
+`streaming_sort_runtime_family` sends completed native merges directly to KV03
+files. The typed core carries one concrete storage context through equivalent
+snapshot replacements:
+
+```cpp
+#include <diet/connection.h>
+#include <diet/sort_runtime_context.h>
+
+using family = diet::streaming_sort_runtime_family<>;
+using engine = diet::typed_engine<diet::string_policy,
+  diet::wrapping_fingerprint_algebra, 256, family>;
+
+auto live = diet::connect<engine>(existing_directory, "earth-616");
+live.put("alpha", "one");
+```
+
+The context reserves a native identity before starting its writer. After the
+file is sealed and SQLite acknowledges the seal, it opens that exact file and
+attaches an immutable receipt to the native owner. The receipt names the
+backing catalog, object, attempt, size, checksum and completed barrier. A store
+accepts this owner only after checking the catalog identity, exact seal row,
+object path and file envelope. This check reads metadata; it does not repeat
+the merge, copy the native file or calculate its whole-body checksum. An
+arbitrary mapped owner without this receipt still cannot introduce a file.
+
+Completed hidden natives retain their exact identities in the next full
+frontier checkpoint, including when no new index was produced in that step.
+Private unfinished file writers restart after recovery. Published native files
+are reused when the typed core rebases onto its mapped snapshot; its concrete
+merge context survives the rebase.
+
+An uncertain seal transaction never returns a sealed native owner. A failure
+during publication, catalog comparison or rebase disables the persistent
+engine and its active merge context, retaining the last durable snapshot for
+the caller. Reopening discovers whichever catalog generation committed. A
+standalone `runtime_store` only owns its own adapter: rejecting an immutable
+snapshot disables that adapter without mutating an unrelated source engine.

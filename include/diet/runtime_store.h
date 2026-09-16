@@ -276,6 +276,15 @@ namespace diet {
       auto plan_native = [&](native_pointer const & native) {
         if (auto known = natives_.find(native); known != natives_.end()) return known->second;
         if (auto known = planned_natives.find(native); known != planned_natives.end()) return known->second;
+        if (native) {
+          if constexpr (requires { native->sealed(); }) if (auto seal = native->sealed()) {
+            if (!native->mapped() || seal->catalog != catalog_.identity())
+              throw std::invalid_argument("sealed native belongs to another backing catalog");
+            catalog_.verify_sealed(seal->receipt, file_kind::native_blob);
+            planned_natives.emplace(native, seal->receipt.object);
+            return seal->receipt.object;
+          }
+        }
         if (!native || !native->owned()) throw std::invalid_argument("mapped native was not opened by this store");
         auto id = ids_(); planned_natives.emplace(native, id); native_outputs.push_back(native);
         reservations.push_back({id, file_kind::native_blob}); return id;
@@ -327,9 +336,11 @@ namespace diet {
         if (!graphs.empty()) {
           op = operation(); catalog_.template register_graphs<mapped_type>(op, graphs);
         }
-        for (auto const & [weak, id] : planned_pairs) nodes_.insert_or_assign(weak, id);
-        for (auto const & [weak, id] : planned_natives) natives_.insert_or_assign(weak, id);
       }
+      // A newly sealed hidden native can arrive without any new pair output.
+      // Its validated attestation still participates in the checkpoint's pins.
+      for (auto const & [weak, id] : planned_pairs) nodes_.insert_or_assign(weak, id);
+      for (auto const & [weak, id] : planned_natives) natives_.insert_or_assign(weak, id);
       auto primary = nodes_.at(source.query_root().head());
       catalog_auxiliary_roots retained;
       for (auto const & pair : roots) retained.pairs.push_back(nodes_.at(pair));
