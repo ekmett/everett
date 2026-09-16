@@ -315,9 +315,16 @@ namespace diet {
     template <class R, class S> inline constexpr bool contains_sort =
       contains<S, typename registry_detail::info<R>::leaves>::value;
     template <class R, class S> struct code;
-    template <class S> struct code<tip<S>, S> { static void write(sort_bit_writer &) {} };
+    template <class S> struct code<tip<S>, S> {
+      static constexpr std::uint64_t size = 0;
+      static void write(sort_bit_writer &) {}
+    };
     template <class T> struct code<unsorted<T>, unsorted<T>> : code<tip<unsorted<T>>, unsorted<T>> {};
     template <class L, class R, class S> struct code<bin<L, R>, S> {
+      static constexpr std::uint64_t size = 1 + [] {
+        if constexpr (contains_sort<L, S>) return code<L, S>::size;
+        else return code<R, S>::size;
+      }();
       static void write(sort_bit_writer & out) {
         constexpr bool right = !contains_sort<L, S>;
         out.write_bits(right, 1);
@@ -326,6 +333,7 @@ namespace diet {
       }
     };
     template <class... T, class S> struct code<sort_list<T...>, S> {
+      static constexpr std::uint64_t size = 8;
       static void write(sort_bit_writer & out) {
         std::uint64_t i = 0, index = 0;
         ((std::is_same_v<T, S> ? (index = i, ++i) : ++i), ...);

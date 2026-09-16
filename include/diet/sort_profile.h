@@ -18,6 +18,7 @@ namespace diet {
   // Selection is a protocol: the declarative registry is one implementation.
   // A custom selector may use a generated table rather than a recursive tree.
   template <class Registry> struct registry_selector {
+    template <class S> static constexpr std::uint64_t code_size = sort_codec_detail::code<Registry, S>::size;
     template <class Input, class Visitor> static decltype(auto) select(Input & in, Visitor && visitor) {
       return dispatch_sort<Registry>(in, std::forward<Visitor>(visitor));
     }
@@ -27,9 +28,11 @@ namespace diet {
   // A navigable key codec supplies an order-bit representation and frames that
   // expose inherited prefix length plus literal spans. Values keep their own
   // complete grammar; value_codec::skip must find their end without allocation.
+  // Optional order_view borrows the caller's key for synchronous query encoding.
   template <class Codec> struct sort_profile_key;
   template <class C> struct sort_profile_key<fc_string_key<C>> {
     static constexpr bool front_coded = true;
+    static bit_view order_view(std::string const & key) { return sort_codec_detail::string_bits(key); }
     static bit_string order(std::string const & key) { return bit_string::copy(sort_codec_detail::string_bits(key)); }
     static std::string decode_order(bit_view key) {
       if (key.size() & 7) throw std::invalid_argument("string order key ends inside byte");
@@ -52,6 +55,7 @@ namespace diet {
   };
   template <class C> struct sort_profile_key<fc_bit_key<C>> {
     static constexpr bool front_coded = true;
+    static bit_view order_view(bit_string const & key) { return key.view(); }
     static bit_string order(bit_string const & key) { return key; }
     static bit_string decode_order(bit_view key) { return bit_string::copy(key); }
     static fc_key_frame read(sort_bit_reader & in, std::uint64_t retained) {
@@ -86,6 +90,7 @@ namespace diet {
   };
   template <class C> struct sort_profile_key<raw_string_key<C>> {
     static constexpr bool front_coded = false;
+    static bit_view order_view(std::string const & key) { return sort_codec_detail::string_bits(key); }
     static bit_string order(std::string const & key) { return bit_string::copy(sort_codec_detail::string_bits(key)); }
     static std::string decode_order(bit_view key) {
       if (key.size() & 7) throw std::invalid_argument("string order key ends inside byte");
@@ -550,8 +555,25 @@ namespace diet {
 
   template <class P, class S, class Selector = registry_selector<typename P::registry_type>>
   bit_string sort_profile_query(typename sort_codec<S>::key_codec::value_type const & key) {
-    bit_string result; sort_bit_writer out(result); Selector::template write<S>(out);
-    auto bits = sort_profile_key<typename sort_codec<S>::key_codec>::order(key);
-    out.append(bits.view()); return result;
+    using key_codec = sort_profile_key<typename sort_codec<S>::key_codec>;
+    auto encode = [](bit_view bits) {
+      bit_string result;
+      // Width is an optional selector hint. Selection still runs for each query.
+      if constexpr (requires { typename std::integral_constant<std::uint64_t, Selector::template code_size<S>>; }) {
+        auto size = profile_detail::add(Selector::template code_size<S>, bits.size());
+        auto bytes = profile_detail::add(size, 7) >> 3;
+        if (bytes > result.bytes.max_size()) throw std::length_error("sort query key too large");
+        result.bytes.reserve(static_cast<std::size_t>(bytes));
+      }
+      sort_bit_writer out(result);
+      Selector::template write<S>(out);
+      out.append(bits);
+      return result;
+    };
+    if constexpr (requires { key_codec::order_view(key); }) return encode(key_codec::order_view(key));
+    else {
+      auto bits = key_codec::order(key);
+      return encode(bits.view());
+    }
   }
 }
