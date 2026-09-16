@@ -27,6 +27,14 @@ conservative automatic choices.
 Optional GPU construction
 -------------------------
 
+The [byte-profile GPU driver](../optional/byte_gpu_merge/README.md) merges mapped
+KV02 files directly, including GPU frame parsing and Elias–Fano construction.
+It compares complete output bytes against the ordinary CPU writer. Its timing
+boundary includes fresh output mappings, checksums and cleanup; fractional
+indexes and durable publication remain outside it.
+Its [M2 Max measurements](../optional/byte_gpu_merge/report.md) retain all trials
+at three input sizes, including small-input losses and process variability.
+
 The [GPU merge experiment](../optional/gpu_merge/design.md) reads compressed
 mapped inputs and emits a complete compressed output file. Its
 [measurements](../optional/gpu_merge/report.md) include parsing, merging,

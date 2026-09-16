@@ -170,7 +170,7 @@ Explicit shader capabilities
 I make GPU support an opt-in property of a concrete sort, selector and merge
 operation. [gpu_sort.h](gpu_sort.h) sketches this gate outside the installed
 library: unknown types are disabled, and its sole enabled registry is the exact
-default string policy with the known replacement operation. The helper is not
+bit `string_policy` with the known replacement operation. The helper is not
 yet wired into runtime selection. A matching key type or `replacement=true`
 alone is insufficient evidence about a user-defined callback.
 

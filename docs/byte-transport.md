@@ -129,3 +129,10 @@ entire output against the CPU writer, including its checksum and padding.
 This is a native-file merge experiment; ordinary connections still use the
 CPU, and the driver does not perform durable publication or strong-delete
 cleanup.
+
+The [initial M2 Max measurements](../optional/byte_gpu_merge/report.md) cover
+4K, 32K and 128K records per input. At 128K, the fixed-value case takes 5.934 ms
+on Metal versus 11.908 ms on the CPU, including complete output construction and
+checksums. Small merges favor the CPU. Variable-value results and their larger
+CPU timing spread remain in the report; these fixtures do not define an
+automatic dispatch threshold.

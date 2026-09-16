@@ -214,6 +214,15 @@ Complete-file comparisons run on Metal. Its shared HLSL also compiles to
 validated Vulkan SPIR-V, without a tested Vulkan host driver. It is not yet
 connected to durable publication or automatic GPU selection.
 
+The [byte GPU measurements](../optional/byte_gpu_merge/report.md) retain 90
+measured trials and 18 warmups. At 131,072 records per input, complete fixed-value
+merges take 5.934 ms on Metal versus 11.908 ms on the production CPU path.
+Variable-value medians also favor Metal, with substantial CPU process variation
+reported explicitly. Small inputs favor the CPU. These structured-prefix
+fixtures establish an initial size range, not a general dispatch calibration.
+All 40 complete-file, four rejection and ten EF output cases pass on Metal,
+including the ASan/UBSan host build.
+
 The separate [fixed-key experiment](../optional/fixed_gpu_merge/README.md)
 constructs complete candidate `.ff` and `.fv` outputs from mapped inputs.
 The Metal path performs scheduled cancellation, survivor compaction, Merge Path,
@@ -1516,7 +1525,7 @@ producers and asynchronous publication without mixing sanitizer runtimes.
 Integration checks on 2026-09-16 passed under AppleClang 21, strict warnings,
 O2 and ASan/UBSan for shared owner bindings, seal acknowledgment failures,
 mapping lifetimes, canonical fallback, runtime publication and streamed native
-admission. The ordinary active API test covers bit-profile saves, forks,
+admission. The explicit bit API coverage includes saves, forks,
 disjoint updates, binary strings, custom chronological arrows and byte-registry
 fallback. The streamed rebuild suite and both existing rebuild suites passed;
 Doxygen passed with the new public engine header. At `d2aa805`, atomic index

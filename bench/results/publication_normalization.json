@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "5b7bafd0ed3e11f3fc2b8b5264b28b56a67bd81bf90b19733d68225371ce2227"
+      "normalized_sha256": "695627070f817e162559d8b36238059e8297e8668fca8eb82c6ad15c51938582"
     }
   ],
   "checks": {
@@ -627,6 +627,12 @@
     },
     {
       "scope": "Update byte-default backend descriptions, optional byte GPU construction, and conservative front-coding scan semantics. Original measurement identities are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link the audited complete byte GPU measurements and remove remaining default-bit wording. Original measurement identities are unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

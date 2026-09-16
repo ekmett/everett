@@ -101,6 +101,12 @@ For sum of squares, the update is $v'^2-v^2$, not $(v'-v)^2$. In general an
 aggregate projection need not preserve the physical representation of a diff.
 Admission must have enough information to construct its projected change.
 
+In the categorical presentation, an update $a:x\to y$ contributes
+$\delta_f(a)=f(y)-f(x)$. For composable updates,
+$\delta_f(b\circ a)=\delta_f(a)+\delta_f(b)$. The intermediate state's two
+contributions cancel, which is why the aggregate survives regrouping during
+merges. We choose the absent state's projection to be zero.
+
 Min and max are different: removing the current extreme does not reveal its
 successor. They need retained candidates, value-ordered indexes, hierarchical
 summaries with repair, or a resolved scan. Quantiles and distinct counts also

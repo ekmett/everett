@@ -66,7 +66,7 @@ Correctness and boundaries
 - Every distinct key remains, including newer tombstones. This is replacement merge, not whole-history deletion cleanup. Inputs are trusted, already validated strictly sorted runs; malformed-case checks are bounded hardening, not a general hostile-file validation API.
 - A GPU min tree finds inherited literal ownership. The global common prefix is proved on the GPU from input extrema. The output LCP cannot be smaller than the winner's retained source prefix, so its final suffix can be copied directly from the original mapped literal.
 - Conservative bounds precede 32-bit output scans. Combined input count is below 2^24 and worst-case output below 2^31 bits. Each final 32-bit payload/EF word has one writer; no racing shared-word OR is used. This GPU entry rejects double-empty input.
-- Eligibility is deliberately narrow: default one-bit sort selector, string keys, optional string values, replacement composition, EG0 and W=15. Arbitrary C++ handlers and complete fractional-cascading index construction are not implemented on the GPU.
+- Eligibility is deliberately narrow: the explicit `string_policy` one-bit sort selector, string keys, optional string values, replacement composition, EG0 and W=15. Arbitrary C++ handlers and complete fractional-cascading index construction are not implemented on the GPU.
 - Actual file-backed `MAP_SHARED` input/output and Everett's read-only input mappings imported through Metal `bytesNoCopy` on this machine: 16,384-byte pages, reported maxBufferLength 62,620,631,040 bytes, unified memory. This is local evidence, not a portable import guarantee. Owners remain alive through command completion; CPU result access waits for completion.
 
 Shared-input rank construction

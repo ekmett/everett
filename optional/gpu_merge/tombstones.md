@@ -2,7 +2,7 @@ Conservative tombstones and complete-coverage cleanup
 =====================================================
 
 I keep this path separately selectable with the `tombstone` correctness mode.
-It uses the existing default string/optional-string grammar and compressed mmap
+It uses the explicit bit string/optional-string grammar and compressed mmap
 inputs. It does not change the calibrated modes, implement durable publication,
 or support arbitrary sort handlers. The historical calibrated modes do not
 preserve this new cap contract; their calibration must not select them for a

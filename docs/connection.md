@@ -173,8 +173,8 @@ pending merges before or after the empty command.
 The defaults allow 64 outstanding contributions, 64 MiB of retained encoded
 input, and the selected engine's structural quote for 1024 records. Those records
 can be grouped into batches; the queue reserves their total until each command
-finishes. For the ordinary string table this is 41,330,608,128 structural units.
-It is a conservative work allowance, not a count of disk operations or bytes.
+finishes. This is a conservative work allowance, not a count of disk operations
+or bytes.
 
 `connection_options::limits` is optional. An omitted value selects these
 engine-specific defaults once when connecting; `db.limits()` returns the resolved
