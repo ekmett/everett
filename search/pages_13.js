@@ -9,10 +9,12 @@ var searchData=
   ['the_20rank_20and_20elias–fano_20refactor_6',['Complete queries after the rank and Elias–Fano refactor',['../complete-queries-after-the-rank-and-eliasfano-refactor.html',1,'']]],
   ['the_20redundant_20runtime_7',['Sort-owned records in the redundant runtime',['../sort-owned-records-in-the-redundant-runtime.html',1,'']]],
   ['third_5fparty_8',['THIRD_PARTY',['../third_party.html',1,'']]],
-  ['timeline_9',['Streaming a table into a persistent timeline',['../md_docs_2streamed-timeline.html',1,'']]],
-  ['to_20a_20named_20session_10',['Connecting to a named session',['../connecting-to-a-named-session.html',1,'']]],
-  ['to_20disk_11',['Streaming a fractional-index chain to disk',['../md_docs_2file-indexes.html',1,'']]],
-  ['toolchain_12',['Everett shader toolchain',['../everett-shader-toolchain.html',1,'']]],
-  ['totals_13',['Bounded rank without cached totals',['../bounded-rank-without-cached-totals.html',1,'']]],
-  ['typed_20worlds_20and_20contributions_14',['Typed worlds and contributions',['../typed-worlds-and-contributions.html',1,'']]]
+  ['tiled_20prefix_20tree_20experiment_9',['Optional tiled prefix-tree experiment',['../optional-tiled-prefix-tree-experiment.html',1,'']]],
+  ['timeline_10',['Streaming a table into a persistent timeline',['../md_docs_2streamed-timeline.html',1,'']]],
+  ['to_20a_20named_20session_11',['Connecting to a named session',['../connecting-to-a-named-session.html',1,'']]],
+  ['to_20disk_12',['Streaming a fractional-index chain to disk',['../md_docs_2file-indexes.html',1,'']]],
+  ['toolchain_13',['Everett shader toolchain',['../everett-shader-toolchain.html',1,'']]],
+  ['totals_14',['Bounded rank without cached totals',['../bounded-rank-without-cached-totals.html',1,'']]],
+  ['tree_20experiment_15',['Optional tiled prefix-tree experiment',['../optional-tiled-prefix-tree-experiment.html',1,'']]],
+  ['typed_20worlds_20and_20contributions_16',['Typed worlds and contributions',['../typed-worlds-and-contributions.html',1,'']]]
 ];

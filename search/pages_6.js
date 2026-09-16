@@ -16,5 +16,6 @@ var searchData=
   ['frontier_13',['Persisting a runtime frontier',['../persisting-a-runtime-frontier.html',1,'']]],
   ['frontiers_20and_20framed_20output_14',['Native merge frontiers and framed output',['../native-merge-frontiers-and-framed-output.html',1,'']]],
   ['full_20key_20copies_15',['Encoded literals without full-key copies',['../encoded-literals-without-full-key-copies.html',1,'']]],
-  ['full_20vector_20and_20packed_20rank_20comparison_16',['Full-vector and packed-rank comparison',['../md_bench_2rank__compare.html',1,'']]]
+  ['full_20vector_20and_20packed_20rank_20comparison_16',['Full-vector and packed-rank comparison',['../md_bench_2rank__compare.html',1,'']]],
+  ['fused_20gpu_20output_20planning_17',['Optional fused GPU output planning',['../optional-fused-gpu-output-planning.html',1,'']]]
 ];
