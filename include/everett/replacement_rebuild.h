@@ -302,9 +302,9 @@ namespace everett {
       }
       std::vector<mutation> entries; entries.reserve(input.records().size());
       foreground_->visit_changes(input, [&]<class S>(std::type_identity<S>, auto const & key,
-          auto const & before, auto const & after, auto const & record) {
+          auto && before, auto && after, auto const & record) {
         static_assert(std::is_same_v<S, sort_type>);
-        entries.push_back({key, before, after, typed_detail::value<P, S>(record.value.view()),
+        entries.push_back({key, std::move(before), std::move(after), typed_detail::value<P, S>(record.value.view()),
           0, record.retained_limit_bits});
       });
       try {

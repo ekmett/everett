@@ -76,13 +76,18 @@ db.erase_range(std::string("users/"), std::string("users0"));
 For a contribution from a retained snapshot, use
 `everett::erase_range(snapshot, lo, hi)` and pass the result to `db.apply`.
 A range cursor also has `erase_remaining()` to delete its not-yet-returned rows.
+One atomic contribution must fit the connection's configured work and byte
+limits. The default work limit quotes 1024 records; larger atomic ranges need
+appropriate [connection options](connection.md). Range deletion does not
+silently publish smaller batches to bypass those limits.
+
 These operations require a replacement sort. General composable arrows can be
 queried by range, but need a sort-specific deletion operation.
 
 We sweep the selected native runs in order and retain the observed old values.
 When the exact native layout is unchanged, those observations need no further
-search. Otherwise admission validates them with a second advancing native frontier. It does not
-perform a point lookup for each returned row, and it does not trust signatures
+search. Otherwise admission validates them with a second advancing native
+frontier. It does not perform a point lookup for each returned row, and it does not trust signatures
 as evidence that old values match. Changed or missing observed keys reject the
 whole batch before mutation. Disjoint changes can proceed; a concurrently added
 key, even inside the interval, survives because it was never observed. This is
@@ -91,8 +96,8 @@ an exact deletion of the selected rows, not a persistent range predicate.
 Each cursor already holds the winning record's decoded FC frame. Its retained
 prefix supplies the tombstone's conservative depth without another random seek.
 The current sweep checks that depth again when the contribution comes from an
-equivalent physical layout. Ordinary carries preserve those bounds. A clean-generation handoff during
-rebuilding admission can remove the target's physical predecessor; subsequent
+equivalent physical layout. Ordinary carries preserve those bounds. A
+clean-generation handoff during rebuilding admission can remove the target's physical predecessor; subsequent
 tombstones then carry the whole key rather than issuing point lookups to repair
 their caps. Clean rebuild
 and FIFO replay use their already-validated old/new states for accounting.

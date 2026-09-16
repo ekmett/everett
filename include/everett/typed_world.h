@@ -571,7 +571,7 @@ namespace everett {
             if (!semantics::present(key, next) && retained) record.retained_limit_bits = record.retained_limit_bits
               ? std::min(*record.retained_limit_bits, *retained) : *retained;
           }
-          std::invoke(visit, tag, key, old, next, record);
+          std::invoke(visit, tag, key, std::move(old), std::move(next), record);
         });
         ++ordinal;
       }
