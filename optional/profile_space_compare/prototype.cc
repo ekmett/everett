@@ -40,15 +40,16 @@ namespace {
   struct fixture { std::string name; bool integer, variable; std::vector<row> rows; };
   fixture make(unsigned shape, bool variable, u64 count) {
     fixture result{{}, shape < 2, variable, {}};
-    result.name = std::array{"integer-ordered", "integer-random", "string-structured", "string-binary"}[shape];
+    result.name = std::array{"integer-ordered", "integer-random", "string-structured", "string-binary", "string-prefix"}[shape];
     result.name += variable ? "-variable" : "-fixed";
     result.rows.reserve(count);
     for (u64 i = 0; i < count; ++i) {
       std::string key;
       if (shape < 2) key = big(shape ? mix(i + 1) : i);
-      else if (shape == 2) {
+      else if (shape == 2 || shape == 4) {
         auto number = std::to_string(i);
-        key = "tenant/000042/object/" + std::string(12 - number.size(), '0') + number + "/state";
+        key = "tenant/000042/object/" + std::string(12 - number.size(), '0') + number;
+        if (shape == 2) key += "/state";
       } else key = big(mix(i + 1)) + big(mix(i + 0x123456789abcdef0ULL));
       u64 length = variable ? mix(i + 0x76543210) % 513 : shape < 2 ? 8 : 16;
       std::string value(length, '\0');
@@ -84,7 +85,7 @@ namespace {
   template <bool Byte, class S> using typed_policy = storage_policy<
     std::conditional_t<Byte, sort_list<S>, bin<tip<S>, sort_undefined>>>;
 
-  template <class P, bool Typed, class S> struct byte_or_raw_codec {
+  template <class P, bool Typed, class S, bool KnownWidth = false> struct byte_or_raw_codec {
     using policy = P;
     using native = profile_array<P>;
     using mapped = mapped_native<P>;
@@ -101,7 +102,7 @@ namespace {
       else return typed_detail::value<P, S>(r.value);
     }
     static auto build(std::span<row const> rows) {
-      profile_native_writer<P> writer;
+      profile_native_writer<P> writer(KnownWidth ? std::optional<u64>(17) : P::value_width);
       for (auto const &r : rows) writer.append(profile_record{key(r), value(r)});
       return std::make_shared<native const>(writer.finish());
     }
@@ -275,8 +276,8 @@ namespace {
   template <bool Byte, bool Fixed, unsigned Width> void raw(std::filesystem::path const &root, std::string const &mode, fixture const &f) {
     run<byte_or_raw_codec<raw_policy<Byte, Fixed, Width>, false, strings>>(root, mode, f);
   }
-  template <bool Byte, class S> void typed(std::filesystem::path const &root, std::string const &mode, fixture const &f) {
-    if constexpr (Byte) run<byte_or_raw_codec<typed_policy<true, S>, true, S>>(root, mode, f);
+  template <bool Byte, class S, bool KnownWidth = false> void typed(std::filesystem::path const &root, std::string const &mode, fixture const &f) {
+    if constexpr (Byte) run<byte_or_raw_codec<typed_policy<true, S>, true, S, KnownWidth>>(root, mode, f);
     else run<bit_sort_codec<S>>(root, mode, f);
   }
 }
@@ -285,12 +286,13 @@ int main(int argc, char **argv) {
     require(argc == 4, "usage: profile-space OUTPUT MODE ROWS");
     std::filesystem::path root(argv[1]); std::string mode(argv[2]); auto count = std::stoull(argv[3]);
     require(count && count % 4 == 0 && count <= 1'048'576, "fixture count must be a positive multiple of four <=2^20");
-    require(mode == "raw-byte" || mode == "raw-bit" || mode == "typed-byte" || mode == "typed-bit", "unknown mode");
+    require(mode == "raw-byte" || mode == "raw-bit" || mode == "typed-byte" || mode == "typed-bit" || mode == "typed-byte-known", "unknown mode");
     std::cout << "mode,fixture,logical_records,file,records,file_bytes,data_bytes,data_bits,key_literal_bits,encoded_value_bits,framing_bits,ef_low_bytes,ef_high_bytes,ef_sample_bytes,ef_sparse_bytes,rank_bytes,flag_bytes,cut_bytes,sort_metadata_bytes,header_directory_bytes,alignment_bytes,universe,offset_count,common_value_bits,suffix_length_bytes,suffix_zero_bytes,suffix_nul_safe_bytes\n";
-    for (unsigned shape = 0; shape < 4; ++shape) for (bool variable : {false, true}) {
+    for (unsigned shape = 0; shape < 5; ++shape) for (bool variable : {false, true}) {
       auto f = make(shape, variable, count);
-      if (mode == "typed-byte") {
-        if (!f.integer) typed<true, strings>(root, mode, f);
+      if (mode == "typed-byte" || mode == "typed-byte-known") {
+        if (!f.integer && !variable && mode == "typed-byte-known") typed<true, strings, true>(root, mode, f);
+        else if (!f.integer) typed<true, strings>(root, mode, f);
         else if (variable) typed<true, integer_sort<false>>(root, mode, f);
         else typed<true, integer_sort<true>>(root, mode, f);
       } else if (mode == "typed-bit") {

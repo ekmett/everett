@@ -54,16 +54,16 @@ def main():
                        index_key_literal_bits=sum(r['key_literal_bits'] for r in index),
                        index_framing_bits=sum(r['framing_bits'] for r in index),
                        stream_zero_escape_delta=sum(2*r['records'] + r['suffix_zero_bytes'] - r['suffix_length_bytes'] for r in items)
-                       if mode.endswith('byte') else None)
+                       if 'byte' in mode else None)
         summary.update(fixtures[f'{name}/{count}'])
         summaries[(name, count, mode)] = summary
-    assert len(summaries) == 8 * len(metadata['sizes']) * 4
+    assert len(summaries) == 10 * len(metadata['sizes']) * 5
     comparisons = []
     for name in sorted({g[0] for g in groups}):
         for count in metadata['sizes']:
-            for family in ['raw', 'typed']:
-                byte = summaries[(name, count, family + '-byte')]
-                bit = summaries[(name, count, family + '-bit')]
+            for family in ['raw', 'typed', 'typed-known']:
+                byte = summaries[(name, count, 'typed-byte-known' if family == 'typed-known' else family + '-byte')]
+                bit = summaries[(name, count, 'typed-bit' if family == 'typed-known' else family + '-bit')]
                 assert byte['sha256'] == bit['sha256'] and byte['file_count'] == bit['file_count']
                 comparisons.append(dict(fixture=name, records=count, family=family,
                     byte_total=byte['total_bytes'], bit_total=bit['total_bytes'],
@@ -83,12 +83,12 @@ def main():
     largest = max(metadata['sizes'])
     lines = ['Generated Space Tables', '======================', '',
              f'Complete native plus index files at {largest:,} logical rows. Positive deltas mean byte files are larger.', '']
-    for family in ['typed', 'raw']:
+    for family in ['typed', 'typed-known', 'raw']:
         lines += [family.capitalize(), '-' * len(family), '',
                   '| Fixture | Byte `.kv` | Bit `.kv` | Byte `.index` | Bit `.index` | Complete byte delta | Bytes/row delta |',
                   '| --- | ---: | ---: | ---: | ---: | ---: | ---: |']
         for c in comparisons:
-            if c['family'] != family or c['records'] != largest:
+            if c['family'] != family or c['records'] != largest or (family == 'typed-known' and not c['fixture'].startswith('string-')):
                 continue
             lines.append(f"| {c['fixture']} | {c['byte_native']:,} | {c['bit_native']:,} | {c['byte_index']:,} | {c['bit_index']:,} | {c['total_delta_percent']:+.2f}% | {c['extra_bytes_per_record']:+.3f} |")
         lines += ['']

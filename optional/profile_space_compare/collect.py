@@ -56,7 +56,7 @@ def main():
     raw = output / 'raw'
     raw.mkdir(exist_ok=True)
     rows, files, fixtures = [], [], {}
-    modes = ['raw-byte', 'raw-bit', 'typed-byte', 'typed-bit']
+    modes = ['raw-byte', 'raw-bit', 'typed-byte', 'typed-bit', 'typed-byte-known']
     for count in args.sizes:
         for mode in modes:
             work = output / 'work' / f'{count}-{mode}'
@@ -68,7 +68,7 @@ def main():
             if result.returncode:
                 raise RuntimeError(f'{count}/{mode} failed: {result.stderr}')
             current = list(csv.DictReader(result.stdout.splitlines()))
-            assert len(current) >= 8 * 7
+            assert len(current) >= 10 * 7
             for row in current:
                 assert row['mode'] == mode and int(row['logical_records']) == count
                 folder = f"{row['fixture']}-{count}-{mode}"

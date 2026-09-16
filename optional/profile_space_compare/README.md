@@ -17,17 +17,17 @@ python3 optional/profile_space_compare/collect.py build-space/profile-space /tmp
 python3 optional/profile_space_compare/analyze.py /tmp/profile-space-results
 ```
 
-`EVERETT_SPACE_SANITIZE=ON` enables ASan/UBSan for the four small CTest cases.
-Each case exercises all eight datasets. The collector runs 1,024, 8,192, 32,768
-and 131,072 logical records in four modes, retains exact file sizes and hashes,
+`EVERETT_SPACE_SANITIZE=ON` enables ASan/UBSan for the five small CTest cases.
+Each case exercises all ten datasets. The collector runs 1,024, 8,192, 32,768
+and 131,072 logical records in five modes, retains exact file sizes and hashes,
 and removes the disposable files after validating them. `--keep-files` keeps
 those files for inspection. `--sizes` selects other positive multiples of four.
 
 Inputs and Encodings
 --------------------
 
-Each size has ordered and permuted 64-bit integers, structured strings and
-16-byte high-entropy binary strings. Fixed values are eight bytes for integers
+Each size has ordered and permuted 64-bit integers, structured strings ending in decimal identifiers, the same strings with a
+constant `/state` suffix, and 16-byte high-entropy binary strings. Fixed values are eight bytes for integers
 and sixteen bytes for strings. Variable values have deterministic lengths
 between zero and 512 bytes. Binary keys include embedded NUL bytes. There are
 no tombstones, overwritten rows, compression dictionaries or entropy codecs.
@@ -38,6 +38,7 @@ no tombstones, overwritten rows, compression dictionaries or entropy codecs.
 | `raw-bit` | KV02 | Identical order bytes, bit FC | Identical raw bytes; fixed width declared where applicable |
 | `typed-byte` | KV02 | Current typed byte transport | Current sort codecs and byte padding |
 | `typed-bit` | KV03 | Current sort-owned bit grammar | Current sort codecs, no byte padding |
+| `typed-byte-known` | KV02 | Same as `typed-byte` | Fixed string batches explicitly declare their 17-byte encoded value width |
 
 The typed modes have the same single sort: `unsigned_key<64>` with
 `unsigned_value<64>` or `string_value<>`, or the built-in
@@ -58,8 +59,13 @@ The KV03 writer detects a common encoded value width at construction. The
 incremental KV02 writer uses the policy's declared width. Fixed integer sorts
 and raw fixed-width controls declare it; the built-in optional-string sort
 does not promise a fixed width merely because this fixture has equal lengths.
-The report retains actual per-file common widths and does not silently change
-these production choices to make the formats agree.
+The report retains actual per-file common widths. The separate
+`typed-byte-known` control passes width 17 to `profile_native_writer` for the
+all-present, sixteen-byte string fixtures; this removes each outer value length
+and subtracts values from the EF universe. These are real supported files,
+with no inference pass hidden in the default mode. Other fixtures in this
+control are byte-for-byte identical to `typed-byte`. The width applies to that
+file, not to every future batch or to tombstones.
 
 Complete Graph
 --------------
