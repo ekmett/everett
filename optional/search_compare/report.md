@@ -180,3 +180,10 @@ then timed checksums. The analysis checks matching record-stream fingerprints,
 result checksums and space across processes. Raw observations, source/header
 hashes, binary hashes, operation counts and sanitized profiler samples are in
 [the retained artifact manifest](results/2026-09-16-m2max/manifest.json).
+
+- Raw timer observations: [primary CSV](results/2026-09-16-m2max/primary-queries.csv.gz),
+  [alternative CSV](results/2026-09-16-m2max/alternatives-queries.csv.gz).
+- Complete-file and preparation observations: [primary space CSV](results/2026-09-16-m2max/primary-space.csv.gz),
+  [alternative space CSV](results/2026-09-16-m2max/alternatives-space.csv.gz).
+- [Untimed operation counts](results/2026-09-16-m2max/operation-counts.csv) and
+  [measurement provenance](results/2026-09-16-m2max/provenance.json).
