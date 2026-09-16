@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "57d9cacdf892c41ab8818f6e6f6e0c8984aaa8c74892701293fcc226d314f485"
+      "normalized_sha256": "7a8e53610c12c84a53c0bd5a49adf822c7c19e270a9d65d4710de6f69e08052c"
     }
   ],
   "checks": {
@@ -543,6 +543,12 @@
     },
     {
       "scope": "Link the isolated complete fixed-key Metal experiment and integrated transaction verification. Original measurement observations and fingerprints are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Summarize separately measured fixed-key Metal results against the forward-decoding CPU baseline. Original measurements and fingerprints remain unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

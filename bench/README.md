@@ -49,6 +49,9 @@ The [fixed-key experiment](../optional/fixed_gpu_merge/README.md) separately
 constructs native `.ff` and `.fv` candidates, including scheduled cancellations,
 actual payload copying and complete native Elias–Fano output. It uses an
 experimental envelope and has its own correctness and timing boundaries.
+Its [M2 Max measurements](../optional/fixed_gpu_merge/report.md) retain both
+random-select and stronger forward-decoding CPU baselines, payload-size and
+cancellation sweeps, skewed inputs and scenario-specific crossover brackets.
 
 Unadopted experiments
 --------------------

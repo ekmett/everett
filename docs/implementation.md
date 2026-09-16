@@ -67,6 +67,15 @@ exceptions. Fixtures compare complete bytes with the CPU oracle. This is an
 experimental native envelope, with no fractional-index reconstruction, catalog
 publication or production dispatch threshold.
 
+The [fixed-key measurements](../optional/fixed_gpu_merge/report.md) compare
+resident native merges with a forward-decoding CPU baseline. At 262,144 records
+per input, the measured Metal gains span 1.47–2.38 times for fixed values and
+1.45–2.33 times for 0–512-byte values across tested cancellation rates. Small
+inputs favor the CPU, and the older-heavy fixed-value case also loses on Metal.
+Both 86-case runs match complete output bytes. The report preserves timing
+ranges and source identities; these figures exclude checksums and durable
+publication and do not reuse the FC calibration.
+
 The separate [GPU experiment](../optional/gpu_merge/design.md) merges default
 bit-profile string replacement files through Metal. GPU passes select input
 Elias–Fano offsets, parse compressed frames, recover inherited prefixes, merge
