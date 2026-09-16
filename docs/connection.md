@@ -85,7 +85,7 @@ The [streaming scan](typed-scan.md) walks the live rows of a captured snapshot
 in key order, resolving older contributions without collecting the whole table.
 Use `db.range(lo, hi)` for a half-open interval, and `db.erase_range(lo, hi)` to
 publish a checked batch of tombstones for its selected rows. The range guide
-explains iterator copies, concurrent insertions and prefix-scan initialization.
+explains iterator copies, concurrent insertions and fractional-cascade positioning.
 
 Deleting an absent key fails. The connection stays usable after that rejected
 command: we do not manufacture a deletion credit for something that was never

@@ -23,12 +23,13 @@ namespace everett {
 
   // Native runs are oldest first. The heap orders equal keys by that age,
   // so noncommutative arrows are applied in exactly their original order.
-  // This is a full scan, including earlier sorts before reaching S, not an
-  // indexed range seek. It retains one reconstructed key per native run and
-  // at most one resolved output row. Values continue borrowing native bytes.
+  // The fractional cascade positions each native run at the lower bound.
+  // It retains one reconstructed key per native run and at most one resolved
+  // output row. Values continue borrowing native bytes.
   // Each step unit consumes one physical record; key bytes, callbacks and
-  // heap comparisons are additional costs. Construction decodes each run's
-  // first key. The captured world keeps all mappings and cursors alive.
+  // heap comparisons are additional costs. Construction searches bounded
+  // catalog windows and seeds each run from the lower-bound query. The captured
+  // world keeps all mappings and cursors alive.
   template <class S, class World> struct typed_scan {
     using policy_type = typename World::policy_type;
     using row_type = typed_row<S>;
@@ -37,14 +38,17 @@ namespace everett {
     using key_transport = typename World::key_transport;
 
     using key_type = typed_detail::key_t<S>;
-    explicit typed_scan(World snapshot, std::optional<key_type> lo = {}, std::optional<key_type> hi = {})
-      : snapshot_(std::move(snapshot)), sweep_(snapshot_) {
-      prefix_ = key_transport::template prefix<S>();
-      if (lo) lower_ = key_transport::template encode<S>(*lo);
-      if (hi) upper_ = key_transport::template encode<S>(*hi);
+    explicit typed_scan(World snapshot, std::optional<key_type> lo = {}, std::optional<key_type> hi = {},
+        range_positioning_work * work = nullptr)
+      : snapshot_(std::move(snapshot)), prefix_(key_transport::template prefix<S>()),
+        lower_(lo ? std::optional{key_transport::template encode<S>(*lo)} : std::nullopt),
+        upper_(hi ? std::optional{key_transport::template encode<S>(*hi)} : std::nullopt) {
+      if (work) *work = {};
       if (lower_ && upper_ && compare_bits(lower_->view(), upper_->view()) > 0)
         throw std::invalid_argument("reversed typed range");
-      finished_ = sweep_.done() || (lower_ && upper_ && compare_bits(lower_->view(), upper_->view()) == 0);
+      if (lower_ && upper_ && compare_bits(lower_->view(), upper_->view()) == 0) { finished_ = true; return; }
+      sweep_ = typed_detail::native_sweep<World>(snapshot_, lower_ ? lower_->view() : prefix_.view(), work);
+      finished_ = sweep_.done();
     }
     typed_scan(typed_scan const &) = default;
     typed_scan & operator=(typed_scan const &) = default;
@@ -166,9 +170,9 @@ namespace everett {
   private:
     std::shared_ptr<void const> identity_ = std::make_shared<int const>(0);
     World snapshot_;
-    typed_detail::native_sweep<World> sweep_;
     bit_string prefix_, group_key_;
     std::optional<bit_string> lower_, upper_;
+    typed_detail::native_sweep<World> sweep_;
     std::optional<row_type> group_, row_;
     bit_view last_value_;
     std::uint64_t last_retained_ = 0;
@@ -190,14 +194,15 @@ namespace everett {
   };
 
   // Bounds follow the sort's encoded ordering. Omitted endpoints are open.
-  // FC initialization scans preceding records; this is not an indexed seek.
+  // The fractional cascade finds the native starts; cursors remain open thereafter.
   template <class S = void, class World> auto range(World snapshot,
       std::optional<typed_detail::key_t<std::conditional_t<std::is_void_v<S>,
         typed_detail::default_sort_t<typename World::policy_type>, S>>> lo = {},
       std::optional<typed_detail::key_t<std::conditional_t<std::is_void_v<S>,
-        typed_detail::default_sort_t<typename World::policy_type>, S>>> hi = {}) {
+        typed_detail::default_sort_t<typename World::policy_type>, S>>> hi = {},
+      range_positioning_work * work = nullptr) {
     using selected = std::conditional_t<std::is_void_v<S>, typed_detail::default_sort_t<typename World::policy_type>, S>;
-    return typed_scan<selected, World>(std::move(snapshot), std::move(lo), std::move(hi));
+    return typed_scan<selected, World>(std::move(snapshot), std::move(lo), std::move(hi), work);
   }
   template <class S = void, class World> auto erase_range(World snapshot,
       std::optional<typed_detail::key_t<std::conditional_t<std::is_void_v<S>,

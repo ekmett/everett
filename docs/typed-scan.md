@@ -120,19 +120,42 @@ fails during allocation, decoding or a sort callback, its unpublished
 contribution is discarded and the cursor is poisoned too. Restart selection
 from the retained snapshot; retrying the partly consumed cursor is rejected.
 
-Range initialization currently scans native prefixes up to the lower bound;
-it is not an indexed seek. It stops at the upper bound instead of walking the
-remaining suffix. Selecting a later sort also walks past earlier sorts. A late,
-small range can therefore traverse many preceding records. We maintain a heap of native cursors,
-one reconstructed key per run, and one resolved row; we do not build an
-in-memory copy of the whole table. Construction decodes each run's first key.
-Each step unit consumes one physical record, including obsolete versions and
-tombstones. Range selection runs on the caller. Its validation against a changed
-layout runs before mutation on the publication worker and can scan the preceding
-physical records again; this validation is outside the mutation-count structural
-merge charge. A small late range therefore has no worst-case latency guarantee
-from that charge or the queue's contribution bound. String bytes, heap comparisons and sort callbacks have their own
-costs. `consumed()` reports the physical records traversed.
+Range initialization follows the fractional cascade once to find the first
+native ordinal at or above the lower bound in every run. Without an explicit
+lower bound, the sort's prefix is the query, so earlier sorts are skipped. We
+keep those native cursors open for the rest of the range; crossing subsequent
+codec blocks advances their framing and block offsets rather than starting
+another point query. Traversal stops at the upper bound.
+
+This also gives us the first key without decoding its preceding native keys.
+Let $p$ precede the selected native key $x$ and let $q$ be the bound. Since
+$p < q \leq x$, every prefix shared by $p$ and $x$ is also shared by $q$ and
+$x$. The stored retained prefix is no longer than that shared prefix. We seed
+the cursor with those bits from $q$ and append the frame's literal suffix.
+The first native key retains no prefix; a bound past the last key creates an
+already-finished cursor without reading a frame. Conservative backtracking, proper-prefix queries and sort-code transitions
+obey the same argument. An equal false borrow can put the native match before
+the projected window, so we recover its ordinal before seeding. A missing
+borrowed predecessor starts the target at ordinal zero: its keys are all above
+the query, and still belong in the range.
+
+For $L$ live catalogs, sampling width $K$ and codec block size $W$, positioning
+visits at most $K$ comparison headers per catalog, replays fewer than $W$ framing
+headers per projected stream, and at most $W$ per native cursor seed. Key-byte
+comparisons, selector dispatch and the first reconstructed key have their own
+costs. Passing a `range_positioning_work*` as the fourth argument to
+`range(snapshot, lo, hi, &work)` records catalog and comparison-header counts,
+compared bits, and the framing-header bound for native seeding. Ordinary ranges
+do not count this instrumentation. `consumed()` counts physical records
+traversed after positioning.
+
+We maintain a heap of native cursors, one reconstructed key per run and one
+resolved row. Each step unit consumes one physical record, including obsolete
+versions and tombstones. Heap comparisons and sort callbacks are additional
+costs. A changed-layout deletion validation positions its advancing frontier
+at the first selected key too. Selection runs on the caller; validation runs
+before mutation on the publication worker. These query costs are outside the
+mutation-count structural merge charge and queue's contribution bound.
 
 The default codec cursor reuses its current key buffer and borrows value bytes
 from the pinned source. Full scans therefore materialize keys that point

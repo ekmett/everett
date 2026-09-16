@@ -261,7 +261,7 @@ namespace everett {
       return decode(ordinal, select_high(ordinal));
     }
 
-    elias_fano_cursor cursor() const;
+    elias_fano_cursor cursor(std::uint64_t ordinal = 0) const;
 
   private:
     friend struct elias_fano_cursor;
@@ -323,10 +323,22 @@ namespace everett {
 
   // Forward selection retains the unused high bits of its current word.
   // Every 256 entries it enters the next directory sample, preserving dense
-  // span and sparse-exception checks. Construction reads no payload pages.
+  // span and sparse-exception checks. An ordinal start performs one selection;
+  // starting at zero or a directory boundary reads no payload pages.
   // The source sections must outlive this cursor and any copies of it.
   struct elias_fano_cursor {
-    explicit elias_fano_cursor(elias_fano_view source) : source_(source) {}
+    explicit elias_fano_cursor(elias_fano_view source, std::uint64_t ordinal = 0)
+      : source_(source), ordinal_(ordinal) {
+      if (ordinal > source.size()) error_detail::raise<std::out_of_range>("Elias-Fano cursor ordinal");
+      if (done() || !(ordinal & 255)) return;
+      auto sample = source_.samples_[ordinal >> 8];
+      sample_ = {sample.first, sample.sparse};
+      if (sample_.sparse == std::numeric_limits<std::uint64_t>::max()) {
+        auto position = source_.select_high(ordinal);
+        word_ = position >> 6;
+        remaining_ = source_.high_[word_] & (~std::uint64_t{0} << (position & 63));
+      }
+    }
     bool done() const noexcept { return ordinal_ == source_.size(); }
     std::uint64_t ordinal() const noexcept { return ordinal_; }
     std::uint64_t next() {
@@ -372,7 +384,7 @@ namespace everett {
     std::uint64_t ordinal_ = 0, word_ = 0, remaining_ = 0;
   };
 
-  inline elias_fano_cursor elias_fano_view::cursor() const { return elias_fano_cursor(*this); }
+  inline elias_fano_cursor elias_fano_view::cursor(std::uint64_t ordinal) const { return elias_fano_cursor(*this, ordinal); }
 
   struct elias_fano {
     static elias_fano build(std::span<std::uint64_t const> residuals) {

@@ -107,6 +107,39 @@ namespace {
     while (engine.pending()) engine.advance(1'000'000);
     assert(engine.snapshot().live_count() == 0 && engine.snapshot().signature() == 0 && contents(engine.snapshot()).empty());
   }
+  template <class E> void indexed_ranges() {
+    E engine("range/indexed/1");
+    std::string shared(96, 'q');
+    auto key = [&](unsigned i) { return shared + std::to_string(1'000'000 + i * 2); };
+    for (unsigned i = 0; i != 1024; ++i) engine.contribute(E::put(key(i), "v"));
+    auto snapshot = engine.snapshot();
+    for (unsigned start : {0u, 511u, 991u, 1023u, 1024u}) {
+      range_positioning_work work;
+      auto walk = range(snapshot, key(start), key(start + 17), &work);
+      using P = typename E::policy_type;
+      assert(work.comparisons.visited_headers <= work.catalogs * P::group_size);
+      assert(work.comparisons.skipped_headers <= work.catalogs * 3 * (P::codec_block_size - 1));
+      assert(work.seeded_headers <= work.catalogs * P::codec_block_size);
+      unsigned count = 0;
+      while (auto row = walk.next()) { assert(row->key == key(start + count)); ++count; }
+      assert(count == std::min(17u, 1024u - start));
+      // No superseded rows occur in this fixture. Lower-bound setup must not
+      // leak earlier physical records into the open sequential walk.
+      assert(walk.consumed() == count);
+    }
+    auto absent = key(991); absent.back() = char(absent.back() + 1);
+    auto walk = range(snapshot, absent, key(996));
+    assert(walk.next()->key == key(992));
+    unsigned count = 1;
+    while (walk.next()) ++count;
+    assert(count == 4 && walk.consumed() == 4);
+    auto empty = range(snapshot, shared); // Proper-prefix bound precedes every key.
+    assert(empty.next()->key == key(0) && empty.consumed() == 1);
+    auto long_window = range(snapshot, key(511));
+    unsigned ordinal = 511;
+    while (auto row = long_window.next()) assert(row->key == key(ordinal++));
+    assert(ordinal == 1024 && long_window.consumed() == 513);
+  }
   struct append_sort {
     using encoding = bit_encoding<>;
     using key_codec = unsigned_key<16>;
@@ -145,6 +178,22 @@ namespace {
       ++oracle;
     }
     assert(oracle->first == 6 && !independent.next());
+    auto later_sort = scan<append_sort>(engine.snapshot());
+    unsigned count = 0;
+    while (later_sort.next()) ++count;
+    std::uint64_t expected_physical = 0;
+    auto prefix = engine_type::world_type::key_transport::template prefix<append_sort>();
+    auto layout = engine.snapshot();
+    for (auto const & run : layout.runtime().runs()) {
+      auto cursor = run->native->view().cursor();
+      while (!cursor.done()) {
+        auto key = cursor.peek().key.prefix;
+        if (key.size() >= prefix.bit_size && compare_bits(key.subview(0, prefix.bit_size), prefix.view()) == 0)
+          ++expected_physical;
+        cursor.advance();
+      }
+    }
+    assert(count == 8 && later_sort.consumed() == expected_physical);
     auto old = engine.snapshot();
     auto strings_only = erase_range<strings>(old);
     engine.contribute(std::move(strings_only));
@@ -265,6 +314,10 @@ int main() {
     everett::sort_runtime_family<everett::string_policy>>>();
   verify<everett::replacement_rebuild_engine<everett::string_policy>>();
   verify<everett::replacement_rebuild_engine<everett::storage_policy<>>>();
+  indexed_ranges<everett::typed_engine<everett::string_policy>>();
+  indexed_ranges<everett::typed_engine<everett::storage_policy<>>>();
+  indexed_ranges<everett::typed_engine<everett::string_policy, everett::wrapping_fingerprint_algebra, 256,
+    everett::sort_runtime_family<everett::string_policy>>>();
   no_point_queries();
   chronological_ranges();
   exact_witnesses();

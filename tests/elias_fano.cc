@@ -87,6 +87,14 @@ namespace {
       auto copy = cursor;
       if (i + 1 != values.size()) require(copy.next() == values[i + 1], "EF cursor copy position");
     }
+    for (std::uint64_t first : std::array<std::uint64_t, 10>{0, 1, 31, 32, 127, 255, 256, 257,
+         values.empty() ? 0ULL : std::uint64_t(values.size() - 1), std::uint64_t(values.size())}) {
+      if (first > values.size()) continue;
+      auto positioned = view.cursor(first);
+      for (auto i = first; i < std::min<std::uint64_t>(first + 258, values.size()); ++i)
+        require(positioned.next() == values[i], "EF positioned cursor differs from integer oracle");
+    }
+    rejects([&] { (void)view.cursor(values.size() + 1); });
     require(cursor.done() && cursor.ordinal() == values.size(), "EF cursor end");
     rejects([&] { (void)cursor.next(); });
     rejects([&] { (void)view.select(values.size()); });

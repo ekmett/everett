@@ -347,8 +347,17 @@ namespace everett {
   };
 
   template <class P, class Selector> struct sort_profile_cursor {
-    explicit sort_profile_cursor(sort_profile_view<P, Selector> view) : view_(view) {
-      if (view.size()) { frame_ = view_.encoded_at(0); decode(); }
+    explicit sort_profile_cursor(sort_profile_view<P, Selector> view) : sort_profile_cursor(view, 0, {}) {}
+    // ordinal must be the native lower bound of query, as for profile_cursor.
+    sort_profile_cursor(sort_profile_view<P, Selector> view, std::uint64_t ordinal, bit_view query)
+      : view_(view), ordinal_(ordinal) {
+      if (ordinal > view.size()) throw std::out_of_range("sort profile cursor ordinal");
+      if (!done()) {
+        frame_ = view_.encoded_at(ordinal);
+        if (frame_.retained > query.size()) throw std::invalid_argument("sort cursor missing query prefix");
+        key_ = bit_string::copy(query.subview(0, frame_.retained));
+        for (auto part : frame_.literal) profile_detail::append(key_, part);
+      }
     }
     bool done() const noexcept { return ordinal_ == view_.size(); }
     profile_item<P> peek() const {
@@ -382,10 +391,6 @@ namespace everett {
     sort_profile_frame frame_;
     bit_string key_;
     std::uint64_t ordinal_ = 0;
-    void decode() {
-      if (frame_.retained) throw std::invalid_argument("unseeded sort profile begins inside a key");
-      for (auto part : frame_.literal) profile_detail::append(key_, part);
-    }
   };
 
   template <class P, class Selector> struct sort_profile_family {

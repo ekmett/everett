@@ -1068,10 +1068,22 @@ namespace everett {
     using policy_type = P;
     static constexpr stream_role role = Role;
 
-    explicit profile_cursor(profile_view<P, Role> view) : view_(view), offsets_(view.group_offsets()) {
+    explicit profile_cursor(profile_view<P, Role> view) : profile_cursor(view, 0, {}) {}
+
+    // The caller supplies the true lower bound of query in this native run.
+    // The interval between the preceding key and this key shares every
+    // retained prefix, so query supplies the first frame's missing bits.
+    profile_cursor(profile_view<P, Role> view, std::uint64_t ordinal, bit_view query)
+      : view_(view), offsets_(view.group_offsets(),
+          ordinal < view.size() ? ordinal / P::codec_block_size : view.group_offsets().size()), ordinal_(ordinal) {
+      if (ordinal > view.size()) error_detail::raise<std::out_of_range>("profile cursor ordinal");
       if (!done()) {
-        record_ = view_.encoded_at(0);
+        record_ = view_.encoded_at(ordinal);
         (void)offsets_.next();
+        auto retained = record_.retained << P::unit_shift;
+        if (retained > query.size()) error_detail::raise<std::invalid_argument>("profile cursor missing query prefix");
+        scratch_ = bit_string::copy(query.subview(0, retained));
+        context_ = record_.retained;
         profile_view<P, Role>::decode_into(record_, std::numeric_limits<std::uint64_t>::max(), scratch_, context_);
       }
     }

@@ -9,6 +9,7 @@
 
 #include <everett/cola_index.h>
 #include <everett/cola_query.h>
+#include <everett/native_sweep.h>
 
 #include <algorithm>
 #include <array>
@@ -264,6 +265,16 @@ namespace {
             "comparison replay exceeded one physical block");
     require(native_work.visited_headers + borrowed_work[0].visited_headers + borrowed_work[1].visited_headers
             <= P::group_size, "three projected streams exceed one virtual window");
+    auto positioned = input.encoded->view().lower_bound_window(group, lower);
+    auto expected_bound = std::lower_bound(input.native_rows.begin(), input.native_rows.end(), query,
+      [](auto const & row, bit_view key) { return compare_bits(row.key.view(), key) < 0; });
+    require(positioned.native_ordinal == std::uint64_t(expected_bound - input.native_rows.begin()),
+      "routed native lower bound differs from sorted oracle");
+    auto cursor = profile_cursor<P, stream_role::native>(input.encoded->native().view(), positioned.native_ordinal, query);
+    for (auto i = positioned.native_ordinal; i != std::min<std::uint64_t>(input.native_rows.size(), positioned.native_ordinal + 2 * P::codec_block_size); ++i) {
+      require(equal(cursor.peek().key.prefix, input.native_rows[i].key.view()), "bound-seeded FC cursor differs from key oracle");
+      cursor.advance();
+    }
     auto expected_native = find(input.native_rows, query);
     require(bool(result.native) == bool(expected_native), "routed search lost/invented native match");
     if (expected_native)
@@ -528,6 +539,46 @@ namespace {
   }
 #endif
 
+  template <class P> struct sweep_world {
+    using policy_type = P;
+    struct runtime_family { using native_type = profile_array<P>; };
+    struct run {
+      std::shared_ptr<profile_array<P> const> native;
+      auto native_owner() const { return native; }
+    };
+    struct runtime_state {
+      cola_query_root<P> root;
+      std::vector<run> sources;
+      auto query_root() const { return root; }
+      auto const & runs() const { return sources; }
+    } state;
+    auto const & runtime() const { return state; }
+  };
+  template <class P> void check_sweep(cola_query_root<P> const & root, bit_view query) {
+    sweep_world<P> world{{root, {}}};
+    std::vector<bit_string> keys;
+    auto add = [&](auto native) {
+      world.state.sources.push_back({native});
+      auto cursor = native->view().cursor();
+      while (!cursor.done()) { keys.push_back(bit_string::copy(cursor.peek().key.prefix)); cursor.advance(); }
+    };
+    for (auto node = root.head(); node; node = node->main_target()) {
+      add(node->native_owner());
+      if (auto secondary = node->secondary_target()) add(secondary);
+    }
+    std::sort(keys.begin(), keys.end(), [](auto const & a, auto const & b) { return compare_bits(a.view(), b.view()) < 0; });
+    auto expected = std::lower_bound(keys.begin(), keys.end(), query,
+      [](auto const & a, bit_view b) { return compare_bits(a.view(), b) < 0; });
+    range_positioning_work work;
+    typed_detail::native_sweep<sweep_world<P>> sweep(world, query, &work);
+    require(work.comparisons.visited_headers <= work.catalogs * P::group_size, "cascade start exceeded local header budget");
+    for (unsigned count = 0; expected != keys.end() && count != 47; ++count, ++expected) {
+      require(!sweep.done() && equal(sweep.peek().key.prefix, expected->view()), "cascade sweep starts at wrong native bounds");
+      sweep.consume();
+    }
+    if (expected == keys.end()) require(sweep.done(), "cascade sweep retained records beyond oracle end");
+  }
+
   template <class P> void matrix() {
     endpoints_and_ownership<P>();
     malformed_chains<P>();
@@ -557,6 +608,10 @@ namespace {
     auto prepared = cola_index<P>::prepare_root(top->encoded, top->secondary);
     require(prepared && prepared->virtual_size() <= P::group_size, "prepared root exceeds one window");
     auto query_root = cola_query_root<P>::adopt_prepared(prepared);
+    check_sweep(query_root, bit_view{}); // No predecessor on either onward route.
+    auto prefix_query = text("m/common/"), after_query = text("zz");
+    check_sweep(query_root, prefix_query.view());
+    check_sweep(query_root, after_query.view()); // Every native cursor is at EOF.
     rejects([&] { cola_query_root<P>::adopt_prepared(nullptr); });
     rejects([&] { cola_query_root<P>::adopt_prepared(top->encoded); });
     std::vector<bit_string> queries = natives;
@@ -571,6 +626,7 @@ namespace {
     for (std::size_t i = 0; i != queries.size(); ++i) {
       auto query = queries[i].view();
       check_query(*top, query, unsigned(i % 8));
+      if (i % 97 == 0 || i + 4 >= queries.size()) check_sweep(query_root, query);
       std::vector<match> actual, wanted;
       std::uint64_t visits = 0;
       walk<P>(prepared, 0, profile_query_context<P>(query), actual, visits);

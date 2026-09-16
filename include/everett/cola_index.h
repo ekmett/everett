@@ -91,6 +91,11 @@ namespace everett {
     std::array<std::optional<profile_blob_borrowed_predecessor<P>>, 2> predecessors;
   };
 
+  template <class P> struct cola_lower_bound_result {
+    std::uint64_t native_ordinal = 0;
+    std::array<std::optional<profile_blob_borrowed_predecessor<P>>, 2> predecessors;
+  };
+
   template <class P> struct profile_stream_family {
     using native_view = profile_view<P, stream_role::native>;
     using borrowed_view = profile_view<P, stream_role::borrowed>;
@@ -171,6 +176,44 @@ namespace everett {
         [](std::uint64_t ordinal, bit_view value) {
           return profile_blob_native_match<P>{ordinal, bit_string::copy(value)};
         }, native_work, borrowed_work);
+    }
+    // The canonical routed window contains the native lower bound, except
+    // that an equal false borrow can follow its native occurrence past a cut.
+    cola_lower_bound_result<P> lower_bound_window(std::uint64_t group, profile_query_context<P> const & lower,
+        profile_comparison_work * work = nullptr) const {
+      if (lower.order() > 0) error_detail::raise<std::invalid_argument>("query precedes COLA boundary");
+      auto window = project(group);
+      cola_lower_bound_result<P> result{window.native_last, {}};
+      bool equal = false;
+      native_.compare_window(window.native_first, window.native_last, lower,
+        [&](profile_comparison_item<P> item) {
+          if (item.comparison.order() >= 0) {
+            result.native_ordinal = item.ordinal;
+            equal = !item.comparison.order();
+            return false;
+          }
+          return true;
+        }, work);
+      for (unsigned route = 0; route < 2; ++route) {
+        auto remember = [&](std::uint64_t ordinal, profile_query_context<P> const & comparison) {
+          auto is_false = false_borrow(route, ordinal);
+          result.predecessors[route] = profile_blob_borrowed_predecessor<P>{ordinal,
+            cola_detail::target_ordinal(ordinal, group_size), is_false, comparison};
+          if (!comparison.order() && is_false && !equal) {
+            if (!window.native_first) error_detail::raise<std::invalid_argument>("COLA false borrow has no native predecessor");
+            result.native_ordinal = std::min(result.native_ordinal, window.native_first - 1);
+          }
+        };
+        borrowed_[route].compare_window(window.borrowed_first[route], window.borrowed_last[route], lower,
+          [&](profile_comparison_item<P> item) {
+            if (item.comparison.order() > 0) return false;
+            remember(item.ordinal, item.comparison);
+            return true;
+          }, work);
+        if (!result.predecessors[route] && window.borrowed_first[route])
+          remember(window.borrowed_first[route] - 1, lower.predecessor(cuts_[route][group]));
+      }
+      return result;
     }
   private:
     friend struct cola_detail::query_access;

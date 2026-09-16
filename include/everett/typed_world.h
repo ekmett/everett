@@ -525,7 +525,8 @@ namespace everett {
         throw std::invalid_argument("typed contribution uses another schema");
       std::optional<typed_detail::native_sweep<world_type>> sweep;
       bool same_layout = input.observed_ && input.base_ && input.base_->runtime().same_layout(current_.runtime());
-      if (input.observed_ && !same_layout) sweep.emplace(current_);
+      if (input.observed_ && !same_layout && !input.records_.empty())
+        sweep.emplace(current_, input.records_.front().key.view());
       std::size_t ordinal = 0;
       // Validate the complete contribution before changing the executor. A
       // range contribution reuses one frontier, including across absent rows.
