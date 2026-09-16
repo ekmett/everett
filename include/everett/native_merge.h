@@ -249,9 +249,18 @@ namespace everett {
               else return std::invoke(compose_, older.key.prefix, older.value, newer.value);
             }();
             auto limit = std::min(older_cursor_.retained_bits(), newer_cursor_.retained_bits());
-            if constexpr (std::is_same_v<decltype(value), bit_view>)
-              append(older_cursor_, older, value, older_prefix_, limit);
-            else append(older_cursor_, older, value.view(), older_prefix_, limit);
+            auto emit = [&](auto const & source, auto const & item) {
+              if constexpr (std::is_same_v<decltype(value), bit_view>)
+                append(source, item, value, older_prefix_, limit);
+              else append(source, item, value.view(), older_prefix_, limit);
+            };
+            if constexpr (encoded_keys) {
+              // Equal keys have interchangeable literal donors. Use the one
+              // that already carries the conservative tombstone boundary,
+              // avoiding reconstruction of an older, shorter literal.
+              if (newer.retained < older.retained) emit(newer_cursor_, newer);
+              else emit(older_cursor_, older);
+            } else emit(older_cursor_, older);
             older_prefix_ = advance(older_cursor_);
             newer_prefix_ = advance(newer_cursor_);
           }
