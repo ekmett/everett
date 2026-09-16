@@ -257,9 +257,9 @@ namespace diet {
       return quote;
     }
 
-    // Validation and allocation of the input's detached replay records precede
-    // mutation. Intermediate per-key cuts stay private until the entire batch
-    // and its owed service succeeds.
+    // Complete validation precedes mutation. The per-key fallback also prepares
+    // detached replay records before execution. Intermediate cuts stay private
+    // until the entire batch and its owed service succeeds.
     cola_type contribute(contribution_type input) {
       writable();
       if (!admission_ready()) throw std::logic_error("replacement foreground needs recovery service");
