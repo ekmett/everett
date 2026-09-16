@@ -603,8 +603,9 @@ C is absent iff borrowed rank is zero; borrowed rank equal to a
 nonempty stream's length still names the final preceding key. The
 [comparison design](comparison-fc.md) derives these cases.
 
-`profile_blob<P>::build` and `reindex` have one ordinary-FC contract; reindexing
-shares the native allocation while replacing borrowed data, cut LCPs, ranks and
+`profile_blob<P>::build` and `reindex` require sorted FC streams with valid
+retained prefixes; maximal retention is the default, and conservative retention
+is also valid. Reindexing shares the native allocation while replacing borrowed data, cut LCPs, ranks and
 false-borrow flags. Sequential cursors retain complete key contexts for
 construction and sample emission. Arbitrary `reconstruct_at` calls may walk a
 prefix chain under ordinary FC. The standalone array's optional locality-preserving

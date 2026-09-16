@@ -258,7 +258,7 @@ namespace everett {
   }
 
   // Owns only the small directory and any endian-conversion buffers. Source
-  // ordinary-FC arrays are borrowed and must remain immutable and alive through
+  // FC arrays are borrowed and must remain immutable and alive through
   // every use. Encoding does not scan them to certify that precondition.
   // Move-only because copied section spans could refer to conversion buffers.
   template <class P> struct encoded_sections {

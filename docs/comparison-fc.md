@@ -235,4 +235,5 @@ of maximal prefix retention.
 `profile_view::reconstruct_at` is a separate full-reconstruction operation.
 Under ordinary FC its cost includes the preceding context it traverses. A
 standalone profile encoder can opt into locality-preserving restarts for this
-operation; blob construction and cascade queries use ordinary FC.
+operation; blob construction and cascade queries work with maximal or
+conservative retained prefixes and do not require those restarts.

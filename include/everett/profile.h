@@ -1011,7 +1011,7 @@ namespace everett {
   // caller retains the view's sections. A copied frame's suffix/value views
   // remain valid while those sections live; the peek reference expires on
   // advance or destruction. Parsing checks lengths and block offsets, but
-  // sorted order and maximal retention require semantic admission or a caller
+  // sorted order and valid retention require semantic admission or a caller
   // that compares against the physical predecessor.
   template <class P, stream_role Role> struct profile_encoded_cursor {
     using policy_type = P;
