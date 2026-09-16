@@ -114,7 +114,28 @@ namespace everett {
       using type = typename Family::key_transport;
     };
     template <class P, class Family> using transport_t = typename transport<P, Family>::type;
-    template <class P, class Transport = profile_key_transport<P>> struct compose {
+    template <class P, class Transport> struct tombstone_predicate {
+      bool is_tombstone(bit_view encoded) const
+        requires std::same_as<default_sort_t<P>, unsorted<std::optional<std::string>>> {
+        // The optional-value tag is independent of the key and payload length.
+        return !encoded.at(0);
+      }
+      bool is_tombstone(bit_view key, bit_view encoded) const {
+        return Transport::dispatch(key, [&]<class S>(std::type_identity<S>, auto const & decoded) {
+          if constexpr (replacement<S>) {
+            using semantics = sort_semantics<S>;
+            auto state = semantics::apply(decoded, semantics::initial(decoded), value<P, S>(encoded));
+            return !semantics::present(decoded, state);
+          } else return false;
+        });
+      }
+    };
+    template <class P, class Transport = profile_key_transport<P>>
+    struct replacement_compose : tombstone_predicate<P, Transport> {
+      // Only the binary overload: key-aware composition would reconstruct keys.
+      bit_view operator()(bit_view, bit_view newer) const { return newer; }
+    };
+    template <class P, class Transport = profile_key_transport<P>> struct compose : tombstone_predicate<P, Transport> {
       bit_string operator()(bit_view key, bit_view older, bit_view newer) const {
         return Transport::dispatch(key, [&]<class S>(std::type_identity<S>, auto const & decoded) {
           auto before = value<P, S>(older), after = value<P, S>(newer);
@@ -195,6 +216,7 @@ namespace everett {
     template <class S = typed_detail::default_sort_t<P>> contribution_type
     erase(typed_detail::key_t<S> const & key) const requires typed_detail::replacement<S>;
   private:
+    template <class, class, class> friend struct typed_batch;
     template <class, class, std::uint64_t, class> friend struct typed_engine;
     template <class, class, std::uint64_t, class> friend struct replacement_rebuild_engine;
     // A contribution already owns its encoded key. The logical key remains
@@ -204,15 +226,24 @@ namespace everett {
     // preflight still dispatches and validates the encoded key first. Custom views and
     // all escaping cursor contexts still take an owning copy.
     template <class S, class Query> typed_detail::state_t<S>
-    get_encoded(typed_detail::key_t<S> const & key, Query && encoded) const {
+    get_encoded(typed_detail::key_t<S> const & key, Query && encoded,
+        std::optional<std::uint64_t> * retained_limit_bits = nullptr) const {
       static_assert(std::same_as<std::remove_cvref_t<Query>, bit_string>);
       using semantics = sort_semantics<S>;
+      if (retained_limit_bits) retained_limit_bits->reset();
+      auto inspect = [&](auto const & native, std::uint64_t ordinal) {
+        if (retained_limit_bits) {
+          if constexpr (requires { native.encoded_at(ordinal).retained; })
+            *retained_limit_bits = native.encoded_at(ordinal).retained << P::unit_shift;
+          else *retained_limit_bits = 0; // A custom view can always emit the whole key.
+        }
+      };
       if constexpr (typed_detail::replacement<S>) {
         auto decode = [&](bit_view value) -> typed_detail::state_t<S> {
           return semantics::apply(key, semantics::initial(key), typed_detail::value<P, S>(value));
         };
         if constexpr (requires { cola_detail::first_value(state_->runtime.query_root(), std::forward<Query>(encoded), decode); }) {
-          auto value = cola_detail::first_value(state_->runtime.query_root(), std::forward<Query>(encoded), decode);
+          auto value = cola_detail::first_value(state_->runtime.query_root(), std::forward<Query>(encoded), decode, inspect);
           return value ? std::move(*value) : semantics::initial(key);
         }
       }
@@ -226,6 +257,15 @@ namespace everett {
           cursor.step(1);
           if (cursor.has_match()) {
             auto match = cursor.take_match();
+            if (retained_limit_bits) {
+              if constexpr (requires { match.secondary; match.ordinal;
+                  match.source->secondary_target()->view(); match.source->view(); }) {
+                if (match.secondary) inspect(match.source->secondary_target()->view(), match.ordinal);
+                else if constexpr (requires { match.source->view().native(); })
+                  inspect(match.source->view().native(), match.ordinal);
+                else *retained_limit_bits = 0;
+              } else *retained_limit_bits = 0;
+            }
             return semantics::apply(key, semantics::initial(key), typed_detail::value<P, S>(match.value.view()));
           }
         }
@@ -260,6 +300,8 @@ namespace everett {
     std::span<profile_record const> records() const noexcept { return records_; }
   private:
     friend struct typed_batch<P, A, Family>;
+    template <class, class, std::uint64_t, class> friend struct typed_engine;
+    template <class, class, std::uint64_t, class> friend struct replacement_rebuild_engine;
     std::optional<typed_world<P, A, Family>> base_;
     std::vector<profile_record> records_;
     typed_contribution(std::optional<typed_world<P, A, Family>> base, std::vector<profile_record> records)
@@ -279,9 +321,12 @@ namespace everett {
       requires typed_detail::replacement<S> { return change<S>(key, value); }
     template <class S = typed_detail::default_sort_t<P>> typed_batch &
     erase(typed_detail::key_t<S> const & key) requires typed_detail::replacement<S> {
-      if (base_ && !sort_semantics<S>::present(key, base_->template get<S>(key)))
+      auto encoded = typed_detail::transport_t<P, Family>::template encode<S>(key);
+      std::optional<std::uint64_t> retained;
+      if (base_ && !sort_semantics<S>::present(key, base_->template get_encoded<S>(key, encoded, &retained)))
         throw std::invalid_argument("deleting absent typed key");
-      return change<S>(key, sort_semantics<S>::erase(key));
+      records_.push_back({std::move(encoded), typed_detail::value<P, S>(sort_semantics<S>::erase(key)), retained});
+      return *this;
     }
     typed_contribution<P, A, Family> finish() && {
       std::sort(records_.begin(), records_.end(), [](auto const & a, auto const & b) {
@@ -325,7 +370,7 @@ namespace everett {
     using key_transport = typed_detail::transport_t<P, Family>;
     using compose_type = std::conditional_t<typed_detail::all_replacements<
       typename registry_detail::info<typename P::registry_type>::leaves>::value,
-      replace_native_value, typed_detail::compose<P, key_transport>>;
+      typed_detail::replacement_compose<P, key_transport>, typed_detail::compose<P, key_transport>>;
     using runtime_type = typename Family::template runtime_type<compose_type>;
     static constexpr bool charged_service = requires { runtime_type::service_budget(std::uint64_t{}); };
     static constexpr std::uint64_t ready_admission_allowance = [] {
@@ -417,23 +462,36 @@ namespace everett {
     template <class, class, std::uint64_t, class> friend struct replacement_rebuild_engine;
     // The rebuild wrapper shares this complete preflight before installing a
     // pristine batch; neither caller can publish metadata ahead of execution.
-    metadata_type prepare(contribution_type const & input) const {
+    metadata_type prepare(contribution_type & input) const {
       if (input.base() && input.base()->metadata().schema_id != current_.metadata().schema_id)
         throw std::invalid_argument("typed contribution uses another schema");
       auto metadata = current_.metadata();
       // Validate every old state and compute every delta before changing the
       // executor. Disjoint batches from one immutable base therefore commute.
-      for (auto const & record : input.records()) {
+      for (auto & record : input.records_) {
         key_transport::dispatch(record.key.view(), [&]<class S>(std::type_identity<S>, auto const & key) {
           using semantics = sort_semantics<S>;
-          auto old = current_.template get_encoded<S>(key, record.key);
+          auto arrow = typed_detail::value<P, S>(record.value.view());
+          std::optional<typed_detail::state_t<S>> replacement_next;
+          if constexpr (typed_detail::replacement<S>)
+            replacement_next.emplace(semantics::apply(key, semantics::initial(key), std::move(arrow)));
+          std::optional<std::uint64_t> retained;
+          auto target = replacement_next && !semantics::present(key, *replacement_next) ? &retained : nullptr;
+          auto old = current_.template get_encoded<S>(key, record.key, target);
           if (input.base() && old != input.base()->template get_encoded<S>(key, record.key))
             throw std::invalid_argument("stale typed key value");
-          auto arrow = typed_detail::value<P, S>(record.value.view());
-          auto next = semantics::apply(key, old, std::move(arrow));
+          auto next = [&] {
+            if constexpr (typed_detail::replacement<S>) return std::move(*replacement_next);
+            else return semantics::apply(key, old, std::move(arrow));
+          }();
           bool was = semantics::present(key, old), now = semantics::present(key, next);
-          if constexpr (typed_detail::replacement<S>)
+          if constexpr (typed_detail::replacement<S>) {
             if (!was && !now) throw std::invalid_argument("deleting absent typed key");
+            // The base may have an equivalent but physically different layout.
+            // Capture the current target before publishing the new input.
+            if (!now && retained) record.retained_limit_bits = record.retained_limit_bits
+              ? std::min(*record.retained_limit_bits, *retained) : *retained;
+          }
           auto before_hash = was ? A::lift(semantics::hash_value(key, old)) : A::zero();
           auto after_hash = now ? A::lift(semantics::hash_value(key, next)) : A::zero();
           metadata.signature = A::add(metadata.signature,

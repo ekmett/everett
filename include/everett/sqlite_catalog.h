@@ -39,11 +39,13 @@ namespace everett {
   struct catalog_options { int busy_timeout_ms = 250; };
   struct catalog_object_reservation { object_id object; file_kind kind; };
   struct catalog_saved_root { blob_identity head; std::string owner; };
+  enum class catalog_native_merge_kind { replacement, conservative_tombstones };
   // Ordered physical inputs to the library's KV03 replacement merge. Schema
   // bytes are application-owned; the operation and physical policy are not.
   struct catalog_native_merge {
     std::string schema;
     object_id older, newer;
+    catalog_native_merge_kind kind = catalog_native_merge_kind::replacement;
   };
   // Every generation has its own permanent root owner. Names and owners are
   // arbitrary nonempty byte strings; generations never wrap or get reused.
@@ -1385,7 +1387,13 @@ CREATE TABLE session_saves(name BLOB PRIMARY KEY REFERENCES saves(name), session
     static catalog_detail::bytes native_merge_domain(catalog_native_merge const & key) {
       catalog_detail::name(key.schema);
       catalog_detail::bytes result;
-      catalog_detail::field(result, "everett.KV03.right-biased-native-merge/1");
+      switch (key.kind) {
+        case catalog_native_merge_kind::replacement:
+          catalog_detail::field(result, "everett.KV03.right-biased-native-merge/1"); break;
+        case catalog_native_merge_kind::conservative_tombstones:
+          catalog_detail::field(result, "everett.KV03.conservative-tombstone-merge/1"); break;
+        default: throw std::invalid_argument("unknown native merge kernel");
+      }
       catalog_detail::field(result, key.schema);
       auto physical = policy(); result.insert(result.end(), physical.begin(), physical.end());
       return result;

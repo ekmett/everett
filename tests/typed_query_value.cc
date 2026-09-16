@@ -103,6 +103,23 @@ namespace {
     auto result = std::make_shared<node<S> const>(node<S>::adopt_native(native<S>(local), main, native<S>(side)));
     return bounded<S>(std::move(result));
   }
+  struct value_only_family {
+    using p = policy<replacement_sort>;
+    using key_transport = sort_key_transport<p>;
+    struct cursor {
+      cola_query_cursor<p, node<replacement_sort>> source;
+      struct match { bit_string value; };
+      bool done() const { return source.done(); }
+      bool has_match() const { return source.has_match(); }
+      auto step(std::uint64_t budget) { return source.step(budget); }
+      match take_match() { return {source.take_match().value}; }
+    };
+    struct snapshot_type {
+      cola_query_root<p, node<replacement_sort>> root;
+      std::uint64_t admissions() const { return 1; }
+      auto cursor_owned(bit_string key) const { return cursor{root.cursor_owned(std::move(key))}; }
+    };
+  };
   template <class P, class Blob> std::vector<std::optional<std::string>> all(
       cola_query_root<P, Blob> const & root, bit_string key) {
     auto cursor = root.cursor_owned(std::move(key));
@@ -287,6 +304,40 @@ namespace {
       "all-occurrence composition order changed");
   }
 
+  void deletion_positions() {
+    using p = policy<replacement_sort>;
+    rows target{{"a0", "anchor"}, {"ab9", "target"}};
+    auto expected = native<replacement_sort>(target)->view().encoded_at(1).retained;
+    check(expected > 1, "deletion fixture has no inherited key prefix");
+    auto main = three<replacement_sort>(target, {}, {{"ab9", "older"}});
+    auto side = three<replacement_sort>({{"z", "local"}}, target, {{"ab9", "older"}});
+    auto tail = three<replacement_sort>({{"z", "local"}}, {}, target);
+    for (auto const & root : {main, side, tail}) {
+      observed_value::reads = 0;
+      auto deletion = typed(root, 4, 3).erase("ab9");
+      check(observed_value::reads == 1, "delete repeated its validating value lookup");
+      check(deletion.records()[0].retained_limit_bits == expected, "delete captured another physical record");
+      auto fallback = typed<false>(root, 4, 3).erase("ab9");
+      check(fallback.records()[0].retained_limit_bits == expected, "owned cursor lost target retention");
+      unsigned inspected = 0;
+      auto query = sort_profile_query<p, replacement_sort>("ab9");
+      auto result = cola_detail::first_value(root, query, [](bit_view value) {
+        sort_bit_reader in(value); return observed_value::read(in);
+      }, [&](auto const & view, std::uint64_t ordinal) {
+        ++inspected;
+        check(view.encoded_at(ordinal).retained == expected, "observer saw wrong native frame");
+        check(typed(root, 4, 3).get("ab9") == "target", "nested observer lookup changed hit");
+      });
+      check(result && *result == "target" && inspected == 1, "observer ran for more than first match");
+    }
+    auto single = three<replacement_sort>({{"ab9", "target"}}, {}, {});
+    using world = typed_world<p, wrapping_fingerprint_algebra, value_only_family>;
+    auto minimal = world::restore({std::move(single)}, {0, 1, "minimal/1"}, "minimal/1");
+    check(minimal.get("ab9") == "target", "value-only custom cursor no longer supports reads");
+    check(minimal.erase("ab9").records()[0].retained_limit_bits == 0,
+      "custom cursor without positions did not use the full-key fallback");
+  }
+
   void owning_lifetime() {
     using p = policy<replacement_sort>;
     auto root = three<replacement_sort>({{"k", std::string(64, 'x')}}, {}, {});
@@ -394,6 +445,7 @@ int main() {
     replacement_reads();
     custom_context_retention();
     boundary_oracle();
+    deletion_positions();
     owning_lifetime();
     reentrant_reads();
     rejected_query_storage();

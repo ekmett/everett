@@ -104,15 +104,20 @@ namespace everett {
       }
     };
 
+    struct ignore_match_position {
+      void operator()(auto const &, std::uint64_t) const noexcept {}
+    };
+
     // Synchronous replacement reads decode under the current node's owner.
     // The callback finishes before that pin is released; public matches stay owned.
-    template <class P, class Blob, class Query, class Decode>
+    // Inspect can capture physical record metadata from that same pinned hit.
+    template <class P, class Blob, class Query, class Decode, class Inspect = ignore_match_position>
       requires std::same_as<std::remove_cvref_t<Query>, bit_string> &&
         (!std::is_reference_v<std::invoke_result_t<Decode &, bit_view>>) &&
         requires(Blob const & blob, profile_query_context<P> const & context) {
           query_access::search(blob.view(), 0, context, query_access::match_probe{});
         }
-    auto first_value(cola_query_root<P, Blob> const & root, Query && query, Decode && decode)
+    auto first_value(cola_query_root<P, Blob> const & root, Query && query, Decode && decode, Inspect inspect = {})
         -> std::optional<std::invoke_result_t<Decode &, bit_view>> {
       using value_type = std::invoke_result_t<Decode &, bit_view>;
       auto current = root.head();
@@ -129,8 +134,10 @@ namespace everett {
       std::uint64_t group = 0;
       while (current) {
         std::optional<value_type> value;
-        auto result = query_access::search(current->view(), group, context,
-          [&](std::uint64_t, bit_view encoded) {
+        auto view = current->view();
+        auto result = query_access::search(view, group, context,
+          [&](std::uint64_t ordinal, bit_view encoded) {
+            std::invoke(inspect, view.native(), ordinal);
             value.emplace(std::invoke(decode, encoded));
             return true;
           });
@@ -141,8 +148,12 @@ namespace everett {
             error_detail::raise<std::invalid_argument>("COLA query main route has no target");
         if (auto const & next = result.predecessors[1]) {
           if (!secondary) error_detail::raise<std::invalid_argument>("COLA query secondary route has no target");
-          visit_secondary<P>(secondary->view(), *next, [&](std::uint64_t, bit_view encoded) {
-            if (!value) value.emplace(std::invoke(decode, encoded));
+          auto side = secondary->view();
+          visit_secondary<P>(side, *next, [&](std::uint64_t ordinal, bit_view encoded) {
+            if (!value) {
+              std::invoke(inspect, side, ordinal);
+              value.emplace(std::invoke(decode, encoded));
+            }
           });
         }
         if (value) return value;

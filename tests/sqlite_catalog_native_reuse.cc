@@ -96,6 +96,25 @@ namespace {
     bit_view operator()(bit_view, bit_view, bit_view newer) const { ++*calls; return newer; }
   };
 
+  void conservative_domains() {
+    prepared f; auto ctx = f.context();
+    using semantic = typed_detail::replacement_compose<P, sort_key_transport<P>>;
+    auto ordinary = merge(ctx, f.older, f.newer);
+    check(!ctx->reuse_merge<semantic>(f.older, f.newer), "ordinary merge supplied tombstone certificate");
+    semantic compose;
+    auto conservative = merge(ctx, f.older, f.newer, std::ref(compose));
+    check(conservative->sealed() && ordinary->sealed()->receipt.object != conservative->sealed()->receipt.object,
+      "different kernels shared an output identity");
+    auto reopened = f.context();
+    auto a = reopened->reuse_merge<semantic>(f.older, f.newer);
+    auto b = reopened->reuse_merge<std::reference_wrapper<semantic>>(f.older, f.newer);
+    check(a && b && a->sealed()->receipt.object == conservative->sealed()->receipt.object &&
+      b->sealed()->receipt.object == a->sealed()->receipt.object, "typed merge reuse lost reference-wrapper domain");
+    check(reopened->reuse_merge<replace_native_value>(f.older, f.newer)->sealed()->receipt.object ==
+      ordinary->sealed()->receipt.object, "conservative completion replaced the ordinary kernel");
+    check(scalar(f.dir.root, "SELECT count(*) FROM completed_native_merges") == 2, "kernel domains were not distinct");
+  }
+
   void ordered_domains_and_replay() {
     prepared f; auto ctx = f.context();
     check(!extension(f.dir.root), "catalog open installed advisory table");
@@ -600,7 +619,7 @@ namespace {
 }
 int main() {
   try {
-    ordered_domains_and_replay(); adaptive_and_copied_catalog(); invalid_evidence(); simultaneous_completions();
+    ordered_domains_and_replay(); conservative_domains(); adaptive_and_copied_catalog(); invalid_evidence(); simultaneous_completions();
     fork_and_checkpoint(); rebuilding_reuse_restart(); interrupted_hints(); reconcile_interrupted_operation(); schema_plumbing();
     std::cout << "durable ordered native merge reuse passed\n";
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }

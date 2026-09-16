@@ -50,7 +50,8 @@ namespace {
     check(oracle == entries.end() && !scan.failed(), "scan lost rows");
   }
   void replacements() {
-    static_assert(std::same_as<engine::compose_type, replace_native_value>);
+    static_assert(std::is_invocable_v<engine::compose_type &, bit_view, bit_view>);
+    static_assert(!std::is_invocable_v<engine::compose_type &, bit_view, bit_view, bit_view>);
     engine active;
     check(active.snapshot().metadata().schema_id != typed_engine<>{}.snapshot().metadata().schema_id,
       "raw keys reused escaped-key schema identity");

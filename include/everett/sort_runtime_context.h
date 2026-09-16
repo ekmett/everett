@@ -218,9 +218,12 @@ namespace everett {
     template <class Compose> std::optional<catalog_native_merge> merge_recipe(
         native_pointer const & older, native_pointer const & newer) const {
       if (!older || !newer) throw std::invalid_argument("null native merge input");
-      // This recognizes one known kernel and registry, not arbitrary allegedly
+      using composer = std::remove_cvref_t<decltype(native_merge_detail::composer(std::declval<Compose &>()))>;
+      using conservative = typed_detail::replacement_compose<P, sort_key_transport<P, Selector>>;
+      // This recognizes known kernels and one registry, not arbitrary allegedly
       // stateless user code. The persisted domain supplies stable wire identity.
-      if constexpr (std::is_same_v<Compose, replace_native_value> && P::unit == profile_unit::bit &&
+      if constexpr ((std::is_same_v<composer, replace_native_value> || std::is_same_v<composer, conservative>) &&
+          P::unit == profile_unit::bit &&
           std::is_same_v<typename P::registry_type, string_registry> &&
           std::is_same_v<Selector, registry_selector<string_registry>>) {
         if (schema_.empty()) return {};
@@ -228,7 +231,9 @@ namespace everett {
         if (!a) return {};
         auto b = newer->bindings_.find(identity_, root());
         if (!b) return {};
-        return catalog_native_merge{schema_, a->receipt.object, b->receipt.object};
+        return catalog_native_merge{schema_, a->receipt.object, b->receipt.object,
+          std::is_same_v<composer, conservative> ? catalog_native_merge_kind::conservative_tombstones :
+            catalog_native_merge_kind::replacement};
       } else return {};
     }
     std::unique_ptr<object_stream<P, FileOps>> start_native_stream() {

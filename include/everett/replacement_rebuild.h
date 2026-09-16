@@ -304,14 +304,18 @@ namespace everett {
       for (auto const & record : input.records()) {
         engine_type::key_transport::dispatch(record.key.view(), [&]<class S>(std::type_identity<S>, auto const & key) {
           static_assert(std::is_same_v<S, sort_type>);
-          auto before = published_.template get_encoded<S>(key, record.key);
+          auto arrow = typed_detail::value<P, S>(record.value.view());
+          auto after = semantics::apply(key, semantics::initial(key), arrow);
+          std::optional<std::uint64_t> target;
+          auto before = published_.template get_encoded<S>(key, record.key,
+            semantics::present(key, after) ? nullptr : &target);
           if (input.base() && before != input.base()->template get_encoded<S>(key, record.key))
             throw std::invalid_argument("stale rebuilt key value");
-          auto arrow = typed_detail::value<P, S>(record.value.view());
-          auto after = semantics::apply(key, before, arrow);
           if (!semantics::present(key, before) && !semantics::present(key, after))
             throw std::invalid_argument("deleting absent rebuilt key");
-          entries.push_back({key, std::move(before), std::move(after), std::move(arrow), 0});
+          auto retained = record.retained_limit_bits;
+          if (target) retained = retained ? std::min(*retained, *target) : *target;
+          entries.push_back({key, std::move(before), std::move(after), std::move(arrow), 0, retained});
         });
       }
       try {
@@ -338,7 +342,13 @@ namespace everett {
       state_type before, after;
       arrow_type arrow;
       std::uint64_t ordinal;
+      std::optional<std::uint64_t> retained_limit_bits;
     };
+    static contribution_type command(mutation const & entry) {
+      auto result = engine_type::template change<sort_type>(entry.key, entry.arrow);
+      result.records_[0].retained_limit_bits = entry.retained_limit_bits;
+      return result;
+    }
     struct rebuild {
       typed_world_type frozen;
       std::unique_ptr<scan_type> scan;
@@ -414,7 +424,7 @@ namespace everett {
         job_->queue.push_back(entry);
       }
       auto prior = foreground_->work().charged;
-      try { foreground_->contribute(engine_type::template change<sort_type>(entry.key, entry.arrow)); }
+      try { foreground_->contribute(command(entry)); }
       catch (...) { work_.foreground_charged = add(work_.foreground_charged, foreground_->work().charged - prior); throw; }
       work_.foreground_charged = add(work_.foreground_charged, foreground_->work().charged - prior);
       work_.mutations = entry.ordinal;
@@ -671,7 +681,7 @@ namespace everett {
             auto const & entry = j.queue.front();
             require(entry.ordinal == add(add(j.frozen_ordinal, j.replayed), 1), "rebuild replay order changed");
             require(j.candidate->snapshot().template get<sort_type>(entry.key) == entry.before, "rebuild replay old value mismatch");
-            candidate_work([&]{ j.candidate->contribute(engine_type::template change<sort_type>(entry.key, entry.arrow)); });
+            candidate_work([&]{ j.candidate->contribute(command(entry)); });
             require(j.candidate->snapshot().template get<sort_type>(entry.key) == entry.after, "rebuild replay new value mismatch");
             j.queue.pop_front(); ++j.replayed; work_.replayed = add(work_.replayed, 1);
           }
