@@ -49,7 +49,9 @@ An unbound owned native and its new index share one reservation and one
 [joint acknowledgment](publication-preparation.md). Both files complete all
 their barriers before that acknowledgment. Already sealed natives retain their
 existing identity and use the separate index-only path; the final tap generation
-is still committed independently.
+is still committed independently. One initial group of up to 16 ready units
+can share a reservation transaction. Each unit keeps its own seal acknowledgment
+and file barriers; the remaining dependencies use the ordinary walk.
 
 Each adapter also retains its latest restored frontier in a local identity
 registry. Acquiring an owner already present there increments its local count;

@@ -37,6 +37,7 @@ for integration. These are development responsibilities.
 | Adaptive encoded outputs | `sort_profile_adaptive.h`, `cola_adaptive_index.h`, `output_budget.h`; adaptive native/index and allowance tests | bounded retained capacities, lifetime leases, exact streamed bytes, lazy reservations and acknowledged seals |
 | Completed native reuse | `sort_runtime_context.h`, `sqlite_catalog.h`; `tests/sqlite_catalog_native_reuse.cc` | exact ordered inputs/schema/kernel, acknowledged acquisition pins, fork-local indexes, hidden checkpoints and uncertain-operation replay |
 | Joint native/index preparation | `runtime_graph_sealer.h`, `sqlite_catalog.h`; `tests/sqlite_catalog_native_pair.cc` | two preparation commits for an unbound owned pair, unchanged file barriers, exact replay, shared-native aliases and races, installation and acknowledgment failures |
+| Ready reservation batches | `runtime_graph_sealer.h`, `catalog_bindings.h`; `tests/sqlite_catalog_ready_reservations.cc` | one bounded group, nonblocking deduplicated producer claims, preserved pair fusion, per-unit acknowledgment and uncertain-reservation recovery |
 | Replacement rebuilding | `replacement_rebuild.h`; replacement and durable-rebuild tests | paid physical scans, FIFO replay, carried generation debt, active saves/forks and gated recovery after interruption |
 | Resolved scans | `typed_scan.h`; typed and mapped scan tests | ordered rows, newest replacements, chronological arrows, tombstone elision, bounded traversal and snapshot ownership |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `fridge.h`; profile/blob/fridge tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
@@ -105,8 +106,10 @@ states the current retention and identity-allocation boundaries.
 An unbound owned native and its new index use one reservation and one joint
 seal/pair acknowledgment. Their file barriers finish before the acknowledgment's
 SQLite transaction. Already bound or streamed natives and hidden native-only
-outputs retain their existing preparation paths. The final tap publication
-remains separate. The [preparation guide](publication-preparation.md) describes
+outputs retain their separate acknowledgment paths. The final tap publication
+remains separate. Up to 16 initially ready units can share one reservation;
+each keeps its own seal acknowledgment. Contended claims fall back to the
+ordinary dependency walk. The [preparation guide](publication-preparation.md) describes
 dependency ordering, concurrent producers and uncertain-operation recovery.
 
 The first sorted power-of-two batch can seed a pristine redundant frontier
@@ -1110,6 +1113,13 @@ for empty input whose exact runtime layout and metadata remain unchanged.
 Three focused strict O2 ASan/UBSan suites cover zero work and catalog deltas,
 schema rejection, pending workers, stale handles, local tickets, and a custom
 core which changes state on empty input and therefore still needs publication.
+
+Ready-reservation preparation passed four focused strict O2 ASan/UBSan suites,
+including existing native/pair and binding-failure tests. A real 64-row frontier
+uses seven ready units to reduce reservations from 17 to 11 with unchanged
+24-file output. Full checkpoint reopening, mapped queries, scans and signatures
+agree with ordinary preparation. Concurrent producers, aliases, the 16-unit
+bound and uncertain reservation or acknowledgment cuts are covered separately.
 
 Integration checks on 2026-09-16 passed under AppleClang 21, strict warnings,
 O2 and ASan/UBSan for shared owner bindings, seal acknowledgment failures,
