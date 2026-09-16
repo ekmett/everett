@@ -45,6 +45,12 @@ file identity and mapped representation. The first sealing walks its immediate
 dependencies; an already bound suffix stops that walk. These records disappear
 with their owners, so there is no weak-owner table to sweep.
 
+`prepare(snapshot)` performs that graph sealing without publishing a named
+generation. [Transactions](transactions.md) use a scoped catalog connection so
+private attempts retain their complete dependencies until commit or final lease
+release. Sealing private files does not make their state visible through a
+named session.
+
 An unbound owned native and its new index share one reservation and one
 [joint acknowledgment](publication-preparation.md). Both files complete all
 their barriers before that acknowledgment. Already sealed natives retain their

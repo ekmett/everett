@@ -26,6 +26,9 @@ for integration. These are development responsibilities.
 | Sort registry | `registry.h`, `policy.h`; `tests/registry.cc`, `tests/registry_compat.cc` | typed discriminator dispatch, width/unit inference, stable-code extension, file-local framing and catalog reopen under broader defaults |
 | Mutable session | `session.h`; `tests/session.cc` | serialized immutable publication, bounded accepted input, readiness backpressure, cancellation, shutdown, exact logical identity and worker failure |
 | Named typed connection | `connection.h`; `tests/sqlite_catalog_connection.cc` | mutable and asynchronous commands, mapped snapshots, exact saves/forks, restart, stale publishers and healthy input rejection |
+| Persistent nursery | `nursery_map.h`; `tests/nursery_map.cc` | closed edit tokens, retained AVL roots, branching old snapshots, ordered traversal, random edits and failure isolation |
+| Private transactions | `transaction.h`, `connection.h`; `tests/sqlite_catalog_transaction.cc` | typed read-your-writes, repeated private flushes, branching, checked commit, cancellation, conflicts and uncertain acknowledgment |
+| Construction scopes | `private_construction.h`, `sqlite_catalog.h`; `tests/sqlite_catalog_private.cc` | private graph sealing, shared process leases, append-only pin release, abandoned-writer recovery and orphan lock cleanup |
 | Encoded runtime | `cola_runtime.h`; `tests/cola_runtime.cc` | chronological runs, real native/index/carrier work, immutable publication, budget partition, mmap restoration and failed continuation isolation |
 | Redundant runtime | `redundant_runtime.h`; redundant and typed-redundant tests | three-slot ownership, overlapping main/secondary jobs, charged admission, exact frontier checkpoints and recovery gates |
 | Initial sorted batches | `redundant_runtime.h`, `sort_runtime.h`, `sort_runtime_context.h`, `typed_world.h`, `replacement_rebuild.h`; initial-batch suites | geometric native slices, exact index targets, paid carries, logical preflight, adaptive encoding and preserved publication on failure |
@@ -114,6 +117,31 @@ mapped results and services merge work in the background. Its synchronous
 cover concurrent same-key commands, noncommutative arrows across reopen, saved
 generations, forks, rejected absent deletes and publication failures. The
 installed SQLite consumer exercises the README workflow.
+
+`connection::begin()` creates a [private transaction](transactions.md). Its
+ordered nursery collapses replacement edits and composes general arrows, while
+closed edit tokens preserve snapshots and branches from any retained root.
+Private flushes use the same typed admission and paid merge path as ordinary
+writes. `runtime_store::prepare` seals the complete frontier without publishing
+a named generation. The original base and scoped construction owners survive
+private flushes until their last users release them.
+
+A changed transaction queues one checked named publication. Equivalent background layouts do
+not conflict with its original logical base; a competing logical write does.
+Tests cover owning and streamed cores, multiple private flushes, custom sorts
+whose state and arrow types differ, chronological composition, snapshot branches
+after abort, stale independent writers, queue cancellation and failure after
+durable publication. Empty flushes create no files. `commit_async` performs the
+private flush synchronously before queueing publication; parallel mutation of
+one nursery and automatic transaction rebasing are not supported.
+
+Construction scopes append durable release events and exclude released attempt
+owners from effective pin views. Explicit `multiverse::recover_transactions`
+skips live locks, releases abandoned scopes and cleans unlocked orphan sidecars.
+Process-exit tests exercise lost owners and interruption after release; they do
+not simulate torn storage or power loss. File collection and retirement of
+published history remain unimplemented. Private construction suppresses
+advisory native-cache ownership so abort does not create permanent cache pins.
 
 `cola_runtime<P, Compose>` admits encoded records, creates a real private binary
 carry queue, and publishes completed equivalent layouts. Its immutable snapshots

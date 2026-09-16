@@ -7,10 +7,11 @@ successful seal receipts, register an exact prepared chain, name an immutable
 save, publish a named timeline generation, close the process, and reopen either
 root for mmap-backed queries.
 
-The component deliberately has no reclamation operation. Reservations, reader
-pins, saved roots and every timeline generation remain durable until an explicit
-retirement protocol is implemented. This gives us useful persistent reads without guessing which old
-owners have stopped using an external file.
+Published saves, reader owners and timeline generations retain their history.
+Private transactions use scoped construction reservations, whose pins can be
+released after their last owner or explicit crash recovery. Release records are
+append-only; physical file collection and retirement of published history remain
+separate work.
 
 ## Build and use
 
@@ -334,8 +335,10 @@ A new connection can inspect whether an operation is visible and perform exact
 replay reconciliation after acknowledgment loss. That is **not** a recovery
 certificate following a real failed filesystem sync. Scanning readable pages,
 reopening SQLite, or observing an operation row cannot prove what survives the
-next reboot. Existing durable saves, timeline generations and reservations are
-never released by this adapter. Catalog creation also leaves an unsuccessful or uncertain new
+next reboot. Existing durable saves, timeline generations and ordinary
+reservations retain their owners. Scoped private construction can append a
+release event once its process lease has no users; its effective attempt pins
+then stop retaining files. Catalog creation also leaves an unsuccessful or uncertain new
 catalog name in place instead of automatically deleting and reusing it.
 
 The `sqlite_catalog_ops` COMMIT hook makes acknowledgment failure testable:
@@ -390,8 +393,12 @@ index construction, two-route queries, saved roots and native merge publication.
 
 I can persist and reopen prepared mmap query chains, reserve their construction,
 retain immutable saves and readers, and compare-and-publish named timeline
-heads. This component does not yet release an owner, expire a reader lease,
-collect files, resume a merge, migrate a schema or apply categorical updates. The richer
+heads. [Private transactions](transactions.md) add scoped construction ownership
+and explicit recovery of abandoned scopes. Release events change the effective
+pin views without deleting seal or publication evidence. This component does
+not yet retire published generations, expire ordinary reader owners or collect
+files. Runtime layers provide merge resumption and categorical updates; the catalog
+does not interpret those operations. The richer
 [ownership and publication design](catalog.md) supplies those next contracts;
 [the durability model](durability.md) explains why external-file barriers and
 catalog commitment remain distinct.

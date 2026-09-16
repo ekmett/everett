@@ -88,6 +88,25 @@ commitment.
 Current catalogs retain historical generations and pins, so disk use includes
 retained history. Automatic reclamation remains future work.
 
+Transactions
+------------
+
+Use a transaction to publish several edits together:
+
+```cpp
+auto tx = db.begin();
+tx.put("name", "Everett");
+tx.put("version", "one");
+auto before = tx.snapshot();
+tx.put("version", "two");
+tx.commit();
+// before.get("version") is still "one".
+```
+
+Transaction reads see its own edits. Subsequent reads through `db` see the
+committed edits; retained snapshots stay fixed and can branch. The [transaction guide](docs/transactions.md)
+covers private flushes, conflicts, abort and recovery.
+
 Concurrent Updates
 ------------------
 

@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "1c3c0657e67d16db2e44d04ea1f6ca77755d465a0bd4e8611059b860d45d5487"
+      "normalized_sha256": "668860e28b8fff98ab57b0a618be4630006f245b9d28c7dad7768ac756da618e"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "179f22e79e07ea97adb134680cb153ccb1da6e3400855a1ff1a81786733e3801"
+      "normalized_sha256": "dd138eadbf47d30a7a0de13811fae6597f57b74958af8cf8c3d6cc62c4d3c06c"
     }
   ],
   "subsequent_updates": [
@@ -1001,6 +1001,13 @@
     },
     {
       "scope": "Record integrated conservative-tombstone verification, preserving the original fixture failure and successful correction. Original measurement hashes and observations are unchanged.",
+      "artifacts": [
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Document implemented persistent nurseries, private transactions and construction-scope recovery. Original measurements and measurement fingerprints are unchanged.",
       "artifacts": [
         "bench/results/publication_normalization.json",
         "docs/implementation.md"

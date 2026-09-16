@@ -69,6 +69,14 @@ int main() {
   db.apply(std::move(right)); db.apply(std::move(left));
   auto ticket = db.put_async("async", "done");
   ticket.get();
+  auto tx = db.begin();
+  tx.put("version", "one");
+  auto checkpoint = tx.snapshot();
+  tx.put("version", "two");
+  (void)tx.flush();
+  if (db.get("version") || checkpoint.get("version") != "one") return 4;
+  tx.commit();
+  if (db.get("version") != "two" || storage.recover_transactions() != 0) return 5;
   return db.get("async") != "done";
 #else
   return 0;

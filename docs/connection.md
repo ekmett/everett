@@ -59,6 +59,10 @@ Reads, writes and snapshots
 durably. They return an owning snapshot of their result. `get` reads whichever
 durable snapshot was current when the read began.
 
+`begin()` starts a [transaction](transactions.md) with a private nursery. It
+supports read-your-writes snapshots, branches, private flushes and one checked
+durable commit for the resulting state.
+
 ```cpp
 auto before = db.snapshot();
 auto after = db.put("name", "Persistent snapshots");

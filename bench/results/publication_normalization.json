@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "179f22e79e07ea97adb134680cb153ccb1da6e3400855a1ff1a81786733e3801"
+      "normalized_sha256": "dd138eadbf47d30a7a0de13811fae6597f57b74958af8cf8c3d6cc62c4d3c06c"
     }
   ],
   "checks": {
@@ -531,6 +531,12 @@
     },
     {
       "scope": "Record integrated conservative-tombstone verification, preserving the original fixture failure and successful correction. Original measurement hashes and observations are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Document implemented persistent nurseries, private transactions and construction-scope recovery. Original measurements and measurement fingerprints are unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

@@ -50,6 +50,15 @@ save pins an exact collection and the dependencies needed to query it. A save
 adds durable retention to that logical snapshot; it does not define a separate
 kind of application state.
 
+A [transaction](transactions.md) retains its original world and collects edits
+in an ordered private nursery. Freezing closes a shared edit token; subsequent
+edits copy changed paths, including when branching from an older snapshot.
+Private flushes feed the ordinary charged merge machinery and can advance that
+private world repeatedly without changing a named session. Commit seals the
+complete graph before one checked SQLite root publication. Shared construction
+leases retain private dependencies until commit, abort or recovery can release
+them; published ownership is acquired before private ownership is relinquished.
+
 The sort owns the entire record grammar, including whether it has a value at
 all. FC strings are one key codec; a fixed-width integer key can occupy its known
 bits without string controls. A key-only toggle illustrates an operation with no
