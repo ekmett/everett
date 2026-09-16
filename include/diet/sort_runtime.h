@@ -68,12 +68,14 @@ namespace diet {
       if (std::filesystem::canonical(receipt.path) != std::filesystem::canonical(path))
         throw std::invalid_argument("sealed native path differs from object identity");
       auto mapped = std::make_shared<mapped_type const>(mapped_type::open(path));
-      auto result = std::shared_ptr<sort_runtime_native>(new sort_runtime_native(std::move(mapped)));
-      result->seal_ = std::make_shared<native_seal const>(native_seal{std::move(catalog), std::move(receipt)});
-      result->bindings_.get_or_create(result->seal_->catalog, root, [&] { return result->seal_; });
+      auto result = std::shared_ptr<sort_runtime_native>(new sort_runtime_native(mapped));
+      auto binding = std::make_shared<native_binding<mapped_type> const>(
+        native_seal{std::move(catalog), std::move(receipt)}, std::move(mapped));
+      result->seal_ = binding;
+      result->bindings_.get_or_create(binding->catalog, root, [&] { return binding; });
       return result;
     }
-    catalog_bindings<native_seal> bindings_;
+    catalog_bindings<native_binding<mapped_type>> bindings_;
     std::shared_ptr<native_seal const> seal_;
     std::shared_ptr<array_type const> owned_;
     std::shared_ptr<mapped_type const> mapped_;

@@ -45,7 +45,7 @@ namespace diet {
   private:
     template <class, class, class, class> friend struct runtime_store;
     template <class, class, class, class> friend struct runtime_store_detail::graph_sealer;
-    catalog_bindings<native_seal> bindings_;
+    catalog_bindings<native_binding<mapped_native<P>>> bindings_;
     std::shared_ptr<profile_array<P> const> owned_;
     std::shared_ptr<mapped_native<P> const> mapped_;
     explicit cola_runtime_native(std::shared_ptr<profile_array<P> const> value) : owned_(std::move(value)) {}
@@ -98,7 +98,7 @@ namespace diet {
   private:
     template <class, class, class, class> friend struct runtime_store;
     template <class, class, class, class> friend struct runtime_store_detail::graph_sealer;
-    catalog_bindings<pair_seal> bindings_;
+    catalog_bindings<pair_binding<mapped_cola_blob<P>>> bindings_;
     native_pointer native_;
     pair_type main_;
     std::shared_ptr<built_type const> built_;

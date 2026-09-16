@@ -80,7 +80,7 @@ namespace diet {
     template <class, class, class, class> friend struct runtime_store;
     template <class, class, class, class> friend struct runtime_store_detail::graph_sealer;
     template <class, class, class, class, class> friend struct sort_runtime_context;
-    catalog_bindings<pair_seal> bindings_;
+    catalog_bindings<pair_binding<typename Storage::mapped_pair_type>> bindings_;
     native_pointer native_, secondary_;
     pair_type main_;
     std::shared_ptr<built_type const> built_;

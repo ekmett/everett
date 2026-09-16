@@ -27,6 +27,18 @@ namespace diet {
     object_seal_receipt receipt; // The index; identity.native names its exact native owner.
   };
 
+  template <class Mapped> struct native_binding : native_seal {
+    std::shared_ptr<Mapped const> mapped;
+    native_binding(native_seal seal, std::shared_ptr<Mapped const> value)
+      : native_seal(std::move(seal)), mapped(std::move(value)) {}
+  };
+
+  template <class Mapped> struct pair_binding : pair_seal {
+    std::shared_ptr<Mapped const> mapped;
+    pair_binding(pair_seal seal, std::shared_ptr<Mapped const> value)
+      : pair_seal(std::move(seal)), mapped(std::move(value)) {}
+  };
+
   template <class P, class Ids, class Ops, class Family> struct runtime_store;
   template <class P, class Selector, class Ids, class CatalogOps, class FileOps> struct sort_runtime_context;
   namespace runtime_store_detail {
