@@ -370,6 +370,13 @@ namespace diet {
     void apply(mutation entry) {
       require(foreground_->admission_ready(), "replacement foreground exhausted its admission service");
       entry.ordinal = add(work_.mutations, 1);
+      // A fresh replacement in a clean string table adds one live row and
+      // one physical admission, without introducing history to collect.
+      // Extend that clean base; pending ordinary carries still receive their
+      // normal admission service. Once history exists, every write funds it.
+      bool extends_clean = false;
+      if constexpr (std::is_same_v<sort_type, unsorted<std::optional<std::string>>>)
+        extends_clean = !job_ && !mutations_ && !entry.before && bool(entry.after);
       if (job_) {
         require(job_->admitted < job_->horizon, "rebuild deadline exhausted before admission");
         job_->queue.push_back(entry);
@@ -378,7 +385,13 @@ namespace diet {
       try { foreground_->contribute(engine_type::template change<sort_type>(entry.key, entry.arrow)); }
       catch (...) { work_.foreground_charged = add(work_.foreground_charged, foreground_->work().charged - prior); throw; }
       work_.foreground_charged = add(work_.foreground_charged, foreground_->work().charged - prior);
-      work_.mutations = entry.ordinal; mutations_ = add(mutations_, 1);
+      work_.mutations = entry.ordinal;
+      if (extends_clean) {
+        base_ = add(base_, 1);
+        require(mass(foreground_->snapshot()) == base_, "extended clean generation mass mismatch");
+        return;
+      }
+      mutations_ = add(mutations_, 1);
       require(mass(foreground_->snapshot()) == add(base_, mutations_), "foreground generation mass mismatch");
       if (job_) {
         ++job_->admitted;

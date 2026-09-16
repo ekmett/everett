@@ -72,6 +72,13 @@ A generation records its clean-base cardinality b and its subsequent mutation
 count u. Native admission mass is exactly b+u, including overwritten bindings
 and tombstones. Logical live cardinality is a separate quantity.
 
+For the ordinary optional-string sort, inserting a new key into a clean
+generation extends $b$ directly. Both the live count and admission mass increase
+by one, so there is no obsolete record to collect. This still pays ordinary
+merge service and increments the total mutation counter in `work()`. Once
+$u$ is nonzero, even fresh-key insertions count toward $u$ and fund the existing
+cleanup obligation. Custom sorts retain their explicit cleaning path.
+
 For a large generation I start a rebuild at the first mutation reaching
 $u=\lfloor b/4\rfloor$. The frozen snapshot contains $n_s$ live rows. The
 handoff horizon is $h=\lfloor n_s/8\rfloor$ subsequent mutations. New writes

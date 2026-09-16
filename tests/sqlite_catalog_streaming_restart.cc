@@ -159,6 +159,12 @@ namespace {
   using oracle = std::map<std::string, std::string>;
   std::string const key("shared\0key", 10);
   std::string const old_value(513, 'o'), new_value(1025, 'n');
+  oracle contents(std::string const & value) {
+    oracle result{{key, value}};
+    for (unsigned i = 0; i != 63; ++i)
+      result.emplace("stable/" + std::to_string(i), "value/" + std::to_string(i));
+    return result;
+  }
 
   struct temporary {
     std::filesystem::path root;
@@ -260,7 +266,7 @@ namespace {
     auto saved = stopped_store::open(root);
     auto initial = saved.find("latest");
     check(bool(initial), "missing baseline");
-    auto meta = core::metadata_type::decode(initial->semantic);
+    auto meta = engine::metadata_type::decode(initial->semantic);
     auto active = runtime::from_snapshot(initial->snapshot, family::storage_type::open(root));
     while (active.pending()) active.advance(100'000);
     state->generation = initial->head.timeline.generation;
@@ -269,8 +275,10 @@ namespace {
     auto contribution = core::put(key, new_value);
     check(bool(active.try_contribute(contribution.records().front(), 0)), "pending fixture admission failed");
     check(active.pending(), "zero-service contribution did not leave real work");
-    meta.signature = signature({{key, new_value}});
+    meta.signature = signature(contents(new_value));
+    ++meta.mutations;
     auto frontier = active.checkpoint();
+    meta.validate(frontier.admissions());
     state->current = stage::logical_publication;
     auto head = saved.publish(initial->head, frontier, meta.encode());
     state->generation = head.head.timeline.generation;
@@ -344,12 +352,12 @@ namespace {
     auto active = engine::connect(dir.root, "latest", {.create_if_missing = false});
     auto state = active.snapshot();
     bool newer = point >= event::service_native || (point == event::logical_publication && after);
-    oracle expected{{key, newer ? new_value : old_value}};
+    auto expected = contents(newer ? new_value : old_value);
     verify(state, expected);
     auto expected_generation = message.generation +
       unsigned(after && (point == event::logical_publication || point == event::equivalent_publication));
     check(state.head().timeline.generation == expected_generation, "wrong named generation after COMMIT cut");
-    check(state.runtime().admissions() == (newer ? 2 : 1), "restart admission mass");
+    check(state.runtime().admissions() == (newer ? 66 : 65), "restart admission mass");
     drain(active);
     verify(active.snapshot(), expected);
     active.contribute(engine::core_type::put("resumed", "yes"));
@@ -362,11 +370,11 @@ namespace {
     verify(active.snapshot(), expected);
     auto saved = store::open(dir.root).find_save("old");
     check(bool(saved), "old save vanished");
-    auto old_meta = core::metadata_type::decode(saved->semantic);
+    auto old_meta = engine::metadata_type::decode(saved->semantic);
     auto old = engine::typed_cola_type::restore(saved->snapshot, old_meta, old_meta.schema_id);
-    verify(old, {{key, old_value}});
+    verify(old, contents(old_value));
     // The snapshot opened before recovery and later writes remains immutable.
-    verify(state, {{key, newer ? new_value : old_value}});
+    verify(state, contents(newer ? new_value : old_value));
   }
 }
 
@@ -375,12 +383,19 @@ int main() {
     temporary baseline;
     {
       auto active = engine::connect(baseline.root, "latest");
+      auto batch = engine::core_type::batch();
+      for (auto const & [k, v] : contents(old_value)) batch.put(k, v);
+      active.contribute(std::move(batch).finish());
+      drain(active);
+      // Keep a valid large replacement generation below its rebuild trigger:
+      // b=64, u=1. The child's next overwrite leaves a real two-input carry
+      // while b=64, u=2 remains valid independently of its private progress.
       active.contribute(engine::core_type::put(key, old_value));
       drain(active);
       auto state = active.snapshot();
       auto saved = store::open(baseline.root);
       saved.save("old", state.head());
-      verify(state, {{key, old_value}});
+      verify(state, contents(old_value));
     } // No live SQLite connection is inherited by a child.
     for (unsigned n = 0; n != unsigned(event::count); ++n)
       for (bool after : {false, true}) {

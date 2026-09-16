@@ -149,10 +149,11 @@ namespace {
       auto quote = core::reservation(core::put("key-0", "returned")); auto before = active.work();
       active.contribute(core::put("key-0", "returned")); expected["key-0"] = "returned";
       auto sixty_four = active.snapshot();
-      assert(active.work().tiny_generations == 2 && sixty_four.runtime().admissions() == 64);
+      assert(active.work().tiny_generations == 1 && sixty_four.runtime().admissions() == 64);
       assert(active.work().granted - before.granted + active.work().foreground_charged - before.foreground_charged <= quote.work);
       active.contribute(core::put("key-64", "large")); expected["key-64"] = "large";
-      assert(active.work().tiny_generations == 2 && active.snapshot().metadata().mutations == 1);
+      assert(active.work().tiny_generations == 1 && !active.snapshot().metadata().mutations &&
+        active.snapshot().metadata().clean_base == 65);
       drain(active); verify(active.snapshot(), expected);
       // The retained dirty and clean snapshots still own their original contents.
       expected.erase("key-64"); expected.erase("key-0"); verify(mapped, expected); verify(clean, expected);
@@ -199,7 +200,7 @@ namespace {
       verify(active.snapshot(), expected); assert(active.storage().identity == context);
     }
     drain(active);
-    auto empty = active.snapshot(); assert(empty.runtime().admissions() == 0 && active.work().tiny_generations >= 128);
+    auto empty = active.snapshot(); assert(empty.runtime().admissions() == 0 && active.work().tiny_generations >= 64);
   }
   void empty_streamed() {
     using family = streaming_sort_runtime_family<>;
@@ -212,7 +213,7 @@ namespace {
     active.contribute(core::erase("only"));
     verify(active.snapshot(), {});
     auto empty = active.snapshot();
-    assert(empty.runtime().admissions() == 0 && active.work().tiny_generations == 2);
+    assert(empty.runtime().admissions() == 0 && active.work().tiny_generations == 1);
     assert(active.storage().context() == storage.context());
   }
 }

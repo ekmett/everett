@@ -183,7 +183,8 @@ namespace {
     auto forked = observer.fork("connection-fork", *saved);
     auto ticket = forked.template put_async<strings>("branch", "new");
     auto result = ticket.get()->cola;
-    check(result.get("branch") == "new" && !result.metadata().rebuilding && result.metadata().mutations == 1,
+    check(result.get("branch") == "new" && !result.metadata().rebuilding && !result.metadata().mutations &&
+      result.metadata().clean_base == old_expected.size() + 1,
       "worker claimed admission before cleanup");
     check(!saved->get("branch"), "fork changed saved state");
     forked.shutdown();

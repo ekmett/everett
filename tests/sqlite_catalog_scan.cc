@@ -25,7 +25,7 @@ int main() {
   std::map<std::string, std::string> expected;
   {
     auto db = fridge.connect("scan");
-    auto batch = diet::typed_engine<>::batch();
+    auto batch = decltype(db)::core_type::batch();
     for (unsigned i = 0; i != 65; ++i) {
       auto key = "key/" + std::to_string(i), value = "value/" + std::to_string(i);
       batch.put(key, value); expected[key] = value;

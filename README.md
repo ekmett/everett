@@ -56,7 +56,8 @@ also be opened with `diet::fridge pantry("data")`.
 `get` returns `std::optional<std::string>`. A missing key and a stored empty
 string are distinct. `put` replaces a value; `erase` removes an existing key.
 Writes return after their new state is durably published. Readers use immutable
-snapshots and mmap the table files.
+snapshots and mmap the table files. Writes also pay for merges and cleanup of
+deleted or overwritten records in the active table.
 
 Saved Tables
 ------------

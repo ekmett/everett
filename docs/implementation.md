@@ -96,7 +96,13 @@ fails. Uncertain or partial execution failures stop the worker. Focused tests
 exercise both paths, shutdown during required service and old snapshot ownership.
 
 `active_engine<>` supplies the ordinary bit-profile optional-string table.
-Its redundant scheduler uses streamed sort-owned records. The lower-level
+Its redundant scheduler uses streamed sort-owned records, with replacement
+rebuilding to clean obsolete history. Other registries use the generic typed
+executor. A compatible registry extension validates the previous replacement
+checkpoint before projecting its metadata; the generic executor makes no
+live-size cleanup promise. Default queue capacity uses the selected engine's
+reservation for 1024 records, and explicit admission limits are kept exactly.
+The lower-level
 `typed_engine<>` also remains available with its binary runtime default. Its
 registry reserves code one for extension and assigns code zero to the current
 sort. Static command factories support ordinary mutable writes; snapshot
@@ -948,6 +954,12 @@ handoff. Replay debt remains in the next generation's mutation count. The
 [replacement guide](replacement-rebuild.md) derives the structural reservations
 and states the separate byte-cost boundary.
 
+A fresh key in a clean optional-string generation extends its clean base
+without a cleanup scan. Ordinary merge service still runs, and the total
+mutation counter still advances. Once obsolete history exists, fresh inserts
+also fund its cleanup. Focused tests check this across 64 rows, after cleanup,
+with existing debt and while old snapshots remain live.
+
 The typed connection can persist this executor's clean-base count, mutation
 count and active-rebuild marker. If private scan or replay progress is lost,
 reopening funds a fresh cleanup of the latest acknowledged state and gates new
@@ -1012,6 +1024,12 @@ replay, context lifetime and 16 process-interruption cuts. Separate failure
 diagnostic tests retain the actual operation ID from the builder's catalog.
 The relocated SQLite consumer and Doxygen passed after integration. These
 focused checks do not replace the complete package run recorded below.
+
+The clean-insertion change passed six strict O2 ASan/UBSan suites: replacement
+accounting, bounded tiny cleanup, ordinary rebuilding defaults, durable scans,
+rebuild recovery and the 16-cut process-interruption suite. The latter uses a
+valid 64-row replacement generation with pending structural work; recovery
+does not infer missing cleanup accounting from a generic typed checkpoint.
 
 Verification through `09903de` on 2026-09-15: AppleClang 21, C++20, Release
 with strict warnings and ASan/UBSan passed all **67 component/package CTests**,

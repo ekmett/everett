@@ -51,6 +51,44 @@ namespace {
     e.contribute(std::move(input));auto after=e.work();
     check(after.granted-before.granted+after.foreground_charged-before.foreground_charged<=quote.work,"admission exceeded static allowance");
   }
+  template <class E> void clean_insertions() {
+    E active;
+    std::map<std::string, std::string> expected;
+    for (unsigned i = 0; i != 129; ++i) {
+      auto key = "new/" + std::to_string(i);
+      expected[key] = "value";
+      quoted(active, E::put(key, "value"));
+      auto state = active.snapshot();
+      check(state.metadata().clean_base == i + 1 && !state.metadata().mutations &&
+        mass(state) == i + 1, "new key did not extend clean base");
+      check(!active.work().generations && !active.work().scan_records &&
+        active.work().mutations == i + 1, "clean insertion rebuilt or lost work accounting");
+      invariant(active);
+    }
+    auto clean = active.snapshot();
+    verify(clean, expected);
+    quoted(active, E::put("new/0", "changed")); expected["new/0"] = "changed";
+    quoted(active, E::put("later", "new")); expected["later"] = "new";
+    check(active.status().clean_base == 129 && active.status().mutations == 2,
+      "new key erased existing mutation debt");
+    verify(active.snapshot(), expected);
+    check(clean.get("new/0") == "value" && !clean.get("later"), "clean insertion mutated snapshot");
+
+    E small;
+    quoted(small, E::put("a", "one")); quoted(small, E::put("b", "two"));
+    quoted(small, E::put("a", "changed"));
+    auto generations = small.work().generations;
+    check(generations == 1 && !small.status().mutations, "small overwrite skipped cleanup");
+    quoted(small, E::put("c", "three"));
+    check(small.work().generations == generations && small.status().clean_base == 3,
+      "post-cleanup insert rebuilt again");
+    quoted(small, E::erase("b"));
+    check(small.work().generations == generations + 1 && mass(small.snapshot()) == 2,
+      "small delete retained history");
+    quoted(small, E::put("b", "returned"));
+    verify(small.snapshot(), {{"a", "changed"}, {"b", "returned"}, {"c", "three"}});
+    invariant(small);
+  }
   void recovery_metadata(){
     engine e;
     for(unsigned n=0;n!=128;++n)quoted(e,engine::put(std::to_string(n),"v"));
@@ -183,4 +221,9 @@ namespace {
     check(!e.failed()&&same(before,e.snapshot()),"stale batch mutated");verify(e.snapshot(),expected);
   }
 }
-int main(){recovery_metadata();sequences();idle_and_stale();atomic_failure();copied_and_uncopied();native_sort_transport();std::cout<<"replacement rebuild tests passed\n";}
+int main(){
+  clean_insertions<engine>();
+  clean_insertions<replacement_rebuild_engine<string_policy, wrapping_fingerprint_algebra, 256, sort_runtime_family<string_policy>>>();
+  recovery_metadata();sequences();idle_and_stale();atomic_failure();copied_and_uncopied();native_sort_transport();
+  std::cout<<"replacement rebuild tests passed\n";
+}
