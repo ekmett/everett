@@ -18,6 +18,7 @@
 #include <everett/redundant_checkpoint.h>
 #include <everett/sort_runtime_store.h>
 #include <everett/typed_world.h>
+#include <everett/typed_scan.h>
 
 #include <concepts>
 #include <cstdint>
@@ -317,6 +318,20 @@ namespace everett {
     publication_type publication() const noexcept { return session_->snapshot(); }
     std::filesystem::path const & root() const & noexcept { return root_; }
     std::filesystem::path const & root() const && = delete;
+    template <class S = typed_detail::default_sort_t<policy_type>> auto range(
+        std::optional<typed_detail::key_t<S>> lo = {}, std::optional<typed_detail::key_t<S>> hi = {}) const {
+      return everett::range<S>(snapshot(), std::move(lo), std::move(hi));
+    }
+    template <class S = typed_detail::default_sort_t<policy_type>> world_type erase_range(
+        std::optional<typed_detail::key_t<S>> lo = {}, std::optional<typed_detail::key_t<S>> hi = {})
+      requires typed_detail::replacement<S> {
+      return apply(everett::erase_range<S>(snapshot(), std::move(lo), std::move(hi)));
+    }
+    template <class S = typed_detail::default_sort_t<policy_type>> ticket erase_range_async(
+        std::optional<typed_detail::key_t<S>> lo = {}, std::optional<typed_detail::key_t<S>> hi = {})
+      requires typed_detail::replacement<S> {
+      return submit(everett::erase_range<S>(snapshot(), std::move(lo), std::move(hi)));
+    }
     template <class S = typed_detail::default_sort_t<policy_type>> auto get(typed_detail::key_t<S> const & key) const {
       return session_->snapshot()->world.template get<S>(key);
     }

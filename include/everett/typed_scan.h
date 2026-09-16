@@ -12,6 +12,7 @@
 #pragma once
 
 #include <everett/typed_world.h>
+#include <iterator>
 
 namespace everett {
   template <class S> struct typed_row {
@@ -34,30 +35,62 @@ namespace everett {
     using native_type = typename World::runtime_family::native_type;
     using key_transport = typename World::key_transport;
 
-    explicit typed_scan(World snapshot) : snapshot_(std::move(snapshot)) {
+    using key_type = typed_detail::key_t<S>;
+    explicit typed_scan(World snapshot, std::optional<key_type> lo = {}, std::optional<key_type> hi = {})
+      : snapshot_(std::move(snapshot)), sweep_(snapshot_) {
       prefix_ = key_transport::template prefix<S>();
-      auto runs = snapshot_.runtime().runs();
-      sources_.reserve(runs.size()); heap_.reserve(runs.size());
-      for (auto const & run : runs) {
-        auto native = [&] {
-          if constexpr (requires { run.native_owner(); }) return run.native_owner();
-          else return run->native;
-        }();
-        sources_.emplace_back(std::move(native));
-        if (!sources_.back().cursor.done()) heap_.push_back(sources_.size() - 1);
-      }
-      std::make_heap(heap_.begin(), heap_.end(), later());
-      finished_ = heap_.empty();
+      if (lo) lower_ = key_transport::template encode<S>(*lo);
+      if (hi) upper_ = key_transport::template encode<S>(*hi);
+      if (lower_ && upper_ && compare_bits(lower_->view(), upper_->view()) > 0)
+        throw std::invalid_argument("reversed typed range");
+      finished_ = sweep_.done() || (lower_ && upper_ && compare_bits(lower_->view(), upper_->view()) == 0);
     }
-    typed_scan(typed_scan const &) = delete;
-    typed_scan & operator=(typed_scan const &) = delete;
+    typed_scan(typed_scan const &) = default;
+    typed_scan & operator=(typed_scan const &) = default;
     typed_scan(typed_scan &&) = default;
-    typed_scan & operator=(typed_scan &&) = delete;
+    typed_scan & operator=(typed_scan &&) = default;
+
+    // Dereferencing returns an owning row. Iterator copies share their walk
+    // until one advances, then copy the per-run keys and cursor positions.
+    // No reference escapes into an iterator's mutable FC reconstruction.
+    struct iterator {
+      using value_type = row_type;
+      using difference_type = std::ptrdiff_t;
+      using iterator_concept = std::forward_iterator_tag;
+      using iterator_category = std::input_iterator_tag;
+      iterator() = default;
+      value_type operator*() const {
+        if (!state_ || !state_->has_row()) throw std::out_of_range("typed range iterator end");
+        return *state_->row_;
+      }
+      iterator & operator++() {
+        if (!state_ || !state_->has_row()) throw std::out_of_range("typed range iterator end");
+        if (state_.use_count() != 1) state_ = std::make_shared<typed_scan>(*state_);
+        state_->row_.reset(); settle(); return *this;
+      }
+      iterator operator++(int) { auto previous = *this; ++*this; return previous; }
+      friend bool operator==(iterator const & a, iterator const & b) {
+        if (a.at_end() || b.at_end()) return a.at_end() && b.at_end();
+        return a.same_position(b);
+      }
+      friend bool operator==(iterator const & value, std::default_sentinel_t) { return value.at_end(); }
+    private:
+      friend typed_scan;
+      std::shared_ptr<typed_scan> state_;
+      explicit iterator(typed_scan const & value) : state_(std::make_shared<typed_scan>(value)) { settle(); }
+      bool at_end() const { return !state_ || state_->done(); }
+      bool same_position(iterator const & other) const {
+        return state_->identity_ == other.state_->identity_ && state_->consumed() == other.state_->consumed();
+      }
+      void settle() { while (!state_->has_row() && !state_->done()) state_->step(256); }
+    };
+    iterator begin() const { return iterator(*this); }
+    std::default_sentinel_t end() const noexcept { return {}; }
 
     bool done() const noexcept { return finished_ && !row_; }
     bool has_row() const noexcept { return row_.has_value(); }
     bool failed() const noexcept { return failed_; }
-    std::uint64_t consumed() const noexcept { return consumed_; }
+    std::uint64_t consumed() const noexcept { return sweep_.consumed(); }
     row_type take_row() {
       if (!row_) throw std::logic_error("typed scan has no row");
       auto result = std::move(*row_); row_.reset(); return result;
@@ -72,71 +105,70 @@ namespace everett {
       std::uint64_t used = 0;
       try {
         while (used != budget && !finished_ && !row_) {
-          if (heap_.empty()) { finish_group(); finished_ = true; break; }
-          auto current = sources_[heap_.front()].cursor.peek();
+          if (sweep_.done()) { finish_group(); finished_ = true; break; }
+          auto current = sweep_.peek();
           if (group_ && compare_bits(group_key_.view(), current.key.prefix) != 0) {
             finish_group();
             if (row_) break;
           }
           if (!group_) {
+            if (upper_ && compare_bits(current.key.prefix, upper_->view()) >= 0) { finished_ = true; break; }
+            if (lower_ && compare_bits(current.key.prefix, lower_->view()) < 0) { sweep_.consume(); ++used; continue; }
             auto order = compare_prefix(current.key.prefix);
             if (order > 0) { finished_ = true; break; }
-            if (order < 0) { consume(); ++used; continue; }
+            if (order < 0) { sweep_.consume(); ++used; continue; }
             group_key_ = bit_string::copy(current.key.prefix);
             auto key = key_transport::template decode<S>(group_key_.view().subview(prefix_.bit_size,
               group_key_.bit_size - prefix_.bit_size));
             auto value = semantics::initial(key);
             group_.emplace(row_type{std::move(key), std::move(value)});
           }
-          if constexpr (typed_detail::replacement<S>) last_value_ = current.value;
+          if constexpr (typed_detail::replacement<S>) {
+            last_value_ = current.value;
+            last_retained_ = sweep_.retained_bits();
+          }
           else group_->value = semantics::apply(group_->key, std::move(group_->value),
             typed_detail::value<policy_type, S>(current.value));
-          consume(); ++used;
-          if (heap_.empty() || compare_bits(group_key_.view(), sources_[heap_.front()].cursor.peek().key.prefix) != 0)
+          sweep_.consume(); ++used;
+          if (sweep_.done() || compare_bits(group_key_.view(), sweep_.peek().key.prefix) != 0)
             finish_group();
-          if (heap_.empty()) finished_ = true;
+          if (sweep_.done()) finished_ = true;
         }
       } catch (...) { failed_ = true; throw; }
       return used;
     }
 
+    // Delete exactly the rows this cursor has not yet returned. The private
+    // observations carry old arrows, not hash-only evidence of old values.
+    auto erase_remaining() requires typed_detail::replacement<S> {
+      typename World::contribution_type result{snapshot_, {}};
+      result.observed_.emplace();
+      while (!done()) {
+        while (!has_row() && !done()) step(256);
+        if (!has_row()) break;
+        result.records_.push_back({bit_string::copy(group_key_.view()),
+          typed_detail::value<policy_type, S>(semantics::erase(row_->key)), last_retained_});
+        result.observed_->push_back(last_value_);
+        row_.reset();
+      }
+      return result;
+    }
+
   private:
-    struct source {
-      std::shared_ptr<native_type const> native;
-      decltype(std::declval<native_type const &>().view().cursor()) cursor;
-      explicit source(std::shared_ptr<native_type const> value)
-        : native(std::move(value)), cursor(native->view()) {}
-    };
+    std::shared_ptr<void const> identity_ = std::make_shared<int const>(0);
     World snapshot_;
+    typed_detail::native_sweep<World> sweep_;
     bit_string prefix_, group_key_;
-    std::vector<source> sources_;
-    std::vector<std::size_t> heap_;
+    std::optional<bit_string> lower_, upper_;
     std::optional<row_type> group_, row_;
     bit_view last_value_;
-    std::uint64_t consumed_ = 0;
+    std::uint64_t last_retained_ = 0;
     bool finished_ = false, failed_ = false;
 
-    auto later() const {
-      return [this](std::size_t a, std::size_t b) {
-        auto order = compare_bits(sources_[a].cursor.peek().key.prefix, sources_[b].cursor.peek().key.prefix);
-        return order ? order > 0 : a > b;
-      };
-    }
     int compare_prefix(bit_view key) const {
       auto count = std::min(key.size(), prefix_.bit_size);
       auto order = compare_bits(key.subview(0, count), prefix_.view().subview(0, count));
       return order ? order : key.size() < prefix_.bit_size ? -1 : 0;
-    }
-    void consume() {
-      std::pop_heap(heap_.begin(), heap_.end(), later());
-      auto which = heap_.back(); heap_.pop_back();
-      auto comparison = sources_[which].cursor.advance_comparison();
-      if (comparison && comparison->order >= 0)
-        throw std::invalid_argument("scanned native keys are not unique and sorted");
-      ++consumed_;
-      if (!sources_[which].cursor.done()) {
-        heap_.push_back(which); std::push_heap(heap_.begin(), heap_.end(), later());
-      }
     }
     void finish_group() {
       if (!group_) return;
@@ -148,6 +180,25 @@ namespace everett {
     }
   };
 
+  // Bounds follow the sort's encoded ordering. Omitted endpoints are open.
+  // FC initialization scans preceding records; this is not an indexed seek.
+  template <class S = void, class World> auto range(World snapshot,
+      std::optional<typed_detail::key_t<std::conditional_t<std::is_void_v<S>,
+        typed_detail::default_sort_t<typename World::policy_type>, S>>> lo = {},
+      std::optional<typed_detail::key_t<std::conditional_t<std::is_void_v<S>,
+        typed_detail::default_sort_t<typename World::policy_type>, S>>> hi = {}) {
+    using selected = std::conditional_t<std::is_void_v<S>, typed_detail::default_sort_t<typename World::policy_type>, S>;
+    return typed_scan<selected, World>(std::move(snapshot), std::move(lo), std::move(hi));
+  }
+  template <class S = void, class World> auto erase_range(World snapshot,
+      std::optional<typed_detail::key_t<std::conditional_t<std::is_void_v<S>,
+        typed_detail::default_sort_t<typename World::policy_type>, S>>> lo = {},
+      std::optional<typed_detail::key_t<std::conditional_t<std::is_void_v<S>,
+        typed_detail::default_sort_t<typename World::policy_type>, S>>> hi = {})
+    requires typed_detail::replacement<std::conditional_t<std::is_void_v<S>,
+      typed_detail::default_sort_t<typename World::policy_type>, S>> {
+    return range<S>(std::move(snapshot), std::move(lo), std::move(hi)).erase_remaining();
+  }
   template <class S = void, class World> auto scan(World snapshot) {
     using selected = std::conditional_t<std::is_void_v<S>, typed_detail::default_sort_t<typename World::policy_type>, S>;
     return typed_scan<selected, World>(std::move(snapshot));

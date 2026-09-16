@@ -355,6 +355,10 @@ namespace everett {
       if (done()) throw std::out_of_range("sort profile cursor end");
       return {ordinal_, profile_anchor<P>::complete(key_.view()), frame_.value};
     }
+    std::uint64_t retained_bits() const {
+      if (done()) throw std::out_of_range("sort profile cursor end");
+      return frame_.retained;
+    }
     void advance() { (void)advance_comparison(); }
     std::optional<bit_comparison> advance_comparison() {
       if (done()) throw std::out_of_range("sort profile cursor end");

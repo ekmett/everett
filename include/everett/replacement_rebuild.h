@@ -301,25 +301,22 @@ namespace everett {
         }
       }
       std::vector<mutation> entries; entries.reserve(input.records().size());
-      for (auto const & record : input.records()) {
-        engine_type::key_transport::dispatch(record.key.view(), [&]<class S>(std::type_identity<S>, auto const & key) {
-          static_assert(std::is_same_v<S, sort_type>);
-          auto arrow = typed_detail::value<P, S>(record.value.view());
-          auto after = semantics::apply(key, semantics::initial(key), arrow);
-          std::optional<std::uint64_t> target;
-          auto before = published_.template get_encoded<S>(key, record.key,
-            semantics::present(key, after) ? nullptr : &target);
-          if (input.base() && before != input.base()->template get_encoded<S>(key, record.key))
-            throw std::invalid_argument("stale rebuilt key value");
-          if (!semantics::present(key, before) && !semantics::present(key, after))
-            throw std::invalid_argument("deleting absent rebuilt key");
-          auto retained = record.retained_limit_bits;
-          if (target) retained = retained ? std::min(*retained, *target) : *target;
-          entries.push_back({key, std::move(before), std::move(after), std::move(arrow), 0, retained});
-        });
-      }
+      foreground_->visit_changes(input, [&]<class S>(std::type_identity<S>, auto const & key,
+          auto const & before, auto const & after, auto const & record) {
+        static_assert(std::is_same_v<S, sort_type>);
+        entries.push_back({key, before, after, typed_detail::value<P, S>(record.value.view()),
+          0, record.retained_limit_bits});
+      });
       try {
-        for (auto & entry : entries) apply(std::move(entry));
+        auto prepared = foreground_->snapshot();
+        for (auto & entry : entries) {
+          // Carries or a clean-generation handoff may change a target's
+          // physical predecessor between the sweep and this admission.
+          auto current = foreground_->snapshot();
+          if (!semantics::present(entry.key, entry.after) && !current.runtime().same_layout(prepared.runtime()))
+            entry.retained_limit_bits = 0;
+          apply(std::move(entry));
+        }
         published_ = publication();
         return published_;
       } catch (...) { poison(); throw; }
@@ -424,7 +421,10 @@ namespace everett {
         job_->queue.push_back(entry);
       }
       auto prior = foreground_->work().charged;
-      try { foreground_->contribute(command(entry)); }
+      try {
+        auto input = command(entry);
+        foreground_->template contribute_validated<sort_type>(input.records()[0], entry.key, entry.before, entry.after);
+      }
       catch (...) { work_.foreground_charged = add(work_.foreground_charged, foreground_->work().charged - prior); throw; }
       work_.foreground_charged = add(work_.foreground_charged, foreground_->work().charged - prior);
       work_.mutations = entry.ordinal;
@@ -666,7 +666,9 @@ namespace everett {
               auto row = j.scan->take_row();
               auto arrow = clean(row.key, row.value);
               require(semantics::apply(row.key, semantics::initial(row.key), arrow) == row.value, "invalid clean replacement arrow");
-              candidate_work([&]{ j.candidate->contribute(engine_type::template change<sort_type>(row.key, arrow)); });
+              auto input = engine_type::template change<sort_type>(row.key, arrow);
+              candidate_work([&]{ j.candidate->template contribute_validated<sort_type>(
+                input.records()[0], row.key, semantics::initial(row.key), row.value); });
               ++j.rows; work_.clean_rows = add(work_.clean_rows, 1);
             }
           } else if (!j.scan->done()) work_.scan_records = add(work_.scan_records, j.scan->step(1));
@@ -680,9 +682,10 @@ namespace everett {
           else {
             auto const & entry = j.queue.front();
             require(entry.ordinal == add(add(j.frozen_ordinal, j.replayed), 1), "rebuild replay order changed");
-            require(j.candidate->snapshot().template get<sort_type>(entry.key) == entry.before, "rebuild replay old value mismatch");
-            candidate_work([&]{ j.candidate->contribute(command(entry)); });
-            require(j.candidate->snapshot().template get<sort_type>(entry.key) == entry.after, "rebuild replay new value mismatch");
+            auto input = command(entry);
+            input.records_[0].retained_limit_bits = 0;
+            candidate_work([&]{ j.candidate->template contribute_validated<sort_type>(
+              input.records()[0], entry.key, entry.before, entry.after); });
             j.queue.pop_front(); ++j.replayed; work_.replayed = add(work_.replayed, 1);
           }
         } else if (j.candidate->pending()) candidate_work([&]{ j.candidate->advance(j.action); });

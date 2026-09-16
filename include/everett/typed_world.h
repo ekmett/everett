@@ -15,6 +15,7 @@
 #include <everett/fingerprint.h>
 #include <everett/sort_codec.h>
 #include <everett/session.h>
+#include <everett/native_sweep.h>
 
 #include <algorithm>
 #include <bit>
@@ -336,10 +337,15 @@ namespace everett {
     std::span<profile_record const> records() const noexcept { return records_; }
   private:
     friend struct typed_batch<P, A, Family>;
+    template <class, class> friend struct typed_scan;
     template <class, class, std::uint64_t, class> friend struct typed_engine;
     template <class, class, std::uint64_t, class> friend struct replacement_rebuild_engine;
     std::optional<typed_world<P, A, Family>> base_;
     std::vector<profile_record> records_;
+    // Only a resolved scan can supply these observations. They are validated
+    // against the current native frontier before any mutation is admitted.
+    // The immutable base owns every byte referenced by these borrowed values.
+    std::optional<std::vector<bit_view>> observed_;
     typed_contribution(std::optional<typed_world<P, A, Family>> base, std::vector<profile_record> records)
       : base_(std::move(base)), records_(std::move(records)) {}
   };
@@ -472,6 +478,8 @@ namespace everett {
       session_reservation result{reservation_work(input.records().size()), 0};
       for (auto const & record : input.records())
         result.bytes = profile_detail::add(result.bytes, profile_detail::add(record.key.bytes.size(), record.value.bytes.size()));
+      if (input.observed_) result.bytes = profile_detail::add(result.bytes,
+        profile_detail::multiply(input.observed_->size(), sizeof(bit_view)));
       return result;
     }
     std::optional<world_type> advance(std::uint64_t budget) {
@@ -498,48 +506,86 @@ namespace everett {
     template <class, class, std::uint64_t, class> friend struct replacement_rebuild_engine;
     // The rebuild wrapper shares this complete preflight before installing a
     // pristine batch; neither caller can publish metadata ahead of execution.
-    metadata_type prepare(contribution_type & input) const {
+    template <class S> static void delta(metadata_type & metadata, typed_detail::key_t<S> const & key,
+        typed_detail::state_t<S> const & old, typed_detail::state_t<S> const & next) {
+      using semantics = sort_semantics<S>;
+      bool was = semantics::present(key, old), now = semantics::present(key, next);
+      auto before_hash = was ? A::lift(semantics::hash_value(key, old)) : A::zero();
+      auto after_hash = now ? A::lift(semantics::hash_value(key, next)) : A::zero();
+      metadata.signature = A::add(metadata.signature,
+        A::multiply(A::lift(semantics::hash_key(key)), A::subtract(after_hash, before_hash)));
+      if (now && !was) metadata.live_count = profile_detail::add(metadata.live_count, 1);
+      if (was && !now) {
+        if (!metadata.live_count) throw std::invalid_argument("inconsistent typed live count");
+        --metadata.live_count;
+      }
+    }
+    template <class F> void visit_changes(contribution_type & input, F && visit) const {
       if (input.base() && input.base()->metadata().schema_id != current_.metadata().schema_id)
         throw std::invalid_argument("typed contribution uses another schema");
-      auto metadata = current_.metadata();
-      // Validate every old state and compute every delta before changing the
-      // executor. Disjoint batches from one immutable base therefore commute.
+      std::optional<typed_detail::native_sweep<world_type>> sweep;
+      if (input.observed_) sweep.emplace(current_);
+      std::size_t ordinal = 0;
+      // Validate the complete contribution before changing the executor. A
+      // range contribution reuses one frontier, including across absent rows.
       for (auto & record : input.records_) {
-        key_transport::dispatch(record.key.view(), [&]<class S>(std::type_identity<S>, auto const & key) {
+        key_transport::dispatch(record.key.view(), [&]<class S>(std::type_identity<S> tag, auto const & key) {
           using semantics = sort_semantics<S>;
           auto arrow = typed_detail::value<P, S>(record.value.view());
           std::optional<typed_detail::state_t<S>> replacement_next;
           if constexpr (typed_detail::replacement<S>)
-            replacement_next.emplace(semantics::apply(key, semantics::initial(key), std::move(arrow)));
+            replacement_next.emplace(semantics::apply(key, semantics::initial(key), arrow));
           std::optional<std::uint64_t> retained;
-          auto target = replacement_next && !semantics::present(key, *replacement_next) ? &retained : nullptr;
-          auto old = current_.template get_encoded<S>(key, record.key, target);
-          if (input.base() && old != input.base()->template get_encoded<S>(key, record.key))
+          auto old = [&] {
+            if (sweep) {
+              if constexpr (typed_detail::replacement<S>) {
+                auto hit = sweep->replacement(record.key.view());
+                if (!hit) return semantics::initial(key);
+                retained = hit->retained_bits;
+                return semantics::apply(key, semantics::initial(key), typed_detail::value<P, S>(hit->value));
+              } else throw std::logic_error("range observation on a nonreplacement sort");
+            }
+            auto target = replacement_next && !semantics::present(key, *replacement_next) ? &retained : nullptr;
+            return current_.template get_encoded<S>(key, record.key, target);
+          }();
+          if (input.observed_) {
+            auto expected = semantics::apply(key, semantics::initial(key),
+              typed_detail::value<P, S>((*input.observed_)[ordinal]));
+            if (old != expected) throw std::invalid_argument("stale typed range value");
+          } else if (input.base() && old != input.base()->template get_encoded<S>(key, record.key))
             throw std::invalid_argument("stale typed key value");
           auto next = [&] {
             if constexpr (typed_detail::replacement<S>) return std::move(*replacement_next);
             else return semantics::apply(key, old, std::move(arrow));
           }();
-          bool was = semantics::present(key, old), now = semantics::present(key, next);
           if constexpr (typed_detail::replacement<S>) {
-            if (!was && !now) throw std::invalid_argument("deleting absent typed key");
-            // The base may have an equivalent but physically different layout.
-            // Capture the current target before publishing the new input.
-            if (!now && retained) record.retained_limit_bits = record.retained_limit_bits
+            if (!semantics::present(key, old) && !semantics::present(key, next))
+              throw std::invalid_argument("deleting absent typed key");
+            // A concurrent equivalent layout may encode a different prefix.
+            if (!semantics::present(key, next) && retained) record.retained_limit_bits = record.retained_limit_bits
               ? std::min(*record.retained_limit_bits, *retained) : *retained;
           }
-          auto before_hash = was ? A::lift(semantics::hash_value(key, old)) : A::zero();
-          auto after_hash = now ? A::lift(semantics::hash_value(key, next)) : A::zero();
-          metadata.signature = A::add(metadata.signature,
-            A::multiply(A::lift(semantics::hash_key(key)), A::subtract(after_hash, before_hash)));
-          if (now && !was) metadata.live_count = profile_detail::add(metadata.live_count, 1);
-          if (was && !now) {
-            if (!metadata.live_count) throw std::invalid_argument("inconsistent typed live count");
-            --metadata.live_count;
-          }
+          std::invoke(visit, tag, key, old, next, record);
         });
+        ++ordinal;
       }
+    }
+    metadata_type prepare(contribution_type & input) const {
+      auto metadata = current_.metadata();
+      visit_changes(input, [&]<class S>(std::type_identity<S>, auto const & key, auto const & old,
+          auto const & next, auto const &) { delta<S>(metadata, key, old, next); });
       return metadata;
+    }
+    // The rebuilding owner has already checked this mutation against its
+    // immutable preflight frontier. Avoid repeating a point lookup for it.
+    template <class S> void contribute_validated(profile_record const & record,
+        typed_detail::key_t<S> const & key, typed_detail::state_t<S> const & old,
+        typed_detail::state_t<S> const & next) {
+      require_active();
+      auto metadata = current_.metadata();
+      delta<S>(metadata, key, old, next);
+      try { complete(std::span(&record, 1), std::move(metadata)); }
+      catch (...) { poison(); throw; }
     }
     // The caller has validated the complete batch. An initialized prefix and
     // this ordinary paid tail remain private until the final metadata is ready.
