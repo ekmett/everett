@@ -75,7 +75,7 @@ auto branch = db.fork("earth-617", *saved);
 branch.put("name", "Another branch");
 ```
 
-The original tap, saved snapshot and new branch can now evolve independently.
+The two taps can now evolve independently while the saved snapshot stays fixed.
 `load` returns an optional snapshot; it leaves the live tap where it is. Save
 names are immutable, and a fork needs an unused tap name. `save(name)` and
 `fork(name)` use the current snapshot.
@@ -85,8 +85,8 @@ logical contents independently of the physical merge layout. I use it to
 notice disagreement between replicas; it is a sanity check, not a cryptographic
 commitment.
 
-Current catalogs retain historical generations and pins. Automatic reclamation
-is still being implemented, so disk use includes retained history.
+Current catalogs retain historical generations and pins, so disk use includes
+retained history. Automatic reclamation remains future work.
 
 Concurrent Updates
 ------------------
@@ -99,6 +99,7 @@ return tickets:
 auto first = db.put_async("left", "L");
 auto second = db.put_async("right", "R");
 second.get(); // Wait for this write's durable publication.
+first.get();  // Check the earlier write's outcome too.
 ```
 
 The queue has bounded admission capacity and applies backpressure when it fills
