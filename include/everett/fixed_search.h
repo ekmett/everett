@@ -31,6 +31,14 @@
 #include <arm_neon.h>
 #endif
 
+#if defined(_MSC_VER)
+#define EVERETT_FIXED_SEARCH_INLINE __forceinline
+#elif defined(__GNUC__)
+#define EVERETT_FIXED_SEARCH_INLINE inline __attribute__((always_inline))
+#else
+#define EVERETT_FIXED_SEARCH_INLINE inline
+#endif
+
 namespace everett {
   namespace fixed_search_detail {
     inline std::uint32_t load_word(std::byte const *source) noexcept {
@@ -62,11 +70,38 @@ namespace everett {
       else return less;
     }
 
+#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    inline uint32x4_t load_partial(std::byte const *source, unsigned words) noexcept {
+      if (words >= 4) return vreinterpretq_u32_u8(vld1q_u8(reinterpret_cast<std::uint8_t const *>(source)));
+      auto result = vdupq_n_u32(0);
+      // Literal scalar loads keep partial accesses bounded without a dynamic
+      // memcpy call or a full vector read beyond the supplied byte span.
+      switch (words) {
+        case 3: result = vsetq_lane_u32(load_word(source + 8), result, 2); [[fallthrough]];
+        case 2: result = vsetq_lane_u32(load_word(source + 4), result, 1); [[fallthrough]];
+        case 1: result = vsetq_lane_u32(load_word(source), result, 0); [[fallthrough]];
+        default: return result;
+      }
+    }
+
+    template <bool Upper>
+    EVERETT_FIXED_SEARCH_INLINE bool precedes_four(std::byte const *source, uint32x4_t query) noexcept {
+      auto value = vreinterpretq_u32_u8(vld1q_u8(reinterpret_cast<std::uint8_t const *>(source)));
+      // A more significant unequal word outweighs every following word.
+      // Each lane contributes -1, 0, or 1, with weights 8, 4, 2, 1.
+      auto order = vreinterpretq_s32_u32(vsubq_u32(vcgtq_u32(value, query), vcltq_u32(value, query)));
+      int32x4_t shifts{3, 2, 1, 0};
+      auto comparison = vaddvq_s32(vshlq_s32(order, shifts));
+      if constexpr (Upper) return comparison >= 0;
+      else return comparison > 0;
+    }
+#endif
+
     // Count keys satisfying < query (or <= query), not individual word lanes.
     // The first word of each key is the most significant comparison word.
     // Callers supply at most four complete keys; no padding is required.
     template <std::size_t Words, bool Upper>
-    inline unsigned population(std::byte const *source, unsigned count,
+    EVERETT_FIXED_SEARCH_INLINE unsigned population(std::byte const *source, unsigned count,
         std::array<std::uint32_t, Words> const &query) noexcept {
       if (!count) return 0;
       unsigned less = 0, equal = 0;
@@ -84,7 +119,8 @@ namespace everett {
       auto queries = _mm256_loadu_si256(reinterpret_cast<__m256i const *>(q.data()));
       auto sign = _mm256_set1_epi32(std::numeric_limits<std::int32_t>::min());
       auto positions = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
-      for (unsigned at = 0; at < word_count; at += 8) {
+      for (unsigned at = 0; at < Words * 4; at += 8) {
+        if (at >= word_count) break;
         auto active = _mm256_cmpgt_epi32(_mm256_set1_epi32(int(word_count - at)), positions);
         // VPMASKMOVD suppresses memory access for inactive dword lanes.
         auto values = _mm256_maskload_epi32(reinterpret_cast<int const *>(source + (at << 2)), active);
@@ -94,22 +130,43 @@ namespace everett {
         equal |= unsigned(_mm256_movemask_ps(_mm256_castsi256_ps(eq))) << at;
       }
 #elif defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-      auto q = repeated<Words, 4>(query);
-      auto queries = vld1q_u32(q.data());
-      uint32x4_t weights{1, 2, 4, 8};
-      for (unsigned at = 0; at < word_count; at += 4) {
-        std::array<std::uint32_t, 4> buffer{};
-        // NEON has no fault-suppressing load here: copy only the valid bytes.
-        std::memcpy(buffer.data(), source + (at << 2), std::min(4u, word_count - at) << 2);
-        auto values = vld1q_u32(buffer.data());
-        less |= vaddvq_u32(vandq_u32(vcltq_u32(values, queries), weights)) << at;
-        equal |= vaddvq_u32(vandq_u32(vceqq_u32(values, queries), weights)) << at;
+      if constexpr (Words == 1) {
+        auto values = load_partial(source, count);
+        auto queries = vdupq_n_u32(query[0]);
+        uint32x4_t positions{0, 1, 2, 3};
+        auto active = vcltq_u32(positions, vdupq_n_u32(count));
+        auto matches = Upper ? vcleq_u32(values, queries) : vcltq_u32(values, queries);
+        return vaddvq_u32(vshrq_n_u32(vandq_u32(matches, active), 31));
+      } else if constexpr (Words == 2) {
+        auto queries = vdupq_n_u64((std::uint64_t(query[0]) << 32) | query[1]);
+        unsigned result = 0;
+        for (unsigned at = 0; at < 4; at += 2) {
+          if (at >= count) break;
+          if (count - at == 1) {
+            result += precedes<Words, Upper>(source + (at << 3), query);
+          } else {
+            auto words = vreinterpretq_u32_u8(vld1q_u8(reinterpret_cast<std::uint8_t const *>(source + (at << 3))));
+            auto values = vreinterpretq_u64_u32(vrev64q_u32(words));
+            auto matches = Upper ? vcleq_u64(values, queries) : vcltq_u64(values, queries);
+            result += unsigned(vaddvq_u64(vshrq_n_u64(matches, 63)));
+          }
+        }
+        return result;
+      } else {
+        auto queries = vld1q_u32(query.data());
+        unsigned result = 0;
+        for (unsigned at = 0; at < 4; ++at) {
+          if (at >= count) break;
+          result += precedes_four<Upper>(source + (at << 4), queries);
+        }
+        return result;
       }
 #elif defined(__SSE2__)
       auto q = repeated<Words, 4>(query);
       auto queries = _mm_loadu_si128(reinterpret_cast<__m128i const *>(q.data()));
       auto sign = _mm_set1_epi32(std::numeric_limits<std::int32_t>::min());
-      for (unsigned at = 0; at < word_count; at += 4) {
+      for (unsigned at = 0; at < Words * 4; at += 4) {
+        if (at >= word_count) break;
         std::array<std::uint32_t, 4> buffer{};
         std::memcpy(buffer.data(), source + (at << 2), std::min(4u, word_count - at) << 2);
         auto values = _mm_loadu_si128(reinterpret_cast<__m128i const *>(buffer.data()));
@@ -196,19 +253,30 @@ namespace everett {
       }
       return first;
     }
-    template <bool Upper> void pivot_step(key_type const &query, std::size_t &first, std::size_t &count) const noexcept {
+    template <bool Upper> EVERETT_FIXED_SEARCH_INLINE void pivot_step(key_type const &query, std::size_t &first, std::size_t &count) const noexcept {
       // Called only with at least three keys, giving three distinct pivots.
       std::array<std::size_t, 3> positions{count >> 2, count >> 1, (3 * count) >> 2};
-      std::array<std::byte, 3 * key_bytes> pivots;
-      for (unsigned i = 0; i < 3; ++i)
-        std::memcpy(pivots.data() + i * key_bytes, bytes_.data() + (first + positions[i]) * key_bytes, key_bytes);
-      auto rank = fixed_search_detail::population<Words, Upper>(pivots.data(), 3, query);
-      std::array<std::size_t, 4> starts{0, positions[0] + 1, positions[1] + 1, positions[2] + 1};
-      std::array<std::size_t, 4> ends{positions[0], positions[1], positions[2], count};
-      first += starts[rank];
-      count = ends[rank] - starts[rank];
+      unsigned rank;
+#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+      if constexpr (Words == 4) {
+        auto queries = vld1q_u32(query.data());
+        rank = 0;
+        for (unsigned i = 0; i < 3; ++i)
+          rank += fixed_search_detail::precedes_four<Upper>(bytes_.data() + (first + positions[i]) * key_bytes, queries);
+      } else
+#endif
+      {
+        std::array<std::byte, 3 * key_bytes> pivots;
+        for (unsigned i = 0; i < 3; ++i)
+          std::memcpy(pivots.data() + i * key_bytes, bytes_.data() + (first + positions[i]) * key_bytes, key_bytes);
+        rank = fixed_search_detail::population<Words, Upper>(pivots.data(), 3, query);
+      }
+      auto start = ((rank * count) >> 2) + (rank != 0);
+      auto end = ((rank + 1) * count) >> 2;
+      first += start;
+      count = end - start;
     }
-    template <bool Upper, unsigned Bucket> std::size_t small_bound(key_type const &query) const noexcept {
+    template <bool Upper, unsigned Bucket> EVERETT_FIXED_SEARCH_INLINE std::size_t small_bound(key_type const &query) const noexcept {
       std::size_t first = 0, count = size();
       if constexpr (Bucket > 4) pivot_step<Upper>(query, first, count);
       // Original sizes 17..32 leave 3..8 keys after the first pivot step.
@@ -216,7 +284,7 @@ namespace everett {
       if (!count) return first;
       return first + fixed_search_detail::population<Words, Upper>(bytes_.data() + first * key_bytes, unsigned(count), query);
     }
-    template <bool Upper> std::size_t simd_bound(key_type const &query) const noexcept {
+    template <bool Upper> EVERETT_FIXED_SEARCH_INLINE std::size_t simd_bound(key_type const &query) const noexcept {
       if (size() <= 4) return small_bound<Upper, 4>(query);
       if (size() <= 8) return small_bound<Upper, 8>(query);
       if (size() <= 16) return small_bound<Upper, 16>(query);
@@ -225,3 +293,5 @@ namespace everett {
     }
   };
 }
+
+#undef EVERETT_FIXED_SEARCH_INLINE
