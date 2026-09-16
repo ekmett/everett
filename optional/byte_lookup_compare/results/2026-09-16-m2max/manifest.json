@@ -1,0 +1,47 @@
+{
+  "format": 1,
+  "header_revision": "384f8443a102334539226f4e6e2a6a4a8b63300b",
+  "harness_revision": "99dce20",
+  "artifacts": {
+    "diagnostics.csv": {
+      "bytes": 54201,
+      "sha256": "ba381b5d5d60498829599ee3e1219192b126bb04c91e8bcabb5f0f31a6f79b27"
+    },
+    "headers.json": {
+      "bytes": 7720,
+      "sha256": "c0e3aa2c36cadc91f44355089d6dbf1e5906f51df1f7f1adbfe6d108e124a71c"
+    },
+    "metadata.json": {
+      "bytes": 7828,
+      "sha256": "384d1c2f8c123c3c57640ead3fb8534feda29ed73d62263d430b654b5bde0122"
+    },
+    "provenance.json": {
+      "bytes": 1428,
+      "sha256": "72f390ff1305df3091e147efd0ed6af8ca3643a843c0b53c34a78e1962eb373f"
+    },
+    "queries.csv.gz": {
+      "bytes": 15076,
+      "sha256": "ca075a3a2b4b3cfa99cb96bf9ab2d696c9f473c7c6809661d30b503191a27a0e"
+    },
+    "raw.tar.gz": {
+      "bytes": 20406,
+      "sha256": "8985fb2827867080fb153855f3dc40105e11402fa8c198ad0d9e3396af1dd6c4"
+    },
+    "space.csv.gz": {
+      "bytes": 1667,
+      "sha256": "be276339cbea9d3c8f74b9f16e9e7a822c9dfe27cd2409adb45fa3861ad4c839"
+    },
+    "summary.csv": {
+      "bytes": 10622,
+      "sha256": "ea6ad7e382108bf1d50373079ac5804935223c4d9cfb0bd078bbb63d68e26b45"
+    }
+  },
+  "analysis_tools": {
+    "summarize.py": "48c8aaaba585b1c1a887642b5e90f16894d69f90cd894a4ae5e292af9355315b"
+  },
+  "notes": [
+    "All972timer observations are retained, including outliers.",
+    "The54matched cases use identical logical tables and query sets. Byte/bit encoded streams and envelopes intentionally differ.",
+    "Headers include the reservoir reader; this is not the pre-reservoir offset comparison."
+  ]
+}

@@ -12,6 +12,55 @@ This collection freezes production headers at
 It is separate from the earlier [offset comparison](../search_compare/report.md),
 whose decoder predates that change.
 
+Results on Apple M2 Max
+-----------------------
+
+Byte lookups provide **2.04× the throughput** of bit lookups across the 54
+matched cases, with individual ratios from **1.78× to 2.23×**. The core
+8K/128K subset alone gives 2.06× across 48 cases; the additional 524K case
+includes all six query/access combinations. These are geometric means of
+ratios of process-median query times. Every byte process-median range is
+disjoint from its bit counterpart in the faster direction.
+
+Representative independent hits show the complete-file tradeoff alongside
+lookup time. A negative final column means the bit files are smaller:
+
+| Base records | Keys | Byte lookup | Bit lookup | Byte throughput | Bit file size vs byte |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| 8,192 | structured, 16 bytes | 2.668 µs | 5.737 µs | 2.150× | -4.864% |
+| 131,072 | structured, 16 bytes | 3.288 µs | 6.820 µs | 2.074× | -5.030% |
+| 8,192 | hash, 128 bytes | 3.083 µs | 6.430 µs | 2.086× | +0.979% |
+| 131,072 | hash, 128 bytes | 3.954 µs | 7.918 µs | 2.003× | +1.090% |
+| 524,288 | hash, 128 bytes | 4.583 µs | 8.462 µs | 1.847× | +1.135% |
+
+For example, the 131,072-record structured/16-byte fixture occupies 6,762,352
+bytes in byte format and 6,422,208 in bit format. The matched hash-like/128-byte
+fixture occupies 30,321,360 and 30,651,952 bytes respectively. Bit encoding saves
+about 4.7–5.0% for the structured fixtures here; the hash-like bit fixtures are
+about 0.66–1.14% larger. Space and speed both depend on the data and grammar.
+These results support byte encoding for this ordinary string-table workload;
+they do not claim that every key/value codec has the same tradeoff.
+
+The snapshot includes the reservoir bit reader. The earlier pre-reservoir
+measurements remain separate; this collection changes query count and timing
+controls, so its difference from that earlier collection is not an isolated
+measurement of the reservoir's effect.
+
+All 972 observations are retained. The largest within-process trial ratio is
+1.422, and the largest ratio between process medians within a case/profile is
+1.228. Median CPU/wall time across process/query-group medians is 99.74%; the
+lowest individual trial is 91.81%. The largest excursion occurs in a 524K byte
+mixed/dependent group. Variation is visible, but the byte advantage remains
+across all process ranges. No slow trial was removed or recollected.
+
+The [paired summary](results/2026-09-16-m2max/summary.csv) retains every query
+kind and access pattern, absolute times, process ranges and complete-file
+bytes. [CPU/wall diagnostics](results/2026-09-16-m2max/diagnostics.csv),
+[raw timed rows](results/2026-09-16-m2max/queries.csv.gz),
+[space observations](results/2026-09-16-m2max/space.csv.gz) and
+[validation provenance](results/2026-09-16-m2max/provenance.json) are retained.
+The [artifact manifest](results/2026-09-16-m2max/manifest.json) records their hashes.
+
 Workloads
 ---------
 
