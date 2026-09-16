@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Exercises the ordinary streamed session, custom arrows and byte-registry fallback.
+ * \brief Exercises byte-default sessions, explicit bit storage and custom arrows.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -22,7 +22,12 @@ namespace {
   static_assert(std::same_as<multiverse<>::active_engine, active_engine<>>);
   static_assert(std::same_as<connection<>::core_type, active_engine<>>);
   static_assert(std::same_as<persistent_engine<>::core_type, active_engine<>>);
-  static_assert(std::same_as<active_engine<>::runtime_family, streaming_sort_runtime_family<>>);
+  static_assert(std::same_as<active_engine<>::runtime_family, redundant_runtime_family<storage_policy<>>>);
+  static_assert(std::same_as<active_engine<string_policy>::runtime_family, streaming_sort_runtime_family<>>);
+  static_assert(std::same_as<typed_engine<>::policy_type, storage_policy<>>);
+  static_assert(std::same_as<typed_world<>::policy_type, storage_policy<>>);
+  static_assert(std::same_as<replacement_rebuild_engine<>::policy_type, storage_policy<>>);
+  static_assert(std::same_as<replacement_world<>::policy_type, storage_policy<>>);
   static_assert(active_engine<>::charged_service);
   struct temporary {
     std::filesystem::path root;
@@ -51,13 +56,14 @@ namespace {
     while (auto row = cursor.next()) assert(scanned.emplace(row->key, *row->value).second);
     assert(scanned == expected);
   }
-  void ordinary() {
+  void bit_sessions() {
+    using core = active_engine<string_policy>;
     temporary dir;
-    auto storage = multiverse<>::create(dir.root / "multiverse");
+    auto storage = multiverse<string_policy>::create(dir.root / "multiverse");
     std::map<std::string, std::string> expected;
     {
       auto db = storage.connect("earth-616");
-      std::vector<connection<>::ticket> tickets;
+      std::vector<connection<core>::ticket> tickets;
       for (unsigned i = 0; i != 20; ++i) {
         auto key = "prefix/" + std::to_string(i), value = "value/" + std::to_string(i);
         expected.emplace(key, value); tickets.push_back(db.put_async(key, value));
@@ -81,7 +87,8 @@ namespace {
       assert(fork.get("prefix/0") == "branch" && old.get("prefix/0") == "value/0" && !db.get("prefix/0"));
       auto restored = db.load("original"); assert(restored); check(*restored, original);
     }
-    auto live = persistent_engine<>::connect(storage.root(), "earth-616", {.create_if_missing = false});
+    rejects([&] { (void)connect(storage.root(), "earth-616", {.create_if_missing = false}); });
+    auto live = persistent_engine<core>::connect(storage.root(), "earth-616", {.create_if_missing = false});
     check(live.snapshot(), expected);
     while (live.pending()) (void)live.advance(1 << 20);
     auto mapped = live.snapshot(); check(mapped, expected);
@@ -93,11 +100,48 @@ namespace {
     }
     // Both wrapped static factories return the public engine type and preserve
     // the concrete storage handle across a settled rebase.
-    using core = active_engine<>;
     auto attached = core::from_snapshot(mapped, core::runtime_family::open_storage(storage.root()));
     static_assert(std::same_as<decltype(attached), core>);
     auto context = attached.storage().context();
     attached.rebase(mapped); assert(attached.storage().context() == context);
+  }
+
+  void byte_defaults() {
+    temporary dir;
+    auto storage = multiverse<>::create(dir.root / "multiverse");
+    static_assert(std::same_as<decltype(storage)::policy_type, storage_policy<>>);
+    static_assert(decltype(storage)::policy_type::unit == profile_unit::byte);
+    std::string key("a\0key", 5), value("v\0\xff", 3);
+    {
+      connection db(storage.root(), "default");
+      static_assert(std::same_as<decltype(db), connection<>>);
+      auto original = db.put(key, value);
+      db.put("", "empty"); db.put("a", "prefix"); db.put("b", "later");
+      db.save("before");
+      auto rows = db.range(std::string("a"), std::string("b"));
+      auto cursor = rows.begin();
+      assert((*cursor).key == "a"); ++cursor;
+      assert((*cursor).key == key && (*cursor).value == value); ++cursor;
+      assert(cursor == std::default_sentinel);
+      auto empty_range = db.range(std::string("b"), std::string("b"));
+      assert(empty_range.begin() == std::default_sentinel);
+      db.erase_range(std::string("a"), std::string("b"));
+      assert(!db.get("a") && !db.get(key) && db.get("b") == "later");
+      assert(original.get(key) == value && original.live_count() == 1);
+      check(db.snapshot(), {{"", "empty"}, {"b", "later"}});
+      assert(db.snapshot().metadata().schema_id == "everett.optional-string/tagless/byte-profile-v2");
+    }
+    multiverse reopened(storage.root());
+    static_assert(std::same_as<decltype(reopened), multiverse<>>);
+    auto db = reopened.connect("default", {.create_if_missing = false});
+    static_assert(std::same_as<decltype(db), connection<>>);
+    check(db.snapshot(), {{"", "empty"}, {"b", "later"}});
+    auto before = db.load("before");
+    assert(before && before->get(key) == value && before->get("a") == "prefix");
+    auto branch = db.fork("branch", *before);
+    branch.put(key, "changed");
+    assert(branch.get(key) == "changed" && before->get(key) == value && !db.get(key));
+    rejects([&] { (void)multiverse<string_policy>(storage.root()).connect("default", {.create_if_missing = false}); });
   }
 
   struct append_sort {
@@ -141,6 +185,6 @@ namespace {
   }
 }
 int main() {
-  try { ordinary(); registries(); }
+  try { byte_defaults(); bit_sessions(); registries(); }
   catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }

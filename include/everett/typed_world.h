@@ -218,7 +218,7 @@ namespace everett {
   template <class P, class A, std::uint64_t DepthLimit, class Family> struct typed_engine;
   template <class P, class A, std::uint64_t DepthLimit, class Family> struct replacement_rebuild_engine;
 
-  template <class P = string_policy, class A = wrapping_fingerprint_algebra,
+  template <class P = storage_policy<>, class A = wrapping_fingerprint_algebra,
     class Family = binary_runtime_family<P>> struct typed_world {
     using policy_type = P;
     using metadata_type = typed_world_metadata<A>;
@@ -401,7 +401,7 @@ namespace everett {
   // DepthLimit bounds the main-chain nodes of every imported or published
   // root, including routing ancestors. It is enforced support, not an inferred
   // COLA theorem, and bounds the allowance for ready singleton admissions.
-  template <class P = string_policy, class A = wrapping_fingerprint_algebra, std::uint64_t DepthLimit = 256,
+  template <class P = storage_policy<>, class A = wrapping_fingerprint_algebra, std::uint64_t DepthLimit = 256,
     class Family = binary_runtime_family<P>>
   struct typed_engine {
     using policy_type = P;

@@ -72,8 +72,8 @@ namespace everett {
     static constexpr std::optional<std::uint64_t> value_width = registry::value_width;
   };
 
-  // The ordinary string table uses bit addressing and leaves one subtree for
-  // future sorts. Its sampling and count-code defaults need no tuning.
+  // Explicit bit-addressed string tables leave one subtree for future sorts.
+  // Ordinary string tables use the byte-addressed storage_policy<> default.
   using string_registry = bin<tip<unsorted<std::optional<std::string>>>, sort_undefined>;
   using string_policy = storage_policy<string_registry>;
 }

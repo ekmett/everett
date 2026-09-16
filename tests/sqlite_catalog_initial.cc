@@ -21,8 +21,8 @@ namespace {
   using namespace everett;
   using P = string_policy;
   using strings = unsorted<std::optional<std::string>>;
-  using core = active_engine<>;
-  using engine = persistent_engine<>;
+  using core = active_engine<P>;
+  using engine = persistent_engine<core>;
   using oracle = std::map<std::string, std::string>;
 
   struct temporary {
@@ -114,7 +114,7 @@ namespace {
 
   void queued_initial_batch() {
     temporary dir;
-    connection<> db(dir.root, "queued");
+    connection<core> db(dir.root, "queued");
     auto empty = db.snapshot();
     auto expected = contents(17);
     auto changes = decltype(db)::core_type::batch();

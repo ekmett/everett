@@ -52,7 +52,9 @@ file(WRITE "${root}/source/sqlite.cc" [=[
 int main() {
 #if defined(__APPLE__) || defined(__linux__)
   auto storage = everett::multiverse<>::create("example-data");
+  static_assert(std::same_as<decltype(storage)::policy_type, everett::storage_policy<>>);
   auto db = storage.connect("earth-616");
+  static_assert(std::same_as<decltype(db), everett::connection<>>);
   db.put("name", "Everett");
   auto before = db.snapshot();
   db.save("before-edit", before);

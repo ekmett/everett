@@ -44,6 +44,9 @@
 
 using policy = everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<everett::fixed_values<3>>>>, 7>;
 using store = everett::multiverse<policy>;
+static_assert(std::is_same_v<everett::multiverse<>::policy_type, everett::storage_policy<>>);
+static_assert(everett::multiverse<>::policy_type::unit == everett::profile_unit::byte);
+static_assert(everett::multiverse<everett::string_policy>::policy_type::unit == everett::profile_unit::bit);
 static_assert(std::is_same_v<store::sort, everett::sort<policy>>);
 static_assert(std::is_same_v<store::blob::policy_type, policy>);
 static_assert(std::is_same_v<store::query_root, everett::query_root<policy>>);

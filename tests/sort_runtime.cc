@@ -53,7 +53,7 @@ namespace {
     static_assert(std::is_invocable_v<engine::compose_type &, bit_view, bit_view>);
     static_assert(!std::is_invocable_v<engine::compose_type &, bit_view, bit_view, bit_view>);
     engine active;
-    check(active.snapshot().metadata().schema_id != typed_engine<>{}.snapshot().metadata().schema_id,
+    check(active.snapshot().metadata().schema_id != typed_engine<string_policy>{}.snapshot().metadata().schema_id,
       "raw keys reused escaped-key schema identity");
     auto command = engine::put(std::string("a\0", 2), "v");
     check(command.records()[0].key.bit_size == 17, "string key gained escapes/terminator");

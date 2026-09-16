@@ -35,7 +35,7 @@ namespace everett {
   // streamed records; byte registries retain their byte-aligned transport.
   // Both run the redundant scheduler and charge service at admission. The
   // single optional-string sort also rebuilds obsolete history as it shrinks.
-  template <class P = string_policy> struct active_engine : active_detail::engine<P> {
+  template <class P = storage_policy<>> struct active_engine : active_detail::engine<P> {
     using base_type = active_detail::engine<P>;
     using world_type = typename base_type::world_type;
     using metadata_type = typename base_type::metadata_type;

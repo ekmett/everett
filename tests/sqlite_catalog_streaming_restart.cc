@@ -160,7 +160,7 @@ namespace {
     random_object_ids, transaction_ops, file_ops>;
   using core = typed_engine<P, wrapping_fingerprint_algebra, 256, family>;
   using runtime = core::runtime_type;
-  using engine = persistent_engine<>; // Recovery exercises the ordinary default bit engine.
+  using engine = persistent_engine<active_engine<P>>; // Recovery exercises the streamed bit engine.
   using store = engine::store_type;
   using stopped_store = runtime_store<P, random_object_ids, transaction_ops, family>;
   using oracle = std::map<std::string, std::string>;

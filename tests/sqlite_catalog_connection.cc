@@ -54,7 +54,7 @@ namespace {
   void simple() {
     temporary directory;
     auto storage = multiverse<>::create(directory.root / "nested" / "storage");
-    static_assert(std::same_as<decltype(storage)::policy_type, string_policy>);
+    static_assert(std::same_as<decltype(storage)::policy_type, storage_policy<>>);
     auto current = connect<core>(storage.root(), "earth-616");
     assert(!current.get("name"));
     auto first = current.put("name", "Everett");

@@ -81,7 +81,7 @@ namespace {
     verify(reopened.snapshot(), expected);
     auto old = reopened.load("before"); assert(old && old->get("key") == "first");
     rejects([&] { (void)connect<core>(dir.root, "earth-616", {.schema_id = "another-schema"}); });
-    rejects([&] { (void)connect<typed_engine<>>(dir.root, "earth-616"); }); // Opaque native family cannot reinterpret KV03.
+    rejects([&] { (void)connect<typed_engine<string_policy>>(dir.root, "earth-616"); }); // Opaque native family cannot reinterpret KV03.
   }
   void protected_payload() {
     temporary dir; auto active = persistent_engine<core>::connect(dir.root, "protected");

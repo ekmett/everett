@@ -139,7 +139,7 @@ namespace {
     temporary_directory temporary;
     auto root = temporary.path / "new" / "nested";
     auto store = multiverse<>::create(root);
-    static_assert(std::same_as<decltype(store)::policy_type, string_policy>);
+    static_assert(std::same_as<decltype(store)::policy_type, storage_policy<>>);
     require(store.root() == std::filesystem::canonical(root), "created root is not canonical");
     auto payload = bit_string::from_bytes("keep this");
     write_bytes(root / "retained", payload.bytes);

@@ -83,7 +83,7 @@ namespace everett {
     bool operator==(replacement_metadata const &) const = default;
   };
 
-  template <class P = string_policy, class A = wrapping_fingerprint_algebra,
+  template <class P = storage_policy<>, class A = wrapping_fingerprint_algebra,
     class Family = redundant_runtime_family<P>>
   struct replacement_world : typed_world<P, A, Family> {
     using base_type = typed_world<P, A, Family>;
@@ -124,7 +124,7 @@ namespace everett {
   // sort supplies clean(key,state)->arrow; the default optional-string sort
   // already represents a clean state with the same replacement arrow.
   // Budgets are structural allowances, not byte counts or elapsed time.
-  template <class P = string_policy, class A = wrapping_fingerprint_algebra,
+  template <class P = storage_policy<>, class A = wrapping_fingerprint_algebra,
     std::uint64_t DepthLimit = 256, class Family = redundant_runtime_family<P>>
   struct replacement_rebuild_engine {
     using policy_type = P;

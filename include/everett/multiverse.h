@@ -69,7 +69,7 @@ namespace everett {
   // sealing creates immutable files under caller-reserved identities. The
   // optional SQLite catalog owns persistent roots and reservations separately.
   // Files/slices retain their mappings independently of this path holder.
-  template <class P = string_policy> struct multiverse {
+  template <class P = storage_policy<>> struct multiverse {
     using policy_type = P;
     using registry_type = typename P::registry_type;
     using sort = everett::sort<P>;

@@ -49,15 +49,15 @@ namespace {
     assert(item == expected.end());
   }
   std::string key(unsigned i) { return "key/" + std::to_string(i); }
-  auto batch(unsigned count) {
-    auto input = core::batch();
+  template <class Core = core> auto batch(unsigned count) {
+    auto input = Core::batch();
     for (unsigned i = 0; i != count; ++i) input.put(key(i), "value");
     return std::move(input).finish();
   }
   void limits_and_cleanup() {
     temporary dir;
     auto storage = multiverse<>::create(dir.root);
-    assert(core::reservation_work(1) == 40'361'922);
+    assert(core::reservation_work(1) == 40'164'546);
     assert(core::reservation(batch(64)).work == core::reservation_work(64));
     auto live = storage.connect("ordinary");
     auto limits = live.limits();
@@ -110,13 +110,14 @@ namespace {
   using extended_store = runtime_store<extended_policy, random_object_ids, sqlite_catalog_ops, extended_core::runtime_family>;
   static_assert(std::same_as<extended_core::metadata_type, typed_world_metadata<>>);
   void registry_extension() {
+    using core = active_engine<string_policy>;
     temporary dir;
-    auto storage = multiverse<>::create(dir.root);
+    auto storage = multiverse<string_policy>::create(dir.root);
     std::map<std::string, std::string> expected;
     for (unsigned i = 0; i != 64; ++i) expected[key(i)] = "value";
     auto old = [&] {
-      auto engine = persistent_engine<>::connect(storage.root(), "evolving");
-      engine.contribute(batch(64));
+      auto engine = persistent_engine<core>::connect(storage.root(), "evolving");
+      engine.contribute(batch<core>(64));
       for (unsigned i = 0; i != 16; ++i) engine.contribute(core::put(key(0), "changed"));
       expected[key(0)] = "changed";
       auto saved = engine.snapshot();
@@ -165,7 +166,7 @@ namespace {
     assert(reopened.snapshot().get<append_sort>("log") == "AB" && reopened.snapshot().get<strings>(key(0)) == "changed");
     // Projecting an old cleanup obligation is one-way. An ordinary typed
     // checkpoint does not supply a clean-base/mutation history to invent.
-    rejects([&] { (void)persistent_engine<>::connect(storage.root(), "evolving", {.create_if_missing = false}); });
+    rejects([&] { (void)persistent_engine<core>::connect(storage.root(), "evolving", {.create_if_missing = false}); });
   }
 }
 int main() {
