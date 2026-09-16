@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <exception>
 #include <filesystem>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -38,11 +39,12 @@ namespace diet {
   };
 
   template <class Cola> struct stored_cola : Cola {
-    stored_cola(Cola value, catalog_tap_head head) : Cola(std::move(value)), head_(std::move(head)) {}
-    catalog_tap_head const & head() const & noexcept { return head_; }
+    stored_cola(Cola value, catalog_tap_head head)
+      : Cola(std::move(value)), head_(std::make_shared<catalog_tap_head const>(std::move(head))) {}
+    catalog_tap_head const & head() const & noexcept { return *head_; }
     catalog_tap_head const & head() const && = delete;
   private:
-    catalog_tap_head head_;
+    std::shared_ptr<catalog_tap_head const> head_;
   };
 
   // Single-threaded durable Engine for tap. Core owns interpretation and

@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <concepts>
+#include <memory>
 #include <string_view>
 
 namespace diet {
@@ -166,11 +167,11 @@ namespace diet {
     using runtime_snapshot = typename Family::snapshot_type;
     using contribution_type = typed_contribution<P, A, Family>;
     using batch_type = typed_batch<P, A, Family>;
-    runtime_snapshot const & runtime() const & noexcept { return runtime_; }
+    runtime_snapshot const & runtime() const & noexcept { return state_->runtime; }
     runtime_snapshot const & runtime() const && = delete;
-    metadata_type const & metadata() const & noexcept { return metadata_; }
-    auto signature() const { return metadata_.signature; }
-    std::uint64_t live_count() const noexcept { return metadata_.live_count; }
+    metadata_type const & metadata() const & noexcept { return state_->metadata; }
+    auto signature() const { return state_->metadata.signature; }
+    std::uint64_t live_count() const noexcept { return state_->metadata.live_count; }
 
     // Metadata and the exact graph must have been admitted together. This
     // checks schema identity and counts; it deliberately does not scan hashes.
@@ -183,7 +184,7 @@ namespace diet {
     get(typed_detail::key_t<S> const & key) const {
       using semantics = sort_semantics<S>;
       auto encoded = key_transport::template encode<S>(key);
-      auto cursor = runtime_.cursor(encoded.view());
+      auto cursor = state_->runtime.cursor(encoded.view());
       if constexpr (typed_detail::replacement<S>) {
         while (!cursor.done()) {
           cursor.step(1);
@@ -217,9 +218,15 @@ namespace diet {
     erase(typed_detail::key_t<S> const & key) const requires typed_detail::replacement<S>;
   private:
     template <class, class, std::uint64_t, class> friend struct typed_engine;
-    runtime_snapshot runtime_;
-    metadata_type metadata_;
-    typed_cola(runtime_snapshot data, metadata_type metadata) : runtime_(std::move(data)), metadata_(std::move(metadata)) {}
+    struct state {
+      runtime_snapshot runtime;
+      metadata_type metadata;
+    };
+    // A snapshot retains one immutable head. Its schema and transitive file
+    // dependencies remain shared rather than copied into each reader.
+    std::shared_ptr<state const> state_;
+    typed_cola(runtime_snapshot data, metadata_type metadata)
+      : state_(std::make_shared<state const>(state{std::move(data), std::move(metadata)})) {}
   };
 
   template <class P, class A, class Family> struct typed_contribution {

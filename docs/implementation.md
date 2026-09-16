@@ -32,6 +32,8 @@ for integration. These are development responsibilities.
 | Typed updates | `typed_cola.h`; `tests/typed_cola.cc` | replacement reads, chronological arrows, per-sort dispatch and hashes, validated deletes, disjoint contributions, mutable commands and snapshot metadata |
 | Sort-owned record codec | `sort_codec.h`; `tests/sort_codec.cc` | heterogeneous FC/raw/integer grammars, optional/niche/no-payload values, typed stream anchors, control parsing and borrowed-role output |
 | Sort-owned physical profiles | `sort_profile.h`, `sort_profile_file.h`, `sort_profile_merge.h`; `tests/sort_profile.cc` | KV03 native framing, shared selector seeds, mapped cascading queries, prefix-preserving merges and protected-page entry |
+| Sort-owned runtime and persistence | `sort_runtime.h`, `sort_runtime_store.h`; sort-runtime and catalog tests | direct heterogeneous records, chronological composition, complete redundant frontiers and metadata-only mapped recovery |
+| Replacement rebuilding | `replacement_rebuild.h`; replacement and durable-rebuild tests | paid physical scans, FIFO replay, carried generation debt, active saves/forks and gated recovery after interruption |
 | Resolved scans | `typed_scan.h`; typed and mapped scan tests | ordered rows, newest replacements, chronological arrows, tombstone elision, bounded traversal and snapshot ownership |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `fridge.h`; profile/blob/fridge tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
 | Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
@@ -100,11 +102,21 @@ factories validate each touched old value, allowing disjoint contributions from
 one base in either order. Sorts supply chronological composition and hashing;
 dispatch bits never enter the signature. Tests include a noncommutative append
 sort, different sort-code layouts with matching signatures, and byte/bit map
-oracles. The current backend transports canonical ordered keys and arrow
-payloads through the ordinary FC profile. Direct heterogeneous record framing
-works independently in `sort_codec`; `sort_profile` connects that grammar to
-mapped native files, cascading queries and prefix-preserving merges. Connecting
-that physical family to the active typed runtime is in progress.
+oracles. The default backend transports canonical ordered keys and arrow
+payloads through the ordinary FC profile. The opt-in `sort_runtime_family`
+uses each sort's key and value grammar directly in KV03 files, with the same
+redundant scheduler, cascading queries and prefix-preserving merges.
+`sort_runtime_store` persists and restores its complete frontier, including
+hidden completed outputs. Its normal open validates metadata; explicit scans
+check the payload and cross-file samples.
+
+`sort_profile_file_writer` and `sort_profile_file_merge` stream native payloads
+through a 64 KiB buffer. Sparse offsets, block seeds and the file's sort
+dictionary remain in memory until finalization. Tests compare complete bytes
+with the owning encoder, bound allocation for large values and unary controls,
+and preserve mapped inputs while builders pause or their filenames are unlinked.
+Connecting these file writers to runtime execution is separate from the
+completed owning-runtime and durable-publication path.
 
 ### COLA main and secondary indexes
 
@@ -878,10 +890,10 @@ File readers use the width encoded in each stream rather than demanding the
 current registry's global width hint. Physical unit, sampling, block size and
 count-code checks remain exact. `typed_engine` connects the registry to reads,
 hash accounting, conditional updates and merge composition. Its current
-transport uses canonical ordered keys and encoded arrows in the ordinary
-profile grammar. `sort_codec` implements leaf-owned key/value packing, including
-fixed-width integer keys; direct heterogeneous mapped integration is separate
-from that transport.
+default transport uses canonical ordered keys and encoded arrows in the ordinary
+profile grammar. `sort_runtime_family` instead uses leaf-owned key/value packing,
+including fixed-width integer keys, through mapped KV03 files and the complete
+redundant runtime. Both transports use the same per-sort semantics.
 The [schema-history extension](keys.md#schema-histories-and-migration) describes
 multiple historical registries and forward migration without claiming that
 runtime exists.
@@ -914,8 +926,21 @@ debt, overwrite cleanup and durable continuation. The record-count argument
 includes full older coverage and a finite admission cut; byte costs require
 additional explicit work budgets.
 
-The global rebuilder is not implemented. Eager reference compaction does not
-exercise its schedule, bounded catch-up or durable publication.
+`replacement_rebuild_engine` implements this transformation for one occupied
+replacement sort. It funds a physical scan, feeds resolved live rows into a
+real candidate runtime, then replays intervening mutations in FIFO order.
+The candidate must settle and match the foreground's logical metadata before
+handoff. Replay debt remains in the next generation's mutation count. The
+[replacement guide](replacement-rebuild.md) derives the structural reservations
+and states the separate byte-cost boundary.
+
+The typed connection can persist this executor's clean-base count, mutation
+count and active-rebuild marker. If private scan or replay progress is lost,
+reopening funds a fresh cleanup of the latest acknowledged state and gates new
+admissions until it finishes. Tests cover active saves and forks, loss of a
+queued overwrite and deletion, repeated reopen and process interruption.
+Private partial candidate output is not resumed. Multiple replacement sorts,
+general arrows and byte-bounded rebuilding remain extensions.
 
 ### Categorical updates
 
@@ -925,9 +950,9 @@ query costs and dependency retention. `reference_cola` resolves replacements
 using optional values, and `profile_blob<P>` carries opaque value payloads.
 `typed_engine` executes per-sort arrows and composes them in chronological
 order during native merges. A noncommutative append sort exercises that order,
-including hash accounting and snapshot restoration. Sort-specific stream
-grammars are implemented independently; their direct mapped integration and
-general normalization bounds remain separate concerns.
+including hash accounting and mapped snapshot restoration. Sort-specific stream
+grammars also run directly in the opt-in KV03 runtime family. General arrow
+normalization bounds remain a separate concern.
 
 ## Build and verification
 
@@ -1015,7 +1040,7 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 
 | Work item | Dependencies | Concrete acceptance |
 | --- | --- | --- |
-| Mixed mapped record grammar | typed sort semantics, standalone key/value grammars, registry traits and current FC transport | selector protocol, shared block seeds, direct raw/FC keys, value skipping, mapped queries and merges without an outer uniform record envelope |
+| Streamed active runtime | direct sort-owned runtime, KV03 file writer and durable complete-frontier adapter | runtime-owned file construction context, sealed mapped merge outputs and bounded native-payload memory during ordinary writes |
 | General arrow policy coverage | replacement and noncommutative append instances, source validation and per-sort endpoint deltas | additional categories, bounded composition dependencies, observation costs and persisted schema migration |
 | Comparison block encoding | ordinary FC, exact cut LCP and scalar comparison transfers | transposed count/literal layouts, ordered SIMD transfer scans, bounded tails and independently measured time/space tradeoffs |
 | Object identity and integrity | portable sections, mmap queries and immutable writer | cryptographic content addressing, durable catalog publication and lazy block-integrity strategy |
@@ -1024,7 +1049,7 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 | Direct batch adoption | native file reader, prefix index builder and scheduler | preserve received ordinary-FC bytes, bound visible catalogs and work debt, preserve causal order and charge actual key bytes |
 | Durable backend and resumable merges | publication protocol and encoded merge continuations | fault injection at write/sync/rename/recovery cuts; failed barriers retain old roots; resume only from verified durable prefixes |
 | Durable round resumption | save manifests and update protocol | persist base/round identity, accepted batch identities and claimed keys; restart without double-applying a changeset |
-| Live-size rebuilding | scheduler and mutation accounting | replacement ready before half the clean base disappears; repeated overwrites do not grow history-sized active levels; preserve replay debt and explicit byte budgets |
+| Generalized live-size rebuilding | single-sort replacement executor and durable recovery gate | multiple replacement sorts, explicit byte budgets and durable partial-progress continuation without erasing replay debt |
 
 Separate files versus extents in managed blobs, transport and client integration
 remain policy choices. The library's correctness contracts must remain explicit

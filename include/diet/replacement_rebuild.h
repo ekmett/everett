@@ -79,17 +79,17 @@ namespace diet {
     using metadata_type = replacement_metadata<A>;
     using runtime_snapshot = typename Family::snapshot_type;
     replacement_cola(base_type value, std::uint64_t b = 0, std::uint64_t u = 0, bool active = false)
-      : base_type(std::move(value)), metadata_(base_type::metadata(), b, u, active) {
-      metadata_.validate(this->runtime().admissions());
+      : base_type(std::move(value)), metadata_(std::make_shared<metadata_type const>(base_type::metadata(), b, u, active)) {
+      metadata_->validate(this->runtime().admissions());
     }
-    metadata_type const & metadata() const & noexcept { return metadata_; }
+    metadata_type const & metadata() const & noexcept { return *metadata_; }
     static replacement_cola restore(runtime_snapshot data, metadata_type metadata, std::string_view schema) {
       metadata.validate(data.admissions());
       auto b = metadata.clean_base, u = metadata.mutations; auto active = metadata.rebuilding;
       return {base_type::restore(std::move(data), std::move(metadata), schema), b, u, active};
     }
   private:
-    metadata_type metadata_;
+    std::shared_ptr<metadata_type const> metadata_;
   };
 
   struct replacement_rebuild_work {
