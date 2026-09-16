@@ -74,7 +74,11 @@ addition to the native/profile traits, a storage family supplies:
 merge and index outputs are streamed and mapped. The context shares one empty
 native owner across rebases. Before an index can name an owned dependency, the
 graph sealer installs its catalog binding. An already bound owner ends that
-walk: its mapped dependency tail is retained directly. A default-constructed
+walk: its mapped dependency tail is retained directly. Each index job retains
+those acknowledged native/main/secondary bindings until completion, so finishing
+it does not repeat their catalog and header checks. Catalog admission still
+validates the completed index against the exact native and target metadata.
+A default-constructed
 storage can make an empty seed snapshot, but it needs `open(root)` before
 starting a merge or index.
 

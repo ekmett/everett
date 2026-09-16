@@ -71,7 +71,25 @@ namespace diet {
         ++sealed_outputs_; return native;
       } catch (...) { failed_ = true; throw; }
     }
-    template <class Node> using index_type = cola_file_index_builder<P, native_type, Node, FileOps>;
+    template <class Node> struct index_type : cola_file_index_builder<P, native_type, Node, FileOps> {
+      using base_type = cola_file_index_builder<P, native_type, Node, FileOps>;
+    private:
+      friend struct sort_runtime_context;
+      using mapped_type = typename Node::storage_type::mapped_pair_type;
+      using native_binding_pointer = std::shared_ptr<native_binding<typename mapped_type::native_type> const>;
+      using pair_binding_pointer = std::shared_ptr<pair_binding<mapped_type> const>;
+      sort_runtime_context const * owner_;
+      native_binding_pointer native_, secondary_;
+      pair_binding_pointer main_;
+      index_type(sort_runtime_context & owner, object_id output, object_attempt_id attempt,
+          native_pointer native, typename Node::pair_type main, native_pointer secondary,
+          native_binding_pointer n, pair_binding_pointer m, native_binding_pointer s)
+        : base_type(owner.root(), std::move(output), std::move(attempt),
+            {n->receipt.object, m ? std::optional<blob_identity>(m->identity) : std::nullopt,
+              s ? std::optional<object_id>(s->receipt.object) : std::nullopt},
+            std::move(native), std::move(main), std::move(secondary), owner.file_ops_, owner.spool_ops_),
+          owner_(&owner), native_(std::move(n)), secondary_(std::move(s)), main_(std::move(m)) {}
+    };
     template <class Node> auto make_index(native_pointer native, typename Node::pair_type main, native_pointer secondary) {
       require_active();
       try {
@@ -85,11 +103,8 @@ namespace diet {
         std::array<blob_identity, 1> inputs{m ? m->identity : blob_identity{n->receipt.object, output}};
         auto owner = ids_().hex(); auto operation = ids_().hex();
         catalog_.reserve(operation, attempt, owner, std::span<blob_identity const>(inputs.data(), m ? 1 : 0), reservation);
-        cola_file_dependencies dependencies{n->receipt.object,
-          m ? std::optional<blob_identity>(m->identity) : std::nullopt,
-          s ? std::optional<object_id>(s->receipt.object) : std::nullopt};
-        return std::make_unique<index_type<Node>>(root(), output, attempt, std::move(dependencies),
-          std::move(native), std::move(main), std::move(secondary), file_ops_, spool_ops_);
+        return std::unique_ptr<index_type<Node>>(new index_type<Node>(*this, output, attempt,
+          std::move(native), std::move(main), std::move(secondary), std::move(n), std::move(m), std::move(s)));
       } catch (...) { failed_ = true; throw; }
     }
     template <class Node> typename Node::pair_type finish_index(index_type<Node> & index) {
@@ -97,12 +112,12 @@ namespace diet {
       try {
         using family = sort_runtime_family<P, Selector, typename Node::storage_type>;
         using mapped_type = typename family::storage_type::mapped_pair_type;
-        runtime_store_detail::graph_sealer<P, Ids, CatalogOps, family> sealer(catalog_, ids_);
+        if (index.owner_ != this) throw std::invalid_argument("index belongs to another runtime context");
         auto receipt = index.finish(); catalog_.record_sealed(ids_().hex(), receipt);
         auto native = index.native_owner(); auto main = index.main_target(); auto secondary = index.secondary_target();
-        auto n = sealer.ensure_native(native);
-        auto m = main ? sealer.ensure_pair(main) : nullptr;
-        auto s = secondary ? sealer.ensure_native(secondary) : nullptr;
+        // Construction already acknowledged these exact dependencies. The job
+        // retains their authority and mappings along with its source facades.
+        auto const & n = index.native_; auto const & m = index.main_; auto const & s = index.secondary_;
         blob_identity identity{n->receipt.object, receipt.object};
         catalog_.template register_pair<mapped_type>(ids_().hex(), identity);
         auto mapped_index = std::make_shared<typename mapped_type::index_type const>(mapped_type::index_type::open(receipt.path));

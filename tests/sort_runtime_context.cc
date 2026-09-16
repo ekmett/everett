@@ -135,6 +135,38 @@ namespace {
     }
     assert(seen == 15 && !disk.context()->failed());
   }
+  void retained_index_jobs() {
+    temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    auto owner = storage::open(dir.root), other = storage::open(dir.root);
+    auto input = core::put("key", "value");
+    auto native = storage::singleton(input.records()[0]);
+    std::weak_ptr<family::native_type const> retained = native;
+    auto job = owner.context()->make_index<family::node_type>(native, {}, {});
+    native.reset(); assert(!retained.expired());
+    while (!job->done()) job->step(1);
+    // A different context cannot consume the retained job authority, even
+    // when it has another healthy connection to the same catalog directory.
+    rejects([&] { (void)other.context()->finish_index<family::node_type>(*job); });
+    assert(other.context()->failed() && !owner.context()->failed() && !job->finished());
+    auto pair = owner.context()->finish_index<family::node_type>(*job);
+    assert(pair->native_owner() == retained.lock()); pair->mapped()->scan();
+    job.reset(); assert(!retained.expired()); pair.reset(); assert(retained.expired());
+
+    auto damaged = storage::singleton(input.records()[0]);
+    auto invalid = owner.context()->make_index<family::node_type>(damaged, {}, {});
+    while (!invalid->done()) invalid->step(1);
+    // Keep registration's current-envelope validation: retained bindings avoid
+    // duplicate prechecks, but do not make corrupted native headers admissible.
+    for (auto const & entry : std::filesystem::recursive_directory_iterator(dir.root))
+      if (entry.path().extension() == ".kv") {
+        assert(::chmod(entry.path().c_str(), 0600) == 0);
+        auto fd = ::open(entry.path().c_str(), O_WRONLY | O_CLOEXEC);
+        assert(fd >= 0); std::byte zero{};
+        assert(::pwrite(fd, &zero, 1, 0) == 1); assert(::close(fd) == 0);
+      }
+    rejects([&] { (void)owner.context()->finish_index<family::node_type>(*invalid); });
+    assert(owner.context()->failed());
+  }
   struct failure_state { int file = 0, commit = 0, commits = 0; bool after = false; };
   struct file_ops : posix_object_ops {
     std::shared_ptr<failure_state> state;
@@ -186,6 +218,6 @@ namespace {
   }
 }
 int main() {
-  try { owned_parity(); hidden_stages(); failures(); }
+  try { owned_parity(); hidden_stages(); retained_index_jobs(); failures(); }
   catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }
