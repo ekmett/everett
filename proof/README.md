@@ -385,8 +385,8 @@ edge's bracket theorem provides the form of invariant needed for composition.
 Queries before the first key, equality runs crossing several cuts, empty targets,
 short final groups and rejected one-past-end parent groups have checked examples.
 The outer `Option` reports an invalid stored group; the inner `Option` reports an
-absent predecessor. Empty-parent handling uses the zero bootstrap instead of an
-invented rank endpoint.
+absent predecessor. An empty parent has no stored group, so `transfer_at_group`
+rejects it. Zero passed samples use `carry`'s zero bootstrap.
 
 The incoming parent window's size remains a caller obligation. The local origin
 scan stays within it, and the outgoing child window has at most $K$ entries.

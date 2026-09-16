@@ -699,5 +699,20 @@
     "status": "Passed",
     "scope": "List/natural-number model; not a proof of packed C++ execution."
   },
-  "timing_note": "All durations in this record are verification metadata, not benchmark observations."
+  "timing_note": "All durations in this record are verification metadata, not benchmark observations.",
+  "subsequent_lean_checks": [
+    {
+      "revision": "ddd458d",
+      "declarations": 1088,
+      "logical_axioms": [
+        "propext",
+        "Quot.sound",
+        "Classical.choice"
+      ],
+      "build": "lake --wfail build",
+      "examples": "lake env lean --run Main.lean",
+      "status": "Passed",
+      "scope": "Concrete one-edge fractional-index construction and stored-rank transfer with an incoming predecessor bracket; not a packed C++ or full dual-route graph proof."
+    }
+  ]
 }

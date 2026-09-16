@@ -965,6 +965,15 @@ assuming arbitrary-position constant-time rank. Abstract sampled indexes name
 their exact catalog targets and preserve correspondence across extension and
 eligible reclamation.
 
+`CarriedRoute` constructs a parent by merging native entries with the child's
+actual samples, proves their correspondence, and stores the grouped rank
+directory with that exact target. Given an incoming predecessor bracket, its
+query scans the parent window, obtains the sampled child position through the
+stored directory, and searches at most $K$ child entries. The theorem supplies
+the builder, rank and sample laws; it does not assume an external child-route
+oracle. This covers one edge with native and borrowed origins. The three-origin
+main/secondary graph remains a separate refinement step.
+
 The default `lake --wfail build` checks the proofs, examples and a transitive
 axiom audit. The interpreted examples cover duplicate keys across cuts, empty
 projections, missing predecessors, and partial tails for $K=3$ and $K=15$.
@@ -1146,6 +1155,10 @@ optional GPU program separately passed all **13 checks** after rebuilding its
 final public sources. Lean checked **995 declarations**, using only its three
 standard logical axioms. The [checkpoint record](../bench/results/everett_verification_20260916.json)
 keeps the original failure and the successful rerun distinct.
+
+At `ddd458d`, the constructed-edge proof and executable examples pass on the
+integrated tree, bringing the transitive Lean audit to **1,088 declarations**
+with the same three standard axioms.
 
 At `296a025`, the combined strict O2 ASan/UBSan build passed all **107 checks**
 on AppleClang 21: 103 C++ component suites, three independent package consumers

@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "6277cba078058836bf343638cb5d50ecafc8d90d3405b90098fd8c54f844fa4b"
+      "normalized_sha256": "f50871ab398d20d908429f55d013e0a32fc71b385fe927df6d3220ef913f464a"
     }
   ],
   "checks": {
@@ -495,6 +495,12 @@
     },
     {
       "scope": "Link the independently reviewed final-named GPU cutover calibration. Original measurement observations and fingerprints are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Document constructed-edge fractional-index proof coverage and its integrated verification. Original measurement observations and fingerprints are unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

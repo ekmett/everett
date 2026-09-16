@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "d0198a14c16f3d8461ebc758c21967f36c3c7e91385fe81aae5d0249df3adb2e"
+      "normalized_sha256": "74fa71b4d28b497ab69bcb391c993ea6fd706c1af0297ca484319fa67a0863b5"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "6277cba078058836bf343638cb5d50ecafc8d90d3405b90098fd8c54f844fa4b"
+      "normalized_sha256": "f50871ab398d20d908429f55d013e0a32fc71b385fe927df6d3220ef913f464a"
     }
   ],
   "subsequent_updates": [
@@ -957,6 +957,13 @@
       "scope": "Link the independently reviewed final-named GPU cutover calibration. Original measurement observations and fingerprints are unchanged.",
       "artifacts": [
         "bench/README.md",
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Document constructed-edge fractional-index proof coverage and its integrated verification. Original measurement observations and fingerprints are unchanged.",
+      "artifacts": [
         "bench/results/publication_normalization.json",
         "docs/implementation.md"
       ]
