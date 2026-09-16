@@ -92,6 +92,25 @@ commitment.
 Current catalogs retain historical generations and pins, so disk use includes
 retained history. Automatic reclamation remains future work.
 
+Ranges
+------
+
+Walk the live rows between two keys, including the lower bound and excluding
+the upper bound:
+
+```cpp
+for (auto row : db.range("a", "b")) {
+  // Use row.key and *row.value.
+}
+db.erase_range("a", "b");
+```
+
+The range keeps its snapshot alive and provides C++20 forward iterators. It
+also works with range adaptors such as `std::views::take`. Range deletion
+publishes one batch of tombstones for the observed rows; earlier snapshots
+retain them. The [range guide](docs/typed-scan.md) covers bounds, streaming,
+concurrent changes and traversal costs.
+
 Transactions
 ------------
 

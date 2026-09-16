@@ -100,7 +100,10 @@ template <std::size_t W, bool Dependent> void measure(fixture<W> const &f,
 }
 
 template <std::size_t W> void suite(unsigned repeats, std::size_t iterations) {
-  for (auto count : {3u, 4u, 7u, 8u, 15u, 16u, 31u, 32u, 63u})
+  std::vector<unsigned> counts;
+  for (unsigned n = 1; n <= 32; ++n) counts.push_back(n);
+  counts.push_back(63);
+  for (auto count : counts)
     for (bool shared : {false, true}) for (auto windows : {1u, 8192u}) {
       fixture<W> f(count, windows, shared);
       measure<W, false>(f, count, shared, repeats, iterations);

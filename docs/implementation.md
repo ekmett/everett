@@ -43,7 +43,8 @@ for integration. These are development responsibilities.
 | Joint native/index preparation | `runtime_graph_sealer.h`, `sqlite_catalog.h`; `tests/sqlite_catalog_native_pair.cc` | two preparation commits for an unbound owned pair, unchanged file barriers, exact replay, shared-native aliases and races, installation and acknowledgment failures |
 | Ready reservation batches | `runtime_graph_sealer.h`, `catalog_bindings.h`; `tests/sqlite_catalog_ready_reservations.cc` | one bounded group, nonblocking deduplicated producer claims, preserved pair fusion, per-unit acknowledgment and uncertain-reservation recovery |
 | Replacement rebuilding | `replacement_rebuild.h`; replacement and durable-rebuild tests | paid physical scans, FIFO replay, carried generation debt, active saves/forks and gated recovery after interruption |
-| Resolved scans | `typed_scan.h`; typed and mapped scan tests | ordered rows, newest replacements, chronological arrows, tombstone elision, bounded traversal and snapshot ownership |
+| Resolved ranges and deletion sweeps | `typed_scan.h`, `native_sweep.h`; typed and mapped range tests | half-open bounds, multipass iterators, chronological resolution, snapshot ownership, observed-value conflicts and sweep-only tombstone admission |
+| Fixed-key local search | `fixed_search.h`; fixed-search and package tests | scalar and SIMD lower/upper bounds, unsigned word ordering, unaligned subviews and protected-page tails |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `multiverse.h`; profile/blob/multiverse tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
 | Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
 | Native construction and merging | `native_writer.h`, `native_merge.h`; native writer/merge tests | streaming record acceptance, preserved FC/EF bytes, chronological composition, input pins and failure state |
@@ -56,6 +57,37 @@ checks and remaining limits. Host-specific resource coordination stays outside
 this package.
 
 ## Implemented foundations
+
+### Ranges and sweeping deletion
+
+`range(snapshot, lo, hi)` and `connection::range` expose half-open live-row
+ranges with optional endpoints. Their C++20 forward iterators own a resumable
+merge walk over pinned native runs. Copies advance independently by copying
+cursor state when needed. Dereferencing returns an owning row; `next()` and
+`take_row()` retain the move-based streaming interface. Range adaptors work
+with temporary results.
+
+`erase_range` constructs exact tombstones for observed live rows. A second
+advancing sweep checks their old values and current retained-prefix depths
+before admitting the batch. Rebuilding uses validated foreground and FIFO
+mutations without repeating point queries. Disjoint writes commute; changed
+observations reject the whole batch, while keys inserted after selection
+survive. Tests cover byte and bit profiles, equivalent layouts, accounting,
+saved roots, reopening, and a counted-query regression.
+
+Range initialization still walks native prefixes to reach the lower bound.
+It stops at the upper bound but does not yet perform an indexed seek. The
+[range guide](typed-scan.md) describes that cost and iterator-copy behavior.
+
+### Fixed-key search windows
+
+`fixed_key_view` searches exact spans of 32-, 64- or 128-bit keys in
+unsigned little-endian word order. Explicit scalar binary and SIMD pivot
+variants share the same lower/upper-bound contract. Protected mappings test
+short tails, arbitrary alignments, empty spans and valid page crossings.
+AVX2 and AVX-512 tails use fault-suppressing masked loads; NEON and SSE2 read
+only valid tail bytes. These primitives are available independently; complete
+`.ff`/`.fv` fractional-index readers remain future work.
 
 ### Byte string tables
 
