@@ -1134,6 +1134,11 @@ They combine ready reservations with empty and initial batches, shared binding
 failures, concurrent connections, and streamed restart cuts. Doxygen checked
 85 Markdown pages and 687 formulas, including the new preparation contract.
 
+At `b05a33f`, a separate strict O2 ThreadSanitizer build passed five concurrency
+suites: shared catalog bindings, named connections, joint native/pair sealing,
+ready reservation batches and empty contributions. These exercise concurrent
+producers and asynchronous publication without mixing sanitizer runtimes.
+
 Integration checks on 2026-09-16 passed under AppleClang 21, strict warnings,
 O2 and ASan/UBSan for shared owner bindings, seal acknowledgment failures,
 mapping lifetimes, canonical fallback, runtime publication and streamed native
