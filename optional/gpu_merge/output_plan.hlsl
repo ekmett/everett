@@ -18,6 +18,11 @@
     return;
   uint bits = input_data[records - 1] + extra[records - 1];
   uint common = frames[0] != 0 ? 0 : other_data[references[0] * parameters[1] + 3];
+#ifdef BYTE_PROFILE
+  // Shared input descriptors retain bit lengths; the byte output scan and
+  // residual universe count bytes.
+  common >>= 3;
+#endif
   uint universe = bits - records * common;
   uint quotient = universe / count;
   uint width = quotient != 0 ? firstbithigh(quotient) : 0;
