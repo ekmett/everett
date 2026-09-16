@@ -58,6 +58,17 @@ namespace {
   using typed_core = core::engine_type;
   using engine = persistent_engine<core>;
   using store = engine::store_type;
+  // Faults in the execution context must reach its own catalog/FileOps rather
+  // than the publication adapter that seals small adaptive outputs.
+  struct eager_storage : storage {
+    using storage::storage;
+    static eager_storage open(std::filesystem::path const & root) {
+      return eager_storage(context_type::open(root, {}, {}, {}, {}, {0, 0}));
+    }
+  };
+  using eager_family = sort_runtime_family<P, registry_selector<string_registry>, eager_storage>;
+  using eager_core = replacement_rebuild_engine<P, wrapping_fingerprint_algebra, 256, eager_family>;
+  using eager_engine = persistent_engine<eager_core>;
 
   struct temporary {
     std::filesystem::path root;
@@ -116,7 +127,9 @@ namespace {
     temporary dir;
     injection = std::make_shared<fault>();
     auto catalog = store::create(dir.root);
-    auto disk = storage::open(dir.root);
+    // Only this private candidate/failure phase requires eager output. Named
+    // reopen and recovery below use the ordinary adaptive storage defaults.
+    auto disk = storage::open(dir.root, {}, {}, {}, {}, {0, 0});
     auto context = disk.context();
     typed_core empty;
     auto initial = typed_core::from_snapshot(empty.snapshot(), disk);
@@ -229,8 +242,8 @@ namespace {
     for (unsigned mode = 0; mode != 3; ++mode) {
       temporary dir;
       injection = std::make_shared<fault>();
-      auto durable = engine::connect(dir.root, "stable");
-      durable.contribute(core::put("first", "retained"));
+      auto durable = eager_engine::connect(dir.root, "stable");
+      durable.contribute(eager_core::put("first", "retained"));
       auto old = durable.snapshot();
       // The batch's foreground or cleanup merge must fail before its new
       // logical state is acknowledged. The earlier test isolates the candidate.
@@ -239,11 +252,11 @@ namespace {
         injection->fail_commit = injection->commits + 2; // reserve, then sealed receipt
         injection->after_commit = mode == 2;
       }
-      rejects([&] { durable.contribute(core::put("second", "unpublished")); });
+      rejects([&] { durable.contribute(eager_core::put("second", "unpublished")); });
       auto failed_snapshot = durable.snapshot();
       check(durable.failed() && failed_snapshot.head() == old.head(), "failed cleanup published partial batch");
       check(injection->syncs, "candidate never reached file sealing");
-      rejects([&] { durable.contribute(core::put("retry", "forbidden")); });
+      rejects([&] { durable.contribute(eager_core::put("retry", "forbidden")); });
       injection.reset();
       auto healthy = engine::connect(dir.root, "stable", {.create_if_missing = false});
       auto reopened = healthy.snapshot();

@@ -57,7 +57,8 @@ namespace {
   void admission() {
     temporary good, wrong;
     auto same = store::create(good.root), other = store::create(wrong.root);
-    auto context = storage::open(good.root); runtime active(context); populate(active);
+    // Cross-store authority requires an already acknowledged physical seal.
+    auto context = storage::open(good.root, {}, {}, {}, {}, {0, 0}); runtime active(context); populate(active);
     auto snapshot = active.snapshot(); std::set<std::string> sealed;
     for (auto const & object : runtime_storage_codec<family>::objects(snapshot.frontier()))
       if (auto token = object->native->sealed()) {
@@ -79,6 +80,28 @@ namespace {
     assert(again.snapshot.admissions() == 4);
     auto reopened = store::open(good.root).find("same"); assert(reopened && reopened->head == again.head);
   }
+  void adaptive_admission() {
+    temporary dir; auto adapter = store::create(dir.root);
+    auto context = storage::open(dir.root); runtime active(context); populate(active);
+    auto snapshot = active.snapshot();
+    assert(!files(dir.root) && !context.context()->sealed_outputs() && !context.context()->sealed_indexes());
+    assert(context.context()->retained_output_bytes());
+    for (auto const & object : runtime_storage_codec<family>::objects(snapshot.frontier()))
+      assert(object->native->owned() && !object->native->mapped());
+    auto saved = adapter.create_tap("adaptive", snapshot);
+    assert(files(dir.root) && saved.snapshot.admissions() == 4);
+    for (auto const & object : runtime_storage_codec<family>::objects(saved.snapshot.frontier())) {
+      assert(object->native->mapped() && !object->native->owned());
+      object->native->mapped()->scan();
+    }
+    // Publication installs the final graph without turning private execution
+    // output into an eagerly sealed context result.
+    assert(!context.context()->sealed_outputs() && !context.context()->sealed_indexes());
+    auto count = files(dir.root);
+    saved = adapter.publish(saved.head, snapshot); assert(files(dir.root) == count);
+    auto reopened = store::open(dir.root).find("adaptive");
+    assert(reopened && reopened->head == saved.head && reopened->snapshot.admissions() == 4);
+  }
   void flip(std::filesystem::path const & path, std::uint64_t offset) {
     std::filesystem::permissions(path, std::filesystem::perms::owner_write, std::filesystem::perm_options::add);
     {
@@ -88,8 +111,9 @@ namespace {
     }
     std::filesystem::permissions(path, std::filesystem::perms::owner_write, std::filesystem::perm_options::remove);
   }
-  void hidden_native() {
-    temporary dir; auto adapter = store::create(dir.root); auto context = storage::open(dir.root);
+  void hidden_native(bool eager) {
+    temporary dir; auto adapter = store::create(dir.root);
+    auto context = storage::open(dir.root, {}, {}, {}, {}, eager ? runtime_output_options{0, 0} : runtime_output_options{});
     runtime active(context); auto saved = adapter.create_tap("hidden", active.snapshot());
     for (auto key : {"a", "b"}) {
       auto input = core::put(key, "value"); assert(active.try_contribute(input.records()[0]));
@@ -101,11 +125,22 @@ namespace {
       auto snapshot = active.checkpoint();
       for (auto const & level : snapshot.frontier().levels) if (level.job && level.job->merged &&
           level.job->stage == redundant_stage::destination_index) {
-        auto token = level.job->merged->sealed(); assert(token);
+        auto token = level.job->merged->sealed();
+        assert(eager ? bool(token) : bool(level.job->merged->owned()));
         auto count = files(dir.root); saved = adapter.publish(saved.head, snapshot);
-        assert(files(dir.root) == count); // Only the completed native arrived; no new pair to seal.
-        assert(std::find(saved.head.auxiliary.natives.begin(), saved.head.auxiliary.natives.end(),
+        // Only the completed native arrived; no new pair needs sealing. An
+        // eager native is already durable; an adaptive native gets its one file now.
+        assert(files(dir.root) == count + !eager);
+        assert(!saved.head.auxiliary.natives.empty());
+        if (token) assert(std::find(saved.head.auxiliary.natives.begin(), saved.head.auxiliary.natives.end(),
           token->receipt.object) != saved.head.auxiliary.natives.end());
+        bool mapped = false;
+        for (auto const & output : saved.snapshot.frontier().levels)
+          if (output.job && output.job->merged && output.job->stage == redundant_stage::destination_index) {
+            assert(output.job->merged->mapped() && !output.job->merged->owned());
+            output.job->merged->mapped()->scan(); mapped = true;
+          }
+        assert(mapped);
         auto reopened = store::open(dir.root).find("hidden"); assert(reopened && reopened->head == saved.head);
         auto resumed = runtime::from_snapshot(reopened->snapshot, storage::open(dir.root));
         while (resumed.pending()) resumed.advance(1024);
@@ -119,7 +154,8 @@ namespace {
   void header_failure() {
     temporary dir; auto adapter = store::create(dir.root); runtime empty;
     auto before = adapter.create_tap("stable", empty.snapshot());
-    auto context = storage::open(dir.root); runtime active(context); populate(active);
+    // Corrupt the acknowledged envelope before publication checks it.
+    auto context = storage::open(dir.root, {}, {}, {}, {}, {0, 0}); runtime active(context); populate(active);
     auto snapshot = active.snapshot(); std::filesystem::path path;
     for (auto const & object : runtime_storage_codec<family>::objects(snapshot.frontier()))
       if (auto token = object->native->sealed()) { path = token->receipt.path; break; }
@@ -185,6 +221,6 @@ namespace {
   }
 }
 int main() {
-  try { admission(); hidden_native(); header_failure(); named_connections(); arrows(); }
+  try { admission(); adaptive_admission(); hidden_native(false); hidden_native(true); header_failure(); named_connections(); arrows(); }
   catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }
