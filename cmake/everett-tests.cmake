@@ -31,9 +31,10 @@ endif()
 
 set(everett_test_names registry registry_compat crc32c rank groups rank_groups_builder elias_fano profile borrowed_writer profile_blob comparison_fc sampling index_builder index_builder_allocations index_pipeline query cola_index cola_frontier cola_route_reuse cola_schedule native_writer native_writer_allocations native_file_writer profile_file_output native_merge native_merge_mapped world pins durability mapped_file files object_writer object_stream mapped_blob multiverse catalog_bindings output_budget)
 if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
-  # These suites seal real mapped inputs through posix_object_ops throughout.
+  # These suites seal mapped inputs through posix_object_ops or protect pages.
   # Model-ops writer tests above retain their platform-independent coverage.
   list(APPEND everett_test_names mapped_index_builder file_index_builder file_index_pipeline mapped_cola mapped_cola_builder cola_terminal cola_file_index cola_adaptive_index tombstone_codec)
+  list(APPEND everett_test_names sort_bit_reservoir)
 endif()
 list(APPEND everett_test_names cola_local_merge cola_local_merge_failure cola_runtime redundant_runtime redundant_initial runtime_registry sort_codec sort_profile sort_profile_query sort_profile_file_writer sort_runtime typed_world typed_initial typed_depth typed_preflight typed_query_value typed_redundant typed_scan tombstone_admission replacement_rebuild session nursery_map)
 list(APPEND everett_test_names byte_transport)

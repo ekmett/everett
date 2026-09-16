@@ -308,6 +308,15 @@ sort path instead of repeating that path literally on every record. The
 sort-owned profile implements sampled entry for bit registries. Byte registries
 use the opaque profile transport in the active runtime.
 
+`sort_bit_reader` keeps up to 64 unread bits so adjacent `read_bits` and
+`read_count` calls can share a bounded load. `take_bits` borrows a payload and
+`skip_bits` advances past it without constructing a value; a long skip discards
+the cached bits and refills only when another field is read. This does not
+change the encoded grammar. KV03 currently creates a reader for each payload,
+while `sort_record_reader` retains one across its stream. The
+[reader measurements](../optional/bit_reservoir/results/2026-09-16-m2max/report.md)
+include the resulting parsing gains and small-value merge regressions.
+
 ### Sort selection is a protocol
 
 I keep sorts within one world, but the store need not traverse a binary tree to

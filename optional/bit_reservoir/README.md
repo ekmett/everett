@@ -1,9 +1,14 @@
 Bit reader reservoir experiment
 ==============================
 
-I am testing whether retaining unread bits helps the sort-owned reader more
-than repeatedly loading and aligning adjacent fields. The candidate keeps up
-to 64 MSB-first bits, refills with bounded loads, and retains cached bits when
+This benchmark compares retaining unread bits in the sort-owned reader with
+the previous stateless implementation, which repeatedly loaded and aligned
+adjacent fields. The [M2 Max measurements](results/2026-09-16-m2max/report.md)
+show faster frame parsing and larger-value merges, alongside regressions in
+small-value merges and general Golomb counts.
+
+The current reader keeps up to 64 MSB-first bits, refills with bounded loads,
+and retains cached bits when
 skipping short payloads. A longer skip advances the address without reading
 the skipped bytes. All wire formats, count values and error positions stay
 unchanged.

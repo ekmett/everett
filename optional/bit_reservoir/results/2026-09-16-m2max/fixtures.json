@@ -1,0 +1,50 @@
+{
+  "hash-512-newer.kv": {
+    "bytes": 4266784,
+    "sha256": "510ff1acd7603a86529354bd82f1c8d7953b4ca07fa86fd1a97f6b0217ff4ddc"
+  },
+  "hash-512-older.kv": {
+    "bytes": 8512248,
+    "sha256": "7f3b2f30e4e1615e51374e56e3f7c057c2782f395a1242acb054915c68674399"
+  },
+  "hash-512.kv": {
+    "bytes": 8512248,
+    "sha256": "7f3b2f30e4e1615e51374e56e3f7c057c2782f395a1242acb054915c68674399"
+  },
+  "hash-6-newer.kv": {
+    "bytes": 347296,
+    "sha256": "4280fae97c9fde815ac00e6619eacbb3074bed093a6bdbbb712755b0cbb457f2"
+  },
+  "hash-6-older.kv": {
+    "bytes": 688008,
+    "sha256": "6d7b67226d12f9aa6e8eb6caf6b5be0384f567d93f94779e5736c8e1a178f3de"
+  },
+  "hash-6.kv": {
+    "bytes": 688008,
+    "sha256": "6d7b67226d12f9aa6e8eb6caf6b5be0384f567d93f94779e5736c8e1a178f3de"
+  },
+  "prefix-512-newer.kv": {
+    "bytes": 4005968,
+    "sha256": "498f7533d79f6b7bb8a13f17d8abadeb81a77b9dcc2cbb04da76542729e020df"
+  },
+  "prefix-512-older.kv": {
+    "bytes": 7980496,
+    "sha256": "2472eb269d944e177e6d4225002fa0796d5af06c499634c04d0810f4b13b0aef"
+  },
+  "prefix-512.kv": {
+    "bytes": 7980496,
+    "sha256": "2472eb269d944e177e6d4225002fa0796d5af06c499634c04d0810f4b13b0aef"
+  },
+  "prefix-6-newer.kv": {
+    "bytes": 82504,
+    "sha256": "8336cd92f396efcc9becf9dbd4e0d7311da09f1db1268f65a58d116dc5ea0eae"
+  },
+  "prefix-6-older.kv": {
+    "bytes": 155720,
+    "sha256": "f0d3002663797bd0b40f3f8a257580f1665e8933a898fcad514e95ede1aa0627"
+  },
+  "prefix-6.kv": {
+    "bytes": 155720,
+    "sha256": "f0d3002663797bd0b40f3f8a257580f1665e8933a898fcad514e95ede1aa0627"
+  }
+}
