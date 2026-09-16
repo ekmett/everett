@@ -1,0 +1,5 @@
+--- a/sux/bits/SimpleSelectHalf.hpp
++++ b/sux/bits/SimpleSelectHalf.hpp
+@@ -137 +137 @@
+-						if (span > (1 << 16)) inventory[inventory_index] = -inventory[inventory_index] - 1;
++						if (span >= (1 << 16)) inventory[inventory_index] = -inventory[inventory_index] - 1;
