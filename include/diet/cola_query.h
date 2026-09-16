@@ -23,6 +23,7 @@
 #include <utility>
 
 namespace diet {
+  template <class P, class Selector> struct sort_profile_view;
   template <class P, class Blob = cola_index<P>> struct cola_query_cursor;
 
   // Source pins the main node that yielded this match. A secondary match
@@ -69,11 +70,28 @@ namespace diet {
   };
 
   namespace cola_detail {
+    // Only these concrete implementations are known not to retain comparison
+    // contexts. Custom views keep the existing owning context behavior.
+    template <class> struct scoped_native_view : std::false_type {};
+    template <class P> struct scoped_native_view<profile_view<P, stream_role::native>> : std::true_type {};
+    template <class P, class Selector> struct scoped_native_view<sort_profile_view<P, Selector>> : std::true_type {};
+    template <class> struct scoped_borrowed_view : std::false_type {};
+    template <class P> struct scoped_borrowed_view<profile_view<P, stream_role::borrowed>> : std::true_type {};
     template <class P> struct first_window_result {
       bool native = false;
       std::array<std::optional<profile_blob_borrowed_predecessor<P>>, 2> predecessors;
     };
     struct query_access {
+      template <class P> static profile_query_context<P> borrow_query(bit_string const & query) {
+        return profile_query_context<P>::from_borrowed(query);
+      }
+      template <class P> static profile_query_context<P> borrow_query(bit_string const &&) = delete;
+      template <class Blob> static constexpr bool scoped_views = [] {
+        using view = std::remove_cvref_t<decltype(std::declval<Blob const &>().view())>;
+        using secondary = std::remove_cvref_t<decltype(std::declval<Blob const &>().secondary_target()->view())>;
+        return scoped_native_view<typename view::native_view>::value &&
+          scoped_borrowed_view<typename view::borrowed_view>::value && scoped_native_view<secondary>::value;
+      }();
       struct match_probe {
         bool operator()(std::uint64_t, bit_view) const { return true; }
       };
@@ -96,7 +114,13 @@ namespace diet {
         -> std::optional<std::invoke_result_t<Decode &, bit_view>> {
       using value_type = std::invoke_result_t<Decode &, bit_view>;
       auto current = root.head();
-      auto context = profile_query_context<P>::from_owned(std::move(query));
+      // Built-in views release all context copies before this by-value query
+      // parameter dies, including on decoder exceptions and nested reads. A
+      // custom view may retain a copy, so preserve its shared query ownership.
+      auto context = [&] {
+        if constexpr (query_access::scoped_views<Blob>) return query_access::borrow_query<P>(query);
+        else return profile_query_context<P>::from_owned(std::move(query));
+      }();
       if (!current) error_detail::raise<std::invalid_argument>("COLA query root has no head");
       if (!current->virtual_size()) return std::nullopt;
       std::uint64_t group = 0;

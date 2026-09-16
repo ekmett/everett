@@ -34,6 +34,7 @@
 #include <vector>
 
 namespace diet {
+  namespace cola_detail { struct query_access; }
   namespace profile_detail {
     inline std::uint64_t add(std::uint64_t a, std::uint64_t b) {
       if (b > std::numeric_limits<std::uint64_t>::max() - a)
@@ -319,8 +320,9 @@ namespace diet {
     profile_anchor<P> anchor() const && = delete;
   };
 
-  // A comparison is inseparable from its owned query. Agreement counts bits;
-  // record lengths/backspaces still count P units. No prefix bytes are implied.
+  // Public comparisons share an immutable query owner. A private synchronous
+  // query may instead borrow its stack owner for the entire traversal. Agreement
+  // counts bits; record lengths/backspaces count P units. No prefix is implied.
   template <class P> struct profile_query_context {
     explicit profile_query_context(bit_view query) {
       if (query.size() & (P::bits_per_unit - 1)) error_detail::raise<std::invalid_argument>("query unit mismatch");
@@ -390,6 +392,16 @@ namespace diet {
     }
 
   private:
+    // Only the synchronous query path may use this: all copies and predecessor
+    // contexts must die before query. An empty-owner alias needs no control
+    // block, but its nonnull stored pointer still supports the usual checks.
+    static profile_query_context from_borrowed(bit_string const & query) {
+      query.validate();
+      if (query.bit_size & (P::bits_per_unit - 1)) error_detail::raise<std::invalid_argument>("query unit mismatch");
+      auto alias = std::shared_ptr<bit_string const>(std::shared_ptr<bit_string const>{}, &query);
+      return profile_query_context(std::move(alias), query.bit_size ? -1 : 0);
+    }
+    friend struct cola_detail::query_access;
     profile_query_context(std::shared_ptr<bit_string const> query, int order)
       : query_(std::move(query)), order_(order) {}
     template <class, stream_role> friend struct profile_view;

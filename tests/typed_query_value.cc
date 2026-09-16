@@ -12,6 +12,7 @@
 #include <diet/sort_runtime.h>
 
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <map>
 #if defined(__unix__) || defined(__APPLE__)
@@ -31,10 +32,12 @@ namespace {
     inline static unsigned reads = 0;
     inline static std::byte const * storage = nullptr;
     inline static bool fail = false;
+    inline static std::function<void()> on_read;
     static value_type read(sort_bit_reader & input) {
       ++reads;
       storage = input.take_bits(0).storage().data();
       if (fail) throw std::runtime_error("injected leaf decode failure");
+      if (on_read) on_read();
       return tombstone_value<string_value<>>::read(input);
     }
   };
@@ -55,6 +58,11 @@ namespace {
     }
   };
   template <class S> using policy = storage_policy<bin<tip<S>, sort_undefined>, 3>;
+  template <class Q> concept scoped_query = requires(Q && query) {
+    cola_detail::query_access::borrow_query<policy<replacement_sort>>(std::forward<Q>(query));
+  };
+  static_assert(scoped_query<bit_string &> && scoped_query<bit_string const &>);
+  static_assert(!scoped_query<bit_string> && !scoped_query<bit_string const>);
   using rows = std::map<std::string, std::optional<std::string>>;
   template <class S> auto native(rows const & input) {
     sort_profile_writer<policy<S>> writer;
@@ -133,6 +141,64 @@ namespace {
     pair_type main_target() const { return {}; }
     native_pointer secondary_target() const { return {}; }
   };
+
+  // Unlike the foreign view above, this family exposes the private capture
+  // path through a real cola_index_view, but retains its comparison argument.
+  struct retaining_view {
+    using p = policy<replacement_sort>;
+    sort_profile_view<p> source;
+    inline static std::optional<profile_query_context<p>> retained;
+    std::uint64_t size() const { return source.size(); }
+    auto encoded_at(std::uint64_t ordinal) const { return source.encoded_at(ordinal); }
+    template <class F> auto compare_window(std::uint64_t first, std::uint64_t last,
+        profile_query_context<p> context, F && fn, profile_comparison_work * work = nullptr) const {
+      retained = context;
+      return source.compare_window(first, last, std::move(context), std::forward<F>(fn), work);
+    }
+  };
+  struct retaining_family {
+    using native_view = retaining_view;
+    using borrowed_view = profile_view<policy<replacement_sort>, stream_role::borrowed>;
+  };
+  struct retaining_blob {
+    using p = policy<replacement_sort>;
+    using native_pointer = typename node<replacement_sort>::native_pointer;
+    using pair_type = std::shared_ptr<retaining_blob const>;
+    typename node<replacement_sort>::pair_type source;
+    auto view() const {
+      auto v = source->view();
+      return cola_index_view<p, retaining_family>({v.native()}, {v.borrowed(0), v.borrowed(1)},
+        {v.interleave(0), v.interleave(1)}, {v.false_borrow_bits(0), v.false_borrow_bits(1)},
+        {v.cut_lcps(0), v.cut_lcps(1)}, v.virtual_size());
+    }
+    std::uint64_t virtual_size() const { return source->virtual_size(); }
+    std::uint64_t group_count() const { return source->group_count(); }
+    pair_type main_target() const { return {}; }
+    native_pointer secondary_target() const { return {}; }
+  };
+  static_assert(cola_detail::query_access::scoped_views<node<replacement_sort>>);
+  static_assert(!cola_detail::query_access::scoped_views<retaining_blob>);
+
+  void custom_context_retention() {
+    using p = policy<replacement_sort>;
+    std::string key(4096, 'k');
+    auto expected = sort_profile_query<p, replacement_sort>(key);
+    {
+      auto native_node = std::make_shared<node<replacement_sort> const>(
+        node<replacement_sort>::adopt_native(native<replacement_sort>({{key, "retained"}})));
+      auto source = std::make_shared<retaining_blob const>(retaining_blob{native_node});
+      auto root = cola_query_root<p, retaining_blob>::adopt_prepared(source);
+      auto state = typed(root, 1, 1);
+      check(state.get(key) == "retained", "custom retaining view query");
+      check(retaining_view::retained.has_value(), "custom view never retained a comparison");
+      check(!compare_common_bits(retaining_view::retained->query(), expected.view()).order,
+        "custom view's retained context outlived its query storage");
+    }
+    // The retained query owner also survives snapshot and graph destruction.
+    auto kept = std::move(*retaining_view::retained);
+    retaining_view::retained.reset();
+    check(!compare_common_bits(kept.query(), expected.view()).order, "moved retained comparison lost its owner");
+  }
 
   void replacement_reads() {
     using p = policy<replacement_sort>;
@@ -228,6 +294,54 @@ namespace {
     check(observed_value::read(input) == std::string(64, 'x'), "public match copy aliased value storage");
   }
 
+  void reentrant_reads() {
+    // Different long queries force independent allocations. After decoding a
+    // native hit, its secondary window still uses the outer comparison context.
+    std::string outer(4096, 'a'), inner(4096, 'z');
+    inner.back() = '\0';
+    auto root = three<replacement_sort>({{outer, "outer"}},
+      {{outer, "older-outer"}, {inner, "inner"}}, {{inner, "old-inner"}});
+    auto state = typed(root, 4, 2);
+    unsigned depth = 0, nested_reads = 0;
+    struct depth_guard {
+      unsigned & depth;
+      explicit depth_guard(unsigned & value) : depth(value) { ++depth; }
+      ~depth_guard() { --depth; }
+    };
+    observed_value::on_read = [&] {
+      depth_guard guard(depth);
+      if (depth != 1) return;
+      ++nested_reads;
+      check(state.get(inner) == "inner", "nested query lost its independent key");
+    };
+    auto answer = state.get(outer);
+    observed_value::on_read = {};
+    check(answer == "outer" && nested_reads == 1 && depth == 0, "reentrant query damaged its caller");
+
+    // A nested decoder exception unwinds both contexts. No shared scratch or
+    // retained stack alias may affect the next query against the same snapshot.
+    observed_value::on_read = [&] {
+      depth_guard guard(depth);
+      if (depth == 2) throw std::runtime_error("nested decode failure");
+      (void)state.get(inner);
+    };
+    rejects([&] { (void)state.get(outer); });
+    observed_value::on_read = {};
+    check(depth == 0 && state.get(outer) == "outer" && state.get(inner) == "inner",
+      "nested exception retained a borrowed query context");
+  }
+
+  void rejected_query_storage() {
+    using p = policy<replacement_sort>;
+    auto root = three<replacement_sort>({}, {}, {});
+    auto decode = [](bit_view) { return false; };
+    rejects([&] { (void)cola_detail::first_value(root, bit_string{{}, 1}, decode); });
+    rejects([&] { (void)cola_detail::first_value(root, bit_string{{std::byte{1}}, 1}, decode); });
+    // Both invalid extents and noncanonical padding are rejected even before
+    // an empty-root shortcut, just as for public owned query contexts.
+    (void)cola_detail::first_value(root, sort_profile_query<p, replacement_sort>(""), decode);
+  }
+
   void mapped_lifetime() {
 #if defined(__unix__) || defined(__APPLE__)
     using p = policy<replacement_sort>;
@@ -271,8 +385,11 @@ namespace {
 int main() {
   try {
     replacement_reads();
+    custom_context_retention();
     boundary_oracle();
     owning_lifetime();
+    reentrant_reads();
+    rejected_query_storage();
     mapped_lifetime();
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';
