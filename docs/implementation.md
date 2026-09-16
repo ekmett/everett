@@ -618,6 +618,12 @@ Generic arrow reads still enumerate every occurrence through the owning cursor.
 Custom query roots without the internal capture interface keep that cursor
 fallback. Tests check decoder backing addresses, mapping retirement, tombstones,
 false-borrow boundaries, decoding failures and noncommutative composition.
+For built-in views the synchronous traversal borrows its own query parameter,
+eliminating the shared query owner's allocation and reference-count updates.
+The private borrow cannot outlive the call. Public cursors and custom views
+retain shared query ownership; tests include a custom view that keeps a
+comparison after the query and source graph are gone, nested long-key reads,
+and exception unwinding.
 
 The [query contract](query.md) separates entry/header bounds from string bytes,
 preparation and scheduler costs. Shape validation rejects cycles, missing
