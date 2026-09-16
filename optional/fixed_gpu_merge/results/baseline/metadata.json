@@ -1,0 +1,45 @@
+{
+  "source_revision": "c97e72fa9b3e5d2ba69f0f5b01b27ab2f85e7cb6",
+  "device": "Apple M2 Max",
+  "os": "macOS 26.6.2 (25G83)",
+  "architecture": "arm64",
+  "cpu_baseline": "single-thread streaming key merge, two random-access EF selects per surviving FV record, production EF output encoder",
+  "host_compiler": "Apple clang 21.0.0 (clang-2100.1.1.101)",
+  "host_flags": [
+    "-std=c++20",
+    "-O3",
+    "-DNDEBUG",
+    "-fobjc-arc"
+  ],
+  "metal_compiler": "Apple metal 32023.883",
+  "metal_flags": [
+    "-std=metal3.2",
+    "-fno-fast-math"
+  ],
+  "dxc": "libdxcompiler 1.9 (1-0d3ee6b5) (1.9.0.1)",
+  "spirv_tools": "v2026.1, build timestamp 2026-09-12T09:51:08+00:00",
+  "spirv_cross": "build timestamp 2026-09-12T05:43:44 (revision string empty)",
+  "input_contract": "validated generated files plus explicit sorted due-cancellation ordinals, target identity/count and canceled payload-byte sum",
+  "benchmark_command": "prototype kernels.metallib scratch-directory bench",
+  "runs": 2,
+  "warmups_per_case": 1,
+  "measured_repeats_per_benchmark_case": 5,
+  "cases_per_run": 50,
+  "complete_output_checks": "all outputs compared byte-for-byte with CPU oracle; all passed",
+  "correctness": "24 cases pass CTest and host ASan+UBSan with real Metal",
+  "host_contention": "main build/regression/package lane explicitly released before measurements; no experiment compilation concurrent with runs",
+  "excluded": [
+    "logical fixture/cancellation metadata generation",
+    "fixture encoding (reported)",
+    "mapping/import and initial fixture copying (reported)",
+    "pipeline load/compilation (reported separately)",
+    "file clipping (reported)",
+    "output validation",
+    "checksum/content identity",
+    "fractional indexes",
+    "catalog publication",
+    "msync/fsync/durable sealing"
+  ],
+  "binary_sha256": "9b1eccecb0e2cbe8bab145c996e64b58e0d3c818a319d079d038a5e28992625d",
+  "metallib_sha256": "0d2a8551029be9b4357b8c813bf95f8e1809929a583efc9d9528053d0e953311"
+}
