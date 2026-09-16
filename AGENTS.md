@@ -65,6 +65,10 @@ Treat asymptotic improvements as the default requirement. Use the fractional
 cascade to position range cursors rather than scanning preceding records.
 Choose a worse asymptotic fallback only when measurements demonstrate clear
 gains across a broad, practical range, and document that measured boundary.
+Before release, favor substantial measured gains in promising workloads and
+use the results to identify the library's strengths. Keep regressions and
+workload boundaries visible; a small regression in another case is not an
+automatic veto on a worthwhile optimization.
 
 Keep the library independent of application policy. A multiverse owns backing
 storage, a world is a logical state, and a timeline is an ordered progression.
