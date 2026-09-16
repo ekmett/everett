@@ -35,6 +35,7 @@ for integration. These are development responsibilities.
 | Sort-owned runtime and persistence | `sort_runtime.h`, `sort_runtime_store.h`; sort-runtime and catalog tests | direct heterogeneous records, chronological composition, complete redundant frontiers and metadata-only mapped recovery |
 | Adaptive encoded outputs | `sort_profile_adaptive.h`, `cola_adaptive_index.h`, `output_budget.h`; adaptive native/index and allowance tests | bounded retained capacities, lifetime leases, exact streamed bytes, lazy reservations and acknowledged seals |
 | Completed native reuse | `sort_runtime_context.h`, `sqlite_catalog.h`; `tests/sqlite_catalog_native_reuse.cc` | exact ordered inputs/schema/kernel, acknowledged acquisition pins, fork-local indexes, hidden checkpoints and uncertain-operation replay |
+| Joint native/index preparation | `runtime_graph_sealer.h`, `sqlite_catalog.h`; `tests/sqlite_catalog_native_pair.cc` | two preparation commits for an unbound owned pair, unchanged file barriers, exact replay, shared-native aliases and races, installation and acknowledgment failures |
 | Replacement rebuilding | `replacement_rebuild.h`; replacement and durable-rebuild tests | paid physical scans, FIFO replay, carried generation debt, active saves/forks and gated recovery after interruption |
 | Resolved scans | `typed_scan.h`; typed and mapped scan tests | ordered rows, newest replacements, chronological arrows, tombstone elision, bounded traversal and snapshot ownership |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `fridge.h`; profile/blob/fridge tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
@@ -99,6 +100,13 @@ competing durable publishers. Redundant checkpoints retain every completed
 artifact through each merge stage; deliberately omitted auxiliary pins are
 rejected on restoration. The [runtime persistence guide](runtime-store.md)
 states the current retention and identity-allocation boundaries.
+
+An unbound owned native and its new index use one reservation and one joint
+seal/pair acknowledgment. Their file barriers finish before the acknowledgment's
+SQLite transaction. Already bound or streamed natives and hidden native-only
+outputs retain their existing preparation paths. The final tap publication
+remains separate. The [preparation guide](publication-preparation.md) describes
+dependency ordering, concurrent producers and uncertain-operation recovery.
 
 `tap<Engine>` provides serialized mutable publication and bounded accepted
 inputs. Optional readiness blocks new claims behind prior engine debt. An
@@ -1072,10 +1080,11 @@ SQLite installations and embedded use. Doxygen is an optional additional check.
 
 At `86ed797`, the complete strict O2 ASan/UBSan build and all **93 C++ component
 suites** passed on AppleClang 21. All three independent package consumers also
-passed. The Doxygen check found a cross-page duplicate-heading resolver bug;
-that documentation failure is tracked separately from the C++ results. The
-native-reuse worker's new focused suite passed separately with strict O2
-ASan/UBSan before integration.
+passed. The native-reuse suite passed after integration at `624f860` with the
+same strict O2 ASan/UBSan settings. At `a350549`, Doxygen also passed, including
+regressions for cross-page duplicate headings and explicit or numeric page
+titles. Its generated output covers 71 public headers, 84 Markdown pages and
+680 formulas.
 
 Integration checks on 2026-09-16 passed under AppleClang 21, strict warnings,
 O2 and ASan/UBSan for shared owner bindings, seal acknowledgment failures,

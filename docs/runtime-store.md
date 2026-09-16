@@ -45,6 +45,12 @@ file identity and mapped representation. The first sealing walks its immediate
 dependencies; an already bound suffix stops that walk. These records disappear
 with their owners, so there is no weak-owner table to sweep.
 
+An unbound owned native and its new index share one reservation and one
+[joint acknowledgment](publication-preparation.md). Both files complete all
+their barriers before that acknowledgment. Already sealed natives retain their
+existing identity and use the separate index-only path; the final tap generation
+is still committed independently.
+
 Each adapter also retains its latest restored frontier in a local identity
 registry. Acquiring an owner already present there increments its local count;
 we do not revisit its native, main or secondary dependencies. A newly live owner

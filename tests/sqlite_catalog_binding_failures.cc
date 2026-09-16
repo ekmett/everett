@@ -81,13 +81,22 @@ namespace {
     }
   };
   void acknowledgment_failures() {
-    // A terminal pair has five transactions: reserve/seal native,
-    // reserve index, seal/register pair, publish the first named root.
+    // An owned terminal pair has three transactions: reserve both files,
+    // seal/register both, publish the first named root. With an acknowledged
+    // native, only its new index participates in the first two transactions.
     // A successful COMMIT reported as a failure must not install a binding.
-    for (unsigned stage = 1; stage <= 5; ++stage) for (bool after : {false, true}) {
+    for (bool prebound : {false, true})
+    for (unsigned stage = 1; stage <= 3; ++stage) for (bool after : {false, true}) {
       temporary dir;
       { auto initialized = store::create(dir.root); }
       auto source = singleton();
+      auto original = source.query_root().head();
+      if (prebound) {
+        auto catalog = sqlite_catalog<P>::open(dir.root);
+        random_object_ids ids;
+        sealer graph(catalog, ids);
+        (void)graph.ensure_native(original->native_owner());
+      }
       auto state = std::make_shared<failure_state>(failure_state{stage, 0, after});
       using faulty_store = runtime_store<P, random_object_ids, failure_ops>;
       auto faulty = faulty_store::open(dir.root, {}, {}, {state});
@@ -101,12 +110,11 @@ namespace {
       auto catalog = sqlite_catalog<P>::open(dir.root);
       random_object_ids ids;
       sealer graph(catalog, ids);
-      auto original = source.query_root().head();
       std::optional<object_id> acknowledged_native;
       std::optional<blob_identity> acknowledged_pair;
-      if (stage >= 3) acknowledged_native = graph.native_id(original->native_owner());
+      if (prebound || stage == 3) acknowledged_native = graph.native_id(original->native_owner());
       else rejects([&] { (void)graph.native_id(original->native_owner()); });
-      if (stage == 5) acknowledged_pair = graph.pair_id(original);
+      if (stage == 3) acknowledged_pair = graph.pair_id(original);
       else rejects([&] { (void)graph.pair_id(original); });
 
       auto before_natives = files(dir.root, ".kv"), before_indexes = files(dir.root, ".index");
@@ -119,7 +127,7 @@ namespace {
       assert(files(dir.root, ".kv") == before_natives + (acknowledged_native ? 0 : 1));
       assert(files(dir.root, ".index") == before_indexes + (acknowledged_pair ? 0 : 1));
       auto uncertain = healthy.find("uncertain");
-      assert(bool(uncertain) == (stage == 5 && after));
+      assert(bool(uncertain) == (stage == 3 && after));
       if (uncertain) assert(uncertain->head.timeline.head == actual);
       auto reopened = store::open(dir.root).find("healthy-retry");
       assert(reopened && reopened->head == result.head);

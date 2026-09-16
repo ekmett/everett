@@ -48,11 +48,12 @@ identities, targets and counts.
 
 Before the write transaction, the method checks canonical receipt paths, opens
 and pins both mappings, validates their envelopes and formats, and checks the
-pair's shape and target counts. The main dependency must already be a registered pair, and the secondary
-native must already have an acknowledged seal. An own-native secondary alias
-therefore uses the graph sealer's index-only fallback, not this direct method. Its transaction performs reservation checks, two seal-row updates,
-and pair insertion using that prepared evidence. The apply path performs no
-explicit filesystem operations.
+pair's shape and target counts. The main dependency must already be a registered
+pair, and the secondary native must already have an acknowledged seal. An
+own-native secondary alias therefore uses the graph sealer's index-only fallback,
+not this direct method. Its transaction performs reservation checks, two seal-row
+updates, and pair insertion using that prepared evidence. The apply path performs
+no explicit filesystem operations.
 
 An exact retry revalidates the current file evidence before returning the recorded
 outcome. A fresh request rejects wrong-kind, unreserved or already sealed
@@ -70,9 +71,10 @@ operation with the same two receipts and pair identity.
 Mapping or binding allocation can still fail after acknowledgment. The durable
 rows remain valid. An installed native binding can survive a later pair-binding
 failure, so a healthy retry can reuse that native and prepare another index.
-The persistent publication adapter retains its previous acknowledged logical
-head on failure. Likewise, losing a later tap compare-and-swap can leave prepared
-objects. This protocol does not reclaim retained attempts or historical graphs.
+Preparation does not change the named tap's logical head. Losing a later tap
+compare-and-swap can leave prepared objects; an uncertain publication can also
+leave a committed new generation, which must be reconciled after reopening.
+This protocol does not reclaim retained attempts or historical graphs.
 
 Focused validation
 ------------------

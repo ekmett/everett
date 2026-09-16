@@ -95,7 +95,7 @@ namespace {
       if (!id || length != 32 || !kind) ::_exit(94);
       std::array<char, 32> operation;
       std::memcpy(operation.data(), id, operation.size());
-      std::optional<event> point;
+      std::optional<event> point, joint;
       auto phase = state->current;
       bool admission = phase == stage::admission || phase == stage::logical_publication;
       if (std::strcmp(kind, "seal") == 0) {
@@ -103,6 +103,11 @@ namespace {
         point = admission ? event::admission_native : event::service_native;
       } else if (std::strcmp(kind, "seal_cola_pair") == 0) {
         point = admission ? event::admission_index_pair : event::service_index_pair;
+      } else if (std::strcmp(kind, "seal_native_cola_pair") == 0) {
+        // Both files become catalog-visible at the same COMMIT. Keep a cut
+        // for each obligation, with the same operation as its recovery oracle.
+        point = admission ? event::admission_native : event::service_native;
+        joint = admission ? event::admission_index_pair : event::service_index_pair;
       } else if (std::strcmp(kind, "publish_tap") == 0) {
         if (phase == stage::logical_publication) point = event::logical_publication;
         if (phase == stage::equivalent_publication) point = event::equivalent_publication;
@@ -110,8 +115,10 @@ namespace {
       sqlite3_finalize(row);
       std::string_view op(operation.data(), operation.size());
       if (point) state->reach(*point, false, op);
+      if (joint) state->reach(*joint, false, op);
       int result = sqlite3_exec(db, "COMMIT", nullptr, nullptr, nullptr);
       if (result == SQLITE_OK && point) state->reach(*point, true, op);
+      if (result == SQLITE_OK && joint) state->reach(*joint, true, op);
       return result;
     }
   };
