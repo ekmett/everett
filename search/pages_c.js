@@ -8,7 +8,7 @@ var searchData=
   ['matched_20cpu_20profile_20merges_5',['Matched CPU profile merges',['../matched-cpu-profile-merges.html',1,'']]],
   ['matched_20fixed_20key_20and_20front_20coded_20metal_20merges_6',['Matched fixed-key and front-coded Metal merges',['../matched-fixed-key-and-front-coded-metal-merges.html',1,'']]],
   ['matched_20fixed_20key_20and_20kv03_20metal_20results_7',['Matched fixed-key and KV03 Metal results',['../matched-fixed-key-and-kv03-metal-results.html',1,'']]],
-  ['measurements_8',['Fixed-key merge measurements',['../fixed-key-merge-measurements.html',1,'']]],
+  ['measurements_8',['measurements',['../fixed-key-merge-measurements.html',1,'Fixed-key merge measurements'],['../retained-select-measurements.html',1,'Retained select measurements']]],
   ['merge_9',['Building a COLA merge',['../building-a-cola-merge.html',1,'']]],
   ['merge_20frontiers_20and_20framed_20output_10',['Native merge frontiers and framed output',['../native-merge-frontiers-and-framed-output.html',1,'']]],
   ['merge_20measurements_11',['Fixed-key merge measurements',['../fixed-key-merge-measurements.html',1,'']]],

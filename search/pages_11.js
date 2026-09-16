@@ -21,12 +21,13 @@ var searchData=
   ['reservations_18',['Persistent SQLite roots and reservations',['../md_docs_2sqlite-catalog.html',1,'']]],
   ['results_19',['Matched fixed-key and KV03 Metal results',['../matched-fixed-key-and-kv03-metal-results.html',1,'']]],
   ['resumption_20',['resumption',['../md_docs_2durability.html',1,'Durable publication and merge resumption'],['../md_docs_2merge-resumption.html',1,'Merge resumption']]],
-  ['reuse_21',['Sampling comparisons and encoder reuse',['../md_bench_2sample__frontier.html',1,'']]],
-  ['reusing_20borrowed_20key_20prefixes_22',['Reusing borrowed-key prefixes',['../md_bench_2borrowed__prefix.html',1,'']]],
-  ['reusing_20completed_20native_20merges_23',['Reusing completed native merges',['../reusing-completed-native-merges.html',1,'']]],
-  ['reusing_20native_20key_20prefixes_24',['Reusing native-key prefixes',['../md_bench_2native__prefix.html',1,'']]],
-  ['roots_25',['roots',['../mapped-blobs-and-exact-query-roots.html',1,'Mapped blobs and exact query roots'],['../saving-and-merging-mapped-cola-roots.html',1,'Saving and merging mapped COLA roots']]],
-  ['roots_20and_20reservations_26',['Persistent SQLite roots and reservations',['../md_docs_2sqlite-catalog.html',1,'']]],
-  ['runtime_27',['Sort-owned records in the redundant runtime',['../sort-owned-records-in-the-redundant-runtime.html',1,'']]],
-  ['runtime_20frontier_28',['Persisting a runtime frontier',['../persisting-a-runtime-frontier.html',1,'']]]
+  ['retained_20select_20measurements_21',['Retained select measurements',['../retained-select-measurements.html',1,'']]],
+  ['reuse_22',['Sampling comparisons and encoder reuse',['../md_bench_2sample__frontier.html',1,'']]],
+  ['reusing_20borrowed_20key_20prefixes_23',['Reusing borrowed-key prefixes',['../md_bench_2borrowed__prefix.html',1,'']]],
+  ['reusing_20completed_20native_20merges_24',['Reusing completed native merges',['../reusing-completed-native-merges.html',1,'']]],
+  ['reusing_20native_20key_20prefixes_25',['Reusing native-key prefixes',['../md_bench_2native__prefix.html',1,'']]],
+  ['roots_26',['roots',['../mapped-blobs-and-exact-query-roots.html',1,'Mapped blobs and exact query roots'],['../saving-and-merging-mapped-cola-roots.html',1,'Saving and merging mapped COLA roots']]],
+  ['roots_20and_20reservations_27',['Persistent SQLite roots and reservations',['../md_docs_2sqlite-catalog.html',1,'']]],
+  ['runtime_28',['Sort-owned records in the redundant runtime',['../sort-owned-records-in-the-redundant-runtime.html',1,'']]],
+  ['runtime_20frontier_29',['Persisting a runtime frontier',['../persisting-a-runtime-frontier.html',1,'']]]
 ];

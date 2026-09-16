@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Everett: optional Directory Reference</title>
+<title>Everett: Retained select measurements</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -74,30 +74,26 @@ $(function() {
 </div>
 </div>
 
-<div id="nav-path" class="navpath">
-  <ul>
-<li class="navelem"><a class="el" href="dir_e847f032f8acac298d9f7c57dfb94040.html">optional</a></li>  </ul>
-</div>
 </div><!-- top -->
-<div class="header">
-  <div class="headertitle"><div class="title">optional Directory Reference</div></div>
+<div><div class="header">
+  <div class="headertitle"><div class="title">Retained select measurements</div></div>
 </div><!--header-->
 <div class="contents">
-<table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="subdirs" name="subdirs"></a>
-Directories</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top"><span class="iconfclosed"></span>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dir_f24120e61dfa324a785ab807bf7e6bf8.html">cpu_profile_compare</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top"><span class="iconfclosed"></span>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dir_be4f8183f40ee51f0de5fd60f64f703d.html">fixed_gpu_merge</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top"><span class="iconfclosed"></span>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dir_4080885a130a30ae825f1a46534f9451.html">fixed_kv_compare</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top"><span class="iconfclosed"></span>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dir_c4bed6dcb131a3c06048542a7b6409a9.html">gpu_merge</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top"><span class="iconfclosed"></span>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="dir_1336bcbd97cd6defe4e7ba0e1cb2f450.html">select_compare</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table>
-</div><!-- contents -->
+<div class="textblock"><p>The <a class="el" href="select-alternatives-on-the-same-offsets.html">report</a> summarizes measurements of the same exact offset sequences. <a class="el" href="offset-selection-on-actual-file-directories.html">The experiment guide</a> describes the candidates, validation contracts, construction boundaries, external source, and regression.</p>
+<ul>
+<li><code>manifest.json</code>: measured source, binary, source-file hashes, external-source hashes, generated boundary-patch hashes, compiler, host, and timing schedule.</li>
+<li><code>sequences.json</code>: all 192 actual exported directories, six replay recipes, three boundary recipes, and exact sequence hashes/extents.</li>
+<li><code>raw.tar.gz</code>: every process CSV and stderr, including excluded warmups, failed/ineligible candidates, and export metadata. No timing observations were dropped. <code>raw-sha256.json</code> checks each original uncompressed member.</li>
+<li><code>summary.json.gz</code>: per-sequence/candidate/access statistics, process medians, immutable-array bytes, allocated capacity and object bytes, construction times.</li>
+<li><code>checks.json</code>: complete-group, hash, and cross-candidate checksum validation.</li>
+<li><code>verification.json</code> and <code>qualification.txt</code>: source qualification and the expected upstream Half boundary failure.</li>
+<li><code>host.json</code>: supplemental read-only host query, needed because sandboxed <code>sysctl</code> was denied during initial collection.</li>
+<li><code>sha256.json</code>: hashes of every other retained evidence file.</li>
+</ul>
+<p>To regenerate the tables, copy this directory to scratch storage, unpack <code>raw.tar.gz</code> there, and run <code>optional/select_compare/analyze.py</code> on that copy. The analyzer verifies all original raw hashes, then regenerates <code>summary.json</code>, <code>checks.json</code>, and <code>report.md</code>. Regenerating the integer sequences themselves uses <code>collect.py</code> and the frozen source revision. Generated <code>.seq</code> files remain local; their exact hashes and recipes are retained here.</p>
+<p>The post-measurement analyzer adds presentation tables only. The measured candidate/export code and executable remain those recorded in the manifest. </p>
+</div></div><!-- contents -->
+</div><!-- PageDoc -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8
