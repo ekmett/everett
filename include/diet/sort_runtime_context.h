@@ -15,7 +15,7 @@
 #include <diet/sort_runtime.h>
 #include <diet/sort_profile_file_merge.h>
 #include <diet/sort_profile_adaptive.h>
-#include <diet/cola_file_index.h>
+#include <diet/cola_adaptive_index.h>
 #include <diet/runtime_graph_sealer.h>
 #include <diet/output_budget.h>
 
@@ -98,39 +98,43 @@ namespace diet {
         ++sealed_outputs_; return native;
       } catch (...) { failed_ = true; throw; }
     }
-    template <class Node> struct index_type : private context_pin, public cola_file_index_builder<P, native_type, Node, FileOps> {
-      using base_type = cola_file_index_builder<P, native_type, Node, FileOps>;
-    private:
-      friend struct sort_runtime_context;
-      using mapped_type = typename Node::storage_type::mapped_pair_type;
-      using native_binding_pointer = std::shared_ptr<native_binding<typename mapped_type::native_type> const>;
-      using pair_binding_pointer = std::shared_ptr<pair_binding<mapped_type> const>;
-      native_binding_pointer native_, secondary_;
-      pair_binding_pointer main_;
-      index_type(std::shared_ptr<sort_runtime_context> owner, object_id output, object_attempt_id attempt,
-          native_pointer native, typename Node::pair_type main, native_pointer secondary,
-          native_binding_pointer n, pair_binding_pointer m, native_binding_pointer s)
-        : context_pin(owner), base_type(owner->root(), std::move(output), std::move(attempt),
-            {n->receipt.object, m ? std::optional<blob_identity>(m->identity) : std::nullopt,
-              s ? std::optional<object_id>(s->receipt.object) : std::nullopt},
-            std::move(native), std::move(main), std::move(secondary), owner->file_ops_, owner->spool_ops_),
-          native_(std::move(n)), secondary_(std::move(s)), main_(std::move(m)) {}
+    template <class Node> struct index_factory {
+      using family = sort_runtime_family<P, Selector, typename Node::storage_type>;
+      using mapped_type = typename family::storage_type::mapped_pair_type;
+      using destination_type = cola_detail::index_destination<P, FileOps, posix_index_spool_ops>;
+      std::shared_ptr<sort_runtime_context> owner_;
+      native_pointer native, secondary;
+      typename Node::pair_type main;
+      std::shared_ptr<native_binding<typename mapped_type::native_type> const> native_, secondary_;
+      std::shared_ptr<pair_binding<mapped_type> const> main_;
+      void poison() noexcept { owner_->poison(); }
+      std::unique_ptr<destination_type> operator()() {
+        auto & owner = *owner_; owner.require_active();
+        try {
+          runtime_store_detail::graph_sealer<P, Ids, CatalogOps, family> sealer(owner.catalog_, owner.ids_);
+          native_ = sealer.ensure_native(native);
+          main_ = main ? sealer.ensure_pair(main) : nullptr;
+          secondary_ = secondary ? sealer.ensure_native(secondary) : nullptr;
+          auto output = owner.ids_(); object_attempt_id attempt(owner.ids_().hex());
+          std::array<catalog_object_reservation, 1> reservation{{{output, file_kind::fractional_index}}};
+          std::array<blob_identity, 1> inputs{main_ ? main_->identity : blob_identity{native_->receipt.object, output}};
+          auto pin = owner.ids_().hex(); auto operation = owner.ids_().hex();
+          owner.catalog_.reserve(operation, attempt, pin, std::span<blob_identity const>(inputs.data(), main_ ? 1 : 0), reservation);
+          cola_file_dependencies dependencies{native_->receipt.object,
+            main_ ? std::optional<blob_identity>(main_->identity) : std::nullopt,
+            secondary_ ? std::optional<object_id>(secondary_->receipt.object) : std::nullopt};
+          return std::make_unique<destination_type>(owner.root(), std::move(output), std::move(attempt),
+            std::move(dependencies), owner.file_ops_, owner.spool_ops_);
+        } catch (...) { owner.failed_ = true; throw; }
+      }
     };
+    template <class Node> using index_type = cola_adaptive_index_builder<P, native_type, Node, index_factory<Node>, FileOps>;
     template <class Node> auto make_index(native_pointer native, typename Node::pair_type main, native_pointer secondary) {
       require_active();
       try {
-        using family = sort_runtime_family<P, Selector, typename Node::storage_type>;
-        runtime_store_detail::graph_sealer<P, Ids, CatalogOps, family> sealer(catalog_, ids_);
-        auto n = sealer.ensure_native(native);
-        auto m = main ? sealer.ensure_pair(main) : nullptr;
-        auto s = secondary ? sealer.ensure_native(secondary) : nullptr;
-        auto output = ids_(); object_attempt_id attempt(ids_().hex());
-        std::array<catalog_object_reservation, 1> reservation{{{output, file_kind::fractional_index}}};
-        std::array<blob_identity, 1> inputs{m ? m->identity : blob_identity{n->receipt.object, output}};
-        auto owner = ids_().hex(); auto operation = ids_().hex();
-        catalog_.reserve(operation, attempt, owner, std::span<blob_identity const>(inputs.data(), m ? 1 : 0), reservation);
-        return std::unique_ptr<index_type<Node>>(new index_type<Node>(this->shared_from_this(), output, attempt,
-          std::move(native), std::move(main), std::move(secondary), std::move(n), std::move(m), std::move(s)));
+        index_factory<Node> factory{this->shared_from_this(), native, secondary, main, {}, {}, {}};
+        return std::make_unique<index_type<Node>>(std::move(factory), budget_, outputs_.object_bytes,
+          std::move(native), std::move(main), std::move(secondary));
       } catch (...) { failed_ = true; throw; }
     }
     template <class Node> typename Node::pair_type finish_index(index_type<Node> & index) {
@@ -138,12 +142,16 @@ namespace diet {
       try {
         using family = sort_runtime_family<P, Selector, typename Node::storage_type>;
         using mapped_type = typename family::storage_type::mapped_pair_type;
-        if (index.owner_.get() != this) throw std::invalid_argument("index belongs to another runtime context");
-        auto receipt = index.finish();
+        if (index.factory().owner_.get() != this) throw std::invalid_argument("index belongs to another runtime context");
+        auto output = index.finish();
+        if (auto built = std::get_if<std::shared_ptr<typename Node::built_type const>>(&output))
+          return Node::from_built(std::move(*built));
+        auto receipt = std::get<object_seal_receipt>(std::move(output));
         auto native = index.native_owner(); auto main = index.main_target(); auto secondary = index.secondary_target();
-        // Construction already acknowledged these exact dependencies. The job
+        // The first spill acknowledged these exact dependencies. The job
         // retains their authority and mappings along with its source facades.
-        auto const & n = index.native_; auto const & m = index.main_; auto const & s = index.secondary_;
+        auto const & factory = index.factory();
+        auto const & n = factory.native_; auto const & m = factory.main_; auto const & s = factory.secondary_;
         blob_identity identity{n->receipt.object, receipt.object};
         auto mapped_index = catalog_.template seal_pair<mapped_type>(ids_().hex(), identity, receipt);
         auto mapped = mapped_type::bind(identity, n->mapped, std::move(mapped_index), m ? m->mapped : nullptr,

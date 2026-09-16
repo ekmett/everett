@@ -51,6 +51,10 @@ namespace diet {
     static pair_type from_built(built_type value) {
       return pair_type(new redundant_node(std::make_shared<built_type const>(std::move(value))));
     }
+    static pair_type from_built(std::shared_ptr<built_type const> value) {
+      if (!value) throw std::invalid_argument("null redundant built head");
+      return pair_type(new redundant_node(std::move(value)));
+    }
     static pair_type from_mapped(std::shared_ptr<typename Storage::mapped_pair_type const> head) {
       if (!head) error_detail::raise<std::invalid_argument>("null redundant mapped head");
       std::vector<std::shared_ptr<typename Storage::mapped_pair_type const>> chain;

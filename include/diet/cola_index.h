@@ -341,6 +341,10 @@ namespace diet {
       void append_known(unsigned route, bit_view key, std::uint64_t common) { writers_[route].append_known(key, common); }
       index_type finish(native_pointer native, main_pointer main, native_pointer secondary, index_metadata<P> metadata) {
         std::array<typename index_type::borrowed_array, 2> borrowed{writers_[0].finish(), writers_[1].finish()};
+        return adopt(std::move(native), std::move(main), std::move(secondary), std::move(borrowed), std::move(metadata));
+      }
+      static index_type adopt(native_pointer native, main_pointer main, native_pointer secondary,
+          std::array<typename index_type::borrowed_array, 2> borrowed, index_metadata<P> metadata) {
         return index_type(std::move(native), std::move(main), std::move(secondary), std::move(borrowed),
           std::move(metadata.ranks), std::move(metadata.flags), std::move(metadata.cuts), metadata.count);
       }

@@ -103,10 +103,13 @@ namespace diet {
         sink.append(key.subview(retained << P::unit_shift, key.size() - (retained << P::unit_shift)));
         metadata.terminal_key_units = size; ++metadata.record_count;
       }
-      template <class Sink> void finish(Sink & sink) {
-        metadata.extent = sink.position() >> P::unit_shift;
+      void finish_metadata(std::uint64_t bits) {
+        metadata.extent = bits >> P::unit_shift;
         starts.push_back(metadata.extent); offsets = elias_fano::build(starts);
-        starts.clear(); starts.shrink_to_fit(); sink.finish_payload();
+        starts.clear(); starts.shrink_to_fit();
+      }
+      template <class Sink> void finish(Sink & sink) {
+        finish_metadata(sink.position()); sink.finish_payload();
       }
     private:
       template <class Sink> static void count(Sink & sink, std::uint64_t value) {
@@ -116,6 +119,62 @@ namespace diet {
         }
       }
     };
+    // Both eager and adaptive outputs finish the same already encoded sections.
+    template <class P, class Sink, class Stream, class Spool>
+    object_seal_receipt seal_file_index(cola_file_dependencies const & dependencies,
+        std::array<borrowed_file_state<P>, 2> const & profiles, index_metadata<P> const & metadata,
+        std::uint64_t native_size, Sink & sink, Stream & stream, Spool & spool) {
+      auto emit_offsets = [&](elias_fano const & ef) {
+        sink.align(); sink.words(ef.low); sink.align(); sink.words(ef.high);
+        sink.align(); sink.samples(ef.samples); sink.align(); sink.words(ef.sparse);
+      };
+      std::array<std::byte, cola_section_detail::directory_bytes> directory{};
+      for (unsigned i = 0; i != 4; ++i) directory[i] = std::byte("IX03"[i]);
+      file_detail::put(directory, 4, 2, 3); file_detail::put(directory, 6, 2, cola_section_detail::section_count);
+      file_detail::put(directory, 8, 8, metadata.count); section_detail::put_id(directory, 88, dependencies.native);
+      if (dependencies.main) {
+        directory[82] = std::byte{1}; section_detail::put_id(directory, 104, dependencies.main->native);
+        section_detail::put_id(directory, 120, dependencies.main->index);
+      }
+      if (dependencies.secondary) { directory[83] = std::byte{1}; section_detail::put_id(directory, 136, *dependencies.secondary); }
+      std::array<std::uint64_t, cola_section_detail::section_count> lengths{};
+      std::uint64_t count = 0;
+      for (unsigned route = 0; route != 2; ++route) {
+        auto const & state = profiles[route]; auto const & m = state.metadata; auto const & ef = state.offsets;
+        file_detail::put(directory, 16 + 8 * route, 8, m.record_count);
+        file_detail::put(directory, 32 + 8 * route, 8, m.extent);
+        file_detail::put(directory, 48 + 8 * route, 8, m.terminal_key_units);
+        file_detail::put(directory, 64 + 8 * route, 8, ef.universe); directory[80 + route] = std::byte(ef.low_width);
+        auto slot = cola_section_detail::profile_slot(route);
+        lengths[slot] = profile_detail::byte_count(profile_detail::multiply(m.extent, P::bits_per_unit));
+        lengths[slot + 1] = ef.low.size() * 8; lengths[slot + 2] = ef.high.size() * 8;
+        lengths[slot + 3] = ef.samples.size() * 16; lengths[slot + 4] = ef.sparse.size() * 8;
+        slot = cola_section_detail::rank_slot(route);
+        lengths[slot] = metadata.ranks[route].classes.size() * 8;
+        lengths[slot + 1] = metadata.ranks[route].checkpoints.size() * 8;
+        lengths[cola_section_detail::flags_slot(route)] = metadata.flags[route].size();
+        lengths[cola_section_detail::cuts_slot(route)] = metadata.cuts[route].size() * 8;
+        count += m.record_count;
+      }
+      if (count > metadata.count || native_size != metadata.count - count)
+        throw std::invalid_argument("streamed COLA native count");
+      std::uint64_t end = directory.size();
+      for (std::size_t i = 0; i != lengths.size(); ++i) {
+        auto start = profile_detail::add(end, 7) & ~std::uint64_t{7}; end = profile_detail::add(start, lengths[i]);
+        file_detail::put(directory, cola_section_detail::descriptor_offset + (i << 4), 8, start);
+        file_detail::put(directory, cola_section_detail::descriptor_offset + (i << 4) + 8, 8, lengths[i]);
+      }
+      emit_offsets(profiles[0].offsets);
+      sink.align(); spool.replay(stream); emit_offsets(profiles[1].offsets);
+      for (unsigned route = 0; route != 2; ++route) {
+        sink.align(); sink.words(metadata.ranks[route].classes);
+        sink.align(); sink.words(metadata.ranks[route].checkpoints);
+      }
+      for (auto const & flags : metadata.flags) { sink.align(); stream.append(flags); }
+      for (auto const & cuts : metadata.cuts) { sink.align(); sink.words(cuts); }
+      file_header<P> header{file_kind::fractional_index, profile_detail::multiply(end, 1u << (3 - P::unit_shift)), count, 0};
+      return stream.finish(header, directory);
+    }
     template <class P, class Ops, class SpoolOps> struct file_index_output {
       using stream_type = object_stream<P, Ops>;
       using spool_type = secondary_spool<SpoolOps>;
@@ -147,52 +206,7 @@ namespace diet {
           if (bool(main) != bool(dependencies_.main) || bool(secondary) != bool(dependencies_.secondary) || !native)
             throw std::invalid_argument("streamed COLA dependency shape");
           profiles_[0].finish(main_); profiles_[1].finish(secondary_);
-          std::array<std::byte, cola_section_detail::directory_bytes> directory{};
-          for (unsigned i = 0; i != 4; ++i) directory[i] = std::byte("IX03"[i]);
-          file_detail::put(directory, 4, 2, 3); file_detail::put(directory, 6, 2, cola_section_detail::section_count);
-          file_detail::put(directory, 8, 8, metadata.count); section_detail::put_id(directory, 88, dependencies_.native);
-          if (dependencies_.main) {
-            directory[82] = std::byte{1}; section_detail::put_id(directory, 104, dependencies_.main->native);
-            section_detail::put_id(directory, 120, dependencies_.main->index);
-          }
-          if (dependencies_.secondary) { directory[83] = std::byte{1}; section_detail::put_id(directory, 136, *dependencies_.secondary); }
-          std::array<std::uint64_t, cola_section_detail::section_count> lengths{};
-          std::uint64_t count = 0;
-          for (unsigned route = 0; route != 2; ++route) {
-            auto const & state = profiles_[route]; auto const & m = state.metadata; auto const & ef = state.offsets;
-            file_detail::put(directory, 16 + 8 * route, 8, m.record_count);
-            file_detail::put(directory, 32 + 8 * route, 8, m.extent);
-            file_detail::put(directory, 48 + 8 * route, 8, m.terminal_key_units);
-            file_detail::put(directory, 64 + 8 * route, 8, ef.universe); directory[80 + route] = std::byte(ef.low_width);
-            auto slot = cola_section_detail::profile_slot(route);
-            lengths[slot] = profile_detail::byte_count(profile_detail::multiply(m.extent, P::bits_per_unit));
-            lengths[slot + 1] = ef.low.size() * 8; lengths[slot + 2] = ef.high.size() * 8;
-            lengths[slot + 3] = ef.samples.size() * 16; lengths[slot + 4] = ef.sparse.size() * 8;
-            slot = cola_section_detail::rank_slot(route);
-            lengths[slot] = metadata.ranks[route].classes.size() * 8;
-            lengths[slot + 1] = metadata.ranks[route].checkpoints.size() * 8;
-            lengths[cola_section_detail::flags_slot(route)] = metadata.flags[route].size();
-            lengths[cola_section_detail::cuts_slot(route)] = metadata.cuts[route].size() * 8;
-            count += m.record_count;
-          }
-          if (count > metadata.count || native->size() != metadata.count - count)
-            throw std::invalid_argument("streamed COLA native count");
-          std::uint64_t end = directory.size();
-          for (std::size_t i = 0; i != lengths.size(); ++i) {
-            auto start = profile_detail::add(end, 7) & ~std::uint64_t{7}; end = profile_detail::add(start, lengths[i]);
-            file_detail::put(directory, cola_section_detail::descriptor_offset + (i << 4), 8, start);
-            file_detail::put(directory, cola_section_detail::descriptor_offset + (i << 4) + 8, 8, lengths[i]);
-          }
-          emit_offsets(profiles_[0].offsets);
-          main_.align(); spool_.replay(stream_); emit_offsets(profiles_[1].offsets);
-          for (unsigned route = 0; route != 2; ++route) {
-            main_.align(); main_.words(metadata.ranks[route].classes);
-            main_.align(); main_.words(metadata.ranks[route].checkpoints);
-          }
-          for (auto const & flags : metadata.flags) { main_.align(); stream_.append(flags); }
-          for (auto const & cuts : metadata.cuts) { main_.align(); main_.words(cuts); }
-          file_header<P> header{file_kind::fractional_index, profile_detail::multiply(end, 1u << (3 - P::unit_shift)), count, 0};
-          return stream_.finish(header, directory);
+          return seal_file_index<P>(dependencies_, profiles_, metadata, native->size(), main_, stream_, spool_);
         } catch (...) { failed_ = true; throw; }
       }
     private:
@@ -209,10 +223,6 @@ namespace diet {
         valid(deps.native); if (deps.main) { valid(deps.main->native); valid(deps.main->index); }
         if (deps.secondary) valid(*deps.secondary);
         return deps;
-      }
-      void emit_offsets(elias_fano const & ef) {
-        main_.align(); main_.words(ef.low); main_.align(); main_.words(ef.high);
-        main_.align(); main_.samples(ef.samples); main_.align(); main_.words(ef.sparse);
       }
     };
     template <class Output> struct file_index_output_ref {

@@ -670,7 +670,7 @@ namespace diet {
   template <class P, stream_role Role = stream_role::native> struct profile_encoded_cursor;
   template <class P> struct profile_borrowed_writer;
   template <class P, class Native, class Output> struct index_builder;
-  namespace profile_detail { template <class P> struct index_output; }
+  namespace profile_detail { template <class P> struct index_output; template <class P> struct borrowed_sections; }
   namespace cola_detail { template <class P, class Native, class Main> struct index_output; }
   template <class P> struct profile_native_writer;
   namespace profile_detail { template <class P> struct native_output; }
@@ -1112,6 +1112,7 @@ namespace diet {
   profile_cursor<P, Role> profile_view<P, Role>::cursor() const { return profile_cursor<P, Role>(*this); }
 
   template <class P, stream_role Role = stream_role::native> struct profile_array {
+    profile_array() = default;
     using policy_type = P;
     static constexpr stream_role role = Role;
 
@@ -1195,11 +1196,25 @@ namespace diet {
     friend struct profile_borrowed_writer<P>;
     friend struct profile_native_writer<P>;
     friend struct profile_detail::native_output<P>;
+    friend struct profile_detail::borrowed_sections<P>;
     std::vector<std::byte> bytes_;
     // The profile's EOF marker is explicit; the generic codec defaults empty.
     elias_fano offsets_ = elias_fano::build(std::array<std::uint64_t, 1>{0});
     profile_metadata metadata_ = profile_detail::initial_metadata<P, Role>();
+    profile_array(std::vector<std::byte> bytes, elias_fano offsets, profile_metadata metadata)
+      : bytes_(std::move(bytes)), offsets_(std::move(offsets)), metadata_(metadata) {}
   };
+
+  namespace profile_detail {
+    // Internal handoff from the same checked modified-FC encoder to an owned
+    // array. Payload bytes and sparse navigation have already been finalized.
+    template <class P> struct borrowed_sections {
+      static profile_array<P, stream_role::borrowed> adopt(std::vector<std::byte> bytes,
+          elias_fano offsets, profile_metadata metadata) {
+        return {std::move(bytes), std::move(offsets), metadata};
+      }
+    };
+  }
 
   // Incremental modified-FC output. The caller supplies any boundary-dependent
   // prefix ceiling before appending that key. There is no all-keys staging:
