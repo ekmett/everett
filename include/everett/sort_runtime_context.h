@@ -218,6 +218,9 @@ namespace everett {
     template <class Compose> std::optional<catalog_native_merge> merge_recipe(
         native_pointer const & older, native_pointer const & newer) const {
       if (!older || !newer) throw std::invalid_argument("null native merge input");
+      // Advisory reuse owns permanent reader pins. A private transaction keeps
+      // its outputs solely under its releasable construction scope instead.
+      if (catalog_.private_construction()) return {};
       using composer = std::remove_cvref_t<decltype(native_merge_detail::composer(std::declval<Compose &>()))>;
       using conservative = typed_detail::replacement_compose<P, sort_key_transport<P, Selector>>;
       // This recognizes known kernels and one registry, not arbitrary allegedly
@@ -269,8 +272,9 @@ namespace everett {
         runtime_output_options outputs = {}) {
       return sort_file_runtime_storage(context_type::open(root, std::move(ids), options, std::move(catalog_ops), std::move(file_ops), outputs));
     }
-    static sort_file_runtime_storage open_for_schema(std::filesystem::path const & root, std::string_view schema) {
-      return sort_file_runtime_storage(context_type::open(root, {}, {}, {}, {}, {}, std::string(schema)));
+    static sort_file_runtime_storage open_for_schema(std::filesystem::path const & root, std::string_view schema,
+        catalog_options options = {}) {
+      return sort_file_runtime_storage(context_type::open(root, {}, options, {}, {}, {}, std::string(schema)));
     }
     void check_schema(std::string_view schema) const { if (context_) context_->check_schema(schema); }
     template <class Compose> native_pointer reuse_merge(native_pointer const & older, native_pointer const & newer) {

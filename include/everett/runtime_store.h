@@ -100,6 +100,13 @@ namespace everett {
       auto head = catalog_.find_saved_session(name);
       return head ? std::optional<stored_type>{restore(std::move(*head))} : std::nullopt;
     }
+    // Seal the complete visible/hidden frontier under construction owners.
+    // This creates no named generation and grants no publication authority.
+    void prepare(snapshot_type const & source) {
+      require_active();
+      try { (void)persist(source); }
+      catch (...) { failed_ = true; throw; }
+    }
     stored_type create_session(std::string_view name, snapshot_type const & source,
         std::span<std::byte const> semantic = {}) {
       require_active();

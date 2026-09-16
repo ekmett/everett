@@ -161,6 +161,11 @@ namespace everett {
         return Storage::open_for_schema(root, schema);
       else return Storage::open(root);
     }
+    template <class Options> static auto open_storage(std::filesystem::path const & root,
+        std::string_view schema, Options options)
+        requires requires { Storage::open_for_schema(root, schema, options); } {
+      return Storage::open_for_schema(root, schema, std::move(options));
+    }
     static std::string default_schema() {
       if constexpr (std::same_as<typename P::registry_type, string_registry> &&
                     std::same_as<Selector, registry_selector<typename P::registry_type>>)

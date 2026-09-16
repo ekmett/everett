@@ -36,7 +36,12 @@ static_assert(SQLITE_VERSION_NUMBER >= 3051003, "Everett requires SQLite 3.51.3 
 
 namespace everett {
   enum class catalog_admission { trusted, scan };
-  struct catalog_options { int busy_timeout_ms = 250; };
+  struct catalog_options {
+    int busy_timeout_ms = 250;
+    // The caller owns this scope's process lease. Only its new reservations
+    // are charged to the scope; existing published owners remain independent.
+    std::optional<object_id> private_scope{};
+  };
   struct catalog_object_reservation { object_id object; file_kind kind; };
   struct catalog_saved_root { blob_identity head; std::string owner; };
   enum class catalog_native_merge_kind { replacement, conservative_tombstones };
@@ -292,6 +297,18 @@ CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT N
     // pins use their existing reader owners, and no logical root depends on it.
     inline constexpr char native_merges_schema[] =
       "CREATE TABLE completed_native_merges(domain BLOB NOT NULL,older TEXT NOT NULL REFERENCES objects(id),newer TEXT NOT NULL REFERENCES objects(id),output TEXT NOT NULL REFERENCES objects(id),owner_kind TEXT NOT NULL CHECK(owner_kind='reader'),owner_id BLOB NOT NULL UNIQUE,PRIMARY KEY(domain,older,newer),FOREIGN KEY(owner_kind,owner_id,output) REFERENCES owner_objects(owner_kind,owner_id,object_id)) STRICT";
+    inline constexpr char private_scopes_schema[] =
+      "CREATE TABLE private_scopes(id TEXT PRIMARY KEY CHECK(length(id)=32)) STRICT";
+    inline constexpr char private_attempts_schema[] =
+      "CREATE TABLE private_attempts(attempt TEXT PRIMARY KEY REFERENCES attempts(id),scope TEXT NOT NULL REFERENCES private_scopes(id)) STRICT";
+    inline constexpr char released_private_scopes_schema[] =
+      "CREATE TABLE released_private_scopes(scope TEXT PRIMARY KEY REFERENCES private_scopes(id)) STRICT";
+    // Release is an append-only event. Seals and operation receipts remain
+    // available after an abort, including an uncertain publication outcome.
+    inline constexpr char live_owner_objects_schema[] =
+      "CREATE VIEW live_owner_objects AS SELECT p.* FROM owner_objects p WHERE p.owner_kind<>'attempt' OR NOT EXISTS(SELECT 1 FROM attempts a JOIN private_attempts s ON s.attempt=a.id JOIN released_private_scopes r ON r.scope=s.scope WHERE a.owner=p.owner_id)";
+    inline constexpr char live_owner_roots_schema[] =
+      "CREATE VIEW live_owner_roots AS SELECT p.* FROM owner_roots p WHERE p.owner_kind<>'attempt' OR NOT EXISTS(SELECT 1 FROM attempts a JOIN private_attempts s ON s.attempt=a.id JOIN released_private_scopes r ON r.scope=s.scope WHERE a.owner=p.owner_id)";
     // Version 1 is retained verbatim for old-catalog validation. No open path
     // rewrites it. Creation explicitly chooses the timeline or COLA extension.
     inline std::string schema_for(unsigned version) {
@@ -341,7 +358,7 @@ CREATE TABLE session_saves(name BLOB PRIMARY KEY REFERENCES saves(name), session
     sqlite_catalog(sqlite_catalog && other) noexcept
       : db_(std::exchange(other.db_, nullptr)), root_(std::move(other.root_)),
         ops_(std::move(other.ops_)), poisoned_(other.poisoned_), schema_version_(other.schema_version_),
-        identity_(std::move(other.identity_)) {}
+        identity_(std::move(other.identity_)), private_scope_(std::move(other.private_scope_)) {}
     sqlite_catalog & operator=(sqlite_catalog &&) = delete;
     ~sqlite_catalog() { if (db_) sqlite3_close_v2(db_); }
 
@@ -368,9 +385,11 @@ CREATE TABLE session_saves(name BLOB PRIMARY KEY REFERENCES saves(name), session
         throw std::invalid_argument("Everett catalog schema or policy mismatch");
       result.identity_.emplace(info.text(1));
       if (info.row()) throw std::invalid_argument("multiple Everett catalog identities");
+      if (options.private_scope) result.set_private_scope(*options.private_scope);
       return result;
     }
     bool poisoned() const noexcept { return poisoned_; }
+    bool private_construction() const noexcept { return private_scope_.has_value(); }
     unsigned schema_version() const noexcept { return schema_version_; }
     static char const * runtime_version() noexcept { return sqlite3_libversion(); }
     static char const * source_id() noexcept { return sqlite3_sourceid(); }
@@ -382,6 +401,48 @@ CREATE TABLE session_saves(name BLOB PRIMARY KEY REFERENCES saves(name), session
       return *identity_;
     }
     object_id const & identity() const && = delete;
+
+    void begin_private_scope(std::string_view op, object_id const & id) {
+      require_sessions(); catalog_detail::name(op);
+      catalog_detail::bytes request; catalog_detail::identity(request, id);
+      transaction(op, "private-begin", request, [&] {
+        ensure_private_scopes();
+        catalog_detail::statement insert(db_, "INSERT INTO private_scopes VALUES(?)");
+        insert.text(1, id.hex()); insert.done();
+        return catalog_detail::bytes{};
+      });
+    }
+    void set_private_scope(object_id const & id) {
+      require_sessions();
+      read([&] { require_private_scope(id); return 0; });
+      private_scope_ = id;
+    }
+    // A process lease establishes that no writer can add more scope work.
+    // Publication must acquire its permanent owners before calling this.
+    void release_private_scope(std::string_view op, object_id const & id) {
+      require_sessions(); catalog_detail::name(op);
+      catalog_detail::bytes request; catalog_detail::identity(request, id);
+      transaction(op, "private-release", request, [&] {
+        validate_private_scopes();
+        catalog_detail::statement exists(db_, "SELECT 1 FROM private_scopes WHERE id=?");
+        exists.text(1, id.hex());
+        if (!exists.row()) throw std::invalid_argument("unknown private construction scope");
+        catalog_detail::statement insert(db_, "INSERT OR IGNORE INTO released_private_scopes VALUES(?)");
+        insert.text(1, id.hex()); insert.done();
+        return catalog_detail::bytes{};
+      });
+    }
+    std::vector<object_id> private_scopes() const {
+      require_sessions();
+      return read([&] {
+        std::vector<object_id> result;
+        if (!has_table("private_scopes")) return result;
+        validate_private_scopes();
+        catalog_detail::statement query(db_, "SELECT id FROM private_scopes WHERE NOT EXISTS(SELECT 1 FROM released_private_scopes WHERE scope=id) ORDER BY id");
+        while (query.row()) result.emplace_back(query.text(0));
+        return result;
+      });
+    }
 
     // Recover acknowledged seal evidence for an existing immutable owner.
     // The catalog supplies the attempt and barrier; the file supplies only
@@ -455,10 +516,16 @@ CREATE TABLE session_saves(name BLOB PRIMARY KEY REFERENCES saves(name), session
         catalog_detail::identity(request, output.object); (void)file_extension(output.kind);
         catalog_detail::number(request, kind(output.kind));
       }
+      if (private_scope_) catalog_detail::identity(request, *private_scope_);
       transaction(op, "reserve", request, [&] {
+        if (private_scope_) require_private_scope(*private_scope_);
         add_owner("attempt", owner);
         catalog_detail::statement job(db_, "INSERT INTO attempts VALUES(?,?)");
         job.text(1, attempt.hex()); job.key(2, owner); job.done();
+        if (private_scope_) {
+          catalog_detail::statement scope(db_, "INSERT INTO private_attempts VALUES(?,?)");
+          scope.text(1, attempt.hex()); scope.text(2, private_scope_->hex()); scope.done();
+        }
         for (auto const & input : inputs) add_root("attempt", owner, input);
         for (auto const & output : outputs) {
           catalog_detail::statement insert(db_, "INSERT INTO objects(id,kind,attempt) VALUES(?,?,?)");
@@ -1103,9 +1170,11 @@ CREATE TABLE session_saves(name BLOB PRIMARY KEY REFERENCES saves(name), session
     mutable bool native_merges_validated_ = false;
     unsigned schema_version_ = 2;
     std::optional<object_id> identity_;
+    std::optional<object_id> private_scope_;
     inline static constexpr char const * immutable_tables[] = {
       "catalog_info", "operations", "owners", "attempts", "pairs", "owner_objects", "owner_roots", "saves",
-      "timelines", "timeline_generations", "session_checkpoints", "session_saves", "completed_native_merges"
+      "timelines", "timeline_generations", "session_checkpoints", "session_saves", "completed_native_merges",
+      "private_scopes", "private_attempts", "released_private_scopes"
     };
     sqlite_catalog(sqlite3 * db, std::filesystem::path root, Ops ops)
       : db_(db), root_(std::move(root)), ops_(std::move(ops)) {}
@@ -1168,7 +1237,8 @@ CREATE TABLE session_saves(name BLOB PRIMARY KEY REFERENCES saves(name), session
         throw std::logic_error("Everett named sessions require catalog version 4; no automatic migration");
     }
     bool has_table(std::string_view table) const {
-      if (table == "completed_native_merges") {
+      if (table == "completed_native_merges" || table == "private_scopes" ||
+          table == "private_attempts" || table == "released_private_scopes") {
         // Unlike core version-selected tables, this advisory extension can
         // appear later through another connection. Do not cache an absence.
         catalog_detail::statement query(db_, "SELECT 1 FROM sqlite_schema WHERE name=?");
@@ -1373,6 +1443,8 @@ CREATE TABLE session_saves(name BLOB PRIMARY KEY REFERENCES saves(name), session
         }
       }
       if (has_table("completed_native_merges")) validate_native_merges();
+      if (has_table("private_scopes") || has_table("private_attempts") || has_table("released_private_scopes"))
+        validate_private_scopes();
       definition("trigger", "objects_no_delete", "CREATE TRIGGER objects_no_delete BEFORE DELETE ON objects BEGIN SELECT RAISE(ABORT,'retained object'); END");
       std::string trigger_query = "SELECT count(*) FROM sqlite_schema WHERE type='trigger' AND tbl_name IN('objects'";
       std::int64_t trigger_count = 2;
@@ -1421,6 +1493,38 @@ CREATE TABLE session_saves(name BLOB PRIMARY KEY REFERENCES saves(name), session
       catalog_detail::statement count(db_, "SELECT count(*) FROM sqlite_schema WHERE type='trigger' AND tbl_name='completed_native_merges'");
       if (!count.row() || count.integer(0) != 2) throw std::invalid_argument("unexpected native merge hint trigger");
       native_merges_validated_ = true;
+    }
+    void ensure_private_scopes() {
+      if (has_table("private_scopes")) { validate_private_scopes(); return; }
+      for (auto sql : {catalog_detail::private_scopes_schema, catalog_detail::private_attempts_schema,
+          catalog_detail::released_private_scopes_schema, catalog_detail::live_owner_objects_schema,
+          catalog_detail::live_owner_roots_schema}) catalog_detail::exec(db_, sql);
+      for (auto table : {"private_scopes", "private_attempts", "released_private_scopes"})
+        for (auto action : {"UPDATE", "DELETE"}) {
+          auto name = "immutable_" + std::string(table) + "_" + action;
+          auto sql = "CREATE TRIGGER " + name + " BEFORE " + action + " ON " + table +
+            " BEGIN SELECT RAISE(ABORT,'immutable catalog row'); END";
+          catalog_detail::exec(db_, sql.c_str());
+        }
+    }
+    void validate_private_scopes() const {
+      definition("table", "private_scopes", catalog_detail::private_scopes_schema);
+      definition("table", "private_attempts", catalog_detail::private_attempts_schema);
+      definition("table", "released_private_scopes", catalog_detail::released_private_scopes_schema);
+      definition("view", "live_owner_objects", catalog_detail::live_owner_objects_schema);
+      definition("view", "live_owner_roots", catalog_detail::live_owner_roots_schema);
+      for (auto table : {"private_scopes", "private_attempts", "released_private_scopes"})
+        for (auto action : {"UPDATE", "DELETE"}) {
+          auto name = "immutable_" + std::string(table) + "_" + action;
+          definition("trigger", name, "CREATE TRIGGER " + name + " BEFORE " + action + " ON " + table +
+            " BEGIN SELECT RAISE(ABORT,'immutable catalog row'); END");
+        }
+    }
+    void require_private_scope(object_id const & id) const {
+      validate_private_scopes();
+      catalog_detail::statement query(db_, "SELECT 1 FROM private_scopes WHERE id=? AND NOT EXISTS(SELECT 1 FROM released_private_scopes WHERE scope=?)");
+      query.text(1, id.hex()); query.text(2, id.hex());
+      if (!query.row()) throw std::invalid_argument("inactive private construction scope");
     }
     void add_native_pin(std::string_view owner, object_id const & native) {
       add_owner("reader", owner);
