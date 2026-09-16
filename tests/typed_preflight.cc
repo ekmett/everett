@@ -29,6 +29,33 @@ namespace {
       }
     };
   };
+  // A custom cursor-only runtime can require an rvalue owner and expose no
+  // bit_view cursor. Preflight must copy its borrowed key into that interface.
+  template <class P> struct owned_only_family : binary_runtime_family<P> {
+    using original = binary_runtime_family<P>;
+    struct snapshot_type {
+      typename original::snapshot_type source;
+      struct query_type {
+        typename original::snapshot_type::query_type source;
+        auto head() const { return source.head(); }
+      };
+      auto query_root() const { return query_type{source.query_root()}; }
+      auto cursor_owned(bit_string && key) const { return source.cursor_owned(std::move(key)); }
+      auto admissions() const { return source.admissions(); }
+      bool same_layout(snapshot_type const & other) const { return source.same_layout(other.source); }
+    };
+    template <class Compose> struct runtime_type : original::template runtime_type<Compose> {
+      using base = typename original::template runtime_type<Compose>;
+      runtime_type() = default;
+      static runtime_type from_snapshot(snapshot_type state) {
+        return runtime_type(base::from_snapshot(std::move(state.source)));
+      }
+      snapshot_type snapshot() const { return {base::snapshot()}; }
+      snapshot_type advance(std::uint64_t budget) { return {base::advance(budget)}; }
+    private:
+      explicit runtime_type(base value) : base(std::move(value)) {}
+    };
+  };
   template <class F> void rejects(F && fn) {
     bool rejected = false;
     try { fn(); } catch (std::invalid_argument const &) { rejected = true; }
@@ -143,6 +170,7 @@ namespace {
 int main() {
   replacements<string_policy, binary_runtime_family<string_policy>>();
   replacements<string_policy, sort_runtime_family<string_policy>>();
+  replacements<string_policy, owned_only_family<string_policy>>();
   using bytes = storage_policy<unsorted<std::optional<std::string>>>;
   replacements<bytes, binary_runtime_family<bytes>>();
   rebuilding();

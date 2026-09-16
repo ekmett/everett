@@ -217,8 +217,8 @@ namespace diet {
         }
       }
       auto cursor = [&] {
-        if constexpr (requires { state_->runtime.cursor_owned(std::forward<Query>(encoded)); })
-          return state_->runtime.cursor_owned(std::forward<Query>(encoded));
+        if constexpr (requires { state_->runtime.cursor_owned(bit_string(std::forward<Query>(encoded))); })
+          return state_->runtime.cursor_owned(bit_string(std::forward<Query>(encoded)));
         else return state_->runtime.cursor(encoded.view());
       }();
       if constexpr (typed_detail::replacement<S>) {
