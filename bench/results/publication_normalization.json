@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "a14cba3dc652ea3bc3c44661c9df1d78da5a1cc129dccbd9fc2a0fff51dfad28"
+      "normalized_sha256": "179f22e79e07ea97adb134680cb153ccb1da6e3400855a1ff1a81786733e3801"
     }
   ],
   "checks": {
@@ -525,6 +525,12 @@
     },
     {
       "scope": "Document conservative tombstone codecs, exact-target admission and rebuild replay, separately qualified GPU cleanup, retained-floor proof, and fixed-key physical table direction. Original measurement observations and fingerprints are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Record integrated conservative-tombstone verification, preserving the original fixture failure and successful correction. Original measurement hashes and observations are unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

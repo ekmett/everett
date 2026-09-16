@@ -1208,6 +1208,14 @@ The retained-floor construction and fragment-gather proof extend that audit to
 literal coverage and local payload charging for exact targets; owner discovery,
 shader execution and the complete merge remain separate verification work.
 
+The conservative-tombstone integration verifies **109 checks** under strict O2
+ASan/UBSan: 108 passed in the full run, and the corrected alternate-layout
+fixture passed its focused rerun. All 17 optional GPU checks pass against the
+integrated headers, with binaries identical to the worker's qualification.
+Lean's build and executable examples also pass. The
+[verification record](../bench/results/conservative_tombstones_verification_20260916.json)
+retains the initial fixture failure, correction, rerun and exact binary hashes.
+
 At `296a025`, the combined strict O2 ASan/UBSan build passed all **107 checks**
 on AppleClang 21: 103 C++ component suites, three independent package consumers
 and Doxygen. This includes arbitrary initial batches, encoded preflight,
