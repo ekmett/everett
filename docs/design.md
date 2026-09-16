@@ -567,11 +567,13 @@ contents and object-store metadata durable, then publish a durable manifest that
 references it, and only then retire the old root's pins. Other snapshots,
 readers, index dependencies and resumable jobs can still retain the old inputs.
 
-Resumable work has its own state. A merge checkpoint names its
-exact recipe and immutable inputs, input positions and prefix contexts, a
-verified output prefix, and the state needed to resume output encoding and index
-construction. Checkpoint publication must follow the durable bytes it describes.
-If no trustworthy checkpoint survives, recompute from the retained inputs.
+The current durable frontier retains the immutable inputs and completed work;
+recovery restarts an unfinished carry from those inputs. To resume partly
+encoded output, I would additionally checkpoint the exact recipe, input
+positions and prefix contexts, a verified output prefix, and the state needed
+to resume output encoding and index construction. That checkpoint must follow
+the durable bytes it describes. Partial-output resumption remains an extension;
+the current [connection](connection.md) recovers by replaying retained inputs.
 
 An `fsync` error means the durability assertion failed. We retain the old
 durable root and inputs, quarantine uncertain output, and report the failed save

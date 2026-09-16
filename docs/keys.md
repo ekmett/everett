@@ -139,8 +139,9 @@ I use the following registry forms:
   `value_encoding<T>::type` supplies its encoding requirements; strings and
   optional strings use variable-width byte encoding. User types can expose
   `T::encoding` or specialize the trait. This trait describes physical encoding
-  requirements; the semantic optional-value codec is part of the active-handle
-  work, not an implicit conversion performed by the raw profile builders.
+  requirements; `sort_codec` supplies the optional-value representation and
+  `sort_semantics` supplies its operations. Raw profile builders consume that
+  explicit encoding.
 - `sort_undefined` reserves an unoccupied code or subtree and imposes no value
   width. `sort_list<>` is also empty. A standalone hole defaults to byte
   addressing; a hole inside a bit tree does not impose byte alignment.
@@ -209,7 +210,8 @@ Source-state validation and replay must establish that interpretation. I may
 leave toggles out if validating them costs more than the payload saving is worth.
 
 The following count-code parameters describe the implemented FC profile. Mixed
-sorts will select each leaf's own key/value grammar through the active handle.
+bit sorts select each leaf's key/value grammar through the typed handle; see
+[sort profiles](sort-profiles.md).
 
 The **byte profile** encodes both keys and values byte at a time. Prefix
 and backspace counts are in bytes, and physical offsets are in bytes. Its framed

@@ -974,6 +974,13 @@ the builder, rank and sample laws; it does not assume an external child-route
 oracle. This covers one edge with native and borrowed origins. The three-origin
 main/secondary graph remains a separate refinement step.
 
+`CarriedChain` constructs a finite chain from the bottom up and proves that
+each retained target is exactly the next parent. Its executable search carries
+aligned windows through the stored directories and returns every catalog's
+global predecessor. Only the root begins with the whole catalog; subsequent
+windows contain at most $K$ entries. Empty nodes bypass rank lookup. The proof
+covers one borrowed origin per node and counts entries, not machine instructions.
+
 The default `lake --wfail build` checks the proofs, examples and a transitive
 axiom audit. The interpreted examples cover duplicate keys across cuts, empty
 projections, missing predecessors, and partial tails for $K=3$ and $K=15$.
@@ -1003,8 +1010,8 @@ rank with bounded local scans, without an extra endpoint total; the population
 and low-field bounds justify their logical widths.
 
 Those theorems do not verify stored cut-LCP scalars, literal comparisons or the
-encoded decoder. Packed machine-word layouts, SIMD operations, full cascade
-execution, C++ refinement, scheduling and crash recovery remain outside the
+encoded decoder. Packed machine-word layouts, SIMD operations, three-origin
+main/secondary traversal, C++ refinement, scheduling and crash recovery remain outside the
 model's scope. The proof README records the assumptions
 and the distinctions between endpoint projection, full arrows and finite-key
 fingerprint sums.
@@ -1159,6 +1166,8 @@ keeps the original failure and the successful rerun distinct.
 At `ddd458d`, the constructed-edge proof and executable examples pass on the
 integrated tree, bringing the transitive Lean audit to **1,088 declarations**
 with the same three standard axioms.
+At `c6c4971`, the coherent-chain construction and traversal also pass, bringing
+the audit to **1,162 declarations** with unchanged logical dependencies.
 
 At `296a025`, the combined strict O2 ASan/UBSan build passed all **107 checks**
 on AppleClang 21: 103 C++ component suites, three independent package consumers

@@ -1,0 +1,1302 @@
+{
+  "scope": "Correctness qualification only, using a separate Windows Vulkan adapter for the frozen compressed merge implementation. These guarded runs are not performance measurements and do not qualify a durable runtime backend.",
+  "date_utc": "2026-09-16",
+  "device": "NVIDIA GeForce RTX 4090",
+  "backend": "Vulkan",
+  "driver_version": 2559967232,
+  "api_version": 4211029,
+  "compiler": "MSVC 19.44.35228.0",
+  "crc_backend": "portable CRC32C",
+  "frozen_source_revision": "f4c26bd0b86e006e39581357afb0ee092f8da3f6",
+  "frozen_archive_sha256": "1b4a7251ff677ee0a28a2df44e34449a5c4748f2e78cd8b505a851e2efccaff5",
+  "source_report_sha256": "c41ace013acfe6c1f33affcaa277766a109b498abe12d3e87cc84a8ac1560dad",
+  "adapter_bundle_sha256": "6d741f25af1ccc9370970e56d320f4501c353d4293298ae3a39601f7a87a84d3",
+  "adapter_executable_sha256": "2b7a568ef4a312b7116ae81dde99cde9648adce4e73890fd9b56109bbfae8305",
+  "source_and_artifact_pins_unchanged": true,
+  "frozen_inputs_unchanged": true,
+  "passed_processes": 150,
+  "total_processes": 150,
+  "distinct_cases": 75,
+  "repetitions_per_case": 2,
+  "validation_enabled": true,
+  "synchronization_validation": true,
+  "validation_errors": 0,
+  "validation_warnings": 0,
+  "cases": [
+    {
+      "name": "boundary-mixed-14",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "4a7033c8978cf8f09723331396c86a5dd628abef1071a9cba6e924c0ef5ab456",
+      "older_count": 14,
+      "newer_count": 9,
+      "output_count": 14,
+      "output_bytes": 456
+    },
+    {
+      "name": "boundary-mixed-15",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "47c1b721f0cdb7c79f8b3d7962a736fdadf1d429c5ee9b6313f32c91fe251cbd",
+      "older_count": 15,
+      "newer_count": 10,
+      "output_count": 15,
+      "output_bytes": 456
+    },
+    {
+      "name": "boundary-mixed-16",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "18c8adc9bce70c5797538ee77ed2f2b15e2a9bfbce2463bea40c45edb63b0b41",
+      "older_count": 16,
+      "newer_count": 11,
+      "output_count": 16,
+      "output_bytes": 480
+    },
+    {
+      "name": "boundary-mixed-255",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "53ea6e2542ad1231d940c0a70a3119ebec1709b25613db83dabfa60df1ba15f8",
+      "older_count": 255,
+      "newer_count": 170,
+      "output_count": 255,
+      "output_bytes": 3752
+    },
+    {
+      "name": "boundary-mixed-256",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "986cbc3fe5c827b5dd43595b9f5fe11dcf680e76417f7c8ba9b8c802c5ee79fa",
+      "older_count": 256,
+      "newer_count": 171,
+      "output_count": 256,
+      "output_bytes": 3784
+    },
+    {
+      "name": "boundary-mixed-257",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "778f49ed0b3008e3f147b922d04ab0dac496ac3333252766c935d43bd88b1b49",
+      "older_count": 257,
+      "newer_count": 171,
+      "output_count": 257,
+      "output_bytes": 3808
+    },
+    {
+      "name": "boundary-mixed-29",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "31478a6fc5ea64b05368474801c7f6641fd1349076a10d4073ae08e943d74a4b",
+      "older_count": 29,
+      "newer_count": 19,
+      "output_count": 29,
+      "output_bytes": 720
+    },
+    {
+      "name": "boundary-mixed-30",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "c7ef27ed9ec7c943f906b37683efeb965d5ff6bbca996780bdce44982d15bea8",
+      "older_count": 30,
+      "newer_count": 20,
+      "output_count": 30,
+      "output_bytes": 752
+    },
+    {
+      "name": "boundary-mixed-31",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "d5e8b107183394e76491d04237964952cfc965db1b50bc5373d2484a2c5e9829",
+      "older_count": 31,
+      "newer_count": 21,
+      "output_count": 31,
+      "output_bytes": 752
+    },
+    {
+      "name": "boundary-mixed-7",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "a09e7a38b7fc814477f277b21b36448db4d22f36c17f2db410a71047dbfc8728",
+      "older_count": 7,
+      "newer_count": 5,
+      "output_count": 7,
+      "output_bytes": 384
+    },
+    {
+      "name": "boundary-mixed-8",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "0043d0629a8c8081bdd67fb1ee322f73a765825f4685a8598ec981b79ad2957a",
+      "older_count": 8,
+      "newer_count": 5,
+      "output_count": 8,
+      "output_bytes": 400
+    },
+    {
+      "name": "boundary-mixed-9",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "a1b58fb6cc248dbe2000dd941138e3e4b024db3eb5743cf661a2debb3d0ca2e3",
+      "older_count": 9,
+      "newer_count": 6,
+      "output_count": 9,
+      "output_bytes": 400
+    },
+    {
+      "name": "boundary-tombstones-14",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "719c96056ce3e8384170b18fa9011c2306555647d238d76df60b123ba58e56b5",
+      "older_count": 14,
+      "newer_count": 14,
+      "output_count": 14,
+      "output_bytes": 376
+    },
+    {
+      "name": "boundary-tombstones-15",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "19bbf27360dd19c154736eb335f350f4f19db623564aa8c4a91c585ee329cdea",
+      "older_count": 15,
+      "newer_count": 15,
+      "output_count": 15,
+      "output_bytes": 376
+    },
+    {
+      "name": "boundary-tombstones-16",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "03195c3373cf3c878e40b188fab190940727ba08f955b609277fa2289ef4e4f1",
+      "older_count": 16,
+      "newer_count": 16,
+      "output_count": 16,
+      "output_bytes": 376
+    },
+    {
+      "name": "boundary-tombstones-255",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "0d5e5f74389e5c3149ad33e3d3ffa9bbc577745055c5773049fa8d5cdc19af1d",
+      "older_count": 255,
+      "newer_count": 255,
+      "output_count": 255,
+      "output_bytes": 704
+    },
+    {
+      "name": "boundary-tombstones-256",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "9c07bb4825d249bda90167c9dc45c87aaef99f8070d91b1ffc88861dd5763cee",
+      "older_count": 256,
+      "newer_count": 256,
+      "output_count": 256,
+      "output_bytes": 712
+    },
+    {
+      "name": "boundary-tombstones-257",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "49ec2e577a2799b9b131505a771951dc5fdfd359db87a8210f87d13f80d3efca",
+      "older_count": 257,
+      "newer_count": 257,
+      "output_count": 257,
+      "output_bytes": 720
+    },
+    {
+      "name": "boundary-tombstones-29",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "a5b97e131399ff371e555a59ac08b7c50a0de2959835ab904fca818fa903f5d1",
+      "older_count": 29,
+      "newer_count": 29,
+      "output_count": 29,
+      "output_bytes": 392
+    },
+    {
+      "name": "boundary-tombstones-30",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "d736bd59d966e5de65d30c65d9ec823f0d63513c237dacc338d269a4d92e744c",
+      "older_count": 30,
+      "newer_count": 30,
+      "output_count": 30,
+      "output_bytes": 392
+    },
+    {
+      "name": "boundary-tombstones-31",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "4c940479e38505faa0150b642f7278a9349b29d812f7588c05c3b00c6ac2fc21",
+      "older_count": 31,
+      "newer_count": 31,
+      "output_count": 31,
+      "output_bytes": 400
+    },
+    {
+      "name": "boundary-tombstones-7",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "b9f738f124042060e845841dacb83c4d2789b32dddbf4e6e9e866ea4d4e8c005",
+      "older_count": 7,
+      "newer_count": 7,
+      "output_count": 7,
+      "output_bytes": 368
+    },
+    {
+      "name": "boundary-tombstones-8",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "db8367623e9d61ba9ffb8a850af39dd2a9d19020b62c61098238b274c66badec",
+      "older_count": 8,
+      "newer_count": 8,
+      "output_count": 8,
+      "output_bytes": 368
+    },
+    {
+      "name": "boundary-tombstones-9",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "2fcf70f2e8ef32af50e33c25ae740f2e6ab1d6df030d26d5a0c57ae9d995c84c",
+      "older_count": 9,
+      "newer_count": 9,
+      "output_count": 9,
+      "output_bytes": 368
+    },
+    {
+      "name": "empty-key-present-empty",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "e25e954ea4bc4e23b944fb4bb4ff4b51a7af2f6645a282ffe5207ca9107855e3",
+      "older_count": 1,
+      "newer_count": 0,
+      "output_count": 1,
+      "output_bytes": 352
+    },
+    {
+      "name": "empty-key-tombstone",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "3504805f684c1ad715737425c8b309124594127cef508c62fbbb59631ce17680",
+      "older_count": 0,
+      "newer_count": 1,
+      "output_count": 1,
+      "output_bytes": 352
+    },
+    {
+      "name": "empty-newer",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "9a7cf17a151c9f06d37ee70800bd0a7a727ac00da5fb0534ac06aed8af472692",
+      "older_count": 11,
+      "newer_count": 0,
+      "output_count": 11,
+      "output_bytes": 416
+    },
+    {
+      "name": "empty-older",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "9a7cf17a151c9f06d37ee70800bd0a7a727ac00da5fb0534ac06aed8af472692",
+      "older_count": 0,
+      "newer_count": 11,
+      "output_count": 11,
+      "output_bytes": 416
+    },
+    {
+      "name": "lcp-bit-0",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "fd84b972bfc0c37c9af140b9ec7e770b007d66f38fdfecb1edc94f0b3acea351",
+      "older_count": 1,
+      "newer_count": 1,
+      "output_count": 2,
+      "output_bytes": 352
+    },
+    {
+      "name": "lcp-bit-1",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "bd1336f5342fe8e999f695ee4775ca9848c6b2c9a8cf1efe76e4bbe57a2f1fd5",
+      "older_count": 1,
+      "newer_count": 1,
+      "output_count": 2,
+      "output_bytes": 352
+    },
+    {
+      "name": "lcp-bit-2",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "cea6ed692183b5515e5792abc94457e9ab580a1900203ffc3c873dd3c2d4dfcb",
+      "older_count": 1,
+      "newer_count": 1,
+      "output_count": 2,
+      "output_bytes": 352
+    },
+    {
+      "name": "lcp-bit-3",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "3fbc82e2b70bf5dd3a4f6c896d53d3e4a96cbbdf5ee31810559af6220056ba41",
+      "older_count": 1,
+      "newer_count": 1,
+      "output_count": 2,
+      "output_bytes": 352
+    },
+    {
+      "name": "lcp-bit-4",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "3956231703e7cf8fcea79a5d1f5d76e610272e71505f59c2a9ab7fa44ff65f76",
+      "older_count": 1,
+      "newer_count": 1,
+      "output_count": 2,
+      "output_bytes": 352
+    },
+    {
+      "name": "lcp-bit-5",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "6218ea1f991de72a156647293e4bac0587f5bd2d9957e94882c02273cf9911cf",
+      "older_count": 1,
+      "newer_count": 1,
+      "output_count": 2,
+      "output_bytes": 352
+    },
+    {
+      "name": "lcp-bit-6",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "32e22143a342d23bfc9045f9d157d7e51435976a892cb05a35d27933286a34f4",
+      "older_count": 1,
+      "newer_count": 1,
+      "output_count": 2,
+      "output_bytes": 352
+    },
+    {
+      "name": "lcp-bit-7",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "e453db66cace51c29603d72c5257db89e62ed2aeb8897a98d28bdc3539943c84",
+      "older_count": 1,
+      "newer_count": 1,
+      "output_count": 2,
+      "output_bytes": 352
+    },
+    {
+      "name": "proper-prefix-and-binary",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "9a0c3bc0b58e199279d84f5ced3f46942044d8ac256267fee8ae34c18af85300",
+      "older_count": 11,
+      "newer_count": 5,
+      "output_count": 11,
+      "output_bytes": 408
+    },
+    {
+      "name": "random-binary-prefix-0",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "8f29e444c395cd30ee15b32057855b6538664f3fb58131b72d177b69eb1bd2d0",
+      "older_count": 23,
+      "newer_count": 23,
+      "output_count": 35,
+      "output_bytes": 1120
+    },
+    {
+      "name": "random-binary-prefix-1",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "f1cc62d7613d19ad15cce19c90740aa2fbcc788ed5875e18fecfbd0b0099ba48",
+      "older_count": 26,
+      "newer_count": 26,
+      "output_count": 39,
+      "output_bytes": 1160
+    },
+    {
+      "name": "random-binary-prefix-127",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "259eedfc034a7bc8e0d6fa544ed6325445087958dbb4066de45953172c93e499",
+      "older_count": 37,
+      "newer_count": 36,
+      "output_count": 55,
+      "output_bytes": 1664
+    },
+    {
+      "name": "random-binary-prefix-255",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "5cb631eea436e9f4a47df83b66524a28ba31d7389325924d809dff20727eeea2",
+      "older_count": 39,
+      "newer_count": 39,
+      "output_count": 59,
+      "output_bytes": 1872
+    },
+    {
+      "name": "random-binary-prefix-31",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "410054aaa6d3df4d2dd601d58eeac19ba245be100607eb845760dbf04e5ceb80",
+      "older_count": 31,
+      "newer_count": 31,
+      "output_count": 47,
+      "output_bytes": 1336
+    },
+    {
+      "name": "random-binary-prefix-511",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "62611f2d72a12c3b4854fb42dffadd130f819e7e75dd4fd8afcc1f651e7db4bf",
+      "older_count": 42,
+      "newer_count": 42,
+      "output_count": 63,
+      "output_bytes": 2152
+    },
+    {
+      "name": "random-binary-prefix-63",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "e23178e0120562d1b94158dbec3bcf8a818c8bde9cf3b4e1bc42e2debf175fe9",
+      "older_count": 34,
+      "newer_count": 34,
+      "output_count": 51,
+      "output_bytes": 1464
+    },
+    {
+      "name": "random-binary-prefix-7",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "9e422e09ec0624cd25e99c9530d7007b795e69d908f0e2e91302f11a1ca4b6b4",
+      "older_count": 29,
+      "newer_count": 28,
+      "output_count": 43,
+      "output_bytes": 1248
+    },
+    {
+      "name": "retention-down-127",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "9b26ef8b941b7e39e1f02ba0a5690fc4ffc48aed624e2d0288efb3f0376a0190",
+      "older_count": 85,
+      "newer_count": 84,
+      "output_count": 127,
+      "output_bytes": 1408
+    },
+    {
+      "name": "retention-down-128",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "1e0873f6f3476bccb727c455d6f487901e9bde10329be89721fd44b98c7e1aea",
+      "older_count": 85,
+      "newer_count": 85,
+      "output_count": 128,
+      "output_bytes": 1416
+    },
+    {
+      "name": "retention-down-129",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "ffd3f1a63a5b4bbc7aea8321a774b3c7e603c2c9c5ecd0353d76a63768f5f951",
+      "older_count": 86,
+      "newer_count": 86,
+      "output_count": 129,
+      "output_bytes": 1416
+    },
+    {
+      "name": "retention-down-14",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "acd02db85894d6107170d069a3f73ff1e8240c1f95d7bcb856c1a012637c541b",
+      "older_count": 9,
+      "newer_count": 9,
+      "output_count": 14,
+      "output_bytes": 448
+    },
+    {
+      "name": "retention-down-15",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "a98b406ba8ac893b91b1e35a2b9a8f9e21803437311a83c3bd1d8de5cd70fcf7",
+      "older_count": 10,
+      "newer_count": 10,
+      "output_count": 15,
+      "output_bytes": 456
+    },
+    {
+      "name": "retention-down-16",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "0e481ffe967bc4d0b64054967523c667fa3545ab495003a30c47ce76bc383889",
+      "older_count": 11,
+      "newer_count": 10,
+      "output_count": 16,
+      "output_bytes": 472
+    },
+    {
+      "name": "retention-down-2",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "31eff533e098e3c743498b13c794feba0adb30e9ae78ec99af11453ef9af801c",
+      "older_count": 1,
+      "newer_count": 1,
+      "output_count": 2,
+      "output_bytes": 352
+    },
+    {
+      "name": "retention-down-3",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "bd49e566d738b9a897d6c42ac367c5c984478efd8ddde2eb0638d8b2000f0e33",
+      "older_count": 2,
+      "newer_count": 2,
+      "output_count": 3,
+      "output_bytes": 360
+    },
+    {
+      "name": "retention-down-31",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "7283db8f0fa16f8d68b4a0a055dc1037fb814266101af18002e9617987418988",
+      "older_count": 21,
+      "newer_count": 20,
+      "output_count": 31,
+      "output_bytes": 584
+    },
+    {
+      "name": "retention-down-32",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "5b04328f7d8d43bdd3d6f7c60e0172a1e716c2ee732d9333bb48aae55f39d67f",
+      "older_count": 21,
+      "newer_count": 21,
+      "output_count": 32,
+      "output_bytes": 600
+    },
+    {
+      "name": "retention-down-33",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "6a522dcb1d13276fd480213551188082f85015b3fa9df7d3c0442d6159b2aaef",
+      "older_count": 22,
+      "newer_count": 22,
+      "output_count": 33,
+      "output_bytes": 600
+    },
+    {
+      "name": "retention-down-63",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "c442e7745ef988bbc37bcd643fb03a4e56636d7893ef664a7bd86451fa420e32",
+      "older_count": 42,
+      "newer_count": 42,
+      "output_count": 63,
+      "output_bytes": 848
+    },
+    {
+      "name": "retention-down-64",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "a05ca8e3ba0d036e5a6752539dccd29ab3e28f0b3b68a6423e4da1e8fd8789e5",
+      "older_count": 43,
+      "newer_count": 42,
+      "output_count": 64,
+      "output_bytes": 864
+    },
+    {
+      "name": "retention-down-65",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "05ec27fc6a99eb78081180c49539fec1619a16579dafda92fce23c55eba42e21",
+      "older_count": 43,
+      "newer_count": 43,
+      "output_count": 65,
+      "output_bytes": 864
+    },
+    {
+      "name": "retention-up-127",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "2f7b697b778ffd935a3492b62c5332f7677a050916c16e33e741d5c083c77c89",
+      "older_count": 85,
+      "newer_count": 84,
+      "output_count": 127,
+      "output_bytes": 1344
+    },
+    {
+      "name": "retention-up-128",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "fe44ede795909062b6df47e17c66d24698923e1bcd7292febca35db2875eb307",
+      "older_count": 85,
+      "newer_count": 85,
+      "output_count": 128,
+      "output_bytes": 1352
+    },
+    {
+      "name": "retention-up-129",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "ef0c9139fb1e713810354cb9534ad2cbad6c3ac6a7c64e0fc62ed440965b4b86",
+      "older_count": 86,
+      "newer_count": 86,
+      "output_count": 129,
+      "output_bytes": 1352
+    },
+    {
+      "name": "retention-up-14",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "f13558f4881d52ae025d60116c526d8f87cc0d2532970e89091e2cc3a7b130a8",
+      "older_count": 9,
+      "newer_count": 9,
+      "output_count": 14,
+      "output_bytes": 440
+    },
+    {
+      "name": "retention-up-15",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "22ca5aeda54b0ab623bea59f0d490d6ff83080ea48069942ed547c12d2dc736f",
+      "older_count": 10,
+      "newer_count": 10,
+      "output_count": 15,
+      "output_bytes": 448
+    },
+    {
+      "name": "retention-up-16",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "08ff6179bb09ba1054fbbba30bc13b021db2817670ad184dfaabf150549a2e0a",
+      "older_count": 11,
+      "newer_count": 10,
+      "output_count": 16,
+      "output_bytes": 464
+    },
+    {
+      "name": "retention-up-2",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "52b5aaebda373744ef15e71d4dd9d8f0dbbead405d64644e9e354c7107500ea4",
+      "older_count": 1,
+      "newer_count": 1,
+      "output_count": 2,
+      "output_bytes": 352
+    },
+    {
+      "name": "retention-up-3",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "de18372291b6446dd5ad2f11a222bccf2c2dcff354a6f55e4c8b30f2424a543c",
+      "older_count": 2,
+      "newer_count": 2,
+      "output_count": 3,
+      "output_bytes": 360
+    },
+    {
+      "name": "retention-up-31",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "3c1d0467cfab508ec74629cc6ad89572d2c94414ea99ae4942dbd5a5dcc5f672",
+      "older_count": 21,
+      "newer_count": 20,
+      "output_count": 31,
+      "output_bytes": 568
+    },
+    {
+      "name": "retention-up-32",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "87ca80f7bb44d09b04fa642c8b97613147768f9c2e98f44723bc9fcc944ec4b9",
+      "older_count": 21,
+      "newer_count": 21,
+      "output_count": 32,
+      "output_bytes": 584
+    },
+    {
+      "name": "retention-up-33",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "e3ce8c7389e700a26717a6c1c5bec7773f803138dc561405af9a1b6155318c21",
+      "older_count": 22,
+      "newer_count": 22,
+      "output_count": 33,
+      "output_bytes": 584
+    },
+    {
+      "name": "retention-up-63",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "ed8dacd41b94e1ab690cadaaef91b5b7269335ce80490f0b6ff8fa76a547f260",
+      "older_count": 42,
+      "newer_count": 42,
+      "output_count": 63,
+      "output_bytes": 816
+    },
+    {
+      "name": "retention-up-64",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "97e07715c05c111d3be66da72e3ef3f84e008c2972334fe7163375e711fb91c6",
+      "older_count": 43,
+      "newer_count": 42,
+      "output_count": 64,
+      "output_bytes": 832
+    },
+    {
+      "name": "retention-up-65",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "914c7ca190ebc664ed7f1cceead62ad08f6f6d133d4ddaf07af442d171246583",
+      "older_count": 43,
+      "newer_count": 43,
+      "output_count": 65,
+      "output_bytes": 832
+    },
+    {
+      "name": "skewed-newer-short",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "eddc65310913b7731392b0cb17b2386139309d1558fa543763f30da9f5e5e262",
+      "older_count": 513,
+      "newer_count": 3,
+      "output_count": 513,
+      "output_bytes": 9832
+    },
+    {
+      "name": "skewed-older-short",
+      "repetitions": 2,
+      "exit_codes": [
+        0,
+        0
+      ],
+      "exact_output": true,
+      "input_and_guards_preserved": true,
+      "validation_errors": 0,
+      "validation_warnings": 0,
+      "output_sha256": "f5cdb466d0c7e6171627f5b4462caaf073bfc716c7cdb56c6041a5340389f892",
+      "older_count": 3,
+      "newer_count": 513,
+      "output_count": 513,
+      "output_bytes": 9864
+    }
+  ]
+}

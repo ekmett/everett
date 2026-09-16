@@ -33,6 +33,9 @@ The [calibration guide](../optional/gpu_merge/cutover.md) describes a measured
 CPU/GPU choice using headers and file sizes.
 The [M2 Max results](../optional/gpu_merge/cutover-report.md) retain the complete
 50-case calibration and its five successful held-out GPU selections.
+The [Vulkan qualification](../optional/gpu_merge/vulkan-qualification.md) records
+150 successful native correctness runs on an RTX 4090; it contains no performance
+claim.
 
 This is a separate opt-in Metal program. It does not publish durable catalog
 updates, and the ordinary library has no shader-toolchain dependency.

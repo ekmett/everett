@@ -713,6 +713,19 @@
       "examples": "lake env lean --run Main.lean",
       "status": "Passed",
       "scope": "Concrete one-edge fractional-index construction and stored-rank transfer with an incoming predecessor bracket; not a packed C++ or full dual-route graph proof."
+    },
+    {
+      "revision": "c6c4971",
+      "declarations": 1162,
+      "logical_axioms": [
+        "propext",
+        "Quot.sound",
+        "Classical.choice"
+      ],
+      "build": "lake --wfail build",
+      "examples": "lake env lean --run Main.lean",
+      "status": "Passed",
+      "scope": "Concrete bottom-up one-borrowed-origin chains with exact target coherence, aligned valid groups and empty-node traversal; not the three-origin physical graph or a C++ refinement."
     }
   ]
 }
