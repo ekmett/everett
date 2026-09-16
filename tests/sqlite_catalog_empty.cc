@@ -17,9 +17,8 @@
 namespace {
   using namespace everett;
   using binary = typed_engine<>;
-  using redundant = typed_engine<string_policy, wrapping_fingerprint_algebra, 256,
-    redundant_runtime_family<string_policy>>;
   using rebuilt = replacement_rebuild_engine<>;
+  using redundant = rebuilt::engine_type;
   template <class E> auto empty() { return std::move(E::batch()).finish(); }
   template <class F> void rejects(F && action) {
     bool rejected = false;
