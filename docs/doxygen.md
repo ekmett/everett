@@ -30,8 +30,13 @@ renderer rejects `\operatorname` in these documents.
 GitHub-style heading IDs keep local section links usable. Doxygen 1.9.8 leaves
 some links to headings in other Markdown files unresolved, and can link to an
 empty file compound when a Markdown page starts with a notice. The build repairs
-these links in HTML and XML using the generated page and section IDs. The checks
-verify page inclusion, formula contents, heading targets and code literals.
+these links in HTML and XML using the generated page and section IDs. GitHub
+numbers duplicate headings within a page; Doxygen also adds suffixes for titles
+on other pages. The repair matches the page-local heading sequence to the actual
+generated anchors, preserving explicit IDs and rejecting ambiguous targets.
+Inline code and emphasis in headings remain part of their text. Unrecognized
+title spellings keep their exact generated IDs instead of guessing an anchor.
+The checks verify page inclusion, formula contents, heading targets and code literals.
 Mermaid fences remain code in this Doxygen configuration.
 
 Links to Lean files, source examples and license texts resolve relative to their

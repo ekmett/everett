@@ -15,12 +15,14 @@
 import argparse
 from collections import Counter
 import html as html_module
+from html.parser import HTMLParser
 from pathlib import Path
 import re
 import shlex
 import shutil
 import subprocess
 import sys
+import unicodedata
 from urllib.parse import quote as urlquote, unquote, urlsplit
 import xml.etree.ElementTree as xml
 
@@ -459,6 +461,112 @@ def write_page_links(page, replacements, output, name):
     tree.write(xml_path, encoding="utf-8", xml_declaration=True)
 
 
+def heading_slug(title):
+    # Doxygen can put escaped HTML (<tt>, <em>, ...) inside an XML title.
+    # Decode that formatting before considering an automatic GitHub anchor.
+    class TitleText(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.parts = []
+        def handle_data(self, data):
+            self.parts.append(data)
+    parser = TitleText()
+    parser.feed("".join(title.itertext()))
+    parser.close()
+    value = "".join(parser.parts).strip().lower()
+    return "".join("-" if char == " " else char for char in value
+                   if char in " _-" or unicodedata.category(char)[0] in "LNM")
+
+
+def explicit_heading_ids(source):
+    # Only recognize the small explicit-ID extension, not Markdown links or a
+    # second heading renderer. Ignore examples inside fenced/indented code.
+    result, fence = set(), None
+    lines = source.splitlines()
+    for at, line in enumerate(lines):
+        if fence:
+            if re.fullmatch(r" {0,3}" + re.escape(fence[0]) + "{" + str(len(fence)) + r",}[ \t]*", line):
+                fence = None
+            continue
+        opening = re.match(r" {0,3}(`{3,}|~{3,})(.*)", line)
+        if opening and (opening.group(1)[0] != "`" or "`" not in opening.group(2)):
+            fence = opening.group(1)
+            continue
+        if line.startswith(("    ", "\t")):
+            continue
+        heading = re.match(r" {0,3}#{1,6}(?:[ \t]|$)", line)
+        underline = at + 1 < len(lines) and re.fullmatch(r" {0,3}(?:=+|-+)[ \t]*", lines[at + 1])
+        if heading or underline:
+            match = re.search(r"\{#([^{}\s]+)\}[ \t]*(?:#+[ \t]*)?$", line)
+            if match:
+                result.add(match.group(1))
+    return result
+
+
+def markdown_heading_targets(page, explicit=()):
+    # Doxygen's GITHUB IDs are globally unique, whereas GitHub numbers heading
+    # collisions within one document. Reconstruct that local sequence only
+    # where the generated ID confirms the parsed title's automatic slug family.
+    # Keep custom IDs and unrecognized title spellings exact instead of guessing.
+    targets, used = {}, set()
+    if page.attrib["id"] in explicit:
+        # Doxygen promotes an explicitly named leading H1 to the page itself.
+        targets[page.attrib["id"]] = [(page.attrib["id"], "")]
+    def unique(base):
+        slug, suffix = base, 0
+        while slug in used:
+            suffix += 1
+            slug = f"{base}-{suffix}"
+        used.add(slug)
+        return slug
+    prefixes = [page.attrib["id"] + "_1"]
+    if page.attrib["id"] == "indexpage":
+        prefixes.append("index_1")
+    entries = []
+    for element in page.iter():
+        if not re.fullmatch(r"sect[1-6]|anchor", element.tag):
+            continue
+        refid = element.get("id", "")
+        spellings = [refid[len(prefix):] for prefix in prefixes if refid.startswith(prefix)]
+        require(len(spellings) == 1, f"Unexpected Markdown heading ID: {refid}")
+        entries.append((element, refid, spellings[0]))
+    title, leading_id, leading = page.find("title"), None, None
+    if title is not None:
+        leading = heading_slug(title)
+        # A real leading H1 has an anchor, or is the configured main page.
+        # A fallback page title (e.g. a filename after a notice) does not count.
+        if entries:
+            element, refid, actual = entries[0]
+            if element.tag == "anchor" and actual not in explicit and (
+                    re.fullmatch(r"(?:autotoc_md)?" + re.escape(leading) + r"(?:-\d+)?", actual) or
+                    (page.attrib["id"] == "indexpage" and actual.startswith("md_"))):
+                leading_id = refid
+        if page.attrib["id"] == "indexpage" or leading_id is not None:
+            unique(leading)
+    for element, refid, actual in entries:
+        title = element.find("title")
+        slug, automatic = (leading, True) if refid == leading_id else (actual, False)
+        if title is not None and actual not in explicit:
+            base = heading_slug(title)
+            spelling = r"(?:autotoc_md)?" + re.escape(base) + r"(?:-\d+)?"
+            if re.fullmatch(spelling, actual):
+                slug, automatic = unique(base), True
+        targets.setdefault(slug, []).append((refid, actual))
+        if refid == leading_id and page.attrib["id"] == "indexpage" and actual != slug:
+            targets.setdefault(actual, []).append((refid, actual))
+        # Keep the earlier exact-ID fallback for formulas or title spellings
+        # we cannot prove automatic, including Doxygen's numeric-ID prefix.
+        if not automatic and actual not in explicit and actual.startswith("autotoc_md"):
+            targets.setdefault(actual[len("autotoc_md"):], []).append((refid, actual))
+    return targets
+
+
+def markdown_heading_target(page, fragment, diagnostic, explicit=()):
+    anchors = markdown_heading_targets(page, explicit).get(fragment, [])
+    require(len(anchors) == 1, f"Missing or ambiguous Markdown heading: {diagnostic}")
+    return anchors[0]
+
+
 def repair_markdown_links(items, source, output):
     # Doxygen 1.9.8 resolves .md pages and local #headings, but leaves
     # cross-page .md#heading URLs literal. Resolve those from generated page
@@ -500,14 +608,11 @@ def repair_markdown_links(items, source, output):
             fragment = unquote(parts.fragment)
             refid, kind = target.attrib["id"], "compound"
             if fragment:
-                # Even GITHUB mode prefixes number-leading section IDs in
-                # Doxygen 1.9.8. Resolve against the actual generated ID.
-                anchors = [(element.get("id"), spelling)
-                           for spelling in (fragment, "autotoc_md" + fragment)
-                           for element in target.iter()
-                           if element.get("id", "").endswith("_1" + spelling)]
-                require(len(anchors) == 1, f"Missing or ambiguous Markdown heading: {name}: {url}")
-                (refid, fragment), kind = anchors[0], "member"
+                # This also handles Doxygen's number-leading autotoc prefix
+                # and suffixes caused by matching titles on other pages.
+                refid, fragment = markdown_heading_target(target, fragment, f"{name}: {url}",
+                    explicit_heading_ids(target_path.read_text(encoding="utf-8")))
+                kind = "compound" if refid == target.attrib["id"] else "member"
             destination = page_html(target) + (("#" + fragment) if fragment else "")
             target_html = (output / "html" / page_html(target)).read_text(encoding="utf-8")
             require(not fragment or f'id="{fragment}"' in target_html or f'name="{fragment}"' in target_html,
@@ -654,12 +759,60 @@ $tilde_code$
 
     $indented_code$
 
+## Shared heading
+
+[First shared](docs/child.md#shared-heading),
+[Second shared](docs/child.md#shared-heading-1), and
+[Repeated page title](docs/child.md#child-page-1),
+[Explicit heading](docs/child.md#shared-heading-9),
+[Math heading](docs/child.md#cost-anchor), and
+[Punctuation heading](docs/child.md#a-value_type--a-choice),
+[Child title](docs/child.md#child-page),
+[Peer title](docs/duplicate-title.md#child-page), and
+[Explicit page title](docs/explicit-title.md#custom-page), and
+[Main page title](README.md#markdown-fixture),
+[Numbered page](docs/numeric-title.md#7-title), and
+[Numbered repeat](docs/numeric-title.md#7-title-1).
+
 ## Details
 
 An ordinary paragraph.
 """, encoding="utf-8")
     child = directory / "docs/child.md"
-    child.write_text("# Child page\n\n[Home](../README.md#details). Formula $q^2$.\n\n## 7. Numbered section\n", encoding="utf-8")
+    child.write_text("""# Child page
+
+[Home](../README.md#details). Formula $q^2$.
+
+## 7. Numbered section
+
+## `Shared` heading
+
+First occurrence in this page, after the same title on the main page.
+
+## Shared heading
+
+Second occurrence in this page.
+
+## Child page
+
+The leading page title participates in GitHub's local heading numbering.
+
+## Shared heading {#shared-heading-9}
+
+An explicit suffix is not an automatically numbered duplicate.
+
+Cost $x$ {#cost-anchor}
+----------------------
+
+## A `value_type` & a *choice*!
+
+```markdown
+## Example {#shared-heading-1}
+```
+""", encoding="utf-8")
+    (directory / "docs/duplicate-title.md").write_text("# Child page\n", encoding="utf-8")
+    (directory / "docs/explicit-title.md").write_text("# Child page {#custom-page}\n", encoding="utf-8")
+    (directory / "docs/numeric-title.md").write_text("# 7. Title\n\n## 7. Title\n", encoding="utf-8")
     (directory / "AGENTS.md").write_text("# Guidance\n", encoding="utf-8")
     (directory / "THIRD_PARTY.md").write_text(
         "<!-- A leading attribution notice. -->\n\nThird-party notices\n===================\n\nFixture text.\n",
@@ -669,14 +822,16 @@ An ordinary paragraph.
     (directory / "proof/.lake/generated/README.md").write_text("# Not an input\n", encoding="utf-8")
     inputs = markdown_inputs(directory)
     require({path.relative_to(directory).as_posix() for path in inputs} ==
-            {"README.md", "AGENTS.md", "docs/child.md", "proof/README.md", "THIRD_PARTY.md"}, "Wrong Markdown input discovery")
+            {"README.md", "AGENTS.md", "docs/child.md", "docs/duplicate-title.md",
+             "docs/explicit-title.md", "docs/numeric-title.md", "proof/README.md", "THIRD_PARTY.md"}, "Wrong Markdown input discovery")
     generated = output / "markdown-fixture-docs"
     run_doxygen(executable, directory, inputs, generated, aliases=True, html=True, markdown_main=readme)
     items = compounds(generated)
     repair_markdown_links(items, directory, generated)
     items = compounds(generated)
     pages = markdown_pages(items, directory)
-    require(set(pages) == {"README.md", "AGENTS.md", "docs/child.md", "proof/README.md", "THIRD_PARTY.md"}, "Fixture pages missing")
+    require(set(pages) == {"README.md", "AGENTS.md", "docs/child.md", "docs/duplicate-title.md",
+             "docs/explicit-title.md", "docs/numeric-title.md", "proof/README.md", "THIRD_PARTY.md"}, "Fixture pages missing")
     require(len(pages["README.md"].findall(".//formula")) == 3 and
             len(pages["docs/child.md"].findall(".//formula")) == 1, "Fixture formula nodes missing")
     details = pages["README.md"].find("detaileddescription")
@@ -690,6 +845,50 @@ An ordinary paragraph.
     check_page_link(pages, "proof/README.md", "README.md", generated)
     check_page_link(pages, "docs/child.md", "README.md", generated)
     check_page_anchor(pages, "README.md", "details", generated)
+    child = pages["docs/child.md"]
+    headings = [node for node in child.iter() if re.fullmatch(r"sect[1-6]", node.tag)]
+    expected = dict(zip(("First shared", "Second shared", "Repeated page title",
+                         "Explicit heading", "Math heading", "Punctuation heading"),
+                        [node.attrib["id"] for node in headings[1:]]))
+    require(len(expected) == 6, "Fixture duplicate headings missing")
+    references = {text(ref): ref.get("refid") for ref in pages["README.md"].findall(".//ref")}
+    require(all(references.get(label) == refid for label, refid in expected.items()),
+            f"Page-local heading sequence was replaced by global numbering: {references}")
+    # Check that this actually exercised global Doxygen disambiguation, rather
+    # than merely accepting a fixture with identical local/global IDs.
+    require(not expected["First shared"].endswith("_1shared-heading"),
+            "Fixture did not create a cross-page heading collision")
+    for label, name, slug in (("Main page title", "README.md", "markdown-fixture"),
+                              ("Child title", "docs/child.md", "child-page"),
+                              ("Peer title", "docs/duplicate-title.md", "child-page"),
+                              ("Explicit page title", "docs/explicit-title.md", "custom-page"),
+                              ("Numbered page", "docs/numeric-title.md", "7-title"),
+                              ("Numbered repeat", "docs/numeric-title.md", "7-title-1")):
+        target = pages[name]
+        refid, _ = markdown_heading_target(target, slug, "page-title fixture",
+            explicit_heading_ids((directory / name).read_text(encoding="utf-8")))
+        require(references.get(label) == refid, f"Duplicate or explicit page title changed: {label}")
+        check_page_link(pages, "README.md", name, generated)
+    require(not references["Peer title"].endswith("_1child-page"),
+            "Fixture did not create a duplicated leading H1")
+    numeric = pages["docs/numeric-title.md"]
+    require(references["Numbered repeat"] == numeric.find(".//sect1").attrib["id"] and
+            references["Numbered page"] != references["Numbered repeat"],
+            "Numeric leading H1 did not reserve its page-local heading ID")
+    ambiguous = xml.fromstring(xml.tostring(child))
+    xml.SubElement(ambiguous.find("detaileddescription"), "anchor",
+                   id=child.attrib["id"] + "_1shared-heading")
+    for candidate, fragment in ((ambiguous, "shared-heading"), (child, "missing-heading")):
+        try:
+            markdown_heading_target(candidate, fragment, "negative heading fixture")
+        except RuntimeError:
+            continue
+        raise RuntimeError("Accepted an ambiguous or missing Markdown heading")
+    unknown = xml.fromstring('<compounddef id="unknown"><title>Unknown</title>'
+        '<sect1 id="unknown_1autotoc_md7-formula"><title>7. \\f$x\\f$</title></sect1></compounddef>')
+    for spelling in ("7-formula", "autotoc_md7-formula"):
+        require(markdown_heading_target(unknown, spelling, "formula fallback")[0] ==
+                "unknown_1autotoc_md7-formula", "Exact formula-title anchor fallback changed")
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
