@@ -18,5 +18,6 @@ import Everett.Transfer
 import Everett.NativeMerge
 import Everett.Navigation
 import Everett.CarriedRoute
+import Everett.CarriedChain
 import Everett.Examples
 import Everett.Audit

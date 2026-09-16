@@ -60,6 +60,7 @@ Field guide
 | [Frontier](Everett/Frontier.lean) | Merge-head ordering from carried LCP lengths, suffix-only comparison at equal lengths, and exact new frontier lengths |
 | [Transfer](Everett/Transfer.lean) | Content-mismatch transfers, the literal-position invariant, composition and associative ordered summaries |
 | [NativeMerge](Everett/NativeMerge.lean) | Executable two-way merging of strictly ordered native runs; unique sorted output; optional pointwise lookup composition; chronological reassociation and disjoint-support commutation |
+| [CarriedChain](Everett/CarriedChain.lean) | Bottom-up coherent chain builder; exact target/next-parent correspondence; carried aligned windows and explicit empty-node traversal; one answer per node |
 | [CarriedRoute](Everett/CarriedRoute.lean) | Concrete parent/sample builder; carried parent windows through stored rank checkpoints and one sample lookup; exact target-window search for one edge |
 | [Navigation](Everett/Navigation.lean) | Constructed unary Elias–Fano selection; strict high positions; common-stride and EOF recovery; grouped population/checkpoint rank equals fractional rank, with bounded local scans and no stored endpoint total |
 | [Examples](Everett/Examples.lean) | Heterogeneous keys, valid and stale sources, noncommutative histories, changed index/target versions, and an old target that cannot be reclaimed while a snapshot retains it |
@@ -179,8 +180,9 @@ This builder produces mathematical lists. Its entries retain the destination's
 occurrence labels and tags; constructing a source's borrowed stream requires
 source-local labels and borrowed tags. The one-edge `CarriedRoute` builder below
 now constructs those borrowed tags and exact target ordinals. Encoded-file decoding,
-independent dual-target routing and composition of an entire cascade remain
-separate refinement obligations. The searches here enumerate finite
+independent dual-target routing and the full three-origin cascade remain separate
+refinement obligations; `CarriedChain` below composes the narrower one-origin
+model. The searches here enumerate finite
 lists, so these theorems establish the window's entry bound and lookup meaning,
 not the running time of binary search, compressed rank or key reconstruction.
 
@@ -386,15 +388,52 @@ Queries before the first key, equality runs crossing several cuts, empty targets
 short final groups and rejected one-past-end parent groups have checked examples.
 The outer `Option` reports an invalid stored group; the inner `Option` reports an
 absent predecessor. An empty parent has no stored group, so `transfer_at_group`
-rejects it. Zero passed samples use `carry`'s zero bootstrap.
+rejects it. Zero passed samples use `carry`'s zero bootstrap; neither case
+invents a rank endpoint.
 
 The incoming parent window's size remains a caller obligation. The local origin
 scan stays within it, and the outgoing child window has at most $K$ entries.
 These are entry-count bounds; list indexing, dropping prefixes and predecessor
 search are executable mathematical definitions, not instruction-count proofs.
 This module has one native and one borrowed origin. It does not yet build the
-full three-origin main/secondary chain, prove its recursive traversal, or refine
-immutable lists to encoded file identities and parser operations.
+full three-origin main/secondary chain or refine immutable lists to encoded file
+identities and parser operations. The finite one-origin chain below proves the
+recursive connection for this narrower topology.
+
+Carrying a coherent chain
+-------------------------
+
+[CarriedChain](Everett/CarriedChain.lean) composes those edges into a finite
+chain. `build_chain` constructs the chain from the bottom up, sampling exactly
+the next node's immutable entries. `build_chain_coherent` proves that every
+stored edge came from the concrete builder and retains exactly that next parent.
+The correspondence is equality of complete entries, not equality of lengths or
+fingerprints; a same-length retargeting fixture fails coherence.
+
+`walk` receives only the stored chain and an incoming window. At each nonempty
+link it reads the stored directory, transfers through the last passed sample,
+and passes the resulting window to the next node. The invariant proves that
+its lower bound is a multiple of $K$ and names an existing group. An empty node
+has a separate path: the builder proves that its target is empty too, and the
+walk passes $[0,0)$ without attempting rank at group zero. Empty nodes still
+contribute their missing answers to the result.
+
+`walk_correct` proves the complete result equals the list of global predecessors.
+`search_built` discharges coherence through construction, requiring only sorted
+input layers and positive $K$. The root begins with its complete source window;
+every generated recursive window has at most $K$ entries. A three-node example
+carries sample position 3 into the middle node, then position 6 into its child,
+returning predecessor ordinals `[1, 4, 6]`. Other examples check before-first and
+after-last queries, empty chains and incoherent targets. `answer_count` proves
+that every node contributes exactly one answer.
+
+These are bounds on the windows selected, not on Lean list operations or machine
+instructions. The reference walk performs two local predecessor scans at a
+nonempty link and a local origin count; it does not claim one fused scan. This
+chain has one borrowed origin, uniform sampling spacing and exact list-valued
+target correspondence. The full three-origin main/secondary topology, physical
+file identities, false-borrow native probes and encoded decoding still need a
+separate refinement.
 
 Succinct navigation
 -------------------
@@ -467,7 +506,7 @@ I have deliberately not claimed:
 - Correct packed byte/bit encoding, front coding, machine-level rank or
   Elias–Fano select accelerators and finite-width allocation arithmetic.
 - A refinement from encoded source streams to the list-level sample certificate,
-  an entire cascade search, or composition of same-key history across blobs.
+  the full three-origin cascade, or composition of same-key history across blobs.
 - A bounded COLA scheduler, strong-deletion work accounting, or byte/I/O costs.
 - Physical-file reachability, reader leases, SQLite transactions or crash recovery.
 - C++ memory safety, compiler refinement or correctness of external implementations.

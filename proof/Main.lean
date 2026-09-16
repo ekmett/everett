@@ -23,4 +23,5 @@ def main : IO Unit := do
   IO.println s!"derived group total: {navigation.total [2, 2, 1] [0] 128}"
   IO.println s!"carried sample route: {carried_route.transfer_at_group carried_route.example_edge 1 6 2}"
   IO.println s!"carried child predecessor: {carried_route.descend_at_group carried_route.example_edge 1 6 2}"
+  IO.println s!"two carried handoffs: {carried_chain.search 2 carried_chain.example_chain}"
   IO.println "All theorem declarations and executable examples were checked by lake build."
