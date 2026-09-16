@@ -1123,14 +1123,14 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 
 | Work item | Dependencies | Concrete acceptance |
 | --- | --- | --- |
-| Active runtime overhead | streamed native/index output and shared owner bindings | fewer repeated metadata opens and graph enumerations, measured transaction costs, bounded tiny-table rebuilding |
+| Durable write overhead | adaptive native/index output, incremental owner bindings and bounded tiny-table rebuilding | measure file creation, catalog transactions and flush costs at larger table sizes; reduce repeated publication work while preserving acknowledgment boundaries |
 | General arrow policy coverage | replacement and noncommutative append instances, source validation and per-sort endpoint deltas | additional categories, bounded composition dependencies, observation costs and persisted schema migration |
 | Comparison block encoding | ordinary FC, exact cut LCP and scalar comparison transfers | transposed count/literal layouts, ordered SIMD transfer scans, bounded tails and independently measured time/space tradeoffs |
-| Object identity and integrity | portable sections, mmap queries and immutable writer | cryptographic content addressing, durable catalog publication and lazy block-integrity strategy |
+| Object identity and integrity | portable sections, mmap queries, immutable writer and durable catalog publication | cryptographic content addressing and a lazy block-integrity strategy |
 | Shared completed merges | redundant main/secondary scheduler, paid structural service and durable full-frontier restoration | reuse completed native merges across forks while each dependent rebuilds its own exact fractional indexes |
 | Catalog pin retirement | conditional timeline publication, immutable saves, reservations and exact file graph | reader/generation retirement, reclaim only after final pin, schema migration and interruption tests |
 | Direct batch adoption | native file reader, prefix index builder and scheduler | preserve received ordinary-FC bytes, bound visible catalogs and work debt, preserve causal order and charge actual key bytes |
-| Durable backend and resumable merges | publication protocol and encoded merge continuations | fault injection at write/sync/rename/recovery cuts; failed barriers retain old roots; resume only from verified durable prefixes |
+| Partial merge resumption | tested publication barriers, process-interruption recovery and encoded merge continuations | persist continuation metadata and verified output prefixes so restart can resume partial encoding instead of replaying the published inputs |
 | Durable round resumption | save manifests and update protocol | persist base/round identity, accepted batch identities and claimed keys; restart without double-applying a changeset |
 | Generalized live-size rebuilding | single-sort replacement executor and durable recovery gate | multiple replacement sorts, explicit byte budgets and durable partial-progress continuation without erasing replay debt |
 
