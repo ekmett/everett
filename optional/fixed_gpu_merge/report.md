@@ -1,6 +1,103 @@
 Fixed-key merge measurements
 ============================
 
+The stronger CPU baseline narrows the GPU advantage substantially. With
+262,144 structured keys in each input and variable values from zero through
+512 bytes, the forward CPU merge takes about 14.2 ms without cancellation;
+Metal takes 6.1–7.2 ms. The original CPU baseline took about 37 ms. I retain
+both so that improved CPU decoding is visible rather than attributed to the
+GPU.
+
+The current [raw run](results/forward/results.csv),
+[repeat run](results/forward/results-repeat.csv),
+[metadata](results/forward/metadata.json) and
+[source/binary hashes](results/forward/source-hashes.json) use source revision
+`3915732f08eeb342e4093960d2b41a4224aa75d7` (the metadata contains the full verified revision).
+The equivalent main revision is `5077bbc`; every listed source hash matches.
+Each run checks 86 cases, including 62 benchmark cases with five measured
+iterations each. All original-CPU, forward-CPU and GPU output files matched
+byte for byte. The 24 smaller cases also passed CTest and host ASan/UBSan with
+real Metal execution.
+
+The host is an Apple M2 Max running macOS 26.6.2. These are **resident complete
+native merges**, including temporary memory, command submission, synchronization,
+real copying and native EF output. The [experiment README](README.md) defines
+the timing boundaries. They exclude checksums, content identity, fractional
+indexes, durable sealing and catalog publication. These results do not measure
+persistent `.ff`/`.fv` files in the production runtime.
+
+Forward CPU comparison
+----------------------
+
+The forward decoder walks high-vector set bits in order, caches shared value
+boundaries, and skips canceled ranges by whole-word popcount where possible.
+It avoids consulting the select directory for every record. Output encoding
+still uses the same production `elias_fano::build` as the original baseline.
+
+Here are ranges of the two run medians, not best individual iterations:
+
+| Layout | Records per input | Older cancellation | Forward CPU ms | GPU total ms | CPU/GPU |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `.ff`, 16-byte values | 262,144 | 0% | 4.29–4.34 | 1.80–2.07 | 2.09–2.38 |
+| `.ff`, 16-byte values | 262,144 | 50% | 3.10–3.15 | 1.74–1.81 | 1.74–1.78 |
+| `.ff`, 16-byte values | 262,144 | 90% | 2.25–2.38 | 1.53–1.62 | 1.47–1.47 |
+| `.fv`, 0–512-byte values | 262,144 | 0% | 14.16–14.27 | 6.13–7.21 | 1.97–2.33 |
+| `.fv`, 0–512-byte values | 262,144 | 50% | 9.75–9.94 | 5.30–6.74 | 1.45–1.88 |
+| `.fv`, 0–512-byte values | 262,144 | 90% | 7.31–7.46 | 4.32–4.40 | 1.69–1.69 |
+| `.fv`, 0–6-byte values | 262,144 | 0% | 7.51–7.54 | 3.31–3.32 | 2.27–2.27 |
+| `.fv`, 0–6-byte values | 262,144 | 50% | 5.42–5.67 | 2.46–2.81 | 1.93–2.31 |
+| `.fv`, 2048–4096-byte values | 32,768 | 0% | 8.46–8.80 | 4.71–6.15 | 1.43–1.80 |
+| `.fv`, 2048–4096-byte values | 32,768 | 50% | 5.94–6.06 | 3.59–4.60 | 1.32–1.65 |
+
+Observed brackets
+-----------------
+
+For a repeatable median margin, I require a CPU-forward/GPU ratio of at least
+1.2 in **both** runs. The table gives the first tested size meeting that rule.
+Individual timing ranges sometimes overlap, and GPU outliers remain visible in
+the raw data; this is a median criterion, not a latency guarantee or an exact
+crossover.
+
+| Scenario | Older cancellation | Previous tested size per input | First tested size per input with the margin |
+| --- | ---: | ---: | ---: |
+| `.ff`, 16-byte values | 0% | 65,536 | 131,072 |
+| `.ff`, 16-byte values | 50% or 90% | 131,072 | 262,144 |
+| `.fv`, 0–512-byte values | 0%, 50% or 90% | 65,536 | 131,072 |
+| `.fv`, 0–6-byte values | 0% or 50% | 65,536 | 131,072 |
+| `.fv`, 2048–4096-byte values | 0% or 50% | 16,384 | 32,768 |
+
+At 4,096 records per input the CPU wins throughout. The larger-payload result
+shows why payload bytes must join record count in any dispatch rule. These
+brackets apply to these structured keys, profiles and merge implementation;
+they do not install a production threshold.
+
+Skew still matters
+------------------
+
+These cases cancel half the older input. The stronger baseline makes the
+older-heavy fixed-value case a clear CPU win:
+
+| Layout | Older records | Newer records | Forward CPU ms | GPU total ms | CPU/GPU |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `.ff` | 262,144 | 4,096 | 1.105–1.106 | 1.48–1.51 | 0.73–0.75 |
+| `.ff` | 4,096 | 262,144 | 1.70–1.71 | 1.58–1.59 | 1.08–1.08 |
+| `.fv` | 262,144 | 4,096 | 3.403–3.404 | 2.82–2.87 | 1.19–1.21 |
+| `.fv` | 4,096 | 262,144 | 6.102–6.105 | 4.07–4.69 | 1.30–1.50 |
+
+Scattered half-cancellation with 262,144 records per input gives 1.53–1.78 times
+for `.ff` and 1.49–2.07 times for `.fv`. The same cancellation count can produce
+different locality. I would use a conservative CPU fallback around marginal
+cases while measuring more profiles.
+
+The one-word payload variant remains slower than the four-word variant, but
+its timings also vary: the no-cancel large `.fv` merge takes 7.89–13.01 ms with
+one word per invocation, versus 6.13–7.21 ms with four. This is a concrete
+optimization opportunity rather than a claim that payload copying itself is
+inherently that expensive.
+
+Retained random-select baseline
+-------------------------------
+
 I measured the [complete native merge experiment](README.md) on an Apple M2 Max
 using source revision `c97e72fa9b3e5d2ba69f0f5b01b27ab2f85e7cb6`.
 The [raw results](results/baseline/results.csv), [repeat run](results/baseline/results-repeat.csv),
