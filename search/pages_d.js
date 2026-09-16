@@ -8,7 +8,7 @@ var searchData=
   ['native_20merge_20frontiers_20and_20framed_20output_5',['Native merge frontiers and framed output',['../native-merge-frontiers-and-framed-output.html',1,'']]],
   ['native_20merge_20outputs_6',['Small native merge outputs',['../small-native-merge-outputs.html',1,'']]],
   ['native_20merge_20span_20descriptors_7',['Compact native-merge span descriptors',['../compact-native-merge-span-descriptors.html',1,'']]],
-  ['native_20merges_8',['Reusing completed native merges',['../reusing-completed-native-merges.html',1,'']]],
+  ['native_20merges_8',['native merges',['../matched-cpu-bit-and-byte-native-merges.html',1,'Matched CPU bit and byte native merges'],['../reusing-completed-native-merges.html',1,'Reusing completed native merges']]],
   ['native_20records_9',['Sort-owned native records',['../sort-owned-native-records.html',1,'']]],
   ['native_20windows_20packed_20rank_20comparison_10',['Native Windows packed-rank comparison',['../md_bench_2rank__compare__windows.html',1,'']]],
   ['native_20writing_20and_20merging_11',['Incremental native writing and merging',['../md_docs_2native-merges.html',1,'']]],

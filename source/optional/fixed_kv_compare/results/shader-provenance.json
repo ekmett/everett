@@ -1,0 +1,49 @@
+{
+  "checks": {
+    "cross_format_logical_sha_pairs": 12,
+    "ctest_passed": 8,
+    "ctest_seconds": 1.32,
+    "ctest_total": 8
+  },
+  "fixed": {
+    "all_current_shader_sources_match_original_qualification": true,
+    "current_host_and_fixture_revision": "3915732",
+    "equivalent_main_fixture_revision": "5077bbc",
+    "initial_shader_source_revision": "c97e72f",
+    "metallib_sha256": "0d2a8551029be9b4357b8c813bf95f8e1809929a583efc9d9528053d0e953311",
+    "shader_sha256": {
+      "optional/fixed_gpu_merge/kernels.hlsl": "b18e3b1f66a299196b6848adb4d9c6bda7d2f489c0fb1b76f90ebdafe5d359a4",
+      "optional/gpu_merge/collision_rank.hlsl": "b3cdf99f597f2b3f6a86896f0a799eddfa460ee675d670c02fd4ce2798ae6c49",
+      "optional/gpu_merge/ef_output.hlsl": "cffe63a8ae253c867e5a00052ea98e2a7d19b41af9236ba01b5db6cb7d135d0b",
+      "optional/gpu_merge/emit_word.hlsl": "1591920398ccc6c940c2d7fd9d385d39a5b85660d8bb11c9b4fc4de5e48af722",
+      "optional/gpu_merge/index_rank.hlsl": "e3e88f08afec61954e8f705ced52c1321aad3cb33a99069a9a2eaf4490f83ad7",
+      "optional/gpu_merge/kernels.hlsl": "e50495219832867fbde37ee0a6e8cbccd2daabe3931c5d10291756d391744588",
+      "optional/gpu_merge/output_plan.hlsl": "94bcb279b5656ec77e1d6fd79c44fb2e6b69c8ea923e8de17a1539a6b591b363",
+      "optional/gpu_merge/parse_input.hlsl": "5450bbdae5d4e64e9bf289b480878d4afe8b466b4cd69c9019414d37e4c84d5a",
+      "optional/gpu_merge/prefix_cache.hlsl": "b2fd01cb52b50e01f11b394f768e8d09b26a14f16ae58cdae7ff875625d02a0f",
+      "optional/gpu_merge/prefix_owner.hlsl": "4930035eecee124cfa7a7593aca14738274950a204e0fa2a5ba465ad916aac5f",
+      "optional/gpu_merge/rank512.hlsl": "2caf1091e8e40769ae04d5982f2cea083b4e51f39d3a131edaaabfc83c273642",
+      "optional/gpu_merge/tombstone_merge.hlsl": "a9d7d1600cb04bf45bfce49530f3f6c399a8ed1b785ee591817441ff135aaf47"
+    }
+  },
+  "host_build": "C++20 Objective-C++ O3 DNDEBUG Wall Wextra Wpedantic Werror ARC; Foundation and Metal",
+  "kv": {
+    "all_current_shader_sources_match_original_qualification": true,
+    "metallib_sha256": "5c86f970ebc240ad5596b9522273022d38be956c0c65ece314ce2a98592b33ed",
+    "qualification_record": "optional/gpu_merge/results/tombstone/qualification.json",
+    "qualification_source_revision": "44d332214558f6beb4cc59a8b5492c9b4c7aca4b",
+    "shader_sha256": {
+      "optional/gpu_merge/collision_rank.hlsl": "b3cdf99f597f2b3f6a86896f0a799eddfa460ee675d670c02fd4ce2798ae6c49",
+      "optional/gpu_merge/ef_output.hlsl": "cffe63a8ae253c867e5a00052ea98e2a7d19b41af9236ba01b5db6cb7d135d0b",
+      "optional/gpu_merge/emit_word.hlsl": "1591920398ccc6c940c2d7fd9d385d39a5b85660d8bb11c9b4fc4de5e48af722",
+      "optional/gpu_merge/index_rank.hlsl": "e3e88f08afec61954e8f705ced52c1321aad3cb33a99069a9a2eaf4490f83ad7",
+      "optional/gpu_merge/kernels.hlsl": "e50495219832867fbde37ee0a6e8cbccd2daabe3931c5d10291756d391744588",
+      "optional/gpu_merge/output_plan.hlsl": "94bcb279b5656ec77e1d6fd79c44fb2e6b69c8ea923e8de17a1539a6b591b363",
+      "optional/gpu_merge/parse_input.hlsl": "5450bbdae5d4e64e9bf289b480878d4afe8b466b4cd69c9019414d37e4c84d5a",
+      "optional/gpu_merge/prefix_cache.hlsl": "b2fd01cb52b50e01f11b394f768e8d09b26a14f16ae58cdae7ff875625d02a0f",
+      "optional/gpu_merge/prefix_owner.hlsl": "4930035eecee124cfa7a7593aca14738274950a204e0fa2a5ba465ad916aac5f",
+      "optional/gpu_merge/rank512.hlsl": "2caf1091e8e40769ae04d5982f2cea083b4e51f39d3a131edaaabfc83c273642",
+      "optional/gpu_merge/tombstone_merge.hlsl": "a9d7d1600cb04bf45bfce49530f3f6c399a8ed1b785ee591817441ff135aaf47"
+    }
+  }
+}

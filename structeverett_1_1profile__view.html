@@ -172,6 +172,9 @@ Private Member Functions</h2></td></tr>
 <tr class="memitem:ad65554d0947caeb0f07036d7174a8e96" id="r_ad65554d0947caeb0f07036d7174a8e96"><td class="memTemplParams" colspan="2">template&lt;bool Views = true&gt; </td></tr>
 <tr class="memitem:ad65554d0947caeb0f07036d7174a8e96"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#ad65554d0947caeb0f07036d7174a8e96">parse_payload</a> (std::uint64_t at, std::uint64_t retained) const</td></tr>
 <tr class="separator:ad65554d0947caeb0f07036d7174a8e96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05c91c595814e0d7bd334a1a0a8c932a" id="r_a05c91c595814e0d7bd334a1a0a8c932a"><td class="memTemplParams" colspan="2">template&lt;class Offset &gt; </td></tr>
+<tr class="memitem:a05c91c595814e0d7bd334a1a0a8c932a"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1profile__encoded__record.html">profile_encoded_record</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#a05c91c595814e0d7bd334a1a0a8c932a">next_record</a> (<a class="el" href="structeverett_1_1profile__encoded__record.html">profile_encoded_record</a> const &amp;previous, std::uint64_t ordinal, Offset &amp;&amp;offset) const</td></tr>
+<tr class="separator:a05c91c595814e0d7bd334a1a0a8c932a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d2560e067ce4a4fc70b2ed988669404" id="r_a4d2560e067ce4a4fc70b2ed988669404"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1profile__encoded__record.html">profile_encoded_record</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__view.html#a4d2560e067ce4a4fc70b2ed988669404">next_record</a> (<a class="el" href="structeverett_1_1profile__encoded__record.html">profile_encoded_record</a> const &amp;previous, std::uint64_t ordinal) const</td></tr>
 <tr class="separator:a4d2560e067ce4a4fc70b2ed988669404"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -716,7 +719,7 @@ template&lt;class P , <a class="el" href="namespaceeverett.html#a374f546e980dc1c
 </div>
 </div>
 <a id="a4d2560e067ce4a4fc70b2ed988669404" name="a4d2560e067ce4a4fc70b2ed988669404"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4d2560e067ce4a4fc70b2ed988669404">&#9670;&#160;</a></span>next_record()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a4d2560e067ce4a4fc70b2ed988669404">&#9670;&#160;</a></span>next_record() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -737,6 +740,52 @@ template&lt;class P , <a class="el" href="namespaceeverett.html#a374f546e980dc1c
           <td></td>
           <td class="paramtype">std::uint64_t&#160;</td>
           <td class="paramname"><em>ordinal</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a05c91c595814e0d7bd334a1a0a8c932a" name="a05c91c595814e0d7bd334a1a0a8c932a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a05c91c595814e0d7bd334a1a0a8c932a">&#9670;&#160;</a></span>next_record() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class P , <a class="el" href="namespaceeverett.html#a374f546e980dc1c516a6bca9073270d3">stream_role</a> Role = stream_role::native&gt; </div>
+<div class="memtemplate">
+template&lt;class Offset &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structeverett_1_1profile__encoded__record.html">profile_encoded_record</a> <a class="el" href="structeverett_1_1profile__view.html">everett::profile_view</a>&lt; P, Role &gt;::next_record </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1profile__encoded__record.html">profile_encoded_record</a> const &amp;&#160;</td>
+          <td class="paramname"><em>previous</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>ordinal</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Offset &amp;&amp;&#160;</td>
+          <td class="paramname"><em>offset</em>&#160;</td>
         </tr>
         <tr>
           <td></td>

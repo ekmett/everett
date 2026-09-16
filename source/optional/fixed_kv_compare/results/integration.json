@@ -1,0 +1,6 @@
+{
+  "measured_source_revision": "473099253e91012a1f03321dee5812d057a8b96b",
+  "integration_revision": "805aa6619aaeb7d2b4140e44e62703f7b20d2ee7",
+  "source_hashes_verified": 126,
+  "scope": "The original measured source and artifact hashes remain in manifest.json. Every listed source has identical bytes at the public integration revision."
+}

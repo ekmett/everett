@@ -1,0 +1,1755 @@
+{
+  "all_logical_identities_match_metal_fixtures": true,
+  "all_sources_and_artifacts_unchanged": true,
+  "completed_unix": 1789551664.9811342,
+  "harness_revision": "40aecd43f21c8c4a16ebd3978a19042b61779d5f",
+  "header_revisions": {
+    "baseline": "5868b32afae9e78cd86a71289ca119670d6c3748",
+    "candidate": "a760695c23c41deb4b8b64c2d7024e9919737b9a"
+  },
+  "host": {
+    "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+    "cpu": "Apple M2 Max",
+    "os": "26.6.2",
+    "os_build": "25G83",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O"
+  },
+  "processes": 288,
+  "raw_and_typed_bit_wire_identical_between_revisions": true,
+  "reference_checks_sha256": "77deac8025697993a160880792e4006b9826d09fbb89b378b4fcc96a20120a00",
+  "schedule": [
+    {
+      "case": 0,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 0,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 0,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 0,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 0,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 0,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 0,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 0,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 1,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 1,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 1,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 1,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 1,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 1,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 1,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 1,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 2,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 2,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 2,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 2,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 2,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 2,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 2,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 2,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 3,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 3,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 3,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 3,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 3,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 3,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 3,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 3,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 4,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 4,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 4,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 4,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 4,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 4,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 4,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 4,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 5,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 5,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 5,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 5,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 5,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 5,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 5,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 5,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 6,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 6,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 6,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 6,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 6,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 6,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 6,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 6,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 7,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 7,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 7,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 7,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 7,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 7,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 7,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 7,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 8,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 8,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 8,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 8,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 8,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 8,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 8,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 8,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 9,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 9,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 9,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 9,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 9,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 9,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 9,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 9,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 10,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 10,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 10,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 10,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 10,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 10,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 10,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 10,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 11,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 11,
+      "mode": "typed-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 11,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 11,
+      "mode": "raw-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 11,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 11,
+      "mode": "raw-byte",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 11,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "candidate"
+    },
+    {
+      "case": 11,
+      "mode": "typed-bit",
+      "process": 0,
+      "revision": "baseline"
+    },
+    {
+      "case": 4,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 4,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 4,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 4,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 4,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 4,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 4,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 4,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 5,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 5,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 5,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 5,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 5,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 5,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 5,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 5,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 6,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 6,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 6,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 6,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 6,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 6,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 6,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 6,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 7,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 7,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 7,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 7,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 7,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 7,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 7,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 7,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 8,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 8,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 8,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 8,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 8,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 8,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 8,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 8,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 9,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 9,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 9,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 9,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 9,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 9,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 9,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 9,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 10,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 10,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 10,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 10,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 10,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 10,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 10,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 10,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 11,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 11,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 11,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 11,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 11,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 11,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 11,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 11,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 0,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 0,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 0,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 0,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 0,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 0,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 0,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 0,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 1,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 1,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 1,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 1,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 1,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 1,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 1,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 1,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 2,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 2,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 2,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 2,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 2,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 2,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 2,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 2,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 3,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 3,
+      "mode": "raw-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 3,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 3,
+      "mode": "raw-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 3,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 3,
+      "mode": "typed-bit",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 3,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "candidate"
+    },
+    {
+      "case": 3,
+      "mode": "typed-byte",
+      "process": 1,
+      "revision": "baseline"
+    },
+    {
+      "case": 8,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 8,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 8,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 8,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 8,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 8,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 8,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 8,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 9,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 9,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 9,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 9,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 9,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 9,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 9,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 9,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 10,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 10,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 10,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 10,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 10,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 10,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 10,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 10,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 11,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 11,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 11,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 11,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 11,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 11,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 11,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 11,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 0,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 0,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 0,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 0,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 0,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 0,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 0,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 0,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 1,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 1,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 1,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 1,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 1,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 1,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 1,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 1,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 2,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 2,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 2,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 2,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 2,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 2,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 2,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 2,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 3,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 3,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 3,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 3,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 3,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 3,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 3,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 3,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 4,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 4,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 4,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 4,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 4,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 4,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 4,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 4,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 5,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 5,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 5,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 5,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 5,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 5,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 5,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 5,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 6,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 6,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 6,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 6,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 6,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 6,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 6,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 6,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 7,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 7,
+      "mode": "raw-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 7,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 7,
+      "mode": "typed-bit",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 7,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "baseline"
+    },
+    {
+      "case": 7,
+      "mode": "typed-byte",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 7,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "candidate"
+    },
+    {
+      "case": 7,
+      "mode": "raw-bit",
+      "process": 2,
+      "revision": "baseline"
+    }
+  ],
+  "scope": "Mapped inputs; native merge, output EF, fresh output mmap and section copy, body/header CRC32C, clipping, cleanup; no durable sync.",
+  "started_unix": 1789551453.050946,
+  "timeout_seconds": 180,
+  "trials_per_process": 3,
+  "warmups_per_process": 1
+}

@@ -84,6 +84,7 @@ $(function() {
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="structeverett_1_1elias__fano__view-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">everett::elias_fano_view Struct Reference</div></div>
 </div><!--header-->
@@ -117,9 +118,13 @@ requires (std::is_same_v&lt;Words, <a class="el" href="structeverett_1_1word__vi
 <tr class="separator:abcd3877c5d2704ee2226b7ec4fa13348"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a00d0193c8d8a68061762c20ccd28daae" id="r_a00d0193c8d8a68061762c20ccd28daae"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1elias__fano__view.html#a00d0193c8d8a68061762c20ccd28daae">select</a> (std::uint64_t ordinal) const</td></tr>
 <tr class="separator:a00d0193c8d8a68061762c20ccd28daae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac2b248838a9bf62828b970dd89214ebb" id="r_ac2b248838a9bf62828b970dd89214ebb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1elias__fano__cursor.html">elias_fano_cursor</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1elias__fano__view.html#ac2b248838a9bf62828b970dd89214ebb">cursor</a> () const</td></tr>
+<tr class="separator:ac2b248838a9bf62828b970dd89214ebb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
+<tr class="memitem:ad76baa08bcd845b19753ad6f6194126d" id="r_ad76baa08bcd845b19753ad6f6194126d"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1elias__fano__view.html#ad76baa08bcd845b19753ad6f6194126d">decode</a> (std::uint64_t ordinal, std::uint64_t position) const</td></tr>
+<tr class="separator:ad76baa08bcd845b19753ad6f6194126d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2560785574b59c55a5e0e7a3458af627" id="r_a2560785574b59c55a5e0e7a3458af627"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1elias__fano__view.html#a2560785574b59c55a5e0e7a3458af627">select_high</a> (std::uint64_t ordinal) const</td></tr>
 <tr class="separator:a2560785574b59c55a5e0e7a3458af627"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -141,6 +146,11 @@ Private Attributes</h2></td></tr>
 <tr class="separator:afeaf3708726af1c861073381b7472b37"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a211a5551bb65219c8955f4a23a5562" id="r_a5a211a5551bb65219c8955f4a23a5562"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1elias__fano__view.html#a5a211a5551bb65219c8955f4a23a5562">low_width_</a> = 0</td></tr>
 <tr class="separator:a5a211a5551bb65219c8955f4a23a5562"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:ab8233de7c80e4633959304eba88cdb26" id="r_ab8233de7c80e4633959304eba88cdb26"><td class="memItemLeft" align="right" valign="top">struct&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1elias__fano__view.html#ab8233de7c80e4633959304eba88cdb26">elias_fano_cursor</a></td></tr>
+<tr class="separator:ab8233de7c80e4633959304eba88cdb26"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a6f636f013cb010fe9a65a117d99a5a47" name="a6f636f013cb010fe9a65a117d99a5a47"></a>
@@ -304,6 +314,67 @@ requires (std::is_same_v&lt;Words, <a class="el" href="structeverett_1_1word__vi
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="ac2b248838a9bf62828b970dd89214ebb" name="ac2b248838a9bf62828b970dd89214ebb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac2b248838a9bf62828b970dd89214ebb">&#9670;&#160;</a></span>cursor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structeverett_1_1elias__fano__cursor.html">elias_fano_cursor</a> everett::elias_fano_view::cursor </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad76baa08bcd845b19753ad6f6194126d" name="ad76baa08bcd845b19753ad6f6194126d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad76baa08bcd845b19753ad6f6194126d">&#9670;&#160;</a></span>decode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t everett::elias_fano_view::decode </td>
+          <td>(</td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>ordinal</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>position</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ad23411aa4a38449bfc654011b2a45b82" name="ad23411aa4a38449bfc654011b2a45b82"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad23411aa4a38449bfc654011b2a45b82">&#9670;&#160;</a></span>high_words()</h2>
 
@@ -525,6 +596,29 @@ requires (std::is_same_v&lt;Words, <a class="el" href="structeverett_1_1word__vi
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<h2 class="groupheader">Friends And Related Symbol Documentation</h2>
+<a id="ab8233de7c80e4633959304eba88cdb26" name="ab8233de7c80e4633959304eba88cdb26"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab8233de7c80e4633959304eba88cdb26">&#9670;&#160;</a></span>elias_fano_cursor</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend struct <a class="el" href="structeverett_1_1elias__fano__cursor.html">elias_fano_cursor</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">

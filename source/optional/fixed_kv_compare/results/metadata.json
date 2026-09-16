@@ -1,0 +1,383 @@
+{
+  "all_logical_identities_equal": true,
+  "all_sources_and_artifacts_unchanged": true,
+  "backend": "Metal",
+  "collector_sha256": "5cc5c53dab18182fe0219ef1fe5d575b07c259dc9736d4c77d15b451f9856f1e",
+  "completed_unix": 1789550090.8775659,
+  "host": {
+    "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin",
+    "cpu": "Apple M2 Max",
+    "os": "26.6.2",
+    "os_build": "25G83",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O"
+  },
+  "processes": 72,
+  "schedule": [
+    {
+      "case": 0,
+      "mode": "fixed",
+      "process": 0
+    },
+    {
+      "case": 0,
+      "mode": "kv",
+      "process": 0
+    },
+    {
+      "case": 1,
+      "mode": "kv",
+      "process": 0
+    },
+    {
+      "case": 1,
+      "mode": "fixed",
+      "process": 0
+    },
+    {
+      "case": 2,
+      "mode": "fixed",
+      "process": 0
+    },
+    {
+      "case": 2,
+      "mode": "kv",
+      "process": 0
+    },
+    {
+      "case": 3,
+      "mode": "kv",
+      "process": 0
+    },
+    {
+      "case": 3,
+      "mode": "fixed",
+      "process": 0
+    },
+    {
+      "case": 4,
+      "mode": "fixed",
+      "process": 0
+    },
+    {
+      "case": 4,
+      "mode": "kv",
+      "process": 0
+    },
+    {
+      "case": 5,
+      "mode": "kv",
+      "process": 0
+    },
+    {
+      "case": 5,
+      "mode": "fixed",
+      "process": 0
+    },
+    {
+      "case": 6,
+      "mode": "fixed",
+      "process": 0
+    },
+    {
+      "case": 6,
+      "mode": "kv",
+      "process": 0
+    },
+    {
+      "case": 7,
+      "mode": "kv",
+      "process": 0
+    },
+    {
+      "case": 7,
+      "mode": "fixed",
+      "process": 0
+    },
+    {
+      "case": 8,
+      "mode": "fixed",
+      "process": 0
+    },
+    {
+      "case": 8,
+      "mode": "kv",
+      "process": 0
+    },
+    {
+      "case": 9,
+      "mode": "kv",
+      "process": 0
+    },
+    {
+      "case": 9,
+      "mode": "fixed",
+      "process": 0
+    },
+    {
+      "case": 10,
+      "mode": "fixed",
+      "process": 0
+    },
+    {
+      "case": 10,
+      "mode": "kv",
+      "process": 0
+    },
+    {
+      "case": 11,
+      "mode": "kv",
+      "process": 0
+    },
+    {
+      "case": 11,
+      "mode": "fixed",
+      "process": 0
+    },
+    {
+      "case": 4,
+      "mode": "kv",
+      "process": 1
+    },
+    {
+      "case": 4,
+      "mode": "fixed",
+      "process": 1
+    },
+    {
+      "case": 5,
+      "mode": "fixed",
+      "process": 1
+    },
+    {
+      "case": 5,
+      "mode": "kv",
+      "process": 1
+    },
+    {
+      "case": 6,
+      "mode": "kv",
+      "process": 1
+    },
+    {
+      "case": 6,
+      "mode": "fixed",
+      "process": 1
+    },
+    {
+      "case": 7,
+      "mode": "fixed",
+      "process": 1
+    },
+    {
+      "case": 7,
+      "mode": "kv",
+      "process": 1
+    },
+    {
+      "case": 8,
+      "mode": "kv",
+      "process": 1
+    },
+    {
+      "case": 8,
+      "mode": "fixed",
+      "process": 1
+    },
+    {
+      "case": 9,
+      "mode": "fixed",
+      "process": 1
+    },
+    {
+      "case": 9,
+      "mode": "kv",
+      "process": 1
+    },
+    {
+      "case": 10,
+      "mode": "kv",
+      "process": 1
+    },
+    {
+      "case": 10,
+      "mode": "fixed",
+      "process": 1
+    },
+    {
+      "case": 11,
+      "mode": "fixed",
+      "process": 1
+    },
+    {
+      "case": 11,
+      "mode": "kv",
+      "process": 1
+    },
+    {
+      "case": 0,
+      "mode": "kv",
+      "process": 1
+    },
+    {
+      "case": 0,
+      "mode": "fixed",
+      "process": 1
+    },
+    {
+      "case": 1,
+      "mode": "fixed",
+      "process": 1
+    },
+    {
+      "case": 1,
+      "mode": "kv",
+      "process": 1
+    },
+    {
+      "case": 2,
+      "mode": "kv",
+      "process": 1
+    },
+    {
+      "case": 2,
+      "mode": "fixed",
+      "process": 1
+    },
+    {
+      "case": 3,
+      "mode": "fixed",
+      "process": 1
+    },
+    {
+      "case": 3,
+      "mode": "kv",
+      "process": 1
+    },
+    {
+      "case": 8,
+      "mode": "fixed",
+      "process": 2
+    },
+    {
+      "case": 8,
+      "mode": "kv",
+      "process": 2
+    },
+    {
+      "case": 9,
+      "mode": "kv",
+      "process": 2
+    },
+    {
+      "case": 9,
+      "mode": "fixed",
+      "process": 2
+    },
+    {
+      "case": 10,
+      "mode": "fixed",
+      "process": 2
+    },
+    {
+      "case": 10,
+      "mode": "kv",
+      "process": 2
+    },
+    {
+      "case": 11,
+      "mode": "kv",
+      "process": 2
+    },
+    {
+      "case": 11,
+      "mode": "fixed",
+      "process": 2
+    },
+    {
+      "case": 0,
+      "mode": "fixed",
+      "process": 2
+    },
+    {
+      "case": 0,
+      "mode": "kv",
+      "process": 2
+    },
+    {
+      "case": 1,
+      "mode": "kv",
+      "process": 2
+    },
+    {
+      "case": 1,
+      "mode": "fixed",
+      "process": 2
+    },
+    {
+      "case": 2,
+      "mode": "fixed",
+      "process": 2
+    },
+    {
+      "case": 2,
+      "mode": "kv",
+      "process": 2
+    },
+    {
+      "case": 3,
+      "mode": "kv",
+      "process": 2
+    },
+    {
+      "case": 3,
+      "mode": "fixed",
+      "process": 2
+    },
+    {
+      "case": 4,
+      "mode": "fixed",
+      "process": 2
+    },
+    {
+      "case": 4,
+      "mode": "kv",
+      "process": 2
+    },
+    {
+      "case": 5,
+      "mode": "kv",
+      "process": 2
+    },
+    {
+      "case": 5,
+      "mode": "fixed",
+      "process": 2
+    },
+    {
+      "case": 6,
+      "mode": "fixed",
+      "process": 2
+    },
+    {
+      "case": 6,
+      "mode": "kv",
+      "process": 2
+    },
+    {
+      "case": 7,
+      "mode": "kv",
+      "process": 2
+    },
+    {
+      "case": 7,
+      "mode": "fixed",
+      "process": 2
+    }
+  ],
+  "scope": "Fresh output map/import, complete merge, body/header CRC32C, clipping and cleanup; no durable sync.",
+  "source_revision": "473099253e91012a1f03321dee5812d057a8b96b",
+  "started_unix": 1789550044.7727098,
+  "timeout_seconds": 180,
+  "trials_per_process": 3,
+  "warmups_per_process": 1
+}

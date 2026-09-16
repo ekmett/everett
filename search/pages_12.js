@@ -34,6 +34,7 @@ var searchData=
   ['streaming_20a_20table_20into_20a_20persistent_20timeline_31',['Streaming a table into a persistent timeline',['../md_docs_2streamed-timeline.html',1,'']]],
   ['streaming_20fractional_20indexes_32',['Streaming fractional indexes',['../streaming-fractional-indexes.html',1,'']]],
   ['streaming_20sort_20owned_20native_20files_33',['Streaming sort-owned native files',['../streaming-sort-owned-native-files.html',1,'']]],
-  ['stringlike_20keys_34',['Sorts and stringlike keys',['../md_docs_2keys.html',1,'']]],
-  ['strong_20deletion_20by_20incremental_20rebuilding_35',['Strong deletion by incremental rebuilding',['../md_docs_2rebuild.html',1,'']]]
+  ['string_20tables_34',['Byte String Tables',['../byte-string-tables.html',1,'']]],
+  ['stringlike_20keys_35',['Sorts and stringlike keys',['../md_docs_2keys.html',1,'']]],
+  ['strong_20deletion_20by_20incremental_20rebuilding_36',['Strong deletion by incremental rebuilding',['../md_docs_2rebuild.html',1,'']]]
 ];

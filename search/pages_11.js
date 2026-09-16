@@ -19,13 +19,14 @@ var searchData=
   ['refactor_16',['Complete queries after the rank and Elias–Fano refactor',['../complete-queries-after-the-rank-and-eliasfano-refactor.html',1,'']]],
   ['replacement_20tables_17',['Rebuilding replacement tables',['../rebuilding-replacement-tables.html',1,'']]],
   ['reservations_18',['Persistent SQLite roots and reservations',['../md_docs_2sqlite-catalog.html',1,'']]],
-  ['resumption_19',['resumption',['../md_docs_2durability.html',1,'Durable publication and merge resumption'],['../md_docs_2merge-resumption.html',1,'Merge resumption']]],
-  ['reuse_20',['Sampling comparisons and encoder reuse',['../md_bench_2sample__frontier.html',1,'']]],
-  ['reusing_20borrowed_20key_20prefixes_21',['Reusing borrowed-key prefixes',['../md_bench_2borrowed__prefix.html',1,'']]],
-  ['reusing_20completed_20native_20merges_22',['Reusing completed native merges',['../reusing-completed-native-merges.html',1,'']]],
-  ['reusing_20native_20key_20prefixes_23',['Reusing native-key prefixes',['../md_bench_2native__prefix.html',1,'']]],
-  ['roots_24',['roots',['../mapped-blobs-and-exact-query-roots.html',1,'Mapped blobs and exact query roots'],['../saving-and-merging-mapped-cola-roots.html',1,'Saving and merging mapped COLA roots']]],
-  ['roots_20and_20reservations_25',['Persistent SQLite roots and reservations',['../md_docs_2sqlite-catalog.html',1,'']]],
-  ['runtime_26',['Sort-owned records in the redundant runtime',['../sort-owned-records-in-the-redundant-runtime.html',1,'']]],
-  ['runtime_20frontier_27',['Persisting a runtime frontier',['../persisting-a-runtime-frontier.html',1,'']]]
+  ['results_19',['Matched fixed-key and KV03 Metal results',['../matched-fixed-key-and-kv03-metal-results.html',1,'']]],
+  ['resumption_20',['resumption',['../md_docs_2durability.html',1,'Durable publication and merge resumption'],['../md_docs_2merge-resumption.html',1,'Merge resumption']]],
+  ['reuse_21',['Sampling comparisons and encoder reuse',['../md_bench_2sample__frontier.html',1,'']]],
+  ['reusing_20borrowed_20key_20prefixes_22',['Reusing borrowed-key prefixes',['../md_bench_2borrowed__prefix.html',1,'']]],
+  ['reusing_20completed_20native_20merges_23',['Reusing completed native merges',['../reusing-completed-native-merges.html',1,'']]],
+  ['reusing_20native_20key_20prefixes_24',['Reusing native-key prefixes',['../md_bench_2native__prefix.html',1,'']]],
+  ['roots_25',['roots',['../mapped-blobs-and-exact-query-roots.html',1,'Mapped blobs and exact query roots'],['../saving-and-merging-mapped-cola-roots.html',1,'Saving and merging mapped COLA roots']]],
+  ['roots_20and_20reservations_26',['Persistent SQLite roots and reservations',['../md_docs_2sqlite-catalog.html',1,'']]],
+  ['runtime_27',['Sort-owned records in the redundant runtime',['../sort-owned-records-in-the-redundant-runtime.html',1,'']]],
+  ['runtime_20frontier_28',['Persisting a runtime frontier',['../persisting-a-runtime-frontier.html',1,'']]]
 ];

@@ -25,8 +25,9 @@ var searchData=
   ['prepared_20chain_20queries_22',['Complete prepared-chain queries',['../md_bench_2query__chain.html',1,'']]],
   ['private_20nurseries_23',['Transactions and private nurseries',['../transactions-and-private-nurseries.html',1,'']]],
   ['profile_20count_20decoding_24',['Small bit-profile count decoding',['../md_bench_2small__count.html',1,'']]],
-  ['proof_20core_25',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
-  ['publication_26',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
-  ['publication_20and_20merge_20resumption_27',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]],
-  ['publication_20preparation_28',['Publication preparation',['../publication-preparation.html',1,'']]]
+  ['profile_20merges_25',['Matched CPU profile merges',['../matched-cpu-profile-merges.html',1,'']]],
+  ['proof_20core_26',['Everett: An Abstract Proof Core',['../everett-an-abstract-proof-core.html',1,'']]],
+  ['publication_27',['Files, mappings and publication',['../md_docs_2file-lifecycle.html',1,'']]],
+  ['publication_20and_20merge_20resumption_28',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]],
+  ['publication_20preparation_29',['Publication preparation',['../publication-preparation.html',1,'']]]
 ];
