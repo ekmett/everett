@@ -14,15 +14,10 @@
 #include <diet/redundant_runtime.h>
 #include <diet/sort_profile_file.h>
 #include <diet/sort_profile_merge.h>
+#include <diet/runtime_seal.h>
 #include <diet/typed_cola.h>
 
 namespace diet {
-  struct native_seal {
-    object_id catalog;
-    object_seal_receipt receipt;
-  };
-  template <class P, class Selector, class Ids, class CatalogOps, class FileOps> struct sort_runtime_context;
-
   // Logical query keys carry their length separately: sort bits followed by
   // leaf order bits. They never acquire the opaque string transport's escapes.
   template <class P, class Selector = registry_selector<typename P::registry_type>> struct sort_key_transport {
@@ -63,6 +58,8 @@ namespace diet {
     std::shared_ptr<mapped_type const> mapped() const noexcept { return mapped_; }
     std::shared_ptr<native_seal const> sealed() const noexcept { return seal_; }
   private:
+    template <class, class, class, class> friend struct runtime_store;
+    template <class, class, class, class> friend struct runtime_store_detail::graph_sealer;
     template <class, class, class, class, class> friend struct sort_runtime_context;
     // Only an acknowledged catalog seal can construct this descriptor. The
     // context opens the expected object path itself, never a supplied mapping.
@@ -73,8 +70,10 @@ namespace diet {
       auto mapped = std::make_shared<mapped_type const>(mapped_type::open(path));
       auto result = std::shared_ptr<sort_runtime_native>(new sort_runtime_native(std::move(mapped)));
       result->seal_ = std::make_shared<native_seal const>(native_seal{std::move(catalog), std::move(receipt)});
+      result->bindings_.get_or_create(result->seal_->catalog, root, [&] { return result->seal_; });
       return result;
     }
+    catalog_bindings<native_seal> bindings_;
     std::shared_ptr<native_seal const> seal_;
     std::shared_ptr<array_type const> owned_;
     std::shared_ptr<mapped_type const> mapped_;
