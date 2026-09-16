@@ -652,6 +652,9 @@ cost includes the count's encoded length even when the resulting key is short.
 We mark each physical stream's block starts and end sentinel, then encode those
 monotone offsets with `elias_fano`. Its `select(i)` returns the stored integer
 at ordinal `i`; sampling intervals and value strides belong to the profile.
+For consecutive positions, `view.cursor().next()` walks the high words forwards
+and retains the unconsumed bits. Native profile cursors use this traversal at
+block boundaries; random lookups still use `select`.
 Fixed-width values give us an additional saving: their contribution to an offset is predictable, so we subtract it before
 encoding and add it back on access. If width is `w` and record ordinal is `i`,
 the contribution is `w * i` in the same address units. The fixed payload stride

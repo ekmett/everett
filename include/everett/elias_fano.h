@@ -199,6 +199,8 @@ namespace everett {
     std::uint64_t sparse;
   };
 
+  struct elias_fano_cursor;
+
   // Elias--Fano over an arbitrary nondecreasing sequence of uint64_t values.
   // Repeated values and the empty sequence are supported. Sampling intervals,
   // record counts, sentinels and fixed strides belong to the caller.
@@ -256,7 +258,14 @@ namespace everett {
     std::uint64_t select(std::uint64_t ordinal) const {
       if (ordinal >= entry_count_) [[unlikely]]
         error_detail::raise<std::out_of_range>("Elias-Fano ordinal");
-      auto position = select_high(ordinal);
+      return decode(ordinal, select_high(ordinal));
+    }
+
+    elias_fano_cursor cursor() const;
+
+  private:
+    friend struct elias_fano_cursor;
+    std::uint64_t decode(std::uint64_t ordinal, std::uint64_t position) const {
       if (position < ordinal) error_detail::raise<std::invalid_argument>("invalid elias_fano high value");
       auto hi = position - ordinal;
       if (hi > (universe_ >> low_width_)) error_detail::raise<std::invalid_argument>("elias_fano high overflow");
@@ -274,7 +283,6 @@ namespace everett {
       return value;
     }
 
-  private:
     std::uint64_t select_high(std::uint64_t ordinal) const {
       auto sample = samples_[ordinal >> 8];
       unsigned remaining = unsigned(ordinal & 255);
@@ -312,6 +320,59 @@ namespace everett {
     std::uint64_t high_bits_ = 0;
     unsigned low_width_ = 0;
   };
+
+  // Forward selection retains the unused high bits of its current word.
+  // Every 256 entries it enters the next directory sample, preserving dense
+  // span and sparse-exception checks. Construction reads no payload pages.
+  // The source sections must outlive this cursor and any copies of it.
+  struct elias_fano_cursor {
+    explicit elias_fano_cursor(elias_fano_view source) : source_(source) {}
+    bool done() const noexcept { return ordinal_ == source_.size(); }
+    std::uint64_t ordinal() const noexcept { return ordinal_; }
+    std::uint64_t next() {
+      if (done()) [[unlikely]] error_detail::raise<std::out_of_range>("Elias-Fano cursor end");
+      if (!(ordinal_ & 255)) {
+        auto sample = source_.samples_[ordinal_ >> 8];
+        sample_ = {sample.first, sample.sparse};
+        if (sample_.sparse == std::numeric_limits<std::uint64_t>::max()) {
+          if (sample_.first >= source_.high_bits_)
+            error_detail::raise<std::invalid_argument>("invalid elias_fano sample");
+          word_ = sample_.first >> 6;
+          remaining_ = source_.high_[word_] & (~std::uint64_t{0} << (sample_.first & 63));
+        }
+      }
+      std::uint64_t position;
+      if (sample_.sparse != std::numeric_limits<std::uint64_t>::max()) {
+        auto lane = ordinal_ & 255;
+        if (sample_.sparse > source_.sparse_.size() || lane >= source_.sparse_.size() - sample_.sparse)
+          error_detail::raise<std::invalid_argument>("invalid elias_fano exception");
+        position = source_.sparse_[sample_.sparse + lane];
+        if (position >= source_.high_bits_ || !(source_.high_[position >> 6] & (std::uint64_t{1} << (position & 63))))
+          error_detail::raise<std::invalid_argument>("invalid elias_fano sparse position");
+      } else {
+        while (!remaining_) {
+          ++word_;
+          if (word_ >= source_.high_.size() || word_ - (sample_.first >> 6) >= 65)
+            error_detail::raise<std::invalid_argument>("elias_fano missing high bit");
+          remaining_ = source_.high_[word_];
+        }
+        position = (word_ << 6) + unsigned(std::countr_zero(remaining_));
+        if (position >= source_.high_bits_ || position - sample_.first >= 4096)
+          error_detail::raise<std::invalid_argument>("elias_fano dense span");
+      }
+      auto value = source_.decode(ordinal_, position);
+      remaining_ &= remaining_ - 1;
+      ++ordinal_;
+      return value;
+    }
+
+  private:
+    elias_fano_view source_;
+    elias_fano_sample sample_{};
+    std::uint64_t ordinal_ = 0, word_ = 0, remaining_ = 0;
+  };
+
+  inline elias_fano_cursor elias_fano_view::cursor() const { return elias_fano_cursor(*this); }
 
   struct elias_fano {
     static elias_fano build(std::span<std::uint64_t const> residuals) {

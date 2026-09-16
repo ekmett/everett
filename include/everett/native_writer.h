@@ -14,7 +14,9 @@
 
 #include <everett/profile.h>
 
+#include <array>
 #include <cstdint>
+#include <cstring>
 #include <optional>
 #include <stdexcept>
 #include <utility>
@@ -75,15 +77,38 @@ namespace everett {
         auto saved_bits = data_.bit_size;
         auto saved_offsets = offsets_.size();
         try {
-          if (count_ % P::codec_block_size == 0) {
+          auto block = count_ % P::codec_block_size == 0;
+          if (block) {
             auto stride = multiply(count_, common_.value_or(0));
             offsets_.push_back((data_.bit_size >> P::unit_shift) - stride);
-            write_count<P>(data_, retained);
-          } else write_backspace<P>(data_, previous_units_ - retained);
-          write_count<P>(data_, literal_units);
-          if (!common_) write_count<P>(data_, value_units);
-          profile_detail::append(data_, literal);
-          profile_detail::append(data_, value);
+          }
+          if constexpr (P::unit == profile_unit::byte) {
+            // At most three ten-byte LEB128 counts. Admit the whole frame,
+            // grow once, and copy directly into its final byte positions.
+            std::array<std::byte, 30> control;
+            auto end = control.data();
+            auto count = [&](std::uint64_t n) {
+              while (n >= 128) { *end++ = std::byte((n & 127) | 128); n >>= 7; }
+              *end++ = std::byte(n);
+            };
+            count(block ? retained : previous_units_ - retained);
+            count(literal_units);
+            if (!common_) count(value_units);
+            auto control_bytes = std::uint64_t(end - control.data());
+            auto payload_bits = add(literal.size(), value.size());
+            resize(data_, add(saved_bits, add(control_bytes << 3, payload_bits)));
+            std::memcpy(data_.bytes.data() + (saved_bits >> 3), control.data(), static_cast<std::size_t>(control_bytes));
+            auto at = saved_bits + (control_bytes << 3);
+            copy_bits(data_.bytes.data(), at, literal);
+            copy_bits(data_.bytes.data(), at + literal.size(), value);
+          } else {
+            if (block) write_count<P>(data_, retained);
+            else write_backspace<P>(data_, previous_units_ - retained);
+            write_count<P>(data_, literal_units);
+            if (!common_) write_count<P>(data_, value_units);
+            profile_detail::append(data_, literal);
+            profile_detail::append(data_, value);
+          }
         } catch (...) {
           resize(data_, saved_bits);
           offsets_.resize(saved_offsets);

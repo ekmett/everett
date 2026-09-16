@@ -78,8 +78,17 @@ namespace {
   }
   void query_oracle(elias_fano_view view, std::span<std::uint64_t const> values) {
     require(view.size() == values.size(), "EF encoded entry count");
-    for (std::size_t i = 0; i < values.size(); ++i)
+    auto cursor = view.cursor();
+    for (std::size_t i = 0; i < values.size(); ++i) {
       require(view.select(i) == values[i], "EF select differs from original integer");
+      require(!cursor.done() && cursor.ordinal() == i && cursor.next() == values[i],
+              "EF forward cursor differs from original integer");
+      // Copies retain their own scan position, including directory boundaries.
+      auto copy = cursor;
+      if (i + 1 != values.size()) require(copy.next() == values[i + 1], "EF cursor copy position");
+    }
+    require(cursor.done() && cursor.ordinal() == values.size(), "EF cursor end");
+    rejects([&] { (void)cursor.next(); });
     rejects([&] { (void)view.select(values.size()); });
     rejects([&] { (void)view.select(std::numeric_limits<std::uint64_t>::max()); });
   }
@@ -165,6 +174,8 @@ namespace {
     elias_fano_view view(word_view::little_endian(low.data), word_view::little_endian(high.data),
       sample_view::little_endian(samples.data), word_view::little_endian(sparse.data), values.size(), index.universe, index.low_width);
     require(view.size() == values.size(), "protected EF shape query");
+    auto cursor = view.cursor();
+    require(cursor.done() == values.empty(), "protected EF cursor construction");
     rejects([&] { (void)view.select(values.size()); });
     low.protect(PROT_READ); high.protect(PROT_READ); samples.protect(PROT_READ); sparse.protect(PROT_READ);
     query_oracle(view, values);
@@ -199,9 +210,29 @@ namespace {
     auto missing = elias_fano::build(std::array<std::uint64_t, 2>{0, 1});
     missing.high[0] = 0;
     rejects([&] { (void)missing.view().select(0); });
+    rejects([&] { (void)missing.view().cursor().next(); });
     auto bad_sample = elias_fano::build(std::array<std::uint64_t, 1>{0});
     bad_sample.samples[0].first = ~std::uint64_t{0};
     rejects([&] { (void)bad_sample.view().select(0); });
+    rejects([&] { (void)bad_sample.view().cursor().next(); });
+
+    // A dense group cannot claim a one outside its permitted span. Sparse
+    // positions must name actual high bits, and low fields stay in universe.
+    std::vector<std::uint64_t> values(10001, 20000);
+    std::fill(values.begin(), values.begin() + 17, 0);
+    auto sparse = elias_fano::build(values);
+    require(sparse.samples[0].sparse != ~std::uint64_t{0}, "sparse cursor fixture");
+    sparse.sparse[0] = ~std::uint64_t{0};
+    rejects([&] { (void)sparse.view().cursor().next(); });
+    auto dense = elias_fano::build(values);
+    dense.samples[0].sparse = ~std::uint64_t{0};
+    rejects([&] {
+      auto cursor = dense.view().cursor();
+      for (unsigned i = 0; i != 18; ++i) (void)cursor.next();
+    });
+    auto low = elias_fano::build(std::array<std::uint64_t, 1>{4});
+    low.low[0] = 3;
+    rejects([&] { (void)low.view().cursor().next(); });
   }
 }
 int main() {

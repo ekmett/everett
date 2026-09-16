@@ -190,6 +190,28 @@ namespace {
     require(count == records.size() && borrowed && observed_key_units == expected_key_units,
             "allocation-free encoded cursor lost frames or borrowed storage");
   }
+
+  template <class P> void cursor_block_retry() {
+    std::vector<profile_record> records;
+    for (std::uint64_t i = 0; i != P::codec_block_size + 2; ++i)
+      records.push_back({key_for<P>(i, i == P::codec_block_size ? 32768 : 0), value_for<P>(i, i % 9)});
+    auto array = array_type<P>::build(records);
+    auto cursor = array.view().cursor();
+    for (std::uint64_t i = 1; i != P::codec_block_size; ++i) cursor.advance();
+    bool rejected = false;
+    fail_after = 0;
+    try { cursor.advance(); }
+    catch (std::bad_alloc const &) { rejected = true; }
+    catch (...) { fail_after = -1; throw; }
+    fail_after = -1;
+    require(rejected && cursor.ordinal() == P::codec_block_size - 1, "cursor boundary allocation was not rejected");
+    cursor.advance();
+    require(cursor.ordinal() == P::codec_block_size &&
+      bit_string::copy(cursor.peek().key.prefix) == records[P::codec_block_size].key,
+      "cursor retry lost its block offset");
+    cursor.advance(); cursor.advance();
+    require(cursor.done(), "cursor retry left extra records");
+  }
 }
 
 int main() {
@@ -198,6 +220,7 @@ int main() {
     using bits = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>;
     prefix_reuse<bytes>(); prefix_reuse<bits>();
     allocation_rollback<bytes>(); allocation_rollback<bits>();
+    cursor_block_retry<bytes>(); cursor_block_retry<bits>();
     encoded_cursor_allocations<bytes>(); encoded_cursor_allocations<bits>();
     std::cout << "Native predecessor reuse, exact encoding and allocation rollback passed\n";
   } catch (std::exception const & error) {

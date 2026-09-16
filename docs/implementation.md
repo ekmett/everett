@@ -409,6 +409,14 @@ Dense select scans at most 4096 high bits; sparse groups store exception positio
 Within a selected word, broadword byte-prefix arithmetic locates the bit; BMI2
 targets use `PDEP`.
 
+`elias_fano_view::cursor()` supports consecutive decoding without restarting a
+select from the group's first one each time. It caches the unused high-word
+bits, enters each 256-entry directory sample once and retains dense-span and
+sparse-exception checks. Construction reads no payload. Both native profile
+cursors use it for sequential block offsets, committing the offset position
+only after parsing the next record succeeds. Independent integer oracles cover
+every low width, copied cursors, sparse groups and guarded unaligned sections.
+
 The shared Elias–Fano writer packs low fields in width-specialized tiles of
 `64/gcd(width,64)` values and assigns each high word once. AArch64 uses NEON
 narrowing for complete width-eight and width-sixteen tiles, and bounded

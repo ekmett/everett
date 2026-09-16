@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "f1b44d34f0664715d288a53937f1d0d4d52dc1eb4548824087f4a216d0c2afb9"
+      "normalized_sha256": "f547bb4828bc7e80afa1a582b01558cd5349653b9657cf4f002c9b0b5d352cb0"
     }
   ],
   "checks": {
@@ -555,6 +555,12 @@
     },
     {
       "scope": "Add reviewed matched Metal format measurements and documentation links; original measurement hashes are preserved.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Document forward Elias-Fano traversal and aligned byte string framing; original measurement hashes are preserved.",
       "artifacts": [
         "docs/implementation.md"
       ]

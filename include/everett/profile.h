@@ -976,10 +976,11 @@ namespace everett {
       }
     }
 
-    profile_encoded_record next_record(profile_encoded_record const & previous, std::uint64_t ordinal) const {
+    template <class Offset>
+    profile_encoded_record next_record(profile_encoded_record const & previous, std::uint64_t ordinal, Offset && offset) const {
       auto at = previous.next_offset;
       if (ordinal % P::codec_block_size == 0) {
-        if (block_offset(ordinal / P::codec_block_size) != at)
+        if (offset(ordinal / P::codec_block_size) != at)
           error_detail::raise<std::invalid_argument>("profile group offset mismatch");
         auto next = parse_absolute(at);
         if (next.retained > previous.key_units)
@@ -987,6 +988,10 @@ namespace everett {
         return next;
       }
       return parse_relative(at, previous.key_units);
+    }
+
+    profile_encoded_record next_record(profile_encoded_record const & previous, std::uint64_t ordinal) const {
+      return next_record(previous, ordinal, [&](std::uint64_t block) { return block_offset(block); });
     }
 
     static void decode_into(profile_encoded_record const & record, std::uint64_t limit,
@@ -1012,8 +1017,8 @@ namespace everett {
     using policy_type = P;
     static constexpr stream_role role = Role;
 
-    explicit profile_encoded_cursor(profile_view<P, Role> view) : view_(view) {
-      if (!done()) record_ = view_.encoded_at(0);
+    explicit profile_encoded_cursor(profile_view<P, Role> view) : view_(view), offsets_(view.group_offsets()) {
+      if (!done()) { record_ = view_.encoded_at(0); (void)offsets_.next(); }
     }
 
     bool done() const noexcept { return ordinal_ == view_.size(); }
@@ -1031,12 +1036,21 @@ namespace everett {
           error_detail::raise<std::invalid_argument>("trailing profile data");
         if (record_.key_units != view_.metadata_.terminal_key_units)
           error_detail::raise<std::invalid_argument>("profile terminal length mismatch");
-      } else record_ = view_.next_record(record_, ordinal_ + 1);
+      } else {
+        std::optional<elias_fano_cursor> offsets;
+        auto next = view_.next_record(record_, ordinal_ + 1, [&](std::uint64_t block) {
+          offsets.emplace(offsets_);
+          return offsets->next() + block * P::codec_block_size * view_.metadata_.common_value_width.value_or(0);
+        });
+        record_ = next;
+        if (offsets) offsets_ = *offsets;
+      }
       ++ordinal_;
     }
 
   private:
     profile_view<P, Role> view_;
+    elias_fano_cursor offsets_;
     profile_encoded_record record_;
     std::uint64_t ordinal_ = 0;
   };
@@ -1054,9 +1068,10 @@ namespace everett {
     using policy_type = P;
     static constexpr stream_role role = Role;
 
-    explicit profile_cursor(profile_view<P, Role> view) : view_(view) {
+    explicit profile_cursor(profile_view<P, Role> view) : view_(view), offsets_(view.group_offsets()) {
       if (!done()) {
         record_ = view_.encoded_at(0);
+        (void)offsets_.next();
         profile_view<P, Role>::decode_into(record_, std::numeric_limits<std::uint64_t>::max(), scratch_, context_);
       }
     }
@@ -1095,7 +1110,13 @@ namespace everett {
         ++ordinal_;
         return;
       }
-      auto next = view_.next_record(record_, ordinal_ + 1);
+      // Keep the navigation position with the committed record if parsing or
+      // key reconstruction throws. Only block boundaries copy cursor state.
+      std::optional<elias_fano_cursor> offsets;
+      auto next = view_.next_record(record_, ordinal_ + 1, [&](std::uint64_t block) {
+        offsets.emplace(offsets_);
+        return offsets->next() + block * P::codec_block_size * view_.metadata_.common_value_width.value_or(0);
+      });
       if constexpr (Compare) {
         auto retained_bits = profile_detail::multiply(next.retained, P::bits_per_unit);
         auto previous = scratch_.view();
@@ -1116,11 +1137,13 @@ namespace everett {
       }
       profile_view<P, Role>::decode_into(next, std::numeric_limits<std::uint64_t>::max(), scratch_, context_);
       record_ = next;
+      if (offsets) offsets_ = *offsets;
       ++ordinal_;
     }
 
   private:
     profile_view<P, Role> view_;
+    elias_fano_cursor offsets_;
     bit_string scratch_;
     std::uint64_t context_ = 0;
     profile_encoded_record record_;

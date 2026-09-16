@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "cd8eaf65bd2e9d1f4e5dd8118365c4fe623131c715152f0ab1fdbb3dbb328629"
+      "normalized_sha256": "4c9f1e93c73765d90c6a1a9277a6333892351bf04f5ff47c894bc1a305664f01"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "f1b44d34f0664715d288a53937f1d0d4d52dc1eb4548824087f4a216d0c2afb9"
+      "normalized_sha256": "f547bb4828bc7e80afa1a582b01558cd5349653b9657cf4f002c9b0b5d352cb0"
     }
   ],
   "subsequent_updates": [
@@ -1033,6 +1033,13 @@
       "scope": "Add reviewed matched Metal format measurements and documentation links; original measurement hashes are preserved.",
       "artifacts": [
         "bench/README.md",
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Document forward Elias-Fano traversal and aligned byte string framing; original measurement hashes are preserved.",
+      "artifacts": [
         "bench/results/publication_normalization.json",
         "docs/implementation.md"
       ]
