@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "dd06903de1fb00d9956ff46aa574a8d251ef838a477f898b12e1dce2a83bf9b2"
+      "normalized_sha256": "72bafd3115378a2a7cf2bd25f8fe7e2054c8896a6367ec390e7d13dcfc5cbdd9"
     }
   ],
   "subsequent_updates": [
@@ -945,6 +945,12 @@
       "scope": "Add checked succinct-navigation proofs and correct independent empty-envelope fixture checksums for the restored signature. Original benchmark observations and original fingerprints are unchanged.",
       "artifacts": [
         "bench/snapshot.py"
+      ]
+    },
+    {
+      "scope": "Record final signature-fixture verification and executable succinct-navigation proof coverage. Original benchmark observations and fingerprints are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
       ]
     }
   ]

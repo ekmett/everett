@@ -979,9 +979,17 @@ key lengths within the admitted physical extent. This supplies the arithmetic
 argument for checking absolute prefixes once per block; it does not prove the
 C++ parser's extraction of those fields.
 
+`Navigation` constructs the unary Elias–Fano high vector and proves selection
+and offset recovery, including repeated offsets, zero-width low fields and
+partial EOF blocks. It proves common-stride subtraction and restoration for
+fixed-size values. Group populations and sampled checkpoints recover fractional
+rank with bounded local scans, without an extra endpoint total; the population
+and low-field bounds justify their logical widths.
+
 Those theorems do not verify stored cut-LCP scalars, literal comparisons or the
-encoded decoder. Compressed rank, Elias–Fano, front coding, full cascade execution, C++ refinement, scheduling
-and crash recovery remain outside its scope. The proof README records the assumptions
+encoded decoder. Packed machine-word layouts, SIMD operations, full cascade
+execution, C++ refinement, scheduling and crash recovery remain outside the
+model's scope. The proof README records the assumptions
 and the distinctions between endpoint projection, full arrows and finite-key
 fingerprint sums.
 
@@ -1122,6 +1130,15 @@ With SQLite enabled, additional suites cover the catalog, adversarial operations
 forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
+
+At `a51904c`, the restored public names and file signatures passed all **107
+checks** after correcting four stale checksum fixtures: the complete run passed
+106 checks, then the rebuilt file-format suite passed its focused rerun. The
+fixtures were independently recalculated with a bitwise CRC32C oracle. The
+optional GPU program separately passed all **13 checks** after rebuilding its
+final public sources. Lean checked **995 declarations**, using only its three
+standard logical axioms. The [checkpoint record](../bench/results/everett_verification_20260916.json)
+keeps the original failure and the successful rerun distinct.
 
 At `296a025`, the combined strict O2 ASan/UBSan build passed all **107 checks**
 on AppleClang 21: 103 C++ component suites, three independent package consumers
