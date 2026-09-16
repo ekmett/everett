@@ -29,7 +29,7 @@ if(DIET_SANITIZERS)
   diet_check_sanitizers()
 endif()
 
-set(diet_test_names registry registry_compat crc32c rank groups rank_groups_builder elias_fano profile borrowed_writer profile_blob comparison_fc sampling index_builder index_builder_allocations index_pipeline query cola_index cola_frontier cola_route_reuse cola_schedule native_writer native_writer_allocations native_file_writer profile_file_output native_merge native_merge_mapped cola pins durability mapped_file files object_writer object_stream mapped_blob fridge catalog_bindings)
+set(diet_test_names registry registry_compat crc32c rank groups rank_groups_builder elias_fano profile borrowed_writer profile_blob comparison_fc sampling index_builder index_builder_allocations index_pipeline query cola_index cola_frontier cola_route_reuse cola_schedule native_writer native_writer_allocations native_file_writer profile_file_output native_merge native_merge_mapped cola pins durability mapped_file files object_writer object_stream mapped_blob fridge catalog_bindings output_budget)
 if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # These suites seal real mapped inputs through posix_object_ops throughout.
   # Model-ops writer tests above retain their platform-independent coverage.
