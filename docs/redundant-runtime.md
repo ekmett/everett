@@ -124,8 +124,16 @@ An empty runtime can build its first sorted batch directly when the batch has
 $N=2^h$ unique records, with $N\ge2$. `try_initialize_sorted(records, allowance,
 depth_limit)` constructs a valid frontier and pays for its remaining carries
 before returning. Ineligible counts, existing history or insufficient work or
-depth allowance leave the executor unchanged and return false. Ordinary typed
-admission uses its existing per-record path in those cases.
+depth allowance leave the executor unchanged and return false.
+
+The typed API accepts arbitrary batch sizes. For a pristine batch of $N\ge2$
+records, it initializes the largest power-of-two prefix $M\le N$, then admits
+the remaining $N-M$ records through the ordinary paid loop. It validates all
+$N$ logical updates before starting and publishes only after the tail succeeds.
+The prefix receives its $M$ records' reservation; each tail record retains its
+ordinary allowance. This preserves the original batch quote without charging
+the whole batch twice. Existing tables and runtimes without the initialization
+hook use ordinary admission throughout.
 
 For 64 records, the initial native slices contain 32, 16, 8, 4, 2, 1 and 1
 records. The first six occupy consecutive levels; the last is a terminal
@@ -139,8 +147,11 @@ Completed higher outputs may remain hidden behind earlier index versions,
 just as after ordinary admission. The complete checkpoint retains them and the
 inputs still needed by those indexes.
 The initial frontier passes the same independent restoration checks as a
-persisted frontier. The public result has no pending service debt; actual native,
+persisted frontier. The runtime initializer returns with no pending service debt; actual native,
 index, root and checkpoint work is charged, with unused allowance discarded.
+An arbitrary-sized typed batch may retain ordinary tail debt for subsequent
+service. Its final checkpoint includes that work, and failure anywhere in the
+prefix or tail preserves the previous published snapshot.
 
 Sorting the public batch and validating its logical updates happen before this
 construction. The initializer builds both native and fractional-index data.

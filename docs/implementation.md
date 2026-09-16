@@ -112,12 +112,13 @@ each keeps its own seal acknowledgment. Contended claims fall back to the
 ordinary dependency walk. The [preparation guide](publication-preparation.md) describes
 dependency ordering, concurrent producers and uncertain-operation recovery.
 
-The first sorted power-of-two batch can seed a pristine redundant frontier
-directly and service its remaining carries before publication. The typed engine
-validates the whole contribution first; ordinary optional-string rebuilding
-starts it as a clean generation. The same native encoder retains small slices
-or spills their encoded bytes through the durable writer. Other counts and
-existing tables retain per-record admission. The
+The first sorted batch seeds a pristine redundant frontier from its largest
+power-of-two prefix, then admits any remaining records through the ordinary
+paid loop before publishing once. The typed engine validates the whole
+contribution first; ordinary optional-string rebuilding starts it as a clean
+generation. The same native encoder retains small slices or spills their
+encoded bytes through the durable writer. Existing tables retain per-record
+admission. The
 [construction](redundant-runtime.md#initial-sorted-batches) keeps complete hidden
 artifacts and charges executed work; it does not change the file formats.
 
@@ -1114,6 +1115,14 @@ grammars, factory failures, typed preflight, native sealing and final-publicatio
 acknowledgment failures, saved forks, queued continuation and mapped reopening.
 The depth suite checks both binary and redundant publication boundaries,
 over-limit imports, preserved earlier snapshots and custom backend hooks.
+
+At `9d81469`, arbitrary-sized initial batches passed five focused strict O2
+ASan/UBSan suites. Counts around power-of-two boundaries at K=3/K=15 check
+prefix construction, ordinary tail work, full-frontier restoration and unchanged
+reservation bounds. Injected tail failures and depth rejection preserve the old
+publication; durable cases cover queued continuation, reopening and seal or
+publication acknowledgment failures. Exact powers retain their existing
+checkpoint and work counts.
 
 Validated empty contributions preserve their current typed publication with no
 structural charge. The persistent adapter skips a new catalog generation only
