@@ -36,6 +36,8 @@ namespace diet {
     // Prepare every slot before acquiring a batch. Once any claim is held,
     // try_lock is the only permitted acquisition: unrelated producers may be
     // holding a parent while waiting for one of our dependencies.
+    // A locked producer is thread-affine: move it only within that thread,
+    // and install, release or destroy it on the thread which acquired it.
     struct producer {
       producer(producer const &) = delete;
       producer & operator=(producer const &) = delete;

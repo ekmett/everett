@@ -11,6 +11,8 @@
  */
 #include <diet/runtime_graph_sealer.h>
 #include <diet/sort_runtime.h>
+#include <diet/sort_runtime_store.h>
+#include <diet/typed_scan.h>
 
 #include <atomic>
 #include <cassert>
@@ -197,6 +199,58 @@ namespace {
     assert(scalar(dir.root, "SELECT count(*) FROM operations WHERE kind='seal'") == 1);
   }
 
+  void real_frontier() {
+    using Q = string_policy;
+    using F = sort_runtime_family<Q>;
+    using Core = typed_engine<Q, wrapping_fingerprint_algebra, 256, F>;
+    using Codec = runtime_storage_codec<F>;
+    Core active; auto input = Core::batch();
+    for (unsigned i = 64; i; --i) input.put("key-" + std::to_string(i), "value-" + std::to_string(i));
+    auto source = active.contribute(std::move(input).finish());
+    assert(!active.pending() && source.runtime().admissions() == 64);
+    struct counts { std::size_t selected, files; std::int64_t reservations, fused; };
+    auto prepare = [&](std::filesystem::path const & root, bool batched) {
+      ids next; auto catalog = sqlite_catalog<Q>::create_taps(root, id(1));
+      runtime_store_detail::graph_sealer<Q, ids, sqlite_catalog_ops, F> graph(catalog, next);
+      std::vector<typename F::node_type::pair_type> pairs;
+      std::vector<typename F::node_type::native_pointer> natives;
+      Codec::collect(source.runtime(), [&](auto p) { if (p) pairs.push_back(std::move(p)); },
+        [&](auto n) { if (n) natives.push_back(std::move(n)); });
+      auto selected = batched ? graph.prepare_ready(pairs, natives) : 0;
+      for (auto const & pair : pairs) (void)graph.ensure_pair(pair);
+      for (auto const & native : natives) (void)graph.ensure_native(native);
+      auto head = graph.pair_id(source.runtime().query_root().head());
+      catalog_auxiliary_roots auxiliary;
+      for (auto const & pair : pairs) auxiliary.pairs.push_back(graph.pair_id(pair));
+      for (auto const & native : natives) auxiliary.natives.push_back(graph.native_id(native));
+      auto checkpoint = Codec::encode(source.runtime(), source.metadata().encode(),
+        [&](auto const & pair) { return graph.pair_id(pair); },
+        [&](auto const & native) { return graph.native_id(native); });
+      auto published = catalog.create_tap("publication", "main", head, checkpoint, auxiliary);
+      auto reopened = runtime_store<Q, ids, sqlite_catalog_ops, F>::open(root);
+      auto saved = reopened.find("main"); assert(saved && saved->head == published);
+      assert(Codec::object_count(saved->snapshot) == Codec::object_count(source.runtime()));
+      assert(saved->snapshot.admissions() == source.runtime().admissions());
+      assert(saved->semantic == source.metadata().encode());
+      auto restored = Core::cola_type::restore(saved->snapshot, source.metadata(), source.metadata().schema_id);
+      for (unsigned i = 1; i <= 64; ++i)
+        assert(restored.get("key-" + std::to_string(i)) == "value-" + std::to_string(i));
+      assert(!restored.get("missing") && restored.signature() == source.signature() && restored.live_count() == 64);
+      auto scan = diet::scan(restored); unsigned found = 0;
+      while (auto row = scan.next()) { assert(row->value == "value-" + row->key.substr(4)); ++found; }
+      assert(found == 64);
+      return counts{selected, files(root), scalar(root, "SELECT count(*) FROM operations WHERE kind='reserve'"),
+        scalar(root, "SELECT count(*) FROM operations WHERE kind='seal_native_cola_pair'")};
+    };
+    temporary serial_dir, batched_dir;
+    auto serial = prepare(serial_dir.root, false), batched = prepare(batched_dir.root, true);
+    assert(batched.selected >= 2 && serial.files == batched.files && batched.fused >= serial.fused);
+    auto extra_fusion = batched.fused - serial.fused;
+    assert(serial.reservations - batched.reservations == std::int64_t(batched.selected - 1) + extra_fusion);
+    std::cout << "64-row frontier: " << batched.selected << " ready units, reservations " << serial.reservations
+      << " -> " << batched.reservations << ", extra fusions " << extra_fusion << ", files " << batched.files << '\n';
+  }
+
   struct fault_state {
     std::string kind;
     unsigned remaining = 1;
@@ -247,15 +301,16 @@ namespace {
       state->after = after; state->armed = true;
       rejects([&] { (void)graph.prepare_ready(roots, {}); });
       assert(!state->armed && catalog.poisoned() && last == state->operation);
+      auto healthy = sqlite_catalog<P>::open(dir.root);
+      sealer<Storage> retry(healthy, next);
       if (reservation) {
         assert(files(dir.root) == 2);
-        rejects([&] { (void)graph.pair_id(left); });
+        rejects([&] { (void)retry.pair_id(left); });
       } else {
         assert(files(dir.root) == 6);
-        assert(graph.pair_id(left).native != old_id.native);
+        assert(retry.pair_id(left).native != old_id.native);
       }
-      rejects([&] { (void)graph.pair_id(right); });
-      auto healthy = sqlite_catalog<P>::open(dir.root);
+      rejects([&] { (void)retry.pair_id(right); });
       assert(bool(healthy.lookup_operation(last)) == after);
       assert(healthy.find_tap("main") == old_head);
       if (reservation) {
@@ -273,9 +328,8 @@ namespace {
         healthy.reserve(last, attempt, owner, inputs, outputs);
         assert(scalar(dir.root, "SELECT count(*) FROM owner_objects") == pins);
       }
-      sealer<Storage> retry(healthy, next);
       std::optional<blob_identity> acknowledged;
-      if (!reservation) acknowledged = graph.pair_id(left);
+      if (!reservation) acknowledged = retry.pair_id(left);
       (void)retry.prepare_ready(roots, {});
       auto a = retry.ensure_pair(left), b = retry.ensure_pair(right);
       if (acknowledged) assert(a->identity == *acknowledged);
@@ -315,6 +369,7 @@ int main() {
   aliases_and_unready<sort_runtime_storage<P>>();
   bounded_batch();
   secondary_alias();
+  real_frontier();
   failures<sort_runtime_storage<P>>(); concurrent<sort_runtime_storage<P>>();
   std::cout << "Ready reservation batches passed\n";
 }
