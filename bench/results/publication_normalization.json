@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "6bf478d3d6354700dcaaf4c7996f3425c4871cccd5ae6360b8bb0eabb6bae478"
+      "normalized_sha256": "31c2be27e9cba6c667c52fe49e3238c4e04d7c981920360a659bfdb446fd982a"
     }
   ],
   "checks": {
@@ -579,6 +579,12 @@
     },
     {
       "scope": "Link the matched CPU byte/bit native merge latency and same-data space measurements. Original measurement fingerprints are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link the reviewed same-offset select comparison and its measured boundaries; original benchmark identities are unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

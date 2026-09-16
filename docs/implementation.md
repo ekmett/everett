@@ -85,6 +85,23 @@ typed-bit controls have mixed results, so I do not attribute a general speedup
 to the forward EF cursor. The report compares complete byte/bit output sizes
 for identical logical records and states the native-construction timing boundary.
 
+### Optional offset-selection measurements
+
+The [select comparison](../optional/select_compare/README.md) preserves the
+production Elias–Fano baseline and measures eleven representations or selectors
+on identical sampled offsets. Its retained run covers 96 native/index fixture
+directories, six larger gap replays and three boundary cases in 315 processes.
+An extra subentry every 32 high ones improves random and dependent selection
+by geometric means of 1.59 and 1.24 times across the fixture directories. Direct
+and packed offsets trade more array space for faster access. These are warm
+offset-access measurements; no whole-query or merge speedup is inferred.
+
+Release and ASan/UBSan checks exercise the selectors, sparse exceptions, sampled
+boundaries and actual byte/bit exports. Independent review checked all 71,535
+observations, per-sequence statistics, space accounting and the retained load
+loop in the measured binary. The original upstream Half selector's exact-span
+failure is explicit; its separately corrected comparator keeps a distinct name.
+
 ### Optional GPU construction
 
 The separate [fixed-key experiment](../optional/fixed_gpu_merge/README.md)

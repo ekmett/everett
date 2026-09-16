@@ -154,6 +154,25 @@ The [PDEP word-select study](https://arxiv.org/abs/1706.00990) distinguishes
 word-select speed from end-to-end bitvector speed; Everett already has a BMI2
 word-select path. This ARM experiment does not measure that path.
 
+The cited results have narrower meanings than a universal select ranking:
+
+- Pandey, Bender and Johnson report 2–4 times faster **word** select and
+  20–68% faster full bitvector select in their x86 experiments.
+- Kurpicz reports a 16.5% select improvement over cs-poppy in the tested x86
+  workload. Table 1 gives 3.58% auxiliary space for pasta-flat, versus 9.88%
+  and about 12.20% for simple-select 1 and 2. Those are overheads over the
+  underlying bitmap, not ratios of total representations.
+- SPIDER reports about 3.8% extra bitmap space. Its claim about eight billion
+  bits concerns the strongest **rank** results; it is not a minimum size for
+  using its select algorithm. Those measurements also use x86 hardware.
+
+The pinned [pasta SIMD implementation](https://github.com/pasta-toolbox/bit_vector/blob/3ffb6e5a2e58c76425de8197bfe554eb1bf9fd94/include/pasta/bit_vector/support/find_l2_flat_with.hpp)
+requires x86 intrinsics. Its scalar binary-search variant is a distinct possible
+comparison. The [SPIDER implementation](https://github.com/williams-cs/spider)
+also needs an ARM port and input-layout adaptation. I have not inferred their
+performance on these small EF high-bit arrays from the published large-bitmap
+experiments.
+
 Retained results
 ----------------
 
@@ -161,3 +180,11 @@ The [Apple M2 Max run](results/2026-09-16-m2max/report.md) retains all 315
 processes, including excluded warmups and correctness failures. Its
 [evidence guide](results/2026-09-16-m2max/README.md) explains how to verify and
 regenerate the tables.
+
+Download the [raw observations](results/2026-09-16-m2max/raw.tar.gz),
+[per-sequence summaries](results/2026-09-16-m2max/summary.json.gz), and
+[evidence hashes](results/2026-09-16-m2max/sha256.json).
+The [integration record](results/2026-09-16-m2max/integration.json) identifies
+the identical public sources, and the
+[assembly review](results/2026-09-16-m2max/assembly-review.json) records the
+retained direct32 load loop.

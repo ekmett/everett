@@ -63,6 +63,12 @@ uses those same logical records in raw and typed bit/byte files. It measures
 complete native construction and reports exact file sizes, before/after byte
 transport results and the bit-path controls.
 
+The [select comparison](../optional/select_compare/README.md) gives every
+candidate the same sampled offsets from native and fractional-index fixtures.
+It separates alternatives to Elias–Fano from changes to its internal selector,
+and reports construction, array and resident space, query patterns, forward
+scans and larger replayed-gap cases. Production navigation remains unchanged.
+
 Unadopted experiments
 --------------------
 

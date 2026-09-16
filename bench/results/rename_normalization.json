@@ -24,7 +24,7 @@
     {
       "path": "bench/README.md",
       "pre_rename_sha256": "58bfcf60e14cbea648a99b1d8d857e7e1845c692a490b4d0d881659d5dbe1d77",
-      "normalized_sha256": "b11ff71d557c928956a15876d993a8c8e5b4624c9180cefcf5c593411dda4b41"
+      "normalized_sha256": "25e047b10fd8f07f56b3bee2a38abea202c19d0ccac563321e7aa33a125fea5a"
     },
     {
       "path": "bench/bitmap512.h",
@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "5fdc222aad91980460d2b6196b37aa823c27db344a17d698ae9cf58503228ebb"
+      "normalized_sha256": "7dc054c67d830c90dbb2f2815bb987accf8494dc8991fb87464f463becf69899"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "6bf478d3d6354700dcaaf4c7996f3425c4871cccd5ae6360b8bb0eabb6bae478"
+      "normalized_sha256": "31c2be27e9cba6c667c52fe49e3238c4e04d7c981920360a659bfdb446fd982a"
     }
   ],
   "subsequent_updates": [
@@ -1060,6 +1060,14 @@
     },
     {
       "scope": "Link the matched CPU byte/bit native merge latency and same-data space measurements. Original measurement fingerprints are unchanged.",
+      "artifacts": [
+        "bench/README.md",
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link the reviewed same-offset select comparison and its measured boundaries; original benchmark identities are unchanged.",
       "artifacts": [
         "bench/README.md",
         "bench/results/publication_normalization.json",

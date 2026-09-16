@@ -418,7 +418,7 @@ def markdown_inputs(source):
     paths.extend(sorted((source / "optional/fixed_gpu_merge").glob("*.md")))
     paths.extend(sorted((source / "optional/fixed_kv_compare").glob("*.md")))
     paths.extend(sorted((source / "optional/cpu_profile_compare").glob("*.md")))
-    paths.extend(sorted((source / "optional/select_compare").glob("*.md")))
+    paths.extend(sorted((source / "optional/select_compare").rglob("*.md")))
     for name in ("proof/README.md", "THIRD_PARTY.md"):
         if (source / name).is_file():
             paths.append(source / name)

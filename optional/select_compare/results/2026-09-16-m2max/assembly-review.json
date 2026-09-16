@@ -1,0 +1,17 @@
+{
+  "binary_sha256": "953e526c126b3728d0bd0c774ea75199146b39334fd3f45ad3d525f98c1dad2c",
+  "method": "Read-only disassembly of the retained measured Release executable; no rebuild or execution.",
+  "tools": [
+    "xcrun llvm-objdump --disassemble --demangle",
+    "xcrun llvm-objdump --macho --indirect-symbols"
+  ],
+  "clock_stub": "0x10005ee14",
+  "expected_sum_loop": "0x100015654\u20130x1000156b0",
+  "start_clock_call": "0x10001572c",
+  "random_load_loop": "0x100015820\u20130x10001586c",
+  "backedge": "0x10001587c",
+  "sum_reduction": "0x100015954\u20130x100015970",
+  "stop_clock_call": "0x100015980",
+  "checksum_comparison": "0x100015988",
+  "finding": "The timed direct32 random-throughput loop contains four query-ordinal pair loads, eight scalar indexed 32-bit data loads, eight independent 64-bit sums, query-pointer advancement and a backward branch. The expected checksum loop precedes the start clock. No loop elimination, reused expected sum or SIMD gather was observed. This establishes the measured independent-load throughput, not serialized lookup latency."
+}
