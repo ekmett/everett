@@ -6,10 +6,14 @@ snapshots provide `get`; its engine applies `put`, `erase` and general changes
 and maintains the live count and additive signature. A [session](session.md) runs that same
 engine behind a mutable current link.
 
-The default is bit-first. `string_registry` assigns code zero to
-`unsorted<std::optional<std::string>>` and reserves code one for a later sort.
-`string_policy` uses that registry with 15:1 sampling and the normal exponential-
-Golomb backspace choice. One occupied sort lets us omit explicit sort arguments.
+The default is `storage_policy<>`: a tagless byte table containing
+`unsorted<std::optional<std::string>>`, with 15:1 sampling and byte-counted front
+coding. One occupied sort lets us omit explicit sort arguments.
+
+`typed_engine<string_policy>` selects the bit policy explicitly.
+Its `string_registry` assigns code zero to the optional-string sort and reserves
+code one for a later sort. It keeps 15:1 sampling and uses order-zero
+exponential-Golomb backspaces.
 
 ```cpp
 #include <everett/typed_world.h>
@@ -153,9 +157,10 @@ numbers followed by the nonempty schema ID; `decode` recovers that compact
 payload. The runtime's admission intervals are a separate part of a durable
 checkpoint. No table scan is needed to save this metadata.
 
-The default schema ID is `everett.optional-string/code0/v1`. The explicit tagless
-byte policy uses `everett.optional-string/tagless/byte-profile-v2`
-with the [byte string transport](byte-transport.md). Other registries require a
+The default schema ID is `everett.optional-string/tagless/byte-profile-v2`
+with the [byte string transport](byte-transport.md). The explicit `string_policy`
+uses `everett.optional-string/code0/v1` with the opaque runtime family.
+Other registries require a
 caller-supplied stable schema ID when constructing the engine. This identifier
 must name the codecs and semantic policies needed to interpret the saved data;
 it is not a compiler type name, tree fingerprint or additive state signature.

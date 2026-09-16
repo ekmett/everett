@@ -20,15 +20,17 @@ int main(int argc, char ** argv) {
 `connect` opens the latest version of that named session, creating an empty one
 when needed. Its default key and value type is `std::string`, including
 embedded zero bytes. A missing key returns an empty `std::optional`; a stored
-empty string remains present. The default uses the bit profile, 15:1 sampling,
-and order-zero exponential-Golomb backspaces. Sort code zero names the string
-table and code one remains reserved.
+empty string remains present. The default uses the byte profile, 15:1 sampling,
+and byte-counted front coding. Its single string sort needs no sort code.
 The free function `everett::connect(directory, name)` provides the same operation
 without keeping a multiverse object.
 
-Use `multiverse<storage_policy<>>` for the [byte string profile](byte-transport.md).
-It keeps the same connection API and 15:1 sampling, with byte-counted front
-coding, raw string payloads and byte tombstone tags.
+`multiverse<>` uses `storage_policy<>`: the [byte string profile](byte-transport.md)
+with raw string payloads and byte tombstone tags. For an explicit bit table,
+use `multiverse<string_policy>`. That registry assigns code zero to strings,
+reserves code one, and uses order-zero exponential-Golomb backspaces. Both
+profiles provide the same connection API. The policy and schema must match
+when reopening a named table.
 
 The ordinary `active_engine<P>` uses the redundant scheduler. Bit registries
 write sort-owned native records, retaining small private merge and index

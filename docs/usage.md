@@ -7,10 +7,27 @@ tickets, snapshots and forks. This guide goes underneath that API to file
 construction, explicit updates and merges, then explains representation and
 tuning choices. We keep the same policy from input records to mapped queries.
 
-For an ordinary byte-aligned string table, select
-`everett::multiverse<everett::storage_policy<>>`. Its `connect`, snapshots and
-transactions work like the default bit table; the [byte table guide](byte-transport.md)
-covers raw string framing and the matching schema.
+For an ordinary byte-aligned string table, use `everett::multiverse<>`, whose
+policy is `everett::storage_policy<>`. The [byte table guide](byte-transport.md)
+covers its raw string framing, schema and measured tradeoffs.
+
+For a bit table, select the policy explicitly:
+
+```cpp
+#include <everett/connection.h>
+
+using bit_store = everett::multiverse<everett::string_policy>;
+auto storage = bit_store::create("bit-data");
+auto db = storage.connect("main");
+db.put("name", "Everett");
+```
+
+This uses the bit registry and order-zero exponential-Golomb backspaces, with
+the same connection, snapshot and transaction operations. Choose its matching
+policy when reopening the store; a policy choice does not convert existing files.
+I use bytes as the starting point and measure the whole workload before choosing
+bit packing for space. Sorts with bit-oriented keys can declare that grammar
+directly.
 
 For low-level encoded blobs, use a sort exposing `using encoding = byte_encoding<>` for byte strings,
 or `bit_encoding<>` for packed bits, then use `storage_policy<tip<YourSort>>`.

@@ -18,14 +18,16 @@ db.put("name", "Persistent snapshots");
 // saved.get("name") still returns "Everett".
 ```
 
-Include `<everett/connection.h>` and link `everett::sqlite`. The default uses compact
-bit encoding, **15:1 index sampling** and **order-zero exponential-Golomb**
-backspaces. Ordinary keys and values are `std::string`; embedded zero bytes work.
-There are no codec parameters to choose before getting started.
+Include `<everett/connection.h>` and link `everett::sqlite`. The default stores
+byte strings with **15:1 index sampling** and byte-counted front coding, which
+stores only the changed suffix of each sorted key. Keys and values are
+`std::string`; embedded zero bytes work. There are no codec parameters to choose
+before getting started.
 
-For byte-aligned string storage, use
-`everett::multiverse<everett::storage_policy<>>` with the same API. The
-[byte table guide](docs/byte-transport.md) explains its space and parsing choices.
+I use the byte path for ordinary tables. The
+[byte table guide](docs/byte-transport.md) explains its framing and measured
+space and merge costs. Explicit bit policies remain available for applications
+with bit-oriented keys.
 
 Version 0.1.0 is experimental; APIs and file formats may change. The
 [connection guide](docs/connection.md) covers the mutable API and its failure
@@ -202,8 +204,8 @@ older readers retain the exact files their indexes describe. A completed merge
 changes the representation without changing the table's contents.
 
 The [design](docs/design.md) develops the accounting. The
-[detailed usage guide](docs/usage.md) covers lower-level construction, packed
-bits, byte profiles and policy choices. [Benchmarks](bench/README.md) and the
+[detailed usage guide](docs/usage.md) covers lower-level construction, byte
+profiles, explicit bit policies and tuning. [Benchmarks](bench/README.md) and the
 [Lean model](proof/README.md) record measurements and correctness arguments.
 
 License

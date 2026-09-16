@@ -18,7 +18,9 @@ while (table.pending()) table.advance(4096);
 
 The initial interface supports one occupied replacement sort. Key transport follows
 the selected runtime family, including the sort-owned native format.
-The default is the bit-oriented optional-string table. A custom sort must have the same state
+The default is the byte-oriented optional-string table under `storage_policy<>`.
+Use `replacement_rebuild_engine<string_policy>` for the bit policy.
+A custom sort must have the same state
 and arrow type, declare replacement semantics, and provide
 `clean(key, state)` to encode a resolved state as a replacement arrow. I check
 that applying this arrow to the initial state reproduces the scanned state.
@@ -37,7 +39,7 @@ auto saved = table.snapshot();
 table.save("before-edit", saved);
 ```
 
-The ordinary bit-profile connection selects `streaming_sort_runtime_family<P>`
+An explicit bit-profile connection selects `streaming_sort_runtime_family<P>`
 from `<everett/sort_runtime_context.h>` as its `Family`. The connection opens
 a catalog-bound storage context and shares it between the foreground and every
 large cleanup candidate. Completed native and fractional-index outputs are
@@ -228,10 +230,10 @@ freeze allowance 1056 and a depth-limited preflight query allowance, then adds
 the foreground typed engine quote. The default policy's resulting single-record
 quote is 40,164,546 structural units for the owning family. A streamed family
 that enables small owning construction adds its explicit conversion allowance;
-at the recommended policy the quote is 40,361,922 units. `reservation_work(n)`
+with `string_policy` the quote is 40,361,922 units. `reservation_work(n)`
 prices $n$ records with the same arithmetic used by `reservation(input)`.
-The ordinary connection's omitted work limit is the quote for 1024 records,
-41,330,608,128 units here. An explicit caller limit is never raised to fit a
+The ordinary connection's omitted work limit is its selected engine's quote
+for 1024 records. An explicit caller limit is never raised to fit a
 batch. Arithmetic is checked. Restored generations
 must pass the same mass/trigger validation that justifies these ratios.
 

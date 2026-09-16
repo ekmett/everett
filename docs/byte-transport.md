@@ -1,14 +1,14 @@
 Byte String Tables
 ==================
 
-I use the byte profile when byte-aligned parsing and copying matter more than
-the bit profile's smaller controls. The ordinary string API stays the same:
+I use the byte profile for ordinary string tables. Byte-aligned parsing and
+copying are a useful starting point, and bit packing does not consistently
+produce smaller complete files on the measured workloads. The ordinary API is:
 
 ```cpp
 #include <everett/connection.h>
 
-using policy = everett::storage_policy<>;
-auto storage = everett::multiverse<policy>::create("byte-data");
+auto storage = everett::multiverse<>::create("byte-data");
 auto db = storage.connect("main");
 db.put("name", "Everett");
 auto before = db.snapshot();
@@ -16,10 +16,16 @@ db.put("name", "Byte strings");
 // before.get("name") still returns "Everett".
 ```
 
-This policy has one tagless `unsorted<std::optional<std::string>>` sort,
+The default `storage_policy<>` has one tagless `unsorted<std::optional<std::string>>` sort,
 15:1 sampling and byte-counted front coding. It uses the same charged redundant
 merge scheduler, persistent worlds, named sessions and transactions as other
 typed tables. Its native files use the byte-aligned `KV02` profile.
+
+`multiverse<string_policy>` selects an explicit bit table with the same public
+operations. I keep that path available for bit-oriented key grammars and
+measured compression gains; I do not assume that smaller controls alone justify
+its parsing cost. The time and space results below compare the complete native
+merge and file costs that they actually measure.
 
 Record Boundaries
 -----------------
