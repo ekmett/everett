@@ -85,6 +85,24 @@ namespace diet {
     std::filesystem::path const & root() const & noexcept { return catalog_.root(); }
     std::filesystem::path const & root() const && = delete;
 
+    native_pointer sorted_native(std::span<profile_record const> records) {
+      require_active();
+      auto owner = this->shared_from_this();
+      try {
+        // The same encoder retains small output or spills its encoded prefix
+        // once. Finalization checks the complete retained allocation, including
+        // navigation metadata, before acquiring the shared allowance.
+        sort_profile_adaptive_writer<P, Selector, FileOps, native_stream_factory> writer(
+          native_stream_factory{owner.get()}, budget_, outputs_.object_bytes, true);
+        sort_runtime_detail::write_sorted_native<P, Selector>(writer, records);
+        auto completed = writer.finish();
+        if (auto owned = std::get_if<0>(&completed)) return native_type::from_owned(std::move(*owned));
+        auto receipt = std::get<1>(std::move(completed));
+        catalog_.record_sealed(ids_().hex(), receipt);
+        auto native = native_type::from_sealed(root(), identity_, std::move(receipt));
+        ++sealed_outputs_; return native;
+      } catch (...) { failed_ = true; throw; }
+    }
     template <class Compose> auto make_merge(native_pointer older, native_pointer newer, Compose compose) {
       require_active();
       try {
@@ -255,6 +273,9 @@ namespace diet {
     }
     std::shared_ptr<context_type> context() const noexcept { return context_; }
     native_pointer empty() const { return context_ ? context_->empty() : sort_runtime_storage<P, Selector>::empty(); }
+    native_pointer sorted_native(std::span<profile_record const> records) {
+      require_context(); return context_->sorted_native(records);
+    }
     void poison() noexcept { if (context_) context_->poison(); }
     template <class Compose> auto make_merge(native_pointer older, native_pointer newer, Compose compose) {
       require_context(); return context_->make_merge(std::move(older), std::move(newer), std::move(compose));

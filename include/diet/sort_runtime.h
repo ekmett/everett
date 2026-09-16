@@ -88,6 +88,35 @@ namespace diet {
     explicit sort_runtime_native(std::shared_ptr<mapped_type const> value) : mapped_(std::move(value)) {}
   };
 
+  namespace sort_runtime_detail {
+    // Input owns the full order keys for this synchronous call. Borrow them
+    // directly, retaining the previous view only long enough to compute LCP.
+    template <class P, class Selector, class Writer>
+    void write_sorted_native(Writer & writer, std::span<profile_record const> records) {
+      using leaves = typename registry_detail::info<typename P::registry_type>::leaves;
+      bit_view previous;
+      bool first = true;
+      for (auto const & record : records) {
+        auto key = record.key.view();
+        auto comparison = compare_common_bits(previous, key);
+        if (!first && comparison.order >= 0)
+          throw std::invalid_argument("sort native requires unique sorted keys");
+        sort_bit_reader input(key);
+        Selector::select(input, [&]<class S>(std::type_identity<S>, auto & source) {
+          sort_codec_detail::validate_value_width<S>();
+          sort_profile_frame frame;
+          frame.path = key.prefix(source.position());
+          frame.leaf = sort_profile_detail::ordinal<leaves, S>::value;
+          frame.key_units = key.size();
+          frame.front_coded = sort_profile_key<typename sort_codec<S>::key_codec>::front_coded;
+          std::array<bit_view, 1> spans{key};
+          writer.append_frame(frame, spans, comparison.common_bits, record.value.view());
+        });
+        previous = key; first = false;
+      }
+    }
+  }
+
   template <class P, class Selector = registry_selector<typename P::registry_type>> struct sort_runtime_storage {
     static_assert(P::unit == profile_unit::bit, "sort runtime uses bit-addressed records");
     using native_type = sort_runtime_native<P, Selector>;
@@ -107,21 +136,12 @@ namespace diet {
     }
     template <class Node> static auto finish_index(index_type<Node> & index) { return Node::from_built(index.finish()); }
     static auto empty() { sort_profile_writer<P, Selector> writer; return native_type::from_owned(writer.finish()); }
-    static auto singleton(profile_record const & record) {
-      using leaves = typename registry_detail::info<typename P::registry_type>::leaves;
+    static auto sorted_native(std::span<profile_record const> records) {
       sort_profile_writer<P, Selector> writer;
-      sort_bit_reader input(record.key.view());
-      Selector::select(input, [&]<class S>(std::type_identity<S>, auto & source) {
-        sort_profile_frame frame;
-        frame.path = record.key.view().prefix(source.position());
-        frame.leaf = sort_profile_detail::ordinal<leaves, S>::value;
-        frame.key_units = record.key.bit_size;
-        frame.front_coded = sort_profile_key<typename sort_codec<S>::key_codec>::front_coded;
-        std::array<bit_view, 1> spans{record.key.view()};
-        writer.append_frame(frame, spans, 0, record.value.view());
-      });
+      sort_runtime_detail::write_sorted_native<P, Selector>(writer, records);
       return native_type::from_owned(writer.finish());
     }
+    static auto singleton(profile_record const & record) { return sorted_native({&record, 1}); }
   };
 
   // Policy/schema dispatch can select this concrete family before entering a
