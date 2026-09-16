@@ -334,6 +334,8 @@ namespace diet {
       runtime_ = std::move(replacement); current_ = std::move(state);
     }
     cola_type snapshot() const { return current_; }
+    // A rebuild shares the concrete execution context, not a borrowed backend pointer.
+    auto storage() const requires requires (runtime_type const & value) { value.storage(); } { return runtime_.storage(); }
     bool pending() const noexcept { return runtime_.pending(); }
     bool failed() const noexcept { return failed_ || runtime_.failed(); }
     void poison() noexcept {
