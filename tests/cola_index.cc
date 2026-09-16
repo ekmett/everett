@@ -428,7 +428,7 @@ namespace {
     auto cursor = [&] {
       auto local = cola_query_root<P>::build(node->encoded);
       auto storage = query;
-      auto result = local.cursor(storage.view());
+      auto result = local.cursor_owned(std::move(storage));
       while (!result.has_match() && !result.done()) result.step();
       return result;
     }();
@@ -578,12 +578,12 @@ namespace {
       if (auto found = find(top->secondary_rows, query))
         wanted.push_back({top->secondary.get(), *found, top->secondary_rows[*found].value});
       check_matches(actual, wanted);
-      auto cursor = query_root.cursor(query);
+      auto cursor = i & 1 ? query_root.cursor_owned(bit_string::copy(query)) : query_root.cursor(query);
       if (i % 29 == 0) {
         cursor.step(1);
         auto copy = cursor;
         check_matches(drain(cursor), drain(copy));
-        cursor = query_root.cursor(query);
+        cursor = query_root.cursor_owned(bit_string::copy(query));
       }
       std::vector<match> query_expected;
       if (auto found = find(top->secondary_rows, query))

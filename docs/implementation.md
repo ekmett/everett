@@ -80,6 +80,15 @@ proof and from byte or latency guarantees.
 
 `runtime_store<P>` seals that exact graph, reuses known native owners during
 reindexing, and publishes its root plus small checkpoint through schema 4.
+Its local owner registry retains the latest acknowledged closure. An already
+live owner costs a reference increment; only new or retired owners visit their
+immediate dependencies. The registry is restricted to the new durable roots
+before checkpoint decoding, so an older cached closure cannot replace a missing
+pin. Tests cover allocation rollback, deep facade collisions, owner retirement
+and a 512-node suffix retained 100 times without revisiting its children.
+Validated redundant checkpoints walk their unique level slots in dependency
+order, avoiding a separate closure allocation for encoding. Raw or imported
+frontiers still undergo the complete structural checks.
 Reopening maps the published files and validates frontier metadata without
 decoding payloads. Unfinished private work restarts from the published inputs.
 The focused ASan/UBSan suites check equivalent layouts, noncommutative merges,
@@ -578,6 +587,13 @@ match returns its owned value, ordinal and exact source pair. Equality continues
 to route downstream, carrying exact query agreement, comparison direction and
 an optional full boundary length. Independent copies can progress separately. Decoding
 failure makes the cursor unusable rather than resuming partial work.
+
+The COLA cursor used by typed lookups can take an encoded query through
+`cursor_owned`, transferring its allocation into the shared comparison context.
+Derived contexts and cursor copies retain that immutable query. The mapped
+sort-owned pair validates and caches its combined navigation view when binding
+the exact native/index owners. Search steps reuse that view. Returned matches
+still own their values.
 
 The [query contract](query.md) separates entry/header bounds from string bytes,
 preparation and scheduler costs. Shape validation rejects cycles, missing

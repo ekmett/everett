@@ -204,9 +204,12 @@ namespace diet {
       if (index->borrowed(0).size() != (main ? main->group_count() : 0) ||
           index->borrowed(1).size() != (secondary ? secondary->size() / P::group_size + (secondary->size() % P::group_size != 0) : 0))
         throw std::invalid_argument("sort COLA sample count mismatch");
-      auto result = pair_type(new mapped_sort_cola(identity, std::move(native), std::move(index), std::move(main), std::move(secondary)));
-      (void)result->view(); // Validate the combined shape without touching payload.
-      return result;
+      // Validate the immutable combined shape once, without touching payload.
+      // Its spans remain backed by the native/index owners retained below.
+      view_type view{native->view(), {index->borrowed(0), index->borrowed(1)}, {index->interleave(0), index->interleave(1)},
+        {index->false_borrow_bits(0), index->false_borrow_bits(1)}, {index->cut_lcps(0), index->cut_lcps(1)}, index->virtual_size()};
+      return pair_type(new mapped_sort_cola(identity, std::move(native), std::move(index), std::move(main),
+        std::move(secondary), std::move(view)));
     }
     auto const & identity() const & noexcept { return identity_; }
     auto const & identity() const && = delete;
@@ -215,12 +218,9 @@ namespace diet {
     index_pointer index_object() const noexcept { return index_; }
     pair_type main_target() const noexcept { return main_; }
     native_pointer secondary_target() const noexcept { return secondary_; }
-    std::uint64_t virtual_size() const { return index_->virtual_size(); }
-    std::uint64_t group_count() const { return virtual_size() / P::group_size + (virtual_size() % P::group_size != 0); }
-    view_type view() const & {
-      return {native_->view(), {index_->borrowed(0), index_->borrowed(1)}, {index_->interleave(0), index_->interleave(1)},
-        {index_->false_borrow_bits(0), index_->false_borrow_bits(1)}, {index_->cut_lcps(0), index_->cut_lcps(1)}, virtual_size()};
-    }
+    std::uint64_t virtual_size() const noexcept { return view_.virtual_size(); }
+    std::uint64_t group_count() const noexcept { return view_.group_count(); }
+    view_type view() const & { return view_; }
     view_type view() const && = delete;
     void scan() const { scan_mapped_cola(*this); }
   private:
@@ -229,8 +229,10 @@ namespace diet {
     std::shared_ptr<mapped_cola_index<P> const> index_;
     pair_type main_;
     native_pointer secondary_;
+    view_type view_;
     mapped_sort_cola(blob_identity identity, native_pointer native, std::shared_ptr<mapped_cola_index<P> const> index,
-        pair_type main, native_pointer secondary)
-      : identity_(identity), native_(std::move(native)), index_(std::move(index)), main_(std::move(main)), secondary_(std::move(secondary)) {}
+        pair_type main, native_pointer secondary, view_type view)
+      : identity_(identity), native_(std::move(native)), index_(std::move(index)), main_(std::move(main)),
+        secondary_(std::move(secondary)), view_(std::move(view)) {}
   };
 }

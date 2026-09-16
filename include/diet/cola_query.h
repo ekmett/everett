@@ -59,6 +59,9 @@ namespace diet {
     }
     pair_type head() const noexcept { return head_; }
     cola_query_cursor<P, Blob> cursor(bit_view query) const { return cola_query_cursor<P, Blob>(*this, query); }
+    cola_query_cursor<P, Blob> cursor_owned(bit_string query) const {
+      return cola_query_cursor<P, Blob>::from_owned(*this, std::move(query));
+    }
   private:
     explicit cola_query_root(pair_type head) : head_(std::move(head)) {}
     pair_type head_;
@@ -72,9 +75,9 @@ namespace diet {
     using pair_type = std::shared_ptr<Blob const>;
     using match_type = cola_query_match<P, Blob>;
     explicit cola_query_cursor(cola_query_root<P, Blob> const & root, bit_view query)
-      : current_(root.head()), context_(query) {
-      if (!current_) error_detail::raise<std::invalid_argument>("COLA query root has no head");
-      if (!current_->virtual_size()) current_.reset();
+      : cola_query_cursor(root, profile_query_context<P>(query), prepared_query{}) {}
+    static cola_query_cursor from_owned(cola_query_root<P, Blob> const & root, bit_string query) {
+      return cola_query_cursor(root, profile_query_context<P>::from_owned(std::move(query)), prepared_query{});
     }
     cola_query_cursor(cola_query_cursor const &) = default;
     cola_query_cursor & operator=(cola_query_cursor const &) = default;
@@ -131,6 +134,12 @@ namespace diet {
       return result;
     }
   private:
+    struct prepared_query {};
+    cola_query_cursor(cola_query_root<P, Blob> const & root, profile_query_context<P> context, prepared_query)
+      : current_(root.head()), context_(std::move(context)) {
+      if (!current_) error_detail::raise<std::invalid_argument>("COLA query root has no head");
+      if (!current_->virtual_size()) current_.reset();
+    }
     pair_type current_;
     profile_query_context<P> context_;
     std::uint64_t group_ = 0;

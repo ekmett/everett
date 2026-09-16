@@ -184,7 +184,11 @@ namespace diet {
     get(typed_detail::key_t<S> const & key) const {
       using semantics = sort_semantics<S>;
       auto encoded = key_transport::template encode<S>(key);
-      auto cursor = state_->runtime.cursor(encoded.view());
+      auto cursor = [&] {
+        if constexpr (requires { state_->runtime.cursor_owned(std::move(encoded)); })
+          return state_->runtime.cursor_owned(std::move(encoded));
+        else return state_->runtime.cursor(encoded.view());
+      }();
       if constexpr (typed_detail::replacement<S>) {
         while (!cursor.done()) {
           cursor.step(1);

@@ -74,6 +74,35 @@ namespace {
     for (std::uint64_t i = 0; i < count; ++i) append_bit(result, original_bit(value, i));
     return result;
   }
+  void moved_queries() {
+    using P = string_policy;
+    auto original = text(std::string("query\0bytes", 11));
+    auto buffer = original.bytes.data();
+    auto context = profile_query_context<P>::from_owned(std::move(original));
+    require(context.query().storage().data() == buffer, "owned query allocation was copied");
+    original = text("overwritten input");
+    auto expected = text(std::string("query\0bytes", 11));
+    require(same_bits(context.query(), expected.view()) && context.order() == -1,
+      "transferred query lost contents or initial order");
+    auto anchored = context.with_key(expected.view());
+    require(anchored.query().storage().data() == buffer && !anchored.order(),
+      "derived comparison did not share transferred query");
+    auto partial = bit_string::from_bits("1010110010101");
+    auto bit_context = profile_query_context<P>::from_owned(std::move(partial));
+    require(bit_context.query().size() == 13, "partial-byte query changed extent");
+    auto empty = profile_query_context<P>::from_owned({});
+    require(empty.query().empty() && !empty.order(), "empty moved query changed order");
+    rejects([] {
+      auto malformed = text("x"); malformed.bit_size += 8;
+      (void)profile_query_context<P>::from_owned(std::move(malformed));
+    });
+    rejects([] {
+      auto malformed = bit_string::from_bits("1"); malformed.bytes[0] |= std::byte{1};
+      (void)profile_query_context<P>::from_owned(std::move(malformed));
+    });
+    using bytes = storage_policy<tip<encoded_sort<byte_encoding<>>>>;
+    rejects([] { (void)profile_query_context<bytes>::from_owned(bit_string::from_bits("1")); });
+  }
   bit_string displaced(bit_view value, unsigned shift) {
     bit_string result;
     for (unsigned i = 0; i != shift; ++i) append_bit(result, true);
@@ -524,6 +553,7 @@ namespace {
 
 int main() {
   try {
+    moved_queries();
     matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 15>>();
     matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
     matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 15>>();

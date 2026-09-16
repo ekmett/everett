@@ -327,6 +327,14 @@ namespace diet {
       query_ = std::make_shared<bit_string const>(bit_string::copy(query));
       order_ = query.size() ? -1 : 0;
     }
+    // Transfer an already encoded query without copying its allocation. Every
+    // derived comparison still shares one immutable owner, as for bit_view.
+    static profile_query_context from_owned(bit_string query) {
+      query.validate();
+      if (query.bit_size & (P::bits_per_unit - 1)) error_detail::raise<std::invalid_argument>("query unit mismatch");
+      auto order = query.bit_size ? -1 : 0;
+      return profile_query_context(std::make_shared<bit_string const>(std::move(query)), order);
+    }
     bit_view query() const {
       if (!query_) error_detail::raise<std::logic_error>("comparison context has no query");
       return query_->view();
@@ -382,6 +390,8 @@ namespace diet {
     }
 
   private:
+    profile_query_context(std::shared_ptr<bit_string const> query, int order)
+      : query_(std::move(query)), order_(order) {}
     template <class, stream_role> friend struct profile_view;
     template <class> friend struct profile_blob;
     template <class> friend struct profile_blob_view;

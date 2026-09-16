@@ -194,6 +194,7 @@ namespace diet {
     query_type const & query_root() const & noexcept { return state_->query; }
     query_type const & query_root() const && = delete;
     auto cursor(bit_view key) const { return state_->query.cursor(key); }
+    auto cursor_owned(bit_string key) const { return state_->query.cursor_owned(std::move(key)); }
     bool same_layout(redundant_snapshot const & other) const noexcept { return state_ == other.state_; }
     // Metadata admission only. The native/index payloads must separately be
     // admitted or trusted. Exact pointer relationships are deliberate: a
