@@ -206,7 +206,10 @@ namespace everett {
   }
 }
 
+// Standard customization: iterators retain their own snapshot and walk state.
+/// \cond
 namespace std::ranges {
   template <class S, class World>
   inline constexpr bool enable_borrowed_range<everett::typed_scan<S, World>> = true;
 }
+/// \endcond
