@@ -6,6 +6,8 @@ native merge writes directly to its reserved `.kv` file, and fractional indexes
 stream into reserved `.index` files. The context owns its
 SQLite connection and concrete file operations. It survives moves and rebases
 of the active engine; immutable snapshots retain their mapped inputs directly.
+Each unfinished job also pins its context until its writer and scratch resources
+have been destroyed, even if the last external storage handle is released.
 
 ```cpp
 #include <diet/sort_runtime_context.h>

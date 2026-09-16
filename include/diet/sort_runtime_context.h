@@ -24,11 +24,28 @@ namespace diet {
   // outside the merge's per-record loop.
   template <class P, class Selector = registry_selector<typename P::registry_type>, class Ids = random_object_ids,
             class CatalogOps = sqlite_catalog_ops, class FileOps = posix_object_ops>
-  struct sort_runtime_context {
+  struct sort_runtime_context : std::enable_shared_from_this<sort_runtime_context<P, Selector, Ids, CatalogOps, FileOps>> {
+  private:
+    // Listed before each writer base, so the writer closes its borrowed Ops
+    // and scratch descriptors before releasing the final context owner.
+    struct context_pin {
+      std::shared_ptr<sort_runtime_context> owner_;
+      explicit context_pin(std::shared_ptr<sort_runtime_context> owner) : owner_(std::move(owner)) {}
+    };
+  public:
     using native_type = sort_runtime_native<P, Selector>;
     using native_pointer = std::shared_ptr<native_type const>;
     using catalog_type = sqlite_catalog<P, CatalogOps>;
-    template <class Compose> using merge_type = sort_profile_file_merge<P, native_type, Compose, Selector, FileOps>;
+    template <class Compose> struct merge_type : private context_pin,
+        public sort_profile_file_merge<P, native_type, Compose, Selector, FileOps> {
+      using base_type = sort_profile_file_merge<P, native_type, Compose, Selector, FileOps>;
+    private:
+      friend struct sort_runtime_context;
+      merge_type(std::shared_ptr<sort_runtime_context> owner, object_id output, object_attempt_id attempt,
+          native_pointer older, native_pointer newer, Compose compose)
+        : context_pin(owner), base_type(owner->root(), std::move(output), std::move(attempt),
+            std::move(older), std::move(newer), owner->file_ops_, std::move(compose)) {}
+    };
     static std::shared_ptr<sort_runtime_context> open(std::filesystem::path const & root, Ids ids = {},
         catalog_options options = {}, CatalogOps catalog_ops = {}, FileOps file_ops = {}) {
       auto catalog = catalog_type::open(root, options, std::move(catalog_ops));
@@ -58,37 +75,37 @@ namespace diet {
         // Current published roots already retain durable inputs. Private
         // uncommitted inputs need not survive a failed logical publication.
         catalog_.reserve(operation, attempt, owner, {}, reservation);
-        return std::make_unique<merge_type<Compose>>(root(), output, attempt,
-          std::move(older), std::move(newer), file_ops_, std::move(compose));
+        return std::unique_ptr<merge_type<Compose>>(new merge_type<Compose>(this->shared_from_this(), output, attempt,
+          std::move(older), std::move(newer), std::move(compose)));
       } catch (...) { failed_ = true; throw; }
     }
     template <class Merge> native_pointer finish_merge(Merge & merge) {
       require_active();
       try {
+        if (merge.owner_.get() != this) throw std::invalid_argument("merge belongs to another runtime context");
         auto receipt = merge.finish();
         catalog_.record_sealed(ids_().hex(), receipt);
         auto native = native_type::from_sealed(root(), identity_, std::move(receipt));
         ++sealed_outputs_; return native;
       } catch (...) { failed_ = true; throw; }
     }
-    template <class Node> struct index_type : cola_file_index_builder<P, native_type, Node, FileOps> {
+    template <class Node> struct index_type : private context_pin, public cola_file_index_builder<P, native_type, Node, FileOps> {
       using base_type = cola_file_index_builder<P, native_type, Node, FileOps>;
     private:
       friend struct sort_runtime_context;
       using mapped_type = typename Node::storage_type::mapped_pair_type;
       using native_binding_pointer = std::shared_ptr<native_binding<typename mapped_type::native_type> const>;
       using pair_binding_pointer = std::shared_ptr<pair_binding<mapped_type> const>;
-      sort_runtime_context const * owner_;
       native_binding_pointer native_, secondary_;
       pair_binding_pointer main_;
-      index_type(sort_runtime_context & owner, object_id output, object_attempt_id attempt,
+      index_type(std::shared_ptr<sort_runtime_context> owner, object_id output, object_attempt_id attempt,
           native_pointer native, typename Node::pair_type main, native_pointer secondary,
           native_binding_pointer n, pair_binding_pointer m, native_binding_pointer s)
-        : base_type(owner.root(), std::move(output), std::move(attempt),
+        : context_pin(owner), base_type(owner->root(), std::move(output), std::move(attempt),
             {n->receipt.object, m ? std::optional<blob_identity>(m->identity) : std::nullopt,
               s ? std::optional<object_id>(s->receipt.object) : std::nullopt},
-            std::move(native), std::move(main), std::move(secondary), owner.file_ops_, owner.spool_ops_),
-          owner_(&owner), native_(std::move(n)), secondary_(std::move(s)), main_(std::move(m)) {}
+            std::move(native), std::move(main), std::move(secondary), owner->file_ops_, owner->spool_ops_),
+          native_(std::move(n)), secondary_(std::move(s)), main_(std::move(m)) {}
     };
     template <class Node> auto make_index(native_pointer native, typename Node::pair_type main, native_pointer secondary) {
       require_active();
@@ -103,7 +120,7 @@ namespace diet {
         std::array<blob_identity, 1> inputs{m ? m->identity : blob_identity{n->receipt.object, output}};
         auto owner = ids_().hex(); auto operation = ids_().hex();
         catalog_.reserve(operation, attempt, owner, std::span<blob_identity const>(inputs.data(), m ? 1 : 0), reservation);
-        return std::unique_ptr<index_type<Node>>(new index_type<Node>(*this, output, attempt,
+        return std::unique_ptr<index_type<Node>>(new index_type<Node>(this->shared_from_this(), output, attempt,
           std::move(native), std::move(main), std::move(secondary), std::move(n), std::move(m), std::move(s)));
       } catch (...) { failed_ = true; throw; }
     }
@@ -112,7 +129,7 @@ namespace diet {
       try {
         using family = sort_runtime_family<P, Selector, typename Node::storage_type>;
         using mapped_type = typename family::storage_type::mapped_pair_type;
-        if (index.owner_ != this) throw std::invalid_argument("index belongs to another runtime context");
+        if (index.owner_.get() != this) throw std::invalid_argument("index belongs to another runtime context");
         auto receipt = index.finish(); catalog_.record_sealed(ids_().hex(), receipt);
         auto native = index.native_owner(); auto main = index.main_target(); auto secondary = index.secondary_target();
         // Construction already acknowledged these exact dependencies. The job

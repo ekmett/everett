@@ -167,6 +167,36 @@ namespace {
     rejects([&] { (void)owner.context()->finish_index<family::node_type>(*invalid); });
     assert(owner.context()->failed());
   }
+  void job_context_lifetimes() {
+    temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    auto older = core::put("a", "old"), newer = core::put("b", "new");
+    auto a = storage::singleton(older.records()[0]), b = storage::singleton(newer.records()[0]);
+    auto disk = storage::open(dir.root), other = storage::open(dir.root);
+    std::weak_ptr<storage::context_type> retained = disk.context();
+    auto merge = disk.context()->make_merge(a, b, replace_native_value{});
+    disk = storage{}; assert(!retained.expired());
+    while (!merge->done()) merge->step(1);
+    rejects([&] { (void)other.context()->finish_merge(*merge); });
+    assert(other.context()->failed() && !retained.lock()->failed() && !merge->failed());
+    auto merged = retained.lock()->finish_merge(*merge);
+    merge.reset(); assert(retained.expired()); merged->mapped()->scan();
+
+    disk = storage::open(dir.root); retained = disk.context();
+    auto index = disk.context()->make_index<family::node_type>(a, {}, b);
+    disk = storage{}; assert(!retained.expired());
+    while (!index->done()) index->step(1);
+    auto pair = retained.lock()->finish_index<family::node_type>(*index);
+    index.reset(); assert(retained.expired()); pair->mapped()->scan();
+
+    // An unfinished secondary spool closes before releasing its last context.
+    disk = storage::open(dir.root); retained = disk.context();
+    auto large = core::put(std::string(100'000, 'z'), "large key");
+    auto abandoned = disk.context()->make_index<family::node_type>(disk.empty(), {},
+      storage::singleton(large.records()[0]));
+    disk = storage{}; assert(!retained.expired());
+    abandoned->step(1); assert(abandoned->spooled_bytes() >= 64 * 1024);
+    abandoned.reset(); assert(retained.expired());
+  }
   struct failure_state { int file = 0, commit = 0, commits = 0; bool after = false; };
   struct file_ops : posix_object_ops {
     std::shared_ptr<failure_state> state;
@@ -218,6 +248,6 @@ namespace {
   }
 }
 int main() {
-  try { owned_parity(); hidden_stages(); retained_index_jobs(); failures(); }
+  try { owned_parity(); hidden_stages(); retained_index_jobs(); job_context_lifetimes(); failures(); }
   catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }
