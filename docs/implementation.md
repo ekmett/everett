@@ -1121,6 +1121,11 @@ uses seven ready units to reduce reservations from 17 to 11 with unchanged
 agree with ordinary preparation. Concurrent producers, aliases, the 16-unit
 bound and uncertain reservation or acknowledgment cuts are covered separately.
 
+At `98409e8`, eight combined strict O2 ASan/UBSan suites and Doxygen passed.
+They combine ready reservations with empty and initial batches, shared binding
+failures, concurrent connections, and streamed restart cuts. Doxygen checked
+85 Markdown pages and 687 formulas, including the new preparation contract.
+
 Integration checks on 2026-09-16 passed under AppleClang 21, strict warnings,
 O2 and ASan/UBSan for shared owner bindings, seal acknowledgment failures,
 mapping lifetimes, canonical fallback, runtime publication and streamed native
