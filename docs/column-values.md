@@ -96,10 +96,18 @@ $-f(v)$. We can carry several such summaries together.
 | Variance | Sum, sum of squares and count in the chosen arithmetic domain |
 | Weighted sum | Changes in the projected product, with validated old operands |
 | XOR | Per-plane parity; each contribution is its own inverse |
+| Bitwise OR / AND | Live one-counts per plane and live-row count; test positive / equal to row count |
 
 For sum of squares, the update is $v'^2-v^2$, not $(v'-v)^2$. In general an
 aggregate projection need not preserve the physical representation of a diff.
 Admission must have enough information to construct its projected change.
+
+For bitwise aggregates, project each value bit separately. Changing 10 to 13
+turns bit one off and bit two on; the arithmetic difference 3 does not encode
+those membership changes. Signed numeric-delta planes suffice for SUM, while
+OR and AND need changes in each actual value bit's membership. Define their
+empty-range identities explicitly; with fixed-width values they are zero for
+OR and all ones for AND.
 
 In the categorical presentation, an update $a:x\to y$ contributes
 $\delta_f(a)=f(y)-f(x)$. For composable updates,
