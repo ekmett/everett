@@ -93,7 +93,14 @@ namespace diet {
     bool failed() const noexcept { return failed_ || core_.failed() || store_.failed(); }
     bool pending() const noexcept { return core_.pending(); }
     bool admission_ready() const noexcept { return !failed() && core_.admission_ready(); }
-    std::string const & last_operation() const noexcept { return store_.last_operation(); }
+    std::string const & last_operation() const noexcept {
+      if (catalog_failure_) {
+        try { std::rethrow_exception(catalog_failure_); }
+        catch (catalog_error const & error) { return error.operation; }
+        catch (...) {}
+      }
+      return store_.last_operation();
+    }
 
     cola_type contribute(contribution_type input) {
       require_active();
@@ -102,10 +109,10 @@ namespace diet {
       // this ticket; publication failures may never take that path.
       auto updated = [&] {
         try { return core_.contribute(std::move(input)); }
-        catch (...) { if (core_.failed()) poison(); throw; }
+        catch (...) { remember_failure(); if (core_.failed()) poison(); throw; }
       }();
       try { return publish(std::move(updated)); }
-      catch (...) { poison(); throw; }
+      catch (...) { remember_failure(); poison(); throw; }
     }
     std::optional<cola_type> advance(std::uint64_t budget) {
       require_active();
@@ -113,7 +120,7 @@ namespace diet {
         auto updated = core_.advance(budget);
         if (!updated) return std::nullopt;
         return publish(std::move(*updated));
-      } catch (...) { poison(); throw; }
+      } catch (...) { remember_failure(); poison(); throw; }
     }
 
   private:
@@ -121,6 +128,7 @@ namespace diet {
     Core core_;
     cola_type current_;
     std::string schema_;
+    std::exception_ptr catalog_failure_;
     bool failed_ = false;
 
     persistent_engine(store_type store, Core core, cola_type current, std::string schema)
@@ -146,7 +154,15 @@ namespace diet {
         else core_ = Core::from_snapshot(mapped);
       }
       current_ = std::move(mapped);
+      catalog_failure_ = nullptr;
       return current_;
+    }
+    void remember_failure() noexcept {
+      // A streamed Core has its own catalog connection. Keep its exact error
+      // alive without copying the operation string while handling a failure.
+      try { throw; }
+      catch (catalog_error const &) { catalog_failure_ = std::current_exception(); }
+      catch (...) { catalog_failure_ = nullptr; }
     }
     void require_active() const { if (failed()) throw std::logic_error("failed persistent Diet engine; reconnect it"); }
     void poison() noexcept {
