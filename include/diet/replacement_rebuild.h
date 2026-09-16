@@ -148,15 +148,57 @@ namespace diet {
     static replacement_rebuild_engine from_snapshot(cola_type source) {
       return replacement_rebuild_engine(std::move(source));
     }
+    template <class Storage>
+    static replacement_rebuild_engine from_clean(typed_cola_type source, Storage storage)
+      requires requires { engine_type::from_snapshot(source, std::move(storage)); }
+    {
+      if (source.runtime().admissions() != source.metadata().live_count)
+        throw std::invalid_argument("replacement rebuild restore needs a clean admission mass");
+      auto b = source.metadata().live_count;
+      return from_snapshot(cola_type(std::move(source), b), std::move(storage));
+    }
+    template <class Storage>
+    static replacement_rebuild_engine from_snapshot(cola_type source, Storage storage)
+      requires requires { engine_type::from_snapshot(source, std::move(storage)); }
+    {
+      return replacement_rebuild_engine(std::move(source), std::move(storage));
+    }
     replacement_rebuild_engine(replacement_rebuild_engine const &) = delete;
     replacement_rebuild_engine & operator=(replacement_rebuild_engine const &) = delete;
     replacement_rebuild_engine(replacement_rebuild_engine &&) noexcept = default;
     replacement_rebuild_engine & operator=(replacement_rebuild_engine &&) noexcept = default;
 
     cola_type snapshot() const { active(); return published_; }
-    bool failed() const noexcept { return failed_; }
+    bool failed() const noexcept {
+      return failed_ || (foreground_ && foreground_->failed()) ||
+        (job_ && job_->candidate && job_->candidate->failed());
+    }
+    // A shared storage context is serialized with both private executors.
+    // Poison it too when an outer durable publication becomes uncertain.
+    void poison() noexcept {
+      failed_ = true;
+      if (foreground_) foreground_->poison();
+      if (job_ && job_->candidate) job_->candidate->poison();
+    }
+    auto storage() const requires requires(engine_type const & core) { core.storage(); } {
+      active();
+      return foreground_->storage();
+    }
+    // Replace only a settled, equivalent physical graph. The concrete storage
+    // context survives publication, including after a candidate handoff.
+    void rebase(cola_type state) {
+      writable();
+      if (pending() || state.metadata() != published_.metadata() ||
+          state.runtime().admissions() != published_.runtime().admissions())
+        throw std::invalid_argument("replacement rebase requires a settled equivalent snapshot");
+      try {
+        foreground_->rebase(state);
+        work_.foreground_charged = add(work_.foreground_charged, foreground_->work().charged);
+        published_ = std::move(state);
+      } catch (...) { poison(); throw; }
+    }
     bool pending() const noexcept { return foreground_ && (job_ || foreground_->pending()); }
-    bool admission_ready() const noexcept { return foreground_ && !failed_ && !recovering_ && foreground_->admission_ready(); }
+    bool admission_ready() const noexcept { return foreground_ && !failed() && !recovering_ && foreground_->admission_ready(); }
     replacement_rebuild_work work() const noexcept { return work_; }
     replacement_rebuild_status status() const {
       active(); replacement_rebuild_status out; out.clean_base = base_; out.mutations = mutations_;
@@ -226,7 +268,7 @@ namespace diet {
         for (auto & entry : entries) apply(std::move(entry));
         published_ = publication();
         return published_;
-      } catch (...) { failed_ = true; throw; }
+      } catch (...) { poison(); throw; }
     }
     std::optional<cola_type> advance(std::uint64_t budget) {
       writable(); if (!budget || !pending()) return {};
@@ -235,7 +277,7 @@ namespace diet {
         if (job_ && foreground_->admission_ready()) { grant(budget); service(); }
         else foreground_advance(budget);
         published_ = publication();
-      } catch (...) { failed_ = true; throw; }
+      } catch (...) { poison(); throw; }
       if (before.runtime().same_layout(published_.runtime()) && before.metadata() == published_.metadata()) return {};
       return published_;
     }
@@ -269,6 +311,16 @@ namespace diet {
     explicit replacement_rebuild_engine(cola_type value)
       : foreground_(std::make_unique<engine_type>(engine_type::from_snapshot(value))), published_(std::move(value)),
         base_(published_.metadata().clean_base), mutations_(published_.metadata().mutations) {
+      initialize_restore();
+    }
+    template <class Storage>
+    replacement_rebuild_engine(cola_type value, Storage storage)
+      : foreground_(std::make_unique<engine_type>(engine_type::from_snapshot(value, std::move(storage)))),
+        published_(std::move(value)), base_(published_.metadata().clean_base),
+        mutations_(published_.metadata().mutations) {
+      initialize_restore();
+    }
+    void initialize_restore() {
       if (published_.runtime().query_root().head()->depth() > DepthLimit)
         throw std::length_error("restored replacement query exceeds depth allowance");
       work_.foreground_charged = foreground_->work().charged;
@@ -276,7 +328,7 @@ namespace diet {
     }
     cola_type publication() const { return {foreground_->snapshot(), base_, mutations_, bool(job_)}; }
     void active() const { if (!foreground_) throw std::logic_error("moved-from replacement rebuild engine"); }
-    void writable() const { active(); if (failed_) throw std::logic_error("failed replacement rebuild engine"); }
+    void writable() const { active(); if (failed()) throw std::logic_error("failed replacement rebuild engine"); }
     static std::uint64_t mass(typed_cola_type const & state) { return state.runtime().admissions(); }
     static std::uint64_t add(std::uint64_t a, std::uint64_t b) { return profile_detail::add(a, b); }
     static std::uint64_t mul(std::uint64_t a, std::uint64_t b) { return profile_detail::multiply(a, b); }
@@ -392,8 +444,15 @@ namespace diet {
         job_->credit -= cost; job_->committed += cost; work_.committed = add(work_.committed, cost);
         auto & j = *job_;
         if (!j.candidate) {
-          j.candidate = std::make_unique<engine_type>(j.frozen.metadata().schema_id);
-          work_.candidate_charged = add(work_.candidate_charged, j.candidate->work().charged);
+          auto seed = std::make_unique<engine_type>(j.frozen.metadata().schema_id);
+          work_.candidate_charged = add(work_.candidate_charged, seed->work().charged);
+          if constexpr (requires { foreground_->storage(); }) {
+            // The empty seed does not execute native work. Its initialization
+            // and context-aware restoration both fit the setup's 32-unit margin.
+            j.candidate = std::make_unique<engine_type>(
+              engine_type::from_snapshot(seed->snapshot(), foreground_->storage()));
+            work_.candidate_charged = add(work_.candidate_charged, j.candidate->work().charged);
+          } else j.candidate = std::move(seed);
           j.scan = std::make_unique<scan_type>(j.frozen);
         } else if (j.building) {
           if (j.scan->has_row()) {

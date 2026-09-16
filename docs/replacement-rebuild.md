@@ -38,6 +38,28 @@ auto saved = table.snapshot();
 table.save("before-edit", saved);
 ```
 
+For streamed native merges, select `streaming_sort_runtime_family<P>` from
+`<diet/sort_runtime_context.h>` as the engine's `Family`. The connection opens
+a catalog-bound storage context and shares it between the foreground and every
+cleanup candidate. Completed native merges are sealed and mapped. Other output
+choices remain those of the selected runtime family; the rebuilding wrapper
+does not introduce another payload buffer.
+
+`from_snapshot(state, storage)` and `from_clean(state, storage)` accept that
+same concrete context when scheduling directly. `storage()` returns a copy of
+the context owner. A settled `rebase(state)` substitutes an admitted equivalent
+mapped graph without replacing its context or generation counters. Candidate
+handoff, active recovery and later native merges keep that owner. The empty
+candidate seed and its context-aware restoration both receive initialization
+charges within the setup allowance; neither decodes the frozen table.
+
+File or seal-record failures poison both private executors and their shared
+context. Public `poison()` provides the same boundary for an outer publication
+failure. The previous acknowledged snapshot stays readable; continuing requires
+a fresh context restored from durable state. Uncertain private outputs retain
+their attempt identities for catalog reconciliation. Cleanup does not reclaim
+those files or resume their partially written payloads.
+
 The current runtime and generation counters are durable. Private scan cursors,
 candidate objects and FIFO replay queues are not. Reopening an active rebuild
 starts a new funded cleanup from the latest acknowledged state, with writes
@@ -206,7 +228,7 @@ work. Reads, saved states and forks remain available during recovery.
 The restart cost is explicit existing debt, serviced before a tap claims a
 queued input. There is no finite work guarantee under infinitely repeated
 interruptions. Lost private candidate files are not claimed as resumable work;
-the current implementation builds that candidate in memory.
+the next recovery restarts that candidate from its acknowledged source.
 
 `from_clean(snapshot)` is a separate convenience for a plain typed snapshot
 whose native admission mass equals its live cardinality. It does not guess a
