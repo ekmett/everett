@@ -35,7 +35,7 @@ if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # Model-ops writer tests above retain their platform-independent coverage.
   list(APPEND diet_test_names mapped_index_builder file_index_builder file_index_pipeline mapped_cola mapped_cola_builder cola_terminal cola_file_index)
 endif()
-list(APPEND diet_test_names cola_local_merge cola_local_merge_failure cola_runtime redundant_runtime runtime_registry sort_codec sort_profile sort_profile_file_writer sort_runtime typed_cola typed_redundant typed_scan replacement_rebuild tap)
+list(APPEND diet_test_names cola_local_merge cola_local_merge_failure cola_runtime redundant_runtime runtime_registry sort_codec sort_profile sort_profile_query sort_profile_file_writer sort_runtime typed_cola typed_redundant typed_scan replacement_rebuild tap)
 if(DIET_ENABLE_SQLITE)
   list(APPEND diet_test_names redundant_checkpoint sqlite_catalog sqlite_catalog_adversarial sqlite_catalog_vfs sqlite_catalog_restart sqlite_catalog_timeline sqlite_catalog_streamed)
   if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")

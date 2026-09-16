@@ -590,7 +590,10 @@ failure makes the cursor unusable rather than resuming partial work.
 
 The COLA cursor used by typed lookups can take an encoded query through
 `cursor_owned`, transferring its allocation into the shared comparison context.
-Derived contexts and cursor copies retain that immutable query. The mapped
+Built-in string and bit keys also lend their order bits directly to query
+encoding. The registry supplies its code width so encoding reserves one result
+buffer; custom codecs and selectors keep their existing fallback. Derived
+contexts and cursor copies retain that immutable query. The mapped
 sort-owned pair validates and caches its combined navigation view when binding
 the exact native/index owners. Search steps reuse that view. Returned matches
 still own their values.
