@@ -623,39 +623,60 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
           auto secondary = pair.secondary_target();
           auto const & secondary_id = pair.index_object()->secondary_id();
           auto secondary_count = secondary ? secondary->size() : 0;
-          require_sealed(pair.identity().native, file_kind::native_blob);
-          require_sealed(pair.identity().index, file_kind::fractional_index);
-          if (secondary) require_sealed(*secondary_id, file_kind::native_blob);
-          catalog_detail::statement old(db_, "SELECT native_id,target_native,target_index,native_count,borrowed_count,virtual_count,layout,secondary_native,secondary_native_count,secondary_borrowed_count FROM pairs WHERE index_id=?");
-          old.text(1, pair.identity().index.hex());
-          if (old.row()) {
-            if (old.integer(6) != 3 || old.text(0) != pair.identity().native.hex() ||
-                old.is_null(1) != !main || old.is_null(2) != !main ||
-                (main && (old.text(1) != main->identity().native.hex() || old.text(2) != main->identity().index.hex())) ||
-                old.is_null(7) != !secondary || (secondary && old.text(7) != secondary_id->hex()) ||
-                old.integer(3) != catalog_detail::integer(view.native().size()) ||
-                old.integer(4) != catalog_detail::integer(view.borrowed(0).size()) ||
-                old.integer(5) != catalog_detail::integer(view.virtual_size()) ||
-                old.integer(8) != catalog_detail::integer(secondary_count) ||
-                old.integer(9) != catalog_detail::integer(view.borrowed(1).size()))
-              throw std::invalid_argument("registered COLA index identity already has different contents");
-            continue;
-          }
-          catalog_detail::statement insert(db_, "INSERT INTO pairs(index_id,native_id,target_native,target_index,native_count,borrowed_count,virtual_count,layout,secondary_native,secondary_native_count,secondary_borrowed_count) VALUES(?,?,?,?,?,?,?,3,?,?,?)");
-          insert.text(1, pair.identity().index.hex()); insert.text(2, pair.identity().native.hex());
-          if (main) { insert.text(3, main->identity().native.hex()); insert.text(4, main->identity().index.hex()); }
-          else { insert.null(3); insert.null(4); }
-          insert.integer(5, catalog_detail::integer(view.native().size()));
-          insert.integer(6, catalog_detail::integer(view.borrowed(0).size()));
-          insert.integer(7, catalog_detail::integer(view.virtual_size()));
-          if (secondary) insert.text(8, secondary_id->hex()); else insert.null(8);
-          insert.integer(9, catalog_detail::integer(secondary_count));
-          insert.integer(10, catalog_detail::integer(view.borrowed(1).size())); insert.done();
+          register_cola_row({pair.identity(), main ? std::optional{main->identity()} : std::nullopt, secondary_id,
+            view.native().size(), view.borrowed(0).size(), view.borrowed(1).size(), secondary_count, view.virtual_size()});
         }
         catalog_detail::bytes result;
         catalog_detail::number(result, canonical.size());
         for (auto const & root : canonical) catalog_detail::pair(result, root->identity());
         return result;
+      });
+    }
+
+    // Admit one new pair over a registered immutable main suffix. Reading the
+    // main row is sufficient: its files and descendants are never reopened.
+    // This is metadata admission; explicit recovery scans remain separate.
+    template <class Mapped> void register_pair(std::string_view op, blob_identity const & id) {
+      static_assert(std::is_same_v<P, typename Mapped::policy_type>);
+      require_active(); catalog_detail::name(op);
+      if (schema_version_ < 3) throw std::logic_error("COLA admission requires catalog version 3");
+      using native_type = typename Mapped::native_type;
+      using index_type = typename Mapped::index_type;
+      using view_type = decltype(std::declval<Mapped const &>().view());
+      auto index = index_type::open(root_ / object_path(id.index, file_kind::fractional_index));
+      if (index.native_id() != id.native) throw std::invalid_argument("COLA pair native identity mismatch");
+      auto native = native_type::open(root_ / object_path(id.native, file_kind::native_blob));
+      std::optional<native_type> secondary;
+      if (index.secondary_id()) secondary.emplace(native_type::open(root_ / object_path(*index.secondary_id(), file_kind::native_blob)));
+      auto main_samples = read([&]() -> std::uint64_t {
+        if (!index.main_id()) return 0;
+        auto const & main = *index.main_id();
+        catalog_detail::statement row(db_, "SELECT native_id,virtual_count,layout FROM pairs WHERE index_id=?");
+        row.text(1, main.index.hex());
+        if (!row.row() || row.text(0) != main.native.hex() || row.integer(2) != 3 || row.integer(1) < 0)
+          throw std::invalid_argument("COLA main target is not this registered pair");
+        auto count = std::uint64_t(row.integer(1));
+        return count / P::group_size + (count % P::group_size != 0);
+      });
+      auto secondary_count = secondary ? secondary->size() : 0;
+      if (index.borrowed(0).size() != main_samples || index.borrowed(1).size() !=
+          secondary_count / P::group_size + (secondary_count % P::group_size != 0))
+        throw std::invalid_argument("COLA pair sample count disagrees with registered target");
+      view_type view{native.view(), {index.borrowed(0), index.borrowed(1)},
+        {index.interleave(0), index.interleave(1)}, {index.false_borrow_bits(0), index.false_borrow_bits(1)},
+        {index.cut_lcps(0), index.cut_lcps(1)}, index.virtual_size()};
+      cola_pair_descriptor descriptor{id, index.main_id(), index.secondary_id(), view.native().size(),
+        view.borrowed(0).size(), view.borrowed(1).size(), secondary_count, view.virtual_size()};
+      catalog_detail::bytes request;
+      catalog_detail::pair(request, id); catalog_detail::number(request, bool(descriptor.main));
+      if (descriptor.main) catalog_detail::pair(request, *descriptor.main);
+      catalog_detail::number(request, bool(descriptor.secondary));
+      if (descriptor.secondary) catalog_detail::identity(request, *descriptor.secondary);
+      for (auto count : {descriptor.native_count, descriptor.main_samples, descriptor.secondary_samples,
+                        descriptor.secondary_count, descriptor.virtual_count}) catalog_detail::number(request, count);
+      transaction(op, "register_cola_pair", request, [&] {
+        register_cola_row(descriptor);
+        catalog_detail::bytes result; catalog_detail::pair(result, id); return result;
       });
     }
 
@@ -862,6 +883,42 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
     }
 
   private:
+    struct cola_pair_descriptor {
+      blob_identity id;
+      std::optional<blob_identity> main;
+      std::optional<object_id> secondary;
+      std::uint64_t native_count, main_samples, secondary_samples, secondary_count, virtual_count;
+    };
+    void register_cola_row(cola_pair_descriptor const & value) {
+      require_sealed(value.id.native, file_kind::native_blob);
+      require_sealed(value.id.index, file_kind::fractional_index);
+      if (value.secondary) require_sealed(*value.secondary, file_kind::native_blob);
+      catalog_detail::statement old(db_, "SELECT native_id,target_native,target_index,native_count,borrowed_count,virtual_count,layout,secondary_native,secondary_native_count,secondary_borrowed_count FROM pairs WHERE index_id=?");
+      old.text(1, value.id.index.hex());
+      if (old.row()) {
+        if (old.integer(6) != 3 || old.text(0) != value.id.native.hex() ||
+            old.is_null(1) != !value.main || old.is_null(2) != !value.main ||
+            (value.main && (old.text(1) != value.main->native.hex() || old.text(2) != value.main->index.hex())) ||
+            old.is_null(7) != !value.secondary || (value.secondary && old.text(7) != value.secondary->hex()) ||
+            old.integer(3) != catalog_detail::integer(value.native_count) ||
+            old.integer(4) != catalog_detail::integer(value.main_samples) ||
+            old.integer(5) != catalog_detail::integer(value.virtual_count) ||
+            old.integer(8) != catalog_detail::integer(value.secondary_count) ||
+            old.integer(9) != catalog_detail::integer(value.secondary_samples))
+          throw std::invalid_argument("registered COLA index identity already has different contents");
+        return;
+      }
+      catalog_detail::statement insert(db_, "INSERT INTO pairs(index_id,native_id,target_native,target_index,native_count,borrowed_count,virtual_count,layout,secondary_native,secondary_native_count,secondary_borrowed_count) VALUES(?,?,?,?,?,?,?,3,?,?,?)");
+      insert.text(1, value.id.index.hex()); insert.text(2, value.id.native.hex());
+      if (value.main) { insert.text(3, value.main->native.hex()); insert.text(4, value.main->index.hex()); }
+      else { insert.null(3); insert.null(4); }
+      insert.integer(5, catalog_detail::integer(value.native_count));
+      insert.integer(6, catalog_detail::integer(value.main_samples));
+      insert.integer(7, catalog_detail::integer(value.virtual_count));
+      if (value.secondary) insert.text(8, value.secondary->hex()); else insert.null(8);
+      insert.integer(9, catalog_detail::integer(value.secondary_count));
+      insert.integer(10, catalog_detail::integer(value.secondary_samples)); insert.done();
+    }
     sqlite3 * db_ = nullptr;
     std::filesystem::path root_;
     Ops ops_;
