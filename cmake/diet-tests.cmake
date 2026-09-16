@@ -29,7 +29,7 @@ if(DIET_SANITIZERS)
   diet_check_sanitizers()
 endif()
 
-set(diet_test_names registry registry_compat crc32c rank groups rank_groups_builder elias_fano profile borrowed_writer profile_blob comparison_fc sampling index_builder index_builder_allocations index_pipeline query cola_index cola_frontier cola_route_reuse cola_schedule native_writer native_writer_allocations native_file_writer profile_file_output native_merge native_merge_mapped cola pins durability mapped_file files object_writer object_stream mapped_blob fridge)
+set(diet_test_names registry registry_compat crc32c rank groups rank_groups_builder elias_fano profile borrowed_writer profile_blob comparison_fc sampling index_builder index_builder_allocations index_pipeline query cola_index cola_frontier cola_route_reuse cola_schedule native_writer native_writer_allocations native_file_writer profile_file_output native_merge native_merge_mapped cola pins durability mapped_file files object_writer object_stream mapped_blob fridge catalog_bindings)
 if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # These suites seal real mapped inputs through posix_object_ops throughout.
   # Model-ops writer tests above retain their platform-independent coverage.
@@ -39,13 +39,13 @@ list(APPEND diet_test_names cola_local_merge cola_local_merge_failure cola_runti
 if(DIET_ENABLE_SQLITE)
   list(APPEND diet_test_names sqlite_catalog sqlite_catalog_adversarial sqlite_catalog_vfs sqlite_catalog_restart sqlite_catalog_timeline sqlite_catalog_streamed)
   if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    list(APPEND diet_test_names sqlite_catalog_cola sqlite_catalog_taps sqlite_catalog_runtime sqlite_catalog_redundant sqlite_catalog_connection sqlite_catalog_scan sqlite_catalog_owner_cache sqlite_catalog_graphs sqlite_catalog_sort_runtime sqlite_catalog_snapshot sqlite_catalog_rebuild sqlite_catalog_seals)
+    list(APPEND diet_test_names sqlite_catalog_cola sqlite_catalog_taps sqlite_catalog_runtime sqlite_catalog_redundant sqlite_catalog_connection sqlite_catalog_scan sqlite_catalog_owner_cache sqlite_catalog_graphs sqlite_catalog_sort_runtime sqlite_catalog_snapshot sqlite_catalog_rebuild sqlite_catalog_seals sort_runtime_context)
   endif()
 endif()
 foreach(diet_test IN LISTS diet_test_names)
   add_executable(diet_test_${diet_test} "${PROJECT_SOURCE_DIR}/tests/${diet_test}.cc")
   target_link_libraries(diet_test_${diet_test} PRIVATE diet::diet)
-  if(diet_test MATCHES "^sqlite_catalog")
+  if(diet_test MATCHES "^sqlite_catalog" OR diet_test STREQUAL "sort_runtime_context")
     target_link_libraries(diet_test_${diet_test} PRIVATE diet::sqlite)
   endif()
   if(diet_test STREQUAL "registry_compat" AND DIET_ENABLE_SQLITE)
@@ -67,6 +67,7 @@ foreach(diet_test IN LISTS diet_test_names)
   endif()
   add_test(NAME diet.${diet_test} COMMAND diet_test_${diet_test})
 endforeach()
+set_tests_properties(diet.catalog_bindings PROPERTIES TIMEOUT 45)
 
 if(DIET_ENABLE_SQLITE)
   configure_file("${PROJECT_SOURCE_DIR}/cmake/diet-sqlite-smoke.cmake.in"
