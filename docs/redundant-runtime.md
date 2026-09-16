@@ -152,6 +152,22 @@ or explicit trust remains a separate requirement. A loader interns immutable
 identities before constructing mapped facades with
 `redundant_node::from_mapped_parts`.
 
+For a validated snapshot, every object occupies exactly one level slot, and
+its object routes lead to the next level. The checkpoint codec visits levels
+from large to small and slots in their fixed order. This gives a complete,
+children-before-parents object stream without a temporary DFS vector or hash
+sets. Hidden completed job outputs already occupy their reserved destination
+slots; separate native artifacts and carrier pairs are still retained explicitly.
+The metadata itself remains $O(\log U)$ and must still be written.
+
+`runtime_storage_codec::for_each_object(snapshot, visitor)` and
+`object_count(snapshot)` expose that allocation-free traversal. The raw-frontier
+`objects(frontier)` helper remains defensive. Decoding still checks every
+reference and runs the full restore validator; only then can the slot count
+reject an encoded descriptor that belongs to no slot. Earlier checkpoints with
+DFS-ordered descriptors remain readable. New encodings use the deterministic
+level/slot order, so an operation replay retains its original request bytes.
+
 A restart recipe owns complete artifacts, never a partially written stream.
 A restarted executor rebuilds only its unfinished stage and inherits no service
 credit. While replay is needed it imposes a recovery barrier: queries work, but

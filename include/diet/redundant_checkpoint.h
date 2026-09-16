@@ -56,9 +56,23 @@ namespace diet {
       }
       return result;
     }
+    // A validated snapshot owns every object in exactly one level slot.
+    // Its routes point to the next level; job outputs occupy destination slots.
+    // Descending levels therefore visit children before parents without a
+    // closure allocation. Raw frontiers still use the defensive walk above.
+    template <class F> static void for_each_object(snapshot_type const & source, F && visit) {
+      auto const & levels = source.frontier().levels;
+      for (auto level = levels.rbegin(); level != levels.rend(); ++level)
+        for (auto const & slot : level->slots) if (slot.object) visit(slot.object);
+    }
+    static std::size_t object_count(snapshot_type const & source) noexcept {
+      std::size_t count = 0;
+      for_each_object(source, [&](auto const &) { ++count; });
+      return count;
+    }
     template <class Pair, class Native> static void collect(snapshot_type const & source, Pair pair, Native native) {
       pair(source.query_root().head());
-      for (auto const & object : objects(source.frontier())) { pair(object->pair); native(object->native); }
+      for_each_object(source, [&](auto const & object) { pair(object->pair); native(object->native); });
       for (auto const & level : source.frontier().levels) {
         for (auto const & slot : level.slots) pair(slot.carrier);
         if (level.job) { pair(level.job->carrier); native(level.job->merged); }
@@ -74,11 +88,11 @@ namespace diet {
       auto native = [&](native_pointer const & value) { number(bool(value)); if (value) catalog_detail::identity(out, native_id(value)); };
       auto const & f = source.frontier();
       number(f.admissions); number(f.next_identity); number(f.service_due);
-      auto all = objects(f); number(all.size());
-      for (auto const & value : all) {
+      number(object_count(source));
+      for_each_object(source, [&](auto const & value) {
         number(value->identity); number(value->first); number(value->last); number(value->level);
         native(value->native); pair(value->pair); routes(value->next);
-      }
+      });
       routes(f.root); number(f.levels.size());
       for (auto const & level : f.levels) {
         number(level.last_destination); number(level.last_destination_visible);
@@ -156,7 +170,7 @@ namespace diet {
       if (size != input.data.size()) throw std::invalid_argument("invalid redundant semantic extent");
       std::vector<std::byte> semantic(input.data.begin(), input.data.end());
       auto restored = snapshot_type::restore(std::move(f), resolver.pair(head));
-      if (runtime_storage_codec::objects(restored.frontier()).size() != objects.size())
+      if (runtime_storage_codec::object_count(restored) != objects.size())
         throw std::invalid_argument("unreachable redundant checkpoint object");
       return {std::move(restored), std::move(semantic)};
     }
