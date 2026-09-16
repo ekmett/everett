@@ -17,6 +17,12 @@
 #include <diet/typed_cola.h>
 
 namespace diet {
+  struct native_seal {
+    object_id catalog;
+    object_seal_receipt receipt;
+  };
+  template <class P, class Selector, class Ids, class CatalogOps, class FileOps> struct sort_runtime_context;
+
   // Logical query keys carry their length separately: sort bits followed by
   // leaf order bits. They never acquire the opaque string transport's escapes.
   template <class P, class Selector = registry_selector<typename P::registry_type>> struct sort_key_transport {
@@ -55,7 +61,21 @@ namespace diet {
     std::uint64_t size() const { return view().size(); }
     std::shared_ptr<array_type const> owned() const noexcept { return owned_; }
     std::shared_ptr<mapped_type const> mapped() const noexcept { return mapped_; }
+    std::shared_ptr<native_seal const> sealed() const noexcept { return seal_; }
   private:
+    template <class, class, class, class, class> friend struct sort_runtime_context;
+    // Only an acknowledged catalog seal can construct this descriptor. The
+    // context opens the expected object path itself, never a supplied mapping.
+    static pointer from_sealed(std::filesystem::path const & root, object_id catalog, object_seal_receipt receipt) {
+      auto path = root / object_path(receipt.object, file_kind::native_blob);
+      if (std::filesystem::canonical(receipt.path) != std::filesystem::canonical(path))
+        throw std::invalid_argument("sealed native path differs from object identity");
+      auto mapped = std::make_shared<mapped_type const>(mapped_type::open(path));
+      auto result = std::shared_ptr<sort_runtime_native>(new sort_runtime_native(std::move(mapped)));
+      result->seal_ = std::make_shared<native_seal const>(native_seal{std::move(catalog), std::move(receipt)});
+      return result;
+    }
+    std::shared_ptr<native_seal const> seal_;
     std::shared_ptr<array_type const> owned_;
     std::shared_ptr<mapped_type const> mapped_;
     explicit sort_runtime_native(std::shared_ptr<array_type const> value) : owned_(std::move(value)) {}
@@ -69,6 +89,11 @@ namespace diet {
     using mapped_pair_type = mapped_sort_cola<P, Selector>;
     static auto encode_native(sort_profile_array<P, Selector> const & value) { return encoded_sort_sections<P>::from(value); }
     template <class Compose> using merge_type = sort_profile_merge_builder<P, native_type, Compose, Selector>;
+    template <class Compose> static auto make_merge(std::shared_ptr<native_type const> older,
+        std::shared_ptr<native_type const> newer, Compose compose) {
+      return std::make_unique<merge_type<Compose>>(std::move(older), std::move(newer), std::move(compose));
+    }
+    template <class Merge> static auto finish_merge(Merge & merge) { return native_type::from_owned(merge.finish()); }
     static auto empty() { sort_profile_writer<P, Selector> writer; return native_type::from_owned(writer.finish()); }
     static auto singleton(profile_record const & record) {
       using leaves = typename registry_detail::info<typename P::registry_type>::leaves;
@@ -89,9 +114,13 @@ namespace diet {
 
   // Policy/schema dispatch can select this concrete family before entering a
   // run. Selector is a protocol implementation, not necessarily a binary tree.
-  template <class P = string_policy, class Selector = registry_selector<typename P::registry_type>>
-  struct sort_runtime_family : redundant_runtime_family<P, sort_runtime_storage<P, Selector>> {
+  template <class P = string_policy, class Selector = registry_selector<typename P::registry_type>,
+            class Storage = sort_runtime_storage<P, Selector>>
+  struct sort_runtime_family : redundant_runtime_family<P, Storage> {
     using key_transport = sort_key_transport<P, Selector>;
+    static auto open_storage(std::filesystem::path const & root) requires requires { Storage::open(root); } {
+      return Storage::open(root);
+    }
     static std::string default_schema() {
       if constexpr (std::same_as<typename P::registry_type, string_registry> &&
                     std::same_as<Selector, registry_selector<typename P::registry_type>>)

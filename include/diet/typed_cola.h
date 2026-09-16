@@ -317,9 +317,29 @@ namespace diet {
     explicit typed_engine(std::string schema_id = default_schema())
       : runtime_(), current_(runtime_.snapshot(), metadata_type{A::zero(), 0, checked_schema(std::move(schema_id))}) {}
     static typed_engine from_snapshot(cola_type state) { return typed_engine(std::move(state)); }
+    template <class Storage> static typed_engine from_snapshot(cola_type state, Storage storage)
+      requires requires { runtime_type::from_snapshot(state.runtime(), std::move(storage)); } {
+      return typed_engine(std::move(state), std::move(storage));
+    }
+    // The caller supplies an equivalent admitted layout. Metadata is a cheap
+    // consistency check, not a cryptographic proof of equivalent contents.
+    void rebase(cola_type state) {
+      require_active();
+      if (pending() || state.metadata() != current_.metadata() || state.runtime().admissions() != current_.runtime().admissions())
+        throw std::invalid_argument("typed rebase requires a settled equivalent snapshot");
+      auto replacement = [&] {
+        if constexpr (requires { runtime_.storage(); }) return runtime_type::from_snapshot(state.runtime(), runtime_.storage());
+        else return runtime_type::from_snapshot(state.runtime());
+      }();
+      runtime_ = std::move(replacement); current_ = std::move(state);
+    }
     cola_type snapshot() const { return current_; }
     bool pending() const noexcept { return runtime_.pending(); }
     bool failed() const noexcept { return failed_ || runtime_.failed(); }
+    void poison() noexcept {
+      failed_ = true;
+      if constexpr (requires { { runtime_.poison() } noexcept; }) runtime_.poison();
+    }
     bool admission_ready() const noexcept { return runtime_.admission_ready(); }
     auto work() const { return runtime_.work(); }
     static typed_batch<P, A, Family> batch() { return {}; }
@@ -404,6 +424,8 @@ namespace diet {
     bool failed_ = false;
     explicit typed_engine(cola_type state)
       : runtime_(runtime_type::from_snapshot(state.runtime())), current_(std::move(state)) {}
+    template <class Storage> typed_engine(cola_type state, Storage storage)
+      : runtime_(runtime_type::from_snapshot(state.runtime(), std::move(storage))), current_(std::move(state)) {}
     static std::string default_schema() {
       if constexpr (requires { Family::default_schema(); }) return Family::default_schema();
       else if constexpr (std::same_as<typename P::registry_type, string_registry>)

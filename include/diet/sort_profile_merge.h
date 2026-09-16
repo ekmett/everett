@@ -121,7 +121,8 @@ namespace diet {
     std::uint64_t left_common_ = 0, right_common_ = 0, materialized_keys_ = 0;
     bool failed_ = false, finished_ = false;
     static source_pointer checked(source_pointer value) {
-      if (!value) throw std::invalid_argument("null sort merge input"); return value;
+      if (!value) throw std::invalid_argument("null sort merge input");
+      return value;
     }
     static std::uint64_t advance(auto & source) { auto cmp = source.advance(); return cmp ? cmp->common_bits : 0; }
     bit_comparison compare() const {

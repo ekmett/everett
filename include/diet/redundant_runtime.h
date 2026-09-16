@@ -24,6 +24,11 @@ namespace diet {
     using mapped_native_type = mapped_native<P>;
     static auto encode_native(profile_array<P> const & value) { return encode_native_sections(value); }
     template <class Compose> using merge_type = native_merge_builder<P, native_type, Compose>;
+    template <class Compose> static auto make_merge(std::shared_ptr<native_type const> older,
+        std::shared_ptr<native_type const> newer, Compose compose) {
+      return std::make_unique<merge_type<Compose>>(std::move(older), std::move(newer), std::move(compose));
+    }
+    template <class Merge> static auto finish_merge(Merge & merge) { return native_type::from_owned(merge.finish()); }
     static auto empty() { return native_type::from_owned(profile_array<P>::build({})); }
     static auto singleton(profile_record const & record) {
       profile_native_writer<P> writer; writer.append(record); return native_type::from_owned(writer.finish());
@@ -336,10 +341,16 @@ namespace diet {
       return profile_detail::multiply(profile_detail::multiply(local_charge_bound, 8),
         std::bit_width(admissions) + 2);
     }
-    explicit redundant_runtime(Compose compose = {}) : e_(std::make_unique<execution>(std::move(compose))) {}
+    explicit redundant_runtime(Compose compose = {}) : redundant_runtime(Storage{}, std::move(compose)) {}
+    redundant_runtime(Storage storage, Compose compose = {}) : e_(std::make_unique<execution>(std::move(storage), std::move(compose))) {}
     static redundant_runtime from_snapshot(snapshot_type source, Compose compose = {}) {
-      return redundant_runtime(std::make_unique<execution>(std::move(source), std::move(compose)));
+      return from_snapshot(std::move(source), Storage{}, std::move(compose));
     }
+    static redundant_runtime from_snapshot(snapshot_type source, Storage storage, Compose compose = {}) {
+      return redundant_runtime(std::make_unique<execution>(std::move(source), std::move(storage), std::move(compose)));
+    }
+    Storage const & storage() const & { return active().storage; }
+    Storage const & storage() const && = delete;
     redundant_runtime(redundant_runtime const &) = delete;
     redundant_runtime & operator=(redundant_runtime const &) = delete;
     redundant_runtime(redundant_runtime &&) noexcept = default;
@@ -352,11 +363,12 @@ namespace diet {
     snapshot_type checkpoint() {
       auto & e = writable();
       try { e.direct(e.checkpoint_price(), category::metadata); e.checkpoint(); }
-      catch (...) { e.failed = true; throw; }
+      catch (...) { e.poison(); throw; }
       return e.published;
     }
     bool pending() const noexcept { return e_ && (e_->unsafe || e_->checkpoint_pending); }
     bool failed() const noexcept { return e_ && e_->failed; }
+    void poison() noexcept { if (e_) e_->poison(); }
     bool admission_ready() const noexcept { return e_ && e_->ready(); }
     bool recovering() const noexcept { return e_ && e_->recovery; }
     std::uint64_t credit() const { return active().credit; }
@@ -366,7 +378,7 @@ namespace diet {
       auto & e = writable();
       if (!budget || !pending()) return e.published;
       try { e.grant(budget); e.service_due -= std::min(e.service_due, budget); e.serve(); }
-      catch (...) { e.failed = true; throw; }
+      catch (...) { e.poison(); throw; }
       return e.published;
     }
     std::optional<snapshot_type> try_contribute(profile_record const & record, std::uint64_t budget = 0) {
@@ -375,7 +387,7 @@ namespace diet {
       validate(record); (void)add(e.admissions, 1);
       auto prior = e.published;
       try { e.admit(record); if (budget) { e.grant(budget); e.service_due -= std::min(e.service_due, budget); e.serve(); } }
-      catch (...) { e.published = std::move(prior); e.failed = true; throw; }
+      catch (...) { e.published = std::move(prior); e.poison(); throw; }
       return e.published;
     }
     snapshot_type contribute(profile_record const & record) {
@@ -407,6 +419,7 @@ namespace diet {
       std::uint64_t charged = 0;
     };
     struct execution {
+      Storage storage; // Outlives workers whose file outputs borrow its concrete context.
       Compose compose;
       native_pointer empty;
       pair_type empty_pair;
@@ -419,16 +432,20 @@ namespace diet {
       snapshot_type published;
       redundant_work work;
       bool failed = false, recovery = false, checkpoint_pending = false, changed = false;
-      static native_pointer make_empty() { return Storage::empty(); }
+      void poison() noexcept {
+        failed = true;
+        if constexpr (requires { { storage.poison() } noexcept; }) storage.poison();
+      }
+      native_pointer make_empty() { return storage.empty(); }
       static pair_type make_empty_pair(native_pointer native) { index_type builder(std::move(native)); return node_type::from_built(builder.finish()); }
       static snapshot_type initial(pair_type pair) {
         redundant_frontier<P, Storage> f; f.levels.resize(1);
         return snapshot_type(std::make_shared<typename snapshot_type::state const>(typename snapshot_type::state{
           std::move(f), query_type::adopt_prepared(std::move(pair)), {}}));
       }
-      explicit execution(Compose value) : compose(std::move(value)), empty(make_empty()), empty_pair(make_empty_pair(empty)),
+      execution(Storage context, Compose value) : storage(std::move(context)), compose(std::move(value)), empty(make_empty()), empty_pair(make_empty_pair(empty)),
         query(query_type::adopt_prepared(empty_pair)), published(initial(empty_pair)) { direct(8, category::metadata); }
-      execution(snapshot_type source, Compose value) : compose(std::move(value)), empty(make_empty()), empty_pair(make_empty_pair(empty)),
+      execution(snapshot_type source, Storage context, Compose value) : storage(std::move(context)), compose(std::move(value)), empty(make_empty()), empty_pair(make_empty_pair(empty)),
         query(source.query_root()), published(std::move(source)) {
         auto const & f = published.frontier();
         require(!f.levels.empty() && f.levels.size() <= maximum_levels, "invalid redundant checkpoint height");
@@ -575,7 +592,7 @@ namespace diet {
       }
       void admit(profile_record const & record) {
         require_ready(); direct(admission_price(), category::root);
-        auto native = Storage::singleton(record);
+        auto native = storage.singleton(record);
         work.native_outputs = add(work.native_outputs, 1);
         auto entries = active(0); unsigned pos; routes route; pair_type pair;
         if (entries.count) pos = vacant(0);
@@ -660,7 +677,7 @@ namespace diet {
         auto source = [&](unsigned which) { return levels[i].slots[r.inputs[which]].object; };
         switch (w.next) {
           case action::native_start:
-            w.merge = std::make_unique<merge_type>(source(0)->native, source(1)->native, merger());
+            w.merge = storage.template make_merge<merge_compose>(source(0)->native, source(1)->native, merger());
             w.next = w.merge->done() ? action::native_finish : action::native_step;
             break;
           case action::native_step: {
@@ -670,7 +687,7 @@ namespace diet {
             break;
           }
           case action::native_finish:
-            r.merged = native_type::from_owned(w.merge->finish()); w.merge.reset();
+            r.merged = storage.finish_merge(*w.merge); w.merge.reset();
             if (r.new_main) r.stage = redundant_stage::destination_index;
             else {
               r.output = object(r.merged, {}, {}, i + 1, source(0)->first, source(1)->last);

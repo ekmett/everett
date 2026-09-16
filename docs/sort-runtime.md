@@ -69,6 +69,7 @@ One scheduler, associated storage
 - `mapped_pair_type`: the exact mapped native/index pair.
 - `empty()` and `singleton(record)`: new native owners.
 - `merge_type<Compose>`: an incremental native merger.
+- `make_merge` and `finish_merge`: concrete construction and publication of native outputs.
 - `encode_native(array)`: the borrowing encoder used to seal a completed array.
 
 `profile_runtime_storage<P>` supplies the ordinary opaque profile.
@@ -89,7 +90,8 @@ restored runtime can resume with mapped inputs and produce new owned sort
 profiles. The tests restore a frontier with a completed hidden native merge,
 remove the source paths, finish its indexing work, then admit new updates.
 Catalog identity allocation and durable publication belong to the persistence
-adapter; the test's graph copier does not implement either.
+adapter. The [streaming context](sort-runtime-context.md) attaches a catalog and
+file output factory to the same scheduler.
 
 Selectors and schema dispatch
 -----------------------------
@@ -118,9 +120,10 @@ Costs and boundaries
 
 The paid scheduler counts structural work, not key bytes, callback time or hard
 latency. This adapter keeps completed native arrays in memory before sealing;
-large merges still need memory for their output. A future file-backed writer
-can be selected through the storage family with an execution context, but the
-current static factories are not a bounded-memory disk-merge implementation.
+large merges still need memory for their output. The explicit
+[streaming family](sort-runtime-context.md) selects a file-backed native writer
+through an owning execution context. Its native payload buffering is bounded,
+while sparse metadata and fractional-index output still occupy memory.
 
 The profile reader caches its selected leaf parser across records and physical
 blocks. That avoids rerunning the selector for every record, but still makes an
