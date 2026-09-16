@@ -140,6 +140,8 @@ records actual complete input/output file sizes and hashes;
 [correctness log](results/2026-09-16-m2max/correctness.log) record validation.
 The [manifest](results/2026-09-16-m2max/sha256.json) authenticates the retained
 artifacts.
+The [complete evidence bundle](results/2026-09-16-m2max.tar.gz) includes those
+files, the original per-process output and the manifest for offline checking.
 
 After the [standalone build](README.md#build-and-check), reproduce the bounded
 collection on an otherwise idle device:
