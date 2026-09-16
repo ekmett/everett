@@ -39,6 +39,11 @@ namespace diet {
     static auto singleton(profile_record const & record) {
       profile_native_writer<P> writer; writer.append(record); return native_type::from_owned(writer.finish());
     }
+    static auto sorted_native(std::span<profile_record const> records) {
+      profile_native_writer<P> writer;
+      for (auto const & record : records) writer.append(record);
+      return native_type::from_owned(writer.finish());
+    }
   };
 
   template <class P, class Storage = profile_runtime_storage<P>> struct redundant_node {
@@ -407,6 +412,28 @@ namespace diet {
     std::uint64_t credit() const { return active().credit; }
     std::uint64_t next_service_cost() const { return active().price(); }
     std::uint64_t admission_cost() const { auto const & e = active(); e.require_ready(); return e.admission_price(); }
+    // Initial construction only: a sorted power-of-two batch seeds the same
+    // consecutive-level topology as ordinary admission, then services its
+    // carry chain. Ineligible calls leave both the input and executor alone.
+    // The allowance charges structural events, not bytes or elapsed time.
+    bool try_initialize_sorted(std::span<profile_record const> records, std::uint64_t allowance,
+        std::uint64_t depth_limit)
+      requires requires (Storage & storage) { storage.sorted_native(records); } {
+      auto & e = writable();
+      auto count = static_cast<std::uint64_t>(records.size());
+      if (!e.initializable() || count < 2 || !std::has_single_bit(count)) return false;
+      auto height = static_cast<unsigned>(std::bit_width(count) - 1);
+      if (height + 1 > depth_limit || execution::initialization_price(count) > allowance) return false;
+      for (std::size_t i = 0; i != records.size(); ++i) {
+        validate(records[i]);
+        if (i && compare_bits(records[i - 1].key.view(), records[i].key.view()) >= 0)
+          error_detail::raise<std::invalid_argument>("initial records must be strictly sorted");
+      }
+      auto prior = e.published;
+      try { e.initialize_sorted(records, allowance, depth_limit); }
+      catch (...) { e.published = std::move(prior); e.poison(); throw; }
+      return true;
+    }
     snapshot_type advance(std::uint64_t budget) {
       auto & e = writable();
       if (!budget || !pending()) return e.published;
@@ -518,6 +545,16 @@ namespace diet {
         return count < 2;
       }
       void require_ready() const { require(ready(), "redundant admission is not ready"); }
+      bool initializable() const noexcept {
+        if (failed || recovery || checkpoint_pending || changed || admissions || next_identity != 1 ||
+            unsafe || credit || service_due || height != 1 || root.main || root.secondary ||
+            work.admissions || levels[0].job || levels[0].last_destination || levels[0].last_destination_visible)
+          return false;
+        for (auto const & slot : levels[0].slots)
+          if (slot.state != redundant_slot_state::empty || slot.object || slot.route.main ||
+              slot.route.secondary || slot.carrier || slot.ever_visible) return false;
+        return true;
+      }
       void refresh(unsigned i) {
         auto flag = std::uint64_t{1} << i;
         if (levels[i].job || active(i).count == 2) unsafe |= flag; else unsafe &= ~flag;
@@ -539,6 +576,26 @@ namespace diet {
         } while (main > P::group_size);
         return result;
       }
+      static std::uint64_t initial_native_price(std::uint64_t count) {
+        return add(profile_detail::multiply(count, 3), add(ceil(count, P::codec_block_size), 4));
+      }
+      static std::uint64_t initialization_price(std::uint64_t count) {
+        auto h = static_cast<unsigned>(std::bit_width(count) - 1);
+        std::uint64_t result = 0, main = 0;
+        for (unsigned i = static_cast<unsigned>(h); i--;) {
+          auto size = std::uint64_t{1} << i;
+          result = add(result, add(initial_native_price(size), index_price(size, main, 0)));
+          main = add(size, ceil(main, P::group_size));
+        }
+        result = add(result, initial_native_price(1));
+        result = add(result, add(root_price(main, 1), 6 * h + 8));
+        // Initial checkpoint and its independent shape/chronology validation.
+        result = add(result, add(8 * h + 16, 64 * (h + 1) + 64));
+        // Exactly one ordinary carry at each source level, with masses
+        // 1,2,...,N/2. Checkpoints are outside the checked local job ceiling.
+        result = add(result, profile_detail::multiply(local_charge_bound, count - 1));
+        return add(result, 2 * (8 * (h + 1) + 16));
+      }
       std::uint64_t checkpoint_price() const { return 8 * height + 16; }
       std::uint64_t visibility_price() const { return 6 * height + 8; }
       void tally(std::uint64_t amount, category kind) {
@@ -549,6 +606,55 @@ namespace diet {
       }
       void direct(std::uint64_t amount, category kind) { auto total = add(work.granted, amount); tally(amount, kind); work.granted = total; }
       void grant(std::uint64_t amount) { auto next = add(credit, amount), total = add(work.granted, amount); credit = next; work.granted = total; }
+      void initialize_sorted(std::span<profile_record const> records, std::uint64_t allowance,
+          std::uint64_t depth_limit) {
+        require(initializable(), "redundant initial construction requires an empty runtime");
+        auto count = static_cast<std::uint64_t>(records.size());
+        height = static_cast<unsigned>(std::bit_width(count) - 1);
+        grant(allowance);
+        auto spend = [&](std::uint64_t amount, category kind) {
+          require(credit >= amount, "initial construction exhausted its allowance");
+          tally(amount, kind); credit -= amount;
+        };
+        spend(64 * (std::uint64_t(height) + 1) + 64, category::metadata);
+        std::uint64_t first = 0;
+        routes next;
+        auto build_native = [&](std::uint64_t size) {
+          spend(initial_native_price(size), category::native);
+          auto native = storage.sorted_native(records.subspan(static_cast<std::size_t>(first), static_cast<std::size_t>(size)));
+          require(native && native->size() == size, "initial native cardinality mismatch");
+          work.native_outputs = add(work.native_outputs, size);
+          return native;
+        };
+        for (unsigned i = height; i--;) {
+          auto size = std::uint64_t{1} << i;
+          auto native = build_native(size);
+          spend(index_price(size, augmented(next.main), 0), category::index);
+          auto pair = build_index(native, next);
+          auto last = add(first, size);
+          auto value = object(std::move(native), std::move(pair), next, i, first, last);
+          levels[i].slots[0] = {redundant_slot_state::active, value, {}, {}, false};
+          first = last; next = {std::move(value), {}};
+        }
+        auto secondary = object(build_native(1), {}, {}, 0, first, count);
+        levels[0].slots[1] = {redundant_slot_state::active, secondary, {}, {}, false};
+        root = {next.main, std::move(secondary)};
+        admissions = count; work.admissions = add(work.admissions, count);
+        for (unsigned i = 0; i != height; ++i) refresh(i);
+        require(unsafe == 1, "initial frontier has more than one unsafe level");
+        service_due = service_budget(count); recovery = true;
+        spend(add(visibility_price(), root_price(augmented(root.main), augmented(root.secondary))), category::root);
+        visibility();
+        require(query.head()->depth() <= depth_limit, "initial root exceeds depth limit");
+        spend(checkpoint_price(), category::metadata); checkpoint();
+        published = snapshot_type::restore(published.frontier(), published.query_root().head());
+        query = published.query_root();
+        service_due -= std::min(service_due, credit);
+        serve();
+        require(!unsafe && !checkpoint_pending && !recovery && !service_due,
+          "initial carry chain exhausted its allowance");
+        require(query.head()->depth() <= depth_limit, "initialized root exceeds depth limit");
+      }
       object_pointer object(native_pointer native, pair_type pair, routes next, unsigned level, std::uint64_t first, std::uint64_t last) {
         auto id = next_identity; next_identity = add(next_identity, 1);
         return std::make_shared<object_type const>(object_type{id, first, last, level, std::move(native), std::move(pair), std::move(next)});
