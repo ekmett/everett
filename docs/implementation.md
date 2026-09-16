@@ -1104,6 +1104,13 @@ acknowledgment failures, saved forks, queued continuation and mapped reopening.
 The depth suite checks both binary and redundant publication boundaries,
 over-limit imports, preserved earlier snapshots and custom backend hooks.
 
+Validated empty contributions preserve their current typed publication with no
+structural charge. The persistent adapter skips a new catalog generation only
+for empty input whose exact runtime layout and metadata remain unchanged.
+Three focused strict O2 ASan/UBSan suites cover zero work and catalog deltas,
+schema rejection, pending workers, stale handles, local tickets, and a custom
+core which changes state on empty input and therefore still needs publication.
+
 Integration checks on 2026-09-16 passed under AppleClang 21, strict warnings,
 O2 and ASan/UBSan for shared owner bindings, seal acknowledgment failures,
 mapping lifetimes, canonical fallback, runtime publication and streamed native
