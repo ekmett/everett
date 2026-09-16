@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "7a8e53610c12c84a53c0bd5a49adf822c7c19e270a9d65d4710de6f69e08052c"
+      "normalized_sha256": "f1b44d34f0664715d288a53937f1d0d4d52dc1eb4548824087f4a216d0c2afb9"
     }
   ],
   "checks": {
@@ -549,6 +549,12 @@
     },
     {
       "scope": "Summarize separately measured fixed-key Metal results against the forward-decoding CPU baseline. Original measurements and fingerprints remain unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Add reviewed matched Metal format measurements and documentation links; original measurement hashes are preserved.",
       "artifacts": [
         "docs/implementation.md"
       ]

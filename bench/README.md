@@ -53,6 +53,11 @@ Its [M2 Max measurements](../optional/fixed_gpu_merge/report.md) retain both
 random-select and stronger forward-decoding CPU baselines, payload-size and
 cancellation sweeps, skewed inputs and scenario-specific crossover brackets.
 
+The [matched format comparison](../optional/fixed_kv_compare/report.md) gives
+both Metal paths identical logical keys and values, with fresh output mappings
+and checksums included. It reports complete latency and encoded size for
+structured and hash-like keys, preserving all trials and their variability.
+
 Unadopted experiments
 --------------------
 

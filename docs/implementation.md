@@ -76,6 +76,16 @@ Both 86-case runs match complete output bytes. The report preserves timing
 ranges and source identities; these figures exclude checksums and durable
 publication and do not reuse the FC calibration.
 
+The [matched Metal format comparison](../optional/fixed_kv_compare/report.md)
+uses identical logical records in twelve no-cancellation cases. Fixed-format
+complete-path medians are 1.37–4.79 times faster than KV03, including fresh
+output mappings, checksums and cleanup. Eleven process-median ranges are
+disjoint, but only eight cases have disjoint ranges across every individual
+trial. Encoded size depends on key distribution: fixed keys cost more for the
+structured fixture and less for the hash-like fixture. All 216 timed outputs
+match their canonical files and cross-format logical hashes. These are
+standalone native merges, without fractional indexes or durable publication.
+
 The separate [GPU experiment](../optional/gpu_merge/design.md) merges default
 bit-profile string replacement files through Metal. GPU passes select input
 Elias–Fano offsets, parse compressed frames, recover inherited prefixes, merge

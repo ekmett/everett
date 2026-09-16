@@ -5,6 +5,8 @@ I use this standalone experiment to compare the two complete Metal merge paths
 on identical logical inputs. It does not change the library or the existing GPU
 calibration. [The retained matched results](report.md) include all twelve cases.
 Both formats merge two sorted, unique streams with no cancellations.
+The [integration record](results/integration.json) identifies a public commit
+whose complete measured source closure matches the original hashes.
 
 Fixtures
 --------
