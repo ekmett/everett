@@ -118,6 +118,26 @@
       "bytes": 1305,
       "sha256": "3c216caf5c092ac0bb97a77bc73cdbb8b1b8eebf03643ea6a1551f28091b16bf"
     },
+    "scheduling-pilot-diagnostics.csv": {
+      "bytes": 3328,
+      "sha256": "98ccb036e4ebc3f1c8c8ec9636328640ee533cf73c6536ca9b4a25d6469e763e"
+    },
+    "scheduling-pilot-metadata.json": {
+      "bytes": 1682,
+      "sha256": "4f04868af2b963e2196a298acfa0a500b11790b6b2c130462a3731c75deab63f"
+    },
+    "scheduling-pilot-queries.csv.gz": {
+      "bytes": 971,
+      "sha256": "ef40729b762c41daa9545f8db44c02175e718b751655924bd92c11302b2654b1"
+    },
+    "scheduling-pilot-raw.tar.gz": {
+      "bytes": 1722,
+      "sha256": "df6182eca9fef3664d498284d50f5641e390c9573fbcc1b7075a99a59de23824"
+    },
+    "scheduling-pilot-space.csv.gz": {
+      "bytes": 506,
+      "sha256": "719f03a5234571fb102e7e1b735d9cb564e5dcacf207e30b13a433fde9edc0dd"
+    },
     "size-metadata.json": {
       "bytes": 16874,
       "sha256": "cbdeb8b985256aaf720aff07c40907c584918d75dc57438de7c25376e0fa5fd0"
@@ -151,7 +171,8 @@
     "prepare.py": "0fc040a99b8a8d54b9d900b02a40e0f1faab5dfe7a31edfb6209bcf8ffa121bc",
     "profile.py": "809b73185c8e7aebbb4859777d26a2c42978746b4c156707bbaa4e51aded638b",
     "run.py": "b5e5b9614c83f51b6615a000282015413de7af6394f7b2213581e867eeba668f",
-    "size_panel.py": "cf4909135bdcca7ec1afca85edcbc0b29c7757d2e16ff041c5cbb221fa20db82",
-    "summarize.py": "88f18e03c4851ecb6e13134dccd5b8e5ef2abe4973571b086cf5dfd3c011c3f9"
+    "size_panel.py": "058c9543b93f49c13e015e01ce83fc41415a1a58133f6937a4f5ed69b7369356",
+    "summarize.py": "88f18e03c4851ecb6e13134dccd5b8e5ef2abe4973571b086cf5dfd3c011c3f9",
+    "scheduling.py": "019bbc538a1ec1a4d57287a5f23f11c25049e4fb3dd735bac46803a9a88acdf0"
   }
 }

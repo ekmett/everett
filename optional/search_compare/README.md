@@ -98,6 +98,33 @@ python3 optional/search_compare/summarize.py build-search/primary \
   build-search/primary-summary.csv --phase primary
 ```
 
+Scheduling diagnostics for large size panels
+-------------------------------------------
+
+`scheduled_size_panel.cc` uses the same mapped fixtures and query walk as the
+size panel. On Apple it requests and verifies `USER_INITIATED` QoS on its own
+thread; it changes no system-wide scheduling setting. It records both wall and
+thread CPU elapsed times once per complete trial, outside the lookup loop.
+This is a separately compiled experiment with separate results, not a correction
+applied to existing measurements. Compile it serially against each generated
+header tree with the same release flags used above.
+
+```sh
+c++ -std=c++20 -O3 -g -DNDEBUG -Wall -Wextra -Werror \
+  -Ibuild-search/VARIANT/include optional/search_compare/scheduled_size_panel.cc \
+  -o build-search/VARIANT/scheduled_size_panel
+python3 optional/search_compare/size_panel.py build-search build-search/scheduled-pilot \
+  --binary-name scheduled_size_panel --variants base --sizes 131072 2097152 \
+  --processes 2 --trials 3
+python3 optional/search_compare/scheduling.py build-search/scheduled-pilot/queries.csv \
+  build-search/scheduled-pilot/diagnostics.csv
+```
+
+The pilot retains all trials. CPU/wall ratios help distinguish descheduling
+from variation while the thread is executing; they do not measure cache misses,
+identify which CPU core ran the thread or guarantee a stable clock frequency.
+A larger follow-up should use a new output directory and keep the pilot separate.
+
 Attribution and checks
 ----------------------
 

@@ -1,0 +1,57 @@
+{
+  "execution_order": [
+    {
+      "name": "0-base-byte-131072-16-structured",
+      "started": 1789580261.54713,
+      "elapsed": 2.537385940551758
+    },
+    {
+      "name": "0-base-bit-131072-128-hash",
+      "started": 1789580264.0853739,
+      "elapsed": 5.391796112060547
+    },
+    {
+      "name": "1-base-byte-131072-16-structured",
+      "started": 1789580269.4781241,
+      "elapsed": 2.156825065612793
+    },
+    {
+      "name": "1-base-bit-131072-128-hash",
+      "started": 1789580271.635927,
+      "elapsed": 5.397902250289917
+    },
+    {
+      "name": "0-base-byte-2097152-16-structured",
+      "started": 1789580277.034945,
+      "elapsed": 3.872772216796875
+    },
+    {
+      "name": "0-base-bit-2097152-128-hash",
+      "started": 1789580280.908681,
+      "elapsed": 12.19740915298462
+    },
+    {
+      "name": "1-base-byte-2097152-16-structured",
+      "started": 1789580293.106956,
+      "elapsed": 3.9005179405212402
+    },
+    {
+      "name": "1-base-bit-2097152-128-hash",
+      "started": 1789580297.008529,
+      "elapsed": 12.063787937164307
+    }
+  ],
+  "binary_name": "scheduled_size_panel",
+  "binaries": {
+    "base": "05160ac48014222512a476952e79cef286632d9f10fbc386e5ead1f9a81e737d"
+  },
+  "sources": {
+    "bench.cc": "893839c61b7359e0aefb2cb7edb3a54770f5b7c772bb0be33d88b0869827e946",
+    "scheduled_size_panel.cc": "7c1dde3af57281b80d055fed4a45626c9090daa5f357254ae0d0c025a7aa8299",
+    "size_panel.py": "058c9543b93f49c13e015e01ce83fc41415a1a58133f6937a4f5ed69b7369356",
+    "prepare.py": "0fc040a99b8a8d54b9d900b02a40e0f1faab5dfe7a31edfb6209bcf8ffa121bc"
+  },
+  "scheduling": [
+    "SCHEDULING,user_initiated,clock_thread_cputime_id"
+  ]
+}
