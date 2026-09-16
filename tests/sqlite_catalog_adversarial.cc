@@ -26,6 +26,7 @@
 #include <memory>
 #include <optional>
 #include <span>
+#include <source_location>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -43,10 +44,12 @@ namespace {
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }
-  template <class F> void rejects(F && action) {
+  template <class F> void rejects(F && action,
+      std::source_location where = std::source_location::current()) {
     bool rejected = false;
     try { action(); } catch (std::exception const &) { rejected = true; }
-    require(rejected, "invalid catalog operation accepted");
+    if (!rejected) throw std::runtime_error("invalid catalog operation accepted at line " +
+      std::to_string(where.line()));
   }
 
   struct temporary_directory {
@@ -137,6 +140,8 @@ namespace {
   }
   object_attempt_id attempt(unsigned n) { return object_attempt_id(id(n).hex()); }
 
+  enum class native_case { canonical, conservative, duplicate, descending };
+
   struct fixture {
     temporary_directory directory;
     blob_identity head{id(101), id(102)};
@@ -147,7 +152,7 @@ namespace {
     std::vector<object_seal_receipt> receipts;
     std::optional<mapped_query_root<policy>> root;
 
-    explicit fixture(bool malformed = false, bool large = false)
+    explicit fixture(native_case encoding = native_case::canonical, bool large = false)
       : records(make_records(large)), source(profile_blob<policy>::build(records)),
         db(catalog::create(directory.path, id(100), {0})) {
       std::array outputs{catalog_object_reservation{head.native, file_kind::native_blob},
@@ -162,15 +167,27 @@ namespace {
         require(!std::filesystem::exists(directory.path / object_path(output.object, output.kind)),
                 "reservation unexpectedly constructed an object");
       std::array<std::uint64_t, 2> ceilings{0, 0};
-      auto native = malformed ? profile_array<policy>::build(records, ceilings) : profile_array<policy>::build(records);
+      auto native = encoding == native_case::canonical ? profile_array<policy>::build(records) :
+        profile_array<policy>::build(records, ceilings);
       auto native_encoding = encode_native_sections(native);
       auto index_encoding = encode_index_sections(source, head.native);
-      receipts.push_back(native_encoding.seal(directory.path, head.native, output_attempt));
+      if (encoding == native_case::duplicate || encoding == native_case::descending) {
+        std::vector<std::byte> body;
+        for (auto chunk : native_encoding.chunks()) body.insert(body.end(), chunk.begin(), chunk.end());
+        auto payload = section_detail::parse(native_encoding.header(), body).sections[section_detail::fc];
+        auto last = static_cast<std::size_t>(payload.offset + payload.length - 1);
+        require(body.at(last) == std::byte{'b'}, "malformed fixture must end in its second key literal");
+        // Both full literals start with the same prefix. Change only the last
+        // unit, leaving framing, extents, offsets and terminal length intact.
+        body[last] = encoding == native_case::duplicate ? std::byte{'a'} : std::byte{'@'};
+        receipts.push_back(object_writer<policy>::seal(directory.path, head.native, output_attempt,
+          native_encoding.header(), body));
+      } else receipts.push_back(native_encoding.seal(directory.path, head.native, output_attempt));
       receipts.push_back(index_encoding.seal(directory.path, head.index, output_attempt));
       db.record_sealed("fixture/native", receipts[0]);
       db.record_sealed("fixture/index", receipts[1]);
       root.emplace(open_mapped_query<policy>(directory.path, head));
-      if (!malformed) db.register_chain("fixture/register", *root, catalog_admission::scan);
+      if (encoding == native_case::canonical) db.register_chain("fixture/register", *root, catalog_admission::scan);
     }
     std::filesystem::path database_path() const { return directory.path / "catalog.sqlite3"; }
     static std::vector<profile_record> make_records(bool large) {
@@ -410,15 +427,31 @@ namespace {
   }
 
   void trusted_admission_test() {
-    // A nonmaximal FC encoding is structurally valid with a freshly streamed
-    // CRC and successful seal barriers. Trusted admission must not turn into
-    // a hidden semantic scan; explicit scan must reject this same fixture.
-    fixture value(true);
-    rejects([&] { value.root->head()->scan(); });
-    value.db.register_chain("trusted/admission", *value.root);
-    require(value.db.lookup_operation("trusted/admission").has_value(), "trusted admission scanned payload semantics");
-    rejects([&] { value.db.register_chain("checked/admission", *value.root, catalog_admission::scan); });
-    require(!value.db.lookup_operation("checked/admission") && !value.db.poisoned(), "semantic scan failure changed catalog state");
+    // Conservative FC repeats prefix units deliberately. It remains ordered
+    // and must pass both metadata-only and explicit semantic admission.
+    fixture conservative(native_case::conservative);
+    conservative.root->head()->scan();
+    conservative.db.register_chain("trusted/conservative", *conservative.root);
+    conservative.db.register_chain("checked/conservative", *conservative.root, catalog_admission::scan);
+    require(conservative.db.lookup_operation("checked/conservative").has_value(),
+      "checked admission rejected valid conservative front coding");
+    for (auto const & record : conservative.records) {
+      auto cursor = conservative.root->cursor(record.key.view());
+      require(cursor.step() == 1 && cursor.has_match(), "conservative admission changed logical keys");
+    }
+
+    // Sealing supplies a correct CRC for these semantically invalid streams.
+    // Trusted admission must not become a hidden scan, while checked admission
+    // must reject both equality and a descending key after a repeated prefix.
+    for (auto encoding : {native_case::duplicate, native_case::descending}) {
+      fixture value(encoding);
+      for (auto const & receipt : value.receipts) file<policy>::open(receipt.path).scan();
+      rejects([&] { value.root->head()->scan(); });
+      value.db.register_chain("trusted/admission", *value.root);
+      require(value.db.lookup_operation("trusted/admission").has_value(), "trusted admission scanned payload semantics");
+      rejects([&] { value.db.register_chain("checked/admission", *value.root, catalog_admission::scan); });
+      require(!value.db.lookup_operation("checked/admission") && !value.db.poisoned(), "semantic scan failure changed catalog state");
+    }
   }
 
   void uncertain_reservation_test() {
