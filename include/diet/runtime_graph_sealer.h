@@ -37,27 +37,7 @@ namespace diet::runtime_store_detail {
     std::shared_ptr<native_binding_type const> ensure_native(native_pointer const & native) {
       if (!native) throw std::invalid_argument("null runtime native owner");
       auto result = native->bindings_.get_or_create(catalog_.identity(), catalog_.root(), [&] {
-        if constexpr (requires { native->sealed(); }) {
-          if (auto sealed = native->sealed()) {
-            if (sealed->catalog != catalog_.identity())
-              throw std::invalid_argument("native seal belongs to another catalog");
-            catalog_.verify_sealed(sealed->receipt, file_kind::native_blob);
-            return std::make_shared<native_binding_type const>(*sealed, native->mapped());
-          }
-        }
-        if (!native->owned()) throw std::invalid_argument("mapped native has no binding in this catalog");
-        auto id = ids_();
-        auto attempt = reserve(id, file_kind::native_blob);
-        auto encoded = [&] {
-          if constexpr (requires { typename Family::storage_type; })
-            return Family::storage_type::encode_native(*native->owned());
-          else return encode_native_sections(*native->owned());
-        }();
-        auto receipt = encoded.seal(catalog_.root(), id, attempt);
-        catalog_.record_sealed(operation(), receipt);
-        auto mapped = std::make_shared<mapped_native_type const>(mapped_native_type::open(receipt.path));
-        return std::make_shared<native_binding_type const>(
-          native_seal{catalog_.identity(), std::move(receipt)}, std::move(mapped));
+        return produce_native(native);
       });
       // A binding attests to acknowledged construction. Import into this
       // backend still checks the current envelope, without scanning its body.
@@ -69,9 +49,43 @@ namespace diet::runtime_store_detail {
       if (!pair) throw std::invalid_argument("null runtime pair owner");
       auto result = pair->bindings_.get_or_create(catalog_.identity(), catalog_.root(), [&] {
         if (!pair->built()) throw std::invalid_argument("mapped pair has no binding in this catalog");
-        auto native = ensure_native(pair->native_owner());
+        // Dependencies can share this pair's native owner. Resolve them before
+        // taking its producer lock, so aliases select the acknowledged fallback.
         auto main = pair->main_target() ? ensure_pair(pair->main_target()) : nullptr;
         auto secondary = pair->secondary_target() ? ensure_native(pair->secondary_target()) : nullptr;
+        auto const & owner = pair->native_owner();
+        if (!owner) throw std::invalid_argument("null runtime native owner");
+        std::optional<pair_seal> fused;
+        std::shared_ptr<typename mapped_type::index_type const> fused_index;
+        auto native = owner->bindings_.get_or_create(catalog_.identity(), catalog_.root(), [&] {
+          if constexpr (requires { owner->sealed(); })
+            if (owner->sealed()) return produce_native(owner);
+          if (!owner->owned()) return produce_native(owner);
+          blob_identity id{ids_(), ids_()};
+          std::array outputs{catalog_object_reservation{id.native, file_kind::native_blob},
+            catalog_object_reservation{id.index, file_kind::fractional_index}};
+          std::array<blob_identity, 1> input{main ? main->identity : id};
+          auto attempt = reserve(outputs, std::span<blob_identity const>(input.data(), main ? 1 : 0));
+          auto native_receipt = encode_native(owner).seal(catalog_.root(), id.native, attempt);
+          auto encoded = encode_cola_sections(*pair->built(), id.native,
+            main ? std::optional<blob_identity>(main->identity) : std::nullopt,
+            secondary ? std::optional<object_id>(secondary->receipt.object) : std::nullopt);
+          auto index_receipt = encoded.seal(catalog_.root(), id.index, attempt);
+          auto [mapped_native, index] = catalog_.template seal_native_pair<mapped_type>(
+            operation(), id, native_receipt, index_receipt);
+          auto binding = std::make_shared<native_binding_type const>(
+            native_seal{catalog_.identity(), std::move(native_receipt)}, std::move(mapped_native));
+          fused.emplace(pair_seal{catalog_.identity(), id, std::move(index_receipt)});
+          fused_index = std::move(index);
+          return binding;
+        });
+        catalog_.verify_sealed(native->receipt, file_kind::native_blob);
+        if (fused) {
+          auto mapped = mapped_type::bind(fused->identity, native->mapped, std::move(fused_index),
+            main ? main->mapped : nullptr, secondary ? secondary->mapped : nullptr,
+            secondary ? std::optional<object_id>(secondary->receipt.object) : std::nullopt);
+          return std::make_shared<pair_binding_type const>(std::move(*fused), std::move(mapped));
+        }
         blob_identity id{native->receipt.object, ids_()};
         std::array<blob_identity, 1> input{main ? main->identity : id};
         auto attempt = reserve(id.index, file_kind::fractional_index,
@@ -153,10 +167,37 @@ namespace diet::runtime_store_detail {
       if (last_operation_) *last_operation_ = id;
       return id;
     }
+    auto encode_native(native_pointer const & native) {
+      if constexpr (requires { typename Family::storage_type; })
+        return Family::storage_type::encode_native(*native->owned());
+      else return encode_native_sections(*native->owned());
+    }
+    std::shared_ptr<native_binding_type const> produce_native(native_pointer const & native) {
+      if constexpr (requires { native->sealed(); }) {
+        if (auto sealed = native->sealed()) {
+          if (sealed->catalog != catalog_.identity())
+            throw std::invalid_argument("native seal belongs to another catalog");
+          catalog_.verify_sealed(sealed->receipt, file_kind::native_blob);
+          return std::make_shared<native_binding_type const>(*sealed, native->mapped());
+        }
+      }
+      if (!native->owned()) throw std::invalid_argument("mapped native has no binding in this catalog");
+      auto id = ids_();
+      auto attempt = reserve(id, file_kind::native_blob);
+      auto receipt = encode_native(native).seal(catalog_.root(), id, attempt);
+      catalog_.record_sealed(operation(), receipt);
+      auto mapped = std::make_shared<mapped_native_type const>(mapped_native_type::open(receipt.path));
+      return std::make_shared<native_binding_type const>(
+        native_seal{catalog_.identity(), std::move(receipt)}, std::move(mapped));
+    }
     object_attempt_id reserve(object_id const & id, file_kind kind, std::span<blob_identity const> inputs = {}) {
+      std::array<catalog_object_reservation, 1> outputs{{{id, kind}}};
+      return reserve(outputs, inputs);
+    }
+    object_attempt_id reserve(std::span<catalog_object_reservation const> outputs,
+        std::span<blob_identity const> inputs = {}) {
       object_attempt_id attempt(ids_().hex());
       auto owner = ids_().hex();
-      std::array<catalog_object_reservation, 1> outputs{{{id, kind}}};
       catalog_.reserve(operation(), attempt, owner, inputs, outputs);
       return attempt;
     }

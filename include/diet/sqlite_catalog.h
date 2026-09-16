@@ -716,6 +716,34 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
       return std::move(prepared.index);
     }
 
+    // Both files have completed their barriers. Prepare and pin their metadata
+    // before taking the writer lock; the joint acknowledgment performs only
+    // SQL work. Neither mapping escapes an uncertain commit.
+    template <class Mapped> auto seal_native_pair(std::string_view op, blob_identity const & id,
+        object_seal_receipt const & native_receipt, object_seal_receipt const & index_receipt) {
+      require_active(); catalog_detail::name(op);
+      if (native_receipt.object != id.native || index_receipt.object != id.index || id.native == id.index)
+        throw std::invalid_argument("pair receipts name different objects");
+      auto native_path = std::filesystem::canonical(native_receipt.path);
+      auto index_path = std::filesystem::canonical(index_receipt.path);
+      if (native_path != root_ / object_path(id.native, file_kind::native_blob) ||
+          index_path != root_ / object_path(id.index, file_kind::fractional_index))
+        throw std::invalid_argument("seal receipt names another catalog path");
+      catalog_detail::bytes request;
+      append_seal_request(request, native_receipt, native_path);
+      append_seal_request(request, index_receipt, index_path);
+      auto prepared = prepare_cola_pair<Mapped>(id, &index_receipt, &native_receipt);
+      append_pair_request(request, prepared.descriptor);
+      auto native = std::make_shared<typename Mapped::native_type const>(std::move(prepared.native));
+      transaction(op, "seal_native_cola_pair", request, [&] {
+        record_prepared_seal(native_receipt, file_kind::native_blob);
+        record_prepared_seal(index_receipt, file_kind::fractional_index);
+        insert_cola_row(prepared.descriptor);
+        catalog_detail::bytes result; catalog_detail::pair(result, id); return result;
+      });
+      return std::pair{std::move(native), std::move(prepared.index)};
+    }
+
     void save(std::string_view op, std::string_view name, blob_identity const & head) {
       require_active(); catalog_detail::name(op); catalog_detail::name(name);
       catalog_detail::bytes request; catalog_detail::field(request, name); catalog_detail::pair(request, head);
@@ -930,13 +958,14 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
       std::shared_ptr<typename Mapped::index_type const> index;
       cola_pair_files files;
       cola_pair_descriptor descriptor;
+      typename Mapped::native_type native;
     };
     mapped_slice open_object_bytes(object_id const & id, file_kind expected) const {
       auto mapping = mapped_file::open(root_ / object_path(id, expected));
       return mapping.slice(0, mapping.size());
     }
     template <class Mapped> prepared_cola_pair<Mapped> prepare_cola_pair(blob_identity const & id,
-        object_seal_receipt const * receipt = nullptr) const {
+        object_seal_receipt const * receipt = nullptr, object_seal_receipt const * native_receipt = nullptr) const {
       return read([&]() -> prepared_cola_pair<Mapped> {
         static_assert(std::is_same_v<P, typename Mapped::policy_type>);
         if (schema_version_ < 3) throw std::logic_error("COLA admission requires catalog version 3");
@@ -951,7 +980,9 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
         else require_sealed(id.index, file_kind::fractional_index, &files.index);
         files.native = open_object_bytes(id.native, file_kind::native_blob);
         auto native = native_type::open(file<P>::from_slice(files.native));
-        require_sealed(id.native, file_kind::native_blob, &files.native);
+        if (native_receipt)
+          check_object_envelope(file_kind::native_blob, native_receipt->bytes, native_receipt->body_crc32c, files.native.bytes());
+        else require_sealed(id.native, file_kind::native_blob, &files.native);
         std::optional<native_type> secondary;
         if (index->secondary_id()) {
           files.secondary = open_object_bytes(*index->secondary_id(), file_kind::native_blob);
@@ -977,7 +1008,7 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
           {index->cut_lcps(0), index->cut_lcps(1)}, index->virtual_size()};
         cola_pair_descriptor descriptor{id, index->main_id(), index->secondary_id(), view.native().size(),
           view.borrowed(0).size(), view.borrowed(1).size(), secondary_count, view.virtual_size()};
-        return {std::move(index), std::move(files), std::move(descriptor)};
+        return {std::move(index), std::move(files), std::move(descriptor), std::move(native)};
       });
     }
     static void append_pair_request(catalog_detail::bytes & request, cola_pair_descriptor const & descriptor) {
@@ -1011,6 +1042,19 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
       // A barrier receipt is an attestation; re-reading cannot prove durability.
       auto opened = evidence ? mapped_slice{} : open_object_bytes(receipt.object, expected);
       check_object_envelope(expected, receipt.bytes, receipt.body_crc32c, (evidence ? *evidence : opened).bytes());
+      write_seal(receipt);
+    }
+    // Used only after the exact path and envelope were checked against a pinned
+    // immutable mapping outside this transaction.
+    void record_prepared_seal(object_seal_receipt const & receipt, file_kind expected) {
+      catalog_detail::statement reserved(db_, "SELECT kind,attempt,bytes FROM objects WHERE id=?");
+      reserved.text(1, receipt.object.hex());
+      if (!reserved.row() || reserved.integer(0) != kind(expected) ||
+          reserved.text(1) != receipt.attempt.hex() || !reserved.is_null(2))
+        throw std::invalid_argument("object is not this attempt's unsealed reservation");
+      write_seal(receipt);
+    }
+    void write_seal(object_seal_receipt const & receipt) {
       catalog_detail::statement update(db_, "UPDATE objects SET bytes=?,crc=?,barrier=? WHERE id=?");
       update.integer(1, catalog_detail::integer(receipt.bytes)); update.integer(2, receipt.body_crc32c);
       update.integer(3, static_cast<unsigned>(receipt.barrier)); update.text(4, receipt.object.hex()); update.done();
