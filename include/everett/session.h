@@ -120,6 +120,20 @@ namespace everett {
     // A saturated try_submit neither copies nor moves input. Blocking submit
     // retains no private input copy while waiting. Caller-owned waiting inputs
     // lie outside the accepted-input reservation bound.
+    // An Engine may adapt a public command to its queue envelope without
+    // taking ownership yet. The ordinary enqueue path still reserves first.
+    template <class C> requires (!std::same_as<std::remove_cvref_t<C>, contribution_type>) &&
+      requires(C && input) { { Engine::borrow_contribution(std::forward<C>(input)) } -> std::same_as<contribution_type>; }
+    std::optional<ticket> try_submit(C && input) {
+      return try_submit(Engine::borrow_contribution(std::forward<C>(input)));
+    }
+    template <class C> requires (!std::same_as<std::remove_cvref_t<C>, contribution_type>) &&
+      requires(C && input) { { Engine::borrow_contribution(std::forward<C>(input)) } -> std::same_as<contribution_type>; }
+    ticket submit(C && input) { return submit(Engine::borrow_contribution(std::forward<C>(input))); }
+    template <class C> requires (!std::same_as<std::remove_cvref_t<C>, contribution_type>) &&
+      requires(C && input) { { Engine::borrow_contribution(std::forward<C>(input)) } -> std::same_as<contribution_type>; }
+    snapshot_type apply(C && input) { return submit(std::forward<C>(input)).get(); }
+
     template <class C> requires std::same_as<std::remove_cvref_t<C>, contribution_type>
     std::optional<ticket> try_submit(C && input) {
       return enqueue(std::forward<C>(input), false);
