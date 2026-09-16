@@ -118,6 +118,14 @@ fully determines the state; it permits the first-match read optimization and
 use `change<S>` and fold all matching arrows from oldest to newest, including
 already composed arrows produced by merges.
 
+For replacement sorts, deletion admission also captures the matching record's
+physical FC retained position during the validating lookup. The new tombstone
+uses that limit to keep the canceled literal available to a parallel merger.
+The current target is checked even when the contribution came from an
+equivalent snapshot with another encoding. Ordinary reads do not request this
+metadata. The [native merge guide](native-merges.md#conservative-tombstone-literals)
+describes the encoding and its space-accounting boundary.
+
 For example, an append sort can use strings for both its state and arrow,
 concatenation for `apply` and `compose`, the empty string for `initial`, and
 nonemptiness for `present`. It must supply hashes for the resulting state.

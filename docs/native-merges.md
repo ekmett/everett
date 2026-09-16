@@ -132,10 +132,63 @@ The tests use string concatenation and fixed-width affine maps as associative,
 noncommutative instances. Mapped-input tests seal and reopen the result, pause
 and move the merger, and keep using input mappings after their names are unlinked.
 
-The merger treats values as encoded data. It does not interpret a tombstone,
-drop an identity arrow, validate arrow endpoints or calculate a world's
-fingerprint. In particular, retaining a deletion marker is the default: removing
-it needs the older-coverage proof described in [rebuilding](rebuild.md).
+The merger treats values as encoded data unless its composer supplies
+`is_tombstone(value)` or `is_tombstone(key, value)`. This predicate controls
+literal retention; it does not remove the record. Removing a deletion marker
+needs the older-coverage proof described in [rebuilding](rebuild.md). Endpoint
+validation and the world's fingerprint belong to typed admission.
+
+## Conservative tombstone literals
+
+Deleting a key already requires a lookup. I also record the target's physical
+retained-prefix position during that lookup. For a key of length $L$, let $r$
+be the target's stored retained position and $n$ the tombstone's ordinary FC
+position. I write the tombstone with
+
+$$
+t=\min(n,r)
+$$
+
+and the complete suffix starting at $t$. If the target retains five characters
+and ordinary FC would retain seven, the tombstone repeats those two characters.
+It now contains every literal character the target supplied. The extra payload
+is $\max(0,n-r)\le L-r$, so it can be charged to that exact target's literal
+payload. The [Lean model](../proof/README.md#canceled-literal-owners) proves the
+local coverage and summed charge with unique target ownership as a premise.
+
+`profile_record::retained_limit_bits` carries this encoding limit in logical
+key bits, including the selector. Writers take the smaller of the ordinary FC
+position and the limit. Byte profiles round down to a byte boundary. Direct
+sort profiles keep the selector in their dictionary and clamp at the leaf's
+prefix; the equation above applies to the key-local payload. A zero limit
+therefore writes the complete key payload. No additional on-disk field is
+needed: the ordinary retained count and literal suffix express the choice.
+
+The native writers and sort-owned writers accept this optional limit. Typed
+`erase` captures it under the lookup's existing source pin. Admission checks
+the current target again as part of old-value validation, since a contribution
+can have an equivalent base with different physical encoding. An unconditional
+erase or replacement-to-absence acquires its limit at admission.
+
+During a merge, an unmatched tombstone retains its input's stored limit. When
+equal keys compose to a tombstone, I use the smaller of both input positions.
+A live replacement resumes ordinary FC. The unary predicate takes precedence
+and the default optional-string sort reads only its presence bit; key-dependent
+predicates may reconstruct the key. The opaque native merger may also need a
+temporary reconstructed key when its new literal begins before the chosen
+source literal; the direct sort merger emits from its existing prefix spans.
+
+These limits remain deliberately conservative. A singleton starts with a
+complete key, and preserving its stored position can keep more literal material
+than a later target alone requires. The local charging theorem does not claim
+a tight global bound for that admission history.
+
+For parallel cleanup, a canceled literal interval can be redirected to the
+tombstone's corresponding interval. The optional GPU merge resolves those
+intervals in metadata, splitting copies at actual owner boundaries. It does
+not reconstruct whole input keys on the CPU. This removes the missing-literal
+dependency caused by cancellation; comparisons at arbitrary FC block starts
+still need their prefix-owner information.
 
 ## Carrying comparisons forward
 

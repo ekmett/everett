@@ -376,15 +376,16 @@
     }
   ],
   "integration_edits": {
-    "optional/gpu_merge/CMakeLists.txt": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure.",
+    "optional/gpu_merge/CMakeLists.txt": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure. Add separately qualified conservative-tombstone preservation and complete-coverage cleanup; historical calibration is unchanged.",
     "optional/gpu_merge/design.md": "Update current status of measured prefix caching, checked fused-origin rank construction, and separately qualified Vulkan adapter; original measurement identities and observations are unchanged.",
     "optional/gpu_merge/rank512_notice.txt": "Remove trailing whitespace while retaining the complete original notice.",
     "optional/gpu_merge/cutover.md": "Link the subsequent final-named calibration; its qualified source hash retains the pre-link guide bytes.",
-    "optional/gpu_merge/build.py": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure.",
+    "optional/gpu_merge/build.py": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure. Add separately qualified conservative-tombstone preservation and complete-coverage cleanup; historical calibration is unchanged.",
     "optional/gpu_merge/prefix_owner.hlsl": "Add the separately measured opt-in tiled prefix-tree path and its independent whole-tree oracle; the levelwise default is retained.",
-    "optional/gpu_merge/prototype.mm": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure.",
-    "optional/gpu_merge/kernels.hlsl": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure.",
-    "optional/gpu_merge/report.md": "Update current status of measured prefix caching, checked fused-origin rank construction, and separately qualified Vulkan adapter; original measurement identities and observations are unchanged."
+    "optional/gpu_merge/prototype.mm": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure. Add separately qualified conservative-tombstone preservation and complete-coverage cleanup; historical calibration is unchanged.",
+    "optional/gpu_merge/kernels.hlsl": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure. Add separately qualified conservative-tombstone preservation and complete-coverage cleanup; historical calibration is unchanged.",
+    "optional/gpu_merge/report.md": "Update current status of measured prefix caching, checked fused-origin rank construction, and separately qualified Vulkan adapter; original measurement identities and observations are unchanged.",
+    "optional/gpu_merge/emit_word.hlsl": "Add separately qualified conservative-tombstone preservation and complete-coverage cleanup; historical calibration is unchanged."
   },
   "post_export_validation": {
     "source_revision": "6c1bbd2e1e1bb364389dd9f2b6977caf02a92527",

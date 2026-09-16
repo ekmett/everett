@@ -33,6 +33,7 @@ for integration. These are development responsibilities.
 | Typed updates | `typed_world.h`; `tests/typed_world.cc` | replacement reads, chronological arrows, per-sort dispatch and hashes, validated deletes, disjoint contributions, mutable commands and snapshot metadata |
 | Sort-owned record codec | `sort_codec.h`; `tests/sort_codec.cc` | heterogeneous FC/raw/integer grammars, optional/niche/no-payload values, typed stream anchors, control parsing and borrowed-role output |
 | Sort-owned physical profiles | `sort_profile.h`, `sort_profile_file.h`, `sort_profile_merge.h`; `tests/sort_profile.cc` | KV03 native framing, shared selector seeds, mapped cascading queries, prefix-preserving merges and protected-page entry |
+| Conservative tombstones | native/sort codecs, `typed_world.h`, `replacement_rebuild.h`; tombstone and first-value tests | exact-target depth capture, conservative re-encoding, equivalent physical bases, custom cursor fallback and replayed limits |
 | Sort-owned runtime and persistence | `sort_runtime.h`, `sort_runtime_store.h`; sort-runtime and catalog tests | direct heterogeneous records, chronological composition, complete redundant frontiers and metadata-only mapped recovery |
 | Adaptive encoded outputs | `sort_profile_adaptive.h`, `cola_adaptive_index.h`, `output_budget.h`; adaptive native/index and allowance tests | bounded retained capacities, lifetime leases, exact streamed bytes, lazy reservations and acknowledged seals |
 | Completed native reuse | `sort_runtime_context.h`, `sqlite_catalog.h`; `tests/sqlite_catalog_native_reuse.cc` | exact ordered inputs/schema/kernel, acknowledged acquisition pins, fork-local indexes, hidden checkpoints and uncertain-operation replay |
@@ -62,6 +63,14 @@ records, scan exact output lengths and write the compressed payload and
 navigation. The CPU supplies file metadata and resources, waits for completion,
 and finishes the envelope and checksums. The program imports mmap-backed files
 directly on the tested unified-memory machine.
+
+The [explicit tombstone mode](../optional/gpu_merge/tombstones.md) preserves conservative FC depths and can remove
+absent winners when the caller supplies complete older-history coverage.
+Parallel metadata redirects canceled literal owners to physical donors, and
+word-owned emission splits at the actual fragment boundaries. All 96 fixture
+executions match complete CPU-encoded files; preserving cases also match the
+production CPU merger. The 17 optional checks pass. This mode has a distinct
+execution identity and has no crossover calibration or performance claim.
 
 The [complete-path measurements](../optional/gpu_merge/report.md) and
 [cancellation-bitmap comparison](../optional/gpu_merge/collision-report.md)
@@ -783,8 +792,20 @@ budget from string/allocation work and durable checkpointing.
 The independent in-memory fixtures check exact wire equivalence, sparse
 offsets, partial blocks, unique-key rejection, moves and input lifetimes. The
 merge oracle checks replacement and both parenthesizations of an associative,
-noncommutative value operation. These builders do not interpret tombstones,
-evaluate endpoints or establish a bounded redundant-level schedule.
+noncommutative value operation. Composers may identify tombstones to preserve
+their conservative literal depths. Typed admission captures the physical target
+limit during its validating lookup, with fresh checks against an equivalent
+current layout. Unary default-sort predicates avoid key reconstruction;
+key-dependent predicates retain the semantic fallback. Ordinary merges keep
+deletion records. The [retention rule](native-merges.md#conservative-tombstone-literals)
+and its Lean proof distinguish local literal charging from global restart and
+scheduling costs. These builders do not evaluate arrow endpoints or establish
+a bounded redundant-level schedule.
+
+The [fixed-key table formats](table-layouts.md) are the next physical-format
+direction. `.fv` gives variable values an Elias–Fano boundary directory; `.ff`
+uses fixed strides throughout. Their fractional indexes use arithmetic key
+addresses. Both are design work, separate from the implemented `.kv` codecs.
 
 `native_file_writer<P>` streams the same framing into an immutable object
 attempt. It retains a reusable predecessor key, 64 KiB of payload buffering,
@@ -1182,6 +1203,10 @@ integrated tree, bringing the transitive Lean audit to **1,088 declarations**
 with the same three standard axioms.
 At `c6c4971`, the coherent-chain construction and traversal also pass, bringing
 the audit to **1,162 declarations** with unchanged logical dependencies.
+The retained-floor construction and fragment-gather proof extend that audit to
+**1,280 declarations**, still using only the same standard axioms. They prove
+literal coverage and local payload charging for exact targets; owner discovery,
+shader execution and the complete merge remain separate verification work.
 
 At `296a025`, the combined strict O2 ASan/UBSan build passed all **107 checks**
 on AppleClang 21: 103 C++ component suites, three independent package consumers

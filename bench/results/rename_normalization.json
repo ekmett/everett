@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "8ea2b6a33446bf001297b283360f6171b10c522faf86883f09f8aff2829515a6"
+      "normalized_sha256": "31f6ea697e754c6fc489f5aa1f5eb158f6ce810f8092c060a2769c9fd53cc227"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "22b9732faf307a4129db51c91068bb32410ed4eb92c677d575cfd4e28e53e38f"
+      "normalized_sha256": "a14cba3dc652ea3bc3c44661c9df1d78da5a1cc129dccbd9fc2a0fff51dfad28"
     }
   ],
   "subsequent_updates": [
@@ -988,6 +988,13 @@
       "scope": "Link the separately reviewed fused output-plan experiment. Original benchmark observations and measurement fingerprints are unchanged.",
       "artifacts": [
         "bench/README.md",
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Document conservative tombstone codecs, exact-target admission and rebuild replay, separately qualified GPU cleanup, retained-floor proof, and fixed-key physical table direction. Original measurement observations and fingerprints are unchanged.",
+      "artifacts": [
         "bench/results/publication_normalization.json",
         "docs/implementation.md"
       ]

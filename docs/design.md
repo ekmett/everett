@@ -62,6 +62,11 @@ strings and integer keys with fixed, optional, niche and no-payload values.
 The typed engine applies the same registry's hashing, read and composition
 laws during admission and merge.
 
+The [physical table layout direction](table-layouts.md) adds fixed-key `.fv`
+and `.ff` formats alongside `.kv`. They share the logical store and specialize
+key access, value offsets and merge kernels; string compression is one physical
+choice rather than a requirement of snapshotting or partitioned updates.
+
 The outer dynamization mechanism needs a merge operation, a query operation,
 and laws relating them. Maps give us one useful instance. Sort semantics supply
 those operations for the typed engine. Its key space is sort-qualified: each
@@ -528,6 +533,14 @@ to materialize a key. Structural merge charges do not bound expanded byte work.
 Elias–Fano construction also needs accounting: final record count and variable
 extent can be known late. Spooling group offsets and finalizing the compact
 index after the data pass is a simple initial strategy.
+
+Deletion lookup also records the canceled record's retained-prefix depth. I
+can make its tombstone repeat enough suffix material to cover that record's
+literal, using the smaller of the target depth and ordinary FC depth. The
+[conservative tombstone rule](native-merges.md#conservative-tombstone-literals)
+gives the exact bound and the implementation's conservative restart behavior.
+Parallel cleanup can redirect canceled literal owners to these physical donors;
+it still needs metadata for comparisons and output placement.
 
 ## 6. Snapshots, saves, and shared work
 

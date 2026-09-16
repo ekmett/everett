@@ -7,8 +7,8 @@ fork finish its own indexes. Its old index dependencies remain pinned until
 that fork switches to its new layout.
 
 The ordinary named string connection passes its exact application schema to the
-storage context. Reuse currently covers the built-in bit-string registry and
-its known right-biased replacement kernel. A custom registry, selector or
+storage context. Reuse covers the built-in bit-string registry and its known
+replacement kernels, including conservative tombstone literals. A custom registry, selector or
 composition function follows the ordinary merge path. I do not infer semantic
 equality from C++ type names or from a user callback having no data members.
 
@@ -19,7 +19,14 @@ A hint names the older native file, the newer native file, and a domain containi
 
 - The exact application schema bytes.
 - The physical policy descriptor.
-- The library's `everett.KV03.right-biased-native-merge/1` operation identity.
+- The library's operation identity: `everett.KV03.right-biased-native-merge/1`
+  for raw replacement, or `everett.KV03.conservative-tombstone-merge/1` for the
+  typed string merge that preserves canceled literals.
+
+The two operations have separate cache entries even when their output contents
+agree. A normally compressed tombstone cannot stand in for a conservative
+literal donor merely because the table signatures match. Passing the typed
+composer by reference retains its operation identity.
 
 Input order matters. Table signatures, record counts and equal-looking payloads
 are not cache keys. Independently constructed equal files can miss. Catalog
