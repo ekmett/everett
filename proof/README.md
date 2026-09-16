@@ -365,11 +365,16 @@ low fields; I do not assume a correct select operation as a premise.
 For nondecreasing offsets $v_i$ and a positive base $B=2^w$, `encode` stores the
 low remainder $v_i\bmod B$ and emits unary quotient gaps. `select_one` walks
 those bits. `unary_high_select` proves that its $i$th selected bit is at
-$v_i/B+i$, and `high_positions_strict` proves that these positions are strictly
+$\lfloor v_i/B\rfloor+i$, and `high_positions_strict` proves that these positions are strictly
 increasing even when offsets repeat. `decode_encode` then recovers every input
 offset. These are executable list definitions, not assertions about an external
 selector. The theorem holds for every positive base, so choosing the width does
-not affect correctness.
+not affect correctness. `low_bit_field_bound` proves that every low remainder
+fits its $w$-bit field, including the zero-width case.
+`encoded_high_population` proves that the unary vector contains exactly one set
+bit per offset. For a nonempty sequence ending at $U$, `encoded_high_length`
+proves its logical length is exactly $\lfloor U/B\rfloor+N$; an empty vector has length zero.
+These counts precede word padding and select-accelerator storage.
 
 A profile owner subtracts the common value width times the record ordinal before
 encoding its boundary offsets. `stride_fits` rules out truncated subtraction;
@@ -383,7 +388,10 @@ block size 15, EOF adds 17 strides, not 30. An empty owner still appends its one
 EOF value; a generic empty EF sequence contains no implicit sentinel.
 
 For grouped rank, `classes` constructs each population by filtering a real
-$K$-entry window, including its short tail. `checkpoints` records a prefix sum
+$K$-entry window, including its short tail. `population_window_bound` proves
+that a population cannot exceed either $K$ or the remaining entries. Thus
+`class_field_bound` proves that $K=2^b-1$ classes fit in $b$ bits, including the
+full-population code $K$. `checkpoints` records a prefix sum
 only for each existing checkpoint group. `grouped_rank_correct` proves that a
 checkpoint plus the intervening classes equals `fractional.rank` at a valid
 stored group boundary. `directory_scan_budget` bounds that scan by fewer than
@@ -415,7 +423,7 @@ axiom.
 I have deliberately not claimed:
 
 - Correct packed byte/bit encoding, front coding, machine-level rank or
-  Elias–Fano select accelerators and representation bounds.
+  Elias–Fano select accelerators and finite-width allocation arithmetic.
 - A refinement from encoded source streams to the list-level sample certificate,
   an entire cascade search, or composition of same-key history across blobs.
 - A bounded COLA scheduler, strong-deletion work accounting, or byte/I/O costs.

@@ -37,6 +37,40 @@ def unary_high : Nat → List Nat → List Bool
   | previous, quotient :: rest =>
     List.replicate (quotient - previous) false ++ true :: unary_high quotient rest
 
+/-- Every input quotient emits exactly one set bit, even when quotients repeat.
+This counting fact does not require ordering. -/
+theorem unary_high_population (quotients : List Nat) (previous : Nat) :
+    ((unary_high previous quotients).filter id).length = quotients.length := by
+  induction quotients generalizing previous with
+  | nil => rfl
+  | cons q rest ih => simp [unary_high, List.filter_append, ih]
+
+/-- Logical high-vector length, before any machine-word padding. The final
+quotient determines the zero-bit budget; each record contributes one set bit. -/
+theorem unary_high_length (quotients : List Nat) (previous last : Nat)
+    (sorted : quotients.Pairwise (· ≤ ·))
+    (lower : ∀ q ∈ quotients, previous ≤ q) (last_value : quotients.getLast? = some last) :
+    (unary_high previous quotients).length = last - previous + quotients.length := by
+  induction quotients generalizing previous with
+  | nil => simp at last_value
+  | cons q rest ih =>
+    obtain ⟨head_le, tail_sorted⟩ := List.pairwise_cons.mp sorted
+    have previous_le := lower q (by simp)
+    cases rest with
+    | nil =>
+      have same : q = last := by simpa using last_value
+      subst last
+      simp [unary_high]
+    | cons r tail =>
+      have tail_last : (r :: tail).getLast? = some last := by simpa using last_value
+      have q_le : q ≤ last := head_le last (List.mem_of_getLast? tail_last)
+      have tail_length := ih q tail_sorted head_le tail_last
+      rw [unary_high]
+      simp only [List.length_append, List.length_replicate, List.length_cons]
+      rw [tail_length]
+      simp only [List.length_cons]
+      omega
+
 /-- Selecting a constructed unary vector recovers quotient + ordinal. No
 assumed select implementation appears in the statement. -/
 theorem unary_high_select (quotients : List Nat) (previous ordinal : Nat)
@@ -110,6 +144,35 @@ theorem quotient_sorted (values : List Nat) (base : Nat)
     (values.map (· / base)).Pairwise (· ≤ ·) := by
   apply List.pairwise_map.mpr
   exact sorted.imp (by intro a b le; exact quotient_mono _ _ base le)
+
+/-- Each low field fits the chosen base. With base 2^w, this is precisely
+its w-bit range; base 1 gives the legitimate zero-width field containing zero. -/
+theorem low_field_bound (values : List Nat) (base ordinal : Nat)
+    (positive : 0 < base) (inside : ordinal < (encode base values).low.length) :
+    (encode base values).low[ordinal] < base := by
+  have valid : ordinal < values.length := by simpa [encode] using inside
+  simpa [encode] using Nat.mod_lt values[ordinal] positive
+
+theorem low_bit_field_bound (values : List Nat) (width ordinal : Nat)
+    (inside : ordinal < (encode (2 ^ width) values).low.length) :
+    (encode (2 ^ width) values).low[ordinal] < 2 ^ width :=
+  low_field_bound values (2 ^ width) ordinal (Nat.two_pow_pos width) inside
+
+theorem encoded_high_population (values : List Nat) (base : Nat) :
+    ((encode base values).high.filter id).length = values.length := by
+  simpa [encode] using unary_high_population (values.map (· / base)) 0
+
+/-- The C++ EF envelope uses the final value as its universe. This is the exact
+logical high-vector length; low/high word rounding and sparse samples are separate. -/
+theorem encoded_high_length (values : List Nat) (base extent : Nat)
+    (sorted : values.Pairwise (· ≤ ·)) (last_value : values.getLast? = some extent) :
+    (encode base values).high.length = extent / base + values.length := by
+  have last_quotient : (values.map (· / base)).getLast? = some (extent / base) := by
+    simp [last_value]
+  simpa [encode] using unary_high_length (values.map (· / base)) 0 (extent / base)
+    (quotient_sorted values base sorted) (by intro q member; omega) last_quotient
+
+theorem encoded_high_empty (base : Nat) : (encode base []).high.length = 0 := rfl
 
 /-- Every valid ordinal decodes to the original offset, through executable
 selection of the constructed high bits. Repeated offsets and width zero work. -/
@@ -291,8 +354,31 @@ theorem sum_append (left right : List Nat) : (left ++ right).sum = left.sum + ri
 def population (p : α → Bool) (xs : List α) (K group : Nat) : Nat :=
   ((fractional.window xs (group * K) ((group + 1) * K)).filter p).length
 
+/-- Populations fit the actual tail, not merely the full group capacity. -/
+theorem population_window_bound (p : α → Bool) (xs : List α) (K group : Nat) :
+    population p xs K group ≤ min K (xs.length - group * K) := by
+  have bound := List.length_filter_le p (fractional.window xs (group * K) ((group + 1) * K))
+  simpa [population, fractional.window, Nat.add_mul, Nat.add_sub_cancel_left] using bound
+
+theorem population_le (p : α → Bool) (xs : List α) (K group : Nat) :
+    population p xs K group ≤ K :=
+  Nat.le_trans (population_window_bound p xs K group) (Nat.min_le_left _ _)
+
+/-- K=2^bits−1 uses exactly the available class range, including population K. -/
+theorem population_bits_fit (p : α → Bool) (xs : List α) (bits group : Nat) :
+    population p xs (2 ^ bits - 1) group < 2 ^ bits := by
+  have bound := population_le p xs (2 ^ bits - 1) group
+  have positive := Nat.two_pow_pos bits
+  omega
+
 def classes (p : α → Bool) (xs : List α) (K : Nat) : List Nat :=
   (List.range (group_count xs.length K)).map (population p xs K)
+
+theorem class_field_bound (p : α → Bool) (xs : List α) (bits group : Nat)
+    (inside : group < (classes p xs (2 ^ bits - 1)).length) :
+    (classes p xs (2 ^ bits - 1))[group] < 2 ^ bits := by
+  simp only [classes, List.getElem_map, List.getElem_range]
+  exact population_bits_fit p xs bits group
 
 theorem population_prefix (p : α → Bool) (xs : List α) (K groups : Nat) :
     ((List.range groups).map (population p xs K)).sum = fractional.rank p xs (groups * K) := by
@@ -422,6 +508,14 @@ example : block_ordinals 30 15 = [0, 15, 30] := by decide
 example : owner_boundaries 0 15 0 id = [⟨0, 0⟩] := by decide
 example : owner_boundaries 17 15 76 (fun n => n * 4 + n / 3) =
     [⟨0, 0⟩, ⟨15, 65⟩, ⟨17, 76⟩] := by decide
+
+-- Full populations use the top code; a partial tail still obeys its own length.
+example : population id (List.replicate 16 true) 15 0 = 15 := by decide
+example : population id (List.replicate 16 true) 15 1 = 1 := by decide
+example : (encode 1 [0, 0, 3, 3]).low = [0, 0, 0, 0] := by decide
+example : ((encode 1 [0, 0, 3, 3]).high.filter id).length = 4 := by decide
+example : (encode 1 [0, 0, 3, 3]).high.length = 3 + 4 := by decide
+example : (encode 8 [0, 7, 8, 8, 65]).high.length = 65 / 8 + 5 := by decide
 
 -- Actual unary bits distinguish equal values instead of collapsing them.
 example : (encode 1 [0, 0, 3, 3]).high =
