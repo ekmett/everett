@@ -33,9 +33,12 @@ count, signature and schema identity. `find_save(name)` returns an immutable
 historical selection; `fork(name, source)` starts a new named progression from
 one. Neither operation copies native records.
 
-Publication walks new graph nodes in dependency order, reserves their identities,
-seals their files, records the receipts and registers the complete graph. It
-then commits the root and checkpoint atomically. Unchanged native owners reuse
+Publication walks the completed graph in dependency order. New owned nodes
+receive reserved identities, sealed files and registered receipts; nodes already
+sealed by the execution context reuse their acknowledged bindings. Only objects
+reachable from the complete checkpoint need publication, so discarded owned
+intermediates do not acquire files. The adapter then commits the root and
+checkpoint atomically. Unchanged native owners reuse
 their existing `.kv` identity when an index changes. A wholly unchanged graph
 needs only a new catalog generation. Each shared owner carries its acknowledged
 file identity and mapped representation. The first sealing walks its immediate
@@ -188,13 +191,13 @@ interleave rank metadata, false-borrow flags, and the actual keys selected from
 both downstream routes. A `mapped_cola_scan<Mapped>` context can scan several
 hidden roots without repeatedly checking their shared suffixes.
 
-Streaming native and index output
+Adaptive native and index output
 ---------------------------------
 
-`streaming_sort_runtime_family` sends native merges directly to KV03 files
-and fractional indexes to IX03 files. This is the ordinary bit-profile
-connection backend. The typed core carries one concrete storage context through equivalent
-snapshot replacements:
+`streaming_sort_runtime_family` keeps small native merges and fractional indexes
+owned until publication, and streams larger outputs into KV03 and IX03 files.
+This is the ordinary bit-profile connection backend. The typed core carries one
+concrete storage context through equivalent snapshot replacements:
 
 ```cpp
 #include <diet/connection.h>
@@ -208,17 +211,38 @@ auto live = diet::connect<engine>(existing_directory, "earth-616");
 live.put("alpha", "one");
 ```
 
-The context reserves a native identity before starting its writer. After the
-file is sealed and SQLite acknowledges the seal, it opens that exact file and
-attaches an immutable receipt to the native owner. The receipt names the
-backing catalog, object, attempt, size, checksum and completed barrier. A store
+The native encoder starts in its existing 64 KiB buffer; an index uses its two
+64 KiB borrowed-stream buffers. A first spill reserves an identity and attempt
+before creating the destination, writes the encoded prefix and continues the
+same encoder. The index resolves exact dependency bindings at that point, so a
+small private index needs neither file identities nor a secondary spool. Large
+metadata or an unavailable retention allowance also selects streaming, including
+at finalization.
+
+The context shares an 8 MiB retained-output allowance between natives and indexes,
+with a 128 KiB ceiling per completed object. Charges follow immutable owners and
+cover the object, lease and actual section-vector capacities. Construction
+buffers, source owners, encoder metadata, composition workspace and allocator
+overhead lie outside that allowance. Setting either output limit to zero forces
+eager streaming; see [the context options](sort-runtime-context.md).
+
+A completed owned output remains part of the scheduler's ordinary charged work.
+Publication seals it only if the full frontier still retains it. A hidden
+completed merge is retained too, even before an index points to it. Discarded owned
+intermediate outputs release their allowance without performing file or catalog
+work. The adapter returns a mapped durable snapshot after the graph and checkpoint
+are committed.
+
+After a streamed native file is sealed and SQLite acknowledges the seal, the
+context opens that exact file and attaches an immutable receipt to its owner.
+The receipt names the backing catalog, object, attempt, size, checksum and completed barrier. A store
 accepts this owner only after checking the catalog identity, exact seal row,
 object path and file envelope. This check reads metadata; it does not repeat
 the merge, copy the native file or calculate its whole-body checksum. An
 arbitrary mapped owner without this receipt still cannot introduce a file.
 
-Completed hidden natives retain their exact identities in the next full
-frontier checkpoint, including when no new index was produced in that step.
+Completed hidden natives receive or reuse their exact identities in the next
+full frontier checkpoint, including when no new index was produced in that step.
 Private unfinished file writers restart after recovery. Published native files
 are reused when the typed core rebases onto its mapped snapshot; its concrete
 merge context survives the rebase.
