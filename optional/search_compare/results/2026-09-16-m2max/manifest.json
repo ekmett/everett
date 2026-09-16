@@ -8,9 +8,10 @@
   "notes": [
     "Raw timer observations are preserved; summary CSVs and statistical categories are derived.",
     "Primary and alternative matrices have three processes and three trials per case.",
-    "size-summary.csv currently contains complete sizes1024,8192,32768,131072, with two processes and three trials.",
     "All five regenerated frozen-header trees match measured header manifests byte for byte.",
-    "Independent read-only review reproduced5184 timer observations, all process medians, complete-file deltas and encoded-payload equivalence."
+    "Independent read-only review reproduced5184 timer observations, all process medians, complete-file deltas and encoded-payload equivalence.",
+    "Size panel covers six sizes1024 through2097152, with two processes and three trials; complete file accounting and oracles pass.",
+    "Final524288/2097152 timing collection has large transient wall-time variation and is retained as diagnostic, not settled performance evidence; size-timing-quality.csv marks the full collection."
   ],
   "artifacts": {
     "alternatives-metadata.json": {
@@ -117,9 +118,29 @@
       "bytes": 1305,
       "sha256": "3c216caf5c092ac0bb97a77bc73cdbb8b1b8eebf03643ea6a1551f28091b16bf"
     },
+    "size-metadata.json": {
+      "bytes": 16874,
+      "sha256": "cbdeb8b985256aaf720aff07c40907c584918d75dc57438de7c25376e0fa5fd0"
+    },
+    "size-queries.csv.gz": {
+      "bytes": 6745,
+      "sha256": "9ac66e20ed69c6075cad8891750bd5d6396f1da0ef08b86f1f7367681687ac22"
+    },
+    "size-raw.tar.gz": {
+      "bytes": 13467,
+      "sha256": "a98e2a73f271355043dc30a779150297ed7b29a9ed4d8cf23010e9c613a1950a"
+    },
+    "size-space.csv.gz": {
+      "bytes": 3020,
+      "sha256": "e1795a52a160bef544185a27c0ce30f4557dafef99b2ef2cf495f8af57ed80be"
+    },
     "size-summary.csv": {
-      "bytes": 17185,
-      "sha256": "af54278358da54667b550b441d8d763c40c0f8b61e4d69e60908cbb2c7ecc650"
+      "bytes": 25971,
+      "sha256": "f48f33174f949b01c8f0a52b920435f76c1bd1641ec23ab9944555ce988ba1dc"
+    },
+    "size-timing-quality.csv": {
+      "bytes": 26209,
+      "sha256": "72ad472a990c3d9458294133867ac2405b7ef1db3a4ced99400dffd88c54fd88"
     },
     "sub32-headers.json": {
       "bytes": 7817,

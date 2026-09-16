@@ -49,6 +49,64 @@ every query kind, key shape, process range, absolute time and complete-file
 denominator. The separate geometric-size panel increases both record count and
 query working set; its results should be consulted before choosing a cutoff.
 
+Growing the files and query set
+-------------------------------
+
+The separate size panel checks six geometric sizes, with two fresh processes
+per variant and three trials of both random and sorted order of the same hit
+set. It increases the query count with $N$ up to 65,536. These are two distinct
+workloads: byte files with structured 16-byte keys, and bit files with hash-like
+128-byte keys. Their size columns do **not** measure byte-versus-bit compression
+for identical input.
+
+| Base records | Byte fixture bytes | Bit fixture bytes | Query count | Distinct query keys |
+| ---: | ---: | ---: | ---: | ---: |
+| 1,024 | 57,664 | 246,248 | 1,024 | 660 |
+| 8,192 | 427,096 | 1,926,400 | 8,192 | 5,179 |
+| 32,768 | 1,694,672 | 7,679,128 | 32,768 | 20,754 |
+| 131,072 | 6,762,352 | 30,651,952 | 65,536 | 51,598 |
+| 524,288 | 27,033,696 | 122,404,168 | 65,536 | 61,621 |
+| 2,097,152 | 108,116,624 | 488,848,920 | 65,536 | 64,544 |
+
+At the largest sizes, query records contain 3,145,728 logical key/value bytes
+for the byte fixture and 10,485,760 for the bit fixture. Each query vector has
+3,670,016 bytes of C++ query objects; its ordering vector occupies another
+524,288 bytes. Logical contents and object storage are reported separately:
+inline string contents may overlap object storage, and allocator overhead and
+spare string capacity are not counted. File size alone does not establish a
+cache boundary. These are warmed resident lookups with a growing query set,
+without hardware cache-miss counters or cold-page measurements.
+
+The complete-file growth at 2,097,152 records remains small:
+
+| Offset choice | Byte whole-file growth | Bit whole-file growth |
+| --- | ---: | ---: |
+| EF with 32-one subentries | 0.0118% | 0.0026% |
+| Packed absolute | 0.3342% | 0.0749% |
+| Direct 32-bit | 0.4776% | 0.0797% |
+| Direct 64-bit | 1.2180% | 0.2435% |
+
+**The final 524K/2M timing collection is diagnostic, not a settled performance
+result.** All queries and file accounting pass, but the raw wall-clock times
+show large transient variation despite an exclusive lane for owned build/test
+jobs. For example, the two 524K byte baseline random process medians are about
+8.09 and 3.86 microseconds; 2M bit direct32 sorted medians are about 15.54 and
+7.89 microseconds. Twenty of the eighty large-size process/access groups have
+a largest trial more than 20% above their smallest trial. Such variation can
+create apparent large gains or regressions. I retain every observation and
+make no cutoff recommendation from those large-size ratios. The data does not
+identify the source of the variation.
+
+The [size summary](results/2026-09-16-m2max/size-summary.csv) includes all six
+sizes and both access orders, with process-median ranges. The
+[timing-quality table](results/2026-09-16-m2max/size-timing-quality.csv) marks
+the entire final collection as diagnostic, rather than selectively removing
+slow trials. The stable smaller-size panel and primary matrix are separate
+collections. [Raw size queries](results/2026-09-16-m2max/size-queries.csv.gz)
+and [complete-file/query-buffer accounting](results/2026-09-16-m2max/size-space.csv.gz)
+are retained for reanalysis. A follow-up large-size collection needs better
+scheduling diagnostics before those timings can support a policy threshold.
+
 Scope and method
 ----------------
 
