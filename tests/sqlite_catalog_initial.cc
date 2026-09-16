@@ -71,14 +71,15 @@ namespace {
     assert(next == expected.end());
   }
   void initialized_snapshots() {
-    for (unsigned count : {16u, 128u}) {
+    for (unsigned count : {3u, 16u, 65u, 128u}) {
       temporary dir;
       auto current = engine::connect(dir.root, "initial");
       auto empty = current.snapshot();
       auto expected = contents(count);
       auto full = current.contribute(batch<core>(expected));
       verify(empty, {}); verify(full, expected);
-      assert(!current.pending() && current.admission_ready());
+      if (std::has_single_bit(count)) assert(!current.pending() && current.admission_ready());
+      else assert(current.admission_ready() || current.pending());
       assert(full.head().timeline.generation == empty.head().timeline.generation + 1);
       assert(full.metadata().clean_base == count && !full.metadata().mutations &&
         !full.metadata().rebuilding && full.runtime().admissions() == count);
@@ -115,7 +116,7 @@ namespace {
     temporary dir;
     connection<> db(dir.root, "queued");
     auto empty = db.snapshot();
-    auto expected = contents(16);
+    auto expected = contents(17);
     auto changes = decltype(db)::core_type::batch();
     for (auto const & [key, value] : expected) changes.put(key, value);
     auto first = db.submit(std::move(changes).finish());
@@ -127,7 +128,7 @@ namespace {
     db.shutdown();
     auto restored = engine::connect(dir.root, "queued", {.create_if_missing = false});
     verify(restored.snapshot(), expected);
-    verify(initial, contents(16));
+    verify(initial, contents(17));
   }
 
   struct fault {
@@ -172,7 +173,7 @@ namespace {
       auto before = adapter.create_tap("initial", empty.runtime(), empty.metadata().encode());
       auto current = faulty_core::from_snapshot(empty,
         family::open_storage(dir.root, empty.metadata().schema_id));
-      auto expected = contents(8, true);
+      auto expected = contents(9, true);
       injection->armed = true;
       std::string operation;
       try {

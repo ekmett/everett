@@ -409,23 +409,7 @@ namespace diet {
       if (input.records().empty()) return current_;
       try {
         if (initialize(input, metadata)) return current_;
-        for (auto const & record : input.records()) {
-          while (!runtime_.admission_ready()) runtime_.advance(std::max<std::uint64_t>(runtime_.next_service_cost(), 1));
-          auto ready = runtime_.snapshot();
-          if (ready.query_root().head()->depth() > DepthLimit || runtime_.admission_cost() > ready_admission_allowance)
-            throw std::length_error("typed runtime exceeds ready-admission depth allowance");
-          auto service = [&] {
-            if constexpr (charged_service) return runtime_type::service_budget(profile_detail::add(ready.admissions(), 1));
-            else return std::uint64_t{0};
-          }();
-          if (!runtime_.try_contribute(record, service)) throw std::logic_error("typed ready admission unexpectedly blocked");
-        }
-        auto state = [&] {
-          if constexpr (requires { runtime_.checkpoint(); }) return runtime_.checkpoint();
-          else return runtime_.snapshot();
-        }();
-        require_depth(state);
-        current_ = cola_type(std::move(state), std::move(metadata));
+        complete(input.records(), std::move(metadata));
         return current_;
       } catch (...) { poison(); throw; }
     }
@@ -463,14 +447,42 @@ namespace diet {
       }
       return metadata;
     }
+    // The caller has validated the complete batch. An initialized prefix and
+    // this ordinary paid tail remain private until the final metadata is ready.
+    void complete(std::span<profile_record const> records, metadata_type metadata) {
+      for (auto const & record : records) {
+        while (!runtime_.admission_ready()) runtime_.advance(std::max<std::uint64_t>(runtime_.next_service_cost(), 1));
+        auto ready = runtime_.snapshot();
+        if (ready.query_root().head()->depth() > DepthLimit || runtime_.admission_cost() > ready_admission_allowance)
+          throw std::length_error("typed runtime exceeds ready-admission depth allowance");
+        auto service = [&] {
+          if constexpr (charged_service) return runtime_type::service_budget(profile_detail::add(ready.admissions(), 1));
+          else return std::uint64_t{0};
+        }();
+        if (!runtime_.try_contribute(record, service)) throw std::logic_error("typed ready admission unexpectedly blocked");
+      }
+      auto state = [&]() -> typename cola_type::runtime_snapshot {
+        if constexpr (requires { runtime_.checkpoint(); }) {
+          if (!records.empty()) return runtime_.checkpoint();
+        }
+        return runtime_.snapshot();
+      }();
+      require_depth(state);
+      current_ = cola_type(std::move(state), std::move(metadata));
+    }
     bool initialize(contribution_type const & input, metadata_type const & metadata) {
       try {
         if constexpr (requires { runtime_.try_initialize_sorted(input.records(), std::uint64_t{}, DepthLimit); }) {
           auto count = input.records().size();
-          if (count >= 2 && std::has_single_bit(count) && !current_.runtime().admissions() && !runtime_.pending() &&
-              runtime_.try_initialize_sorted(input.records(), reservation_work(count), DepthLimit)) {
-            current_ = cola_type(checked_snapshot(runtime_.snapshot()), metadata);
-            return true;
+          if (count >= 2 && !current_.runtime().admissions() && !runtime_.pending()) {
+            // Prefix and tail share the original linear reservation: M*A
+            // funds initialization, and each remaining record retains its A.
+            auto prefix = std::bit_floor(count);
+            if (runtime_.try_initialize_sorted(input.records().first(prefix), reservation_work(prefix), DepthLimit)) {
+              require_depth(runtime_.snapshot());
+              complete(input.records().subspan(prefix), metadata);
+              return true;
+            }
           }
         }
         return false;

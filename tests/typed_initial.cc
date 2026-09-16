@@ -22,12 +22,18 @@ namespace {
 
   template <class P> struct observed_storage : sort_runtime_storage<P> {
     using base_type = sort_runtime_storage<P>;
-    inline static unsigned initializations = 0;
+    inline static unsigned initializations = 0, initial_rows = 0, singletons = 0;
+    inline static unsigned fail_singleton = 0;
     inline static bool fail = false;
     static auto sorted_native(std::span<profile_record const> records) {
       ++initializations;
+      initial_rows += static_cast<unsigned>(records.size());
       if (fail) throw std::runtime_error("initial native failure");
       return base_type::sorted_native(records);
+    }
+    static auto singleton(profile_record const & record) {
+      if (++singletons == fail_singleton) throw std::runtime_error("initial tail failure");
+      return base_type::singleton(record);
     }
   };
   template <class P> using observed_family = sort_runtime_family<P,
@@ -86,17 +92,19 @@ namespace {
   }
 
   template <class E> void initial_batches() {
-    for (auto size : {0u, 1u, 2u, 3u, 4u, 7u, 16u, 64u}) {
-      observed_storage<string_policy>::initializations = 0;
+    using storage = observed_storage<typename E::policy_type>;
+    for (auto size : {0u, 1u, 2u, 3u, 4u, 5u, 7u, 8u, 9u, 15u, 16u, 17u, 63u, 64u, 65u, 127u}) {
+      storage::initializations = storage::initial_rows = storage::singletons = 0;
       E engine;
       auto empty = engine.snapshot();
       std::map<std::string, std::string> expected;
       auto initial = contribute(engine, batch<E>(size, expected));
-      bool direct = size >= 2 && std::has_single_bit(size);
-      assert(observed_storage<string_policy>::initializations == (direct ? std::bit_width(size) : 0u));
+      auto prefix = size >= 2 ? std::bit_floor(size) : 0;
+      assert(storage::initializations == (prefix ? std::bit_width(prefix) : 0u));
+      assert(storage::initial_rows == prefix && storage::singletons == size - prefix);
       assert(initial.runtime().admissions() == size && !empty.live_count());
       verify(initial, expected);
-      if (direct) {
+      if (prefix == size && prefix) {
         assert(charge(engine) > 0);
         if constexpr (requires { engine.work().charged; }) {
           auto work = engine.work();
@@ -106,13 +114,16 @@ namespace {
         }
         assert(!engine.pending() && engine.admission_ready());
         assert(initial.runtime().frontier().service_due == 0);
-        std::uint64_t through = 0;
-        for (auto const & run : initial.runtime().runs()) {
-          assert(run->first == through);
-          through = run->last;
-        }
-        assert(through == size);
       }
+      std::uint64_t through = 0;
+      for (auto const & run : initial.runtime().runs()) {
+        assert(run->first == through);
+        through = run->last;
+      }
+      assert(through == size);
+      using snapshot = typename E::runtime_family::snapshot_type;
+      auto restored = snapshot::restore(initial.runtime().frontier(), initial.runtime().query_root().head());
+      assert(restored.admissions() == size && restored.frontier().service_due == initial.runtime().frontier().service_due);
       if constexpr (requires { engine.status(); }) {
         assert(initial.metadata().clean_base == size && !initial.metadata().mutations);
         assert(engine.work().mutations == size && !engine.work().generations);
@@ -141,7 +152,7 @@ namespace {
     auto prior = charge(engine);
     observed_storage<string_policy>::initializations = 0;
     auto invalid = E::batch();
-    invalid.put("a-valid", "v").erase("z-missing");
+    invalid.put("a-valid", "v").put("b-valid", "v").erase("z-missing");
     rejects([&] { engine.contribute(std::move(invalid).finish()); });
     auto rejected = engine.snapshot();
     assert(!engine.failed() && rejected.runtime().same_layout(empty.runtime()));
@@ -165,10 +176,10 @@ namespace {
     auto initial = contribute(engine, batch<E>(4, expected));
     assert(observed_storage<string_policy>::initializations == 3);
     auto second = initial.batch();
-    second.put("later/a", "one").put("later/b", "two");
+    second.put("later/a", "one").put("later/b", "two").put("later/c", "three");
     contribute(engine, std::move(second).finish());
     assert(observed_storage<string_policy>::initializations == 3);
-    expected["later/a"] = "one"; expected["later/b"] = "two";
+    expected["later/a"] = "one"; expected["later/b"] = "two"; expected["later/c"] = "three";
     verify(engine.snapshot(), expected);
   }
 
@@ -183,6 +194,28 @@ namespace {
     assert(engine.failed() && failed.runtime().same_layout(old.runtime()));
     assert(!old.live_count() && !old.get("key/2"));
     rejects([&] { engine.contribute(E::put("retry", "forbidden")); });
+  }
+
+  template <class E> void tail_failure() {
+    using storage = observed_storage<typename E::policy_type>;
+    for (auto at : {1u, 3u}) {
+      E engine;
+      auto empty = engine.snapshot();
+      auto before = charge(engine);
+      storage::initializations = storage::initial_rows = storage::singletons = 0;
+      storage::fail_singleton = at;
+      std::map<std::string, std::string> expected;
+      auto input = batch<E>(7, expected);
+      auto quote = E::reservation(input);
+      rejects([&] { engine.contribute(std::move(input)); });
+      storage::fail_singleton = 0;
+      auto failed = engine.snapshot();
+      assert(storage::initializations == 3 && storage::initial_rows == 4 && storage::singletons == at);
+      assert(engine.failed() && charge(engine) > before && charge(engine) - before <= quote.work);
+      assert(failed.runtime().same_layout(empty.runtime()) && failed.metadata() == empty.metadata());
+      verify(failed, {}); verify(empty, {});
+      rejects([&] { engine.contribute(E::put("retry", "forbidden")); });
+    }
   }
 
   struct append_sort {
@@ -207,7 +240,7 @@ namespace {
     E engine("mixed-initial/1");
     auto empty = engine.snapshot();
     auto invalid = E::batch();
-    invalid.put<strings>("same", "replacement").change<append_sort>("other", "X");
+    invalid.put<strings>("same", "replacement").put<strings>("other", "v").change<append_sort>("other", "X");
     append_sort::fail_hash = true;
     rejects([&] { engine.contribute(std::move(invalid).finish()); });
     append_sort::fail_hash = false;
@@ -216,14 +249,15 @@ namespace {
       rejected.runtime().same_layout(empty.runtime()));
     auto input = E::batch();
     input.put<strings>("same", "replacement").put<strings>("other", "");
-    input.change<append_sort>("same", "A").change<append_sort>("other", "X");
+    input.change<append_sort>("same", "A").change<append_sort>("other", "X").change<append_sort>("tail", "T");
     auto initial = contribute(engine, std::move(input).finish());
-    assert(observed_storage<P>::initializations == 3 && !engine.pending());
+    assert(observed_storage<P>::initializations == 3 && initial.runtime().admissions() == 5);
     auto expected_hash = sort_semantics<strings>::hash_key("same") * sort_semantics<strings>::hash_value("same", "replacement") +
       sort_semantics<strings>::hash_key("other") * sort_semantics<strings>::hash_value("other", "") +
       append_sort::hash_key("same") * append_sort::hash_value("same", "A") +
-      append_sort::hash_key("other") * append_sort::hash_value("other", "X");
-    assert(initial.signature() == expected_hash && initial.live_count() == 4);
+      append_sort::hash_key("other") * append_sort::hash_value("other", "X") +
+      append_sort::hash_key("tail") * append_sort::hash_value("tail", "T");
+    assert(initial.signature() == expected_hash && initial.live_count() == 5);
     for (auto suffix : {"B", "C", "D"}) contribute(engine, E::change<append_sort>("same", suffix));
     drain(engine);
     assert(engine.snapshot().get<append_sort>("same") == "ABCD");
@@ -231,7 +265,7 @@ namespace {
     expected_hash += append_sort::hash_key("same") *
       (append_sort::hash_value("same", "ABCD") - append_sort::hash_value("same", "A"));
     auto final = engine.snapshot();
-    assert(final.signature() == expected_hash && final.runtime().admissions() == 7);
+    assert(final.signature() == expected_hash && final.runtime().admissions() == 8);
   }
 
   struct custom_replacement : sort_semantics<strings> {
@@ -262,6 +296,61 @@ namespace {
     assert(reused.snapshot().metadata().clean_base == 2 && reused.work().mutations == 4);
   }
 
+  // A custom initializer may finish below the support limit, followed by a
+  // tail whose valid routing root is deeper. No prefix metadata may escape.
+  template <class Compose> struct growing_tail_runtime : cola_runtime<string_policy, Compose> {
+    using base_type = cola_runtime<string_policy, Compose>;
+    using snapshot_type = typename base_type::snapshot_type;
+    inline static std::size_t initialized = 0;
+    bool try_initialize_sorted(std::span<profile_record const> records, std::uint64_t, std::uint64_t) {
+      initialized = records.size();
+      base_type::contribute(records, 0);
+      return true;
+    }
+    snapshot_type snapshot() const {
+      auto source = base_type::snapshot();
+      if (source.admissions() <= 2) return source;
+      using node = typename snapshot_type::node_type;
+      auto native = cola_runtime_native<string_policy>::from_owned(profile_array<string_policy>::build({}));
+      auto head = source.query_root().head();
+      for (unsigned i = 0; i != 8; ++i) {
+        cola_index_builder<string_policy, cola_runtime_native<string_policy>, node> builder(native, head);
+        while (!builder.done()) builder.step(64);
+        head = node::from_built(builder.finish());
+      }
+      std::vector<cola_runtime_interval> intervals;
+      for (auto const & run : source.runs()) intervals.push_back({run.first, run.last});
+      return snapshot_type::restore(head, intervals);
+    }
+  };
+  struct growing_tail_family : binary_runtime_family<string_policy> {
+    template <class Compose> using runtime_type = growing_tail_runtime<Compose>;
+  };
+  void tail_depth_failure() {
+    using E = typed_engine<string_policy, wrapping_fingerprint_algebra, 4, growing_tail_family>;
+    E engine;
+    auto empty = engine.snapshot();
+    std::map<std::string, std::string> expected;
+    bool rejected = false;
+    try { engine.contribute(batch<E>(3, expected)); }
+    catch (std::length_error const &) { rejected = true; }
+    assert(rejected && E::runtime_type::initialized == 2 && engine.failed());
+    auto retained = engine.snapshot();
+    assert(retained.runtime().same_layout(empty.runtime()) && retained.metadata() == empty.metadata());
+    verify(retained, {});
+  }
+
+  void exact_power_charge() {
+    typed engine;
+    typed::runtime_type reference;
+    std::map<std::string, std::string> expected;
+    auto input = batch<typed>(64, expected);
+    assert(reference.try_initialize_sorted(input.records(), typed::reservation_work(64), 256));
+    engine.contribute(std::move(input));
+    assert(engine.work().charged == reference.work().charged &&
+      engine.work().metadata_work == reference.work().metadata_work);
+  }
+
   void opaque_initialization() {
     using E = typed_engine<string_policy, wrapping_fingerprint_algebra, 256, redundant_runtime_family<string_policy>>;
     E engine;
@@ -283,5 +372,10 @@ int main() {
   initial_batches<typed>(); initial_batches<rebuilt>();
   preflight<typed>(); preflight<rebuilt>();
   construction_failure<typed>(); construction_failure<rebuilt>();
-  mixed_chronology(); wrapper_scope(); opaque_initialization(); binary_fallback();
+  tail_failure<typed>(); tail_failure<rebuilt>();
+  using p3 = storage_policy<string_registry, 3>;
+  using typed3 = typed_engine<p3, wrapping_fingerprint_algebra, 256, observed_family<p3>>;
+  using rebuilt3 = replacement_rebuild_engine<p3, wrapping_fingerprint_algebra, 256, observed_family<p3>>;
+  initial_batches<typed3>(); initial_batches<rebuilt3>();
+  mixed_chronology(); wrapper_scope(); tail_depth_failure(); exact_power_charge(); opaque_initialization(); binary_fallback();
 }

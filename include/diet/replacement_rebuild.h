@@ -271,10 +271,14 @@ namespace diet {
       if (input.records().empty()) return published_;
       // Initial unique string replacements are already clean arrows. Share
       // the typed preflight and avoid constructing detached per-key replay
-      // entries when the runtime can install this entire pristine batch.
-      if constexpr (std::is_same_v<sort_type, unsorted<std::optional<std::string>>>) {
+      // entries when the runtime can initialize a prefix and admit the tail
+      // before publishing the complete pristine batch.
+      if constexpr (std::is_same_v<sort_type, unsorted<std::optional<std::string>>> &&
+          requires(runtime_type & runtime, std::span<profile_record const> records) {
+            runtime.try_initialize_sorted(records, std::uint64_t{}, DepthLimit);
+          }) {
         auto count = input.records().size();
-        if (count >= 2 && std::has_single_bit(count) && !base_ && !mutations_ &&
+        if (count >= 2 && !base_ && !mutations_ &&
             !job_ && !recovering_ && !foreground_->pending() && !mass(published_) &&
             !work_.mutations && !work_.generations) {
           auto metadata = foreground_->prepare(input);
