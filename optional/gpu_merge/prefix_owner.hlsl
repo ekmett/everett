@@ -68,6 +68,13 @@ uint compressed_source_fragment(uint source, uint at, uint count) {
 }
 
 uint compressed_key_byte(uint record, uint byte_offset) {
+#ifdef BYTE_PROFILE
+  // Byte FC never splits a byte between owners. One tree lookup supplies
+  // the complete byte, without the fragment loop needed by bit prefixes.
+  record = compressed_owner(record, byte_offset * 8);
+  return compressed_source_byte(extra[record * 8 + 6],
+      (extra[record * 8] >> 3) + byte_offset - (extra[record * 8 + 4] >> 3));
+#else
   uint first = byte_offset * 8;
   uint end = first + 8;
   uint value = 0;
@@ -82,6 +89,7 @@ uint compressed_key_byte(uint record, uint byte_offset) {
     end = begin;
   }
   return value;
+#endif
 }
 
 uint compressed_value_bit(uint record, uint at) {
