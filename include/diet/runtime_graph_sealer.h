@@ -121,6 +121,31 @@ namespace diet::runtime_store_detail {
       return value->identity;
     }
 
+    native_pointer mapped_native(native_pointer const & native) {
+      auto binding = native->bindings_.find(catalog_.identity(), catalog_.root());
+      if (!binding) throw std::logic_error("runtime native has not been sealed");
+      if (native->mapped() == binding->mapped) return native;
+      // Only a distinct facade is cached. A mapped owner returns itself above,
+      // so the memo never acquires a shared-pointer reference to its own owner.
+      return native->mapped_owners_.get_or_create(catalog_.identity(), catalog_.root(), [&] {
+        auto result = native_type::from_mapped(binding->mapped);
+        result->bindings_.get_or_create(catalog_.identity(), catalog_.root(), [&] { return binding; });
+        return result;
+      });
+    }
+    pair_type mapped_pair(pair_type const & pair) {
+      auto binding = pair->bindings_.find(catalog_.identity(), catalog_.root());
+      if (!binding) throw std::logic_error("runtime pair has not been sealed");
+      if (pair->canonical_mapped() && pair->mapped() == binding->mapped) return pair;
+      return pair->mapped_owners_.get_or_create(catalog_.identity(), catalog_.root(), [&] {
+        auto result = node_type::from_mapped_parts(binding->mapped, mapped_native(pair->native_owner()),
+          pair->main_target() ? mapped_pair(pair->main_target()) : nullptr,
+          pair->secondary_target() ? mapped_native(pair->secondary_target()) : nullptr);
+        result->bindings_.get_or_create(catalog_.identity(), catalog_.root(), [&] { return binding; });
+        return result;
+      });
+    }
+
   private:
     catalog_type & catalog_;
     Ids & ids_;

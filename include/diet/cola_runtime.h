@@ -46,6 +46,7 @@ namespace diet {
     template <class, class, class, class> friend struct runtime_store;
     template <class, class, class, class> friend struct runtime_store_detail::graph_sealer;
     catalog_bindings<native_binding<mapped_native<P>>> bindings_;
+    catalog_bindings<cola_runtime_native> mapped_owners_;
     std::shared_ptr<profile_array<P> const> owned_;
     std::shared_ptr<mapped_native<P> const> mapped_;
     explicit cola_runtime_native(std::shared_ptr<profile_array<P> const> value) : owned_(std::move(value)) {}
@@ -95,15 +96,18 @@ namespace diet {
     std::uint64_t depth() const noexcept { return depth_; }
     std::shared_ptr<built_type const> built() const noexcept { return built_; }
     std::shared_ptr<mapped_cola_blob<P> const> mapped() const noexcept { return mapped_; }
+    bool canonical_mapped() const noexcept { return canonical_mapped_; }
   private:
     template <class, class, class, class> friend struct runtime_store;
     template <class, class, class, class> friend struct runtime_store_detail::graph_sealer;
     catalog_bindings<pair_binding<mapped_cola_blob<P>>> bindings_;
+    catalog_bindings<cola_runtime_node> mapped_owners_;
     native_pointer native_;
     pair_type main_;
     std::shared_ptr<built_type const> built_;
     std::shared_ptr<mapped_cola_blob<P> const> mapped_;
     std::uint64_t depth_;
+    bool canonical_mapped_ = false;
     explicit cola_runtime_node(std::shared_ptr<built_type const> value)
       : native_(value->native_owner()), main_(value->main_target()), built_(std::move(value)),
         depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)) {
@@ -111,10 +115,11 @@ namespace diet {
     }
     cola_runtime_node(std::shared_ptr<mapped_cola_blob<P> const> value, pair_type main)
       : native_(native_type::from_mapped(value->native_object())), main_(std::move(main)), mapped_(std::move(value)),
-        depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)) {}
+        depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)), canonical_mapped_(!main_ || main_->canonical_mapped()) {}
     cola_runtime_node(std::shared_ptr<mapped_cola_blob<P> const> value, native_pointer native, pair_type main)
       : native_(std::move(native)), main_(std::move(main)), mapped_(std::move(value)),
-        depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)) {}
+        depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)),
+        canonical_mapped_(native_->mapped() && (!main_ || main_->canonical_mapped())) {}
   };
 
   struct cola_runtime_interval {

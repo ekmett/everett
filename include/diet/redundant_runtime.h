@@ -76,27 +76,31 @@ namespace diet {
     std::uint64_t depth() const noexcept { return depth_; }
     std::shared_ptr<built_type const> built() const noexcept { return built_; }
     std::shared_ptr<typename Storage::mapped_pair_type const> mapped() const noexcept { return mapped_; }
+    bool canonical_mapped() const noexcept { return canonical_mapped_; }
   private:
     template <class, class, class, class> friend struct runtime_store;
     template <class, class, class, class> friend struct runtime_store_detail::graph_sealer;
     template <class, class, class, class, class> friend struct sort_runtime_context;
     catalog_bindings<pair_binding<typename Storage::mapped_pair_type>> bindings_;
+    catalog_bindings<redundant_node> mapped_owners_;
     native_pointer native_, secondary_;
     pair_type main_;
     std::shared_ptr<built_type const> built_;
     std::shared_ptr<typename Storage::mapped_pair_type const> mapped_;
     std::uint64_t depth_;
+    bool canonical_mapped_ = false;
     explicit redundant_node(std::shared_ptr<built_type const> value)
       : native_(value->native_owner()), secondary_(value->secondary_target()), main_(value->main_target()), built_(std::move(value)),
         depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)) {}
     redundant_node(std::shared_ptr<typename Storage::mapped_pair_type const> value, native_pointer native, pair_type main, native_pointer secondary)
       : native_(std::move(native)), secondary_(std::move(secondary)), main_(std::move(main)), mapped_(std::move(value)),
-        depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)) {}
+        depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)),
+        canonical_mapped_(native_->mapped() && (!main_ || main_->canonical_mapped()) && (!secondary_ || secondary_->mapped())) {}
     redundant_node(std::shared_ptr<typename Storage::mapped_pair_type const> value, pair_type main)
       : native_(native_type::from_mapped(value->native_object())),
         secondary_(value->secondary_target() ? native_type::from_mapped(value->secondary_target()) : native_pointer{}),
         main_(std::move(main)), mapped_(std::move(value)),
-        depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)) {}
+        depth_(profile_detail::add(main_ ? main_->depth() : 0, 1)), canonical_mapped_(!main_ || main_->canonical_mapped()) {}
   };
 
   template <class P, class Storage = profile_runtime_storage<P>> struct redundant_object;

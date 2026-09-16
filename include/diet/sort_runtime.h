@@ -76,6 +76,7 @@ namespace diet {
       return result;
     }
     catalog_bindings<native_binding<mapped_type>> bindings_;
+    catalog_bindings<sort_runtime_native> mapped_owners_;
     std::shared_ptr<native_seal const> seal_;
     std::shared_ptr<array_type const> owned_;
     std::shared_ptr<mapped_type const> mapped_;
