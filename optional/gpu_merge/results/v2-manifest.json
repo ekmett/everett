@@ -1,0 +1,9 @@
+{
+  "optional/gpu_merge/build.py": "029fd0abaa703019b1acadba535b10b03c33045eaccb9c6dd5c93cd3513f6219",
+  "optional/gpu_merge/kernels.hlsl": "f5c532925419020bf17a46d30f586130af71476c5307e9d34fb77dc5e495567e",
+  "optional/gpu_merge/prototype.mm": "82aa90e43e3d2e396be33ccee1e4b5dcef6daddac380ae9164685ad53c2f55c6",
+  "optional/gpu_merge/design.md": "b120e32a5329cb140593d4b8749699288195445183610acdc17a67147f9d6867",
+  "optional/gpu_merge/adversarial.h": "dc2bfa1cf3f68bd741225757dad99d47688daeee99e3014b8dc8b3456cc1ec89",
+  "build-gpu-merge/prototype": "078bed2536c8835db1cdcb8e8215e44d45edab873cba1403507c0cfcb0441a29",
+  "build-gpu-merge/kernels.metallib": "0be72eee77abc5e7c18f5a8d14f93fc26753924374b36590a6914cb758e481af"
+}

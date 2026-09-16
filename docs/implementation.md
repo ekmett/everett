@@ -53,6 +53,28 @@ this package.
 
 ## Implemented foundations
 
+### Optional GPU construction
+
+The separate [GPU experiment](../optional/gpu_merge/design.md) merges default
+bit-profile string replacement files through Metal. GPU passes select input
+Elias–Fano offsets, parse compressed frames, recover inherited prefixes, merge
+records, scan exact output lengths and write the compressed payload and
+navigation. The CPU supplies file metadata and resources, waits for completion,
+and finishes the envelope and checksums. The program imports mmap-backed files
+directly on the tested unified-memory machine.
+
+The [complete-path measurements](../optional/gpu_merge/report.md) and
+[cancellation-bitmap comparison](../optional/gpu_merge/collision-report.md)
+retain checked outputs and measured identities. Temporary collision rank is
+construction scratch. Separate GPU passes construct the existing final rank15
+format; neither experiment replaces its CPU query implementation.
+
+This program has its own opt-in CMake build. It is not part of durable runtime
+publication, and arbitrary sort handlers do not run as shaders. The
+[header-based selector](../optional/gpu_merge/cutover.md) requires a matching
+device and implementation calibration. Unknown or unvalidated configurations
+fall back to the CPU.
+
 ### Active runtime and named frontiers
 
 `multiverse<>::create(path).connect(name)` opens a default bit-profile string table.

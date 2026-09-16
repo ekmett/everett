@@ -20,6 +20,21 @@ New measurements of Everett should record their own source hashes and results.
 The [implementation ledger](../docs/implementation.md) links the accepted
 measurements and describes the current library.
 
+Optional GPU construction
+-------------------------
+
+The [GPU merge experiment](../optional/gpu_merge/design.md) reads compressed
+mapped inputs and emits a complete compressed output file. Its
+[measurements](../optional/gpu_merge/report.md) include parsing, merging,
+navigation construction and checksums. The
+[collision-rank comparison](../optional/gpu_merge/collision-report.md) explores
+temporary cancellation bitmaps; the production rank formats stay unchanged.
+The [calibration guide](../optional/gpu_merge/cutover.md) describes a measured
+CPU/GPU choice using headers and file sizes.
+
+This is a separate opt-in Metal program. It does not publish durable catalog
+updates, and the ordinary library has no shader-toolchain dependency.
+
 Unadopted experiments
 --------------------
 

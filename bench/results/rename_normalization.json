@@ -24,7 +24,7 @@
     {
       "path": "bench/README.md",
       "pre_rename_sha256": "58bfcf60e14cbea648a99b1d8d857e7e1845c692a490b4d0d881659d5dbe1d77",
-      "normalized_sha256": "1156c4704e7b4b08cc0fb75325644cbf6ed0dbb22ccf74eceb8bf021315ba689"
+      "normalized_sha256": "2a4c60faecfa70203f8ba313ae07ae1ce5158c7fe4605dcbdc4ef1db801e2465"
     },
     {
       "path": "bench/bitmap512.h",
@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "5e9334be83a96c3b8b9ace221c22a719ef45160544f2050882bb6400aa85f6d6"
+      "normalized_sha256": "ad5798852dc429718522feede1d874ba293169e0f01a5fcad1e8fadf9b72afa6"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,17 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "85a8d1fca69a9e55312a701ea04b478c29fc601577521e91ae082217b73bb10c"
+      "normalized_sha256": "dd06903de1fb00d9956ff46aa574a8d251ef838a477f898b12e1dce2a83bf9b2"
+    }
+  ],
+  "subsequent_updates": [
+    {
+      "scope": "Link the optional GPU construction program and include its guides in checked documentation. Original measurement observations and original fingerprints are unchanged.",
+      "artifacts": [
+        "bench/README.md",
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
     }
   ]
 }

@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "85a8d1fca69a9e55312a701ea04b478c29fc601577521e91ae082217b73bb10c"
+      "normalized_sha256": "dd06903de1fb00d9956ff46aa574a8d251ef838a477f898b12e1dce2a83bf9b2"
     }
   ],
   "checks": {
@@ -485,5 +485,13 @@
     "bundled_bitmap_runner": "ASan/UBSan oracle passed; performance not rerun",
     "doxygen": "passed"
   },
-  "checks_scope": "These checks describe the original publication cleanup. The later naming-only refresh checks are recorded separately in rename_normalization.json."
+  "checks_scope": "These checks describe the original publication cleanup. The later naming-only refresh checks are recorded separately in rename_normalization.json.",
+  "subsequent_updates": [
+    {
+      "scope": "Link the optional GPU construction program and include its guides in checked documentation. Original measurement observations and original fingerprints are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    }
+  ]
 }

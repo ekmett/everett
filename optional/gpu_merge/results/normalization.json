@@ -1,0 +1,65 @@
+{
+  "note": "Public logs omit resource-wrapper log-location records only. Timing and correctness records are unchanged. Original raw logs, measured source snapshots, and source reconstruction patches are retained in a private provenance archive; source and binary manifests retain their original hashes.",
+  "logs": {
+    "adversarial-v1.log": {
+      "original_sha256": "7f2eafce67d035fa9ac219a243bf668b214054554ddfe64bc7b625fd35e5dfd7",
+      "public_sha256": "66e34f8256a7aad76b52372c5bbf3fa8b981853ae745f411ccdaa91157cf5bc1",
+      "removed_location_records": 1
+    },
+    "adversarial-v2.log": {
+      "original_sha256": "dd4c0f7280ae4a5d84d985fe661ea0c8cc9704264c91485b0c4d8296a4241236",
+      "public_sha256": "f229cc54dc9bfc2d415527787886eef529da6f376a809677b87ae3584f534f22",
+      "removed_location_records": 1
+    },
+    "adversarial-v3.log": {
+      "original_sha256": "21f0d5ea69868c78e36fd6ee16205c854a3d9f921aafed84c4f169d6267ce0bc",
+      "public_sha256": "3c9065f012dde3baaf5e43820b6f4f54897baa7540defafd830678b4b28ce99d",
+      "removed_location_records": 1
+    },
+    "adversarial-v4.log": {
+      "original_sha256": "bdaeabc98a95d9ccde186d097e2cc5af4aea4d1a15f1ef9d7cbf1e447f10307d",
+      "public_sha256": "9730a83179a703c6a76325dadec8848a681afc1f6e4a6e8bb1ca8b715e72c5fa",
+      "removed_location_records": 1
+    },
+    "merge-v1.log": {
+      "original_sha256": "c4f5f9772d840c7adf5d870d1651183a65c6af9462552ecde68885d3d65c081c",
+      "public_sha256": "0698545503cb3c739072ed11498419e3606062e14fcdd8e6689e05d9d6c72fe7",
+      "removed_location_records": 1
+    },
+    "merge-v2.log": {
+      "original_sha256": "0c4191865be97279db6951f365f684bdbfb7533257b2f621505ada9c9c2c2a00",
+      "public_sha256": "d83aa2e49a5a00d78f07c0b08f04ba742175b7ba29fe00f0913ac77a1421b14d",
+      "removed_location_records": 1
+    },
+    "merge-v3.log": {
+      "original_sha256": "aa17d72741701c2e5cf732a4c510568583b353742d80ccb27365109d0b36cfb6",
+      "public_sha256": "b8ab27505cb54f1dabbfe3fd0acdf11ee90916adc33cfbde7e3af18ed129c627",
+      "removed_location_records": 1
+    },
+    "merge-v4.log": {
+      "original_sha256": "8d1aa40496d601a80d9dc9d001bf418948af7d94f81042e6f33b93f1c2f61112",
+      "public_sha256": "78112dbc106b14a8dcee88a398931cf71736c233347d5ef52daa77b62e6b2d5c",
+      "removed_location_records": 1
+    },
+    "rank-pilot.log": {
+      "original_sha256": "ea1c5c92b507ebc92edd4b363d624eb9ea23edaae1a937be9aa1c45da5f5a191",
+      "public_sha256": "633c15644556a20726b34531b13938b88a0042b7f06d507496bd1233f239e9bd",
+      "removed_location_records": 1
+    },
+    "merge-v5.log": {
+      "original_sha256": "991eab75dbe63e23ac09e777ba560bb904886792c175530b62a55da2e21496dc",
+      "public_sha256": "72751756498ee07806c78b2b353a74a2555444a67d382285ce30c75c4be5e47c",
+      "removed_location_records": 1
+    },
+    "adversarial-v5.log": {
+      "original_sha256": "54e06b97fbc716faa371a2b80f399238c865cc0e674ee37869ac09f93ae5b96d",
+      "public_sha256": "199a7364c54c2c0212474e440dd6d92c5daf11196e48450b676e69c0d4d2d7a7",
+      "removed_location_records": 1
+    },
+    "rank-shared-v5.log": {
+      "original_sha256": "724dc6856610b479cc621168f53dfac037f507149bb97dfc71d9456d5f92131f",
+      "public_sha256": "7884079fc09262db6df24d0b07a5d86c53b3997e4786be23342f267dc65e15fe",
+      "removed_location_records": 1
+    }
+  }
+}
