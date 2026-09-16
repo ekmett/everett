@@ -34,6 +34,7 @@ for integration. These are development responsibilities.
 | Sort-owned physical profiles | `sort_profile.h`, `sort_profile_file.h`, `sort_profile_merge.h`; `tests/sort_profile.cc` | KV03 native framing, shared selector seeds, mapped cascading queries, prefix-preserving merges and protected-page entry |
 | Sort-owned runtime and persistence | `sort_runtime.h`, `sort_runtime_store.h`; sort-runtime and catalog tests | direct heterogeneous records, chronological composition, complete redundant frontiers and metadata-only mapped recovery |
 | Adaptive encoded outputs | `sort_profile_adaptive.h`, `cola_adaptive_index.h`, `output_budget.h`; adaptive native/index and allowance tests | bounded retained capacities, lifetime leases, exact streamed bytes, lazy reservations and acknowledged seals |
+| Completed native reuse | `sort_runtime_context.h`, `sqlite_catalog.h`; `tests/sqlite_catalog_native_reuse.cc` | exact ordered inputs/schema/kernel, acknowledged acquisition pins, fork-local indexes, hidden checkpoints and uncertain-operation replay |
 | Replacement rebuilding | `replacement_rebuild.h`; replacement and durable-rebuild tests | paid physical scans, FIFO replay, carried generation debt, active saves/forks and gated recovery after interruption |
 | Resolved scans | `typed_scan.h`; typed and mapped scan tests | ordered rows, newest replacements, chronological arrows, tombstone elision, bounded traversal and snapshot ownership |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `fridge.h`; profile/blob/fridge tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
@@ -153,6 +154,16 @@ The [native](adaptive-native.md) and [index](adaptive-index.md) guides describe
 retention and spill selection. The
 [context guide](sort-runtime-context.md) gives the exact memory and failure
 boundaries.
+
+The built-in string replacement connection can reuse a naturally streamed
+native merge completed by another fork. Its domain includes exact ordered
+native identities, application schema, physical policy and a fixed library
+operation identity. A hit skips native scanning and encoding, then follows the
+ordinary branch-local index stages. Small adaptive outputs and custom
+composition retain their existing paths. The optional catalog hint table and
+its reader pins are acknowledged atomically; acquisitions add their own pins.
+These pins currently remain permanent. The [reuse guide](native-merge-reuse.md)
+states the scope and failure protocol.
 
 ### COLA main and secondary indexes
 
@@ -1059,6 +1070,13 @@ forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
+At `86ed797`, the complete strict O2 ASan/UBSan build and all **93 C++ component
+suites** passed on AppleClang 21. All three independent package consumers also
+passed. The Doxygen check found a cross-page duplicate-heading resolver bug;
+that documentation failure is tracked separately from the C++ results. The
+native-reuse worker's new focused suite passed separately with strict O2
+ASan/UBSan before integration.
+
 Integration checks on 2026-09-16 passed under AppleClang 21, strict warnings,
 O2 and ASan/UBSan for shared owner bindings, seal acknowledgment failures,
 mapping lifetimes, canonical fallback, runtime publication and streamed native
@@ -1143,7 +1161,7 @@ See [the documentation check](doxygen.md) for the exact assertions and limits.
 | General arrow policy coverage | replacement and noncommutative append instances, source validation and per-sort endpoint deltas | additional categories, bounded composition dependencies, observation costs and persisted schema migration |
 | Comparison block encoding | ordinary FC, exact cut LCP and scalar comparison transfers | transposed count/literal layouts, ordered SIMD transfer scans, bounded tails and independently measured time/space tradeoffs |
 | Object identity and integrity | portable sections, mmap queries, immutable writer and durable catalog publication | cryptographic content addressing and a lazy block-integrity strategy |
-| Shared completed merges | redundant main/secondary scheduler, paid structural service and durable full-frontier restoration | reuse completed native merges across forks while each dependent rebuilds its own exact fractional indexes |
+| Wider completed-merge reuse | exact streamed replacement hints and fork-local index rebuilding | explicit domains for other composition kernels, optional recipes for retained outputs, and cache retirement together with catalog liveness |
 | Catalog pin retirement | conditional timeline publication, immutable saves, reservations and exact file graph | reader/generation retirement, reclaim only after final pin, schema migration and interruption tests |
 | Direct batch adoption | native file reader, prefix index builder and scheduler | preserve received ordinary-FC bytes, bound visible catalogs and work debt, preserve causal order and charge actual key bytes |
 | Partial merge resumption | tested publication barriers, process-interruption recovery and encoded merge continuations | persist continuation metadata and verified output prefixes so restart can resume partial encoding instead of replaying the published inputs |

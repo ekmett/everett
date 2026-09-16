@@ -194,6 +194,13 @@ hidden roots without repeatedly checking their shared suffixes.
 Adaptive native and index output
 ---------------------------------
 
+The ordinary named string connection can also
+[reuse completed native merges](native-merge-reuse.md) from another fork. Exact
+ordered input identities, application schema, physical policy and the known
+replacement kernel select the result. The requesting fork retains its old
+dependencies while constructing its own indexes. Reuse covers naturally
+streamed completions; it never forces small adaptive outputs to acquire files.
+
 `streaming_sort_runtime_family` keeps small native merges and fractional indexes
 owned until publication, and streams larger outputs into KV03 and IX03 files.
 This is the ordinary bit-profile connection backend. The typed core carries one

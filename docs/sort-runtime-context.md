@@ -96,6 +96,8 @@ Concrete storage hooks
 addition to the native/profile traits, a storage family supplies:
 
 - `make_merge<Compose>(older, newer, compose)` to start an incremental merger.
+- An optional `reuse_merge<Compose>(older, newer)` to acquire an already completed
+  native before starting its replacement merger.
 - `finish_merge(merge)` to produce its immutable native owner.
 - `make_index<Node>(native, main, secondary)` and `finish_index<Node>(index)`
   to build an index over exact pinned dependencies.
@@ -117,6 +119,15 @@ For a direct engine, I can attach an opened storage with
 a settled layout. Its metadata and admission-count checks are consistency
 checks: the caller remains responsible for supplying an equivalent layout.
 The named connection uses this operation after persisting a settled result.
+
+The named connection also passes its application schema into the storage
+context. For the built-in string replacement sort, this enables
+[completed native merge reuse](native-merge-reuse.md) across forks with identical
+ordered input files. Each fork still builds its own fractional indexes. A
+direct engine can opt in with `family::open_storage(root, schema)`; an empty
+storage schema disables reuse. Naturally retained small outputs keep their
+existing no-I/O path. Durable hints and acquisition pins currently remain in
+the append-only catalog.
 
 Memory and work
 ---------------
