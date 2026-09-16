@@ -27,6 +27,21 @@ namespace {
       if (forced) for (auto & record : records) record.retained_limit_bits = forced;
       return base::sorted_native(records);
     }
+    template <class Merge> static auto finish_merge(Merge & merge) {
+      auto result = merge.finish();
+      if (!forced) return native_type::from_owned(std::move(result));
+      // Initial construction performs real carries. Re-encode their result to
+      // supply an equivalent physical layout, rather than expecting live rows
+      // to preserve a temporary input hint through ordinary compression.
+      std::vector<profile_record> records;
+      auto cursor = result.view().cursor();
+      while (!cursor.done()) {
+        auto item = cursor.peek();
+        records.push_back({bit_string::copy(item.key.prefix), bit_string::copy(item.value), forced});
+        cursor.advance();
+      }
+      return base::sorted_native(records);
+    }
     static auto singleton(profile_record const & record) {
       auto target = sort_profile_query<p, strings>("ab9");
       if (compare_bits(record.key.view(), target.view()) == 0)
@@ -65,7 +80,8 @@ namespace {
     auto conditional = base.erase("ab9");
     check(conditional.records()[0].retained_limit_bits == depth, "base lookup lost physical depth");
     auto alternate = make(1); auto saved = alternate.snapshot();
-    check(retention(saved) == 1 && saved.metadata() == base.metadata(), "alternate layout is not equivalent");
+    check(retention(saved) == 1, "alternate layout did not change stored retention");
+    check(saved.metadata() == base.metadata(), "alternate layout changed logical metadata");
     storage::observed.reset(); storage::admissions = 0;
     auto deleted = alternate.contribute(conditional);
     check(storage::admissions == 1 && storage::observed == 1, "admission trusted the base's different encoding");
