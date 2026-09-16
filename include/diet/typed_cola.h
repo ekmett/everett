@@ -17,6 +17,7 @@
 #include <diet/tap.h>
 
 #include <algorithm>
+#include <bit>
 #include <concepts>
 #include <memory>
 #include <string_view>
@@ -157,6 +158,7 @@ namespace diet {
   template <class P, class A, class Family = binary_runtime_family<P>> struct typed_contribution;
   template <class P, class A, class Family = binary_runtime_family<P>> struct typed_batch;
   template <class P, class A, std::uint64_t DepthLimit, class Family> struct typed_engine;
+  template <class P, class A, std::uint64_t DepthLimit, class Family> struct replacement_rebuild_engine;
 
   template <class P = string_policy, class A = wrapping_fingerprint_algebra,
     class Family = binary_runtime_family<P>> struct typed_cola {
@@ -389,6 +391,33 @@ namespace diet {
     }
     cola_type contribute(contribution_type input) {
       require_active();
+      auto metadata = prepare(input);
+      try {
+        if (initialize(input, metadata)) return current_;
+        for (auto const & record : input.records()) {
+          while (!runtime_.admission_ready()) runtime_.advance(std::max<std::uint64_t>(runtime_.next_service_cost(), 1));
+          auto ready = runtime_.snapshot();
+          if (ready.query_root().head()->depth() > DepthLimit || runtime_.admission_cost() > ready_admission_allowance)
+            throw std::length_error("typed runtime exceeds ready-admission depth allowance");
+          auto service = [&] {
+            if constexpr (charged_service) return runtime_type::service_budget(profile_detail::add(ready.admissions(), 1));
+            else return std::uint64_t{0};
+          }();
+          if (!runtime_.try_contribute(record, service)) throw std::logic_error("typed ready admission unexpectedly blocked");
+        }
+        auto state = [&] {
+          if constexpr (requires { runtime_.checkpoint(); }) return runtime_.checkpoint();
+          else return runtime_.snapshot();
+        }();
+        current_ = cola_type(std::move(state), std::move(metadata));
+        return current_;
+      } catch (...) { failed_ = true; throw; }
+    }
+  private:
+    template <class, class, std::uint64_t, class> friend struct replacement_rebuild_engine;
+    // The rebuild wrapper shares this complete preflight before installing a
+    // pristine batch; neither caller can publish metadata ahead of execution.
+    metadata_type prepare(contribution_type const & input) const {
       if (input.base() && input.base()->metadata().schema_id != current_.metadata().schema_id)
         throw std::invalid_argument("typed contribution uses another schema");
       auto metadata = current_.metadata();
@@ -416,27 +445,21 @@ namespace diet {
           }
         });
       }
-      try {
-        for (auto const & record : input.records()) {
-          while (!runtime_.admission_ready()) runtime_.advance(std::max<std::uint64_t>(runtime_.next_service_cost(), 1));
-          auto ready = runtime_.snapshot();
-          if (ready.query_root().head()->depth() > DepthLimit || runtime_.admission_cost() > ready_admission_allowance)
-            throw std::length_error("typed runtime exceeds ready-admission depth allowance");
-          auto service = [&] {
-            if constexpr (charged_service) return runtime_type::service_budget(profile_detail::add(ready.admissions(), 1));
-            else return std::uint64_t{0};
-          }();
-          if (!runtime_.try_contribute(record, service)) throw std::logic_error("typed ready admission unexpectedly blocked");
-        }
-        auto state = [&] {
-          if constexpr (requires { runtime_.checkpoint(); }) return runtime_.checkpoint();
-          else return runtime_.snapshot();
-        }();
-        current_ = cola_type(std::move(state), std::move(metadata));
-        return current_;
-      } catch (...) { failed_ = true; throw; }
+      return metadata;
     }
-  private:
+    bool initialize(contribution_type const & input, metadata_type const & metadata) {
+      try {
+        if constexpr (requires { runtime_.try_initialize_sorted(input.records(), std::uint64_t{}, DepthLimit); }) {
+          auto count = input.records().size();
+          if (count >= 2 && std::has_single_bit(count) && !current_.runtime().admissions() && !runtime_.pending() &&
+              runtime_.try_initialize_sorted(input.records(), reservation_work(count), DepthLimit)) {
+            current_ = cola_type(runtime_.snapshot(), metadata);
+            return true;
+          }
+        }
+        return false;
+      } catch (...) { poison(); throw; }
+    }
     runtime_type runtime_;
     cola_type current_;
     bool failed_ = false;

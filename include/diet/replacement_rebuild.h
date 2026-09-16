@@ -268,6 +268,33 @@ namespace diet {
       if (published_.runtime().query_root().head()->depth() > DepthLimit ||
           (input.base() && input.base()->runtime().query_root().head()->depth() > DepthLimit))
         throw std::length_error("replacement query exceeds depth allowance");
+      // Initial unique string replacements are already clean arrows. Share
+      // the typed preflight and avoid constructing detached per-key replay
+      // entries when the runtime can install this entire pristine batch.
+      if constexpr (std::is_same_v<sort_type, unsorted<std::optional<std::string>>>) {
+        auto count = input.records().size();
+        if (count >= 2 && std::has_single_bit(count) && !base_ && !mutations_ &&
+            !job_ && !recovering_ && !foreground_->pending() && !mass(published_) &&
+            !work_.mutations && !work_.generations) {
+          auto metadata = foreground_->prepare(input);
+          auto accepted = add(work_.mutations, count);
+          auto prior = foreground_->work().charged;
+          try {
+            if (foreground_->initialize(input, metadata)) {
+              work_.foreground_charged = add(work_.foreground_charged, foreground_->work().charged - prior);
+              prior = foreground_->work().charged;
+              base_ = count;
+              work_.mutations = accepted;
+              published_ = publication();
+              return published_;
+            }
+          } catch (...) {
+            work_.foreground_charged = add(work_.foreground_charged, foreground_->work().charged - prior);
+            poison();
+            throw;
+          }
+        }
+      }
       std::vector<mutation> entries; entries.reserve(input.records().size());
       for (auto const & record : input.records()) {
         engine_type::key_transport::dispatch(record.key.view(), [&]<class S>(std::type_identity<S>, auto const & key) {
