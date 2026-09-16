@@ -71,7 +71,8 @@ including query encoding, exact cascade routing, record parsing, comparisons,
 value decoding, allocation and destruction.
 Every generation stores the same value for a given key. This catches wrong-key
 selection, but does not independently test choosing the newest of unequal
-replacement values; that semantic property belongs to the library's tests.
+replacement values. A separate untimed mapped-query check adds unequal newer
+values and tombstones, described below.
 
 The primary matrix uses 8,192 and 131,072 base records, both key shapes and
 lengths, both byte/bit profiles, and hit/miss/mixed queries. The independent
@@ -175,7 +176,12 @@ Correctness and evidence
 
 The five selectors pass 213,460 sequential/random oracle selections each under
 ASan/UBSan, including empty/repeated inputs, 32/256-one boundaries, clustered
-offsets and sparse exceptions. Complete query fixtures check exact values,
+offsets and sparse exceptions. Each variant also passes 16,384 mapped
+changed-value, tombstone and neighboring-miss checks under ASan/UBSan, across
+both byte/bit profiles and short structured/long hash-like keys. This separate
+untimed check verifies newest-value selection without changing the measured
+fixtures. Its [source and binary hashes](results/2026-09-16-m2max/chronology-checks.json)
+are retained. Complete query fixtures check exact values,
 then timed checksums. The analysis checks matching record-stream fingerprints,
 result checksums and space across processes. Raw observations, source/header
 hashes, binary hashes, operation counts and sanitized profiler samples are in

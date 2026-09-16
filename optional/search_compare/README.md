@@ -127,6 +127,17 @@ linker-folded frames retained in `routing_and_other`; they are not precise
 per-call timings. Inclusive categories can overlap. Exclusive categories
 choose the innermost recognized scope and sum to 100%.
 
+`chronology_check.cc` adds a newer mapped run containing changed values and
+tombstones, then exhaustively checks its keys and neighboring misses. It is
+untimed and uses the same generated readers:
+
+```sh
+c++ -std=c++20 -O0 -g -fsanitize=address,undefined -Wall -Wextra -Werror \
+  -Ibuild-search/VARIANT/include optional/search_compare/chronology_check.cc \
+  -o build-search/VARIANT/chronology_check
+./build-search/VARIANT/chronology_check
+```
+
 `select_check.cc` checks sequential and random selection against the original
 integer vector, including empty streams, repeated offsets, 32/256-one
 boundaries, clustering and sparse exceptions. Run it against each generated
