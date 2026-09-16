@@ -61,6 +61,11 @@ initial compile concurrency to four jobs. Build and test with CMake/CTest;
 exercise ASan/UBSan where supported. Keep generated outputs in ignored build
 folders. Validate the installed CMake package from a separate consumer.
 
+Treat asymptotic improvements as the default requirement. Use the fractional
+cascade to position range cursors rather than scanning preceding records.
+Choose a worse asymptotic fallback only when measurements demonstrate clear
+gains across a broad, practical range, and document that measured boundary.
+
 Keep the library independent of application policy. A multiverse owns backing
 storage, a world is a logical state, and a timeline is an ordered progression.
 Do not label design-only codecs, schedulers or persistence as implemented.
