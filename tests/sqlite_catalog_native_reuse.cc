@@ -319,6 +319,166 @@ namespace {
     verify(old, {{"key", std::string(96 * 1024, 'a')}});
   }
 
+  void rebuilding_reuse_restart() {
+    using rebuild = replacement_rebuild_engine<P, wrapping_fingerprint_algebra, 256, family>;
+    using rebuilt = rebuild::cola_type;
+    using durable = persistent_engine<rebuild>;
+    auto settle = [](auto & active) {
+      unsigned rounds = 0;
+      while (active.pending()) {
+        active.advance(1'000'000);
+        check(++rounds < 10'000, "combined reuse/rebuild did not settle");
+      }
+      check(active.admission_ready(), "settled rebuild retained admission debt");
+    };
+    auto key = [](unsigned n) { return "row-" + std::to_string(n); };
+    temporary dir;
+    auto saved = store::create(dir.root);
+    auto disk = storage::open_for_schema(dir.root, schema);
+    rebuild seed(schema);
+    auto active = rebuild::from_snapshot(seed.snapshot(), disk);
+    oracle original;
+    auto initial = rebuild::batch();
+    for (unsigned n = 0; n != 128; ++n) {
+      original[key(n)] = "original-" + std::to_string(n);
+      initial.put(key(n), original.at(key(n)));
+    }
+    active.contribute(std::move(initial).finish());
+    settle(active);
+    auto old = active.snapshot();
+    verify(old, original);
+    auto recorded = saved.create_tap("original", old.runtime(), old.metadata().encode());
+    saved.save("before-deletes", recorded.head);
+
+    auto expected = original;
+    for (unsigned n = 0; n != 32; ++n) {
+      while (!active.admission_ready()) active.advance(1'000'000);
+      active.contribute(rebuild::erase(key(n)));
+      expected.erase(key(n));
+    }
+    auto frozen = active.snapshot();
+    verify(frozen, expected);
+    check(frozen.metadata().rebuilding && frozen.metadata().clean_base == 128 &&
+      frozen.metadata().mutations == 32 && frozen.runtime().admissions() == 160,
+      "checked deletions did not reach the large rebuild trigger");
+
+    // Keep the real active generation, but expose a lower-level service cut.
+    // Each overwrite first passes through the typed engine: its checked
+    // metadata, exact encoded record and actual admission count are reused
+    // below. Only service timing differs; no semantic hash is patched by hand.
+    auto pending = runtime::from_snapshot(frozen.runtime(), disk);
+    settle(pending);
+    auto semantic = core::from_snapshot(frozen, disk);
+    settle(semantic);
+    std::uint64_t admitted = 0;
+    for (unsigned n = 0; n != 2; ++n) {
+      auto value = std::string((96 + 4 * n) * 1024, char('a' + n));
+      auto batch = core::batch(); batch.put(key(32), value);
+      auto command = std::move(batch).finish();
+      check(command.records().size() == 1, "overwrite fixture unexpectedly coalesced");
+      auto record = command.records().front();
+      admitted += command.records().size();
+      semantic.contribute(std::move(command));
+      expected[key(32)] = std::move(value);
+      check(bool(pending.try_contribute(record, 0)), "zero-service checked overwrite rejected");
+    }
+    auto semantic_state = semantic.snapshot();
+    auto frontier = pending.checkpoint();
+    check(frontier.admissions() == semantic_state.runtime().admissions() &&
+      frontier.admissions() == frozen.runtime().admissions() + admitted && frontier.frontier().service_due,
+      "checked overwrite lost admission mass or its service obligation");
+    rebuilt shared(typed::restore(frontier, semantic_state.metadata(), schema),
+      frozen.metadata().clean_base, frozen.metadata().mutations + admitted, true);
+    verify(shared, expected);
+    auto first = saved.create_tap("cleanup-first", shared.runtime(), shared.metadata().encode());
+    auto second = saved.fork("cleanup-second", first.head);
+    auto finished = runtime::from_snapshot(first.snapshot, storage::open_for_schema(dir.root, schema));
+    settle(finished);
+    rebuilt first_state(typed::restore(finished.snapshot(), semantic_state.metadata(), schema),
+      shared.metadata().clean_base, shared.metadata().mutations, true);
+    auto winner = saved.publish(first.head, first_state.runtime(), first_state.metadata().encode());
+    std::optional<blob_identity> winning_pair;
+    for (auto const & run : winner.snapshot.runs())
+      if (run->first == 160 && run->last == 162) winning_pair = run->pair->mapped()->identity();
+    check(winning_pair && finished.work().native_reuses == 0 && finished.work().native_inputs == 2,
+      "first active-generation fork did not create the expected native merge");
+
+    auto reopened = store::open(dir.root).find("cleanup-second");
+    check(reopened && reopened->head == second.head, "active fork lost exact checkpoint");
+    auto borrowing = runtime::from_snapshot(reopened->snapshot, storage::open_for_schema(dir.root, schema));
+    std::optional<catalog_tap_head> hidden_head;
+    std::uint64_t hidden_due = 0;
+    while (borrowing.pending() && !hidden_head) {
+      auto price = borrowing.next_service_cost(), credit = borrowing.credit();
+      borrowing.advance(price > credit ? price - credit : 1);
+      auto cut = borrowing.checkpoint();
+      for (auto const & level : cut.frontier().levels) {
+        if (!level.job || !level.job->merged || level.job->stage != redundant_stage::destination_index) continue;
+        auto const & merged = level.job->merged;
+        check(merged->sealed() && merged->sealed()->receipt.object == winning_pair->native,
+          "active-generation reuse selected a different native");
+        hidden_due = cut.frontier().service_due;
+        check(hidden_due && !borrowing.admission_ready() && borrowing.work().native_reuses == 1 &&
+          !borrowing.work().native_inputs && !borrowing.work().native_outputs,
+          "native reuse forgave debt or invented scanned work");
+        rebuilt hidden(typed::restore(cut, semantic_state.metadata(), schema),
+          shared.metadata().clean_base, shared.metadata().mutations, true);
+        verify(hidden, expected);
+        auto held = saved.publish(second.head, hidden.runtime(), hidden.metadata().encode());
+        check(std::find(held.head.auxiliary.natives.begin(), held.head.auxiliary.natives.end(), winning_pair->native) !=
+          held.head.auxiliary.natives.end(), "active rebuild did not pin its hidden reused output");
+        hidden_head = held.head;
+        break;
+      }
+    }
+    check(bool(hidden_head), "active rebuild missed hidden native reuse");
+
+    std::optional<durable> recovering(durable::connect(dir.root, "cleanup-second",
+      {.schema_id = schema, .create_if_missing = false}));
+    auto before = recovering->snapshot();
+    verify(before, expected);
+    check(before.head() == *hidden_head && before.metadata() == shared.metadata() &&
+      before.runtime().frontier().service_due == hidden_due && !recovering->admission_ready(),
+      "reopen lost hidden-index debt or active rebuild accounting");
+    rejects([&] { recovering->contribute(rebuild::put("blocked", "not admitted")); });
+    auto rejected = recovering->snapshot();
+    check(!recovering->failed() && rejected.head() == *hidden_head,
+      "recovery admission refusal changed the acknowledged generation");
+    // The first service call completes only the blocked foreground. Its
+    // branch-local index must exist before the cleanup candidate can run.
+    recovering->advance(1'000'000);
+    auto indexed = recovering->snapshot();
+    check(indexed.metadata() == shared.metadata() && !indexed.runtime().frontier().service_due &&
+      recovering->pending() && !recovering->admission_ready(),
+      "index completion prematurely cleared replacement cleanup debt");
+    bool own_index = false;
+    for (auto const & run : indexed.runtime().runs())
+      if (run->first == 160 && run->last == 162) {
+        auto identity = run->pair->mapped()->identity();
+        own_index = identity.native == winning_pair->native && identity.index != winning_pair->index;
+      }
+    check(own_index, "recovered rebuild reused another fork's fractional index");
+    recovering.reset();
+    recovering.emplace(durable::connect(dir.root, "cleanup-second",
+      {.schema_id = schema, .create_if_missing = false}));
+    check(!recovering->admission_ready() && recovering->snapshot().metadata() == shared.metadata(),
+      "second restart treated unfinished cleanup as a clean generation");
+    settle(*recovering);
+    auto cleaned = recovering->snapshot();
+    verify(cleaned, expected);
+    check(!cleaned.metadata().rebuilding && cleaned.metadata().clean_base == 96 &&
+      !cleaned.metadata().mutations && cleaned.runtime().admissions() == 96 &&
+      cleaned.head().timeline.generation > hidden_head->timeline.generation,
+      "recovered cleanup did not shrink the admitted universe at durable handoff");
+    for (unsigned n = 0; n != 32; ++n) check(!cleaned.get(key(n)), "cleanup resurrected a deleted key");
+    auto old_save = store::open(dir.root).find_save("before-deletes");
+    check(bool(old_save), "cleanup discarded the old saved snapshot");
+    auto old_state = rebuilt::restore(old_save->snapshot, rebuild::metadata_type::decode(old_save->semantic), schema);
+    verify(old_state, original); verify(old, original); verify(first_state, expected);
+    check(old_state.get(key(32)) == "original-32" && cleaned.get(key(32)) == expected.at(key(32)),
+      "old snapshot or overwritten survivor changed during handoff");
+  }
+
   struct fault { std::string kind; bool armed = false, after = false; unsigned hits = 0; };
   std::shared_ptr<fault> injection;
   struct catalog_ops {
@@ -441,7 +601,7 @@ namespace {
 int main() {
   try {
     ordered_domains_and_replay(); adaptive_and_copied_catalog(); invalid_evidence(); simultaneous_completions();
-    fork_and_checkpoint(); interrupted_hints(); reconcile_interrupted_operation(); schema_plumbing();
+    fork_and_checkpoint(); rebuilding_reuse_restart(); interrupted_hints(); reconcile_interrupted_operation(); schema_plumbing();
     std::cout << "durable ordered native merge reuse passed\n";
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }
