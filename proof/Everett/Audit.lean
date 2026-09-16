@@ -11,6 +11,7 @@ import Everett.Framing
 import Everett.Frontier
 import Everett.Transfer
 import Everett.NativeMerge
+import Everett.Navigation
 import Lean
 
 open Lean Elab Command

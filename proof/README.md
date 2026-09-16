@@ -35,7 +35,7 @@ axiom audit. The interpreted executable prints the outcomes of
 disjoint updates, an invalid reversal of same-key updates, and a retained snapshot
 whose current owner has adopted a different exact index/target pair. It also
 shows a sampled search whose native match lies before the routed window and is
-recovered through a false borrow.
+recovered through a false borrow, then runs the succinct-navigation boundary examples.
 
 I use `by decide` only where Lean can reduce a concrete proposition in the
 kernel; these examples do not use `native_decide` as a proof shortcut. Executing
@@ -60,6 +60,7 @@ Field guide
 | [Frontier](Everett/Frontier.lean) | Merge-head ordering from carried LCP lengths, suffix-only comparison at equal lengths, and exact new frontier lengths |
 | [Transfer](Everett/Transfer.lean) | Content-mismatch transfers, the literal-position invariant, composition and associative ordered summaries |
 | [NativeMerge](Everett/NativeMerge.lean) | Executable two-way merging of strictly ordered native runs; unique sorted output; optional pointwise lookup composition; chronological reassociation and disjoint-support commutation |
+| [Navigation](Everett/Navigation.lean) | Constructed unary Elias–Fano selection; strict high positions; common-stride and EOF recovery; grouped population/checkpoint rank equals fractional rank, with bounded local scans and no stored endpoint total |
 | [Examples](Everett/Examples.lean) | Heterogeneous keys, valid and stale sources, noncommutative histories, changed index/target versions, and an old target that cannot be reclaimed while a snapshot retains it |
 | [FractionalExamples](Everett/FractionalExamples.lean) | K=3 and K=15, equal keys across several cuts, empty native projections, false-borrow recovery, empty targets, before-first queries, short tails and stored-index routing |
 | [Audit](Everett/Audit.lean) | Rejects unexpected axioms in every kernel-safe `Everett` declaration and its transitive dependencies |
@@ -354,6 +355,50 @@ new target graph, while reclamation theorems require a proof that no deleted ID
 is reachable from an owner. These are explicit interface obligations. I am not
 assuming that an unverified external index satisfies them.
 
+Succinct navigation
+-------------------
+
+[Navigation](Everett/Navigation.lean) connects ordinal navigation to the list
+semantics used above. I model the actual unary high-bit vector and uncompressed
+low fields; I do not assume a correct select operation as a premise.
+
+For nondecreasing offsets $v_i$ and a positive base $B=2^w$, `encode` stores the
+low remainder $v_i\bmod B$ and emits unary quotient gaps. `select_one` walks
+those bits. `unary_high_select` proves that its $i$th selected bit is at
+$v_i/B+i$, and `high_positions_strict` proves that these positions are strictly
+increasing even when offsets repeat. `decode_encode` then recovers every input
+offset. These are executable list definitions, not assertions about an external
+selector. The theorem holds for every positive base, so choosing the width does
+not affect correctness.
+
+A profile owner subtracts the common value width times the record ordinal before
+encoding its boundary offsets. `stride_fits` rules out truncated subtraction;
+`stride_ordered` states that physical growth covers those fixed-width values.
+We derive monotone residuals from those two conditions. `physical_select_correct`
+proves exact recovery after adding the stride back. `owner_boundaries` generates
+regular block ordinals and appends one real EOF entry;
+`owner_select` proves the full $\min(jK,N)$ ordinal convention, and
+`owner_eof` selects the final entry using the actual record count. For 17 records with
+block size 15, EOF adds 17 strides, not 30. An empty owner still appends its one
+EOF value; a generic empty EF sequence contains no implicit sentinel.
+
+For grouped rank, `classes` constructs each population by filtering a real
+$K$-entry window, including its short tail. `checkpoints` records a prefix sum
+only for each existing checkpoint group. `grouped_rank_correct` proves that a
+checkpoint plus the intervening classes equals `fractional.rank` at a valid
+stored group boundary. `directory_scan_budget` bounds that scan by fewer than
+$C$ classes (128 in the implementation). `fine_rank` combines this boundary rank
+with the local origin scan, of fewer than $K$ entries. The executable boundary
+API rejects a one-past-end group. `grouped_total_correct` derives the total from
+the last valid boundary plus its population; no extra total is stored. These
+bounds count selected classes or entries, not Lean list traversal or machine
+instructions.
+
+The model uses natural numbers and lists. It does not yet verify packed low
+fields or population words, sparse/dense select accelerators, machine overflow,
+SIMD instructions, or the C++ parser. The byte-level implementation must refine
+these concrete construction and navigation contracts.
+
 Axiom audit and verification boundary
 ------------------------------------
 
@@ -369,8 +414,8 @@ axiom.
 
 I have deliberately not claimed:
 
-- Correct byte/bit encoding, front coding, compressed rank or Elias–Fano
-  representation bounds.
+- Correct packed byte/bit encoding, front coding, machine-level rank or
+  Elias–Fano select accelerators and representation bounds.
 - A refinement from encoded source streams to the list-level sample certificate,
   an entire cascade search, or composition of same-key history across blobs.
 - A bounded COLA scheduler, strong-deletion work accounting, or byte/I/O costs.
