@@ -55,7 +55,14 @@ def main():
     for entry in ["clear", "rank_probe", "scatter_a", "scatter_a_tiled", "scatter_b", "compact_a"]:
         name = "collision_rank2048_" + ("probe" if entry == "rank_probe" else entry)
         jobs.append(("collision_" + entry, name, True, True, True))
-    for entry, name, compressed, cached, rank2048 in jobs:
+    jobs = [(*job, False) for job in jobs]
+    for entry, name in [("tombstone_initialize", "tombstone_initialize"),
+                        ("tombstone_redirect", "tombstone_redirect"),
+                        ("merge_keep", "tombstone_merge_keep"),
+                        ("merge_sizes", "tombstone_merge_sizes"),
+                        ("compressed_merge_emit_words", "tombstone_merge_emit_words")]:
+        jobs.append((entry, name, True, True, False, True))
+    for entry, name, compressed, cached, rank2048, tombstones in jobs:
         stem = output / name
         run("python3", compiler, "--source", root / "optional/gpu_merge/kernels.hlsl",
             "--entry", entry, "--profile", "cs_6_0", "--spv", f"{stem}.spv",
@@ -63,12 +70,13 @@ def main():
             "--spirv-val", args.spirv_val, "--spirv-cross", args.spirv_cross,
             *(["--define", "COMPRESSED_INPUT=1"] if compressed else []),
             *(["--define", "PREFIX_CACHE=1"] if cached else []),
-            *(["--define", "COLLISION_RANK2048=1"] if rank2048 else []))
+            *(["--define", "COLLISION_RANK2048=1"] if rank2048 else []),
+            *(["--define", "TOMBSTONE_MERGE=1"] if tombstones else []))
         run("xcrun", "-sdk", "macosx", "metal", "-std=metal3.2",
             f"-fmodules-cache-path={output / 'metal-module-cache'}", "-fno-fast-math",
             "-c", f"{stem}.metal", "-o", f"{stem}.air")
     run("xcrun", "-sdk", "macosx", "metallib",
-        *(f"{output / name}.air" for _, name, _, _, _ in jobs), "-o", output / "kernels.metallib")
+        *(f"{output / name}.air" for _, name, _, _, _, _ in jobs), "-o", output / "kernels.metallib")
     run("xcrun", "clang++", "-std=c++20", "-O3", "-DNDEBUG", "-Wall", "-Wextra",
         "-Wpedantic", "-Werror", "-fobjc-arc", f"-I{root / 'include'}",
         root / "optional/gpu_merge/prototype.mm", "-framework", "Foundation",

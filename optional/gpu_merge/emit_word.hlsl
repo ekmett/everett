@@ -60,8 +60,30 @@ uint word_emit_part(uint record, uint ordinal, uint offset, uint capacity, out u
     count = min(capacity, suffix - offset);
     // All distinct keys survive this replacement merge. The output LCP is
     // at least the source retained prefix, so this suffix is a local span.
+#ifdef TOMBSTONE_MERGE
+    // Resolve a word's owned intervals backwards in METADATA only. The last
+    // bit chooses its original literal owner; that owner's retained boundary
+    // bounds the interval. A word has at most32 nonempty intervals. Never walk
+    // encoded predecessor frames or materialize a full key.
+    uint first = common + offset, end = first + count, result = 0;
+    uint key_record = tombstone_data[record * 3];
+    while (end > first) {
+      uint owner = compressed_owner(key_record, end - 1);
+      uint begin = max(first, extra[owner * 8 + 4]);
+      uint redirect = tombstone_data[owner * 3 + 1];
+      // Exactly one redirect and donor lookup: legacy donor may be owner itself.
+      uint donor = tombstone_data[redirect * 3];
+      uint at = extra[donor * 8] + begin - extra[donor * 8 + 4];
+      uint fragment = word_emit_source(extra[donor * 8 + 6], at, end - begin);
+      // word_emit_source returns MSB-aligned bits, like every other segment.
+      result |= fragment >> (begin - first);
+      end = begin;
+    }
+    return result;
+#else
     uint source_bit = extra[record * 8] + common - extra[record * 8 + 4] + offset;
     return word_emit_source(source, source_bit, count);
+#endif
   }
   offset -= suffix;
   count = min(capacity, extra[record * 8 + 3] - offset);

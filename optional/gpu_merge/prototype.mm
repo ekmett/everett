@@ -77,7 +77,8 @@ struct gpu {
                 id<MTLBuffer> extra = nil, id<MTLBuffer> refs = nil, id<MTLBuffer> frames = nil,
                 std::uint32_t p1 = 0, std::uint32_t p2 = 0, std::uint32_t p3 = 0,
                 std::uint32_t p4 = 0, std::uint32_t p5 = 0, std::uint32_t p6 = 0,
-                id<MTLBuffer> other = nil, id<MTLBuffer> prefix = nil, id<MTLBuffer> tree = nil) {
+                id<MTLBuffer> other = nil, id<MTLBuffer> prefix = nil, id<MTLBuffer> tree = nil,
+                id<MTLBuffer> tombstones = nil) {
     if (!threads)
       return;
     auto encoder = [command computeCommandEncoder];
@@ -102,6 +103,8 @@ struct gpu {
       [encoder setBuffer:prefix offset:0 atIndex:8];
     if (tree)
       [encoder setBuffer:tree offset:0 atIndex:9];
+    if (tombstones)
+      [encoder setBuffer:tombstones offset:0 atIndex:10];
     auto group = name == "compressed_prefix"                   ? 1u
                  : name == "scan_blocks" || name == "scan_add" ? 256u
                                                                : 128u;
@@ -370,8 +373,18 @@ struct merge_result {
   std::uint32_t count = 0, bits = 0;
   std::size_t bytes = 0;
 };
+// This is caller-supplied semantic authority. Two arbitrary runs cannot prove
+// the absence of older history. No durable-runtime dispatcher currently calls
+// this optional prototype.
+enum class merge_coverage { preserve_tombstones, complete_older_history };
+bool conservative_tombstones = false;
 merge_result gpu_merge(gpu &context, native const &a, native const &b,
-                       std::filesystem::path const &path) {
+                       std::filesystem::path const &path,
+                       merge_coverage coverage = merge_coverage::preserve_tombstones) {
+  require(coverage == merge_coverage::preserve_tombstones || conservative_tombstones,
+          "cleanup requires conservative tombstone mode and explicit complete older coverage");
+  require(!conservative_tombstones || (compressed_inputs && use_word_emitter &&
+          cancellation_path == collision_path::disabled), "tombstone pipeline configuration");
   auto start = clock_type::now(), phase = start;
   merge_result result;
   result.path = path;
@@ -478,11 +491,15 @@ merge_result gpu_merge(gpu &context, native const &a, native const &b,
     }
   }
   auto kernel = [&](char const *name) {
+    if (conservative_tombstones && (std::string_view(name) == "merge_keep" ||
+                                   std::string_view(name) == "merge_sizes"))
+      return "tombstone_" + std::string(name);
     if (use_prefix_cache && std::string_view(name) != "merge_emit")
       return "cached_" + std::string(name);
     return compressed_inputs ? "compressed_" + std::string(name) : std::string(name);
   };
   auto compact = context.buffer(std::size_t(n) * 4);
+  id<MTLBuffer> tombstones = conservative_tombstones ? context.buffer(std::size_t(n) * 12) : nil;
   id<MTLBuffer> ordered = nil, keep = nil, count = nil;
   id<MTLBuffer> collision_map = nil, collision_directory = nil, collision_counts = nil,
                 collision_positions = nil, surviving_a = nil;
@@ -512,12 +529,20 @@ merge_result gpu_merge(gpu &context, native const &a, native const &b,
   if (use_prefix_cache)
     context.dispatch(command, "compressed_cache", n, arena, desc, nil, n, desc, nil, nil, a_count,
                      b_count, 0, delta_a, delta_b, tree_base, other, prefix, tree);
+  if (conservative_tombstones) {
+    context.dispatch(command, "tombstone_initialize", n, arena, nil, nil, n, desc, nil,
+                     tombstones, a_count, b_count, 0, delta_a, delta_b, tree_base, other, prefix, tree);
+    context.dispatch(command, "tombstone_redirect", b_count, arena, nil, nil, n, desc, nil,
+                     tombstones, a_count, b_count, 0, delta_a, delta_b, tree_base, other, prefix, tree);
+  }
   if (cancellation_path == collision_path::disabled) {
     context.dispatch(command, kernel("merge_order"), (n + 7) / 8, arena, ordered, nil, n, desc, nil,
                      nil, a_count, b_count, shared_prefix, delta_a, delta_b, tree_base, other,
                      prefix, tree);
     context.dispatch(command, kernel("merge_keep"), n, arena, keep, nil, n, desc, ordered, nil, 0,
-                     0, shared_prefix, delta_a, delta_b, tree_base, other, prefix, tree);
+                     0, conservative_tombstones ? unsigned(coverage == merge_coverage::complete_older_history)
+                                               : shared_prefix,
+                     delta_a, delta_b, tree_base, other, prefix, tree, tombstones);
     auto positions = context.scan(command, keep, n);
     context.dispatch(command, "merge_compact", n, keep, compact, count, n, positions, ordered);
     gpu::finish(command);
@@ -571,7 +596,23 @@ merge_result gpu_merge(gpu &context, native const &a, native const &b,
   }
   result.order = elapsed(phase);
   auto survivors = result.count;
-  require(survivors > 0 && survivors <= n, "bad survivor count");
+  require(survivors <= n, "bad survivor count");
+  if (!survivors) {
+    require(coverage == merge_coverage::complete_older_history, "unexpected empty merge");
+    // Only constant-sized empty grammar/envelope construction occurs on CPU.
+    // Every input record was parsed/ordered/filtered on GPU before this point.
+    phase = clock_type::now();
+    everett::sort_profile_writer<policy> empty;
+    auto empty_array = empty.finish();
+    auto encoded = everett::encoded_sort_sections<policy>::from(empty_array).materialize();
+    mapping output(path, encoded.size());
+    std::memcpy(output.data, encoded.data(), encoded.size());
+    require(ftruncate(output.fd, off_t(encoded.size())) == 0, "empty output extent");
+    result.bytes = encoded.size();
+    result.assembly = elapsed(phase);
+    result.total = elapsed(start);
+    return result;
+  }
   if (verify_compressed_descriptors && use_prefix_cache) {
     auto common_bytes = *static_cast<std::uint32_t const *>(prefix.contents);
     auto records = static_cast<compressed_descriptor const *>(desc.contents);
@@ -605,7 +646,7 @@ merge_result gpu_merge(gpu &context, native const &a, native const &b,
   command = [context.queue commandBuffer];
   context.dispatch(command, kernel("merge_sizes"), survivors, arena, lengths, status, survivors,
                    desc, compact, frames, 0, 0, shared_prefix, delta_a, delta_b, tree_base, other,
-                   prefix, tree);
+                   prefix, tree, tombstones);
   auto offsets = context.scan(command, lengths, survivors);
   if (use_output_plan) {
     sparse_counts = context.buffer(std::size_t(sample_count) * 4);
@@ -722,9 +763,10 @@ merge_result gpu_merge(gpu &context, native const &a, native const &b,
                                              deallocator:nil];
   require(target != nil, "packed output mmap import");
   command = [context.queue commandBuffer];
-  context.dispatch(command, use_word_emitter ? "compressed_merge_emit_words" : kernel("merge_emit"),
+  context.dispatch(command, conservative_tombstones ? "tombstone_merge_emit_words" :
+                   use_word_emitter ? "compressed_merge_emit_words" : kernel("merge_emit"),
                    (result.bits + 31) / 32, arena, target, offsets, survivors, desc, compact,
-                   frames, result.bits, 72, 0, delta_a, delta_b, tree_base, other, prefix, tree);
+                   frames, result.bits, 72, 0, delta_a, delta_b, tree_base, other, prefix, tree, tombstones);
   if (gpu_output_ef) {
     for (auto [entry, section, threads] :
          {std::tuple{"ef_output_low", 1u, std::uint32_t(part_sizes[1] / 4)},
@@ -801,6 +843,7 @@ void merge_case(gpu &context, std::filesystem::path const &directory, std::uint3
 }
 
 #include "adversarial.h"
+#include "tombstone_test.h"
 #include "cutover_cases.h"
 #include "gpu_sort.h"
 #include "index_rank_test.h"
@@ -839,8 +882,10 @@ int main(int argc, char **argv) {
       bool merge_mode = collision_mode || mode == "merge" || mode == "merge-bench" ||
                         mode == "compressed" || mode == "compressed-bench" || mode == "complete" ||
                         mode == "complete-bench" || mode == "cached" || mode == "cached-bench" ||
-                        mode == "optimized" || mode == "optimized-bench" || mode == "cutover";
+                        mode == "optimized" || mode == "optimized-bench" || mode == "cutover" ||
+                        mode == "tombstone";
       if (merge_mode) {
+        conservative_tombstones = mode == "tombstone";
         if (collision_mode) {
           collision_2048 = mode.starts_with("collision2048");
           cancellation_path = mode.find("-tiled") != std::string::npos     ? collision_path::tiled
@@ -848,8 +893,9 @@ int main(int argc, char **argv) {
                                                                            : collision_path::direct;
         }
         use_prefix_cache = collision_mode || mode.starts_with("cached") ||
-                           mode.starts_with("optimized") || mode == "cutover";
-        use_word_emitter = collision_mode || mode.starts_with("optimized") || mode == "cutover";
+                           mode.starts_with("optimized") || mode == "cutover" || conservative_tombstones;
+        use_word_emitter = collision_mode || mode.starts_with("optimized") || mode == "cutover" ||
+                           conservative_tombstones;
         gpu_output_ef = use_prefix_cache || mode.starts_with("complete");
         compressed_inputs = gpu_output_ef || mode.starts_with("compressed");
         require(!use_output_plan || gpu_output_ef, "output-plan mode requires GPU output EF");
@@ -873,6 +919,13 @@ int main(int argc, char **argv) {
             (void)context.pipeline(name);
         if (use_word_emitter)
           (void)context.pipeline("compressed_merge_emit_words");
+        if (conservative_tombstones) {
+          for (auto name : {"tombstone_initialize", "tombstone_redirect", "tombstone_merge_keep",
+                            "tombstone_merge_sizes", "tombstone_merge_emit_words"})
+            (void)context.pipeline(name);
+          gpu_tombstone_test::run(context, argv[2]);
+          return 0;
+        }
         for (auto name : {"merge_order", "merge_keep", "merge_compact", "merge_sizes", "merge_emit",
                           "scan_blocks", "scan_add"})
           (void)context.pipeline(name);

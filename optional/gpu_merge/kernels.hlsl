@@ -143,6 +143,9 @@ uint lcp_bits(uint a, uint b) {
   return n * 8;
 #endif
 }
+#ifdef TOMBSTONE_MERGE
+#include "tombstone_merge.hlsl"
+#endif
 [numthreads(128, 1, 1)] void merge_order(uint3 tid : SV_DispatchThreadID) {
   uint na = parameters[1], nb = parameters[2], count = na + nb, diagonal = tid.x * 8;
   if (diagonal >= count)
@@ -164,7 +167,13 @@ uint lcp_bits(uint a, uint b) {
   uint i = tid.x, n = parameters[0];
   if (i >= n)
     return;
-  output_data[i] = (i + 1 == n || compare_records(references[i], references[i + 1]) != 0) ? 1 : 0;
+  bool keep = i + 1 == n || compare_records(references[i], references[i + 1]) != 0;
+#ifdef TOMBSTONE_MERGE
+  // Parameter3 is an explicit complete-older-coverage authorization, not a
+  // property inferred from these two files. Ordinary merges retain tombstones.
+  if (parameters[3] && tombstone_record(references[i])) keep = false;
+#endif
+  output_data[i] = keep ? 1 : 0;
 }
 [numthreads(128, 1, 1)] void merge_compact(uint3 tid : SV_DispatchThreadID) {
   uint i = tid.x, n = parameters[0];
@@ -183,6 +192,9 @@ uint lcp_bits(uint a, uint b) {
     return;
   uint record = references[i], bits = extra[record * RECORD_WORDS + 1] * 8;
   uint common = i ? lcp_bits(references[i - 1], record) : 0;
+#ifdef TOMBSTONE_MERGE
+  common = min(common, tombstone_data[record * 3 + 2]);
+#endif
   uint control =
       (i % 15 == 0) ? common + 1 : extra[references[i - 1] * RECORD_WORDS + 1] * 8 - common;
   uint suffix = bits - common, value = extra[record * RECORD_WORDS + 3];
