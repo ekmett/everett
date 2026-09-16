@@ -650,12 +650,20 @@ Generic arrow reads still enumerate every occurrence through the owning cursor.
 Custom query roots without the internal capture interface keep that cursor
 fallback. Tests check decoder backing addresses, mapping retirement, tombstones,
 false-borrow boundaries, decoding failures and noncommutative composition.
-For built-in views the synchronous traversal borrows its own query parameter,
+For built-in views the synchronous traversal borrows the encoded query,
 eliminating the shared query owner's allocation and reference-count updates.
 The private borrow cannot outlive the call. Public cursors and custom views
 retain shared query ownership; tests include a custom view that keeps a
 comparison after the query and source graph are gone, nested long-key reads,
 and exception unwinding.
+
+Contribution preflight reuses each record's existing encoded key for current
+and conditional-base lookups. It still dispatches and validates the key before
+applying sort semantics; only private typed-batch construction supplies these
+records. Custom views and cursor-only runtimes retain an owning copy when
+needed. Four focused strict O2 ASan/UBSan suites check zero re-encodings during
+preflight, stale and whole-batch rejection, chronological arrows, retained
+custom contexts, and custom runtimes accepting only an rvalue query owner.
 
 The [query contract](query.md) separates entry/header bounds from string bytes,
 preparation and scheduler costs. Shape validation rejects cycles, missing
