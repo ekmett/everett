@@ -19,6 +19,8 @@ parser.add_argument("--processes", type=int, default=3)
 parser.add_argument("--queries", type=int, default=2048)
 parser.add_argument("--loops", type=int, default=2)
 parser.add_argument("--trials", type=int, default=3)
+parser.add_argument("--variants", nargs="+", default=["base", "sub32", "direct32"])
+parser.add_argument("--compiled-bench-sha256")
 args = parser.parse_args()
 args.output.mkdir(parents=True, exist_ok=True)
 jobs = [(profile, n, width, shape) for profile in ["byte", "bit"]
@@ -28,8 +30,8 @@ observations, footprints, order = [], [], []
 for process in range(args.processes):
     random.Random(917 + process).shuffle(jobs)
     for case, dimensions in enumerate(jobs):
-        variants = ["base", "sub32", "direct32"]
-        rotation = (case + process) % 3
+        variants = args.variants
+        rotation = (case + process) % len(variants)
         for variant in variants[rotation:] + variants[:rotation]:
             name = f"{process}-{variant}-{'-'.join(map(str, dimensions))}"
             command = [str((args.build / variant / "bench").resolve()), *map(str, dimensions),
@@ -58,6 +60,7 @@ metadata = {"platform": platform.platform(), "machine": platform.machine(),
     "arguments": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()
                   if k not in ["build", "output"]},
     "sources": {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},
+    "compiled_bench_sha256": args.compiled_bench_sha256 or hashlib.sha256(sources[0].read_bytes()).hexdigest(),
     "binaries": {v: hashlib.sha256((args.build / v / "bench").read_bytes()).hexdigest()
-                 for v in ["base", "sub32", "direct32"]}, "execution_order": order}
+                 for v in args.variants}, "execution_order": order}
 (args.output / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")

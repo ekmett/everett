@@ -255,4 +255,5 @@ int main(int argc, char ** argv) {
     else run<false>(count, width, std::string(argv[4]) == "hash", queries,
       std::stoul(argv[6]), std::stoul(argv[7]), std::stoul(argv[8]));
   } catch (std::exception const & e) { std::cerr << e.what() << '\n'; return 1; }
+  return 0;
 }
