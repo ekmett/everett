@@ -123,7 +123,20 @@ python3 optional/search_compare/scheduling.py build-search/scheduled-pilot/queri
 The pilot retains all trials. CPU/wall ratios help distinguish descheduling
 from variation while the thread is executing; they do not measure cache misses,
 identify which CPU core ran the thread or guarantee a stable clock frequency.
-A larger follow-up should use a new output directory and keep the pilot separate.
+The retained follow-up uses a new directory and keeps the pilot separate:
+
+```sh
+python3 optional/search_compare/size_panel.py build-search build-search/scheduled-full \
+  --binary-name scheduled_size_panel --sizes 131072 --processes 3 --trials 3
+python3 optional/search_compare/summarize.py build-search/scheduled-full \
+  build-search/scheduled-full/summary.csv --phase scheduled-size-panel
+python3 optional/search_compare/scheduling.py build-search/scheduled-full/queries.csv \
+  build-search/scheduled-full/diagnostics.csv
+```
+
+Repeat the collection command with `--sizes 524288` and `--sizes 2097152`,
+then regenerate the summaries. Each size completes within its own timing
+window; the runner refuses to resume if the executable or source hashes change.
 
 Attribution and checks
 ----------------------

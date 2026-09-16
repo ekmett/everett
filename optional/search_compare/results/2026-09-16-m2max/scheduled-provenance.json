@@ -1,0 +1,44 @@
+{
+  "source_revision": "c3af5e7",
+  "header_revision": "cb2b029a657d2bbcd7135265cb3060b2b11cd961",
+  "sizes": [
+    131072,
+    524288,
+    2097152
+  ],
+  "processes_per_fixture_variant": 3,
+  "trials_per_access_order": 3,
+  "rows": 540,
+  "process_count": 90,
+  "all_trials_retained": true,
+  "pilot_is_separate": true,
+  "scheduling": "USER_INITIATED requested and verified on benchmark thread only",
+  "clock": "steady wall clock plus CLOCK_THREAD_CPUTIME_ID once per whole trial",
+  "source_files": {
+    "bench.cc": "893839c61b7359e0aefb2cb7edb3a54770f5b7c772bb0be33d88b0869827e946",
+    "scheduled_size_panel.cc": "7c1dde3af57281b80d055fed4a45626c9090daa5f357254ae0d0c025a7aa8299",
+    "size_panel.py": "058c9543b93f49c13e015e01ce83fc41415a1a58133f6937a4f5ed69b7369356",
+    "scheduling.py": "019bbc538a1ec1a4d57287a5f23f11c25049e4fb3dd735bac46803a9a88acdf0",
+    "summarize.py": "88f18e03c4851ecb6e13134dccd5b8e5ef2abe4973571b086cf5dfd3c011c3f9"
+  },
+  "equivalence": "All complete file byte counts, offset payload/auxiliary sizes, encoded stream fingerprints and query buffers exactly match the original size panel. All exact-value and aggregate query checks passed.",
+  "correctness_check": {
+    "flags": [
+      "-std=c++20",
+      "-O0",
+      "-g",
+      "-fsanitize=address,undefined",
+      "-Wall",
+      "-Wextra",
+      "-Werror"
+    ],
+    "profiles": [
+      "byte structured16",
+      "bit hash128"
+    ],
+    "records": 1024,
+    "queries": 1024,
+    "result": "Both passed; timing discarded",
+    "binary_sha256": "7b61a70dcb5c5e6f5880d704e14bd53206c5b4a9a70d259a7dd7c64c06871f16"
+  }
+}

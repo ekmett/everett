@@ -86,7 +86,7 @@ The complete-file growth at 2,097,152 records remains small:
 | Direct 32-bit | 0.4776% | 0.0797% |
 | Direct 64-bit | 1.2180% | 0.2435% |
 
-**The final 524K/2M timing collection is diagnostic, not a settled performance
+**The initial 524K/2M timing collection is diagnostic, not a settled performance
 result.** All queries and file accounting pass, but the raw wall-clock times
 show large transient variation despite an exclusive lane for owned build/test
 jobs. For example, the two 524K byte baseline random process medians are about
@@ -100,12 +100,75 @@ identify the source of the variation.
 The [size summary](results/2026-09-16-m2max/size-summary.csv) includes all six
 sizes and both access orders, with process-median ranges. The
 [timing-quality table](results/2026-09-16-m2max/size-timing-quality.csv) marks
-the entire final collection as diagnostic, rather than selectively removing
+the entire initial large-size collection as diagnostic, rather than selectively removing
 slow trials. The stable smaller-size panel and primary matrix are separate
 collections. [Raw size queries](results/2026-09-16-m2max/size-queries.csv.gz)
 and [complete-file/query-buffer accounting](results/2026-09-16-m2max/size-space.csv.gz)
-are retained for reanalysis. A follow-up large-size collection needs better
-scheduling diagnostics before those timings can support a policy threshold.
+are retained for reanalysis. I made one separate follow-up with scheduling
+diagnostics; it does not overwrite or selectively filter this collection.
+
+Scheduled follow-up
+-------------------
+
+I repeated three sizes in a separate collection: 131,072 as a control, then
+524,288 and 2,097,152. Each of the five variants has three fresh processes and
+three trials per access order: 90 processes and 540 retained observations.
+The benchmark requests and verifies `USER_INITIATED` QoS on its own Apple
+thread and records thread CPU time alongside wall time for each complete
+trial. It changes no global scheduling setting and adds no timer inside the
+lookup loop. The smaller baseline-only pilot, original collection and this
+follow-up remain separate. The improved repeatability does not establish that
+QoS alone caused the difference.
+
+Each cell below is **whole-query throughput / extra complete-file space** for
+random hits. All file sizes, encoded-stream fingerprints and query buffers
+match the original size panel exactly. The byte and bit rows still use
+different key workloads.
+
+| Workload | Base records | EF sub32 | Packed | Direct32 | Direct64 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Byte / structured 16 | 131,072 | 1.016× / +0.0151% | 1.101× / +0.2366% | 1.131× / +0.4732% | 1.124× / +1.2140% |
+| Byte / structured 16 | 524,288 | 1.006× / +0.0125% | 1.111× / +0.2868% | 1.132× / +0.4767% | 1.131× / +1.2172% |
+| Byte / structured 16 | 2,097,152 | 1.013× / +0.0118% | 1.089× / +0.3342% | 1.108× / +0.4776% | 1.097× / +1.2180% |
+| Bit / hash 128 | 131,072 | 1.008× / +0.0033% | 1.041× / +0.0531% | 1.079× / +0.0785% | 1.055× / +0.2419% |
+| Bit / hash 128 | 524,288 | 1.005× / +0.0028% | 1.042× / +0.0643% | 1.053× / +0.0794% | 1.041× / +0.2429% |
+| Bit / hash 128 | 2,097,152 | 0.964× / +0.0026% | 1.004× / +0.0749% | 1.019× / +0.0797% | 1.029× / +0.2435% |
+
+For byte keys, all 18 packed/direct32/direct64 comparisons across both random
+and sorted access have process-median ranges disjoint in the candidate's
+favor. At 2M, direct32 gives 10.8% more random-hit throughput for 0.4776% extra
+complete-file space; packed gives 8.9% for 0.3342%. Sorted-hit speedups there
+are 1.115× and 1.089× respectively.
+
+The largest bit fixture has a less decisive outcome. Packed, direct32 and
+direct64 give random-hit median ratios of 1.004×, 1.019× and 1.029×, with
+overlapping process ranges. Sorted ratios are 1.002×, 1.036× and 1.047×, also
+with overlapping ranges. Those small differences do not establish a winner.
+Sub32 is 0.964× random and 0.966× sorted there; the sorted process ranges are
+disjoint in the slower direction. Denser EF sampling still does not support
+a broad whole-search improvement.
+
+| Base records | Largest trial max/min within a process | Largest process-median max/min | Median CPU/wall | Minimum CPU/wall |
+| ---: | ---: | ---: | ---: | ---: |
+| 131,072 | 1.083 | 1.087 | 99.46% | 99.02% |
+| 524,288 | 1.096 | 1.074 | 99.49% | 99.24% |
+| 2,097,152 | 1.304 | 1.091 | 99.71% | 92.02% |
+
+The CPU/wall median is taken over process/access medians; the minimum is over
+individual trials. Variation is still visible. The worst wall-time excursion
+is a 2M byte/sub32 sorted process; its CPU-time trial ratio is also 1.203×.
+All trials remain in the analysis. CPU/wall time can expose descheduling but
+does not identify core placement, clock frequency or cache misses. Process
+ranges describe repeatability, not confidence intervals. I do not derive an
+automatic size cutoff from this one host and these two workloads.
+
+The [scheduled summary](results/2026-09-16-m2max/scheduled-summary.csv) retains
+both access orders and all absolute query times. Its
+[CPU/wall diagnostics](results/2026-09-16-m2max/scheduled-diagnostics.csv),
+[raw trials](results/2026-09-16-m2max/scheduled-queries.csv.gz),
+[complete-file accounting](results/2026-09-16-m2max/scheduled-space.csv.gz) and
+[source/validation provenance](results/2026-09-16-m2max/scheduled-provenance.json)
+are retained separately from the original six-size panel.
 
 Scope and method
 ----------------

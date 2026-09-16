@@ -3,7 +3,8 @@
   "header_revision": "cb2b029a657d2bbcd7135265cb3060b2b11cd961",
   "measurement_sources": [
     "867d0e683472f0491817489d9e59761b5b366040",
-    "b6987f1c0e75a3ed010cf46d507507be9329e3c0"
+    "b6987f1c0e75a3ed010cf46d507507be9329e3c0",
+    "c3af5e7"
   ],
   "notes": [
     "Raw timer observations are preserved; summary CSVs and statistical categories are derived.",
@@ -11,7 +12,8 @@
     "All five regenerated frozen-header trees match measured header manifests byte for byte.",
     "Independent read-only review reproduced5184 timer observations, all process medians, complete-file deltas and encoded-payload equivalence.",
     "Size panel covers six sizes1024 through2097152, with two processes and three trials; complete file accounting and oracles pass.",
-    "Final524288/2097152 timing collection has large transient wall-time variation and is retained as diagnostic, not settled performance evidence; size-timing-quality.csv marks the full collection."
+    "Initial524288/2097152 timing collection has large transient wall-time variation and is retained as diagnostic, not settled performance evidence; size-timing-quality.csv marks the full collection.",
+    "Scheduled follow-up retains90 processes/540 trials across131072,524288,2097152, separately from the8-process baseline pilot and original size panel. All trials retained; CPU/wall diagnostics expose remaining variation."
   ],
   "artifacts": {
     "alternatives-metadata.json": {
@@ -117,6 +119,34 @@
     "provenance.json": {
       "bytes": 1305,
       "sha256": "3c216caf5c092ac0bb97a77bc73cdbb8b1b8eebf03643ea6a1551f28091b16bf"
+    },
+    "scheduled-diagnostics.csv": {
+      "bytes": 35341,
+      "sha256": "41ab896f5a037458af10ee16932eacb5d5a4908410bafc75114a305f8fc46678"
+    },
+    "scheduled-metadata.json": {
+      "bytes": 13027,
+      "sha256": "cacec9186a99ab0b945293709c33873424e4649c5b7a3e23d5e12f1be8f6ff11"
+    },
+    "scheduled-provenance.json": {
+      "bytes": 1610,
+      "sha256": "2a01c02e43129f7e17decccf24642a5bfe754eec9bdb7450eba8f72c51f6e765"
+    },
+    "scheduled-queries.csv.gz": {
+      "bytes": 8341,
+      "sha256": "ebc911f077a76e6e7ecc6bb4da6647b4e085b830a48fbbb9b6ba52eebe709b28"
+    },
+    "scheduled-raw.tar.gz": {
+      "bytes": 13735,
+      "sha256": "464f167abd400533dfe97c6e3a5bc2567de9f336c3f1424f8b8d00cefdb2455e"
+    },
+    "scheduled-space.csv.gz": {
+      "bytes": 1963,
+      "sha256": "ef176949c52cc1b6577e470eb2aa9888314f425ca7262c68dfd1c2129afde263"
+    },
+    "scheduled-summary.csv": {
+      "bytes": 13796,
+      "sha256": "3311910c8d1c377b30953e92e47b5228f6ea193506786d2c60a4874d587583a1"
     },
     "scheduling-pilot-diagnostics.csv": {
       "bytes": 3328,
