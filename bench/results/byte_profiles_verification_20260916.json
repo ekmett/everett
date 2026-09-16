@@ -1,0 +1,629 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-16",
+  "tested_revision": "a90bc0ba54936d8386062107ff69fadceefc759a",
+  "scope": "Correctness verification of aligned built-in byte string transport, transactional forward Elias-Fano navigation, fused byte native writes and conservative equal-key literal reuse. Performance measurements are retained separately.",
+  "configuration": "AppleClang 21, C++20, Release O2, strict warnings; ASan and UBSan for runtime tests, SQLite enabled. Installed and embedded package consumers use their configured Release builds.",
+  "suites": [
+    {
+      "kind": "runtime_and_documentation",
+      "tests": 112,
+      "failures": 0,
+      "skipped": 0,
+      "seconds": 195.98,
+      "report_sha256": "b048dd80fe12289deb048dc52446c2be4dae156ab2eafa3df27dab2b48d7b2ea",
+      "cases": [
+        {
+          "name": "everett.registry",
+          "passed": true,
+          "seconds": 0.269183
+        },
+        {
+          "name": "everett.registry_compat",
+          "passed": true,
+          "seconds": 0.521955
+        },
+        {
+          "name": "everett.crc32c",
+          "passed": true,
+          "seconds": 1.18895
+        },
+        {
+          "name": "everett.rank",
+          "passed": true,
+          "seconds": 1.41164
+        },
+        {
+          "name": "everett.groups",
+          "passed": true,
+          "seconds": 0.911269
+        },
+        {
+          "name": "everett.rank_groups_builder",
+          "passed": true,
+          "seconds": 0.312813
+        },
+        {
+          "name": "everett.elias_fano",
+          "passed": true,
+          "seconds": 0.373922
+        },
+        {
+          "name": "everett.profile",
+          "passed": true,
+          "seconds": 3.71935
+        },
+        {
+          "name": "everett.borrowed_writer",
+          "passed": true,
+          "seconds": 0.709762
+        },
+        {
+          "name": "everett.profile_blob",
+          "passed": true,
+          "seconds": 2.1465
+        },
+        {
+          "name": "everett.comparison_fc",
+          "passed": true,
+          "seconds": 69.5007
+        },
+        {
+          "name": "everett.sampling",
+          "passed": true,
+          "seconds": 1.1048
+        },
+        {
+          "name": "everett.index_builder",
+          "passed": true,
+          "seconds": 2.76899
+        },
+        {
+          "name": "everett.index_builder_allocations",
+          "passed": true,
+          "seconds": 0.390589
+        },
+        {
+          "name": "everett.index_pipeline",
+          "passed": true,
+          "seconds": 0.472617
+        },
+        {
+          "name": "everett.query",
+          "passed": true,
+          "seconds": 1.61371
+        },
+        {
+          "name": "everett.cola_index",
+          "passed": true,
+          "seconds": 105.456
+        },
+        {
+          "name": "everett.cola_frontier",
+          "passed": true,
+          "seconds": 0.481521
+        },
+        {
+          "name": "everett.cola_route_reuse",
+          "passed": true,
+          "seconds": 0.405099
+        },
+        {
+          "name": "everett.cola_schedule",
+          "passed": true,
+          "seconds": 26.7279
+        },
+        {
+          "name": "everett.native_writer",
+          "passed": true,
+          "seconds": 0.765918
+        },
+        {
+          "name": "everett.native_writer_allocations",
+          "passed": true,
+          "seconds": 0.916591
+        },
+        {
+          "name": "everett.native_file_writer",
+          "passed": true,
+          "seconds": 0.548244
+        },
+        {
+          "name": "everett.profile_file_output",
+          "passed": true,
+          "seconds": 0.79837
+        },
+        {
+          "name": "everett.native_merge",
+          "passed": true,
+          "seconds": 1.30615
+        },
+        {
+          "name": "everett.native_merge_mapped",
+          "passed": true,
+          "seconds": 1.99661
+        },
+        {
+          "name": "everett.world",
+          "passed": true,
+          "seconds": 0.320445
+        },
+        {
+          "name": "everett.pins",
+          "passed": true,
+          "seconds": 0.336178
+        },
+        {
+          "name": "everett.durability",
+          "passed": true,
+          "seconds": 0.321027
+        },
+        {
+          "name": "everett.mapped_file",
+          "passed": true,
+          "seconds": 0.51569
+        },
+        {
+          "name": "everett.files",
+          "passed": true,
+          "seconds": 1.01032
+        },
+        {
+          "name": "everett.object_writer",
+          "passed": true,
+          "seconds": 0.341782
+        },
+        {
+          "name": "everett.object_stream",
+          "passed": true,
+          "seconds": 0.413393
+        },
+        {
+          "name": "everett.mapped_blob",
+          "passed": true,
+          "seconds": 11.6543
+        },
+        {
+          "name": "everett.multiverse",
+          "passed": true,
+          "seconds": 0.47261
+        },
+        {
+          "name": "everett.catalog_bindings",
+          "passed": true,
+          "seconds": 0.342248
+        },
+        {
+          "name": "everett.output_budget",
+          "passed": true,
+          "seconds": 0.407204
+        },
+        {
+          "name": "everett.mapped_index_builder",
+          "passed": true,
+          "seconds": 2.19755
+        },
+        {
+          "name": "everett.file_index_builder",
+          "passed": true,
+          "seconds": 2.02974
+        },
+        {
+          "name": "everett.file_index_pipeline",
+          "passed": true,
+          "seconds": 4.40006
+        },
+        {
+          "name": "everett.mapped_cola",
+          "passed": true,
+          "seconds": 7.22265
+        },
+        {
+          "name": "everett.mapped_cola_builder",
+          "passed": true,
+          "seconds": 2.15387
+        },
+        {
+          "name": "everett.cola_terminal",
+          "passed": true,
+          "seconds": 0.499379
+        },
+        {
+          "name": "everett.cola_file_index",
+          "passed": true,
+          "seconds": 0.514079
+        },
+        {
+          "name": "everett.cola_adaptive_index",
+          "passed": true,
+          "seconds": 0.64814
+        },
+        {
+          "name": "everett.tombstone_codec",
+          "passed": true,
+          "seconds": 0.383124
+        },
+        {
+          "name": "everett.cola_local_merge",
+          "passed": true,
+          "seconds": 0.573912
+        },
+        {
+          "name": "everett.cola_local_merge_failure",
+          "passed": true,
+          "seconds": 0.496942
+        },
+        {
+          "name": "everett.cola_runtime",
+          "passed": true,
+          "seconds": 1.22262
+        },
+        {
+          "name": "everett.redundant_runtime",
+          "passed": true,
+          "seconds": 9.25262
+        },
+        {
+          "name": "everett.redundant_initial",
+          "passed": true,
+          "seconds": 1.23277
+        },
+        {
+          "name": "everett.runtime_registry",
+          "passed": true,
+          "seconds": 0.4042
+        },
+        {
+          "name": "everett.sort_codec",
+          "passed": true,
+          "seconds": 0.450945
+        },
+        {
+          "name": "everett.sort_profile",
+          "passed": true,
+          "seconds": 0.430124
+        },
+        {
+          "name": "everett.sort_profile_query",
+          "passed": true,
+          "seconds": 0.268493
+        },
+        {
+          "name": "everett.sort_profile_file_writer",
+          "passed": true,
+          "seconds": 0.48975
+        },
+        {
+          "name": "everett.sort_runtime",
+          "passed": true,
+          "seconds": 0.785195
+        },
+        {
+          "name": "everett.typed_world",
+          "passed": true,
+          "seconds": 0.503112
+        },
+        {
+          "name": "everett.typed_initial",
+          "passed": true,
+          "seconds": 0.995526
+        },
+        {
+          "name": "everett.typed_depth",
+          "passed": true,
+          "seconds": 0.454966
+        },
+        {
+          "name": "everett.typed_preflight",
+          "passed": true,
+          "seconds": 0.468713
+        },
+        {
+          "name": "everett.typed_query_value",
+          "passed": true,
+          "seconds": 0.449545
+        },
+        {
+          "name": "everett.typed_redundant",
+          "passed": true,
+          "seconds": 0.931996
+        },
+        {
+          "name": "everett.typed_scan",
+          "passed": true,
+          "seconds": 0.497101
+        },
+        {
+          "name": "everett.tombstone_admission",
+          "passed": true,
+          "seconds": 0.37081
+        },
+        {
+          "name": "everett.replacement_rebuild",
+          "passed": true,
+          "seconds": 2.84235
+        },
+        {
+          "name": "everett.session",
+          "passed": true,
+          "seconds": 0.392038
+        },
+        {
+          "name": "everett.nursery_map",
+          "passed": true,
+          "seconds": 0.409477
+        },
+        {
+          "name": "everett.byte_transport",
+          "passed": true,
+          "seconds": 0.4913
+        },
+        {
+          "name": "everett.native_merge_allocations",
+          "passed": true,
+          "seconds": 0.568369
+        },
+        {
+          "name": "everett.redundant_checkpoint",
+          "passed": true,
+          "seconds": 2.75166
+        },
+        {
+          "name": "everett.sqlite_catalog",
+          "passed": true,
+          "seconds": 1.58677
+        },
+        {
+          "name": "everett.sqlite_catalog_adversarial",
+          "passed": true,
+          "seconds": 2.38052
+        },
+        {
+          "name": "everett.sqlite_catalog_vfs",
+          "passed": true,
+          "seconds": 19.4193
+        },
+        {
+          "name": "everett.sqlite_catalog_restart",
+          "passed": true,
+          "seconds": 8.319
+        },
+        {
+          "name": "everett.sqlite_catalog_timeline",
+          "passed": true,
+          "seconds": 7.07938
+        },
+        {
+          "name": "everett.sqlite_catalog_streamed",
+          "passed": true,
+          "seconds": 11.6507
+        },
+        {
+          "name": "everett.sqlite_catalog_private",
+          "passed": true,
+          "seconds": 1.23211
+        },
+        {
+          "name": "everett.sqlite_catalog_transaction",
+          "passed": true,
+          "seconds": 5.66655
+        },
+        {
+          "name": "everett.sqlite_catalog_byte_transport",
+          "passed": true,
+          "seconds": 20.3322
+        },
+        {
+          "name": "everett.sqlite_catalog_cola",
+          "passed": true,
+          "seconds": 2.67389
+        },
+        {
+          "name": "everett.sqlite_catalog_sessions",
+          "passed": true,
+          "seconds": 1.69979
+        },
+        {
+          "name": "everett.sqlite_catalog_runtime",
+          "passed": true,
+          "seconds": 3.06417
+        },
+        {
+          "name": "everett.sqlite_catalog_redundant",
+          "passed": true,
+          "seconds": 8.36127
+        },
+        {
+          "name": "everett.sqlite_catalog_connection",
+          "passed": true,
+          "seconds": 12.6371
+        },
+        {
+          "name": "everett.sqlite_catalog_scan",
+          "passed": true,
+          "seconds": 2.70609
+        },
+        {
+          "name": "everett.sqlite_catalog_bindings",
+          "passed": true,
+          "seconds": 2.62027
+        },
+        {
+          "name": "everett.sqlite_catalog_binding_failures",
+          "passed": true,
+          "seconds": 5.59511
+        },
+        {
+          "name": "everett.sqlite_catalog_graphs",
+          "passed": true,
+          "seconds": 0.904226
+        },
+        {
+          "name": "everett.sqlite_catalog_sort_runtime",
+          "passed": true,
+          "seconds": 12.1498
+        },
+        {
+          "name": "everett.sqlite_catalog_snapshot",
+          "passed": true,
+          "seconds": 0.624989
+        },
+        {
+          "name": "everett.sqlite_catalog_rebuild",
+          "passed": true,
+          "seconds": 11.5199
+        },
+        {
+          "name": "everett.sqlite_catalog_rebuild_streaming",
+          "passed": true,
+          "seconds": 21.4602
+        },
+        {
+          "name": "everett.sqlite_catalog_rebuild_default",
+          "passed": true,
+          "seconds": 5.96368
+        },
+        {
+          "name": "everett.sqlite_catalog_tiny_rebuild",
+          "passed": true,
+          "seconds": 5.94632
+        },
+        {
+          "name": "everett.sqlite_catalog_active",
+          "passed": true,
+          "seconds": 15.5806
+        },
+        {
+          "name": "everett.sqlite_catalog_seals",
+          "passed": true,
+          "seconds": 0.624166
+        },
+        {
+          "name": "everett.sqlite_catalog_seal_pair",
+          "passed": true,
+          "seconds": 1.39385
+        },
+        {
+          "name": "everett.sqlite_catalog_native_pair",
+          "passed": true,
+          "seconds": 3.01643
+        },
+        {
+          "name": "everett.sqlite_catalog_ready_reservations",
+          "passed": true,
+          "seconds": 6.99878
+        },
+        {
+          "name": "everett.sqlite_catalog_initial",
+          "passed": true,
+          "seconds": 15.8552
+        },
+        {
+          "name": "everett.sqlite_catalog_empty",
+          "passed": true,
+          "seconds": 2.19495
+        },
+        {
+          "name": "everett.sqlite_catalog_pair",
+          "passed": true,
+          "seconds": 1.01494
+        },
+        {
+          "name": "everett.sqlite_catalog_streaming_runtime",
+          "passed": true,
+          "seconds": 15.211
+        },
+        {
+          "name": "everett.sqlite_catalog_streaming_restart",
+          "passed": true,
+          "seconds": 12.4551
+        },
+        {
+          "name": "everett.sqlite_catalog_streaming_diagnostics",
+          "passed": true,
+          "seconds": 2.47625
+        },
+        {
+          "name": "everett.sqlite_catalog_adaptive_native",
+          "passed": true,
+          "seconds": 1.15691
+        },
+        {
+          "name": "everett.sqlite_catalog_native_reuse",
+          "passed": true,
+          "seconds": 7.9128
+        },
+        {
+          "name": "everett.sort_runtime_context",
+          "passed": true,
+          "seconds": 17.0656
+        },
+        {
+          "name": "everett.sort_runtime_adaptive_index",
+          "passed": true,
+          "seconds": 0.736644
+        },
+        {
+          "name": "everett.sort_runtime_initial",
+          "passed": true,
+          "seconds": 1.36326
+        },
+        {
+          "name": "everett.doxygen",
+          "passed": true,
+          "seconds": 11.4853
+        }
+      ]
+    },
+    {
+      "kind": "package_consumers",
+      "tests": 3,
+      "failures": 0,
+      "skipped": 0,
+      "seconds": 21.76,
+      "report_sha256": "d91d8d7f7f514e0b7a6175dcb9d1f6e025d0a01c8f7cd32bcb854882c9a3a2aa",
+      "cases": [
+        {
+          "name": "everett.package.sqlite",
+          "passed": true,
+          "seconds": 13.4931
+        },
+        {
+          "name": "everett.package.installed",
+          "passed": true,
+          "seconds": 4.19886
+        },
+        {
+          "name": "everett.package.embedded",
+          "passed": true,
+          "seconds": 4.06545
+        }
+      ]
+    }
+  ],
+  "checks": {
+    "tests_total": 115,
+    "failures_total": 0,
+    "doxygen": "Markdown and API pages, associations, equations and local links passed.",
+    "privacy": "No private workspace name or checkout path in changed public files or 1584 generated HTML/JS/CSS files.",
+    "artifact_manifests": "118 artifact, 95 publication and 182 rename fingerprints verified. All 588 original CPU measurement export fingerprints verified.",
+    "cpu_reproduction": "Retained evidence regenerated the published report, summaries and space tables byte-for-byte. Both 82-header frozen revisions and all 5 measured harness/fixture sources verified from Git.",
+    "published_assets": "Generated raw CPU and Metal CSV/manifest assets match repository bytes."
+  },
+  "coverage": [
+    "Empty, binary and proper-prefix string keys; empty, live and missing values",
+    "Tagless and mixed sort registries, chronological merge, resolved scan and rebuilding",
+    "Retained snapshots, transaction branches, saved worlds, mapped reopening and schema rejection",
+    "Forward EF against independent ordinals across dense/sparse samples, unaligned mappings and guard pages",
+    "Cursor allocation failure at a sampled boundary followed by successful retry",
+    "Fused byte writes with allocation rollback and unaligned source views",
+    "128-KiB equal-key literal donor regression, byte/bit profiles, borrowed/owning and key-aware composition",
+    "All existing runtime, catalog, recovery and installed consumer suites"
+  ],
+  "limits": [
+    "The byte transport uses the existing KV02 profile; generalized byte KV03 streaming is outside this change.",
+    "Performance reports measure native construction, excluding durable publication and fractional-index rebuilding.",
+    "Default byte schema identity changed; explicitly supplied application schema identifiers remain caller promises.",
+    "No new power-loss or torn-write filesystem model is claimed."
+  ]
+}
