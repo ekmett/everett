@@ -115,7 +115,10 @@ Bounded traversal
 instead call `step(record_budget)`, then `has_row()` and `take_row()`. A ready
 row holds its position until taken. `step(0)` does nothing; `done()` becomes
 true once no more rows remain. A decoding or callback failure poisons that
-cursor while its captured snapshot stays available.
+cursor while its captured snapshot stays available. If `erase_remaining()`
+fails during allocation, decoding or a sort callback, its unpublished
+contribution is discarded and the cursor is poisoned too. Restart selection
+from the retained snapshot; retrying the partly consumed cursor is rejected.
 
 Range initialization currently scans native prefixes up to the lower bound;
 it is not an indexed seek. It stops at the upper bound instead of walking the

@@ -166,7 +166,12 @@ namespace {
     static state_type initial(std::string const &) { return {}; }
     static state_type apply(std::string const &, state_type const &, move_value::value_type value) { return std::move(*value); }
     static bool present(std::string const &, state_type const & value) { return value.has_value(); }
-    static auto erase(std::string const &) { return std::make_unique<state_type>(); }
+    inline static unsigned erase_calls = 0;
+    inline static std::optional<unsigned> throw_after;
+    static auto erase(std::string const &) {
+      if (throw_after && erase_calls++ == *throw_after) throw std::runtime_error("erase callback");
+      return std::make_unique<state_type>();
+    }
     static std::uint64_t hash_key(std::string const &) { return 1; }
     static std::uint64_t hash_value(std::string const &, state_type const & value) { return value ? 1 : 0; }
   };
@@ -182,6 +187,28 @@ namespace {
     assert(!engine.failed() && engine.snapshot().get("a") == "after");
     engine.contribute(erase_range(engine.snapshot()));
     assert(engine.snapshot().live_count() == 0 && engine.snapshot().signature() == 0);
+    for (auto const * key : {"a", "b", "c"})
+      engine.contribute(engine_type::change(key, std::make_unique<collision_sort::state_type>(key)));
+    auto stable = engine.snapshot();
+    auto rows = range(stable);
+    collision_sort::erase_calls = 0; collision_sort::throw_after = 2;
+    bool threw = false;
+    try { (void)rows.erase_remaining(); } catch (std::runtime_error const &) { threw = true; }
+    collision_sort::throw_after.reset();
+    assert(threw && collision_sort::erase_calls == 3 && rows.failed());
+    for (auto action : {0, 1, 2}) {
+      bool poisoned = false;
+      try {
+        if (action == 0) (void)rows.erase_remaining();
+        if (action == 1) (void)rows.next();
+        if (action == 2) (void)rows.begin();
+      } catch (std::logic_error const &) { poisoned = true; }
+      assert(poisoned);
+    }
+    assert(engine.snapshot().metadata() == stable.metadata());
+    for (auto const * key : {"a", "b", "c"}) assert(engine.snapshot().get(key) == key);
+    engine.contribute(erase_range(stable)); // Restart selection from the retained snapshot.
+    assert(engine.snapshot().live_count() == 0);
   }
   // Hide the optimized query root to count every point query. Native scans
   // still expose ordinary immutable runs. Range selection/preflight/admission

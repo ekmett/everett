@@ -85,7 +85,10 @@ namespace everett {
       }
       void settle() { while (!state_->has_row() && !state_->done()) state_->step(256); }
     };
-    iterator begin() const { return iterator(*this); }
+    iterator begin() const {
+      if (failed_) throw std::logic_error("failed typed scan");
+      return iterator(*this);
+    }
     std::default_sentinel_t end() const noexcept { return {}; }
 
     bool done() const noexcept { return finished_ && !row_; }
@@ -93,10 +96,12 @@ namespace everett {
     bool failed() const noexcept { return failed_; }
     std::uint64_t consumed() const noexcept { return sweep_.consumed(); }
     row_type take_row() {
+      if (failed_) throw std::logic_error("failed typed scan");
       if (!row_) throw std::logic_error("typed scan has no row");
       auto result = std::move(*row_); row_.reset(); return result;
     }
     std::optional<row_type> next() {
+      if (failed_) throw std::logic_error("failed typed scan");
       while (!has_row() && !done()) step(256);
       return has_row() ? std::optional<row_type>{take_row()} : std::nullopt;
     }
@@ -142,17 +147,20 @@ namespace everett {
     // Delete exactly the rows this cursor has not yet returned. The private
     // observations carry old arrows, not hash-only evidence of old values.
     auto erase_remaining() requires typed_detail::replacement<S> {
-      typename World::contribution_type result{snapshot_, {}};
-      result.observed_.emplace();
-      while (!done()) {
-        while (!has_row() && !done()) step(256);
-        if (!has_row()) break;
-        result.records_.push_back({bit_string::copy(group_key_.view()),
-          typed_detail::value<policy_type, S>(semantics::erase(row_->key)), last_retained_});
-        result.observed_->push_back(last_value_);
-        row_.reset();
-      }
-      return result;
+      if (failed_) throw std::logic_error("failed typed scan");
+      try {
+        typename World::contribution_type result{snapshot_, {}};
+        result.observed_.emplace();
+        while (!done()) {
+          while (!has_row() && !done()) step(256);
+          if (!has_row()) break;
+          result.records_.push_back({bit_string::copy(group_key_.view()),
+            typed_detail::value<policy_type, S>(semantics::erase(row_->key)), last_retained_});
+          result.observed_->push_back(last_value_);
+          row_.reset();
+        }
+        return result;
+      } catch (...) { failed_ = true; throw; }
     }
 
   private:
