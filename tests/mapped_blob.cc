@@ -195,14 +195,15 @@ namespace {
     std::shared_ptr<profile_blob<P> const> original;
     query_root<P> root;
 
-    fixture() : rows(make_rows()), queries(keys<P>()), indexes(rows.size()), original(build()), root(query_root<P>::build(original)) {
+    explicit fixture(bool conservative = false) : rows(make_rows(conservative)), queries(keys<P>()),
+      indexes(rows.size()), original(build()), root(query_root<P>::build(original)) {
       queries.push_back(bit_string::from_bytes("not-present"));
       for (std::size_t i = 0, end = queries.size(); i < end; i += 7) {
         auto units = queries[i].bit_size / P::bits_per_unit;
         if (units) queries.push_back(prefix(queries[i].view(), (units - 1) * P::bits_per_unit));
       }
     }
-    static rows_type make_rows() {
+    static rows_type make_rows(bool conservative) {
       auto source = keys<P>();
       rows_type result(4);
       for (std::size_t i = 0; i < source.size(); ++i) {
@@ -210,6 +211,10 @@ namespace {
         if (i % 3 != 1) result[2].push_back({source[i], value_for<P>(unsigned(i + 23))});
         result[3].push_back({source[i], value_for<P>(unsigned(i + 47))});
       }
+      if (conservative)
+        for (auto & layer : result)
+          for (std::size_t i = 0; i != layer.size(); ++i)
+            layer[i].retained_limit_bits = i % 2 ? 13 : 0;
       return result; // Layer one deliberately has only borrowed occurrences.
     }
     std::shared_ptr<profile_blob<P> const> build() {
@@ -266,7 +271,7 @@ namespace {
     std::vector<std::shared_ptr<mapped_index<P> const>> indexes;
     std::vector<pair_type> pairs;
 
-    persisted_fixture() {
+    explicit persisted_fixture(bool conservative = false) : source(conservative) {
       for (auto current = source.root.head(); current; current = current->target()) original.push_back(current);
       for (std::size_t i = 0; i < original.size(); ++i) {
         auto native_id = id(unsigned(2 * i + 1));
@@ -1098,6 +1103,19 @@ int main() {
     run_policy<bit_var>(true);
     conservative_scan_tests<byte_var>();
     conservative_scan_tests<bit_var>();
+    // Query fresh and reopened mapped chains through their fractional cascade.
+    // Conservative native retention must not alter exact cut LCPs, false-borrow
+    // recovery, per-level matches, or endpoint/missing-key comparisons.
+    {
+      persisted_fixture<byte_var> conservative(true);
+      conservative.check_sections();
+      conservative.check_queries();
+    }
+    {
+      persisted_fixture<bit_var> conservative(true);
+      conservative.check_sections();
+      conservative.check_queries();
+    }
     empty_test<byte_var>();
     empty_test<bit_var>();
     run_policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 15, exponential_golomb<0>, 16>>(false);
