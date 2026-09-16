@@ -1430,6 +1430,16 @@ forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
+The byte-default and conservative front-coding integration qualifies all **119
+checks** under strict O2 ASan/UBSan on AppleClang 21. The complete run passed
+118 checks; one admission fixture incorrectly treated valid conservative front
+coding as corruption. After replacing that negative case with duplicate and
+descending keys, the rebuilt adversarial suite passed its focused rerun. The
+[verification record](../bench/results/byte_default_verification_20260916.json)
+keeps the original failure, correction and rerun distinct. The optional byte
+Metal driver separately passes 40 merge cases, four malformed-input rejections
+and ten Elias–Fano output cases; those are outside the CTest total.
+
 The fractional-cascade range, bit-reader reservoir and bounded-search integration
 passed all **119 checks** under strict O2 ASan/UBSan on AppleClang 21: component
 suites, SQLite recovery, three package consumers and Doxygen. The

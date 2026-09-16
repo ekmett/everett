@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "23c1dfce9ba9d76aec212321934031cd8495c517ef8868ba3114bd3bbd4462a0"
+      "normalized_sha256": "835324ce4807d2abeec19892480348474e9a001d16cd6355d7e7b105f5c5a94b"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "695627070f817e162559d8b36238059e8297e8668fca8eb82c6ad15c51938582"
+      "normalized_sha256": "d4cffdc301abcd8628a05c1b763eb22757d18ecfc000e40c49e52e2685a5bcc8"
     }
   ],
   "subsequent_updates": [
@@ -1129,6 +1129,13 @@
       "scope": "Link the audited complete byte GPU measurements and remove remaining default-bit wording. Original measurement identities are unchanged.",
       "artifacts": [
         "bench/README.md",
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Record byte-default integration qualification and conservative front-coding comparison bounds. Original measured source identities and observations are unchanged.",
+      "artifacts": [
         "bench/results/publication_normalization.json",
         "docs/implementation.md"
       ]

@@ -226,6 +226,12 @@ index dependencies. Construction reconstructs sequentially. The explicit
 prefix retention and ordering, navigation directories, cut LCPs and exact target samples.
 `file<P>::scan` supplies the lower-level envelope, CRC and padding check.
 
+Conservative retention is safe for comparison transfers: the stored prefix
+needs only to be shared, while cut LCPs are computed exactly from the keys.
+Repeating prefix material can increase literal-comparison work. It leaves the
+sampled entry bounds unchanged, but does not preserve the byte-work savings
+of maximal prefix retention.
+
 `profile_view::reconstruct_at` is a separate full-reconstruction operation.
 Under ordinary FC its cost includes the preceding context it traverses. A
 standalone profile encoder can opt into locality-preserving restarts for this
