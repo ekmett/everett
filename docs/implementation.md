@@ -28,6 +28,7 @@ for integration. These are development responsibilities.
 | Named typed connection | `connection.h`; `tests/sqlite_catalog_connection.cc` | mutable and asynchronous commands, mapped snapshots, exact saves/forks, restart, stale publishers and healthy input rejection |
 | Encoded runtime | `cola_runtime.h`; `tests/cola_runtime.cc` | chronological runs, real native/index/carrier work, immutable publication, budget partition, mmap restoration and failed continuation isolation |
 | Redundant runtime | `redundant_runtime.h`; redundant and typed-redundant tests | three-slot ownership, overlapping main/secondary jobs, charged admission, exact frontier checkpoints and recovery gates |
+| Initial sorted batches | `redundant_runtime.h`, `sort_runtime.h`, `sort_runtime_context.h`, `typed_cola.h`, `replacement_rebuild.h`; initial-batch suites | geometric native slices, exact index targets, paid carries, logical preflight, adaptive encoding and preserved publication on failure |
 | Runtime persistence | `runtime_store.h`, `runtime_checkpoint.h`, `redundant_checkpoint.h`; runtime and redundant catalog tests | exact graph sealing, hidden completed artifacts, atomic auxiliary pins, saved frontiers, mapped reopening and interrupted-stage restart |
 | Typed updates | `typed_cola.h`; `tests/typed_cola.cc` | replacement reads, chronological arrows, per-sort dispatch and hashes, validated deletes, disjoint contributions, mutable commands and snapshot metadata |
 | Sort-owned record codec | `sort_codec.h`; `tests/sort_codec.cc` | heterogeneous FC/raw/integer grammars, optional/niche/no-payload values, typed stream anchors, control parsing and borrowed-role output |
@@ -107,6 +108,15 @@ SQLite transaction. Already bound or streamed natives and hidden native-only
 outputs retain their existing preparation paths. The final tap publication
 remains separate. The [preparation guide](publication-preparation.md) describes
 dependency ordering, concurrent producers and uncertain-operation recovery.
+
+The first sorted power-of-two batch can seed a pristine redundant frontier
+directly and service its remaining carries before publication. The typed engine
+validates the whole contribution first; ordinary optional-string rebuilding
+starts it as a clean generation. The same native encoder retains small slices
+or spills their encoded bytes through the durable writer. Other counts and
+existing tables retain per-record admission. The
+[construction](redundant-runtime.md#initial-sorted-batches) keeps complete hidden
+artifacts and charges executed work; it does not change the file formats.
 
 `tap<Engine>` provides serialized mutable publication and bounded accepted
 inputs. Optional readiness blocks new claims behind prior engine debt. An
@@ -1086,6 +1096,13 @@ async publication committed before result restoration fails. Doxygen includes
 regressions for cross-page duplicate headings and explicit or numeric page
 titles. Its generated output covers 71 public headers, 84 Markdown pages and
 680 formulas.
+
+Initial-batch integration subsequently passed five focused strict O2 ASan/UBSan
+suites plus Doxygen. They cover powers through 4096 at K=3/K=15, mixed record
+grammars, factory failures, typed preflight, native sealing and final-publication
+acknowledgment failures, saved forks, queued continuation and mapped reopening.
+The depth suite checks both binary and redundant publication boundaries,
+over-limit imports, preserved earlier snapshots and custom backend hooks.
 
 Integration checks on 2026-09-16 passed under AppleClang 21, strict warnings,
 O2 and ASan/UBSan for shared owner bindings, seal acknowledgment failures,

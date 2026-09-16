@@ -117,6 +117,38 @@ visibility-before-reuse schedule remains separate from those executable
 checks. Atomic finalization means that a bound on offered structural service
 must not be read as a hard per-call latency bound.
 
+Initial sorted batches
+----------------------
+
+An empty runtime can build its first sorted batch directly when the batch has
+$N=2^h$ unique records, with $N\ge2$. `try_initialize_sorted(records, allowance,
+depth_limit)` constructs a valid frontier and pays for its remaining carries
+before returning. Ineligible counts, existing history or insufficient work or
+depth allowance leave the executor unchanged and return false. Ordinary typed
+admission uses its existing per-record path in those cases.
+
+For 64 records, the initial native slices contain 32, 16, 8, 4, 2, 1 and 1
+records. The first six occupy consecutive levels; the last is a terminal
+secondary at level zero. Construction proceeds from large to small, so each
+fractional index sees its exact completed target. Only level zero begins
+unsafe. The ordinary scheduler then performs six carries, emitting runs of
+2, 4, 8, 16, 32 and 64 records. We write $N$ native records to seed the frontier
+and $2N-2$ through those carries: $3N-2$ in total.
+
+Completed higher outputs may remain hidden behind earlier index versions,
+just as after ordinary admission. The complete checkpoint retains them and the
+inputs still needed by those indexes.
+The initial frontier passes the same independent restoration checks as a
+persisted frontier. The public result has no pending service debt; actual native,
+index, root and checkpoint work is charged, with unused allowance discarded.
+
+Sorting the public batch and validating its logical updates happen before this
+construction. The initializer builds both native and fractional-index data.
+Key/value bytes, codec finalizers and durability barriers retain their usual costs. Failure
+during construction preserves the old published snapshot and poisons the
+executor. Small outputs use the shared adaptive allowance; larger outputs spill
+through the existing immutable-file writer.
+
 Immutable checkpoints and restart
 ---------------------------------
 

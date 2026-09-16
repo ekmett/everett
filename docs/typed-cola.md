@@ -169,12 +169,16 @@ A multi-record batch can also drain carries between its records.
 `reservation` quotes **ready-admission allowances** and owned encoded record
 bytes. It does not quote the total work of an old carry or of every intermediate
 carry in a batch. `work()` reports the runtime's executed structural accounting.
-The default engine enforces a ready-root depth limit of 256; its third template
-parameter changes that explicit support limit. Each input record reserves
+The default engine limits each imported or published root to 256 main-chain
+nodes, including empty routing ancestors. Its third template parameter changes
+that explicit support limit. Each input record reserves
 $2K + 128 + D + 32$ ready-admission units, with at most 64 runtime runs and root
 depth at most D. Before admission, the engine checks the actual metadata-derived
-charge and depth against those limits. This is an enforced bound for that
-operation, not a proof of a complete deamortized COLA schedule or a latency bound.
+charge and depth against those limits. It also checks the completed root before
+publishing a contribution or an `advance` result. An over-limit imported layout
+is rejected before changing a healthy engine; execution that exceeds the limit
+poisons the engine and leaves its previous snapshot available. This enforced
+support bound is separate from a complete deamortized COLA proof or latency bound.
 
 The fourth engine parameter selects a runtime family. To use the redundant
 schedule:

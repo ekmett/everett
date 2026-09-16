@@ -132,6 +132,23 @@ For prepared contributions, use `submit`, `try_submit`, or `apply`.
 the other submission path waits for capacity. `cancel(ticket)` can cancel a
 queued command before the worker claims it. Dropping a ticket does not cancel it.
 
+Group related writes into one batch to validate and publish them together:
+
+```cpp
+auto changes = decltype(db)::core_type::batch();
+changes.put("left", "L");
+changes.put("right", "R");
+auto together = db.apply(std::move(changes).finish());
+```
+
+Batch keys must be distinct; `finish()` sorts them and rejects duplicates.
+`submit` accepts the same finished batch for asynchronous publication. The
+ordinary bit-profile table can construct an initial power-of-two batch
+directly, paying its remaining carries before publication. Existing tables and
+other batch sizes use ordinary charged admission. The
+[runtime guide](redundant-runtime.md#initial-sorted-batches) gives the construction
+and its work accounting.
+
 The defaults allow 64 outstanding contributions, 64 MiB of retained encoded
 input, and the selected engine's structural quote for 1024 records. Those records
 can be grouped into batches; the queue reserves their total until each command
