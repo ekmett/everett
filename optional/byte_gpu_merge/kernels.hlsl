@@ -3,6 +3,9 @@
 // KV02 byte FC for the built-in optional-string sort. Input descriptors retain
 // the shared eight-word ABI (bit positions, byte key lengths); output offsets,
 // EF universes, frame sizes and the fixed value stride are all BYTE counts.
+#ifdef TOMBSTONE_MERGE
+#error Byte optional-value tags require a byte-specific cleanup implementation
+#endif
 #define COMPRESSED_INPUT 1
 #define PREFIX_CACHE 1
 #define BYTE_PROFILE 1
