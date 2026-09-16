@@ -1078,10 +1078,11 @@ forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
-At `86ed797`, the complete strict O2 ASan/UBSan build and all **93 C++ component
-suites** passed on AppleClang 21. All three independent package consumers also
-passed. The native-reuse suite passed after integration at `624f860` with the
-same strict O2 ASan/UBSan settings. At `a350549`, Doxygen also passed, including
+At `1128378`, the complete strict O2 ASan/UBSan build and all **95 C++ component
+suites** passed on AppleClang 21. All three independent package consumers and
+Doxygen also passed: **99 checks** in total. This includes joint native/index
+preparation, native reuse through an interrupted cleanup generation, and an
+async publication committed before result restoration fails. Doxygen includes
 regressions for cross-page duplicate headings and explicit or numeric page
 titles. Its generated output covers 71 public headers, 84 Markdown pages and
 680 formulas.
