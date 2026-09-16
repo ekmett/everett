@@ -33,6 +33,7 @@ namespace diet {
   enum class cola_target : unsigned { main = 0, secondary = 1 };
   enum class cola_origin : unsigned { native = 0, main = 1, secondary = 2 };
   namespace cola_detail {
+    struct query_access;
     inline unsigned route(unsigned value) {
       if (value >= 2) error_detail::raise<std::out_of_range>("COLA target route");
       return value;
@@ -166,13 +167,24 @@ namespace diet {
     cola_window_result<P> search_window(std::uint64_t group, profile_query_context<P> const & lower,
         profile_comparison_work * native_work = nullptr,
         std::array<profile_comparison_work *, 2> borrowed_work = {}) const {
+      return search_window_with<cola_window_result<P>>(group, lower,
+        [](std::uint64_t ordinal, bit_view value) {
+          return profile_blob_native_match<P>{ordinal, bit_string::copy(value)};
+        }, native_work, borrowed_work);
+    }
+  private:
+    friend struct cola_detail::query_access;
+    template <class Result, class Capture> Result search_window_with(std::uint64_t group,
+        profile_query_context<P> const & lower, Capture && capture,
+        profile_comparison_work * native_work = nullptr,
+        std::array<profile_comparison_work *, 2> borrowed_work = {}) const {
       if (lower.order() > 0) error_detail::raise<std::invalid_argument>("query precedes COLA boundary");
       auto window = project(group);
-      cola_window_result<P> result;
+      Result result;
       native_.compare_window(window.native_first, window.native_last, lower,
         [&](profile_comparison_item<P> item) {
           if (!item.comparison.order())
-            result.native = profile_blob_native_match<P>{item.ordinal, bit_string::copy(item.value)};
+            result.native = capture(item.ordinal, item.value);
           return item.comparison.order() < 0;
         }, native_work);
       for (unsigned route = 0; route < 2; ++route) {
@@ -183,8 +195,7 @@ namespace diet {
           if (!comparison.order() && is_false && !result.native) {
             if (!window.native_first) error_detail::raise<std::invalid_argument>("COLA false borrow has no native predecessor");
             auto native_ordinal = window.native_first - 1;
-            result.native = profile_blob_native_match<P>{native_ordinal,
-              bit_string::copy(native_.encoded_at(native_ordinal).value)};
+            result.native = capture(native_ordinal, native_.encoded_at(native_ordinal).value);
           }
         };
         borrowed_[route].compare_window(window.borrowed_first[route], window.borrowed_last[route], lower,
@@ -198,7 +209,6 @@ namespace diet {
       }
       return result;
     }
-  private:
     native_view native_;
     std::array<borrowed_view, 2> borrowed_;
     std::array<rank_view, 2> ranks_;
@@ -209,17 +219,26 @@ namespace diet {
 
   // A secondary is a native-only leaf. Its sampled ordinal directly names a
   // native K-window; it has no onward index route.
+  namespace cola_detail {
+    template <class P, class View, class Capture> void visit_secondary(View const & leaf,
+        profile_blob_borrowed_predecessor<P> const & predecessor, Capture && capture,
+        profile_comparison_work * work = nullptr) {
+      auto first = predecessor.target_ordinal;
+      if (first >= leaf.size() || first % P::group_size || predecessor.comparison.order() > 0)
+        error_detail::raise<std::invalid_argument>("invalid COLA secondary route");
+      auto last = first + std::min<std::uint64_t>(P::group_size, leaf.size() - first);
+      leaf.compare_window(first, last, predecessor.comparison, [&](profile_comparison_item<P> item) {
+        if (!item.comparison.order()) capture(item.ordinal, item.value);
+        return item.comparison.order() < 0;
+      }, work);
+    }
+  }
   template <class P, class View> std::optional<profile_blob_native_match<P>> cola_search_secondary(
       View leaf, profile_blob_borrowed_predecessor<P> const & predecessor,
       profile_comparison_work * work = nullptr) {
-    auto first = predecessor.target_ordinal;
-    if (first >= leaf.size() || first % P::group_size || predecessor.comparison.order() > 0)
-      error_detail::raise<std::invalid_argument>("invalid COLA secondary route");
-    auto last = first + std::min<std::uint64_t>(P::group_size, leaf.size() - first);
     std::optional<profile_blob_native_match<P>> result;
-    leaf.compare_window(first, last, predecessor.comparison, [&](profile_comparison_item<P> item) {
-      if (!item.comparison.order()) result = profile_blob_native_match<P>{item.ordinal, bit_string::copy(item.value)};
-      return item.comparison.order() < 0;
+    cola_detail::visit_secondary<P>(leaf, predecessor, [&](std::uint64_t ordinal, bit_view value) {
+      result = profile_blob_native_match<P>{ordinal, bit_string::copy(value)};
     }, work);
     return result;
   }

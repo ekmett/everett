@@ -14,6 +14,7 @@
 
 #include <diet/cola_index.h>
 
+#include <functional>
 #include <array>
 #include <memory>
 #include <optional>
@@ -66,6 +67,67 @@ namespace diet {
     explicit cola_query_root(pair_type head) : head_(std::move(head)) {}
     pair_type head_;
   };
+
+  namespace cola_detail {
+    template <class P> struct first_window_result {
+      bool native = false;
+      std::array<std::optional<profile_blob_borrowed_predecessor<P>>, 2> predecessors;
+    };
+    struct query_access {
+      struct match_probe {
+        bool operator()(std::uint64_t, bit_view) const { return true; }
+      };
+      template <class P, class Family, class Capture> static first_window_result<P> search(
+          cola_index_view<P, Family> const & view, std::uint64_t group,
+          profile_query_context<P> const & context, Capture && capture) {
+        return view.template search_window_with<first_window_result<P>>(group, context,
+          std::forward<Capture>(capture));
+      }
+    };
+
+    // Synchronous replacement reads decode under the current node's owner.
+    // The callback finishes before that pin is released; public matches stay owned.
+    template <class P, class Blob, class Decode>
+      requires (!std::is_reference_v<std::invoke_result_t<Decode &, bit_view>>) &&
+        requires(Blob const & blob, profile_query_context<P> const & context) {
+          query_access::search(blob.view(), 0, context, query_access::match_probe{});
+        }
+    auto first_value(cola_query_root<P, Blob> const & root, bit_string query, Decode && decode)
+        -> std::optional<std::invoke_result_t<Decode &, bit_view>> {
+      using value_type = std::invoke_result_t<Decode &, bit_view>;
+      auto current = root.head();
+      auto context = profile_query_context<P>::from_owned(std::move(query));
+      if (!current) error_detail::raise<std::invalid_argument>("COLA query root has no head");
+      if (!current->virtual_size()) return std::nullopt;
+      std::uint64_t group = 0;
+      while (current) {
+        std::optional<value_type> value;
+        auto result = query_access::search(current->view(), group, context,
+          [&](std::uint64_t, bit_view encoded) {
+            value.emplace(std::invoke(decode, encoded));
+            return true;
+          });
+        auto main = current->main_target();
+        auto secondary = current->secondary_target();
+        if (auto const & next = result.predecessors[0])
+          if (!main || next->target_ordinal % P::group_size || next->target_ordinal >= main->virtual_size())
+            error_detail::raise<std::invalid_argument>("COLA query main route has no target");
+        if (auto const & next = result.predecessors[1]) {
+          if (!secondary) error_detail::raise<std::invalid_argument>("COLA query secondary route has no target");
+          visit_secondary<P>(secondary->view(), *next, [&](std::uint64_t, bit_view encoded) {
+            if (!value) value.emplace(std::invoke(decode, encoded));
+          });
+        }
+        if (value) return value;
+        if (auto & next = result.predecessors[0]) {
+          group = next->target_ordinal / P::group_size;
+          context = std::move(next->comparison);
+          current = std::move(main);
+        } else current.reset();
+      }
+      return std::nullopt;
+    }
+  }
 
   // Each charged main-node visit searches at most one augmented K-window and
   // one terminal native K-window. Two equal native matches may result: neither

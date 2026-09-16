@@ -184,6 +184,15 @@ namespace diet {
     get(typed_detail::key_t<S> const & key) const {
       using semantics = sort_semantics<S>;
       auto encoded = key_transport::template encode<S>(key);
+      if constexpr (typed_detail::replacement<S>) {
+        auto decode = [&](bit_view value) -> typed_detail::state_t<S> {
+          return semantics::apply(key, semantics::initial(key), typed_detail::value<P, S>(value));
+        };
+        if constexpr (requires { cola_detail::first_value(state_->runtime.query_root(), std::move(encoded), decode); }) {
+          auto value = cola_detail::first_value(state_->runtime.query_root(), std::move(encoded), decode);
+          return value ? std::move(*value) : semantics::initial(key);
+        }
+      }
       auto cursor = [&] {
         if constexpr (requires { state_->runtime.cursor_owned(std::move(encoded)); })
           return state_->runtime.cursor_owned(std::move(encoded));
