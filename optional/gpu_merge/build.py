@@ -36,7 +36,8 @@ def main():
         "index_rank_classes", "index_rank_blocks",
     ]
     jobs = [(entry, entry, False, False) for entry in entries]
-    for entry in ["prefix_leaf", "prefix_reduce", "compressed_prefix", "compressed_probe"]:
+    for entry in ["prefix_leaf", "prefix_reduce", "prefix_leaf_tiles", "prefix_reduce_tiles",
+                  "compressed_prefix", "compressed_probe"]:
         jobs.append((entry, entry, True, False))
     for entry in ["merge_order", "merge_keep", "merge_sizes", "merge_emit"]:
         jobs.append((entry, "compressed_" + entry, True, False))

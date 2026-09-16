@@ -109,6 +109,23 @@ struct gpu {
             threadsPerThreadgroup:MTLSizeMake(group, 1, 1)];
     [encoder endEncoding];
   }
+  void build_prefix_tree(id<MTLCommandBuffer> command, id<MTLBuffer> tree,
+                         id<MTLBuffer> status, id<MTLBuffer> descriptors,
+                         std::uint32_t count, std::uint32_t older, bool tiled) {
+    auto base = std::bit_ceil(count);
+    if (tiled) {
+      dispatch(command, "prefix_leaf_tiles", ((base + 255) / 256) * 128,
+               nil, tree, status, count, descriptors, nil, nil, older, count - older, 0, 0, 0, base);
+      for (auto level = base / 256; level > 1; level /= 256)
+        dispatch(command, "prefix_reduce_tiles", ((level + 255) / 256) * 128,
+                 tree, tree, nil, level);
+    } else {
+      dispatch(command, "prefix_leaf", base, nil, tree, status, count,
+               descriptors, nil, nil, older, count - older, 0, 0, 0, base);
+      for (auto first = base / 2; first; first /= 2)
+        dispatch(command, "prefix_reduce", first, tree, tree, nil, first, nil, nil, nil, first);
+    }
+  }
   id<MTLBuffer> scan(id<MTLCommandBuffer> command, id<MTLBuffer> input, std::uint32_t n) {
     auto output = buffer(n * 4), totals = buffer(((n + 255) / 256) * 4);
     dispatch(command, "scan_blocks", n, input, output, totals, n);
@@ -126,6 +143,7 @@ struct gpu {
   }
 };
 #include "collision_rank_test.h"
+#include "prefix_tree_test.h"
 #include "ef_input_test.h"
 #include "ef_output_test.h"
 #include "emit_word_test.h"
@@ -247,6 +265,7 @@ using everett_gpu::compressed_blocks;
 using everett_gpu::compressed_descriptor;
 bool compressed_inputs = false;
 bool use_prefix_cache = false;
+bool use_prefix_tiles = false;
 bool use_word_emitter = false;
 bool gpu_output_ef = false;
 bool verify_compressed_descriptors = false;
@@ -382,10 +401,7 @@ merge_result gpu_merge(gpu &context, native const &a, native const &b,
                      left_offsets, nil, 0, 0, left.block_count, delta_a, left.extent);
     context.dispatch(parse, "parse_input", right.block_count, other, desc, status, right.count, nil,
                      right_offsets, nil, left.count, 1, right.block_count, delta_b, right.extent);
-    context.dispatch(parse, "prefix_leaf", tree_base, nil, tree, status, n, desc, nil, nil,
-                     left.count, right.count, 0, delta_a, delta_b, tree_base);
-    for (auto first = tree_base / 2; first; first /= 2)
-      context.dispatch(parse, "prefix_reduce", first, tree, tree, nil, first, nil, nil, nil, first);
+    context.build_prefix_tree(parse, tree, status, desc, n, left.count, use_prefix_tiles);
     gpu::finish(parse);
     auto flags = static_cast<std::uint32_t const *>(status.contents);
     require(flags[0] == 0, "GPU input framing/retention validation failed");
@@ -783,6 +799,10 @@ int main(int argc, char **argv) {
                         "rank15_finish"})
         (void)context.pipeline(name);
       std::string mode = argc > 3 ? argv[3] : "rank";
+      if (auto tile_option = mode.find("-tiles"); tile_option != std::string::npos) {
+        use_prefix_tiles = true;
+        mode.erase(tile_option, 6);
+      }
       auto quick = argc > 3;
       if (mode == "rank-shared") {
         (void)context.pipeline("rank15_classes");
@@ -818,7 +838,8 @@ int main(int argc, char **argv) {
                             "ef_output_samples", "ef_output_sparse"})
             (void)context.pipeline(name);
         if (compressed_inputs)
-          for (auto name : {"parse_input", "prefix_leaf", "prefix_reduce", "compressed_prefix",
+          for (auto name : {"parse_input", "prefix_leaf", "prefix_reduce", "prefix_leaf_tiles",
+                            "prefix_reduce_tiles", "compressed_prefix",
                             "compressed_probe", "compressed_merge_order", "compressed_merge_keep",
                             "compressed_merge_sizes", "compressed_merge_emit"})
             (void)context.pipeline(name);
@@ -864,6 +885,8 @@ int main(int argc, char **argv) {
             check_word_emit(context);
             index_rank_adversarial(context);
           }
+          if (use_prefix_tiles)
+            prefix_tree_adversarial(context);
           ef_input_test(context);
           if (gpu_output_ef)
             ef_output_adversarial(context);

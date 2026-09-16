@@ -96,33 +96,80 @@ uint compressed_suffix_bit(uint record, uint full_key_bit) {
                                extra[record * 8] + full_key_bit - extra[record * 8 + 4]);
 }
 
-[numthreads(128, 1, 1)] void prefix_leaf(uint3 tid : SV_DispatchThreadID) {
-  uint i = tid.x;
-  uint count = parameters[0], base = parameters[6];
-  if (i >= base)
-    return;
-  uint retained = 0xffffffffu;
-  if (i < count) {
-    retained = extra[i * 8 + 4];
-    bool first = i == 0 || i == parameters[1];
-    bool invalid = first ? retained != 0 : retained > extra[(i - 1) * 8 + 1] * 8;
-    invalid = invalid || extra[i * 8 + 6] != (i < parameters[1] ? 0u : 1u);
-    if (invalid) {
-      uint old;
-      InterlockedOr(totals[0], 16u, old);
-    }
+// Validation is shared by the levelwise and tiled builders. The parser bounds
+// key widths before either builder; no padding descriptor is ever read.
+uint prefix_retained(uint i) {
+  if (i >= parameters[0])
+    return 0xffffffffu;
+  uint retained = extra[i * 8 + 4];
+  bool first = i == 0 || i == parameters[1];
+  bool invalid = first ? retained != 0 : retained > extra[(i - 1) * 8 + 1] * 8;
+  invalid = invalid || extra[i * 8 + 6] != (i < parameters[1] ? 0u : 1u);
+  if (invalid) {
+    uint old;
+    InterlockedOr(totals[0], 16u, old);
   }
-  output_data[base + i] = retained;
+  return retained;
 }
 
-    // One dispatch per tree level; children are complete before parents are read.
-    // Here input_data and output_data both bind the tree, while params mean
-    // {node_count, first_node}. All writes in a dispatch target distinct parents.
-    [numthreads(128, 1, 1)] void prefix_reduce(uint3 tid : SV_DispatchThreadID) {
+[numthreads(128, 1, 1)] void prefix_leaf(uint3 tid : SV_DispatchThreadID) {
+  if (tid.x < parameters[6])
+    output_data[parameters[6] + tid.x] = prefix_retained(tid.x);
+}
+
+// One dispatch per tree level; children are complete before parents are read.
+// input_data/output_data both bind the tree; params are {node_count,first_node}.
+[numthreads(128, 1, 1)] void prefix_reduce(uint3 tid : SV_DispatchThreadID) {
   if (tid.x >= parameters[0])
     return;
   uint node = parameters[1] + tid.x;
   output_data[node] = min(input_data[node * 2], input_data[node * 2 + 1]);
+}
+
+// One workgroup owns a complete binary subtree of up to 256 leaves. Its
+// shared heap preserves the original global heap: every interior node is
+// written, not just the tile minimum. Different groups write disjoint nodes.
+// base/level and tile_span are powers of two, so there is no partial tile.
+groupshared uint prefix_tile[512];
+
+void prefix_tile_parents(uint lane, uint first_node, uint tile_span) {
+  for (uint width = tile_span / 2; width != 0; width /= 2) {
+    first_node /= 2;
+    if (lane < width) {
+      uint value = min(prefix_tile[2 * (width + lane)], prefix_tile[2 * (width + lane) + 1]);
+      prefix_tile[width + lane] = value;
+      output_data[first_node + lane] = value;
+    }
+    GroupMemoryBarrierWithGroupSync();
+  }
+}
+
+// Same parameters/bindings as prefix_leaf. Dispatch ceil(base/256) groups.
+[numthreads(128, 1, 1)] void prefix_leaf_tiles(uint3 lane : SV_GroupThreadID,
+                                             uint3 group : SV_GroupID) {
+  uint base = parameters[6], tile_span = min(base, 256u);
+  uint first = group.x * 256;
+  for (uint local = lane.x; local < tile_span; local += 128) {
+    uint value = prefix_retained(first + local);
+    prefix_tile[tile_span + local] = value;
+    output_data[base + first + local] = value;
+  }
+  GroupMemoryBarrierWithGroupSync();
+  prefix_tile_parents(lane.x, base + first, tile_span);
+}
+
+// Reads a completed heap level [level,2*level), writing its ancestors through
+// at most eight more levels. Dispatch ceil(level/256) groups, then repeat with
+// level/256 until the root is complete. Children/parents never alias within a
+// dispatch; dispatch ordering establishes the dependency between tile passes.
+[numthreads(128, 1, 1)] void prefix_reduce_tiles(uint3 lane : SV_GroupThreadID,
+                                               uint3 group : SV_GroupID) {
+  uint level = parameters[0], tile_span = min(level, 256u);
+  uint first_node = level + group.x * 256;
+  for (uint local = lane.x; local < tile_span; local += 128)
+    prefix_tile[tile_span + local] = input_data[first_node + local];
+  GroupMemoryBarrierWithGroupSync();
+  prefix_tile_parents(lane.x, first_node, tile_span);
 }
 
 uint compressed_common_bytes(uint a, uint b, uint limit) {
