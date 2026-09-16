@@ -14,6 +14,7 @@
 #include <diet/runtime_store.h>
 #include <diet/sort_runtime.h>
 #include <diet/sort_profile_file_merge.h>
+#include <diet/sort_profile_adaptive.h>
 #include <diet/cola_file_index.h>
 #include <diet/runtime_graph_sealer.h>
 #include <diet/output_budget.h>
@@ -37,19 +38,23 @@ namespace diet {
       std::shared_ptr<sort_runtime_context> owner_;
       explicit context_pin(std::shared_ptr<sort_runtime_context> owner) : owner_(std::move(owner)) {}
     };
+    struct native_stream_factory {
+      sort_runtime_context * owner;
+      auto operator()() { return owner->start_native_stream(); }
+      void poison() noexcept { owner->poison(); }
+    };
   public:
     using native_type = sort_runtime_native<P, Selector>;
     using native_pointer = std::shared_ptr<native_type const>;
     using catalog_type = sqlite_catalog<P, CatalogOps>;
     template <class Compose> struct merge_type : private context_pin,
-        public sort_profile_file_merge<P, native_type, Compose, Selector, FileOps> {
-      using base_type = sort_profile_file_merge<P, native_type, Compose, Selector, FileOps>;
+        public sort_profile_adaptive_merge<P, native_type, Compose, Selector, FileOps, native_stream_factory> {
+      using base_type = sort_profile_adaptive_merge<P, native_type, Compose, Selector, FileOps, native_stream_factory>;
     private:
       friend struct sort_runtime_context;
-      merge_type(std::shared_ptr<sort_runtime_context> owner, object_id output, object_attempt_id attempt,
-          native_pointer older, native_pointer newer, Compose compose)
-        : context_pin(owner), base_type(owner->root(), std::move(output), std::move(attempt),
-            std::move(older), std::move(newer), owner->file_ops_, std::move(compose)) {}
+      merge_type(std::shared_ptr<sort_runtime_context> owner, native_pointer older, native_pointer newer, Compose compose)
+        : context_pin(owner), base_type(native_stream_factory{owner.get()}, owner->budget_, owner->outputs_.object_bytes,
+            std::move(older), std::move(newer), std::move(compose)) {}
     };
     static std::shared_ptr<sort_runtime_context> open(std::filesystem::path const & root, Ids ids = {},
         catalog_options options = {}, CatalogOps catalog_ops = {}, FileOps file_ops = {},
@@ -77,13 +82,7 @@ namespace diet {
     template <class Compose> auto make_merge(native_pointer older, native_pointer newer, Compose compose) {
       require_active();
       try {
-        auto output = ids_(); object_attempt_id attempt(ids_().hex());
-        auto owner = ids_().hex(); auto operation = ids_().hex();
-        std::array<catalog_object_reservation, 1> reservation{{{output, file_kind::native_blob}}};
-        // Current published roots already retain durable inputs. Private
-        // uncommitted inputs need not survive a failed logical publication.
-        catalog_.reserve(operation, attempt, owner, {}, reservation);
-        return std::unique_ptr<merge_type<Compose>>(new merge_type<Compose>(this->shared_from_this(), output, attempt,
+        return std::unique_ptr<merge_type<Compose>>(new merge_type<Compose>(this->shared_from_this(),
           std::move(older), std::move(newer), std::move(compose)));
       } catch (...) { failed_ = true; throw; }
     }
@@ -91,7 +90,9 @@ namespace diet {
       require_active();
       try {
         if (merge.owner_.get() != this) throw std::invalid_argument("merge belongs to another runtime context");
-        auto receipt = merge.finish();
+        auto completed = merge.finish();
+        if (auto owned = std::get_if<0>(&completed)) return native_type::from_owned(std::move(*owned));
+        auto receipt = std::get<1>(std::move(completed));
         catalog_.record_sealed(ids_().hex(), receipt);
         auto native = native_type::from_sealed(root(), identity_, std::move(receipt));
         ++sealed_outputs_; return native;
@@ -166,6 +167,19 @@ namespace diet {
     sort_runtime_context(catalog_type catalog, Ids ids, FileOps file_ops, runtime_output_options outputs)
       : catalog_(std::move(catalog)), ids_(std::move(ids)), file_ops_(std::move(file_ops)), outputs_(outputs),
         budget_(outputs.retained_bytes), identity_(catalog_.identity()) {}
+    std::unique_ptr<object_stream<P, FileOps>> start_native_stream() {
+      require_active();
+      try {
+        auto output = ids_(); object_attempt_id attempt(ids_().hex());
+        auto owner = ids_().hex(); auto operation = ids_().hex();
+        std::array<catalog_object_reservation, 1> reservation{{{output, file_kind::native_blob}}};
+        // Current roots retain durable inputs. Private outputs may be replayed
+        // from that published frontier if this logical publication fails.
+        catalog_.reserve(operation, attempt, owner, {}, reservation);
+        return std::make_unique<object_stream<P, FileOps>>(root(), std::move(output), std::move(attempt),
+          file_kind::native_blob, 192, file_ops_);
+      } catch (...) { failed_ = true; throw; }
+    }
     void require_active() const { if (failed()) throw std::logic_error("failed sort runtime context"); }
   };
 

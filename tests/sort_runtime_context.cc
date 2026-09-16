@@ -49,9 +49,9 @@ namespace {
     }
     assert(oracle == expected.end());
   }
-  void owned_parity() {
+  void owned_parity(runtime_output_options outputs = {}) {
     temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
-    auto disk = storage::open(dir.root); auto context = disk.context();
+    auto disk = storage::open(dir.root, {}, {}, {}, {}, outputs); auto context = disk.context();
     core seed; owned_core reference;
     auto active = core::from_snapshot(seed.snapshot(), disk);
     std::map<std::string, std::string> expected;
@@ -70,14 +70,14 @@ namespace {
     }
     drain(active); drain(reference); verify(active.snapshot(), expected);
     assert(active.snapshot().metadata() == reference.snapshot().metadata());
-    assert(context->sealed_outputs() > 30 && context->sealed_indexes() > 30 && !context->failed());
+    assert(!context->failed());
+    if (!outputs.retained_bytes) assert(context->sealed_outputs() > 30 && context->sealed_indexes() > 30);
     unsigned mapped = 0;
     auto snapshot = active.snapshot();
-    assert(snapshot.runtime().query_root().head()->mapped());
-    snapshot.runtime().query_root().head()->mapped()->scan();
+    if (auto mapped_head = snapshot.runtime().query_root().head()->mapped()) mapped_head->scan();
     for (auto const & level : snapshot.runtime().frontier().levels)
       for (auto const & slot : level.slots) if (slot.object && slot.object->pair) {
-        assert(slot.object->pair->mapped() && !slot.object->pair->built());
+        assert(bool(slot.object->pair->mapped()) != bool(slot.object->pair->built()));
         assert(slot.object->pair->native_owner() == slot.object->native);
       }
     for (auto const & run : snapshot.runtime().runs()) {
@@ -90,7 +90,7 @@ namespace {
       auto ordinary = family::native_type::from_mapped(native->mapped());
       assert(!ordinary->sealed()); // A caller-provided mapping cannot manufacture admission authority.
     }
-    assert(mapped);
+    if (!outputs.retained_bytes) assert(mapped);
     for (auto const & [state, values] : saved) verify(state, values);
     auto prior = active.snapshot(); auto old_count = context->sealed_outputs();
     rejects([&] { active.rebase(seed.snapshot()); });
@@ -120,7 +120,7 @@ namespace {
         auto recovered = Runtime::from_snapshot(checkpoint, disk);
         while (recovered.pending()) recovered.advance(8192);
         auto resumed = recovered.snapshot();
-        resumed.query_root().head()->mapped()->scan();
+        if (auto mapped = resumed.query_root().head()->mapped()) mapped->scan();
         for (auto const & key : {"a", "b"}) {
           auto encoded = family::key_transport::encode<strings>(key);
           auto cursor = resumed.cursor(encoded.view());
@@ -137,7 +137,7 @@ namespace {
   }
   void retained_index_jobs() {
     temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
-    auto owner = storage::open(dir.root), other = storage::open(dir.root);
+    auto owner = storage::open(dir.root, {}, {}, {}, {}, {0, 0}), other = storage::open(dir.root);
     auto input = core::put("key", "value");
     auto native = storage::singleton(input.records()[0]);
     std::weak_ptr<family::native_type const> retained = native;
@@ -179,14 +179,15 @@ namespace {
     rejects([&] { (void)other.context()->finish_merge(*merge); });
     assert(other.context()->failed() && !retained.lock()->failed() && !merge->failed());
     auto merged = retained.lock()->finish_merge(*merge);
-    merge.reset(); assert(retained.expired()); merged->mapped()->scan();
+    merge.reset(); assert(retained.expired()); merged->view().scan();
 
     disk = storage::open(dir.root); retained = disk.context();
     auto index = disk.context()->make_index<family::node_type>(a, {}, b);
     disk = storage{}; assert(!retained.expired());
     while (!index->done()) index->step(1);
     auto pair = retained.lock()->finish_index<family::node_type>(*index);
-    index.reset(); assert(retained.expired()); pair->mapped()->scan();
+    index.reset(); assert(retained.expired());
+    if (auto mapped = pair->mapped()) mapped->scan();
 
     // An unfinished secondary spool closes before releasing its last context.
     disk = storage::open(dir.root); retained = disk.context();
@@ -226,7 +227,7 @@ namespace {
     for (unsigned mode = 0; mode != 14; ++mode) {
       temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
       auto state = std::make_shared<failure_state>();
-      auto disk = faulty_family::storage_type::open(dir.root, {}, {}, catalog_ops(state), file_ops(state));
+      auto disk = faulty_family::storage_type::open(dir.root, {}, {}, catalog_ops(state), file_ops(state), {0, 0});
       auto context = disk.context(); faulty_core seed;
       auto active = faulty_core::from_snapshot(seed.snapshot(), disk);
       active.contribute(faulty_core::put("first", "retained"));
@@ -248,6 +249,6 @@ namespace {
   }
 }
 int main() {
-  try { owned_parity(); hidden_stages(); retained_index_jobs(); job_context_lifetimes(); failures(); }
+  try { owned_parity(); owned_parity({0, 0}); hidden_stages(); retained_index_jobs(); job_context_lifetimes(); failures(); }
   catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }

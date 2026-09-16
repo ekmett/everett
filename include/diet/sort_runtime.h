@@ -48,6 +48,10 @@ namespace diet {
     static pointer from_owned(array_type value) {
       return pointer(new sort_runtime_native(std::make_shared<array_type const>(std::move(value))));
     }
+    static pointer from_owned(std::shared_ptr<array_type const> value) {
+      if (!value) throw std::invalid_argument("null owned sort runtime native");
+      return pointer(new sort_runtime_native(std::move(value)));
+    }
     static pointer from_mapped(std::shared_ptr<mapped_type const> value) {
       if (!value) throw std::invalid_argument("null mapped sort runtime native");
       return pointer(new sort_runtime_native(std::move(value)));

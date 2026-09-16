@@ -153,6 +153,7 @@ namespace diet {
   template <class P, class Selector = registry_selector<typename P::registry_type>> struct sort_profile_view;
   template <class P, class Selector = registry_selector<typename P::registry_type>> struct sort_profile_cursor;
   template <class P, class Selector = registry_selector<typename P::registry_type>> struct sort_profile_writer;
+  namespace sort_profile_detail { template <class P, class Selector> struct encoder; }
 
   struct sort_profile_payload {
     fc_key_frame key;
@@ -392,6 +393,7 @@ namespace diet {
   template <class P, class Selector> struct sort_profile_array {
     using policy_type = P;
     using stream_family = sort_profile_family<P, Selector>;
+    sort_profile_array() = default;
     auto view() const & {
       return sort_profile_view<P, Selector>(data_.view(), offsets_.view(), metadata_, dictionary_.view(),
         word_view(std::span<std::uint64_t const>(dictionary_offsets_)), seeds_.view());
@@ -404,12 +406,23 @@ namespace diet {
     auto const & dictionary() const & noexcept { return dictionary_; }
     std::span<std::uint64_t const> dictionary_offsets() const noexcept { return dictionary_offsets_; }
     auto const & seeds() const & noexcept { return seeds_; }
+    // Allocated output capacities, excluding allocator/control-block overhead.
+    std::size_t retained_bytes() const noexcept {
+      return sizeof(*this) + data_.bytes.capacity() + dictionary_.bytes.capacity() + seeds_.bytes.capacity() +
+        8 * (dictionary_offsets_.capacity() + offsets_.low.capacity() + offsets_.high.capacity() + offsets_.sparse.capacity()) +
+        sizeof(elias_fano_sample) * offsets_.samples.capacity();
+    }
   private:
     friend struct sort_profile_writer<P, Selector>;
+    friend struct sort_profile_detail::encoder<P, Selector>;
     bit_string data_, dictionary_, seeds_;
     std::vector<std::uint64_t> dictionary_offsets_{0};
     elias_fano offsets_ = elias_fano::build(std::array<std::uint64_t, 1>{0});
     profile_metadata metadata_ = [] { auto m = profile_detail::initial_metadata<P, stream_role::native>(); m.version = 3; return m; }();
+    sort_profile_array(bit_string data, bit_string dictionary, bit_string seeds,
+        std::vector<std::uint64_t> dictionary_offsets, elias_fano offsets, profile_metadata metadata)
+      : data_(std::move(data)), dictionary_(std::move(dictionary)), seeds_(std::move(seeds)),
+        dictionary_offsets_(std::move(dictionary_offsets)), offsets_(std::move(offsets)), metadata_(metadata) {}
   };
 
   namespace sort_profile_detail {
@@ -486,6 +499,12 @@ namespace diet {
         for (auto id : block_seeds_) out.write_bits(id, unsigned(width));
         metadata.extent = extent;
       }
+      // The same completed framing state supplies owning and streamed output.
+      // Neither adoption nor serialization repeats key/value composition.
+      sort_profile_array<P, Selector> take(bit_string data) {
+        return {std::move(data), std::move(dictionary), std::move(seeds),
+          std::move(dictionary_offsets), std::move(offsets), metadata};
+      }
     private:
       bit_string previous_path_;
       std::vector<std::size_t> ids_;
@@ -512,7 +531,7 @@ namespace diet {
       if (size() && comparison.order >= 0) throw std::invalid_argument("sort profile requires unique sorted keys");
       std::array<bit_view, 1> spans{logical.view()};
       try {
-        sort_bit_writer out(output_.data_);
+        sort_bit_writer out(data_);
         encoder_.template append<S>(out, path.view(), bits.bit_size, spans, encoded_value.view(), comparison.common_bits);
         previous_ = std::move(logical);
       } catch (...) { failed_ = true; throw; }
@@ -523,7 +542,7 @@ namespace diet {
                       std::uint64_t common, bit_view value) {
       require_active();
       try {
-        sort_bit_writer out(output_.data_);
+        sort_bit_writer out(data_);
         encoder_.append_frame(out, frame, spans, common, value);
         encoded_only_ = true;
       } catch (...) { failed_ = true; throw; }
@@ -534,17 +553,13 @@ namespace diet {
     array_type finish() {
       require_active();
       try {
-        encoder_.finish(output_.data_.bit_size);
-        output_.metadata_ = encoder_.metadata;
-        output_.offsets_ = std::move(encoder_.offsets);
-        output_.dictionary_ = std::move(encoder_.dictionary);
-        output_.dictionary_offsets_ = std::move(encoder_.dictionary_offsets);
-        output_.seeds_ = std::move(encoder_.seeds);
-        finished_ = true; return std::move(output_);
+        encoder_.finish(data_.bit_size);
+        auto result = encoder_.take(std::move(data_));
+        finished_ = true; return result;
       } catch (...) { failed_ = true; throw; }
     }
   private:
-    array_type output_;
+    bit_string data_;
     sort_profile_detail::encoder<P, Selector> encoder_;
     bit_string previous_;
     bool failed_ = false, finished_ = false, encoded_only_ = false;
