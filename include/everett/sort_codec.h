@@ -58,19 +58,128 @@ namespace everett {
     std::uint64_t position() const noexcept { return at_; }
     std::uint64_t remaining() const noexcept { return data_.size() - at_; }
     bool empty() const noexcept { return remaining() == 0; }
-    std::uint64_t read_bits(unsigned width) { return profile_detail::read_fixed(data_, at_, width); }
+    std::uint64_t read_bits(unsigned width) {
+      if (width > 64 || width > remaining())
+        error_detail::raise<std::invalid_argument>("truncated backspace remainder");
+      if (!width) return 0;
+      if (!cached_) refill();
+      if (width <= cached_) {
+        auto result = width == 64 ? reservoir_ : reservoir_ >> (64 - width);
+        consume(width);
+        return result;
+      }
+      // The first nonempty fragment is shorter than width, so neither shift
+      // below can be 64. One refill supplies the entire second fragment.
+      auto result = reservoir_ >> (64 - cached_);
+      width -= cached_;
+      consume(cached_);
+      refill();
+      result = (result << width) | (reservoir_ >> (64 - width));
+      consume(width);
+      return result;
+    }
     bit_view take_bits(std::uint64_t count) {
       if (count > remaining()) error_detail::raise<std::invalid_argument>("truncated sort payload");
       auto result = data_.subview(at_, count);
-      at_ += count;
+      skip(count);
       return result;
     }
+    void skip_bits(std::uint64_t count) {
+      if (count > remaining()) error_detail::raise<std::invalid_argument>("truncated sort payload");
+      skip(count);
+    }
     template <class Code = exponential_golomb<0>> std::uint64_t read_count() {
-      return profile_detail::read_backspace<sort_codec_detail::count_policy<Code>>(data_, at_);
+      using policy = sort_codec_detail::count_policy<Code>;
+      if constexpr (policy::backspace_code == bit_backspace_code::exponential_golomb) {
+        auto quotient = read_exponential();
+        if (quotient > (std::numeric_limits<std::uint64_t>::max() >> policy::backspace_parameter))
+          error_detail::raise<std::invalid_argument>("overflowing exponential-Golomb backspace");
+        auto remainder = read_bits(unsigned(policy::backspace_parameter));
+        return (quotient << policy::backspace_parameter) | remainder;
+      } else {
+        constexpr auto modulus = policy::backspace_parameter;
+        constexpr auto width = unsigned(std::bit_width(modulus - 1));
+        constexpr auto cutoff = profile_detail::golomb_cutoff<policy>();
+        constexpr auto limit = std::numeric_limits<std::uint64_t>::max() / modulus;
+        auto quotient = read_zero_run(limit, "truncated backspace remainder", "overflowing Golomb quotient");
+        std::uint64_t remainder = 0;
+        if constexpr (width != 0) {
+          remainder = read_bits(width - 1);
+          if (remainder >= cutoff) remainder = ((remainder << 1) | read_bits(1)) - cutoff;
+        }
+        auto base = quotient * modulus;
+        if (remainder > std::numeric_limits<std::uint64_t>::max() - base)
+          error_detail::raise<std::invalid_argument>("overflowing Golomb backspace");
+        return base + remainder;
+      }
     }
   private:
     bit_view data_;
     std::uint64_t at_ = 0;
+    // Valid bits are left aligned. Refill is lazy: a payload skip need not
+    // touch any payload pages, and an empty input performs no memory access.
+    std::uint64_t reservoir_ = 0;
+    unsigned cached_ = 0;
+    void refill() noexcept {
+      auto offset = data_.offset() + at_;
+      auto shift = unsigned(offset & 7);
+      auto width = 64 - shift;
+      cached_ = unsigned(std::min<std::uint64_t>(remaining(), width));
+      if (cached_ == width)
+        reservoir_ = key_detail::load_big(data_.storage().data() + (offset >> 3)) << shift;
+      else reservoir_ = profile_detail::load_bits(data_, at_, cached_) << (64 - cached_);
+    }
+    void consume(unsigned count) noexcept {
+      reservoir_ = count == 64 ? 0 : reservoir_ << count;
+      cached_ -= count;
+      at_ += count;
+    }
+    void skip(std::uint64_t count) noexcept {
+      if (count <= cached_) consume(unsigned(count));
+      else { at_ += count; cached_ = 0; reservoir_ = 0; }
+    }
+    std::uint64_t read_zero_run(std::uint64_t limit, char const *truncated, char const *overflow) {
+      std::uint64_t zeros = 0;
+      for (;;) {
+        if (empty()) error_detail::raise<std::invalid_argument>(truncated);
+        if (!cached_) refill();
+        auto width = cached_;
+        auto leading = std::min(unsigned(std::countl_zero(reservoir_)), width);
+        if (leading > limit - zeros) {
+          consume(unsigned(limit - zeros + 1));
+          error_detail::raise<std::invalid_argument>(overflow);
+        }
+        zeros += leading;
+        consume(leading);
+        if (leading != width) { consume(1); return zeros; }
+      }
+    }
+    std::uint64_t read_exponential() {
+      if (!empty() && !cached_) refill();
+      auto zeros = unsigned(std::countl_zero(reservoir_));
+      // Decode consecutive short fields directly from the cached word.
+      if (zeros < 32 && 2 * zeros + 1 <= cached_) {
+        auto width = 2 * zeros + 1;
+        auto result = (reservoir_ >> (64 - width)) - 1;
+        consume(width);
+        return result;
+      }
+      return read_exponential_slow();
+    }
+    std::uint64_t read_exponential_slow() {
+      auto zeros = unsigned(read_zero_run(64,
+        "truncated exponential-Golomb count", "overflowing exponential-Golomb count"));
+      if (zeros > remaining()) {
+        skip(remaining());
+        error_detail::raise<std::invalid_argument>("truncated exponential-Golomb count");
+      }
+      auto suffix = read_bits(zeros);
+      if (zeros == 64) {
+        if (suffix) error_detail::raise<std::invalid_argument>("overflowing exponential-Golomb count");
+        return std::numeric_limits<std::uint64_t>::max();
+      }
+      return ((std::uint64_t{1} << zeros) - 1) + suffix;
+    }
   };
 
   // A frame borrows literal bits and keeps the inherited prefix implicit.
