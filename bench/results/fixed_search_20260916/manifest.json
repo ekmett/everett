@@ -1,0 +1,23 @@
+{
+  "description": "Bounded fixed-key lower-bound measurements; raw data unchanged. Source/binary identities are collection-specific.",
+  "collections": {
+    "avx2-selection": {
+      "cases.csv": "e95eab0c7c73754fa06b60677b253431c777a601e5da7cef9ead0325574c819b",
+      "manifest.json": "a62681dd8dad10c48bf20be7c8e1b8f928592c0325466fe4487c84b406100e19",
+      "raw.tar.gz": "ac090ff501e3dd094bb6089c7faba26f296c26c1c6f2841a619293f35af5b076",
+      "summary.csv": "b2183d068d16ef92a5a079b2a6b6dba6be8adc5ebe802a1a0adb0200b2fe0693"
+    },
+    "m2max-dispatch": {
+      "cases.csv": "1b0b8fd6ab9d8e5118ce37030b24eebf2c73b1607b67d78440302b5cd51fb1ed",
+      "manifest.json": "e467f6f6426551256048c3c6a7aa68542b4025d873366c22f62723adb967c8e3",
+      "raw.tar.gz": "9a24059dd0312688e4b0c33a67ef2e7fc0d9d813d525b81bd794e6e46975b1f8",
+      "summary.csv": "cf9d18faeff2f9e7fce40b5cf04719d9a6352d576dd43d8cdf0be2834a9bcf60"
+    },
+    "m2max-selection": {
+      "cases.csv": "9def63085fb8528ca067f3547d356cb74f7042b354020fc0f5ff2d44d789cbae",
+      "manifest.json": "b1d14976b4162295a3ba1dc0f248c19cd947bf4d5c86cfe43e90a778d4c9c813",
+      "raw.tar.gz": "5fa0f79e790fed1dd023b73dc56343210470202071493c5f411917883a31d56d",
+      "summary.csv": "f37465a9ac9b4925fbe658de0a05096862ea4b6a7e72805469984f134891c4bb"
+    }
+  }
+}

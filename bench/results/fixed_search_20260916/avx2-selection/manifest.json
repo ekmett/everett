@@ -1,0 +1,32 @@
+{
+  "platform": "Linux-6.8.0-100-generic-x86_64-with-glibc2.35",
+  "cpu_model": "12th Gen Intel(R) Core(TM) i9-12900K",
+  "affinity_cpu": 4,
+  "compiler": "Ubuntu clang version 20.0.0 (++20241101031257+b74e588e1f46-1~exp1~20241101151424.2024)\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /usr/lib/llvm-20/bin\n",
+  "manifest": {
+    "sources": {
+      "include/everett/fixed_search.h": {
+        "revision": "5263d76",
+        "sha256": "6c9d047152f1170e9f8938105f0a5246a943efb7317b94e16d53df66fc697cce"
+      },
+      "include/everett/error_detail.h": {
+        "revision": "5263d76",
+        "sha256": "ea7dd3fdc92a3d3bb3cfbfe92b1da8b34bc1c082af2a4f4fc0bc87ee6624422a"
+      },
+      "bench/fixed_search.cc": {
+        "revision": "cb2b029a657d2bbcd7135265cb3060b2b11cd961",
+        "sha256": "670f775a6769e5a918075493908a43065ffe119546e5a21ab88c14d1e9c4e1dd"
+      }
+    },
+    "public_benchmark_revision": "cb2b029a657d2bbcd7135265cb3060b2b11cd961"
+  },
+  "binary_sha256": "a73cc5f823568006803130445bfbacf6fdb4cdfaf820ab6d59d127326594dbaf",
+  "flags": "-std=c++20 -O3 -DNDEBUG -march=x86-64 -mavx2 -mpopcnt -mno-avx512f -Wall -Wextra -Werror -Iinclude",
+  "command": "fixed-search 3 65536",
+  "processes": 3,
+  "raw_sha256": {
+    "process-0.csv": "ce10a5c42696a1fae976d4b4822f0a2f8dbf2797f19c5dda265167161cf93966",
+    "process-1.csv": "7fcbe7299c83111a9b94c4ceed69f4b570702e58b7811ed3cdb9ea219b9b0109",
+    "process-2.csv": "34f1e40927c8e90a6bb0fa68ae2df7301a0c72ead17732f38680457cdea19870"
+  }
+}

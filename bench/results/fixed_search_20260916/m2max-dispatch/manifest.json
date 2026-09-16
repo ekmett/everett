@@ -1,0 +1,19 @@
+{
+  "host": "Apple M2 Max",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "flags": "-std=c++20 -O3 -DNDEBUG -Wall -Wextra -Werror -Iinclude",
+  "source_revision": "cb2b029 with measured dispatch edit",
+  "sources": {
+    "include/everett/fixed_search.h": "e46f9607c013fe1b7d73b2392db9a70cfe0d6813aad922e633d5f4fd27fc6576",
+    "include/everett/error_detail.h": "ea7dd3fdc92a3d3bb3cfbfe92b1da8b34bc1c082af2a4f4fc0bc87ee6624422a",
+    "bench/fixed_search.cc": "670f775a6769e5a918075493908a43065ffe119546e5a21ab88c14d1e9c4e1dd"
+  },
+  "binary_sha256": "56c675249eaa04f29b618576d06eba25c64b38189c9f2dda91bb17d533028a86",
+  "command": "fixed-search 3 65536",
+  "processes": 3,
+  "raw_sha256": {
+    "process-0.csv": "f4c5655c64bcea9188a83e579702ae257539d7b36846fe38c8389283f2b997d4",
+    "process-1.csv": "2397443bfe871ae912da845d53e0417192e02ada2bd467ec55edffcd1c1bc519",
+    "process-2.csv": "47d2fc8741f2ec731c1141328c77ff75b12d7da8787561345e2fdc89804d0b2b"
+  }
+}

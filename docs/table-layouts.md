@@ -80,6 +80,9 @@ the beginning of a key array does not align every projected search window.
 Khuong and Morin's [array-layout study](https://arxiv.org/abs/1509.05053)
 motivates comparing flat branch-free search with alternatives; its machine
 measurements do not establish the best cutoff for these short windows.
+The [bounded search measurements](../bench/fixed_search.md) select conservative
+NEON and AVX2 cases. Other windows use scalar binary search by default; the
+explicit variants remain available for measuring a different host or workload.
 
 Logical keys and shared machinery
 --------------------------------

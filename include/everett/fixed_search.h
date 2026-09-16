@@ -200,7 +200,6 @@ namespace everett {
     static_assert(Words == 1 || Words == 2 || Words == 4, "fixed keys have 1, 2, or 4 words");
     using key_type = std::array<std::uint32_t, Words>;
     static constexpr std::size_t key_bytes = Words * 4;
-    static constexpr std::size_t simd_cutoff = 16; // Provisional, not a measured crossover.
     static constexpr std::size_t explicit_simd_limit = 32;
     fixed_key_view() = default;
     explicit fixed_key_view(std::span<std::byte const> bytes) : bytes_(bytes) {
@@ -223,10 +222,10 @@ namespace everett {
       return fixed_key_view(bytes_.subspan(first * key_bytes, count * key_bytes));
     }
     std::size_t lower_bound(key_type const &query) const noexcept {
-      return size() <= simd_cutoff ? simd_bound<false>(query) : binary_bound<false>(query);
+      return prefer_simd() ? simd_bound<false>(query) : binary_bound<false>(query);
     }
     std::size_t upper_bound(key_type const &query) const noexcept {
-      return size() <= simd_cutoff ? simd_bound<true>(query) : binary_bound<true>(query);
+      return prefer_simd() ? simd_bound<true>(query) : binary_bound<true>(query);
     }
     std::size_t lower_bound_binary(key_type const &query) const noexcept { return binary_bound<false>(query); }
     std::size_t upper_bound_binary(key_type const &query) const noexcept { return binary_bound<true>(query); }
@@ -234,6 +233,21 @@ namespace everett {
     std::size_t upper_bound_simd(key_type const &query) const noexcept { return simd_bound<true>(query); }
   private:
     std::span<std::byte const> bytes_;
+    bool prefer_simd() const noexcept {
+      // Measured lower-bound choices; explicit methods remain available for
+      // other hosts/workloads. Complete 2^m-1 scalar windows are especially cheap.
+#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+      if constexpr (Words == 4)
+        return (size() >= 2 && size() <= 4) || size() == 15 || size() == 16 || size() == 32;
+      else return size() == 4;
+#elif defined(__AVX2__) && !defined(__AVX512F__)
+      if constexpr (Words == 1) return size() == 4;
+      else if constexpr (Words == 2) return size() >= 2 && size() <= 4;
+      else return size() == 2 || size() == 4;
+#else
+      return false;
+#endif
+    }
     template <bool Upper> std::size_t binary_bound(key_type const &query) const noexcept {
       auto count = size();
       std::size_t first = 0;

@@ -24,7 +24,7 @@
     {
       "path": "bench/README.md",
       "pre_rename_sha256": "58bfcf60e14cbea648a99b1d8d857e7e1845c692a490b4d0d881659d5dbe1d77",
-      "normalized_sha256": "25e047b10fd8f07f56b3bee2a38abea202c19d0ccac563321e7aa33a125fea5a"
+      "normalized_sha256": "8fb3e9d08578210fc4eea42f872089055744a1fdf121b02491f9b445aafb987e"
     },
     {
       "path": "bench/bitmap512.h",
@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "7dc054c67d830c90dbb2f2815bb987accf8494dc8991fb87464f463becf69899"
+      "normalized_sha256": "cdb2377647ba0245f253dfe3e8d39b142b16a16c0841c6d76f0eafab2bf99232"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "31c2be27e9cba6c667c52fe49e3238c4e04d7c981920360a659bfdb446fd982a"
+      "normalized_sha256": "35b98b89f235f9fb0b122c0fc9c17433c9eadc3b333f39467eeebb4463ae086e"
     }
   ],
   "subsequent_updates": [
@@ -1068,6 +1068,14 @@
     },
     {
       "scope": "Link the reviewed same-offset select comparison and its measured boundaries; original benchmark identities are unchanged.",
+      "artifacts": [
+        "bench/README.md",
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Add forward ranges and sweep deletion plus measured bounded fixed-key searches. Refresh current documentation fingerprints; original benchmark measurement identities are unchanged.",
       "artifacts": [
         "bench/README.md",
         "bench/results/publication_normalization.json",

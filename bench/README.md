@@ -20,6 +20,10 @@ New measurements of Everett should record their own source hashes and results.
 The [implementation ledger](../docs/implementation.md) links the accepted
 measurements and describes the current library.
 
+The [bounded fixed-key search comparison](fixed_search.md) measures scalar
+and SIMD windows on NEON and AVX2, with protected-page correctness checks and
+conservative automatic choices.
+
 Optional GPU construction
 -------------------------
 
