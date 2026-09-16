@@ -27,8 +27,10 @@ The free function `diet::connect(directory, name)` provides the same operation
 without keeping a fridge object.
 
 The ordinary `active_engine<P>` uses the redundant scheduler. Bit registries
-write sort-owned native records and stream both native merges and fractional
-indexes to files. Byte registries use the same scheduler with byte-aligned
+write sort-owned native records, retaining small private merge and index
+outputs under a shared allowance and streaming larger ones to files.
+Publication seals every retained output needed by the durable snapshot.
+Byte registries use the same scheduler with byte-aligned
 opaque records. Each admitted item pays structural merge and index work. A
 registry containing only the optional-string sort also [rebuilds obsolete history](replacement-rebuild.md),
 so deletion reduces the current table's physical generation as well as its live

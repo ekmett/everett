@@ -33,6 +33,7 @@ for integration. These are development responsibilities.
 | Sort-owned record codec | `sort_codec.h`; `tests/sort_codec.cc` | heterogeneous FC/raw/integer grammars, optional/niche/no-payload values, typed stream anchors, control parsing and borrowed-role output |
 | Sort-owned physical profiles | `sort_profile.h`, `sort_profile_file.h`, `sort_profile_merge.h`; `tests/sort_profile.cc` | KV03 native framing, shared selector seeds, mapped cascading queries, prefix-preserving merges and protected-page entry |
 | Sort-owned runtime and persistence | `sort_runtime.h`, `sort_runtime_store.h`; sort-runtime and catalog tests | direct heterogeneous records, chronological composition, complete redundant frontiers and metadata-only mapped recovery |
+| Adaptive encoded outputs | `sort_profile_adaptive.h`, `cola_adaptive_index.h`, `output_budget.h`; adaptive native/index and allowance tests | bounded retained capacities, lifetime leases, exact streamed bytes, lazy reservations and acknowledged seals |
 | Replacement rebuilding | `replacement_rebuild.h`; replacement and durable-rebuild tests | paid physical scans, FIFO replay, carried generation debt, active saves/forks and gated recovery after interruption |
 | Resolved scans | `typed_scan.h`; typed and mapped scan tests | ordered rows, newest replacements, chronological arrows, tombstone elision, bounded traversal and snapshot ownership |
 | Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `fridge.h`; profile/blob/fridge tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
@@ -134,11 +135,22 @@ through a 64 KiB buffer. Sparse offsets, block seeds and the file's sort
 dictionary remain in memory until finalization. Tests compare complete bytes
 with the owning encoder, bound allocation for large values and unary controls,
 and preserve mapped inputs while builders pause or their filenames are unlinked.
-The execution-owned `sort_runtime_context` now connects these writers and
-the dual-stream IX03 writer to the runtime. An acknowledged output retains
-its mapped representation through a shared owner binding. Native payloads
-use a 64 KiB buffer; indexes use two such buffers and a private secondary
-spool. Sparse navigation metadata remains in memory. The
+The execution-owned `sort_runtime_context` connects those encoders to adaptive
+native and index outputs. Small completed encodings share an 8 MiB retention
+allowance, with a 128 KiB ceiling per output. Charges follow actual vector
+capacities and the output's shared lifetime. An intermediate output that is
+merged away before publication needs no file or catalog reservation.
+Publication still seals and pins every output in its complete checkpoint.
+The first payload spill reserves a physical output and continues the same
+encoder; composition is never replayed. Either zero output limit selects eager
+streaming. An acknowledged file retains its mapped representation through a
+shared owner binding. Native payloads use a 64 KiB buffer; indexes use two such
+buffers and a private secondary spool after spilling. Sparse navigation and
+construction metadata remain in memory outside the retention allowance.
+Focused tests compare full KV03/IX03 bytes, all eight bit tails, expanding
+composition, quota retirement, metadata-only spills and pre/post-commit failures.
+The [native](adaptive-native.md) and [index](adaptive-index.md) guides describe
+retention and spill selection. The
 [context guide](sort-runtime-context.md) gives the exact memory and failure
 boundaries.
 

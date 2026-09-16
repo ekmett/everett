@@ -51,7 +51,17 @@ namespace {
   };
   using P = string_policy;
   using strings = unsorted<std::optional<std::string>>;
-  using family = streaming_sort_runtime_family<P, registry_selector<string_registry>, random_object_ids, catalog_ops>;
+  // These diagnostics deliberately fail the executor's separate connection.
+  // Small adaptive outputs seal through the publication adapter instead, so
+  // force streaming here to retain that distinct operation-identity boundary.
+  struct eager_storage : sort_file_runtime_storage<P, registry_selector<string_registry>, random_object_ids, catalog_ops> {
+    using base = sort_file_runtime_storage<P, registry_selector<string_registry>, random_object_ids, catalog_ops>;
+    using base::base;
+    static eager_storage open(std::filesystem::path const & root) {
+      return eager_storage(context_type::open(root, {}, {}, {}, {}, {0, 0}));
+    }
+  };
+  using family = sort_runtime_family<P, registry_selector<string_registry>, eager_storage>;
   using core = typed_engine<P, wrapping_fingerprint_algebra, 256, family>;
   using engine = persistent_engine<core>;
   using store = engine::store_type;

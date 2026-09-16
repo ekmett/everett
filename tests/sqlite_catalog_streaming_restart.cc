@@ -97,12 +97,12 @@ namespace {
       std::memcpy(operation.data(), id, operation.size());
       std::optional<event> point;
       auto phase = state->current;
-      if (std::strcmp(kind, "seal") == 0 && (phase == stage::admission || phase == stage::service)) {
+      bool admission = phase == stage::admission || phase == stage::logical_publication;
+      if (std::strcmp(kind, "seal") == 0) {
         if (native != 0) ::_exit(95);
-        point = phase == stage::admission ? event::admission_native : event::service_native;
+        point = admission ? event::admission_native : event::service_native;
       } else if (std::strcmp(kind, "seal_cola_pair") == 0) {
-        if (phase == stage::admission) point = event::admission_index_pair;
-        if (phase == stage::service) point = event::service_index_pair;
+        point = admission ? event::admission_index_pair : event::service_index_pair;
       } else if (std::strcmp(kind, "publish_tap") == 0) {
         if (phase == stage::logical_publication) point = event::logical_publication;
         if (phase == stage::equivalent_publication) point = event::equivalent_publication;
@@ -267,7 +267,14 @@ namespace {
     auto initial = saved.find("latest");
     check(bool(initial), "missing baseline");
     auto meta = engine::metadata_type::decode(initial->semantic);
-    auto active = runtime::from_snapshot(initial->snapshot, family::storage_type::open(root));
+    // Ordinary small outputs stay private until publication. The four syscall
+    // cuts force streaming so they still exercise the context's FileOps hooks;
+    // graph publication has its own independently tested file writer.
+    bool eager = state->selected == event::native_barrier || state->selected == event::index_barrier;
+    auto storage = family::storage_type::open(root, {}, {}, {}, {},
+      eager ? runtime_output_options{0, 0} : runtime_output_options{});
+    auto context = storage.context();
+    auto active = runtime::from_snapshot(initial->snapshot, std::move(storage));
     while (active.pending()) active.advance(100'000);
     state->generation = initial->head.timeline.generation;
     state->enabled = true;
@@ -279,6 +286,8 @@ namespace {
     ++meta.mutations;
     auto frontier = active.checkpoint();
     meta.validate(frontier.admissions());
+    if (!eager) check(!context->sealed_outputs() && !context->sealed_indexes() &&
+      context->retained_output_bytes(), "small admission did not retain its private encoding");
     state->current = stage::logical_publication;
     auto head = saved.publish(initial->head, frontier, meta.encode());
     state->generation = head.head.timeline.generation;
@@ -402,7 +411,7 @@ int main() {
         std::cerr << names[n] << (after ? " after\n" : " before\n");
         run_case(baseline.root, event(n), after);
       }
-    std::cout << "16 streamed sort-owned process interruption cuts passed\n";
+    std::cout << "12 adaptive publication and 4 streamed barrier interruption cuts passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';
     return 1;
