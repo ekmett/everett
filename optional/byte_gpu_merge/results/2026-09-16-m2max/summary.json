@@ -1,0 +1,554 @@
+[
+  {
+    "assembly_ms": {
+      "median": 0.9532909999999999,
+      "process_medians": [
+        0.661333,
+        0.9532909999999999,
+        1.022542
+      ],
+      "trial_max": 1.1097920000000001,
+      "trial_min": 0.575792
+    },
+    "case": "fixed-131072",
+    "common_value_bytes": 17,
+    "cpu_ms": {
+      "median": 11.907875,
+      "process_medians": [
+        11.937917,
+        11.896083,
+        11.907875
+      ],
+      "trial_max": 12.699333,
+      "trial_min": 11.615875
+    },
+    "cpu_over_gpu": 2.006762023129911,
+    "emit_ms": {
+      "median": 0.966917,
+      "process_medians": [
+        0.927125,
+        0.971042,
+        0.966917
+      ],
+      "trial_max": 1.316,
+      "trial_min": 0.842875
+    },
+    "gpu_complete_ms": {
+      "median": 5.933875,
+      "process_medians": [
+        5.584166,
+        5.933875,
+        5.941417
+      ],
+      "trial_max": 6.226875,
+      "trial_min": 5.369333
+    },
+    "gpu_device_ms": {
+      "median": 2.65970837790519,
+      "process_medians": [
+        2.6736666914075613,
+        2.65970837790519,
+        2.6586250169202685
+      ],
+      "trial_max": 2.833333390299231,
+      "trial_min": 2.617791702505201
+    },
+    "input_a_bytes": 2632416,
+    "input_b_bytes": 2632416,
+    "newer": 131072,
+    "observations": 15,
+    "older": 131072,
+    "order_ms": {
+      "median": 1.895417,
+      "process_medians": [
+        2.033,
+        1.849,
+        1.895417
+      ],
+      "trial_max": 2.143792,
+      "trial_min": 1.798416
+    },
+    "output_bytes": 4394392,
+    "output_records": 218881,
+    "parse_ms": {
+      "median": 1.248,
+      "process_medians": [
+        1.248,
+        1.601334,
+        1.200666
+      ],
+      "trial_max": 1.7465,
+      "trial_min": 1.026292
+    },
+    "size_ms": {
+      "median": 0.689708,
+      "process_medians": [
+        0.579333,
+        0.709166,
+        0.689708
+      ],
+      "trial_max": 0.755792,
+      "trial_min": 0.485042
+    }
+  },
+  {
+    "assembly_ms": {
+      "median": 0.39025,
+      "process_medians": [
+        0.428708,
+        0.38475000000000004,
+        0.39025
+      ],
+      "trial_max": 0.814625,
+      "trial_min": 0.36650000000000005
+    },
+    "case": "fixed-32768",
+    "common_value_bytes": 17,
+    "cpu_ms": {
+      "median": 3.145875,
+      "process_medians": [
+        3.12775,
+        3.145875,
+        3.166542
+      ],
+      "trial_max": 3.360666,
+      "trial_min": 3.009958
+    },
+    "cpu_over_gpu": 0.912652547550623,
+    "emit_ms": {
+      "median": 0.392209,
+      "process_medians": [
+        0.406625,
+        0.391417,
+        0.392209
+      ],
+      "trial_max": 0.686375,
+      "trial_min": 0.3775
+    },
+    "gpu_complete_ms": {
+      "median": 3.446958,
+      "process_medians": [
+        3.778875,
+        3.358625,
+        3.446958
+      ],
+      "trial_max": 3.91975,
+      "trial_min": 3.150709
+    },
+    "gpu_device_ms": {
+      "median": 1.617166679352522,
+      "process_medians": [
+        1.6355000552721322,
+        1.617166679352522,
+        1.6130416770465672
+      ],
+      "trial_max": 1.7157499678432941,
+      "trial_min": 1.6057500033639371
+    },
+    "input_a_bytes": 658304,
+    "input_b_bytes": 658304,
+    "newer": 32768,
+    "observations": 15,
+    "older": 32768,
+    "order_ms": {
+      "median": 1.277709,
+      "process_medians": [
+        1.277709,
+        1.325042,
+        1.274042
+      ],
+      "trial_max": 1.609125,
+      "trial_min": 1.253833
+    },
+    "output_bytes": 1098640,
+    "output_records": 54712,
+    "parse_ms": {
+      "median": 0.910625,
+      "process_medians": [
+        0.929625,
+        0.76625,
+        0.910625
+      ],
+      "trial_max": 1.004917,
+      "trial_min": 0.746834
+    },
+    "size_ms": {
+      "median": 0.329167,
+      "process_medians": [
+        0.334875,
+        0.315583,
+        0.329167
+      ],
+      "trial_max": 0.894625,
+      "trial_min": 0.300583
+    }
+  },
+  {
+    "assembly_ms": {
+      "median": 0.300333,
+      "process_medians": [
+        0.300333,
+        0.292,
+        0.376542
+      ],
+      "trial_max": 0.6688339999999999,
+      "trial_min": 0.273
+    },
+    "case": "fixed-4096",
+    "common_value_bytes": 17,
+    "cpu_ms": {
+      "median": 0.634917,
+      "process_medians": [
+        0.645417,
+        0.566916,
+        0.634917
+      ],
+      "trial_max": 0.802625,
+      "trial_min": 0.534208
+    },
+    "cpu_over_gpu": 0.21128980837668945,
+    "emit_ms": {
+      "median": 0.265375,
+      "process_medians": [
+        0.268833,
+        0.258084,
+        0.265375
+      ],
+      "trial_max": 0.535459,
+      "trial_min": 0.239167
+    },
+    "gpu_complete_ms": {
+      "median": 3.004958,
+      "process_medians": [
+        3.004958,
+        2.929291,
+        3.155041
+      ],
+      "trial_max": 3.655875,
+      "trial_min": 2.400209
+    },
+    "gpu_device_ms": {
+      "median": 1.2687083217315376,
+      "process_medians": [
+        1.2548333615995944,
+        1.2691249139606953,
+        1.2687083217315376
+      ],
+      "trial_max": 1.5209167613647878,
+      "trial_min": 1.2506666826084256
+    },
+    "input_a_bytes": 82536,
+    "input_b_bytes": 82536,
+    "newer": 4096,
+    "observations": 15,
+    "older": 4096,
+    "order_ms": {
+      "median": 1.084208,
+      "process_medians": [
+        1.089375,
+        1.084208,
+        1.015917
+      ],
+      "trial_max": 1.388333,
+      "trial_min": 0.982958
+    },
+    "output_bytes": 137568,
+    "output_records": 6839,
+    "parse_ms": {
+      "median": 0.836875,
+      "process_medians": [
+        0.830875,
+        0.836875,
+        0.8445
+      ],
+      "trial_max": 1.485917,
+      "trial_min": 0.569875
+    },
+    "size_ms": {
+      "median": 0.279625,
+      "process_medians": [
+        0.279625,
+        0.25225,
+        0.291084
+      ],
+      "trial_max": 0.597667,
+      "trial_min": 0.235834
+    }
+  },
+  {
+    "assembly_ms": {
+      "median": 4.532833,
+      "process_medians": [
+        4.532833,
+        4.410083,
+        4.667041
+      ],
+      "trial_max": 5.176290999999999,
+      "trial_min": 4.097709
+    },
+    "case": "variable-131072",
+    "common_value_bytes": 0,
+    "cpu_ms": {
+      "median": 36.047875,
+      "process_medians": [
+        56.465125,
+        36.047875,
+        29.156583
+      ],
+      "trial_max": 81.849833,
+      "trial_min": 28.0825
+    },
+    "cpu_over_gpu": 2.068250020210375,
+    "emit_ms": {
+      "median": 7.808084,
+      "process_medians": [
+        7.996375,
+        7.808084,
+        7.725084
+      ],
+      "trial_max": 8.166583,
+      "trial_min": 7.605375
+    },
+    "gpu_complete_ms": {
+      "median": 17.429167,
+      "process_medians": [
+        17.504625,
+        17.39125,
+        17.429167
+      ],
+      "trial_max": 18.059583,
+      "trial_min": 16.996292
+    },
+    "gpu_device_ms": {
+      "median": 8.259166614152491,
+      "process_medians": [
+        8.509083301760256,
+        8.259166614152491,
+        8.248458383604884
+      ],
+      "trial_max": 8.616416656877846,
+      "trial_min": 8.152916678227484
+    },
+    "input_a_bytes": 31265784,
+    "input_b_bytes": 31266112,
+    "newer": 131072,
+    "observations": 15,
+    "older": 131072,
+    "order_ms": {
+      "median": 2.046916,
+      "process_medians": [
+        2.046916,
+        2.083042,
+        1.95925
+      ],
+      "trial_max": 2.418584,
+      "trial_min": 1.906292
+    },
+    "output_bytes": 52212272,
+    "output_records": 218881,
+    "parse_ms": {
+      "median": 2.256334,
+      "process_medians": [
+        1.945833,
+        2.256334,
+        2.300166
+      ],
+      "trial_max": 2.72075,
+      "trial_min": 1.759834
+    },
+    "size_ms": {
+      "median": 0.716334,
+      "process_medians": [
+        0.716334,
+        0.537625,
+        0.721542
+      ],
+      "trial_max": 1.109167,
+      "trial_min": 0.487041
+    }
+  },
+  {
+    "assembly_ms": {
+      "median": 1.304958,
+      "process_medians": [
+        1.227124,
+        1.304958,
+        1.421166
+      ],
+      "trial_max": 1.554416,
+      "trial_min": 1.189626
+    },
+    "case": "variable-32768",
+    "common_value_bytes": 0,
+    "cpu_ms": {
+      "median": 7.128875,
+      "process_medians": [
+        7.128875,
+        7.274291,
+        7.102
+      ],
+      "trial_max": 7.441166,
+      "trial_min": 6.652958
+    },
+    "cpu_over_gpu": 1.0828738874107362,
+    "emit_ms": {
+      "median": 2.139458,
+      "process_medians": [
+        2.134875,
+        2.17525,
+        2.139458
+      ],
+      "trial_max": 2.425417,
+      "trial_min": 2.066042
+    },
+    "gpu_complete_ms": {
+      "median": 6.583292,
+      "process_medians": [
+        6.416542,
+        6.583292,
+        6.841958
+      ],
+      "trial_max": 7.239792,
+      "trial_min": 6.269167
+    },
+    "gpu_device_ms": {
+      "median": 3.021083364728838,
+      "process_medians": [
+        2.990624983794987,
+        3.0253749573603272,
+        3.021083364728838
+      ],
+      "trial_max": 3.183666674885899,
+      "trial_min": 2.9748749220743775
+    },
+    "input_a_bytes": 7815552,
+    "input_b_bytes": 7816512,
+    "newer": 32768,
+    "observations": 15,
+    "older": 32768,
+    "order_ms": {
+      "median": 1.4215,
+      "process_medians": [
+        1.271959,
+        1.4215,
+        1.496459
+      ],
+      "trial_max": 2.027,
+      "trial_min": 1.261792
+    },
+    "output_bytes": 13050112,
+    "output_records": 54712,
+    "parse_ms": {
+      "median": 1.120333,
+      "process_medians": [
+        1.116166,
+        1.194291,
+        1.120333
+      ],
+      "trial_max": 1.637541,
+      "trial_min": 1.031041
+    },
+    "size_ms": {
+      "median": 0.390625,
+      "process_medians": [
+        0.386083,
+        0.390625,
+        0.605583
+      ],
+      "trial_max": 0.827084,
+      "trial_min": 0.323334
+    }
+  },
+  {
+    "assembly_ms": {
+      "median": 0.391417,
+      "process_medians": [
+        0.391417,
+        0.404,
+        0.36266699999999996
+      ],
+      "trial_max": 0.806709,
+      "trial_min": 0.34650000000000003
+    },
+    "case": "variable-4096",
+    "common_value_bytes": 0,
+    "cpu_ms": {
+      "median": 1.098167,
+      "process_medians": [
+        1.184041,
+        1.098167,
+        1.045584
+      ],
+      "trial_max": 1.432958,
+      "trial_min": 0.930292
+    },
+    "cpu_over_gpu": 0.3666872242959791,
+    "emit_ms": {
+      "median": 0.460792,
+      "process_medians": [
+        0.460792,
+        0.487292,
+        0.444541
+      ],
+      "trial_max": 0.7985,
+      "trial_min": 0.422417
+    },
+    "gpu_complete_ms": {
+      "median": 2.994833,
+      "process_medians": [
+        3.106083,
+        2.949375,
+        2.994833
+      ],
+      "trial_max": 3.738291,
+      "trial_min": 2.471541
+    },
+    "gpu_device_ms": {
+      "median": 1.473166630603373,
+      "process_medians": [
+        1.4830000000074506,
+        1.471708295866847,
+        1.473166630603373
+      ],
+      "trial_max": 1.6156249330379069,
+      "trial_min": 1.1042499099858105
+    },
+    "input_a_bytes": 976248,
+    "input_b_bytes": 977320,
+    "newer": 4096,
+    "observations": 15,
+    "older": 4096,
+    "order_ms": {
+      "median": 1.016083,
+      "process_medians": [
+        1.01525,
+        1.0215,
+        1.016083
+      ],
+      "trial_max": 1.388708,
+      "trial_min": 0.798458
+    },
+    "output_bytes": 1631720,
+    "output_records": 6839,
+    "parse_ms": {
+      "median": 0.906292,
+      "process_medians": [
+        0.928667,
+        0.715333,
+        0.906292
+      ],
+      "trial_max": 0.999708,
+      "trial_min": 0.590708
+    },
+    "size_ms": {
+      "median": 0.259417,
+      "process_medians": [
+        0.259417,
+        0.268416,
+        0.256333
+      ],
+      "trial_max": 0.596958,
+      "trial_min": 0.236125
+    }
+  }
+]

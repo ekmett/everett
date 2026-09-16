@@ -1,0 +1,326 @@
+[
+  {
+    "bytes": {
+      "cpu": 4394392,
+      "gpu": 4394392,
+      "newer": 2632416,
+      "older": 2632416,
+      "oracle": 4394392
+    },
+    "case": "fixed-131072",
+    "process": 0,
+    "sha256": {
+      "cpu": "05a772bfa124bd87051817122b47b3f6d25d64df16062581b8faffd63805b8bb",
+      "gpu": "05a772bfa124bd87051817122b47b3f6d25d64df16062581b8faffd63805b8bb",
+      "newer": "b07ff66c8e7453a5a21c34cbd6c091d9f1c7216bd1803fe5ec46f682fe42b83b",
+      "older": "1b4b294ecd79dc34e4f811e8d79ff56b45e3c8e7638bf636305ebcc27bc6fc7d",
+      "oracle": "05a772bfa124bd87051817122b47b3f6d25d64df16062581b8faffd63805b8bb"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 1098640,
+      "gpu": 1098640,
+      "newer": 658304,
+      "older": 658304,
+      "oracle": 1098640
+    },
+    "case": "fixed-32768",
+    "process": 0,
+    "sha256": {
+      "cpu": "241486de3a29514fde68c3523ae6a0104234b75f8eb81daafc818631c2e3ced9",
+      "gpu": "241486de3a29514fde68c3523ae6a0104234b75f8eb81daafc818631c2e3ced9",
+      "newer": "f4fe7bcc9609934b2dded5f3e0e9a1fe40a95d5ba7d540421d22ac06b97c02b7",
+      "older": "3b8c50bc26e402a831e0ec5ac22fb92419bc708c16dc50ac4839996ac75b6539",
+      "oracle": "241486de3a29514fde68c3523ae6a0104234b75f8eb81daafc818631c2e3ced9"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 137568,
+      "gpu": 137568,
+      "newer": 82536,
+      "older": 82536,
+      "oracle": 137568
+    },
+    "case": "fixed-4096",
+    "process": 0,
+    "sha256": {
+      "cpu": "1fcd0389f5abc90c942a01aeafc7cf15176f290e114e7ceb2d82cca470fbf670",
+      "gpu": "1fcd0389f5abc90c942a01aeafc7cf15176f290e114e7ceb2d82cca470fbf670",
+      "newer": "3170e56ac7270a6fdc1cdce108e402ce27bebbf41a707be6dbc9b1824ec18fc3",
+      "older": "38232bcb0e1e340a1176a059f8ae5a0c366dad9b433898c3201ea5528380b561",
+      "oracle": "1fcd0389f5abc90c942a01aeafc7cf15176f290e114e7ceb2d82cca470fbf670"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 52212272,
+      "gpu": 52212272,
+      "newer": 31266112,
+      "older": 31265784,
+      "oracle": 52212272
+    },
+    "case": "variable-131072",
+    "process": 0,
+    "sha256": {
+      "cpu": "b431bd62d558d5a351e4b21fcb81da229e793323ff995ee27a96926f3fb03e36",
+      "gpu": "b431bd62d558d5a351e4b21fcb81da229e793323ff995ee27a96926f3fb03e36",
+      "newer": "0327aaac28f8891eb7d248735fef7c8d5d05ac02330f029a470d1ce929bc9f1c",
+      "older": "c2c6bea7b81b3b9edf82277b22491803e736dbbe66c97ec660df6ea8f7cf9dc5",
+      "oracle": "b431bd62d558d5a351e4b21fcb81da229e793323ff995ee27a96926f3fb03e36"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 13050112,
+      "gpu": 13050112,
+      "newer": 7816512,
+      "older": 7815552,
+      "oracle": 13050112
+    },
+    "case": "variable-32768",
+    "process": 0,
+    "sha256": {
+      "cpu": "cbb2eb36e988ec8cb955c20f932563adba53dde9683caf9542de9ed09bb91102",
+      "gpu": "cbb2eb36e988ec8cb955c20f932563adba53dde9683caf9542de9ed09bb91102",
+      "newer": "c370f57474f4b5c3fce174bdd1524c2df3f44860b40bb2f60b65f8e029cf8848",
+      "older": "cfe7d9d8f4d84a25edf96bfa74701b4ea23fad6289d028dd1d47c0ee00b81e08",
+      "oracle": "cbb2eb36e988ec8cb955c20f932563adba53dde9683caf9542de9ed09bb91102"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 1631720,
+      "gpu": 1631720,
+      "newer": 977320,
+      "older": 976248,
+      "oracle": 1631720
+    },
+    "case": "variable-4096",
+    "process": 0,
+    "sha256": {
+      "cpu": "bc6f3c4e817dcda9c5a3da4e38532f96a18524adb7de8b004aa7f6c0a9979f52",
+      "gpu": "bc6f3c4e817dcda9c5a3da4e38532f96a18524adb7de8b004aa7f6c0a9979f52",
+      "newer": "0cb2731c03e9e574be1852fb6212a122bd7115d44e5d06c047ce202f6f86ffcb",
+      "older": "b3435e3cd0e272bb04f7f7822786f88e6e62ae4a7f6d6c403808358bad1db3e3",
+      "oracle": "bc6f3c4e817dcda9c5a3da4e38532f96a18524adb7de8b004aa7f6c0a9979f52"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 4394392,
+      "gpu": 4394392,
+      "newer": 2632416,
+      "older": 2632416,
+      "oracle": 4394392
+    },
+    "case": "fixed-131072",
+    "process": 1,
+    "sha256": {
+      "cpu": "05a772bfa124bd87051817122b47b3f6d25d64df16062581b8faffd63805b8bb",
+      "gpu": "05a772bfa124bd87051817122b47b3f6d25d64df16062581b8faffd63805b8bb",
+      "newer": "b07ff66c8e7453a5a21c34cbd6c091d9f1c7216bd1803fe5ec46f682fe42b83b",
+      "older": "1b4b294ecd79dc34e4f811e8d79ff56b45e3c8e7638bf636305ebcc27bc6fc7d",
+      "oracle": "05a772bfa124bd87051817122b47b3f6d25d64df16062581b8faffd63805b8bb"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 1098640,
+      "gpu": 1098640,
+      "newer": 658304,
+      "older": 658304,
+      "oracle": 1098640
+    },
+    "case": "fixed-32768",
+    "process": 1,
+    "sha256": {
+      "cpu": "241486de3a29514fde68c3523ae6a0104234b75f8eb81daafc818631c2e3ced9",
+      "gpu": "241486de3a29514fde68c3523ae6a0104234b75f8eb81daafc818631c2e3ced9",
+      "newer": "f4fe7bcc9609934b2dded5f3e0e9a1fe40a95d5ba7d540421d22ac06b97c02b7",
+      "older": "3b8c50bc26e402a831e0ec5ac22fb92419bc708c16dc50ac4839996ac75b6539",
+      "oracle": "241486de3a29514fde68c3523ae6a0104234b75f8eb81daafc818631c2e3ced9"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 137568,
+      "gpu": 137568,
+      "newer": 82536,
+      "older": 82536,
+      "oracle": 137568
+    },
+    "case": "fixed-4096",
+    "process": 1,
+    "sha256": {
+      "cpu": "1fcd0389f5abc90c942a01aeafc7cf15176f290e114e7ceb2d82cca470fbf670",
+      "gpu": "1fcd0389f5abc90c942a01aeafc7cf15176f290e114e7ceb2d82cca470fbf670",
+      "newer": "3170e56ac7270a6fdc1cdce108e402ce27bebbf41a707be6dbc9b1824ec18fc3",
+      "older": "38232bcb0e1e340a1176a059f8ae5a0c366dad9b433898c3201ea5528380b561",
+      "oracle": "1fcd0389f5abc90c942a01aeafc7cf15176f290e114e7ceb2d82cca470fbf670"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 52212272,
+      "gpu": 52212272,
+      "newer": 31266112,
+      "older": 31265784,
+      "oracle": 52212272
+    },
+    "case": "variable-131072",
+    "process": 1,
+    "sha256": {
+      "cpu": "b431bd62d558d5a351e4b21fcb81da229e793323ff995ee27a96926f3fb03e36",
+      "gpu": "b431bd62d558d5a351e4b21fcb81da229e793323ff995ee27a96926f3fb03e36",
+      "newer": "0327aaac28f8891eb7d248735fef7c8d5d05ac02330f029a470d1ce929bc9f1c",
+      "older": "c2c6bea7b81b3b9edf82277b22491803e736dbbe66c97ec660df6ea8f7cf9dc5",
+      "oracle": "b431bd62d558d5a351e4b21fcb81da229e793323ff995ee27a96926f3fb03e36"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 13050112,
+      "gpu": 13050112,
+      "newer": 7816512,
+      "older": 7815552,
+      "oracle": 13050112
+    },
+    "case": "variable-32768",
+    "process": 1,
+    "sha256": {
+      "cpu": "cbb2eb36e988ec8cb955c20f932563adba53dde9683caf9542de9ed09bb91102",
+      "gpu": "cbb2eb36e988ec8cb955c20f932563adba53dde9683caf9542de9ed09bb91102",
+      "newer": "c370f57474f4b5c3fce174bdd1524c2df3f44860b40bb2f60b65f8e029cf8848",
+      "older": "cfe7d9d8f4d84a25edf96bfa74701b4ea23fad6289d028dd1d47c0ee00b81e08",
+      "oracle": "cbb2eb36e988ec8cb955c20f932563adba53dde9683caf9542de9ed09bb91102"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 1631720,
+      "gpu": 1631720,
+      "newer": 977320,
+      "older": 976248,
+      "oracle": 1631720
+    },
+    "case": "variable-4096",
+    "process": 1,
+    "sha256": {
+      "cpu": "bc6f3c4e817dcda9c5a3da4e38532f96a18524adb7de8b004aa7f6c0a9979f52",
+      "gpu": "bc6f3c4e817dcda9c5a3da4e38532f96a18524adb7de8b004aa7f6c0a9979f52",
+      "newer": "0cb2731c03e9e574be1852fb6212a122bd7115d44e5d06c047ce202f6f86ffcb",
+      "older": "b3435e3cd0e272bb04f7f7822786f88e6e62ae4a7f6d6c403808358bad1db3e3",
+      "oracle": "bc6f3c4e817dcda9c5a3da4e38532f96a18524adb7de8b004aa7f6c0a9979f52"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 4394392,
+      "gpu": 4394392,
+      "newer": 2632416,
+      "older": 2632416,
+      "oracle": 4394392
+    },
+    "case": "fixed-131072",
+    "process": 2,
+    "sha256": {
+      "cpu": "05a772bfa124bd87051817122b47b3f6d25d64df16062581b8faffd63805b8bb",
+      "gpu": "05a772bfa124bd87051817122b47b3f6d25d64df16062581b8faffd63805b8bb",
+      "newer": "b07ff66c8e7453a5a21c34cbd6c091d9f1c7216bd1803fe5ec46f682fe42b83b",
+      "older": "1b4b294ecd79dc34e4f811e8d79ff56b45e3c8e7638bf636305ebcc27bc6fc7d",
+      "oracle": "05a772bfa124bd87051817122b47b3f6d25d64df16062581b8faffd63805b8bb"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 1098640,
+      "gpu": 1098640,
+      "newer": 658304,
+      "older": 658304,
+      "oracle": 1098640
+    },
+    "case": "fixed-32768",
+    "process": 2,
+    "sha256": {
+      "cpu": "241486de3a29514fde68c3523ae6a0104234b75f8eb81daafc818631c2e3ced9",
+      "gpu": "241486de3a29514fde68c3523ae6a0104234b75f8eb81daafc818631c2e3ced9",
+      "newer": "f4fe7bcc9609934b2dded5f3e0e9a1fe40a95d5ba7d540421d22ac06b97c02b7",
+      "older": "3b8c50bc26e402a831e0ec5ac22fb92419bc708c16dc50ac4839996ac75b6539",
+      "oracle": "241486de3a29514fde68c3523ae6a0104234b75f8eb81daafc818631c2e3ced9"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 137568,
+      "gpu": 137568,
+      "newer": 82536,
+      "older": 82536,
+      "oracle": 137568
+    },
+    "case": "fixed-4096",
+    "process": 2,
+    "sha256": {
+      "cpu": "1fcd0389f5abc90c942a01aeafc7cf15176f290e114e7ceb2d82cca470fbf670",
+      "gpu": "1fcd0389f5abc90c942a01aeafc7cf15176f290e114e7ceb2d82cca470fbf670",
+      "newer": "3170e56ac7270a6fdc1cdce108e402ce27bebbf41a707be6dbc9b1824ec18fc3",
+      "older": "38232bcb0e1e340a1176a059f8ae5a0c366dad9b433898c3201ea5528380b561",
+      "oracle": "1fcd0389f5abc90c942a01aeafc7cf15176f290e114e7ceb2d82cca470fbf670"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 52212272,
+      "gpu": 52212272,
+      "newer": 31266112,
+      "older": 31265784,
+      "oracle": 52212272
+    },
+    "case": "variable-131072",
+    "process": 2,
+    "sha256": {
+      "cpu": "b431bd62d558d5a351e4b21fcb81da229e793323ff995ee27a96926f3fb03e36",
+      "gpu": "b431bd62d558d5a351e4b21fcb81da229e793323ff995ee27a96926f3fb03e36",
+      "newer": "0327aaac28f8891eb7d248735fef7c8d5d05ac02330f029a470d1ce929bc9f1c",
+      "older": "c2c6bea7b81b3b9edf82277b22491803e736dbbe66c97ec660df6ea8f7cf9dc5",
+      "oracle": "b431bd62d558d5a351e4b21fcb81da229e793323ff995ee27a96926f3fb03e36"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 13050112,
+      "gpu": 13050112,
+      "newer": 7816512,
+      "older": 7815552,
+      "oracle": 13050112
+    },
+    "case": "variable-32768",
+    "process": 2,
+    "sha256": {
+      "cpu": "cbb2eb36e988ec8cb955c20f932563adba53dde9683caf9542de9ed09bb91102",
+      "gpu": "cbb2eb36e988ec8cb955c20f932563adba53dde9683caf9542de9ed09bb91102",
+      "newer": "c370f57474f4b5c3fce174bdd1524c2df3f44860b40bb2f60b65f8e029cf8848",
+      "older": "cfe7d9d8f4d84a25edf96bfa74701b4ea23fad6289d028dd1d47c0ee00b81e08",
+      "oracle": "cbb2eb36e988ec8cb955c20f932563adba53dde9683caf9542de9ed09bb91102"
+    }
+  },
+  {
+    "bytes": {
+      "cpu": 1631720,
+      "gpu": 1631720,
+      "newer": 977320,
+      "older": 976248,
+      "oracle": 1631720
+    },
+    "case": "variable-4096",
+    "process": 2,
+    "sha256": {
+      "cpu": "bc6f3c4e817dcda9c5a3da4e38532f96a18524adb7de8b004aa7f6c0a9979f52",
+      "gpu": "bc6f3c4e817dcda9c5a3da4e38532f96a18524adb7de8b004aa7f6c0a9979f52",
+      "newer": "0cb2731c03e9e574be1852fb6212a122bd7115d44e5d06c047ce202f6f86ffcb",
+      "older": "b3435e3cd0e272bb04f7f7822786f88e6e62ae4a7f6d6c403808358bad1db3e3",
+      "oracle": "bc6f3c4e817dcda9c5a3da4e38532f96a18524adb7de8b004aa7f6c0a9979f52"
+    }
+  }
+]

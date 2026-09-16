@@ -1,0 +1,18 @@
+{
+  "source_revision": "0ae73ea",
+  "release_ctest": {
+    "passed": 1,
+    "failed": 0
+  },
+  "metal_device": "Apple M2 Max",
+  "host_sanitizers": [
+    "AddressSanitizer",
+    "UndefinedBehaviorSanitizer"
+  ],
+  "complete_file_cases": 40,
+  "malformed_input_cases": 4,
+  "ef_output_cases": 10,
+  "release_binary_sha256": "c86eb615968f8b6dec6e6eee964d06323698a8d64cd2afc555e1e7807e0c2b10",
+  "sanitized_binary_sha256": "c390a81ca6504436b62801bca9e5229610244d98ee3390973602588498192c85",
+  "metallib_sha256": "5e379d7b839beacbc8c0d46907016effd6e1777fd95124e383953a13f834e8ae"
+}

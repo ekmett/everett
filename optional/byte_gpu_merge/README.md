@@ -14,6 +14,8 @@ header, 128-byte directory, five sections, canonical Elias–Fano arrays, paddin
 and CRC32C. It is checked byte for byte against the CPU batch writer, then opened
 and scanned through the ordinary mapped reader.
 
+[Initial measurements](report.md) retain complete-file times, process spread and correctness evidence.
+
 Pipeline
 --------
 

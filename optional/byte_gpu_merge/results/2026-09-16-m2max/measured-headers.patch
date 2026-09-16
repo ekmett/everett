@@ -1,0 +1,85 @@
+diff --git a/include/everett/active_engine.h b/include/everett/active_engine.h
+index c764f1e..9dc3bef 100644
+--- a/include/everett/active_engine.h
++++ b/include/everett/active_engine.h
+@@ -35,7 +35,7 @@ namespace everett {
+   // streamed records; byte registries retain their byte-aligned transport.
+   // Both run the redundant scheduler and charge service at admission. The
+   // single optional-string sort also rebuilds obsolete history as it shrinks.
+-  template <class P = storage_policy<>> struct active_engine : active_detail::engine<P> {
++  template <class P = string_policy> struct active_engine : active_detail::engine<P> {
+     using base_type = active_detail::engine<P>;
+     using world_type = typename base_type::world_type;
+     using metadata_type = typename base_type::metadata_type;
+diff --git a/include/everett/multiverse.h b/include/everett/multiverse.h
+index 14a1129..200c201 100644
+--- a/include/everett/multiverse.h
++++ b/include/everett/multiverse.h
+@@ -69,7 +69,7 @@ namespace everett {
+   // sealing creates immutable files under caller-reserved identities. The
+   // optional SQLite catalog owns persistent roots and reservations separately.
+   // Files/slices retain their mappings independently of this path holder.
+-  template <class P = storage_policy<>> struct multiverse {
++  template <class P = string_policy> struct multiverse {
+     using policy_type = P;
+     using registry_type = typename P::registry_type;
+     using sort = everett::sort<P>;
+diff --git a/include/everett/policy.h b/include/everett/policy.h
+index de02dbd..510df4e 100644
+--- a/include/everett/policy.h
++++ b/include/everett/policy.h
+@@ -72,8 +72,8 @@ namespace everett {
+     static constexpr std::optional<std::uint64_t> value_width = registry::value_width;
+   };
+ 
+-  // Explicit bit-addressed string tables leave one subtree for future sorts.
+-  // Ordinary string tables use the byte-addressed storage_policy<> default.
++  // The ordinary string table uses bit addressing and leaves one subtree for
++  // future sorts. Its sampling and count-code defaults need no tuning.
+   using string_registry = bin<tip<unsorted<std::optional<std::string>>>, sort_undefined>;
+   using string_policy = storage_policy<string_registry>;
+ }
+diff --git a/include/everett/replacement_rebuild.h b/include/everett/replacement_rebuild.h
+index e162004..668cdb0 100644
+--- a/include/everett/replacement_rebuild.h
++++ b/include/everett/replacement_rebuild.h
+@@ -83,7 +83,7 @@ namespace everett {
+     bool operator==(replacement_metadata const &) const = default;
+   };
+ 
+-  template <class P = storage_policy<>, class A = wrapping_fingerprint_algebra,
++  template <class P = string_policy, class A = wrapping_fingerprint_algebra,
+     class Family = redundant_runtime_family<P>>
+   struct replacement_world : typed_world<P, A, Family> {
+     using base_type = typed_world<P, A, Family>;
+@@ -124,7 +124,7 @@ namespace everett {
+   // sort supplies clean(key,state)->arrow; the default optional-string sort
+   // already represents a clean state with the same replacement arrow.
+   // Budgets are structural allowances, not byte counts or elapsed time.
+-  template <class P = storage_policy<>, class A = wrapping_fingerprint_algebra,
++  template <class P = string_policy, class A = wrapping_fingerprint_algebra,
+     std::uint64_t DepthLimit = 256, class Family = redundant_runtime_family<P>>
+   struct replacement_rebuild_engine {
+     using policy_type = P;
+diff --git a/include/everett/typed_world.h b/include/everett/typed_world.h
+index 5d7d1b1..afe30c5 100644
+--- a/include/everett/typed_world.h
++++ b/include/everett/typed_world.h
+@@ -218,7 +218,7 @@ namespace everett {
+   template <class P, class A, std::uint64_t DepthLimit, class Family> struct typed_engine;
+   template <class P, class A, std::uint64_t DepthLimit, class Family> struct replacement_rebuild_engine;
+ 
+-  template <class P = storage_policy<>, class A = wrapping_fingerprint_algebra,
++  template <class P = string_policy, class A = wrapping_fingerprint_algebra,
+     class Family = binary_runtime_family<P>> struct typed_world {
+     using policy_type = P;
+     using metadata_type = typed_world_metadata<A>;
+@@ -401,7 +401,7 @@ namespace everett {
+   // DepthLimit bounds the main-chain nodes of every imported or published
+   // root, including routing ancestors. It is enforced support, not an inferred
+   // COLA theorem, and bounds the allowance for ready singleton admissions.
+-  template <class P = storage_policy<>, class A = wrapping_fingerprint_algebra, std::uint64_t DepthLimit = 256,
++  template <class P = string_policy, class A = wrapping_fingerprint_algebra, std::uint64_t DepthLimit = 256,
+     class Family = binary_runtime_family<P>>
+   struct typed_engine {
+     using policy_type = P;
