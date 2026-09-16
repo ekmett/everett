@@ -114,13 +114,18 @@ queue. Worker claim and cancellation are synchronized. A cancelled ticket stays
 valid and throws `tap_cancelled` from `get()`. Running or completed work cannot
 be cancelled through this interface. Dropping a ticket or waiting elsewhere
 does not cancel an accepted update. `ticket::ready()` checks whether its success
-or exception is available without waiting.
+or exception is available without waiting. `ticket::wait()` waits for either
+outcome without reporting it. Use `ticket::get()` to observe the publication or
+the exception; completion alone is not a successful acknowledgment.
 
 `close()` rejects further admissions, wakes blocked submitters and lets accepted
 contributions drain. `shutdown()` additionally joins the worker. The destructor
 uses the same draining behavior. Optional maintenance stops once the accepted
 queue has drained; snapshots remain valid independently of the engine. Shutdown
-can wait for an active contribution or finalization and has no latency bound.
+does not rethrow a worker failure, and an empty queue can include failed or
+cancelled requests. Check individual ticket outcomes even after joining.
+Shutdown can wait for an active contribution or finalization and has no latency
+bound.
 Engine callbacks must not wait on their own tap's receipts or destroy the tap;
 blocking submission and shutdown from its worker are rejected. Contribution
 constructors and destructors must also avoid waiting for their own tap: their

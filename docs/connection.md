@@ -105,14 +105,22 @@ Asynchronous writes
 --------------------
 
 `put_async`, `erase_async`, and `change_async` enqueue mutable commands and
-return tickets. A ticket's `get()` waits for its owning publication:
+return tickets. Returning a ticket means acceptance into the in-memory queue,
+not durable publication. A ticket's `get()` waits for its outcome: it returns
+the owning durable publication on success, or throws on rejection or failure:
 
 ```cpp
 auto first = db.put_async("name", "one");
 auto second = db.put_async("name", "two");
 auto result = second.get();
 // result->cola.get("name") == "two"
+first.get(); // Check this command's outcome too.
 ```
+
+`wait()` and `ready()` report completion, including cancellation or failure;
+they do not check whether the command succeeded. The queue itself is not a
+durable input log. After a crash, reopening recovers the published state and its
+merge frontier, not commands that were only waiting in memory.
 
 Mutable commands are interpreted against the state reached by earlier queued
 commands. They do not secretly capture the state at submission time. This lets
@@ -147,9 +155,13 @@ then replaces the current link. The detailed `publication()` view distinguishes
 a logical generation from an equivalent representation revision; tickets retain
 their own publication even after that replacement.
 
-`close()` stops new submissions and drains accepted commands. `shutdown()` also
-joins the worker; destruction does the same. Optional background maintenance
-can stop at shutdown because the durable frontier records how to restart its
+`close()` stops new submissions and lets accepted commands finish unless the
+worker fails. `shutdown()` also joins the worker; destruction does the same.
+Joining does not rethrow a worker failure or check individual command outcomes.
+Even after shutdown or when `pending_count()` is zero, use each ticket's `get()`
+to check its result. `failure()` reports an error that stopped the worker; a
+healthy validation rejection is reported only by its ticket. Optional background
+maintenance can stop at shutdown because the durable frontier records how to restart its
 carry. Reopening maps that frontier and restarts an unfinished private carry;
 the checkpoint does not preserve its partially built output. It does not decode
 the whole table to construct an in-memory replacement.

@@ -17,6 +17,7 @@
 #include <fstream>
 #include <future>
 #include <iostream>
+#include <limits>
 #include <thread>
 
 namespace {
@@ -178,9 +179,22 @@ namespace {
     assert(reopened.snapshot().get("k") == "old");
   }
 
+  struct restore_gate {
+    std::promise<void> entered, release;
+    std::shared_future<void> proceed = release.get_future().share();
+  };
   struct decode_failure {
     inline static bool armed = false;
+    inline static std::shared_ptr<restore_gate> blocked;
     static core::metadata_type decode(std::span<std::byte const> data) {
+      // The test installs this gate before starting the worker and clears it
+      // only after joining, so its shared pointer needs no concurrent mutation.
+      if (auto gate = blocked) {
+        gate->entered.set_value();
+        if (gate->proceed.wait_for(std::chrono::seconds(20)) != std::future_status::ready)
+          throw std::runtime_error("metadata restore gate timed out");
+        throw std::runtime_error("intentional metadata restore failure");
+      }
       if (armed) throw std::runtime_error("intentional metadata restore failure");
       return core::metadata_type::decode(data);
     }
@@ -209,6 +223,62 @@ namespace {
     assert(durable.get("k") == "committed");
     assert(durable.head().timeline.generation == first.head().timeline.generation + 1);
     assert(durable.metadata().schema_id == first.metadata().schema_id && durable.live_count() == 1);
+    core oracle;
+    oracle.contribute(core::put("k", "old"));
+    auto expected = oracle.contribute(core::put("k", "committed"));
+    assert(durable.metadata() == expected.metadata());
+  }
+
+  void async_committed_restore_failure() {
+    temporary directory;
+    using faulty = persistent_engine<restore_fault_core>;
+    auto current = faulty::connect(directory.root, "async-committed");
+    current.contribute(core::put("k", "old"));
+    while (current.pending()) current.advance(16384);
+    auto first = current.snapshot();
+    auto gate = std::make_shared<restore_gate>();
+    auto entered = gate->entered.get_future();
+    decode_failure::blocked = gate;
+    struct reset_gate {
+      ~reset_gate() { decode_failure::blocked.reset(); }
+    } reset;
+    tap<faulty> live(std::move(current), {std::numeric_limits<std::uint64_t>::max(),
+      std::numeric_limits<std::uint64_t>::max(), 4, 16384});
+    auto before = live.snapshot();
+    auto active = live.submit(core::put("k", "committed"));
+    assert(entered.wait_for(std::chrono::seconds(20)) == std::future_status::ready);
+    auto queued = live.submit(core::put("queued", "never-applied"));
+    assert(!active.ready() && !queued.ready() && live.pending_count() == 2);
+    assert(live.snapshot() == before && before->cola.get("k") == "old");
+    // The durable head is already newer while no successful ticket exists.
+    auto committed = engine::connect(directory.root, "async-committed", {.create_if_missing = false});
+    auto observed = committed.snapshot();
+    assert(observed.get("k") == "committed" && !observed.get("queued"));
+    assert(observed.head().timeline.generation == first.head().timeline.generation + 1);
+    live.close();
+    gate->release.set_value();
+    active.wait(); queued.wait(); // Waiting observes completion, not success.
+    assert(active.ready() && queued.ready());
+    std::exception_ptr failure;
+    for (auto const * ticket : {&active, &queued}) {
+      bool threw = false;
+      try { (void)ticket->get(); }
+      catch (std::runtime_error const & error) {
+        assert(std::string_view(error.what()) == "intentional metadata restore failure");
+        if (!failure) failure = std::current_exception();
+        else assert(failure == std::current_exception());
+        threw = true;
+      }
+      assert(threw);
+    }
+    live.shutdown(); // Joins normally despite the failed worker and tickets.
+    assert(live.failure() == failure && live.pending_count() == 0);
+    assert(live.outstanding() == tap_reservation{});
+    assert(live.snapshot() == before && first.get("k") == "old");
+    auto reopened = engine::connect(directory.root, "async-committed", {.create_if_missing = false});
+    auto durable = reopened.snapshot();
+    assert(durable.head() == observed.head());
+    assert(durable.get("k") == "committed" && !durable.get("queued"));
     core oracle;
     oracle.contribute(core::put("k", "old"));
     auto expected = oracle.contribute(core::put("k", "committed"));
@@ -282,6 +352,7 @@ namespace {
 
 int main() {
   try { simple(); queued_commands(); pending_restart(); failed_publication(); committed_restore_failure();
+    async_committed_restore_failure();
     noncommutative(); creation_checks(); }
   catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }
