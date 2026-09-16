@@ -149,6 +149,13 @@ other batch sizes use ordinary charged admission. The
 [runtime guide](redundant-runtime.md#initial-sorted-batches) gives the construction
 and its work accounting.
 
+An empty batch still validates its schema. Once admitted, it returns this
+handle's existing durable snapshot without charging merge work or creating a
+new catalog generation. It does not refresh a stale handle or act as a
+compare-and-swap barrier against another writer. Local ticket generation and
+revision counters can still advance, and the worker can independently service
+pending merges before or after the empty command.
+
 The defaults allow 64 outstanding contributions, 64 MiB of retained encoded
 input, and the selected engine's structural quote for 1024 records. Those records
 can be grouped into batches; the queue reserves their total until each command

@@ -268,6 +268,7 @@ namespace diet {
       if (published_.runtime().query_root().head()->depth() > DepthLimit ||
           (input.base() && input.base()->runtime().query_root().head()->depth() > DepthLimit))
         throw std::length_error("replacement query exceeds depth allowance");
+      if (input.records().empty()) return published_;
       // Initial unique string replacements are already clean arrows. Share
       // the typed preflight and avoid constructing detached per-key replay
       // entries when the runtime can install this entire pristine batch.

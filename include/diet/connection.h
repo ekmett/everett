@@ -120,6 +120,11 @@ namespace diet {
 
     cola_type contribute(contribution_type input) {
       require_active();
+      // Only empty input needs this comparison. A pending Core can own a
+      // different physical layout from the last mapped durable publication.
+      std::optional<typed_cola_type> before;
+      if constexpr (requires { input.records().empty(); })
+        if (input.records().empty()) before.emplace(core_.snapshot());
       // Core's healthy failure contract means no logical update was admitted.
       // Encoding, old-value validation and an absent deletion can reject just
       // this ticket; publication failures may never take that path.
@@ -127,8 +132,11 @@ namespace diet {
         try { return core_.contribute(std::move(input)); }
         catch (...) { remember_failure(); if (core_.failed()) poison(); throw; }
       }();
-      try { return publish(std::move(updated)); }
-      catch (...) { remember_failure(); poison(); throw; }
+      try {
+        if (before && updated.runtime().same_layout(before->runtime()) && updated.metadata() == before->metadata())
+          return current_;
+        return publish(std::move(updated));
+      } catch (...) { remember_failure(); poison(); throw; }
     }
     std::optional<cola_type> advance(std::uint64_t budget) {
       require_active();

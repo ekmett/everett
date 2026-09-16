@@ -395,6 +395,7 @@ namespace diet {
     cola_type contribute(contribution_type input) {
       require_active();
       auto metadata = prepare(input);
+      if (input.records().empty()) return current_;
       try {
         if (initialize(input, metadata)) return current_;
         for (auto const & record : input.records()) {

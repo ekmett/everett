@@ -48,10 +48,8 @@ namespace {
   template <class E> auto contribute(E & engine, typename E::contribution_type input) {
     auto quote = E::reservation(input);
     auto prior = charge(engine);
-    auto records = input.records().size();
     auto result = engine.contribute(std::move(input));
-    // The legacy empty contribution checkpoints without an admission quote.
-    assert(!records || charge(engine) - prior <= quote.work);
+    assert(charge(engine) - prior <= quote.work);
     return result;
   }
   template <class E> void drain(E & engine) {
