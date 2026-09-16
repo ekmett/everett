@@ -340,12 +340,15 @@ change or an FC region. The continuation must establish its selected handler
 and retained position; it must not invent missing key bytes from an unrelated
 query. The mixed-format implementation must make that context explicit.
 
-A blob can therefore be independently **walkable** while still needing the
-world's routing context to reconstruct full keys. I do not want a full-key
-restart anchor added merely to make sequential grammar dispatch convenient.
-The existing opaque-profile codec and the standalone typed record codec are
-documented separately; neither is evidence that this entire mixed mapped
-continuation path is already implemented.
+An isolated continuation can therefore be independently **walkable** while still
+needing incoming key context to reconstruct full keys. This distinction applies
+to positions inside a file: current complete files start with self-contained
+keys, while later codec blocks do not repeat those full-key restarts. File order
+in the COLA graph does not supply a decoding predecessor, because native key
+ranges overlap. The [sort-owned profile](sort-profiles.md) implements the mixed
+mapped continuation path. Its sort transitions reset key-local inheritance;
+the generic opaque profile instead front-codes the whole encoded key without
+interpreting sort boundaries.
 
 ## 3. A framing illustration, not a wire format
 

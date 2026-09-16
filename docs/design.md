@@ -287,6 +287,33 @@ keys and borrowed keys have separate predecessor chains. Reindexing changes the
 borrowed stream and its navigation metadata while sharing the exact native
 allocation.
 
+### File order, key order and decoding boundaries
+
+Each native file is sorted by logical key, including the sort code. Different
+files can cover overlapping key ranges. Their places in the COLA graph follow
+update history and the merge schedule; concatenating them does not produce a
+sorted stream. A neighboring file therefore supplies no implicit FC predecessor.
+
+I distinguish four boundaries:
+
+| Boundary | Meaning |
+|---|---|
+| Native file | An immutable sorted run with a complete first key |
+| Codec block | Up to $W$ physical records; its first retained position permits framing to resume, without supplying the inherited prefix bytes |
+| Sampling group | $K$ augmented occurrences used by fractional indexing |
+| Memory page | An operating-system mapping unit, independent of $K$ and $W$ |
+
+The defaults use $K=W=15$, but these are separate parameters. In the direct
+sort-owned grammar, changing sorts also resets the key-local prefix, while the
+sort code itself may share prefix bits. A full forward cursor preserves its
+key context across codec blocks, including records omitted from a merge's
+output. An isolated block needs that context to reconstruct keys; its retained
+position alone only permits parsing. File boundaries currently provide a full
+restart. Cross-file inheritance would require an explicit retained decoding
+dependency and cannot be inferred from chronological file order.
+
+### Record controls
+
 The first record of each physical block starts with an absolute retained-prefix
 length. Other records start with a backspace relative to their physical
 predecessor. The remaining fields are the same:

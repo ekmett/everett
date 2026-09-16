@@ -1,11 +1,14 @@
 # Strong deletion by incremental rebuilding
 
-Design checkpoint, 2026-09-15. Tombstones remove bindings from query results,
+Tombstones remove bindings from query results,
 but leave their old records behind. To keep the active representation proportional
 to live state, we need to rebuild before too much of it becomes history. This
-is the rebuilding executor planned above the [Everett design](design.md).
-The existing reference world tests eager compaction, live counts and fingerprints;
-it does not implement this schedule or its disk publication protocol.
+is the rebuilding protocol for the [Everett design](design.md). The
+[replacement executor](replacement-rebuild.md) implements the charged frozen
+scan, candidate construction and ordered replay for one occupied replacement
+sort, including durable generation state. Its private scan and partial output
+are rebuilt after interruption; exact private-progress continuation remains
+a separate extension described below.
 
 The concrete elision and clean-image rules below apply to replacement-valued
 records. To use the [per-key categorical extension](arrows.md), we additionally
@@ -169,6 +172,13 @@ We merge the **entire resolved frozen world** into fresh immutable native data.
 For each key, we retain its newest visible live value and emit nothing if its
 resolved value is a tombstone. This removes every version obsolete at the freeze
 cut, including the deletion markers that hid them.
+
+The executor performs a multiway scan in key order, retaining a forward cursor
+in every frozen native file. Equal-key occurrences are resolved oldest to
+newest. Each cursor starts from its file's complete first key and advances
+through every input record, including records that do not survive into the
+output. Their prefix bytes remain available to decode later keys. This is
+distinct from traversing whole files in age order; their key ranges overlap.
 
 This is where we turn tombstones into strong deletion. We cannot get that result
 by copying every frozen physical record or merging only some older runs without
