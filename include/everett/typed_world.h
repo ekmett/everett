@@ -524,7 +524,8 @@ namespace everett {
       if (input.base() && input.base()->metadata().schema_id != current_.metadata().schema_id)
         throw std::invalid_argument("typed contribution uses another schema");
       std::optional<typed_detail::native_sweep<world_type>> sweep;
-      if (input.observed_) sweep.emplace(current_);
+      bool same_layout = input.observed_ && input.base_ && input.base_->runtime().same_layout(current_.runtime());
+      if (input.observed_ && !same_layout) sweep.emplace(current_);
       std::size_t ordinal = 0;
       // Validate the complete contribution before changing the executor. A
       // range contribution reuses one frontier, including across absent rows.
@@ -534,9 +535,14 @@ namespace everett {
           auto arrow = typed_detail::value<P, S>(record.value.view());
           std::optional<typed_detail::state_t<S>> replacement_next;
           if constexpr (typed_detail::replacement<S>)
-            replacement_next.emplace(semantics::apply(key, semantics::initial(key), arrow));
+            replacement_next.emplace(semantics::apply(key, semantics::initial(key), std::move(arrow)));
           std::optional<std::uint64_t> retained;
           auto old = [&] {
+            if (same_layout) {
+              retained = record.retained_limit_bits;
+              return semantics::apply(key, semantics::initial(key),
+                typed_detail::value<P, S>((*input.observed_)[ordinal]));
+            }
             if (sweep) {
               if constexpr (typed_detail::replacement<S>) {
                 auto hit = sweep->replacement(record.key.view());
@@ -548,11 +554,11 @@ namespace everett {
             auto target = replacement_next && !semantics::present(key, *replacement_next) ? &retained : nullptr;
             return current_.template get_encoded<S>(key, record.key, target);
           }();
-          if (input.observed_) {
+          if (input.observed_ && !same_layout) {
             auto expected = semantics::apply(key, semantics::initial(key),
               typed_detail::value<P, S>((*input.observed_)[ordinal]));
             if (old != expected) throw std::invalid_argument("stale typed range value");
-          } else if (input.base() && old != input.base()->template get_encoded<S>(key, record.key))
+          } else if (!input.observed_ && input.base() && old != input.base()->template get_encoded<S>(key, record.key))
             throw std::invalid_argument("stale typed key value");
           auto next = [&] {
             if constexpr (typed_detail::replacement<S>) return std::move(*replacement_next);

@@ -44,7 +44,10 @@ for (auto row : db.range(std::string("a"), std::string("b"))) {
 auto first_three = db.range() | std::views::take(3);
 ```
 
-Include `<ranges>` for the view adapters. Dereferencing returns an **owning row
+Include `<ranges>` for the view adapters. Iterators retain their snapshot
+independently, so this is also a borrowed range: algorithms such as
+`std::ranges::find(db.range(), key, projection)` return a usable iterator even
+after the temporary range is destroyed. Dereferencing returns an **owning row
 by value**, so it copies the key and resolved value. This is a C++20 forward
 iterator, whose reference type may be a value; its legacy iterator category is
 input. It makes no promise of a stable address for a row inside the cursor.
@@ -77,7 +80,8 @@ These operations require a replacement sort. General composable arrows can be
 queried by range, but need a sort-specific deletion operation.
 
 We sweep the selected native runs in order and retain the observed old values.
-Admission validates them with a second advancing native frontier. It does not
+When the exact native layout is unchanged, those observations need no further
+search. Otherwise admission validates them with a second advancing native frontier. It does not
 perform a point lookup for each returned row, and it does not trust signatures
 as evidence that old values match. Changed or missing observed keys reject the
 whole batch before mutation. Disjoint changes can proceed; a concurrently added
@@ -87,9 +91,10 @@ an exact deletion of the selected rows, not a persistent range predicate.
 Each cursor already holds the winning record's decoded FC frame. Its retained
 prefix supplies the tombstone's conservative depth without another random seek.
 The current sweep checks that depth again when the contribution comes from an
-equivalent physical layout. A carry or rebuilding handoff during admission can
-change the target's physical predecessor; subsequent tombstones then carry the
-whole key rather than issuing point lookups to repair their caps. Clean rebuild
+equivalent physical layout. Ordinary carries preserve those bounds. A clean-generation handoff during
+rebuilding admission can remove the target's physical predecessor; subsequent
+tombstones then carry the whole key rather than issuing point lookups to repair
+their caps. Clean rebuild
 and FIFO replay use their already-validated old/new states for accounting.
 
 The selection stores one key, tombstone and borrowed old-value view per selected
@@ -114,7 +119,11 @@ small range can therefore traverse many preceding records. We maintain a heap of
 one reconstructed key per run, and one resolved row; we do not build an
 in-memory copy of the whole table. Construction decodes each run's first key.
 Each step unit consumes one physical record, including obsolete versions and
-tombstones. String bytes, heap comparisons and sort callbacks have their own
+tombstones. Range selection runs on the caller. Its validation against a changed
+layout runs before mutation on the publication worker and can scan the preceding
+physical records again; this validation is outside the mutation-count structural
+merge charge. A small late range therefore has no worst-case latency guarantee
+from that charge or the queue's contribution bound. String bytes, heap comparisons and sort callbacks have their own
 costs. `consumed()` reports the physical records traversed.
 
 The default codec cursor reuses its current key buffer and borrows value bytes

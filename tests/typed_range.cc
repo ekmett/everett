@@ -41,6 +41,10 @@ namespace {
     auto rows = range(before, std::string("a"), std::string("b"));
     static_assert(std::ranges::forward_range<decltype(rows)>);
     static_assert(std::ranges::viewable_range<decltype(rows)>);
+    static_assert(std::ranges::borrowed_range<decltype(rows)>);
+    auto temporary_hit = std::ranges::find(range(before), std::string("aa"), &decltype(rows)::row_type::key);
+    static_assert(std::same_as<decltype(temporary_hit), typename decltype(rows)::iterator>);
+    assert((*temporary_hit).key == "aa");
     auto taken = range(before, std::string("a"), std::string("b")) | std::views::take(2);
     assert(std::ranges::distance(taken) == 2);
     auto filtered = range(before) | std::views::filter([](auto const & row) { return row.key == "aa"; });
@@ -68,6 +72,14 @@ namespace {
     assert(std::ranges::distance(suffix) == 2);
     auto binary = range(before, std::string("\0", 1), std::string("\0b", 2));
     assert(std::ranges::distance(binary) == 2);
+    auto partial = range(before, std::string("a"), std::string("b"));
+    assert(partial.next()->key == "a");
+    auto tail_deletion = partial.erase_remaining();
+    assert(tail_deletion.records().size() == 2);
+    auto branch = E::from_snapshot(before);
+    while (!branch.admission_ready()) branch.advance(1'000'000);
+    branch.contribute(std::move(tail_deletion));
+    assert(branch.snapshot().get("a") && !branch.snapshot().get("aa") && !branch.snapshot().get("abc"));
     auto removal = erase_range(before, std::string("a"), std::string("b"));
     assert(removal.records().size() == 3);
     engine.contribute(E::put("other", "independent")); expected["other"] = "independent";
@@ -94,6 +106,82 @@ namespace {
     engine.contribute(std::move(all));
     while (engine.pending()) engine.advance(1'000'000);
     assert(engine.snapshot().live_count() == 0 && engine.snapshot().signature() == 0 && contents(engine.snapshot()).empty());
+  }
+  struct append_sort {
+    using encoding = bit_encoding<>;
+    using key_codec = unsigned_key<16>;
+    using value_codec = string_value<>;
+    using state_type = std::string;
+    static state_type initial(std::uint64_t) { return {}; }
+    static state_type apply(std::uint64_t, state_type before, state_type const & next) { return before + next; }
+    static state_type compose(std::uint64_t key, state_type before, state_type const & next) {
+      return apply(key, std::move(before), next);
+    }
+    static bool present(std::uint64_t, state_type const & value) { return !value.empty(); }
+    static std::uint64_t hash_key(std::uint64_t key) { return key + 17; }
+    static std::uint64_t hash_value(std::uint64_t, state_type const & value) { return u64_table_hash{}.key(value); }
+  };
+  void chronological_ranges() {
+    using strings = unsorted<std::optional<std::string>>;
+    using p = storage_policy<bin<tip<strings>, bin<tip<append_sort>, sort_undefined>>>;
+    using engine_type = typed_engine<p, wrapping_fingerprint_algebra, 256, sort_runtime_family<p>>;
+    engine_type engine("range/mixed/1");
+    std::map<std::uint64_t, std::string> expected;
+    for (unsigned i = 0; i != 48; ++i) {
+      auto key = std::uint64_t(i % 8);
+      auto change = "[" + std::to_string(i) + "]";
+      auto batch = engine_type::batch();
+      batch.template put<strings>("earlier", "sort").template change<append_sort>(key, change);
+      engine.contribute(std::move(batch).finish()); expected[key] += change;
+    }
+    auto rows = range<append_sort>(engine.snapshot(), std::uint64_t{2}, std::uint64_t{6});
+    rows.step(1);
+    auto independent = rows;
+    auto oracle = expected.lower_bound(2);
+    while (auto row = rows.next()) {
+      auto same = independent.next();
+      assert(same && same->key == row->key && same->value == row->value);
+      assert(oracle != expected.end() && row->key == oracle->first && row->value == oracle->second);
+      ++oracle;
+    }
+    assert(oracle->first == 6 && !independent.next());
+    auto old = engine.snapshot();
+    auto strings_only = erase_range<strings>(old);
+    engine.contribute(std::move(strings_only));
+    assert(!engine.snapshot().template get<strings>("earlier"));
+    for (auto const & [key, value] : expected) assert(engine.snapshot().template get<append_sort>(key) == value);
+  }
+  struct move_value : tombstone_value<string_value<>> {
+    using base = tombstone_value<string_value<>>;
+    using value_type = std::unique_ptr<std::optional<std::string>>;
+    static void write(sort_bit_writer & out, value_type const & value) { base::write(out, *value); }
+    static value_type read(sort_bit_reader & input) { return std::make_unique<base::value_type>(base::read(input)); }
+  };
+  struct collision_sort {
+    using encoding = bit_encoding<>;
+    using key_codec = fc_string_key<>;
+    using value_codec = move_value;
+    using state_type = std::optional<std::string>;
+    static constexpr bool replacement = true;
+    static state_type initial(std::string const &) { return {}; }
+    static state_type apply(std::string const &, state_type const &, move_value::value_type value) { return std::move(*value); }
+    static bool present(std::string const &, state_type const & value) { return value.has_value(); }
+    static auto erase(std::string const &) { return std::make_unique<state_type>(); }
+    static std::uint64_t hash_key(std::string const &) { return 1; }
+    static std::uint64_t hash_value(std::string const &, state_type const & value) { return value ? 1 : 0; }
+  };
+  void exact_witnesses() {
+    using engine_type = typed_engine<storage_policy<tip<collision_sort>>>;
+    engine_type engine("range/collision/1");
+    engine.contribute(engine_type::change("a", std::make_unique<collision_sort::state_type>("before")));
+    auto before = engine.snapshot();
+    auto stale = erase_range(before);
+    engine.contribute(engine_type::change("a", std::make_unique<collision_sort::state_type>("after")));
+    assert(engine.snapshot().signature() == before.signature());
+    rejects([&] { engine.contribute(std::move(stale)); });
+    assert(!engine.failed() && engine.snapshot().get("a") == "after");
+    engine.contribute(erase_range(engine.snapshot()));
+    assert(engine.snapshot().live_count() == 0 && engine.snapshot().signature() == 0);
   }
   // Hide the optimized query root to count every point query. Native scans
   // still expose ordinary immutable runs. Range selection/preflight/admission
@@ -145,4 +233,6 @@ int main() {
   verify<everett::replacement_rebuild_engine<everett::string_policy>>();
   verify<everett::replacement_rebuild_engine<everett::storage_policy<>>>();
   no_point_queries();
+  chronological_ranges();
+  exact_witnesses();
 }

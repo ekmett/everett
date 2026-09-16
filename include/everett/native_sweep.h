@@ -25,17 +25,17 @@ namespace everett::typed_detail {
     struct observation { bit_view value; std::uint64_t retained_bits; };
     explicit native_sweep(World const & snapshot) {
       if constexpr (requires { snapshot.runtime().runs(); }) {
-      auto runs = snapshot.runtime().runs();
-      sources_.reserve(runs.size()); heap_.reserve(runs.size());
-      for (auto const & run : runs) {
-        auto native = [&] {
-          if constexpr (requires { run.native_owner(); }) return run.native_owner();
-          else return run->native;
-        }();
-        sources_.emplace_back(std::move(native));
-        if (!sources_.back().cursor.done()) heap_.push_back(sources_.size() - 1);
-      }
-      std::make_heap(heap_.begin(), heap_.end(), later());
+        auto runs = snapshot.runtime().runs();
+        sources_.reserve(runs.size()); heap_.reserve(runs.size());
+        for (auto const & run : runs) {
+          auto native = [&] {
+            if constexpr (requires { run.native_owner(); }) return run.native_owner();
+            else return run->native;
+          }();
+          sources_.emplace_back(std::move(native));
+          if (!sources_.back().cursor.done()) heap_.push_back(sources_.size() - 1);
+        }
+        std::make_heap(heap_.begin(), heap_.end(), later());
       } else throw std::logic_error("runtime does not expose a native sweep");
     }
     bool done() const noexcept { return heap_.empty(); }

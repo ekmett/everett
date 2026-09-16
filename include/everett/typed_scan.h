@@ -13,6 +13,7 @@
 
 #include <everett/typed_world.h>
 #include <iterator>
+#include <ranges>
 
 namespace everett {
   template <class S> struct typed_row {
@@ -203,4 +204,9 @@ namespace everett {
     using selected = std::conditional_t<std::is_void_v<S>, typed_detail::default_sort_t<typename World::policy_type>, S>;
     return typed_scan<selected, World>(std::move(snapshot));
   }
+}
+
+namespace std::ranges {
+  template <class S, class World>
+  inline constexpr bool enable_borrowed_range<everett::typed_scan<S, World>> = true;
 }

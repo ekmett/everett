@@ -71,6 +71,17 @@ namespace {
       compare(db.snapshot());
       db.save("after");
     }
+    auto detached = [&] {
+      auto db = storage.connect("main");
+      return db.range().begin();
+    }();
+    auto oracle = expected.begin();
+    while (detached != std::default_sentinel) {
+      auto row = *detached;
+      assert(oracle != expected.end() && row.key == oracle->first && row.value == oracle->second);
+      ++oracle; ++detached;
+    }
+    assert(oracle == expected.end());
     {
       auto db = storage.connect("main"); compare(db.snapshot());
       auto before = db.load("before"), after = db.load("after");

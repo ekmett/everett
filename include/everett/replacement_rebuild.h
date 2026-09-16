@@ -308,12 +308,11 @@ namespace everett {
           0, record.retained_limit_bits});
       });
       try {
-        auto prepared = foreground_->snapshot();
+        auto generation = work_.generations;
         for (auto & entry : entries) {
-          // Carries or a clean-generation handoff may change a target's
-          // physical predecessor between the sweep and this admission.
-          auto current = foreground_->snapshot();
-          if (!semantics::present(entry.key, entry.after) && !current.runtime().same_layout(prepared.runtime()))
+          // Ordinary carries preserve all distinct keys. A clean-generation
+          // handoff can remove a predecessor and require a longer literal.
+          if (!semantics::present(entry.key, entry.after) && work_.generations != generation)
             entry.retained_limit_bits = 0;
           apply(std::move(entry));
         }
@@ -423,7 +422,7 @@ namespace everett {
       auto prior = foreground_->work().charged;
       try {
         auto input = command(entry);
-        foreground_->template contribute_validated<sort_type>(input.records()[0], entry.key, entry.before, entry.after);
+        foreground_->template contribute_validated<sort_type>(input.records_[0], entry.key, entry.before, entry.after);
       }
       catch (...) { work_.foreground_charged = add(work_.foreground_charged, foreground_->work().charged - prior); throw; }
       work_.foreground_charged = add(work_.foreground_charged, foreground_->work().charged - prior);
@@ -668,7 +667,7 @@ namespace everett {
               require(semantics::apply(row.key, semantics::initial(row.key), arrow) == row.value, "invalid clean replacement arrow");
               auto input = engine_type::template change<sort_type>(row.key, arrow);
               candidate_work([&]{ j.candidate->template contribute_validated<sort_type>(
-                input.records()[0], row.key, semantics::initial(row.key), row.value); });
+                input.records_[0], row.key, semantics::initial(row.key), row.value); });
               ++j.rows; work_.clean_rows = add(work_.clean_rows, 1);
             }
           } else if (!j.scan->done()) work_.scan_records = add(work_.scan_records, j.scan->step(1));
@@ -685,7 +684,7 @@ namespace everett {
             auto input = command(entry);
             input.records_[0].retained_limit_bits = 0;
             candidate_work([&]{ j.candidate->template contribute_validated<sort_type>(
-              input.records()[0], entry.key, entry.before, entry.after); });
+              input.records_[0], entry.key, entry.before, entry.after); });
             j.queue.pop_front(); ++j.replayed; work_.replayed = add(work_.replayed, 1);
           }
         } else if (j.candidate->pending()) candidate_work([&]{ j.candidate->advance(j.action); });
