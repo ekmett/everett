@@ -60,6 +60,7 @@ Field guide
 | [Frontier](Everett/Frontier.lean) | Merge-head ordering from carried LCP lengths, suffix-only comparison at equal lengths, and exact new frontier lengths |
 | [Transfer](Everett/Transfer.lean) | Content-mismatch transfers, the literal-position invariant, composition and associative ordered summaries |
 | [NativeMerge](Everett/NativeMerge.lean) | Executable two-way merging of strictly ordered native runs; unique sorted output; optional pointwise lookup composition; chronological reassociation and disjoint-support commutation |
+| [CarriedRoute](Everett/CarriedRoute.lean) | Concrete parent/sample builder; carried parent windows through stored rank checkpoints and one sample lookup; exact target-window search for one edge |
 | [Navigation](Everett/Navigation.lean) | Constructed unary Elias–Fano selection; strict high positions; common-stride and EOF recovery; grouped population/checkpoint rank equals fractional rank, with bounded local scans and no stored endpoint total |
 | [Examples](Everett/Examples.lean) | Heterogeneous keys, valid and stale sources, noncommutative histories, changed index/target versions, and an old target that cannot be reclaimed while a snapshot retains it |
 | [FractionalExamples](Everett/FractionalExamples.lean) | K=3 and K=15, equal keys across several cuts, empty native projections, false-borrow recovery, empty targets, before-first queries, short tails and stored-index routing |
@@ -176,9 +177,10 @@ target does not redirect that edge.
 
 This builder produces mathematical lists. Its entries retain the destination's
 occurrence labels and tags; constructing a source's borrowed stream requires
-source-local labels and borrowed tags. That retagging, encoded-file decoding,
-independent borrowed-predecessor routing and composition of an entire cascade
-remain separate refinement obligations. The searches here enumerate finite
+source-local labels and borrowed tags. The one-edge `CarriedRoute` builder below
+now constructs those borrowed tags and exact target ordinals. Encoded-file decoding,
+independent dual-target routing and composition of an entire cascade remain
+separate refinement obligations. The searches here enumerate finite
 lists, so these theorems establish the window's entry bound and lookup meaning,
 not the running time of binary search, compressed rank or key reconstruction.
 
@@ -202,9 +204,10 @@ native entries and no child. `search_correct` agrees with full list searches,
 and `visits_bound` gives at most $2h$ catalog visits for main height $h$, including
 a synthetic root if present. These visits are not instruction or byte costs.
 The traversal computes exact samples and an independent route in each catalog;
-it does not yet derive the next window from a carried parent result. Connecting
-that handoff, stored dual-target samples, false-borrow probes, immutable file
-identities and C++ decoding to this model remains separate. No scheduler, visibility deadline or space theorem is claimed.
+it does not yet derive the next window from a carried parent result. The
+`CarriedRoute` model below proves that handoff for one constructed edge. Connecting
+it into this three-origin chain, with stored dual-target samples, false-borrow
+probes, immutable file identities and C++ decoding, remains separate. No scheduler, visibility deadline or space theorem is claimed.
 
 String prefixes and comparison transfers
 ---------------------------------------
@@ -355,6 +358,44 @@ new target graph, while reclamation theorems require a proof that no deleted ID
 is reachable from an owner. These are explicit interface obligations. I am not
 assuming that an unverified external index satisfies them.
 
+Carrying one parent window
+--------------------------
+
+[CarriedRoute](Everett/CarriedRoute.lean) supplies a concrete one-edge connection
+that `DualRoute.search` does not yet make. `build_edge` stable-merges native
+entries with the child's exact every-$K$th samples, retaining their target
+ordinals and equal-key multiplicity. We prove both origin filtering and parent
+sortedness from the actual builder. The stored edge also retains the exact child
+and constructs its origin-population classes and checkpoints.
+
+The public semantic query `transfer_at_group` receives this stored edge, an
+existing group boundary and an incoming parent window. It reads the stored rank
+directory, searches only that window, adds the local borrowed population to the
+boundary rank, and reads the last passed sample by ordinal. It does not reconstruct
+the samples, scan the whole parent prefix, or compare the query against a fresh
+child sample search. `descend_at_group` follows the retained target and searches
+the resulting window of at most $K$ entries.
+
+`descend_at_group_correct` proves that this complete path returns the child's
+exact global predecessor. The theorem requires sorted native and child inputs
+and a valid incoming bracket containing the parent's predecessor when one exists.
+It derives the parent cut, sample correspondence and stored-rank correctness;
+those are not supplied as conclusions or opaque builder axioms. The preceding
+edge's bracket theorem provides the form of invariant needed for composition.
+Queries before the first key, equality runs crossing several cuts, empty targets,
+short final groups and rejected one-past-end parent groups have checked examples.
+The outer `Option` reports an invalid stored group; the inner `Option` reports an
+absent predecessor. Empty-parent handling uses the zero bootstrap instead of an
+invented rank endpoint.
+
+The incoming parent window's size remains a caller obligation. The local origin
+scan stays within it, and the outgoing child window has at most $K$ entries.
+These are entry-count bounds; list indexing, dropping prefixes and predecessor
+search are executable mathematical definitions, not instruction-count proofs.
+This module has one native and one borrowed origin. It does not yet build the
+full three-origin main/secondary chain, prove its recursive traversal, or refine
+immutable lists to encoded file identities and parser operations.
+
 Succinct navigation
 -------------------
 
@@ -382,9 +423,10 @@ encoding its boundary offsets. `stride_fits` rules out truncated subtraction;
 We derive monotone residuals from those two conditions. `physical_select_correct`
 proves exact recovery after adding the stride back. `owner_boundaries` generates
 regular block ordinals and appends one real EOF entry;
-`owner_select` proves the full $\min(jK,N)$ ordinal convention, and
+`owner_select` proves the full $\min(jW,N)$ ordinal convention, and
 `owner_eof` selects the final entry using the actual record count. For 17 records with
-block size 15, EOF adds 17 strides, not 30. An empty owner still appends its one
+codec block size $W=15$, EOF adds 17 strides, not 30. The codec block
+spacing $W$ is independent of the sampling group size $K$ used for rank below. An empty owner still appends its one
 EOF value; a generic empty EF sequence contains no implicit sentinel.
 
 For grouped rank, `classes` constructs each population by filtering a real
