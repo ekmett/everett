@@ -6,5 +6,6 @@ var searchData=
   ['universe_5f_3',['universe_',['../structeverett_1_1elias__fano__view.html#a91e12e182a33f76a80ef228527d12871',1,'everett::elias_fano_view']]],
   ['universes_4',['universes',['../structeverett_1_1cola__section__detail_1_1directory.html#ab598bfc56004f770ef96bf8770b15340',1,'everett::cola_section_detail::directory']]],
   ['unsafe_5',['unsafe',['../structeverett_1_1redundant__runtime_1_1execution.html#aa9f9abb3b7a46351e78739f548fb0950',1,'everett::redundant_runtime::execution']]],
-  ['used_6',['used',['../structeverett_1_1output__budget_1_1state.html#adbd7d262728e4dcb62c75ae175e4034e',1,'everett::output_budget::state']]]
+  ['upper_5f_6',['upper_',['../structeverett_1_1typed__scan.html#a2f7fdd2362e62ce63ebba3bcde6ddaa7',1,'everett::typed_scan']]],
+  ['used_7',['used',['../structeverett_1_1output__budget_1_1state.html#adbd7d262728e4dcb62c75ae175e4034e',1,'everett::output_budget::state']]]
 ];

@@ -91,6 +91,8 @@ $(function() {
 <p>Scans one sort in an immutable typed world with chronological resolution.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;<a class="el" href="typed__world_8h_source.html">everett/typed_world.h</a>&gt;</code><br />
+<code>#include &lt;iterator&gt;</code><br />
+<code>#include &lt;ranges&gt;</code><br />
 </div>
 <p><a href="typed__scan_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -100,7 +102,7 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan&lt; S, World &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan_1_1source.html">everett::typed_scan&lt; S, World &gt;::source</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan_1_1iterator.html">everett::typed_scan&lt; S, World &gt;::iterator</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
@@ -110,6 +112,13 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a98410c4e1bddbe9645bff60e6d9b365a" id="r_a98410c4e1bddbe9645bff60e6d9b365a"><td class="memTemplParams" colspan="2">template&lt;class S  = void, class World &gt; </td></tr>
+<tr class="memitem:a98410c4e1bddbe9645bff60e6d9b365a"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a98410c4e1bddbe9645bff60e6d9b365a">everett::range</a> (World snapshot, std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; std::conditional_t&lt; std::is_void_v&lt; S &gt;, <a class="el" href="namespaceeverett_1_1typed__detail.html#abf9d2fd465e492de0ac4bccbceb7fd27">typed_detail::default_sort_t</a>&lt; typename World::policy_type &gt;, S &gt; &gt; &gt; lo={}, std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; std::conditional_t&lt; std::is_void_v&lt; S &gt;, <a class="el" href="namespaceeverett_1_1typed__detail.html#abf9d2fd465e492de0ac4bccbceb7fd27">typed_detail::default_sort_t</a>&lt; typename World::policy_type &gt;, S &gt; &gt; &gt; hi={}, <a class="el" href="structeverett_1_1range__positioning__work.html">range_positioning_work</a> *work=nullptr)</td></tr>
+<tr class="separator:a98410c4e1bddbe9645bff60e6d9b365a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa1bfce6c99e7c63cea6502832b7ce767" id="r_aa1bfce6c99e7c63cea6502832b7ce767"><td class="memTemplParams" colspan="2">template&lt;class S  = void, class World &gt; <br />
+requires <a class="el" href="namespaceeverett_1_1typed__detail.html#a2b84c5f7957a28616e797263cdecc310">typed_detail::replacement</a>&lt;std::conditional_t&lt;std::is_void_v&lt;S&gt;, <a class="el" href="namespaceeverett_1_1typed__detail.html#abf9d2fd465e492de0ac4bccbceb7fd27">typed_detail::default_sort_t</a>&lt;typename World::policy_type&gt;, S&gt;&gt;</td></tr>
+<tr class="memitem:aa1bfce6c99e7c63cea6502832b7ce767"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#aa1bfce6c99e7c63cea6502832b7ce767">everett::erase_range</a> (World snapshot, std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; std::conditional_t&lt; std::is_void_v&lt; S &gt;, <a class="el" href="namespaceeverett_1_1typed__detail.html#abf9d2fd465e492de0ac4bccbceb7fd27">typed_detail::default_sort_t</a>&lt; typename World::policy_type &gt;, S &gt; &gt; &gt; lo={}, std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; std::conditional_t&lt; std::is_void_v&lt; S &gt;, <a class="el" href="namespaceeverett_1_1typed__detail.html#abf9d2fd465e492de0ac4bccbceb7fd27">typed_detail::default_sort_t</a>&lt; typename World::policy_type &gt;, S &gt; &gt; &gt; hi={})</td></tr>
+<tr class="separator:aa1bfce6c99e7c63cea6502832b7ce767"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c3f7b2bb2defdbf0309c59a9e6b9d5b" id="r_a0c3f7b2bb2defdbf0309c59a9e6b9d5b"><td class="memTemplParams" colspan="2">template&lt;class S  = void, class World &gt; </td></tr>
 <tr class="memitem:a0c3f7b2bb2defdbf0309c59a9e6b9d5b"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a0c3f7b2bb2defdbf0309c59a9e6b9d5b">everett::scan</a> (World snapshot)</td></tr>
 <tr class="separator:a0c3f7b2bb2defdbf0309c59a9e6b9d5b"><td class="memSeparator" colspan="2">&#160;</td></tr>

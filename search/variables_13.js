@@ -15,5 +15,6 @@ var searchData=
   ['tiny_5findexes_12',['tiny_indexes',['../structeverett_1_1replacement__rebuild__work.html#ab3a1669db864050324e4bceac37f65c9',1,'everett::replacement_rebuild_work']]],
   ['tiny_5frecord_5flimit_13',['tiny_record_limit',['../structeverett_1_1replacement__rebuild__engine.html#a02b0dbfb895d90251c902f125a54689c',1,'everett::replacement_rebuild_engine']]],
   ['transaction_14',['transaction',['../structeverett_1_1transaction_1_1snapshot__type.html#a81b23603f5c41ae746befc945d5fb9bc',1,'everett::transaction::snapshot_type']]],
-  ['transaction_5ftype_15',['transaction_type',['../structeverett_1_1connection.html#a6310566eed954abe0822ec1c3963d8da',1,'everett::connection']]]
+  ['transaction_5ftype_15',['transaction_type',['../structeverett_1_1connection.html#a6310566eed954abe0822ec1c3963d8da',1,'everett::connection']]],
+  ['typed_5fscan_16',['typed_scan',['../structeverett_1_1typed__scan_1_1iterator.html#a6dca5300305410a2b4f988eefa6c94af',1,'everett::typed_scan::iterator']]]
 ];

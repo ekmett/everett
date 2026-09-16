@@ -1,0 +1,49 @@
+{
+  "baseline_revision": "cb2b029a657d2bbcd7135265cb3060b2b11cd961",
+  "candidate_revision": "90f624635d5373c166cc79750f0e7405406f20df",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "records": 32768,
+  "processes": 3,
+  "trials": 5,
+  "loops": 4,
+  "binary_sha256": {
+    "baseline": "63befd13b5e6042dffd5042e175a4b9f9e6a428d498b0ac160d974be365e9704",
+    "candidate": "932418a0a37cd43c9b339504dd8b9f456464d2c5c152502596f88c6fded2de12"
+  },
+  "source_sha256": {
+    "include/everett/sort_codec.h": "67a3d14a460fe303cd9381eb10649b049a84df78bec6cf6d4b83cd649bf5f38f",
+    "tests/sort_bit_reservoir.cc": "ab35390753a5c96d80556f4d02fdc42a146562ceb3c4794ed6128c6b2d3bb047",
+    "optional/bit_reservoir/CMakeLists.txt": "46b4ed141d99f2a405233e813025064fcab834475ecf8bdfe9b463e19f47085e",
+    "optional/bit_reservoir/README.md": "1b4c870669c3249eebfbf4709b9447dc75a85b45cf9fcfc0887f200867e5dc8c",
+    "optional/bit_reservoir/collect.py": "1065e8c07e935dc4857ac0e598b3871a00d873a901a10169087879de0bb7b2ff",
+    "optional/bit_reservoir/prototype.cc": "7f0898107aa6c562c181346f269888b514bee83c63ff3713dd60878b865a2091"
+  },
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "schedule": [
+    {
+      "process": 0,
+      "variant": "baseline"
+    },
+    {
+      "process": 0,
+      "variant": "candidate"
+    },
+    {
+      "process": 1,
+      "variant": "candidate"
+    },
+    {
+      "process": 1,
+      "variant": "baseline"
+    },
+    {
+      "process": 2,
+      "variant": "baseline"
+    },
+    {
+      "process": 2,
+      "variant": "candidate"
+    }
+  ]
+}

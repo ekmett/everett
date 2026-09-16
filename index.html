@@ -121,6 +121,14 @@ Saved Tables</h1>
 </div><!-- fragment --><p>The two sessions can now evolve independently while the saved snapshot stays fixed. <code>load</code> returns an optional snapshot; it leaves the live session where it is. Save names are immutable, and a fork needs an unused session name. <code>save(name)</code> and <code>fork(name)</code> use the current snapshot.</p>
 <p>Snapshots also expose <code>live_count()</code> and <code>signature()</code>. The signature describes logical contents independently of the physical merge layout. I use it to notice disagreement between replicas; it is a sanity check, not a cryptographic commitment.</p>
 <p>Current catalogs retain historical generations and pins, so disk use includes retained history. Automatic reclamation remains future work.</p>
+<h1><a class="anchor" id="ranges"></a>
+Ranges</h1>
+<p>Walk the live rows between two keys, including the lower bound and excluding the upper bound:</p>
+<div class="fragment"><div class="line"><span class="keywordflow">for</span> (<span class="keyword">auto</span> row : db.range(<span class="stringliteral">&quot;a&quot;</span>, <span class="stringliteral">&quot;b&quot;</span>)) {</div>
+<div class="line">  <span class="comment">// Use row.key and *row.value.</span></div>
+<div class="line">}</div>
+<div class="line">db.erase_range(<span class="stringliteral">&quot;a&quot;</span>, <span class="stringliteral">&quot;b&quot;</span>);</div>
+</div><!-- fragment --><p>The range keeps its snapshot alive and provides C++20 forward iterators. It also works with range adaptors such as <code>std::views::take</code>. Range deletion publishes one batch of tombstones for the observed rows; earlier snapshots retain them. The <a class="el" href="scanning-a-table.html">range guide</a> covers bounds, streaming, concurrent changes and traversal costs.</p>
 <h1><a class="anchor" id="transactions"></a>
 Transactions</h1>
 <p>Use a transaction to publish several edits together:</p>

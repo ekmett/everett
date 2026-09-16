@@ -1,0 +1,9 @@
+{
+  "inputs": {
+    "primary-summary.csv": "ec9618024a38e2cc38d3543e8ef35450644e1c060a919c729f6c5730aa8c0981",
+    "alternatives-summary.csv": "34a754eeac49ca45313be84b0561e09f68f02eb8bcdfb8483e148d9e0ff82761"
+  },
+  "script_sha256": "da154081b33d5a3352f06455ff68e2113e8bdb5ac511311f7befe45e88ec966b",
+  "matplotlib": "3.11.2",
+  "aggregation": "One point per retained workload median; no pooled latencies."
+}

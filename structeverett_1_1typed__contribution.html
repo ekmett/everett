@@ -110,11 +110,16 @@ Private Attributes</h2></td></tr>
 <tr class="separator:ac248176018fd4236a38f3dfec51528c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abb8295193f8b1dc3db8ea082b216e977" id="r_abb8295193f8b1dc3db8ea082b216e977"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structeverett_1_1profile__record.html">profile_record</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__contribution.html#abb8295193f8b1dc3db8ea082b216e977">records_</a></td></tr>
 <tr class="separator:abb8295193f8b1dc3db8ea082b216e977"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a967d69167fdb75941d9e4a1183cbfc9a" id="r_a967d69167fdb75941d9e4a1183cbfc9a"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::vector&lt; <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__contribution.html#a967d69167fdb75941d9e4a1183cbfc9a">observed_</a></td></tr>
+<tr class="separator:a967d69167fdb75941d9e4a1183cbfc9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
 <tr class="memitem:a01030a9603874260d17077ac5d9e9c8e" id="r_a01030a9603874260d17077ac5d9e9c8e"><td class="memItemLeft" align="right" valign="top">struct&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__contribution.html#a01030a9603874260d17077ac5d9e9c8e">typed_batch&lt; P, A, Family &gt;</a></td></tr>
 <tr class="separator:a01030a9603874260d17077ac5d9e9c8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc21be75cd27b9543093abaa61e73dc3" id="r_adc21be75cd27b9543093abaa61e73dc3"><td class="memTemplParams" colspan="2">template&lt;class , class &gt; </td></tr>
+<tr class="memitem:adc21be75cd27b9543093abaa61e73dc3"><td class="memTemplItemLeft" align="right" valign="top">struct&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__contribution.html#adc21be75cd27b9543093abaa61e73dc3">typed_scan</a></td></tr>
+<tr class="separator:adc21be75cd27b9543093abaa61e73dc3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad839ba9dd6b1eb5cb6c51d84dc82fbec" id="r_ad839ba9dd6b1eb5cb6c51d84dc82fbec"><td class="memTemplParams" colspan="2">template&lt;class , class , std::uint64_t , class &gt; </td></tr>
 <tr class="memitem:ad839ba9dd6b1eb5cb6c51d84dc82fbec"><td class="memTemplItemLeft" align="right" valign="top">struct&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__contribution.html#ad839ba9dd6b1eb5cb6c51d84dc82fbec">typed_engine</a></td></tr>
 <tr class="separator:ad839ba9dd6b1eb5cb6c51d84dc82fbec"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -293,6 +298,32 @@ template&lt;class , class , std::uint64_t , class &gt; </div>
 
 </div>
 </div>
+<a id="adc21be75cd27b9543093abaa61e73dc3" name="adc21be75cd27b9543093abaa61e73dc3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adc21be75cd27b9543093abaa61e73dc3">&#9670;&#160;</a></span>typed_scan</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class P , class A , class Family &gt; </div>
+<div class="memtemplate">
+template&lt;class , class &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend struct <a class="el" href="structeverett_1_1typed__scan.html">typed_scan</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Member Data Documentation</h2>
 <a id="ac248176018fd4236a38f3dfec51528c9" name="ac248176018fd4236a38f3dfec51528c9"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac248176018fd4236a38f3dfec51528c9">&#9670;&#160;</a></span>base_</h2>
@@ -307,6 +338,30 @@ template&lt;class P , class A , class Family &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">std::optional&lt;<a class="el" href="structeverett_1_1typed__world.html">typed_world</a>&lt;P, A, Family&gt; &gt; <a class="el" href="structeverett_1_1typed__contribution.html">everett::typed_contribution</a>&lt; P, A, Family &gt;::base_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a967d69167fdb75941d9e4a1183cbfc9a" name="a967d69167fdb75941d9e4a1183cbfc9a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a967d69167fdb75941d9e4a1183cbfc9a">&#9670;&#160;</a></span>observed_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class P , class A , class Family &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;std::vector&lt;<a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&gt; &gt; <a class="el" href="structeverett_1_1typed__contribution.html">everett::typed_contribution</a>&lt; P, A, Family &gt;::observed_</td>
         </tr>
       </table>
   </td>

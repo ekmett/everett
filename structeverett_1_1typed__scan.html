@@ -95,7 +95,7 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan_1_1source.html">source</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan_1_1iterator.html">iterator</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
@@ -110,19 +110,25 @@ Public Types</h2></td></tr>
 <tr class="separator:a04419f4bf0a930ea3ec71b8dc00c391c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8176015f6582ff8997119b8fafb6e82a" id="r_a8176015f6582ff8997119b8fafb6e82a"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a8176015f6582ff8997119b8fafb6e82a">key_transport</a> = typename World::key_transport</td></tr>
 <tr class="separator:a8176015f6582ff8997119b8fafb6e82a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab062b3391a61009f20a4f4f9f2c9c67d" id="r_ab062b3391a61009f20a4f4f9f2c9c67d"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#ab062b3391a61009f20a4f4f9f2c9c67d">key_type</a> = <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt;</td></tr>
+<tr class="separator:ab062b3391a61009f20a4f4f9f2c9c67d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ad2206107ac54756ccb464ab633db0928" id="r_ad2206107ac54756ccb464ab633db0928"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#ad2206107ac54756ccb464ab633db0928">typed_scan</a> (World snapshot)</td></tr>
-<tr class="separator:ad2206107ac54756ccb464ab633db0928"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a71a8bf4e866897ad3651f475118deec4" id="r_a71a8bf4e866897ad3651f475118deec4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a71a8bf4e866897ad3651f475118deec4">typed_scan</a> (<a class="el" href="structeverett_1_1typed__scan.html">typed_scan</a> const &amp;)=delete</td></tr>
-<tr class="separator:a71a8bf4e866897ad3651f475118deec4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab77fc2d87125021d54a7c2d5ab27305f" id="r_ab77fc2d87125021d54a7c2d5ab27305f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1typed__scan.html">typed_scan</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#ab77fc2d87125021d54a7c2d5ab27305f">operator=</a> (<a class="el" href="structeverett_1_1typed__scan.html">typed_scan</a> const &amp;)=delete</td></tr>
-<tr class="separator:ab77fc2d87125021d54a7c2d5ab27305f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5572f5c6f0d04d5923898b0318e01e17" id="r_a5572f5c6f0d04d5923898b0318e01e17"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a5572f5c6f0d04d5923898b0318e01e17">typed_scan</a> (World snapshot, std::optional&lt; <a class="el" href="structeverett_1_1typed__scan.html#ab062b3391a61009f20a4f4f9f2c9c67d">key_type</a> &gt; lo={}, std::optional&lt; <a class="el" href="structeverett_1_1typed__scan.html#ab062b3391a61009f20a4f4f9f2c9c67d">key_type</a> &gt; hi={}, <a class="el" href="structeverett_1_1range__positioning__work.html">range_positioning_work</a> *work=nullptr)</td></tr>
+<tr class="separator:a5572f5c6f0d04d5923898b0318e01e17"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1603af6ac40a02b5d3ca5c9b5f417804" id="r_a1603af6ac40a02b5d3ca5c9b5f417804"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a1603af6ac40a02b5d3ca5c9b5f417804">typed_scan</a> (<a class="el" href="structeverett_1_1typed__scan.html">typed_scan</a> const &amp;)=default</td></tr>
+<tr class="separator:a1603af6ac40a02b5d3ca5c9b5f417804"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f8b359f8d03781e13bea7b55fce162d" id="r_a7f8b359f8d03781e13bea7b55fce162d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1typed__scan.html">typed_scan</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a7f8b359f8d03781e13bea7b55fce162d">operator=</a> (<a class="el" href="structeverett_1_1typed__scan.html">typed_scan</a> const &amp;)=default</td></tr>
+<tr class="separator:a7f8b359f8d03781e13bea7b55fce162d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa2cdf9e4da393fc0e056d2f49f20d1b3" id="r_aa2cdf9e4da393fc0e056d2f49f20d1b3"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#aa2cdf9e4da393fc0e056d2f49f20d1b3">typed_scan</a> (<a class="el" href="structeverett_1_1typed__scan.html">typed_scan</a> &amp;&amp;)=default</td></tr>
 <tr class="separator:aa2cdf9e4da393fc0e056d2f49f20d1b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a617a683484c3b70542e8ecd5fb670420" id="r_a617a683484c3b70542e8ecd5fb670420"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1typed__scan.html">typed_scan</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a617a683484c3b70542e8ecd5fb670420">operator=</a> (<a class="el" href="structeverett_1_1typed__scan.html">typed_scan</a> &amp;&amp;)=delete</td></tr>
-<tr class="separator:a617a683484c3b70542e8ecd5fb670420"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98e6866cbe687a176897112350dbe5d1" id="r_a98e6866cbe687a176897112350dbe5d1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1typed__scan.html">typed_scan</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a98e6866cbe687a176897112350dbe5d1">operator=</a> (<a class="el" href="structeverett_1_1typed__scan.html">typed_scan</a> &amp;&amp;)=default</td></tr>
+<tr class="separator:a98e6866cbe687a176897112350dbe5d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1711b9de6410c74d3c33108cd05f440a" id="r_a1711b9de6410c74d3c33108cd05f440a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1typed__scan_1_1iterator.html">iterator</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a1711b9de6410c74d3c33108cd05f440a">begin</a> () const</td></tr>
+<tr class="separator:a1711b9de6410c74d3c33108cd05f440a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71d91cfeb861e0806a5d0f0e87a54c48" id="r_a71d91cfeb861e0806a5d0f0e87a54c48"><td class="memItemLeft" align="right" valign="top">std::default_sentinel_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a71d91cfeb861e0806a5d0f0e87a54c48">end</a> () const noexcept</td></tr>
+<tr class="separator:a71d91cfeb861e0806a5d0f0e87a54c48"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0a809f8cb1fd8496bd929cc35ab878fd" id="r_a0a809f8cb1fd8496bd929cc35ab878fd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a0a809f8cb1fd8496bd929cc35ab878fd">done</a> () const noexcept</td></tr>
 <tr class="separator:a0a809f8cb1fd8496bd929cc35ab878fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02b1a68b522c05d82f6be7151b6da3cb" id="r_a02b1a68b522c05d82f6be7151b6da3cb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a02b1a68b522c05d82f6be7151b6da3cb">has_row</a> () const noexcept</td></tr>
@@ -137,38 +143,40 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a3fad11d79dc64a73b68e932b2aa58d19"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a18cdd868e181091b01e2502c3524fac1" id="r_a18cdd868e181091b01e2502c3524fac1"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a18cdd868e181091b01e2502c3524fac1">step</a> (std::uint64_t budget)</td></tr>
 <tr class="separator:a18cdd868e181091b01e2502c3524fac1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbc3b500d12ad28224452b3e197bf90a" id="r_afbc3b500d12ad28224452b3e197bf90a"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#afbc3b500d12ad28224452b3e197bf90a">erase_remaining</a> ()</td></tr>
+<tr class="separator:afbc3b500d12ad28224452b3e197bf90a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
-<tr class="memitem:a566395987671ac14a23413505befa781" id="r_a566395987671ac14a23413505befa781"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a566395987671ac14a23413505befa781">later</a> () const</td></tr>
-<tr class="separator:a566395987671ac14a23413505befa781"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab8dde7a87c0289fc413e60694997e925" id="r_ab8dde7a87c0289fc413e60694997e925"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#ab8dde7a87c0289fc413e60694997e925">compare_prefix</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> key) const</td></tr>
 <tr class="separator:ab8dde7a87c0289fc413e60694997e925"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3b665f8af98d9056f82320b108a37339" id="r_a3b665f8af98d9056f82320b108a37339"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a3b665f8af98d9056f82320b108a37339">consume</a> ()</td></tr>
-<tr class="separator:a3b665f8af98d9056f82320b108a37339"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a34821cbd621ee2234f5746aa3fecda17" id="r_a34821cbd621ee2234f5746aa3fecda17"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a34821cbd621ee2234f5746aa3fecda17">finish_group</a> ()</td></tr>
 <tr class="separator:a34821cbd621ee2234f5746aa3fecda17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
+<tr class="memitem:aa9e42ce554aa2205ee2f78207ee4a410" id="r_aa9e42ce554aa2205ee2f78207ee4a410"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; void const  &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#aa9e42ce554aa2205ee2f78207ee4a410">identity_</a> = std::make_shared&lt;int const&gt;(0)</td></tr>
+<tr class="separator:aa9e42ce554aa2205ee2f78207ee4a410"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7580db95e4b1dbe11a9383c53250d7c6" id="r_a7580db95e4b1dbe11a9383c53250d7c6"><td class="memItemLeft" align="right" valign="top">World&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a7580db95e4b1dbe11a9383c53250d7c6">snapshot_</a></td></tr>
 <tr class="separator:a7580db95e4b1dbe11a9383c53250d7c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a180e49e2df1439d1a2054b1c65d4619a" id="r_a180e49e2df1439d1a2054b1c65d4619a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1bit__string.html">bit_string</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a180e49e2df1439d1a2054b1c65d4619a">prefix_</a></td></tr>
 <tr class="separator:a180e49e2df1439d1a2054b1c65d4619a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07e5a3f6829583c78935e43523d8b658" id="r_a07e5a3f6829583c78935e43523d8b658"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1bit__string.html">bit_string</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a07e5a3f6829583c78935e43523d8b658">group_key_</a></td></tr>
 <tr class="separator:a07e5a3f6829583c78935e43523d8b658"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab84b0b9b28bea2412af132655b4f4764" id="r_ab84b0b9b28bea2412af132655b4f4764"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="structeverett_1_1typed__scan_1_1source.html">source</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#ab84b0b9b28bea2412af132655b4f4764">sources_</a></td></tr>
-<tr class="separator:ab84b0b9b28bea2412af132655b4f4764"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a455d5615c85b7cc72a0e97508c99403f" id="r_a455d5615c85b7cc72a0e97508c99403f"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::size_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a455d5615c85b7cc72a0e97508c99403f">heap_</a></td></tr>
-<tr class="separator:a455d5615c85b7cc72a0e97508c99403f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa95e0ea2097b1315fbf214e486a9d5eb" id="r_aa95e0ea2097b1315fbf214e486a9d5eb"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#aa95e0ea2097b1315fbf214e486a9d5eb">lower_</a></td></tr>
+<tr class="separator:aa95e0ea2097b1315fbf214e486a9d5eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2f7fdd2362e62ce63ebba3bcde6ddaa7" id="r_a2f7fdd2362e62ce63ebba3bcde6ddaa7"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structeverett_1_1bit__string.html">bit_string</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a2f7fdd2362e62ce63ebba3bcde6ddaa7">upper_</a></td></tr>
+<tr class="separator:a2f7fdd2362e62ce63ebba3bcde6ddaa7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acadc65ad86888d37347b0a9ff1dff4f6" id="r_acadc65ad86888d37347b0a9ff1dff4f6"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1typed__detail_1_1native__sweep.html">typed_detail::native_sweep</a>&lt; World &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#acadc65ad86888d37347b0a9ff1dff4f6">sweep_</a></td></tr>
+<tr class="separator:acadc65ad86888d37347b0a9ff1dff4f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac5078e20835e45472794f38fb3cf9e25" id="r_ac5078e20835e45472794f38fb3cf9e25"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structeverett_1_1typed__scan.html#a5615c0451dde1334d4f67b7d0a73d565">row_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#ac5078e20835e45472794f38fb3cf9e25">group_</a></td></tr>
 <tr class="separator:ac5078e20835e45472794f38fb3cf9e25"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad55cc9282522e8a2a9e4a54baf57feaf" id="r_ad55cc9282522e8a2a9e4a54baf57feaf"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structeverett_1_1typed__scan.html#a5615c0451dde1334d4f67b7d0a73d565">row_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#ad55cc9282522e8a2a9e4a54baf57feaf">row_</a></td></tr>
 <tr class="separator:ad55cc9282522e8a2a9e4a54baf57feaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a29c947b9a49f3b889b0a84d7fb515e41" id="r_a29c947b9a49f3b889b0a84d7fb515e41"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a29c947b9a49f3b889b0a84d7fb515e41">last_value_</a></td></tr>
 <tr class="separator:a29c947b9a49f3b889b0a84d7fb515e41"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acdc4b106459e7d80b9f82464b5f6559b" id="r_acdc4b106459e7d80b9f82464b5f6559b"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#acdc4b106459e7d80b9f82464b5f6559b">consumed_</a> = 0</td></tr>
-<tr class="separator:acdc4b106459e7d80b9f82464b5f6559b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a02118cd23c5399677f5e21f3c1a19242" id="r_a02118cd23c5399677f5e21f3c1a19242"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a02118cd23c5399677f5e21f3c1a19242">last_retained_</a> = 0</td></tr>
+<tr class="separator:a02118cd23c5399677f5e21f3c1a19242"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3e8129b72f182100b85899dccc119528" id="r_a3e8129b72f182100b85899dccc119528"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a3e8129b72f182100b85899dccc119528">finished_</a> = false</td></tr>
 <tr class="separator:a3e8129b72f182100b85899dccc119528"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27d19ae81db6e19ce6d0c3882ed53b1b" id="r_a27d19ae81db6e19ce6d0c3882ed53b1b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__scan.html#a27d19ae81db6e19ce6d0c3882ed53b1b">failed_</a> = false</td></tr>
@@ -185,6 +193,22 @@ template&lt;class S , class World &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">using <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::key_transport =  typename World::key_transport</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab062b3391a61009f20a4f4f9f2c9c67d" name="ab062b3391a61009f20a4f4f9f2c9c67d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab062b3391a61009f20a4f4f9f2c9c67d">&#9670;&#160;</a></span>key_type</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class S , class World &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::key_type =  <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt;S&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -256,8 +280,8 @@ template&lt;class S , class World &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="ad2206107ac54756ccb464ab633db0928" name="ad2206107ac54756ccb464ab633db0928"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad2206107ac54756ccb464ab633db0928">&#9670;&#160;</a></span>typed_scan() <span class="overload">[1/3]</span></h2>
+<a id="a5572f5c6f0d04d5923898b0318e01e17" name="a5572f5c6f0d04d5923898b0318e01e17"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5572f5c6f0d04d5923898b0318e01e17">&#9670;&#160;</a></span>typed_scan() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -271,8 +295,30 @@ template&lt;class S , class World &gt; </div>
           <td class="memname"><a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::typed_scan </td>
           <td>(</td>
           <td class="paramtype">World&#160;</td>
-          <td class="paramname"><em>snapshot</em></td><td>)</td>
+          <td class="paramname"><em>snapshot</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">std::optional&lt; <a class="el" href="structeverett_1_1typed__scan.html#ab062b3391a61009f20a4f4f9f2c9c67d">key_type</a> &gt;&#160;</td>
+          <td class="paramname"><em>lo</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; <a class="el" href="structeverett_1_1typed__scan.html#ab062b3391a61009f20a4f4f9f2c9c67d">key_type</a> &gt;&#160;</td>
+          <td class="paramname"><em>hi</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1range__positioning__work.html">range_positioning_work</a> *&#160;</td>
+          <td class="paramname"><em>work</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -284,8 +330,8 @@ template&lt;class S , class World &gt; </div>
 
 </div>
 </div>
-<a id="a71a8bf4e866897ad3651f475118deec4" name="a71a8bf4e866897ad3651f475118deec4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a71a8bf4e866897ad3651f475118deec4">&#9670;&#160;</a></span>typed_scan() <span class="overload">[2/3]</span></h2>
+<a id="a1603af6ac40a02b5d3ca5c9b5f417804" name="a1603af6ac40a02b5d3ca5c9b5f417804"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1603af6ac40a02b5d3ca5c9b5f417804">&#9670;&#160;</a></span>typed_scan() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -305,7 +351,7 @@ template&lt;class S , class World &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">delete</span></span>  </td>
+<span class="mlabels"><span class="mlabel">default</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -341,6 +387,33 @@ template&lt;class S , class World &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a1711b9de6410c74d3c33108cd05f440a" name="a1711b9de6410c74d3c33108cd05f440a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1711b9de6410c74d3c33108cd05f440a">&#9670;&#160;</a></span>begin()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class S , class World &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structeverett_1_1typed__scan_1_1iterator.html">iterator</a> <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::begin </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ab8dde7a87c0289fc413e60694997e925" name="ab8dde7a87c0289fc413e60694997e925"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab8dde7a87c0289fc413e60694997e925">&#9670;&#160;</a></span>compare_prefix()</h2>
 
@@ -358,33 +431,6 @@ template&lt;class S , class World &gt; </div>
           <td class="paramtype"><a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&#160;</td>
           <td class="paramname"><em>key</em></td><td>)</td>
           <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a3b665f8af98d9056f82320b108a37339" name="a3b665f8af98d9056f82320b108a37339"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3b665f8af98d9056f82320b108a37339">&#9670;&#160;</a></span>consume()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class S , class World &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::consume </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
         </tr>
       </table>
   </td>
@@ -444,6 +490,60 @@ template&lt;class S , class World &gt; </div>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a71d91cfeb861e0806a5d0f0e87a54c48" name="a71d91cfeb861e0806a5d0f0e87a54c48"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a71d91cfeb861e0806a5d0f0e87a54c48">&#9670;&#160;</a></span>end()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class S , class World &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::default_sentinel_t <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::end </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="afbc3b500d12ad28224452b3e197bf90a" name="afbc3b500d12ad28224452b3e197bf90a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afbc3b500d12ad28224452b3e197bf90a">&#9670;&#160;</a></span>erase_remaining()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class S , class World &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::erase_remaining </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -531,33 +631,6 @@ template&lt;class S , class World &gt; </div>
 
 </div>
 </div>
-<a id="a566395987671ac14a23413505befa781" name="a566395987671ac14a23413505befa781"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a566395987671ac14a23413505befa781">&#9670;&#160;</a></span>later()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class S , class World &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">auto <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::later </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a3fad11d79dc64a73b68e932b2aa58d19" name="a3fad11d79dc64a73b68e932b2aa58d19"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3fad11d79dc64a73b68e932b2aa58d19">&#9670;&#160;</a></span>next()</h2>
 
@@ -585,8 +658,8 @@ template&lt;class S , class World &gt; </div>
 
 </div>
 </div>
-<a id="a617a683484c3b70542e8ecd5fb670420" name="a617a683484c3b70542e8ecd5fb670420"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a617a683484c3b70542e8ecd5fb670420">&#9670;&#160;</a></span>operator=() <span class="overload">[1/2]</span></h2>
+<a id="a98e6866cbe687a176897112350dbe5d1" name="a98e6866cbe687a176897112350dbe5d1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a98e6866cbe687a176897112350dbe5d1">&#9670;&#160;</a></span>operator=() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -606,15 +679,15 @@ template&lt;class S , class World &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">delete</span></span>  </td>
+<span class="mlabels"><span class="mlabel">default</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="ab77fc2d87125021d54a7c2d5ab27305f" name="ab77fc2d87125021d54a7c2d5ab27305f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab77fc2d87125021d54a7c2d5ab27305f">&#9670;&#160;</a></span>operator=() <span class="overload">[2/2]</span></h2>
+<a id="a7f8b359f8d03781e13bea7b55fce162d" name="a7f8b359f8d03781e13bea7b55fce162d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f8b359f8d03781e13bea7b55fce162d">&#9670;&#160;</a></span>operator=() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -634,7 +707,7 @@ template&lt;class S , class World &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">delete</span></span>  </td>
+<span class="mlabels"><span class="mlabel">default</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -697,30 +770,6 @@ template&lt;class S , class World &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Data Documentation</h2>
-<a id="acdc4b106459e7d80b9f82464b5f6559b" name="acdc4b106459e7d80b9f82464b5f6559b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acdc4b106459e7d80b9f82464b5f6559b">&#9670;&#160;</a></span>consumed_</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;class S , class World &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::uint64_t <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::consumed_ = 0</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">private</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a27d19ae81db6e19ce6d0c3882ed53b1b" name="a27d19ae81db6e19ce6d0c3882ed53b1b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a27d19ae81db6e19ce6d0c3882ed53b1b">&#9670;&#160;</a></span>failed_</h2>
 
@@ -817,8 +866,8 @@ template&lt;class S , class World &gt; </div>
 
 </div>
 </div>
-<a id="a455d5615c85b7cc72a0e97508c99403f" name="a455d5615c85b7cc72a0e97508c99403f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a455d5615c85b7cc72a0e97508c99403f">&#9670;&#160;</a></span>heap_</h2>
+<a id="aa9e42ce554aa2205ee2f78207ee4a410" name="aa9e42ce554aa2205ee2f78207ee4a410"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9e42ce554aa2205ee2f78207ee4a410">&#9670;&#160;</a></span>identity_</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -829,7 +878,31 @@ template&lt;class S , class World &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt;std::size_t&gt; <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::heap_</td>
+          <td class="memname">std::shared_ptr&lt;void const&gt; <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::identity_ = std::make_shared&lt;int const&gt;(0)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a02118cd23c5399677f5e21f3c1a19242" name="a02118cd23c5399677f5e21f3c1a19242"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a02118cd23c5399677f5e21f3c1a19242">&#9670;&#160;</a></span>last_retained_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class S , class World &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::last_retained_ = 0</td>
         </tr>
       </table>
   </td>
@@ -854,6 +927,30 @@ template&lt;class S , class World &gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="structeverett_1_1bit__view.html">bit_view</a> <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::last_value_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aa95e0ea2097b1315fbf214e486a9d5eb" name="aa95e0ea2097b1315fbf214e486a9d5eb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa95e0ea2097b1315fbf214e486a9d5eb">&#9670;&#160;</a></span>lower_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class S , class World &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;<a class="el" href="structeverett_1_1bit__string.html">bit_string</a>&gt; <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::lower_</td>
         </tr>
       </table>
   </td>
@@ -937,8 +1034,8 @@ template&lt;class S , class World &gt; </div>
 
 </div>
 </div>
-<a id="ab84b0b9b28bea2412af132655b4f4764" name="ab84b0b9b28bea2412af132655b4f4764"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab84b0b9b28bea2412af132655b4f4764">&#9670;&#160;</a></span>sources_</h2>
+<a id="acadc65ad86888d37347b0a9ff1dff4f6" name="acadc65ad86888d37347b0a9ff1dff4f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acadc65ad86888d37347b0a9ff1dff4f6">&#9670;&#160;</a></span>sweep_</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -949,7 +1046,31 @@ template&lt;class S , class World &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt;<a class="el" href="structeverett_1_1typed__scan_1_1source.html">source</a>&gt; <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::sources_</td>
+          <td class="memname"><a class="el" href="structeverett_1_1typed__detail_1_1native__sweep.html">typed_detail::native_sweep</a>&lt;World&gt; <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::sweep_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2f7fdd2362e62ce63ebba3bcde6ddaa7" name="a2f7fdd2362e62ce63ebba3bcde6ddaa7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2f7fdd2362e62ce63ebba3bcde6ddaa7">&#9670;&#160;</a></span>upper_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class S , class World &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::optional&lt;<a class="el" href="structeverett_1_1bit__string.html">bit_string</a>&gt; <a class="el" href="structeverett_1_1typed__scan.html">everett::typed_scan</a>&lt; S, World &gt;::upper_</td>
         </tr>
       </table>
   </td>

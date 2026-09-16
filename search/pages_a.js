@@ -10,6 +10,7 @@ var searchData=
   ['key_20merge_20measurements_7',['Fixed-key merge measurements',['../fixed-key-merge-measurements.html',1,'']]],
   ['key_20prefixes_8',['key prefixes',['../md_bench_2borrowed__prefix.html',1,'Reusing borrowed-key prefixes'],['../md_bench_2native__prefix.html',1,'Reusing native-key prefixes']]],
   ['key_20prefixes_20bit_20copies_20and_20framing_9',['Key prefixes, bit copies, and framing',['../md_bench_2key__bits.html',1,'']]],
-  ['keys_10',['Sorts and stringlike keys',['../md_docs_2keys.html',1,'']]],
-  ['kv03_20metal_20results_11',['Matched fixed-key and KV03 Metal results',['../matched-fixed-key-and-kv03-metal-results.html',1,'']]]
+  ['key_20search_10',['Bounded fixed-key search',['../bounded-fixed-key-search.html',1,'']]],
+  ['keys_11',['Sorts and stringlike keys',['../md_docs_2keys.html',1,'']]],
+  ['kv03_20metal_20results_12',['Matched fixed-key and KV03 Metal results',['../matched-fixed-key-and-kv03-metal-results.html',1,'']]]
 ];

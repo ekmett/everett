@@ -1,0 +1,42 @@
+{
+  "header_revision": "cb2b029a657d2bbcd7135265cb3060b2b11cd961",
+  "primary_harness_revision": "867d0e683472f0491817489d9e59761b5b366040",
+  "compiled_primary_harness_sha256": "60515e6eba56c82304e84c9f4034cacca391aa6005bf8093158e46ab58d5ba2a",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+  "flags": [
+    "-std=c++20",
+    "-O3",
+    "-g",
+    "-DNDEBUG",
+    "-Wall",
+    "-Wextra",
+    "-Werror"
+  ],
+  "host": "Apple M2 Max",
+  "profile_template": "Time Profiler",
+  "profile_sample_us": 1000,
+  "profile_duration_s": 10,
+  "retained_profile_duration_s": 8,
+  "selector_checks": {
+    "variants": [
+      "base",
+      "sub32",
+      "packed",
+      "direct32",
+      "direct64"
+    ],
+    "selections_per_variant": 213460,
+    "flags": [
+      "-O1",
+      "-g",
+      "-fsanitize=address,undefined",
+      "-Wall",
+      "-Wextra",
+      "-Werror"
+    ],
+    "result": "passed"
+  },
+  "audit": "96 operation-count rows; audit timings discarded",
+  "measurement_boundary": "fresh mapped file preparation before warm whole-query timing; no durability barriers",
+  "source_notes": "Primary and alternatives executables use the same frozen benchmark source; the size panel adds an explicit return 0 to the included helper main. Header manifests identify every generated header."
+}

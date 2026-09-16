@@ -9,8 +9,9 @@ var searchData=
   ['native_5fmerge_2eh_6',['native_merge.h',['../native__merge_8h.html',1,'']]],
   ['native_5fmerge_2emd_7',['native_merge.md',['../native__merge_8md.html',1,'']]],
   ['native_5fprefix_2emd_8',['native_prefix.md',['../native__prefix_8md.html',1,'']]],
-  ['native_5fwriter_2eh_9',['native_writer.h',['../native__writer_8h.html',1,'']]],
-  ['neon_5fbitmap_5frank_2emd_10',['neon_bitmap_rank.md',['../neon__bitmap__rank_8md.html',1,'']]],
-  ['network_2dadmission_2emd_11',['network-admission.md',['../network-admission_8md.html',1,'']]],
-  ['nursery_5fmap_2eh_12',['nursery_map.h',['../nursery__map_8h.html',1,'']]]
+  ['native_5fsweep_2eh_9',['native_sweep.h',['../native__sweep_8h.html',1,'']]],
+  ['native_5fwriter_2eh_10',['native_writer.h',['../native__writer_8h.html',1,'']]],
+  ['neon_5fbitmap_5frank_2emd_11',['neon_bitmap_rank.md',['../neon__bitmap__rank_8md.html',1,'']]],
+  ['network_2dadmission_2emd_12',['network-admission.md',['../network-admission_8md.html',1,'']]],
+  ['nursery_5fmap_2eh_13',['nursery_map.h',['../nursery__map_8h.html',1,'']]]
 ];

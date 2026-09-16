@@ -7,7 +7,7 @@ var searchData=
   ['design_4',['Everett design',['../md_docs_2design.html',1,'']]],
   ['detailed_20usage_5',['Detailed Usage',['../detailed-usage.html',1,'']]],
   ['direct_20compressed_20input_20and_20output_6',['Optional GPU merge: direct compressed input and output',['../optional-gpu-merge-direct-compressed-input-and-output.html',1,'']]],
-  ['directories_7',['Offset selection on actual file directories',['../offset-selection-on-actual-file-directories.html',1,'']]],
+  ['directories_7',['directories',['../offset-selection-on-actual-file-directories.html',1,'Offset selection on actual file directories'],['../per-file-offset-directories.html',1,'Per-file offset directories']]],
   ['disk_8',['Streaming a fractional-index chain to disk',['../md_docs_2file-indexes.html',1,'']]],
   ['doxygen_20metadata_20and_20declaration_20ownership_9',['Doxygen metadata and declaration ownership',['../md_docs_2doxygen.html',1,'']]],
   ['durable_20publication_20and_20merge_20resumption_10',['Durable publication and merge resumption',['../md_docs_2durability.html',1,'']]]

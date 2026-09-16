@@ -11,9 +11,10 @@ var searchData=
   ['native_5foutput_8',['native_output',['../structeverett_1_1profile__detail_1_1native__output.html',1,'everett::profile_detail']]],
   ['native_5fseal_9',['native_seal',['../structeverett_1_1native__seal.html',1,'everett']]],
   ['native_5fstream_5ffactory_10',['native_stream_factory',['../structeverett_1_1sort__runtime__context_1_1native__stream__factory.html',1,'everett::sort_runtime_context']]],
-  ['niche_5fvalue_11',['niche_value',['../structeverett_1_1niche__value.html',1,'everett']]],
-  ['no_5fvalue_12',['no_value',['../structeverett_1_1no__value.html',1,'everett']]],
-  ['node_13',['node',['../structeverett_1_1nursery__map_1_1node.html',1,'everett::nursery_map']]],
-  ['nursery_5fmap_14',['nursery_map',['../structeverett_1_1nursery__map.html',1,'everett']]],
-  ['nursery_5fvalue_15',['nursery_value',['../structeverett_1_1transaction_1_1nursery__value.html',1,'everett::transaction']]]
+  ['native_5fsweep_11',['native_sweep',['../structeverett_1_1typed__detail_1_1native__sweep.html',1,'everett::typed_detail']]],
+  ['niche_5fvalue_12',['niche_value',['../structeverett_1_1niche__value.html',1,'everett']]],
+  ['no_5fvalue_13',['no_value',['../structeverett_1_1no__value.html',1,'everett']]],
+  ['node_14',['node',['../structeverett_1_1nursery__map_1_1node.html',1,'everett::nursery_map']]],
+  ['nursery_5fmap_15',['nursery_map',['../structeverett_1_1nursery__map.html',1,'everett']]],
+  ['nursery_5fvalue_16',['nursery_value',['../structeverett_1_1transaction_1_1nursery__value.html',1,'everett::transaction']]]
 ];

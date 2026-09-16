@@ -4,7 +4,8 @@ var searchData=
   ['object_5fpath_2eh_1',['object_path.h',['../object__path_8h.html',1,'']]],
   ['object_5fstream_2eh_2',['object_stream.h',['../object__stream_8h.html',1,'']]],
   ['object_5fwriter_2eh_3',['object_writer.h',['../object__writer_8h.html',1,'']]],
-  ['other_5frank_2emd_4',['other_rank.md',['../other__rank_8md.html',1,'']]],
-  ['output_2dplan_2dreport_2emd_5',['output-plan-report.md',['../output-plan-report_8md.html',1,'']]],
-  ['output_5fbudget_2eh_6',['output_budget.h',['../output__budget_8h.html',1,'']]]
+  ['offset_2ddirectories_2emd_4',['offset-directories.md',['../offset-directories_8md.html',1,'']]],
+  ['other_5frank_2emd_5',['other_rank.md',['../other__rank_8md.html',1,'']]],
+  ['output_2dplan_2dreport_2emd_6',['output-plan-report.md',['../output-plan-report_8md.html',1,'']]],
+  ['output_5fbudget_2eh_7',['output_budget.h',['../output__budget_8h.html',1,'']]]
 ];

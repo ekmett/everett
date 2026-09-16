@@ -1,0 +1,277 @@
+{
+  "input": "comparisons.csv",
+  "input_sha256": "8410b4bea7e9d2e5595737d5e77f340a698a878a0772fb951979af51937f2e82",
+  "script": "plot.py",
+  "script_sha256": "5211ef6ac97ff9f32a88fc5cd6ef9162652feefdbf32f97eb9e049e8f9d16ea7",
+  "matplotlib_version": "3.11.2",
+  "y_metric": "100 * ((byte_native + byte_index) / (bit_native + bit_index) - 1)",
+  "files": "Complete serialized native and fractional-index files; metadata catalog and filesystem allocation excluded.",
+  "measured_source_revision": "9fbf906111523b2ea7c040021855b58043d74fbe",
+  "data": [
+    {
+      "fixture": "string-prefix-fixed",
+      "family": "typed",
+      "records": 1024,
+      "byte_total": 27080,
+      "bit_total": 25208,
+      "delta_percent": 7.426213900349099
+    },
+    {
+      "fixture": "string-prefix-fixed",
+      "family": "typed",
+      "records": 8192,
+      "byte_total": 190392,
+      "bit_total": 173200,
+      "delta_percent": 9.926096997690536
+    },
+    {
+      "fixture": "string-prefix-fixed",
+      "family": "typed",
+      "records": 32768,
+      "byte_total": 748144,
+      "bit_total": 678328,
+      "delta_percent": 10.292365935063863
+    },
+    {
+      "fixture": "string-prefix-fixed",
+      "family": "typed",
+      "records": 131072,
+      "byte_total": 2980136,
+      "bit_total": 2699880,
+      "delta_percent": 10.380313199105151
+    },
+    {
+      "fixture": "string-prefix-fixed",
+      "family": "typed-known",
+      "records": 1024,
+      "byte_total": 26024,
+      "bit_total": 25208,
+      "delta_percent": 3.2370675975880614
+    },
+    {
+      "fixture": "string-prefix-fixed",
+      "family": "typed-known",
+      "records": 8192,
+      "byte_total": 182008,
+      "bit_total": 173200,
+      "delta_percent": 5.085450346420317
+    },
+    {
+      "fixture": "string-prefix-fixed",
+      "family": "typed-known",
+      "records": 32768,
+      "byte_total": 714632,
+      "bit_total": 678328,
+      "delta_percent": 5.351983111415137
+    },
+    {
+      "fixture": "string-prefix-fixed",
+      "family": "typed-known",
+      "records": 131072,
+      "byte_total": 2846112,
+      "bit_total": 2699880,
+      "delta_percent": 5.416240721809862
+    },
+    {
+      "fixture": "string-structured-fixed",
+      "family": "typed",
+      "records": 1024,
+      "byte_total": 33680,
+      "bit_total": 33368,
+      "delta_percent": 0.9350275713258194
+    },
+    {
+      "fixture": "string-structured-fixed",
+      "family": "typed",
+      "records": 8192,
+      "byte_total": 243120,
+      "bit_total": 238328,
+      "delta_percent": 2.0106743647410275
+    },
+    {
+      "fixture": "string-structured-fixed",
+      "family": "typed",
+      "records": 32768,
+      "byte_total": 958936,
+      "bit_total": 938872,
+      "delta_percent": 2.1370325241353516
+    },
+    {
+      "fixture": "string-structured-fixed",
+      "family": "typed",
+      "records": 131072,
+      "byte_total": 3823240,
+      "bit_total": 3741976,
+      "delta_percent": 2.171686830701214
+    },
+    {
+      "fixture": "string-structured-fixed",
+      "family": "typed-known",
+      "records": 1024,
+      "byte_total": 32648,
+      "bit_total": 33368,
+      "delta_percent": -2.15775593382882
+    },
+    {
+      "fixture": "string-structured-fixed",
+      "family": "typed-known",
+      "records": 8192,
+      "byte_total": 234824,
+      "bit_total": 238328,
+      "delta_percent": -1.4702426907455268
+    },
+    {
+      "fixture": "string-structured-fixed",
+      "family": "typed-known",
+      "records": 32768,
+      "byte_total": 925736,
+      "bit_total": 938872,
+      "delta_percent": -1.3991257594219486
+    },
+    {
+      "fixture": "string-structured-fixed",
+      "family": "typed-known",
+      "records": 131072,
+      "byte_total": 3690512,
+      "bit_total": 3741976,
+      "delta_percent": -1.3753161431286576
+    },
+    {
+      "fixture": "string-binary-fixed",
+      "family": "typed",
+      "records": 1024,
+      "byte_total": 42528,
+      "bit_total": 42888,
+      "delta_percent": -0.8393956351426923
+    },
+    {
+      "fixture": "string-binary-fixed",
+      "family": "typed",
+      "records": 8192,
+      "byte_total": 310760,
+      "bit_total": 312512,
+      "delta_percent": -0.5606184722506624
+    },
+    {
+      "fixture": "string-binary-fixed",
+      "family": "typed",
+      "records": 32768,
+      "byte_total": 1225040,
+      "bit_total": 1227472,
+      "delta_percent": -0.1981307923928255
+    },
+    {
+      "fixture": "string-binary-fixed",
+      "family": "typed",
+      "records": 131072,
+      "byte_total": 4865936,
+      "bit_total": 4862688,
+      "delta_percent": 0.06679433268184098
+    },
+    {
+      "fixture": "string-binary-fixed",
+      "family": "typed-known",
+      "records": 1024,
+      "byte_total": 41496,
+      "bit_total": 42888,
+      "delta_percent": -3.2456631225517674
+    },
+    {
+      "fixture": "string-binary-fixed",
+      "family": "typed-known",
+      "records": 8192,
+      "byte_total": 302504,
+      "bit_total": 312512,
+      "delta_percent": -3.202437026418181
+    },
+    {
+      "fixture": "string-binary-fixed",
+      "family": "typed-known",
+      "records": 32768,
+      "byte_total": 1191968,
+      "bit_total": 1227472,
+      "delta_percent": -2.8924488705241336
+    },
+    {
+      "fixture": "string-binary-fixed",
+      "family": "typed-known",
+      "records": 131072,
+      "byte_total": 4733728,
+      "bit_total": 4862688,
+      "delta_percent": -2.65203113997855
+    },
+    {
+      "fixture": "integer-random-fixed",
+      "family": "typed",
+      "records": 1024,
+      "byte_total": 23480,
+      "bit_total": 22344,
+      "delta_percent": 5.084138918725389
+    },
+    {
+      "fixture": "integer-random-fixed",
+      "family": "typed",
+      "records": 8192,
+      "byte_total": 158472,
+      "bit_total": 151344,
+      "delta_percent": 4.709800190294966
+    },
+    {
+      "fixture": "integer-random-fixed",
+      "family": "typed",
+      "records": 32768,
+      "byte_total": 615904,
+      "bit_total": 590968,
+      "delta_percent": 4.219517808070816
+    },
+    {
+      "fixture": "integer-random-fixed",
+      "family": "typed",
+      "records": 131072,
+      "byte_total": 2429488,
+      "bit_total": 2348632,
+      "delta_percent": 3.442684933186646
+    },
+    {
+      "fixture": "integer-ordered-fixed",
+      "family": "typed",
+      "records": 1024,
+      "byte_total": 16208,
+      "bit_total": 21760,
+      "delta_percent": -25.51470588235294
+    },
+    {
+      "fixture": "integer-ordered-fixed",
+      "family": "typed",
+      "records": 8192,
+      "byte_total": 104664,
+      "bit_total": 146984,
+      "delta_percent": -28.792249496543842
+    },
+    {
+      "fixture": "integer-ordered-fixed",
+      "family": "typed",
+      "records": 32768,
+      "byte_total": 405832,
+      "bit_total": 574088,
+      "delta_percent": -29.308398712392524
+    },
+    {
+      "fixture": "integer-ordered-fixed",
+      "family": "typed",
+      "records": 131072,
+      "byte_total": 1611488,
+      "bit_total": 2283416,
+      "delta_percent": -29.426438283694257
+    }
+  ],
+  "artifacts": {
+    "space-tradeoff.png": "3dfad5556059fe65a756780e5349e5704a35614b3069a6fe2418661cf1a72fd4",
+    "space-tradeoff.svg": "3cb3949459632062777cb845ea6c199e24c4ddfaa6cad4f7a4e3bd52ab9d3086"
+  },
+  "notes": [
+    "Known-width control is a low-level writer hint for all-present fixed-length string fixtures.",
+    "Integer native grammars differ: byte FC versus bit fixed-width raw integers.",
+    "This figure measures current typed codecs, not byte alignment in isolation."
+  ]
+}

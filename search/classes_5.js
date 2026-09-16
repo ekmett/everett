@@ -28,6 +28,7 @@ var searchData=
   ['file_5foutput_5fref_25',['file_output_ref',['../structeverett_1_1sort__profile__detail_1_1file__output__ref.html',1,'everett::sort_profile_detail']]],
   ['file_5foutput_5fref_3c_20p_2c_20typename_20native_3a_3astream_5ffamily_3a_3aselector_5ftype_2c_20posix_5fobject_5fops_20_3e_26',['file_output_ref&lt; P, typename Native::stream_family::selector_type, posix_object_ops &gt;',['../structeverett_1_1sort__profile__detail_1_1file__output__ref.html',1,'everett::sort_profile_detail']]],
   ['first_5fwindow_5fresult_27',['first_window_result',['../structeverett_1_1cola__detail_1_1first__window__result.html',1,'everett::cola_detail']]],
-  ['fixed_5fvalues_28',['fixed_values',['../structeverett_1_1fixed__values.html',1,'everett']]],
-  ['frontier_5fselection_29',['frontier_selection',['../structeverett_1_1cola__detail_1_1frontier__selection.html',1,'everett::cola_detail']]]
+  ['fixed_5fkey_5fview_28',['fixed_key_view',['../structeverett_1_1fixed__key__view.html',1,'everett']]],
+  ['fixed_5fvalues_29',['fixed_values',['../structeverett_1_1fixed__values.html',1,'everett']]],
+  ['frontier_5fselection_30',['frontier_selection',['../structeverett_1_1cola__detail_1_1frontier__selection.html',1,'everett::cola_detail']]]
 ];

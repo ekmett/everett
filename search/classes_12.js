@@ -72,7 +72,7 @@ var searchData=
   ['sort_5fsemantics_3c_20unsorted_3c_20std_3a_3aoptional_3c_20std_3a_3astring_20_3e_20_3e_20_3e_69',['sort_semantics&lt; unsorted&lt; std::optional&lt; std::string &gt; &gt; &gt;',['../structeverett_1_1sort__semantics_3_01unsorted_3_01std_1_1optional_3_01std_1_1string_01_4_01_4_01_4.html',1,'everett']]],
   ['sort_5fundefined_70',['sort_undefined',['../structeverett_1_1sort__undefined.html',1,'everett']]],
   ['sorts_71',['sorts',['../structeverett_1_1registry__detail_1_1sorts.html',1,'everett::registry_detail']]],
-  ['source_72',['source',['../structeverett_1_1typed__scan_1_1source.html',1,'everett::typed_scan']]],
+  ['source_72',['source',['../structeverett_1_1typed__detail_1_1native__sweep_1_1source.html',1,'everett::typed_detail::native_sweep']]],
   ['span_73',['span',['../structeverett_1_1native__merge__detail_1_1encoded__source_1_1span.html',1,'everett::native_merge_detail::encoded_source']]],
   ['sqlite_5fcatalog_74',['sqlite_catalog',['../structeverett_1_1sqlite__catalog.html',1,'everett']]],
   ['sqlite_5fcatalog_3c_20p_2c_20sqlite_5fcatalog_5fops_20_3e_75',['sqlite_catalog&lt; P, sqlite_catalog_ops &gt;',['../structeverett_1_1sqlite__catalog.html',1,'everett']]],

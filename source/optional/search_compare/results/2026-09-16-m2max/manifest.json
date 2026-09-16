@@ -1,0 +1,208 @@
+{
+  "format": 1,
+  "header_revision": "cb2b029a657d2bbcd7135265cb3060b2b11cd961",
+  "measurement_sources": [
+    "867d0e683472f0491817489d9e59761b5b366040",
+    "b6987f1c0e75a3ed010cf46d507507be9329e3c0",
+    "c3af5e7"
+  ],
+  "notes": [
+    "Raw timer observations are preserved; summary CSVs and statistical categories are derived.",
+    "Primary and alternative matrices have three processes and three trials per case.",
+    "All five regenerated frozen-header trees match measured header manifests byte for byte.",
+    "Independent read-only review reproduced5184 timer observations, all process medians, complete-file deltas and encoded-payload equivalence.",
+    "Size panel covers six sizes1024 through2097152, with two processes and three trials; complete file accounting and oracles pass.",
+    "Initial524288/2097152 timing collection has large transient wall-time variation and is retained as diagnostic, not settled performance evidence; size-timing-quality.csv marks the full collection.",
+    "Scheduled follow-up retains90 processes/540 trials across131072,524288,2097152, separately from the8-process baseline pilot and original size panel. All trials retained; CPU/wall diagnostics expose remaining variation."
+  ],
+  "artifacts": {
+    "alternatives-metadata.json": {
+      "bytes": 20392,
+      "sha256": "7de47521d9c7647e37742bc6d70ef63b55669aaa06137bf55937bde3ac6ebe3e"
+    },
+    "alternatives-queries.csv.gz": {
+      "bytes": 23159,
+      "sha256": "40c7e4425cf68a2ca6688aef12ca9f6b0e9fc68d4c978c00a29d987cf4ee7046"
+    },
+    "alternatives-raw.tar.gz": {
+      "bytes": 40547,
+      "sha256": "6c1f026bb10575fe77a0b154a9d013ae1369b1319a9a5b1eb21de0c3fcf8645a"
+    },
+    "alternatives-space.csv.gz": {
+      "bytes": 2826,
+      "sha256": "a8b1e9cd022c67556df9a8ebacc64fbe5ba6dc57ca9e6d6928dc8e8f49a8efa7"
+    },
+    "alternatives-summary.csv": {
+      "bytes": 60891,
+      "sha256": "34a754eeac49ca45313be84b0561e09f68f02eb8bcdfb8483e148d9e0ff82761"
+    },
+    "audit-headers.json": {
+      "bytes": 8920,
+      "sha256": "421edd1836d9e6a5583ae07554e5cdeaf2b31446a92521eb4489f5c4e6f30059"
+    },
+    "base-headers.json": {
+      "bytes": 7615,
+      "sha256": "6be3669aad2e13b59b0535acd8e787d6c171d205d0e1b0a5d9c386f37cf6bdba"
+    },
+    "chronology-checks.json": {
+      "bytes": 1536,
+      "sha256": "0946eb0cd827207da56999b33f7e4d2a0a4b6eaeeead112821befeb9040dbfbc"
+    },
+    "direct32-headers.json": {
+      "bytes": 7817,
+      "sha256": "a3041288bfabc10800c95cbab475bcd0a1e1b4456498c7b3651bda5e34280274"
+    },
+    "direct64-headers.json": {
+      "bytes": 7857,
+      "sha256": "085a404c8fd67c449a499f2b4a97290fff4b4d7a80ba5787497c3045202e63f2"
+    },
+    "operation-counts.csv": {
+      "bytes": 10643,
+      "sha256": "c506b4f746f90da138525c2d132af68606bc7c84aa86b1e165f4fdfc57e6a821"
+    },
+    "packed-headers.json": {
+      "bytes": 7857,
+      "sha256": "273609180b4a60d30602299a517b3e8660d1063b090e62c29b7a18a4b11c9695"
+    },
+    "primary-metadata.json": {
+      "bytes": 20082,
+      "sha256": "ca26a6eb7836b64038a816ac64ac4fc5b2563f170f909d2bd12286d2e4338271"
+    },
+    "primary-queries.csv.gz": {
+      "bytes": 23185,
+      "sha256": "7cb2b7da311b372463f4864c99c118a084f835daa69da5c521c7b6c8629149f4"
+    },
+    "primary-raw.tar.gz": {
+      "bytes": 40504,
+      "sha256": "af737d7329e97ef400924863c39a019845f15efad39f030156dd995bdf920caf"
+    },
+    "primary-space.csv.gz": {
+      "bytes": 2834,
+      "sha256": "66d60d11c861d7dda4e75167ecdbdf5dd281f9d2c51515981e5b94c0ab8c44ad"
+    },
+    "primary-summary.csv": {
+      "bytes": 59779,
+      "sha256": "ec9618024a38e2cc38d3543e8ef35450644e1c060a919c729f6c5730aa8c0981"
+    },
+    "profile-bit-hash.json": {
+      "bytes": 131908,
+      "sha256": "1a1196039e79c63719905afb39f83cf7be2d72426c3fb50b018032f0b3c7dc00"
+    },
+    "profile-bit-hash.samples.json.gz": {
+      "bytes": 1073059,
+      "sha256": "be14186571972d1fe01be76b79c818dac01f046f119976a5988ec4197dd1bcc0"
+    },
+    "profile-bit-structured.json": {
+      "bytes": 122207,
+      "sha256": "e25b8776704b03c86963f40e454fd1f4791e848abc371e8d328b036515d55478"
+    },
+    "profile-bit-structured.samples.json.gz": {
+      "bytes": 1074324,
+      "sha256": "23186261b3d1209116d2efade670c2fddeaf549308b46495b925a569dc42264e"
+    },
+    "profile-byte-hash.json": {
+      "bytes": 78277,
+      "sha256": "e3e50616cc9f0255abca3afe2dffc792326cc4c094532ee707b5a73b9ed73ccc"
+    },
+    "profile-byte-hash.samples.json.gz": {
+      "bytes": 602350,
+      "sha256": "993c6c10a8083e517645540ff543056b996fcd536d4c1b22664c21b5cdb8ad4b"
+    },
+    "profile-byte-structured.json": {
+      "bytes": 87471,
+      "sha256": "9f39acc9b5e039ccbaf92cea8cb5d317a9f3037fa4b35fe6f56eb1f74ec7c564"
+    },
+    "profile-byte-structured.samples.json.gz": {
+      "bytes": 625514,
+      "sha256": "ca388884f6a9121791357d89503b47145508062c72b6cd81438ad8a0f2534b22"
+    },
+    "provenance.json": {
+      "bytes": 1305,
+      "sha256": "3c216caf5c092ac0bb97a77bc73cdbb8b1b8eebf03643ea6a1551f28091b16bf"
+    },
+    "scheduled-diagnostics.csv": {
+      "bytes": 35341,
+      "sha256": "41ab896f5a037458af10ee16932eacb5d5a4908410bafc75114a305f8fc46678"
+    },
+    "scheduled-metadata.json": {
+      "bytes": 13027,
+      "sha256": "cacec9186a99ab0b945293709c33873424e4649c5b7a3e23d5e12f1be8f6ff11"
+    },
+    "scheduled-provenance.json": {
+      "bytes": 1610,
+      "sha256": "2a01c02e43129f7e17decccf24642a5bfe754eec9bdb7450eba8f72c51f6e765"
+    },
+    "scheduled-queries.csv.gz": {
+      "bytes": 8341,
+      "sha256": "ebc911f077a76e6e7ecc6bb4da6647b4e085b830a48fbbb9b6ba52eebe709b28"
+    },
+    "scheduled-raw.tar.gz": {
+      "bytes": 13735,
+      "sha256": "464f167abd400533dfe97c6e3a5bc2567de9f336c3f1424f8b8d00cefdb2455e"
+    },
+    "scheduled-space.csv.gz": {
+      "bytes": 1963,
+      "sha256": "ef176949c52cc1b6577e470eb2aa9888314f425ca7262c68dfd1c2129afde263"
+    },
+    "scheduled-summary.csv": {
+      "bytes": 13796,
+      "sha256": "3311910c8d1c377b30953e92e47b5228f6ea193506786d2c60a4874d587583a1"
+    },
+    "scheduling-pilot-diagnostics.csv": {
+      "bytes": 3328,
+      "sha256": "98ccb036e4ebc3f1c8c8ec9636328640ee533cf73c6536ca9b4a25d6469e763e"
+    },
+    "scheduling-pilot-metadata.json": {
+      "bytes": 1682,
+      "sha256": "4f04868af2b963e2196a298acfa0a500b11790b6b2c130462a3731c75deab63f"
+    },
+    "scheduling-pilot-queries.csv.gz": {
+      "bytes": 971,
+      "sha256": "ef40729b762c41daa9545f8db44c02175e718b751655924bd92c11302b2654b1"
+    },
+    "scheduling-pilot-raw.tar.gz": {
+      "bytes": 1722,
+      "sha256": "df6182eca9fef3664d498284d50f5641e390c9573fbcc1b7075a99a59de23824"
+    },
+    "scheduling-pilot-space.csv.gz": {
+      "bytes": 506,
+      "sha256": "719f03a5234571fb102e7e1b735d9cb564e5dcacf207e30b13a433fde9edc0dd"
+    },
+    "size-metadata.json": {
+      "bytes": 16874,
+      "sha256": "cbdeb8b985256aaf720aff07c40907c584918d75dc57438de7c25376e0fa5fd0"
+    },
+    "size-queries.csv.gz": {
+      "bytes": 6745,
+      "sha256": "9ac66e20ed69c6075cad8891750bd5d6396f1da0ef08b86f1f7367681687ac22"
+    },
+    "size-raw.tar.gz": {
+      "bytes": 13467,
+      "sha256": "a98e2a73f271355043dc30a779150297ed7b29a9ed4d8cf23010e9c613a1950a"
+    },
+    "size-space.csv.gz": {
+      "bytes": 3020,
+      "sha256": "e1795a52a160bef544185a27c0ce30f4557dafef99b2ef2cf495f8af57ed80be"
+    },
+    "size-summary.csv": {
+      "bytes": 25971,
+      "sha256": "f48f33174f949b01c8f0a52b920435f76c1bd1641ec23ab9944555ce988ba1dc"
+    },
+    "size-timing-quality.csv": {
+      "bytes": 26209,
+      "sha256": "72ad472a990c3d9458294133867ac2405b7ef1db3a4ced99400dffd88c54fd88"
+    },
+    "sub32-headers.json": {
+      "bytes": 7817,
+      "sha256": "f02a81ef401209ace64cdd8ca2bd4281e3bb9bea8b4ed48ff811ec04739352dc"
+    }
+  },
+  "tools": {
+    "prepare.py": "0fc040a99b8a8d54b9d900b02a40e0f1faab5dfe7a31edfb6209bcf8ffa121bc",
+    "profile.py": "809b73185c8e7aebbb4859777d26a2c42978746b4c156707bbaa4e51aded638b",
+    "run.py": "b5e5b9614c83f51b6615a000282015413de7af6394f7b2213581e867eeba668f",
+    "size_panel.py": "058c9543b93f49c13e015e01ce83fc41415a1a58133f6937a4f5ed69b7369356",
+    "summarize.py": "88f18e03c4851ecb6e13134dccd5b8e5ef2abe4973571b086cf5dfd3c011c3f9",
+    "scheduling.py": "019bbc538a1ec1a4d57287a5f23f11c25049e4fb3dd735bac46803a9a88acdf0"
+  }
+}

@@ -141,6 +141,17 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a586ac3bca952d321e93626253300c6bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a590221724b7222b8656faece071a3851" id="r_a590221724b7222b8656faece071a3851"><td class="memItemLeft" align="right" valign="top">std::filesystem::path const &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1connection.html#a590221724b7222b8656faece071a3851">root</a> () const &amp;&amp;=delete</td></tr>
 <tr class="separator:a590221724b7222b8656faece071a3851"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0fc1cd30ee1c91f1c4bf9a8beceb3a6" id="r_ab0fc1cd30ee1c91f1c4bf9a8beceb3a6"><td class="memTemplParams" colspan="2">template&lt;class S  = typed_detail::default_sort_t&lt;policy_type&gt;&gt; </td></tr>
+<tr class="memitem:ab0fc1cd30ee1c91f1c4bf9a8beceb3a6"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1connection.html#ab0fc1cd30ee1c91f1c4bf9a8beceb3a6">range</a> (std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; &gt; lo={}, std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; &gt; hi={}) const</td></tr>
+<tr class="separator:ab0fc1cd30ee1c91f1c4bf9a8beceb3a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9782677b88259738bd132ccd03899632" id="r_a9782677b88259738bd132ccd03899632"><td class="memTemplParams" colspan="2">template&lt;class S  = typed_detail::default_sort_t&lt;policy_type&gt;&gt; <br />
+requires <a class="el" href="namespaceeverett_1_1typed__detail.html#a2b84c5f7957a28616e797263cdecc310">typed_detail::replacement</a>&lt;S&gt;</td></tr>
+<tr class="memitem:a9782677b88259738bd132ccd03899632"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1connection.html#abd2fcb70cd3071851b8da16a82b1730a">world_type</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1connection.html#a9782677b88259738bd132ccd03899632">erase_range</a> (std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; &gt; lo={}, std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; &gt; hi={})</td></tr>
+<tr class="separator:a9782677b88259738bd132ccd03899632"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61b95eca61c7d15c8edb6e6561ae8c9f" id="r_a61b95eca61c7d15c8edb6e6561ae8c9f"><td class="memTemplParams" colspan="2">template&lt;class S  = typed_detail::default_sort_t&lt;policy_type&gt;&gt; <br />
+requires <a class="el" href="namespaceeverett_1_1typed__detail.html#a2b84c5f7957a28616e797263cdecc310">typed_detail::replacement</a>&lt;S&gt;</td></tr>
+<tr class="memitem:a61b95eca61c7d15c8edb6e6561ae8c9f"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1connection.html#ab1c5443f26dd4e14c23fcc4723e3df59">ticket</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1connection.html#a61b95eca61c7d15c8edb6e6561ae8c9f">erase_range_async</a> (std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; &gt; lo={}, std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; &gt; hi={})</td></tr>
+<tr class="separator:a61b95eca61c7d15c8edb6e6561ae8c9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af774644cd3f4594e4e58930170171d6a" id="r_af774644cd3f4594e4e58930170171d6a"><td class="memTemplParams" colspan="2">template&lt;class S  = typed_detail::default_sort_t&lt;policy_type&gt;&gt; </td></tr>
 <tr class="memitem:af774644cd3f4594e4e58930170171d6a"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1connection.html#af774644cd3f4594e4e58930170171d6a">get</a> (<a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; const &amp;key) const</td></tr>
 <tr class="separator:af774644cd3f4594e4e58930170171d6a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -782,6 +793,88 @@ requires <a class="el" href="namespaceeverett_1_1typed__detail.html#a2b84c5f7957
 
 </div>
 </div>
+<a id="a9782677b88259738bd132ccd03899632" name="a9782677b88259738bd132ccd03899632"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9782677b88259738bd132ccd03899632">&#9670;&#160;</a></span>erase_range()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Core  = active_engine&lt;&gt;&gt; </div>
+<div class="memtemplate">
+template&lt;class S  = typed_detail::default_sort_t&lt;policy_type&gt;&gt; <br />
+requires <a class="el" href="namespaceeverett_1_1typed__detail.html#a2b84c5f7957a28616e797263cdecc310">typed_detail::replacement</a>&lt;S&gt;</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structeverett_1_1connection.html#abd2fcb70cd3071851b8da16a82b1730a">world_type</a> <a class="el" href="structeverett_1_1connection.html">everett::connection</a>&lt; Core &gt;::erase_range </td>
+          <td>(</td>
+          <td class="paramtype">std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; &gt;&#160;</td>
+          <td class="paramname"><em>lo</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; &gt;&#160;</td>
+          <td class="paramname"><em>hi</em> = <code>{}</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a61b95eca61c7d15c8edb6e6561ae8c9f" name="a61b95eca61c7d15c8edb6e6561ae8c9f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a61b95eca61c7d15c8edb6e6561ae8c9f">&#9670;&#160;</a></span>erase_range_async()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Core  = active_engine&lt;&gt;&gt; </div>
+<div class="memtemplate">
+template&lt;class S  = typed_detail::default_sort_t&lt;policy_type&gt;&gt; <br />
+requires <a class="el" href="namespaceeverett_1_1typed__detail.html#a2b84c5f7957a28616e797263cdecc310">typed_detail::replacement</a>&lt;S&gt;</div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structeverett_1_1connection.html#ab1c5443f26dd4e14c23fcc4723e3df59">ticket</a> <a class="el" href="structeverett_1_1connection.html">everett::connection</a>&lt; Core &gt;::erase_range_async </td>
+          <td>(</td>
+          <td class="paramtype">std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; &gt;&#160;</td>
+          <td class="paramname"><em>lo</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; &gt;&#160;</td>
+          <td class="paramname"><em>hi</em> = <code>{}</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="abf6c8ce66739f61008f444401960ce4c" name="abf6c8ce66739f61008f444401960ce4c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abf6c8ce66739f61008f444401960ce4c">&#9670;&#160;</a></span>failure()</h2>
 
@@ -1168,6 +1261,46 @@ requires <a class="el" href="namespaceeverett_1_1typed__detail.html#a2b84c5f7957
           <td></td>
           <td>)</td>
           <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab0fc1cd30ee1c91f1c4bf9a8beceb3a6" name="ab0fc1cd30ee1c91f1c4bf9a8beceb3a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab0fc1cd30ee1c91f1c4bf9a8beceb3a6">&#9670;&#160;</a></span>range()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Core  = active_engine&lt;&gt;&gt; </div>
+<div class="memtemplate">
+template&lt;class S  = typed_detail::default_sort_t&lt;policy_type&gt;&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="structeverett_1_1connection.html">everett::connection</a>&lt; Core &gt;::range </td>
+          <td>(</td>
+          <td class="paramtype">std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; &gt;&#160;</td>
+          <td class="paramname"><em>lo</em> = <code>{}</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; <a class="el" href="namespaceeverett_1_1typed__detail.html#a8e3adf585ba8e008f0619d55f01db9fe">typed_detail::key_t</a>&lt; S &gt; &gt;&#160;</td>
+          <td class="paramname"><em>hi</em> = <code>{}</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
         </tr>
       </table>
   </td>

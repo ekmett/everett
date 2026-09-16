@@ -16,5 +16,6 @@ var searchData=
   ['info_3c_20sort_5flist_3c_20s_2e_2e_2e_20_3e_20_3e_13',['info&lt; sort_list&lt; S... &gt; &gt;',['../structeverett_1_1registry__detail_1_1info_3_01sort__list_3_01_s_8_8_8_01_4_01_4.html',1,'everett::registry_detail']]],
   ['info_3c_20sort_5fundefined_20_3e_14',['info&lt; sort_undefined &gt;',['../structeverett_1_1registry__detail_1_1info_3_01sort__undefined_01_4.html',1,'everett::registry_detail']]],
   ['info_3c_20tip_3c_20s_20_3e_20_3e_15',['info&lt; tip&lt; S &gt; &gt;',['../structeverett_1_1registry__detail_1_1info_3_01tip_3_01_s_01_4_01_4.html',1,'everett::registry_detail']]],
-  ['info_3c_20unsorted_3c_20t_20_3e_20_3e_16',['info&lt; unsorted&lt; T &gt; &gt;',['../structeverett_1_1registry__detail_1_1info_3_01unsorted_3_01_t_01_4_01_4.html',1,'everett::registry_detail']]]
+  ['info_3c_20unsorted_3c_20t_20_3e_20_3e_16',['info&lt; unsorted&lt; T &gt; &gt;',['../structeverett_1_1registry__detail_1_1info_3_01unsorted_3_01_t_01_4_01_4.html',1,'everett::registry_detail']]],
+  ['iterator_17',['iterator',['../structeverett_1_1typed__scan_1_1iterator.html',1,'everett::typed_scan']]]
 ];

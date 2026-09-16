@@ -1,0 +1,41 @@
+{
+  "header_revision": "cb2b029a657d2bbcd7135265cb3060b2b11cd961",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)",
+  "flags": [
+    "-std=c++20",
+    "-O0",
+    "-g",
+    "-fsanitize=address,undefined",
+    "-Wall",
+    "-Wextra",
+    "-Werror"
+  ],
+  "checks_per_variant": 16384,
+  "sources": {
+    "chronology_check.cc": "24238e315614b8db06616b8baddb72586626bf364a2ac27922eccebe55680e81",
+    "bench.cc": "893839c61b7359e0aefb2cb7edb3a54770f5b7c772bb0be33d88b0869827e946"
+  },
+  "variants": {
+    "base": {
+      "binary_sha256": "33b768fbbfe2f0c8d6be815a648fb30d5e6f68cba8bb70b4dfc5d517e66d5971",
+      "output": "16384 mapped changed-value/tombstone/miss checks passed"
+    },
+    "sub32": {
+      "binary_sha256": "3c97e4a27a049c4b6b5ecd7c300f748dad143ff47cc0a9156356780e982f09a3",
+      "output": "16384 mapped changed-value/tombstone/miss checks passed"
+    },
+    "packed": {
+      "binary_sha256": "ea785dc61b9ac7f3d7837c42cf9cc7a55dd15b20fa8d15994073945994dc042a",
+      "output": "16384 mapped changed-value/tombstone/miss checks passed"
+    },
+    "direct32": {
+      "binary_sha256": "7ec31b21e514ce978ada749823d5ab17ed3b995fda009b59407524cf39c1f55e",
+      "output": "16384 mapped changed-value/tombstone/miss checks passed"
+    },
+    "direct64": {
+      "binary_sha256": "41327bbb38776d0bfdf8472ce7480377d3c9496b191af798a3f17001b350ba87",
+      "output": "16384 mapped changed-value/tombstone/miss checks passed"
+    }
+  },
+  "timing": "No elapsed times are retained or used as performance evidence."
+}

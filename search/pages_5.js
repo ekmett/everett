@@ -15,5 +15,5 @@ var searchData=
   ['exact_20query_20roots_12',['Mapped blobs and exact query roots',['../mapped-blobs-and-exact-query-roots.html',1,'']]],
   ['exception_20paths_20in_20complete_20queries_13',['Cold exception paths in complete queries',['../cold-exception-paths-in-complete-queries.html',1,'']]],
   ['execution_14',['execution',['../charged-encoded-cola-execution.html',1,'Charged encoded COLA execution'],['../redundant-cola-execution.html',1,'Redundant COLA execution']]],
-  ['experiment_15',['experiment',['../collision-bitmap-and-rank-experiment.html',1,'Collision bitmap and rank experiment'],['../gpu-construction-experiment.html',1,'GPU construction experiment'],['../optional-tiled-prefix-tree-experiment.html',1,'Optional tiled prefix-tree experiment']]]
+  ['experiment_15',['experiment',['../bit-reader-reservoir-experiment.html',1,'Bit reader reservoir experiment'],['../collision-bitmap-and-rank-experiment.html',1,'Collision bitmap and rank experiment'],['../gpu-construction-experiment.html',1,'GPU construction experiment'],['../optional-tiled-prefix-tree-experiment.html',1,'Optional tiled prefix-tree experiment']]]
 ];

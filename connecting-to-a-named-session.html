@@ -109,7 +109,7 @@ Reads, writes and snapshots</h1>
 <div class="line">db.erase(<span class="stringliteral">&quot;name&quot;</span>);</div>
 <div class="line"><span class="comment">// db.get(&quot;name&quot;) is now absent; both snapshots remain readable.</span></div>
 </div><!-- fragment --><p>A snapshot retains mapped files, rather than copying their records. It remains readable after further writes or after the connection closes. Each snapshot also has <code>signature()</code> and <code>live_count()</code>. Equivalent background merges preserve both; the signature is an algebraic sanity check, not cryptographic identity.</p>
-<p>The <a class="el" href="scanning-a-table.html">streaming scan</a> walks the live rows of a captured snapshot in key order, resolving older contributions without collecting the whole table.</p>
+<p>The <a class="el" href="scanning-a-table.html">streaming scan</a> walks the live rows of a captured snapshot in key order, resolving older contributions without collecting the whole table. Use <code>db.range(lo, hi)</code> for a half-open interval, and <code>db.erase_range(lo, hi)</code> to publish a checked batch of tombstones for its selected rows. The range guide explains iterator copies, concurrent insertions and fractional-cascade positioning.</p>
 <p>Deleting an absent key fails. The connection stays usable after that rejected command: we do not manufacture a deletion credit for something that was never present.</p>
 <p><code>save</code> gives a snapshot an immutable durable name:</p>
 <div class="fragment"><div class="line">db.save(<span class="stringliteral">&quot;before-edit&quot;</span>, before);</div>

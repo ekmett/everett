@@ -82,6 +82,7 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pri-methods">Private Member Functions</a> &#124;
 <a href="#pri-attribs">Private Attributes</a> &#124;
 <a href="structeverett_1_1sort__bit__reader-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">everett::sort_bit_reader Struct Reference</div></div>
@@ -104,9 +105,26 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a5a678b9755d7621f357087cab17a4a70"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf009f4e4605f14a2d2a23f322903e11" id="r_abf009f4e4605f14a2d2a23f322903e11"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__bit__reader.html#abf009f4e4605f14a2d2a23f322903e11">take_bits</a> (std::uint64_t count)</td></tr>
 <tr class="separator:abf009f4e4605f14a2d2a23f322903e11"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea34920352a7827b8cfcbf20b884e6c1" id="r_aea34920352a7827b8cfcbf20b884e6c1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__bit__reader.html#aea34920352a7827b8cfcbf20b884e6c1">skip_bits</a> (std::uint64_t count)</td></tr>
+<tr class="separator:aea34920352a7827b8cfcbf20b884e6c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2ca7dbc252d5f2fd7f8eb94c1c4b0b34" id="r_a2ca7dbc252d5f2fd7f8eb94c1c4b0b34"><td class="memTemplParams" colspan="2">template&lt;class Code  = exponential_golomb&lt;0&gt;&gt; </td></tr>
 <tr class="memitem:a2ca7dbc252d5f2fd7f8eb94c1c4b0b34"><td class="memTemplItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__bit__reader.html#a2ca7dbc252d5f2fd7f8eb94c1c4b0b34">read_count</a> ()</td></tr>
 <tr class="separator:a2ca7dbc252d5f2fd7f8eb94c1c4b0b34"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
+Private Member Functions</h2></td></tr>
+<tr class="memitem:aecc01e51cc9cf65093297842ad18621b" id="r_aecc01e51cc9cf65093297842ad18621b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__bit__reader.html#aecc01e51cc9cf65093297842ad18621b">refill</a> () noexcept</td></tr>
+<tr class="separator:aecc01e51cc9cf65093297842ad18621b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae70e3539795849e3ddfee768f04ef796" id="r_ae70e3539795849e3ddfee768f04ef796"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__bit__reader.html#ae70e3539795849e3ddfee768f04ef796">consume</a> (unsigned count) noexcept</td></tr>
+<tr class="separator:ae70e3539795849e3ddfee768f04ef796"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e19bd9a27e4dc77504d5f000fca27eb" id="r_a7e19bd9a27e4dc77504d5f000fca27eb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__bit__reader.html#a7e19bd9a27e4dc77504d5f000fca27eb">skip</a> (std::uint64_t count) noexcept</td></tr>
+<tr class="separator:a7e19bd9a27e4dc77504d5f000fca27eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f0206bffba9e848e252cf392530e17a" id="r_a7f0206bffba9e848e252cf392530e17a"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__bit__reader.html#a7f0206bffba9e848e252cf392530e17a">read_zero_run</a> (std::uint64_t limit, char const *truncated, char const *overflow)</td></tr>
+<tr class="separator:a7f0206bffba9e848e252cf392530e17a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac28211bf043c231f456743efb799a248" id="r_ac28211bf043c231f456743efb799a248"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__bit__reader.html#ac28211bf043c231f456743efb799a248">read_exponential</a> ()</td></tr>
+<tr class="separator:ac28211bf043c231f456743efb799a248"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2f72b6382efdc73036f499c14c4b887" id="r_ab2f72b6382efdc73036f499c14c4b887"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__bit__reader.html#ab2f72b6382efdc73036f499c14c4b887">read_exponential_slow</a> ()</td></tr>
+<tr class="separator:ab2f72b6382efdc73036f499c14c4b887"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-attribs" name="pri-attribs"></a>
 Private Attributes</h2></td></tr>
@@ -114,6 +132,10 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a85dc85f80311957e0fecd64e19cfc1a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02568cf3a57fef78894acf87f050ae74" id="r_a02568cf3a57fef78894acf87f050ae74"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__bit__reader.html#a02568cf3a57fef78894acf87f050ae74">at_</a> = 0</td></tr>
 <tr class="separator:a02568cf3a57fef78894acf87f050ae74"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a803ff8ede1b9cdb0d69dde22a49e7efa" id="r_a803ff8ede1b9cdb0d69dde22a49e7efa"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__bit__reader.html#a803ff8ede1b9cdb0d69dde22a49e7efa">reservoir_</a> = 0</td></tr>
+<tr class="separator:a803ff8ede1b9cdb0d69dde22a49e7efa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abcb3d24cefe2a738eeca882a48fac05f" id="r_abcb3d24cefe2a738eeca882a48fac05f"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__bit__reader.html#abcb3d24cefe2a738eeca882a48fac05f">cached_</a> = 0</td></tr>
+<tr class="separator:abcb3d24cefe2a738eeca882a48fac05f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a52eec08508f21e42af3983ad115a0a2a" name="a52eec08508f21e42af3983ad115a0a2a"></a>
@@ -143,6 +165,32 @@ Private Attributes</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="ae70e3539795849e3ddfee768f04ef796" name="ae70e3539795849e3ddfee768f04ef796"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae70e3539795849e3ddfee768f04ef796">&#9670;&#160;</a></span>consume()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void everett::sort_bit_reader::consume </td>
+          <td>(</td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>count</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a3f16b615cc4bd64c66e4f34ecf13632c" name="a3f16b615cc4bd64c66e4f34ecf13632c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a3f16b615cc4bd64c66e4f34ecf13632c">&#9670;&#160;</a></span>empty()</h2>
 
@@ -246,6 +294,123 @@ template&lt;class Code  = exponential_golomb&lt;0&gt;&gt; </div>
 
 </div>
 </div>
+<a id="ac28211bf043c231f456743efb799a248" name="ac28211bf043c231f456743efb799a248"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac28211bf043c231f456743efb799a248">&#9670;&#160;</a></span>read_exponential()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t everett::sort_bit_reader::read_exponential </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab2f72b6382efdc73036f499c14c4b887" name="ab2f72b6382efdc73036f499c14c4b887"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2f72b6382efdc73036f499c14c4b887">&#9670;&#160;</a></span>read_exponential_slow()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t everett::sort_bit_reader::read_exponential_slow </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7f0206bffba9e848e252cf392530e17a" name="a7f0206bffba9e848e252cf392530e17a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f0206bffba9e848e252cf392530e17a">&#9670;&#160;</a></span>read_zero_run()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t everett::sort_bit_reader::read_zero_run </td>
+          <td>(</td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>limit</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char const *&#160;</td>
+          <td class="paramname"><em>truncated</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">char const *&#160;</td>
+          <td class="paramname"><em>overflow</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aecc01e51cc9cf65093297842ad18621b" name="aecc01e51cc9cf65093297842ad18621b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aecc01e51cc9cf65093297842ad18621b">&#9670;&#160;</a></span>refill()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void everett::sort_bit_reader::refill </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a028d45c18f37990f07b0b0431d1268e7" name="a028d45c18f37990f07b0b0431d1268e7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a028d45c18f37990f07b0b0431d1268e7">&#9670;&#160;</a></span>remaining()</h2>
 
@@ -265,6 +430,58 @@ template&lt;class Code  = exponential_golomb&lt;0&gt;&gt; </div>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7e19bd9a27e4dc77504d5f000fca27eb" name="a7e19bd9a27e4dc77504d5f000fca27eb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e19bd9a27e4dc77504d5f000fca27eb">&#9670;&#160;</a></span>skip()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void everett::sort_bit_reader::skip </td>
+          <td>(</td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>count</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">private</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aea34920352a7827b8cfcbf20b884e6c1" name="aea34920352a7827b8cfcbf20b884e6c1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aea34920352a7827b8cfcbf20b884e6c1">&#9670;&#160;</a></span>skip_bits()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void everett::sort_bit_reader::skip_bits </td>
+          <td>(</td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>count</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -320,6 +537,28 @@ template&lt;class Code  = exponential_golomb&lt;0&gt;&gt; </div>
 
 </div>
 </div>
+<a id="abcb3d24cefe2a738eeca882a48fac05f" name="abcb3d24cefe2a738eeca882a48fac05f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abcb3d24cefe2a738eeca882a48fac05f">&#9670;&#160;</a></span>cached_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned everett::sort_bit_reader::cached_ = 0</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a85dc85f80311957e0fecd64e19cfc1a0" name="a85dc85f80311957e0fecd64e19cfc1a0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a85dc85f80311957e0fecd64e19cfc1a0">&#9670;&#160;</a></span>data_</h2>
 
@@ -331,6 +570,28 @@ template&lt;class Code  = exponential_golomb&lt;0&gt;&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname"><a class="el" href="structeverett_1_1bit__view.html">bit_view</a> everett::sort_bit_reader::data_</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">private</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a803ff8ede1b9cdb0d69dde22a49e7efa" name="a803ff8ede1b9cdb0d69dde22a49e7efa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a803ff8ede1b9cdb0d69dde22a49e7efa">&#9670;&#160;</a></span>reservoir_</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint64_t everett::sort_bit_reader::reservoir_ = 0</td>
         </tr>
       </table>
   </td>
