@@ -1023,7 +1023,8 @@ doubled during rebuilding, bounds repeated first-key storage by $O(T\log(N+1))$.
 The [network analysis](network-admission.md) also bounds all borrowed literals
 by the index count times the native key union's ordinary-FC literal size, and
 separates these per-snapshot peaks from cumulative string work and historical
-pins. Enforcing occupancy and admission work budgets remains scheduler work.
+pins. The record-admission scheduler enforces its own occupancy and service
+rules; extending those rules to directly received files remains work.
 
 ### Strong deletes and global rebuilding
 

@@ -1,11 +1,13 @@
 # Files, mappings and publication
 
-Updated 2026-09-15. SQLite manages catalog metadata; bulk data lives in two
+Updated 2026-09-16. SQLite manages catalog metadata; bulk data lives in two
 custom file kinds, `.kv` and `.index`. We have read-only mapping, checked object
 envelopes, typed codecs and an immutable object writer as implemented foundations.
 Portable codec sections, exact mapped chains and an optional SQLite catalog
-support saves and conditional timeline publication. The recovery executor
-remains work. See
+support saves and conditional timeline publication. Reopening restores the
+published runtime frontier and restarts unfinished merges from its retained
+inputs. Resuming a partially written output and automatically reclaiming
+unreferenced files remain separate work. See
 [implementation status](implementation.md), the [catalog design](catalog.md)
 and the [failure and resumption protocol](durability.md).
 
