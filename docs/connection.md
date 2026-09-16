@@ -207,6 +207,9 @@ commits but before the caller receives its snapshot. Reopening discovers that
 generation with its matching checkpoint. I do not blindly retry failed writes:
 replaying a general arrow could apply it twice. `failure()` reports the worker's
 exception, and the synchronous engine exposes `failed()` and `last_operation()`.
+A catalog failure retains its actual operation ID, including failures from the
+streamed builder's separate catalog connection, so acknowledgment loss can be
+reconciled against the operation that failed.
 
 Normal reopening checks metadata and schema compatibility. Full integrity scans
 remain explicit recovery operations. These guarantees use the file sealing and

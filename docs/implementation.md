@@ -174,8 +174,9 @@ main/secondary/shadow transitions with immutable identities and explicit work
 counts. At `b11957d`, strict O3 ASan/UBSan and Release checks covered 131,072
 admissions, 131,047 completed merges and 32,743 hidden merge inputs. Independent
 event replay checked intermediate roots, chronological coverage, slot reuse,
-snapshot unions and budget splitting. This is an executable count model;
-production scheduling, byte/I/O service and durable continuation remain work.
+snapshot unions and budget splitting. The separate production runtime executes
+this schedule with encoded native/index work and durable full-frontier recovery.
+Neither the count model nor its structural charges establish a byte/I/O bound.
 
 `cola_local_merge_job<P, Compose>` executes one owning native/index/carrier job
 with exact main or secondary destination plans. `step` counts work in the
@@ -380,8 +381,8 @@ also exercise profile count encoding, borrowed writers and index pipelines. Coun
 fixtures check known bit patterns, truncation, overflow, unaligned appends,
 metadata mismatch and unchanged default encodings. Invalid policy parameters
 are rejected at compile time. These test record/prefix behavior, not the full
-string-store I/O theorem. Semantic pair framing and active per-sort hash/category dispatch remain
-extensions; the prefix-free registry and typed discriminator dispatch are implemented.
+string-store I/O theorem. The sort-profile and typed-runtime suites separately
+cover heterogeneous framing, per-sort hashing and chronological composition.
 
 ### Object envelopes, mappings and type family
 
@@ -801,8 +802,9 @@ The generic owner does not assign chronology to arbitrary partial replacements;
 the caller must preserve semantic precedence. Current reference compaction
 replaces the entire set. This reference owner uses process-local IDs and shared
 pointers. The separate SQLite catalog uses persistent opaque object IDs for
-saved encoded chains; attaching the reference owner to those objects and
-implementing disk reclamation remain work.
+saved encoded chains. The production runtime retains those objects through
+shared native/pair owners and exact catalog bindings. Disk reclamation remains
+separate work; the reference owner is an in-memory semantic oracle.
 
 ### Durability and merge resumption
 
@@ -815,8 +817,10 @@ Failed synchronization retains the prior recovery root and inputs. Resumption
 after a manifest attempt additionally requires explicit selector reconciliation.
 Tests model the failed-writeback/successful-retry trap, checkpoint identity and
 context checks, and both outcomes of uncertain manifest publication. The
-[durability protocol](durability.md) specifies the required future backend.
-No physical power-loss or process-restart validation is implied by model tests.
+[durability protocol](durability.md) specifies the corresponding storage rules.
+The file writers and SQLite adapter have separate failure and process-interruption
+tests. Model tests alone imply neither process-restart nor physical power-loss
+validation; partial file continuation and pin retirement remain unimplemented.
 
 ### Abstract Lean model
 
@@ -869,10 +873,11 @@ fingerprint sums.
 
 ### Aggregate API and key policies
 
-The read-side `fridge<P>` and associated type family are implemented as
-described above. Persistent `cola<P>`, `timeline<P>` and `branch_point<P>`
-runtimes remain to be attached to the selected SQLite catalog.
-`reference_cola` provides the executable in-memory semantics.
+`fridge<P>::connect` opens a named typed tap backed by SQLite and immutable
+mapped files. Typed snapshots provide reads, conditional contributions, saves
+and forks. The raw `cola<P>`, `timeline<P>` and `branch_point<P>` aggregate names
+are forward declarations; applications use the connection's concrete snapshot
+type. `reference_cola` provides an independent in-memory semantic oracle.
 
 [Sorts and key policies](keys.md) describes sort-qualified keys, key units,
 prefix-free coding and hash selection. The category may depend on the full key,
@@ -948,6 +953,13 @@ count and active-rebuild marker. If private scan or replay progress is lost,
 reopening funds a fresh cleanup of the latest acknowledged state and gates new
 admissions until it finishes. Tests cover active saves and forks, loss of a
 queued overwrite and deletion, repeated reopen and process interruption.
+For eager cleanup with at most 64 live rows and 256 physical occurrences,
+streamed storage builds a bounded owning candidate, converts its checked settled
+frontier and seals only the final graph. It shares the final native owners and
+accounts for index conversion separately. Tests sweep cardinalities 0–64,
+check the 64-to-65 transition, count the exact final files, and cover seal
+acknowledgment failures. The bound counts records; it does not bound key bytes.
+
 Private partial candidate output is not resumed. Multiple replacement sorts,
 general arrows and byte-bounded rebuilding remain extensions.
 
@@ -960,7 +972,7 @@ using optional values, and `profile_blob<P>` carries opaque value payloads.
 `typed_engine` executes per-sort arrows and composes them in chronological
 order during native merges. A noncommutative append sort exercises that order,
 including hash accounting and mapped snapshot restoration. Sort-specific stream
-grammars also run directly in the opt-in KV03 runtime family. General arrow
+grammars run directly in the KV03 family selected by ordinary bit-profile taps. General arrow
 normalization bounds remain a separate concern.
 
 ## Build and verification
@@ -983,7 +995,7 @@ ctest --test-dir build-sanitize --output-on-failure
 
 The default component suites cover codecs, native and borrowed writers, index
 construction, queries, cola semantics, ownership, durability and mapped files.
-With SQLite enabled, seven more suites cover the catalog, adversarial operations,
+With SQLite enabled, additional suites cover the catalog, adversarial operations,
 forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
@@ -994,8 +1006,12 @@ mapping lifetimes, canonical fallback, runtime publication and streamed native
 admission. The ordinary active API test covers bit-profile saves, forks,
 disjoint updates, binary strings, custom chronological arrows and byte-registry
 fallback. The streamed rebuild suite and both existing rebuild suites passed;
-Doxygen passed with the new public engine header. These focused checks do not
-replace the complete package run recorded below.
+Doxygen passed with the new public engine header. At `d2aa805`, atomic index
+seal/pair admission passed seven focused suites, including rollback, exact
+replay, context lifetime and 16 process-interruption cuts. Separate failure
+diagnostic tests retain the actual operation ID from the builder's catalog.
+The relocated SQLite consumer and Doxygen passed after integration. These
+focused checks do not replace the complete package run recorded below.
 
 Verification through `09903de` on 2026-09-15: AppleClang 21, C++20, Release
 with strict warnings and ASan/UBSan passed all **67 component/package CTests**,

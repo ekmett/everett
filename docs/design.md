@@ -1,6 +1,6 @@
 # Diet design
 
-Updated 2026-09-15.
+Updated 2026-09-16.
 
 Start with immutable blobs and a way to merge them. Small updates can become
 small blobs, and retained collections can represent persistent colas. We can
@@ -57,24 +57,25 @@ payload, with two occurrences composing to identity. I keep toggles as an
 optional experiment: their state-dependent hash accounting and validation may
 cost more than the representation saves.
 The registry dispatches to the record handler, while the store owns navigation,
-pins and scheduling. The current profile implementation supplies the FC-string
-case; connecting other record grammars is active-handle work.
+pins and scheduling. The sort-owned profile implements mixed FC strings, raw
+strings and integer keys with fixed, optional, niche and no-payload values.
+The typed engine applies the same registry's hashing, read and composition
+laws during admission and merge.
 
 The outer dynamization mechanism needs a merge operation, a query operation,
-and laws relating them. Maps give us one useful instance. We can leave the
-exact monoid/homomorphism interface open until its consumers tell us which
-laws they need. The typed blob specialization supports byte or bit keys and opaque fixed-
-or variable-width values. The replacement oracle uses fixed-width values and
-tombstones. The intended key space is sort-qualified: each logical
-key combines a sort identity with a key interpreted by that sort's policy.
+and laws relating them. Maps give us one useful instance. Sort semantics supply
+those operations for the typed engine. Its key space is sort-qualified: each
+logical key combines a sort identity with a key interpreted by that sort's policy.
 [Sorts and key policies](keys.md) specifies key units, canonical ordering,
-prefix-free coding and hash-policy selection. The byte-key encoding below is a
-starting point; it does not yet implement the sort envelope. The general update
+prefix-free coding and hash-policy selection. The homogeneous byte-key encoding
+below explains navigation; the [sort-owned profile](sort-profiles.md) extends
+it to heterogeneous records. The general update
 model allows a category chosen per full logical key: records carry composable
 arrows, and omission means the identity update.
 [Updates in a category chosen per key](arrows.md) specifies that
 model, its nerve interpretation, and the additional cost and retention contracts.
-The replacement-specific rules below remain the implemented first instance.
+The replacement-specific accounting below applies to ordinary string tables;
+the typed runtime also executes chronological composable updates.
 
 [Data.Vector.Map](https://hackage.haskell.org/package/structures-0.2/docs/Data-Vector-Map.html)
 and
@@ -143,8 +144,8 @@ The byte-key instance has a specified unsigned-byte lexicographic order,
 including empty keys and embedded zero bytes. Encoded records carry lengths;
 zero bytes need not be reserved as terminators. General sort-qualified keys must
 also satisfy the canonical ordering and framing contract in [keys.md](keys.md);
-the typed registry is implemented, while semantic pair encoders and active
-read/merge dispatch remain to be connected. A fixed-width value codec can use
+the typed registry, mixed record encoders and active read/merge dispatch all
+use that contract. A fixed-width value codec can use
 an explicit tombstone tag or reserve a sentinel niche in its representation.
 
 Native keys are unique within each blob. In the categorical extension, one
@@ -453,7 +454,9 @@ queries and IX03 files.
 
 The [scheduling model](cola-scheduling.md) separates logical unmerged slots,
 root visibility and physical snapshot pins. It checks fixed-admission
-transitions and slot-reuse deadlines. Arbitrary extra compaction, received-file
+transitions and slot-reuse deadlines. The [redundant runtime](redundant-runtime.md)
+executes this schedule and charges native and index work on admission.
+Arbitrary extra compaction, received-file
 admission and persistent retention still need their corresponding bounds.
 
 I want the store to keep $O(\log N)$ active blobs, with a bounded number per
@@ -461,14 +464,16 @@ level. Small updates pay for later merging and index construction. Work may be
 performed during downtime as well as on arrivals; logical state does not depend
 on the amount of compaction already completed.
 
-Network admission retains received content-addressed `.kv` bytes unchanged,
+The network admission design retains received content-addressed `.kv` bytes unchanged,
 including their ordinary FC stream and physical sampled offsets. We build
 receiver-specific fractional indexes backward over the incoming prefix and retain the old suffix.
 Received `.index` objects are reusable only with matching exact source/target
 versions. Native re-encoding waits for a real merge. The
 [admission analysis](network-admission.md) gives the arbitrary-file-size entry
 bound and identifies the remaining scheduling and variable-key-byte obligations.
-No power-of-two physical-file requirement follows from the query argument;
+Current files use reserved random identities; content addressing and network
+admission are separate implementation work. No power-of-two physical-file
+requirement follows from the query argument;
 the original redundant-counter schedule still requires an admission proof.
 
 There are several distinct points at which work becomes reusable:
@@ -488,8 +493,10 @@ We cannot assume that an input's compressed size pays for full expansion of
 every string. LCP-aware merging is relevant here;
 [Bingmann, Sanders, and Schimek, §II-B](https://panthema.net/2020/0518-distributed-string-sorting/2001.08516v1-Communication-Efficient-String-Sorting.pdf)
 describes carrying LCP information through multiway merging and communicating
-prefix-compressed strings. Adapting that technique and measuring actual work
-is a separate implementation milestone.
+prefix-compressed strings. Diet's native merge carries predecessor comparisons
+and borrows inherited prefix spans from its pinned inputs. The
+[sort runtime](sort-runtime.md) describes when a semantic collision still needs
+to materialize a key. Structural merge charges do not bound expanded byte work.
 
 Elias–Fano construction also needs accounting: final record count and variable
 extent can be known late. Spooling group offsets and finalizing the compact

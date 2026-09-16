@@ -39,7 +39,7 @@ list(APPEND diet_test_names cola_local_merge cola_local_merge_failure cola_runti
 if(DIET_ENABLE_SQLITE)
   list(APPEND diet_test_names sqlite_catalog sqlite_catalog_adversarial sqlite_catalog_vfs sqlite_catalog_restart sqlite_catalog_timeline sqlite_catalog_streamed)
   if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    list(APPEND diet_test_names sqlite_catalog_cola sqlite_catalog_taps sqlite_catalog_runtime sqlite_catalog_redundant sqlite_catalog_connection sqlite_catalog_scan sqlite_catalog_bindings sqlite_catalog_binding_failures sqlite_catalog_graphs sqlite_catalog_sort_runtime sqlite_catalog_snapshot sqlite_catalog_rebuild sqlite_catalog_rebuild_streaming sqlite_catalog_active sqlite_catalog_seals sqlite_catalog_pair sqlite_catalog_streaming_runtime sort_runtime_context)
+    list(APPEND diet_test_names sqlite_catalog_cola sqlite_catalog_taps sqlite_catalog_runtime sqlite_catalog_redundant sqlite_catalog_connection sqlite_catalog_scan sqlite_catalog_bindings sqlite_catalog_binding_failures sqlite_catalog_graphs sqlite_catalog_sort_runtime sqlite_catalog_snapshot sqlite_catalog_rebuild sqlite_catalog_rebuild_streaming sqlite_catalog_tiny_rebuild sqlite_catalog_active sqlite_catalog_seals sqlite_catalog_seal_pair sqlite_catalog_pair sqlite_catalog_streaming_runtime sqlite_catalog_streaming_restart sqlite_catalog_streaming_diagnostics sort_runtime_context)
   endif()
 endif()
 foreach(diet_test IN LISTS diet_test_names)
@@ -68,6 +68,9 @@ foreach(diet_test IN LISTS diet_test_names)
   add_test(NAME diet.${diet_test} COMMAND diet_test_${diet_test})
 endforeach()
 set_tests_properties(diet.catalog_bindings PROPERTIES TIMEOUT 45)
+if(TARGET diet_test_sqlite_catalog_streaming_restart)
+  set_tests_properties(diet.sqlite_catalog_streaming_restart PROPERTIES TIMEOUT 240)
+endif()
 
 if(DIET_ENABLE_SQLITE)
   configure_file("${PROJECT_SOURCE_DIR}/cmake/diet-sqlite-smoke.cmake.in"

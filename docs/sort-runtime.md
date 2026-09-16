@@ -29,8 +29,10 @@ exact old-value validation; the engine's static command factories apply to the
 current state. Disjoint contributions from one base retain the same composite
 signature in either order.
 
-This family is an explicit choice. `typed_engine<>` and the existing opaque
-binary and redundant families retain their current formats. The default string
+Ordinary bit-profile connections select this grammar with streamed native and
+index output. The example above selects its owning in-memory family explicitly.
+`typed_engine<>` and the opaque binary and redundant families retain their
+own formats. The default string
 schema for this family is `diet.optional-string/code0/sort-profile-v1`, distinct
 from the opaque transport's `diet.optional-string/code0/v1`. A custom registry
 or selector needs an explicit application schema identity.
@@ -138,4 +140,4 @@ keys, fixed three-bit values, a custom non-tree selector, mixed integer and
 string sorts, noncommutative arrows, scans, independent fingerprint oracles,
 disjoint updates, tap command ordering, stale input rejection, historical
 snapshots and mapped pending-work restoration. Existing opaque typed, scan,
-profile and redundant-runtime tests exercise the unchanged default family.
+profile and redundant-runtime tests exercise the lower-level opaque families.

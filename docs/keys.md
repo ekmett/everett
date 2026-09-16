@@ -13,9 +13,10 @@ updates may depend on the complete pair $(s,x)$, not just on the sort.
 
 The contract below lets these choices coexist in one key space. Concrete typed
 codecs for byte-at-a-time and bit-at-a-time profiles are in `profile.h`.
-`registry.h` supplies prefix-free sort registries and typed dispatch. Pair
-encoding and the active handle that applies each sort's read/merge laws remain
-to be connected to these physical codecs. Consult the
+`registry.h` supplies prefix-free sort registries and typed dispatch.
+`sort_profile.h` encodes heterogeneous records, and `active_engine` connects
+their sort-owned read, hash and merge laws to a charged persistent runtime.
+Consult the
 [implementation ledger](implementation.md) for completed codec work, the
 [store design](design.md) for blobs, and [per-key arrows](arrows.md) for update
 semantics.
@@ -84,8 +85,9 @@ The registry selects the sort handler. That handler supplies reading, skipping,
 comparison, hashing and writing for its record grammar. The generic store owns
 ordinals, rank, sampled offsets, pins and merge scheduling. Fractional-index
 construction asks for a key-only representation; it does not copy values or
-force native integer records through FC-string framing. Exact codec operations
-and their resumable state remain active-handle implementation work.
+force native integer records through FC-string framing. The
+[record codecs](sort-codecs.md) and [sort profiles](sort-profiles.md) specify
+these operations, including sampled entry and resumed traversal.
 
 A logical key's canonical order is distinct from its compressed record bytes.
 The handler's comparisons and the index builder must agree on that order.
@@ -291,8 +293,9 @@ the sort code without a separate code-length field: there is no exponential-
 Golomb “descend this many bits” count. The backspace retains its count; descent
 ends at the prefix-free code's leaf. A backspace staying within
 a local key retains its current sort. This shares prefix compression with the
-sort path instead of repeating that path literally on every record. Mixed-codec
-sample entry and the byte-list framing still need their concrete contracts.
+sort path instead of repeating that path literally on every record. The
+sort-owned profile implements sampled entry for bit registries. Byte registries
+use the opaque profile transport in the active runtime.
 
 ### Sort selection is a protocol
 
@@ -537,10 +540,11 @@ contribution recomputation. Compatibility may be established explicitly; merely 
 `profile_array<P, Role>` and `profile_view<P, Role>` implement typed byte
 and bit streams with fixed/variable values and actual backspace counts. The
 blob uses ordinary FC in both roles. `typed_engine` connects registry-selected
-key/arrow codecs and sort-owned semantics to this encoded runtime. Its current
-transport uses canonical ordered keys inside the ordinary FC profile; the
-direct mixed grammar has a separate [record codec](sort-codecs.md). The mapped
-mixed-format continuation path described above remains integration work.
+key/arrow codecs and sort-owned semantics to its selected runtime family.
+The binary and opaque redundant families encode canonical ordered keys inside
+the ordinary FC profile. The [sort runtime](sort-runtime.md) instead uses the
+direct mixed grammar, including mapped continuation and streamed file output.
+`active_engine` selects that path for bit registries.
 
 Each physical block contains up to W records. Its first record stores an
 absolute **retained-prefix length**; subsequent records store a relative
@@ -602,7 +606,8 @@ prepared mmap query chains. Its component aliases retain the same policy.
 Its `cola`, `timeline` and `branch_point` aliases name forward-declared
 aggregate types. The separate [SQLite catalog](sqlite-catalog.md) owns durable
 reservations, immutable saved roots, conditional timeline publication and reader pins.
-Pin retirement and durable merge progress remain extensions.
+Named connections use typed snapshots and persist complete merge frontiers.
+Pin retirement and resumption of partially written files remain extensions.
 
 `sort<P>` checks an individual code's packing and policy alignment; it does not
 validate a whole prefix-free registry. Object access validates headers by
@@ -633,10 +638,11 @@ Codec acceptance must cover:
 The implementation ledger records which profiles and integration paths have
 passed these requirements. Registry tests cover typed dispatch, extension and
 inference. Typed-engine tests establish mixed semantic reads and writes through
-the opaque FC transport; standalone sort-codec tests establish the separate
-record grammar. Sort-profile tests additionally exercise mapped mixed grammars,
+both the opaque and sort-owned transports; standalone sort-codec tests establish
+the record grammar. Sort-profile tests additionally exercise mapped mixed grammars,
 cascading queries, false borrows, protected payload pages and native merges.
-The mutable typed runtime still uses its opaque transport.
+Persistent runtime tests cover pending merge restoration, streamed output,
+saved snapshots and subsequent admission through the same sort registry.
 
 
 ## Schema histories and migration
