@@ -110,3 +110,16 @@ length, keeping the same FC cuts, values and other controls. The model does not
 produce a supported file or rebuild its EF offsets and checksums. It therefore
 cannot be reported as a complete-file size. A one-byte delimiter is valid only
 for a NUL-free suffix alphabet; it has no general binary-string interpretation.
+
+Plot
+----
+
+With Matplotlib installed, regenerate the retained comparison from its CSV:
+
+```sh
+python3 optional/profile_space_compare/plot.py --output build-space/space-tradeoff
+```
+
+The output includes PNG and SVG copies and a JSON file with input, script and
+image hashes. It plots current typed-codec choices, including the explicit
+common-width hint, rather than attributing every difference to byte alignment.

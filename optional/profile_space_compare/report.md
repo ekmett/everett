@@ -13,6 +13,11 @@ searchable layout. They are not performance results. Integer codec choices
 matter enough to reverse the ordering, so I keep the actual typed formats and
 identical-grammar controls separate.
 
+The [space plot](results/space-tradeoff.svg) shows these choices across all four
+sizes, including the explicit common-width control. A
+[PNG copy](results/space-tradeoff.png) and
+[plot provenance](results/space-tradeoff.json) are also retained.
+
 Measured Layout and Scope
 -------------------------
 
