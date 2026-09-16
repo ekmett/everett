@@ -149,8 +149,8 @@ Private Types</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
-<tr class="memitem:a9d7e6873a01ce04e897e6778dd6f04a5" id="r_a9d7e6873a01ce04e897e6778dd6f04a5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1native__merge__builder.html#a9d7e6873a01ce04e897e6778dd6f04a5">append</a> (auto const &amp;item, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> value, std::uint64_t retained)</td></tr>
-<tr class="separator:a9d7e6873a01ce04e897e6778dd6f04a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa40fe8577765a1026d84c5eacaef039d" id="r_aa40fe8577765a1026d84c5eacaef039d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1native__merge__builder.html#aa40fe8577765a1026d84c5eacaef039d">append</a> (<a class="el" href="structeverett_1_1native__merge__builder.html#a6a07f05b84d2d678aac8094a107303dd">cursor_type</a> const &amp;source, auto const &amp;item, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> value, std::uint64_t retained, std::uint64_t limit_bits)</td></tr>
+<tr class="separator:aa40fe8577765a1026d84c5eacaef039d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abc64930af756e0598b01c571489a15b2" id="r_abc64930af756e0598b01c571489a15b2"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1bit__comparison.html">bit_comparison</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1native__merge__builder.html#abc64930af756e0598b01c571489a15b2">compare_heads</a> () const</td></tr>
 <tr class="separator:abc64930af756e0598b01c571489a15b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ed536bde464e3d77ea392eed832d092" id="r_a9ed536bde464e3d77ea392eed832d092"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1native__merge__builder.html#a9ed536bde464e3d77ea392eed832d092">require_active</a> () const</td></tr>
@@ -465,8 +465,8 @@ template&lt;class P , class Native  = profile_array&lt;P&gt;, class Compose  = r
 
 </div>
 </div>
-<a id="a9d7e6873a01ce04e897e6778dd6f04a5" name="a9d7e6873a01ce04e897e6778dd6f04a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9d7e6873a01ce04e897e6778dd6f04a5">&#9670;&#160;</a></span>append()</h2>
+<a id="aa40fe8577765a1026d84c5eacaef039d" name="aa40fe8577765a1026d84c5eacaef039d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa40fe8577765a1026d84c5eacaef039d">&#9670;&#160;</a></span>append()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -479,6 +479,12 @@ template&lt;class P , class Native  = profile_array&lt;P&gt;, class Compose  = r
         <tr>
           <td class="memname">void <a class="el" href="structeverett_1_1native__merge__builder.html">everett::native_merge_builder</a>&lt; P, Native, Compose, Output &gt;::append </td>
           <td>(</td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1native__merge__builder.html#a6a07f05b84d2d678aac8094a107303dd">cursor_type</a> const &amp;&#160;</td>
+          <td class="paramname"><em>source</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">auto const &amp;&#160;</td>
           <td class="paramname"><em>item</em>, </td>
         </tr>
@@ -492,7 +498,13 @@ template&lt;class P , class Native  = profile_array&lt;P&gt;, class Compose  = r
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">std::uint64_t&#160;</td>
-          <td class="paramname"><em>retained</em>&#160;</td>
+          <td class="paramname"><em>retained</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint64_t&#160;</td>
+          <td class="paramname"><em>limit_bits</em>&#160;</td>
         </tr>
         <tr>
           <td></td>

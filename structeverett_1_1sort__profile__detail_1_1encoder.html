@@ -102,9 +102,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a41b8dc8154fd01bd7ddb350664989dd7" id="r_a41b8dc8154fd01bd7ddb350664989dd7"><td class="memTemplParams" colspan="2">template&lt;class Output &gt; </td></tr>
 <tr class="memitem:a41b8dc8154fd01bd7ddb350664989dd7"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__profile__detail_1_1encoder.html#a41b8dc8154fd01bd7ddb350664989dd7">append_frame</a> (Output &amp;out, <a class="el" href="structeverett_1_1sort__profile__frame.html">sort_profile_frame</a> const &amp;frame, std::span&lt; <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> const &gt; spans, std::uint64_t common, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> value)</td></tr>
 <tr class="separator:a41b8dc8154fd01bd7ddb350664989dd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaf9ae60378eeae6cdf719e1fc696857d" id="r_aaf9ae60378eeae6cdf719e1fc696857d"><td class="memTemplParams" colspan="2">template&lt;class S , class Output &gt; </td></tr>
-<tr class="memitem:aaf9ae60378eeae6cdf719e1fc696857d"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__profile__detail_1_1encoder.html#aaf9ae60378eeae6cdf719e1fc696857d">append</a> (Output &amp;out, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> path, std::uint64_t key_bits, std::span&lt; <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> const &gt; key, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> value, std::uint64_t common)</td></tr>
-<tr class="separator:aaf9ae60378eeae6cdf719e1fc696857d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae8140bff5ce90e29990f2cd3834e4537" id="r_ae8140bff5ce90e29990f2cd3834e4537"><td class="memTemplParams" colspan="2">template&lt;class S , class Output &gt; </td></tr>
+<tr class="memitem:ae8140bff5ce90e29990f2cd3834e4537"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__profile__detail_1_1encoder.html#ae8140bff5ce90e29990f2cd3834e4537">append</a> (Output &amp;out, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> path, std::uint64_t key_bits, std::span&lt; <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> const &gt; key, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> value, std::uint64_t common, std::optional&lt; std::uint64_t &gt; retained_limit_bits={})</td></tr>
+<tr class="separator:ae8140bff5ce90e29990f2cd3834e4537"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a224c6a1d92737138216dda8c04a93cd7" id="r_a224c6a1d92737138216dda8c04a93cd7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__profile__detail_1_1encoder.html#a224c6a1d92737138216dda8c04a93cd7">finish</a> (std::uint64_t extent)</td></tr>
 <tr class="separator:a224c6a1d92737138216dda8c04a93cd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee5572213825d49fc2d90b8f03d4d0b0" id="r_aee5572213825d49fc2d90b8f03d4d0b0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1sort__profile__array.html">sort_profile_array</a>&lt; P, Selector &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__profile__detail_1_1encoder.html#aee5572213825d49fc2d90b8f03d4d0b0">take</a> (<a class="el" href="structeverett_1_1bit__string.html">bit_string</a> data)</td></tr>
@@ -154,8 +154,8 @@ template&lt;class P , class Selector &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="aaf9ae60378eeae6cdf719e1fc696857d" name="aaf9ae60378eeae6cdf719e1fc696857d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aaf9ae60378eeae6cdf719e1fc696857d">&#9670;&#160;</a></span>append()</h2>
+<a id="ae8140bff5ce90e29990f2cd3834e4537" name="ae8140bff5ce90e29990f2cd3834e4537"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae8140bff5ce90e29990f2cd3834e4537">&#9670;&#160;</a></span>append()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -201,7 +201,13 @@ template&lt;class S , class Output &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">std::uint64_t&#160;</td>
-          <td class="paramname"><em>common</em>&#160;</td>
+          <td class="paramname"><em>common</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; std::uint64_t &gt;&#160;</td>
+          <td class="paramname"><em>retained_limit_bits</em> = <code>{}</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

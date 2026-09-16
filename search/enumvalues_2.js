@@ -8,6 +8,7 @@ var searchData=
   ['coded_5',['coded',['../structeverett_1_1index__builder.html#af55408e8f8b798f037a217f1b559d69aae94d87bc7a0aa2655c572af7bf67792e',1,'everett::index_builder']]],
   ['commit_6',['commit',['../structeverett_1_1redundant__runtime.html#ae986d9e1426f5c8b2413224c5083015fafffca4d67ea0a788813031b8bbc3b329',1,'everett::redundant_runtime::commit'],['../namespaceeverett.html#a54547b3195b1f57cff45fa38f5be0856afffca4d67ea0a788813031b8bbc3b329',1,'everett::commit']]],
   ['complete_7',['complete',['../namespaceeverett.html#a17f6895b13a893618f9eac92af8e2bd3ad9a22d7a8178d5b42a8750123cbfe5b1',1,'everett']]],
-  ['consumed_8',['consumed',['../namespaceeverett.html#a47aa22dc5cd07f677c4d7b09d4a886eaa48fe8558ce14c4c865198444c538ecc5',1,'everett']]],
-  ['content_5fsynced_9',['content_synced',['../namespaceeverett.html#a17f6895b13a893618f9eac92af8e2bd3a2a99725778bd84f441fef113ca4f0662',1,'everett']]]
+  ['conservative_5ftombstones_8',['conservative_tombstones',['../namespaceeverett.html#ac6fec750df761e3c1c45d1e2d1fc39cca6c20676854161f694340a00270858bc3',1,'everett']]],
+  ['consumed_9',['consumed',['../namespaceeverett.html#a47aa22dc5cd07f677c4d7b09d4a886eaa48fe8558ce14c4c865198444c538ecc5',1,'everett']]],
+  ['content_5fsynced_10',['content_synced',['../namespaceeverett.html#a17f6895b13a893618f9eac92af8e2bd3a2a99725778bd84f441fef113ca4f0662',1,'everett']]]
 ];

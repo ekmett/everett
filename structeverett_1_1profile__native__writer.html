@@ -115,8 +115,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ad7435bf2c8fe90ddd848dfe85bc39c41"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a359b99f8fc0821af741ea2d41ba6929f" id="r_a359b99f8fc0821af741ea2d41ba6929f"><td class="memItemLeft" align="right" valign="top">std::optional&lt; std::uint64_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__native__writer.html#a359b99f8fc0821af741ea2d41ba6929f">common_value_width</a> () const noexcept</td></tr>
 <tr class="separator:a359b99f8fc0821af741ea2d41ba6929f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a765f562173053ea62c8187c138d0826b" id="r_a765f562173053ea62c8187c138d0826b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__native__writer.html#a765f562173053ea62c8187c138d0826b">append</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> key, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> value)</td></tr>
-<tr class="separator:a765f562173053ea62c8187c138d0826b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e5559f442b291ddca7827b8cd819aaf" id="r_a5e5559f442b291ddca7827b8cd819aaf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__native__writer.html#a5e5559f442b291ddca7827b8cd819aaf">append</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> key, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> value, std::optional&lt; std::uint64_t &gt; retained_limit_bits={})</td></tr>
+<tr class="separator:a5e5559f442b291ddca7827b8cd819aaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a348fe4b777ebcc9bcb5062930a6863" id="r_a3a348fe4b777ebcc9bcb5062930a6863"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__native__writer.html#a3a348fe4b777ebcc9bcb5062930a6863">append</a> (<a class="el" href="structeverett_1_1profile__record.html">profile_record</a> const &amp;record)</td></tr>
 <tr class="separator:a3a348fe4b777ebcc9bcb5062930a6863"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb3eb9302cc5da53cbdd83e48a6fd45b" id="r_afb3eb9302cc5da53cbdd83e48a6fd45b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1profile__array.html">profile_array</a>&lt; P &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1profile__native__writer.html#afb3eb9302cc5da53cbdd83e48a6fd45b">finish</a> ()</td></tr>
@@ -237,8 +237,8 @@ template&lt;class P &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a765f562173053ea62c8187c138d0826b" name="a765f562173053ea62c8187c138d0826b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a765f562173053ea62c8187c138d0826b">&#9670;&#160;</a></span>append() <span class="overload">[1/2]</span></h2>
+<a id="a5e5559f442b291ddca7827b8cd819aaf" name="a5e5559f442b291ddca7827b8cd819aaf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e5559f442b291ddca7827b8cd819aaf">&#9670;&#160;</a></span>append() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -258,7 +258,13 @@ template&lt;class P &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&#160;</td>
-          <td class="paramname"><em>value</em>&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; std::uint64_t &gt;&#160;</td>
+          <td class="paramname"><em>retained_limit_bits</em> = <code>{}</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

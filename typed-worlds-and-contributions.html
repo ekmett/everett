@@ -91,7 +91,7 @@ $(function() {
 <div class="line">  <span class="keywordflow">if</span> (first.get(<span class="stringliteral">&quot;name&quot;</span>) != <span class="stringliteral">&quot;Everett&quot;</span> || third.get(<span class="stringliteral">&quot;name&quot;</span>)) <span class="keywordflow">return</span> 1;</div>
 <div class="line">  <span class="keywordflow">return</span> third.live_count() != 1;</div>
 <div class="line">}</div>
-<div class="ttc" id="astructeverett_1_1typed__engine_html"><div class="ttname"><a href="structeverett_1_1typed__engine.html">everett::typed_engine</a></div><div class="ttdef"><b>Definition</b> typed_world.h:319</div></div>
+<div class="ttc" id="astructeverett_1_1typed__engine_html"><div class="ttname"><a href="structeverett_1_1typed__engine.html">everett::typed_engine</a></div><div class="ttdef"><b>Definition</b> typed_world.h:364</div></div>
 <div class="ttc" id="atyped__world_8h_html"><div class="ttname"><a href="typed__world_8h.html">typed_world.h</a></div><div class="ttdoc">Connects sort-owned semantics to encoded COLA updates and immutable typed snapshots.</div></div>
 </div><!-- fragment --><p>Snapshots own their complete query graphs. Updating or destroying the engine does not change an earlier snapshot. <code>pending()</code> and <code>advance(budget)</code> expose background layout work; an equivalent result retains the same signature, live count and schema identity.</p>
 <p>For a mutable async handle:</p>
@@ -138,6 +138,7 @@ Sort-owned semantics</h1>
 \]
 </p>
 <p>The engine dispatches through the complete registry during merging. It does not assume the last sort passed to <code>put</code> is the only sort that existing blobs contain. A sort with <code>replacement = true</code> promises that its newest occurrence fully determines the state; it permits the first-match read optimization and <code>put</code>/<code>erase</code> helpers. Its <code>erase(key)</code> supplies the tombstone arrow. Other sorts use <code>change&lt;S&gt;</code> and fold all matching arrows from oldest to newest, including already composed arrows produced by merges.</p>
+<p>For replacement sorts, deletion admission also captures the matching record's physical FC retained position during the validating lookup. The new tombstone uses that limit to keep the canceled literal available to a parallel merger. The current target is checked even when the contribution came from an equivalent snapshot with another encoding. Ordinary reads do not request this metadata. The <a href="md_docs_2native-merges.html#conservative-tombstone-literals">native merge guide</a> describes the encoding and its space-accounting boundary.</p>
 <p>For example, an append sort can use strings for both its state and arrow, concatenation for <code>apply</code> and <code>compose</code>, the empty string for <code>initial</code>, and nonemptiness for <code>present</code>. It must supply hashes for the resulting state. That query reconstructs its state from the arrows; a logarithmic number of runs does not bound the size of that reconstruction.</p>
 <h1><a class="anchor" id="fingerprint-and-checkpoint-metadata"></a>
 Fingerprint and checkpoint metadata</h1>

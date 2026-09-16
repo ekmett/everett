@@ -110,9 +110,9 @@ Public Types</h2></td></tr>
 <tr class="separator:a8b3c341b9b6076dbc382e1c914ae8b1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc9f56b5436cbdd45114a4069cca8cbb" id="r_afc9f56b5436cbdd45114a4069cca8cbb"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__engine.html#afc9f56b5436cbdd45114a4069cca8cbb">key_transport</a> = <a class="el" href="namespaceeverett_1_1typed__detail.html#a8acdcecdb1c8f697d2c8c40301035c66">typed_detail::transport_t</a>&lt; P, Family &gt;</td></tr>
 <tr class="separator:afc9f56b5436cbdd45114a4069cca8cbb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a174ec7bbdd806734ed981bdfaa4cfe7b" id="r_a174ec7bbdd806734ed981bdfaa4cfe7b"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__engine.html#a174ec7bbdd806734ed981bdfaa4cfe7b">compose_type</a> = std::conditional_t&lt; <a class="el" href="structeverett_1_1typed__detail_1_1all__replacements.html">typed_detail::all_replacements</a>&lt; typename <a class="el" href="structeverett_1_1registry__detail_1_1info.html">registry_detail::info</a>&lt; typename P::registry_type &gt;::leaves &gt;::value, <a class="el" href="structeverett_1_1replace__native__value.html">replace_native_value</a>, <a class="el" href="structeverett_1_1typed__detail_1_1compose.html">typed_detail::compose</a>&lt; P, <a class="el" href="structeverett_1_1typed__engine.html#afc9f56b5436cbdd45114a4069cca8cbb">key_transport</a> &gt; &gt;</td></tr>
-<tr class="separator:a174ec7bbdd806734ed981bdfaa4cfe7b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9713e64c8fd2ba37d29ad4bfa0de3dec" id="r_a9713e64c8fd2ba37d29ad4bfa0de3dec"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__engine.html#a9713e64c8fd2ba37d29ad4bfa0de3dec">runtime_type</a> = typename Family::template <a class="el" href="structeverett_1_1typed__engine.html#a9713e64c8fd2ba37d29ad4bfa0de3dec">runtime_type</a>&lt; <a class="el" href="structeverett_1_1typed__engine.html#a174ec7bbdd806734ed981bdfaa4cfe7b">compose_type</a> &gt;</td></tr>
+<tr class="memitem:aa77d7cb373fad63af76112d9df70bbe5" id="r_aa77d7cb373fad63af76112d9df70bbe5"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__engine.html#aa77d7cb373fad63af76112d9df70bbe5">compose_type</a> = std::conditional_t&lt; <a class="el" href="structeverett_1_1typed__detail_1_1all__replacements.html">typed_detail::all_replacements</a>&lt; typename <a class="el" href="structeverett_1_1registry__detail_1_1info.html">registry_detail::info</a>&lt; typename P::registry_type &gt;::leaves &gt;::value, <a class="el" href="structeverett_1_1typed__detail_1_1replacement__compose.html">typed_detail::replacement_compose</a>&lt; P, <a class="el" href="structeverett_1_1typed__engine.html#afc9f56b5436cbdd45114a4069cca8cbb">key_transport</a> &gt;, <a class="el" href="structeverett_1_1typed__detail_1_1compose.html">typed_detail::compose</a>&lt; P, <a class="el" href="structeverett_1_1typed__engine.html#afc9f56b5436cbdd45114a4069cca8cbb">key_transport</a> &gt; &gt;</td></tr>
+<tr class="separator:aa77d7cb373fad63af76112d9df70bbe5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9713e64c8fd2ba37d29ad4bfa0de3dec" id="r_a9713e64c8fd2ba37d29ad4bfa0de3dec"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__engine.html#a9713e64c8fd2ba37d29ad4bfa0de3dec">runtime_type</a> = typename Family::template <a class="el" href="structeverett_1_1typed__engine.html#a9713e64c8fd2ba37d29ad4bfa0de3dec">runtime_type</a>&lt; <a class="el" href="structeverett_1_1typed__engine.html#aa77d7cb373fad63af76112d9df70bbe5">compose_type</a> &gt;</td></tr>
 <tr class="separator:a9713e64c8fd2ba37d29ad4bfa0de3dec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
@@ -177,8 +177,8 @@ Static Public Attributes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pri-methods" name="pri-methods"></a>
 Private Member Functions</h2></td></tr>
-<tr class="memitem:a58de71c9fc489ca66abfdafc71ee4a57" id="r_a58de71c9fc489ca66abfdafc71ee4a57"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1typed__engine.html#a0cd273d55add5711a440de01b974d59c">metadata_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__engine.html#a58de71c9fc489ca66abfdafc71ee4a57">prepare</a> (<a class="el" href="structeverett_1_1typed__engine.html#ae5198351f2acefa208da7a0adfff106f">contribution_type</a> const &amp;input) const</td></tr>
-<tr class="separator:a58de71c9fc489ca66abfdafc71ee4a57"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00ab4a4ba6a16969cf8e10cd7f07db3e" id="r_a00ab4a4ba6a16969cf8e10cd7f07db3e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1typed__engine.html#a0cd273d55add5711a440de01b974d59c">metadata_type</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__engine.html#a00ab4a4ba6a16969cf8e10cd7f07db3e">prepare</a> (<a class="el" href="structeverett_1_1typed__engine.html#ae5198351f2acefa208da7a0adfff106f">contribution_type</a> &amp;input) const</td></tr>
+<tr class="separator:a00ab4a4ba6a16969cf8e10cd7f07db3e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd6ad621d7a844695bf4f7e817a7ca59" id="r_abd6ad621d7a844695bf4f7e817a7ca59"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__engine.html#abd6ad621d7a844695bf4f7e817a7ca59">complete</a> (std::span&lt; <a class="el" href="structeverett_1_1profile__record.html">profile_record</a> const &gt; records, <a class="el" href="structeverett_1_1typed__engine.html#a0cd273d55add5711a440de01b974d59c">metadata_type</a> metadata)</td></tr>
 <tr class="separator:abd6ad621d7a844695bf4f7e817a7ca59"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02f2c8db4a6dfeab254a05ada17cb4dc" id="r_a02f2c8db4a6dfeab254a05ada17cb4dc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1typed__engine.html#a02f2c8db4a6dfeab254a05ada17cb4dc">initialize</a> (<a class="el" href="structeverett_1_1typed__engine.html#ae5198351f2acefa208da7a0adfff106f">contribution_type</a> const &amp;input, <a class="el" href="structeverett_1_1typed__engine.html#a0cd273d55add5711a440de01b974d59c">metadata_type</a> const &amp;metadata)</td></tr>
@@ -218,8 +218,8 @@ Friends</h2></td></tr>
 <tr class="separator:a94760249d39bbd8f092ad89a8c8ca2bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Typedef Documentation</h2>
-<a id="a174ec7bbdd806734ed981bdfaa4cfe7b" name="a174ec7bbdd806734ed981bdfaa4cfe7b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a174ec7bbdd806734ed981bdfaa4cfe7b">&#9670;&#160;</a></span>compose_type</h2>
+<a id="aa77d7cb373fad63af76112d9df70bbe5" name="aa77d7cb373fad63af76112d9df70bbe5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa77d7cb373fad63af76112d9df70bbe5">&#9670;&#160;</a></span>compose_type</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -227,7 +227,7 @@ Friends</h2></td></tr>
 template&lt;class P  = string_policy, class A  = wrapping_fingerprint_algebra, std::uint64_t DepthLimit = 256, class Family  = binary_runtime_family&lt;P&gt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structeverett_1_1typed__engine.html">everett::typed_engine</a>&lt; P, A, DepthLimit, Family &gt;::compose_type =  std::conditional_t&lt;<a class="el" href="structeverett_1_1typed__detail_1_1all__replacements.html">typed_detail::all_replacements</a>&lt; typename <a class="el" href="structeverett_1_1registry__detail_1_1info.html">registry_detail::info</a>&lt;typename P::registry_type&gt;::leaves&gt;::value, <a class="el" href="structeverett_1_1replace__native__value.html">replace_native_value</a>, <a class="el" href="structeverett_1_1typed__detail_1_1compose.html">typed_detail::compose</a>&lt;P, <a class="el" href="structeverett_1_1typed__engine.html#afc9f56b5436cbdd45114a4069cca8cbb">key_transport</a>&gt; &gt;</td>
+          <td class="memname">using <a class="el" href="structeverett_1_1typed__engine.html">everett::typed_engine</a>&lt; P, A, DepthLimit, Family &gt;::compose_type =  std::conditional_t&lt;<a class="el" href="structeverett_1_1typed__detail_1_1all__replacements.html">typed_detail::all_replacements</a>&lt; typename <a class="el" href="structeverett_1_1registry__detail_1_1info.html">registry_detail::info</a>&lt;typename P::registry_type&gt;::leaves&gt;::value, <a class="el" href="structeverett_1_1typed__detail_1_1replacement__compose.html">typed_detail::replacement_compose</a>&lt;P, <a class="el" href="structeverett_1_1typed__engine.html#afc9f56b5436cbdd45114a4069cca8cbb">key_transport</a>&gt;, <a class="el" href="structeverett_1_1typed__detail_1_1compose.html">typed_detail::compose</a>&lt;P, <a class="el" href="structeverett_1_1typed__engine.html#afc9f56b5436cbdd45114a4069cca8cbb">key_transport</a>&gt; &gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -323,7 +323,7 @@ template&lt;class P  = string_policy, class A  = wrapping_fingerprint_algebra, s
 template&lt;class P  = string_policy, class A  = wrapping_fingerprint_algebra, std::uint64_t DepthLimit = 256, class Family  = binary_runtime_family&lt;P&gt;&gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structeverett_1_1typed__engine.html">everett::typed_engine</a>&lt; P, A, DepthLimit, Family &gt;::runtime_type =  typename Family::template <a class="el" href="structeverett_1_1typed__engine.html#a9713e64c8fd2ba37d29ad4bfa0de3dec">runtime_type</a>&lt;<a class="el" href="structeverett_1_1typed__engine.html#a174ec7bbdd806734ed981bdfaa4cfe7b">compose_type</a>&gt;</td>
+          <td class="memname">using <a class="el" href="structeverett_1_1typed__engine.html">everett::typed_engine</a>&lt; P, A, DepthLimit, Family &gt;::runtime_type =  typename Family::template <a class="el" href="structeverett_1_1typed__engine.html#a9713e64c8fd2ba37d29ad4bfa0de3dec">runtime_type</a>&lt;<a class="el" href="structeverett_1_1typed__engine.html#aa77d7cb373fad63af76112d9df70bbe5">compose_type</a>&gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -934,8 +934,8 @@ template&lt;class P  = string_policy, class A  = wrapping_fingerprint_algebra, s
 
 </div>
 </div>
-<a id="a58de71c9fc489ca66abfdafc71ee4a57" name="a58de71c9fc489ca66abfdafc71ee4a57"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a58de71c9fc489ca66abfdafc71ee4a57">&#9670;&#160;</a></span>prepare()</h2>
+<a id="a00ab4a4ba6a16969cf8e10cd7f07db3e" name="a00ab4a4ba6a16969cf8e10cd7f07db3e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a00ab4a4ba6a16969cf8e10cd7f07db3e">&#9670;&#160;</a></span>prepare()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -948,7 +948,7 @@ template&lt;class P  = string_policy, class A  = wrapping_fingerprint_algebra, s
         <tr>
           <td class="memname"><a class="el" href="structeverett_1_1typed__engine.html#a0cd273d55add5711a440de01b974d59c">metadata_type</a> <a class="el" href="structeverett_1_1typed__engine.html">everett::typed_engine</a>&lt; P, A, DepthLimit, Family &gt;::prepare </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="structeverett_1_1typed__engine.html#ae5198351f2acefa208da7a0adfff106f">contribution_type</a> const &amp;&#160;</td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1typed__engine.html#ae5198351f2acefa208da7a0adfff106f">contribution_type</a> &amp;&#160;</td>
           <td class="paramname"><em>input</em></td><td>)</td>
           <td> const</td>
         </tr>
@@ -1277,8 +1277,8 @@ template&lt;class P  = string_policy, class A  = wrapping_fingerprint_algebra, s
 <div class="line">        <span class="keywordflow">return</span> <a class="code hl_variable" href="structeverett_1_1typed__engine.html#a63c3f7f860c22564ea0eefd128ac2544">ready_admission_allowance</a> + runtime_type::local_charge_bound * 8 * (runtime_type::maximum_levels + 2);</div>
 <div class="line">      <span class="keywordflow">else</span> <span class="keywordflow">return</span> <a class="code hl_variable" href="structeverett_1_1typed__engine.html#a63c3f7f860c22564ea0eefd128ac2544">ready_admission_allowance</a>;</div>
 <div class="line">    }()</div>
-<div class="ttc" id="astructeverett_1_1typed__engine_html_a63c3f7f860c22564ea0eefd128ac2544"><div class="ttname"><a href="structeverett_1_1typed__engine.html#a63c3f7f860c22564ea0eefd128ac2544">everett::typed_engine::ready_admission_allowance</a></div><div class="ttdeci">static constexpr std::uint64_t ready_admission_allowance</div><div class="ttdef"><b>Definition</b> typed_world.h:331</div></div>
-<div class="ttc" id="astructeverett_1_1typed__engine_html_a8c302576f2e2c64eaeea887e0b70d526"><div class="ttname"><a href="structeverett_1_1typed__engine.html#a8c302576f2e2c64eaeea887e0b70d526">everett::typed_engine::charged_service</a></div><div class="ttdeci">static constexpr bool charged_service</div><div class="ttdef"><b>Definition</b> typed_world.h:330</div></div>
+<div class="ttc" id="astructeverett_1_1typed__engine_html_a63c3f7f860c22564ea0eefd128ac2544"><div class="ttname"><a href="structeverett_1_1typed__engine.html#a63c3f7f860c22564ea0eefd128ac2544">everett::typed_engine::ready_admission_allowance</a></div><div class="ttdeci">static constexpr std::uint64_t ready_admission_allowance</div><div class="ttdef"><b>Definition</b> typed_world.h:376</div></div>
+<div class="ttc" id="astructeverett_1_1typed__engine_html_a8c302576f2e2c64eaeea887e0b70d526"><div class="ttname"><a href="structeverett_1_1typed__engine.html#a8c302576f2e2c64eaeea887e0b70d526">everett::typed_engine::charged_service</a></div><div class="ttdeci">static constexpr bool charged_service</div><div class="ttdef"><b>Definition</b> typed_world.h:375</div></div>
 </div><!-- fragment -->
 </div>
 </div>

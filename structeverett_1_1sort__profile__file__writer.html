@@ -126,8 +126,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a302348c24b33ae45cb37dc682cfe05cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24a18084b477c0741a645543319684be" id="r_a24a18084b477c0741a645543319684be"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__profile__file__writer.html#a24a18084b477c0741a645543319684be">append_frame</a> (<a class="el" href="structeverett_1_1sort__profile__frame.html">sort_profile_frame</a> const &amp;frame, std::span&lt; <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> const &gt; key, std::uint64_t common, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> value)</td></tr>
 <tr class="separator:a24a18084b477c0741a645543319684be"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aede5593386f71fe0b5eb30874bc0cb50" id="r_aede5593386f71fe0b5eb30874bc0cb50"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__profile__file__writer.html#aede5593386f71fe0b5eb30874bc0cb50">append_encoded</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> key, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> value)</td></tr>
-<tr class="separator:aede5593386f71fe0b5eb30874bc0cb50"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a09af90f4299f80a285f8322271c2fae3" id="r_a09af90f4299f80a285f8322271c2fae3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__profile__file__writer.html#a09af90f4299f80a285f8322271c2fae3">append_encoded</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> key, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> value, std::optional&lt; std::uint64_t &gt; retained_limit_bits={})</td></tr>
+<tr class="separator:a09af90f4299f80a285f8322271c2fae3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abad419575857831d63bb0ffe8b97f21c" id="r_abad419575857831d63bb0ffe8b97f21c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__profile__file__writer.html#abad419575857831d63bb0ffe8b97f21c">append_encoded</a> (<a class="el" href="structeverett_1_1profile__record.html">profile_record</a> const &amp;record)</td></tr>
 <tr class="separator:abad419575857831d63bb0ffe8b97f21c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa612a041b4c5717688149b3f6196b831" id="r_aa612a041b4c5717688149b3f6196b831"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1object__seal__receipt.html">object_seal_receipt</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sort__profile__file__writer.html#aa612a041b4c5717688149b3f6196b831">finish</a> ()</td></tr>
@@ -327,8 +327,8 @@ template&lt;class P , class Selector  = registry_selector&lt;typename P::registr
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="aede5593386f71fe0b5eb30874bc0cb50" name="aede5593386f71fe0b5eb30874bc0cb50"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aede5593386f71fe0b5eb30874bc0cb50">&#9670;&#160;</a></span>append_encoded() <span class="overload">[1/2]</span></h2>
+<a id="a09af90f4299f80a285f8322271c2fae3" name="a09af90f4299f80a285f8322271c2fae3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a09af90f4299f80a285f8322271c2fae3">&#9670;&#160;</a></span>append_encoded() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -348,7 +348,13 @@ template&lt;class P , class Selector  = registry_selector&lt;typename P::registr
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&#160;</td>
-          <td class="paramname"><em>value</em>&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::optional&lt; std::uint64_t &gt;&#160;</td>
+          <td class="paramname"><em>retained_limit_bits</em> = <code>{}</code>&#160;</td>
         </tr>
         <tr>
           <td></td>

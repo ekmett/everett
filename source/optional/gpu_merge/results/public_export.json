@@ -23,7 +23,7 @@
     {
       "path": "optional/gpu_merge/CMakeLists.txt",
       "original_sha256": "8f18614e2573071de04d96de2a3b6a84d905d9f996b11fbbf0f1d086adbce0e8",
-      "normalized_sha256": "6c24cc28e55df931e85c4b09ea3f957a42d0852e8b89979436a9d5193f1a7f63",
+      "normalized_sha256": "1cf48b6c898163bc97b35ff987d5ebfc9008dbbe4cfd8668bb3d4ff3b2ab2344",
       "export_sha256": "3ea9c3313261565db076c319f5e15c622daec1d61c1e4ea5938b6a84cf0429cf"
     },
     {
@@ -34,7 +34,7 @@
     {
       "path": "optional/gpu_merge/build.py",
       "original_sha256": "4e8653d729adf207bc3d63301c6f6d28280039c1e560d56b45fa56d329a35cf3",
-      "normalized_sha256": "dd95c68ffb77aa84e7a5b6ac45999b520d6c5321da88949e096a2ff2745449db",
+      "normalized_sha256": "21130c7720d262c43e8550cdadc42a843078bd71e56aa15e388ef06c2f1d37c8",
       "export_sha256": "1e805da4894385f4b65ab55726c5488b3c82bbfe02d93319497fb64598e4a57f"
     },
     {
@@ -117,7 +117,7 @@
     {
       "path": "optional/gpu_merge/emit_word.hlsl",
       "original_sha256": "e10a1d7ad6376bd26627c20c39de0ae7d114b177847700cc15cb80290a65e9c4",
-      "normalized_sha256": "e10a1d7ad6376bd26627c20c39de0ae7d114b177847700cc15cb80290a65e9c4"
+      "normalized_sha256": "1591920398ccc6c940c2d7fd9d385d39a5b85660d8bb11c9b4fc4de5e48af722"
     },
     {
       "path": "optional/gpu_merge/emit_word_test.h",
@@ -142,7 +142,7 @@
     {
       "path": "optional/gpu_merge/kernels.hlsl",
       "original_sha256": "39e6f6e08308ac77956144e053a678fca057d1595735943c014e0b85436e5191",
-      "normalized_sha256": "47c421974f55547d7615c518c23c1203699728cd06713b6e7afd60abc6f4b740",
+      "normalized_sha256": "e50495219832867fbde37ee0a6e8cbccd2daabe3931c5d10291756d391744588",
       "export_sha256": "098c65f8b710f2b64812ece22c2007cbc6acf25a94dc2876432039976dff5d9e"
     },
     {
@@ -169,7 +169,7 @@
     {
       "path": "optional/gpu_merge/prototype.mm",
       "original_sha256": "b10b30f19d95881ca55500743692c676639d9eb5260cc130d803d13bba4c2b93",
-      "normalized_sha256": "94fb945f6e81ff80e20837ee334233f289b8f91d89170140a11f57cca0c3a279",
+      "normalized_sha256": "806d991798163424efcac22c7945dde688942d05208215cd5a8561ac12f9a74d",
       "export_sha256": "cdeedb9531df19c68f33f7bfa5427122d836681884b3995e5b3679ac6ffa640a"
     },
     {
@@ -376,15 +376,16 @@
     }
   ],
   "integration_edits": {
-    "optional/gpu_merge/CMakeLists.txt": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure.",
+    "optional/gpu_merge/CMakeLists.txt": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure. Add separately qualified conservative-tombstone preservation and complete-coverage cleanup; historical calibration is unchanged.",
     "optional/gpu_merge/design.md": "Update current status of measured prefix caching, checked fused-origin rank construction, and separately qualified Vulkan adapter; original measurement identities and observations are unchanged.",
     "optional/gpu_merge/rank512_notice.txt": "Remove trailing whitespace while retaining the complete original notice.",
     "optional/gpu_merge/cutover.md": "Link the subsequent final-named calibration; its qualified source hash retains the pre-link guide bytes.",
-    "optional/gpu_merge/build.py": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure.",
+    "optional/gpu_merge/build.py": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure. Add separately qualified conservative-tombstone preservation and complete-coverage cleanup; historical calibration is unchanged.",
     "optional/gpu_merge/prefix_owner.hlsl": "Add the separately measured opt-in tiled prefix-tree path and its independent whole-tree oracle; the levelwise default is retained.",
-    "optional/gpu_merge/prototype.mm": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure.",
-    "optional/gpu_merge/kernels.hlsl": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure.",
-    "optional/gpu_merge/report.md": "Update current status of measured prefix caching, checked fused-origin rank construction, and separately qualified Vulkan adapter; original measurement identities and observations are unchanged."
+    "optional/gpu_merge/prototype.mm": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure. Add separately qualified conservative-tombstone preservation and complete-coverage cleanup; historical calibration is unchanged.",
+    "optional/gpu_merge/kernels.hlsl": "Add separately measured opt-in tiled prefix-tree and fused output-plan paths with independent oracles. Default behavior is unchanged; each experiment retains its measured source closure. Add separately qualified conservative-tombstone preservation and complete-coverage cleanup; historical calibration is unchanged.",
+    "optional/gpu_merge/report.md": "Update current status of measured prefix caching, checked fused-origin rank construction, and separately qualified Vulkan adapter; original measurement identities and observations are unchanged.",
+    "optional/gpu_merge/emit_word.hlsl": "Add separately qualified conservative-tombstone preservation and complete-coverage cleanup; historical calibration is unchanged."
   },
   "post_export_validation": {
     "source_revision": "6c1bbd2e1e1bb364389dd9f2b6977caf02a92527",
@@ -408,6 +409,19 @@
       "scope": "Optional fused output planning removes one host wait; separately qualified and measured with no default-path switch.",
       "report": "../output-plan-report.md",
       "metadata": "output-plan/metadata.json"
+    },
+    {
+      "source_revision": "44d332214558f6beb4cc59a8b5492c9b4c7aca4b",
+      "scope": "Optional conservative tombstone retention and explicit complete-older-coverage cleanup; seventeen correctness suites and 96 canonical-file cases pass. No performance claim or calibrated-default switch.",
+      "report": "../tombstones.md",
+      "metadata": "tombstone/qualification.json",
+      "new_files": {
+        "optional/gpu_merge/tombstone_merge.hlsl": "a9d7d1600cb04bf45bfce49530f3f6c399a8ed1b785ee591817441ff135aaf47",
+        "optional/gpu_merge/tombstone_test.h": "964086e65e3f427fae400fdfc521ddbd455fb740bc79b03186087c5fb708b1a8",
+        "optional/gpu_merge/tombstones.md": "c30380bbd51244c5e8e59fa56a0605b8c73422527f76125ebabccb81d98adac7",
+        "optional/gpu_merge/results/tombstone/cases.csv": "d91b1765a9d36c3da9aedd4444e17526fa5feb4b6053f008547884e964bae41a",
+        "optional/gpu_merge/results/tombstone/qualification.json": "0e3b80ffe61c1a53512ae64e4039ca93a8d5ec08f3ff8cfaf9600a0c52e0721e"
+      }
     }
   ]
 }

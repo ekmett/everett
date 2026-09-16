@@ -81,7 +81,8 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">everett::native_merge_detail Namespace Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -90,7 +91,96 @@ $(function() {
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1native__merge__detail_1_1encoded__source.html">encoded_source</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ac4be55c9da1b954437eca6278abdcbd6" id="r_ac4be55c9da1b954437eca6278abdcbd6"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:ac4be55c9da1b954437eca6278abdcbd6"><td class="memTemplItemLeft" align="right" valign="top">T &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1native__merge__detail.html#ac4be55c9da1b954437eca6278abdcbd6">composer</a> (T &amp;value)</td></tr>
+<tr class="separator:ac4be55c9da1b954437eca6278abdcbd6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8209b66b44d89b98f703d39117633a9d" id="r_a8209b66b44d89b98f703d39117633a9d"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
+<tr class="memitem:a8209b66b44d89b98f703d39117633a9d"><td class="memTemplItemLeft" align="right" valign="top">T &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1native__merge__detail.html#a8209b66b44d89b98f703d39117633a9d">composer</a> (std::reference_wrapper&lt; T &gt; value)</td></tr>
+<tr class="separator:a8209b66b44d89b98f703d39117633a9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba59771338dfce0c6b9114d75709c603" id="r_aba59771338dfce0c6b9114d75709c603"><td class="memTemplParams" colspan="2">template&lt;class Compose , class Key &gt; </td></tr>
+<tr class="memitem:aba59771338dfce0c6b9114d75709c603"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1native__merge__detail.html#aba59771338dfce0c6b9114d75709c603">is_tombstone</a> (Compose &amp;compose, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> value, Key &amp;&amp;key)</td></tr>
+<tr class="separator:aba59771338dfce0c6b9114d75709c603"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a8209b66b44d89b98f703d39117633a9d" name="a8209b66b44d89b98f703d39117633a9d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8209b66b44d89b98f703d39117633a9d">&#9670;&#160;</a></span>composer() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">T &amp; everett::native_merge_detail::composer </td>
+          <td>(</td>
+          <td class="paramtype">std::reference_wrapper&lt; T &gt;&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ac4be55c9da1b954437eca6278abdcbd6" name="ac4be55c9da1b954437eca6278abdcbd6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac4be55c9da1b954437eca6278abdcbd6">&#9670;&#160;</a></span>composer() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class T &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">T &amp; everett::native_merge_detail::composer </td>
+          <td>(</td>
+          <td class="paramtype">T &amp;&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="aba59771338dfce0c6b9114d75709c603" name="aba59771338dfce0c6b9114d75709c603"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aba59771338dfce0c6b9114d75709c603">&#9670;&#160;</a></span>is_tombstone()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;class Compose , class Key &gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">bool everett::native_merge_detail::is_tombstone </td>
+          <td>(</td>
+          <td class="paramtype">Compose &amp;&#160;</td>
+          <td class="paramname"><em>compose</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Key &amp;&amp;&#160;</td>
+          <td class="paramname"><em>key</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

@@ -119,18 +119,20 @@ Field guide</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a href="source/proof/Everett/Transfer.lean">Transfer</a>   </td><td class="markdownTableBodyNone">Content-mismatch transfers, the literal-position invariant, composition and associative ordered summaries    </td></tr>
 <tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a href="source/proof/Everett/RetainedFloor.lean">RetainedFloor</a>   </td><td class="markdownTableBodyNone">Constructed retained-prefix caps; exact canceled-owner literal aliases; arbitrary fragment-gather preservation; extra literal growth charged to canceled FC payloads    </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a href="source/proof/Everett/NativeMerge.lean">NativeMerge</a>   </td><td class="markdownTableBodyNone">Executable two-way merging of strictly ordered native runs; unique sorted output; optional pointwise lookup composition; chronological reassociation and disjoint-support commutation    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a href="source/proof/Everett/CarriedChain.lean">CarriedChain</a>   </td><td class="markdownTableBodyNone">Bottom-up coherent chain builder; exact target/next-parent correspondence; carried aligned windows and explicit empty-node traversal; one answer per node    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a href="source/proof/Everett/CarriedRoute.lean">CarriedRoute</a>   </td><td class="markdownTableBodyNone">Concrete parent/sample builder; carried parent windows through stored rank checkpoints and one sample lookup; exact target-window search for one edge    </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><a href="source/proof/Everett/Navigation.lean">Navigation</a>   </td><td class="markdownTableBodyNone">Constructed unary Elias–Fano selection; strict high positions; common-stride and EOF recovery; grouped population/checkpoint rank equals fractional rank, with bounded local scans and no stored endpoint total    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><a href="source/proof/Everett/Examples.lean">Examples</a>   </td><td class="markdownTableBodyNone">Heterogeneous keys, valid and stale sources, noncommutative histories, changed index/target versions, and an old target that cannot be reclaimed while a snapshot retains it    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><a href="source/proof/Everett/FractionalExamples.lean">FractionalExamples</a>   </td><td class="markdownTableBodyNone">K=3 and K=15, equal keys across several cuts, empty native projections, false-borrow recovery, empty targets, before-first queries, short tails and stored-index routing    </td></tr>
+<td class="markdownTableBodyNone"><a href="source/proof/Everett/Examples.lean">Examples</a>   </td><td class="markdownTableBodyNone">Heterogeneous keys, valid and stale sources, noncommutative histories, changed index/target versions, and an old target that cannot be reclaimed while a snapshot retains it    </td></tr>
 <tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><a href="source/proof/Everett/FractionalExamples.lean">FractionalExamples</a>   </td><td class="markdownTableBodyNone">K=3 and K=15, equal keys across several cuts, empty native projections, false-borrow recovery, empty targets, before-first queries, short tails and stored-index routing    </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a href="source/proof/Everett/Audit.lean">Audit</a>   </td><td class="markdownTableBodyNone">Rejects unexpected axioms in every kernel-safe <code>Everett</code> declaration and its transitive dependencies   </td></tr>
 </table>
 <h1><a class="anchor" id="examples-1"></a>
@@ -190,6 +192,19 @@ String prefixes and comparison transfers</h1>
 <p><code>Transfer.lean</code> models a content mismatch as a position with its direction, or infinity. A record retaining \(r\) units preserves an incoming mismatch before \(r\); otherwise it substitutes the literal mismatch \(e\). Valid summaries require \(e\ge r\). Their composition represents applying the earlier record followed by the later one, preserves validity, and is associative. The selected mismatch retains its direction.</p>
 <p>These summaries describe content mismatches. Infinity does not mean that two complete keys are equal: endpoints and full lengths remain separate. The module does not prove that a particular SIMD comparison produces the correct summary.</p>
 <p>The missing bridge is from the origin-filtered cut to these string hypotheses, then from the encoded length/LCP metadata and literal comparisons to the abstract state. Complete cascade composition, block access bounds and the C++ implementation remain separate refinements.</p>
+<h1><a class="anchor" id="canceled-literal-owners"></a>
+Canceled literal owners</h1>
+<p>Deleting a record does not erase its contribution to a later key's inherited prefix. In <a href="source/proof/Everett/RetainedFloor.lean">RetainedFloor</a>, I give the replacing tombstone enough literal material to stand in for its exact canceled record. Let \(r\) be that record's stored retained-prefix position and \(n\) the tombstone's ordinary retained position. I construct the tombstone with</p>
+<p class="formulaDsp">
+\[
+t=\min(n,r), \qquad \Delta=n-t=\max(0,n-r).
+\]
+</p>
+<p><code>target_literal_covered</code> proves that the tombstone's literal suffix contains the entire target literal suffix. For an owned key position \(j\ge r\), <code>alias_lookup</code> proves that the replacement address is exactly \(j-t\); <code>alias_in_bounds</code> proves that address is in bounds whenever the original key position is. No omitted prefix is reconstructed by these definitions.</p>
+<p><code>literal_growth</code> proves that \(\Delta\) is exactly the increase in literal units. <code>extra_le_target_literal</code> bounds it by \(|k|-r\), the canceled record's existing literal payload. <code>batch_charge</code> sums this bound over admitted certificates. Charging each physical record once additionally requires distinct target identities; <code>admitted_once</code> states that obligation. These are literal-unit bounds, excluding count controls, values, indexes, allocation and I/O costs.</p>
+<p>One tombstone need not contain every inherited fragment exposed by a run of deletions. <code>fragments_covered</code> instead proves that any supplied finite gather schedule returns the same units after each original owner is redirected to its own certificate. The adjacent-owner example obtains separate fragments from two tombstones. A GPU implementation still has to find those owners and split copies at ownership boundaries; a machine-word boundary alone is insufficient.</p>
+<p>The certificate names a file, record ordinal and exact stored retention. <code>changed_retention_rejected</code> shows why an equivalent re-encoding cannot silently replace that target. Source immutability, identity non-reuse, pin lifetime and same-key admission remain obligations of the surrounding catalog and codec. The construction receives the known complete target key; a fingerprint does not stand in for that knowledge.</p>
+<p>No survivor mask is assumed by the coverage theorem, so adjacent deletions do not invalidate it. Its caller must establish that each requested fragment really belongs to that original owner, and that its extent is valid. The module does not prove the owner-tree algorithm, deletion visibility, shader accesses or a complete parallel merge. It also does not implement or verify the tighter single-bridge encoding that depends on a frozen survivor mask.</p>
 <h1><a class="anchor" id="native-run-merging"></a>
 Native run merging</h1>
 <p>I model a native run as a finite list of natural-number keys with arbitrary values. <code>native_merge.merge</code> is the actual two-way recursive algorithm: it emits the smaller head, and combines equal heads with <code>compose key older newer</code>. The callback produces a value at the same key. <code>merge_ordered</code> proves strict output order, and <code>merge_unique</code> proves that no key occurs twice. Neither result needs an algebraic law for the callback.</p>

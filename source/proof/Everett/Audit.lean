@@ -14,6 +14,7 @@ import Everett.NativeMerge
 import Everett.Navigation
 import Everett.CarriedRoute
 import Everett.CarriedChain
+import Everett.RetainedFloor
 import Lean
 
 open Lean Elab Command

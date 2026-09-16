@@ -101,6 +101,8 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__detail_1_1frontier__selection.html">frontier_selection</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__detail_1_1ignore__match__position.html">ignore_match_position</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__detail_1_1index__destination.html">index_destination</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__detail_1_1index__metadata.html">index_metadata</a></td></tr>
@@ -137,10 +139,10 @@ Functions</h2></td></tr>
 <tr class="memitem:af23414179f6cd95239ae60c3392c7f65" id="r_af23414179f6cd95239ae60c3392c7f65"><td class="memTemplParams" colspan="2">template&lt;class P , class View , class Capture &gt; </td></tr>
 <tr class="memitem:af23414179f6cd95239ae60c3392c7f65"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1cola__detail.html#af23414179f6cd95239ae60c3392c7f65">visit_secondary</a> (View const &amp;leaf, <a class="el" href="structeverett_1_1profile__blob__borrowed__predecessor.html">profile_blob_borrowed_predecessor</a>&lt; P &gt; const &amp;predecessor, Capture &amp;&amp;capture, <a class="el" href="structeverett_1_1profile__comparison__work.html">profile_comparison_work</a> *work=nullptr)</td></tr>
 <tr class="separator:af23414179f6cd95239ae60c3392c7f65"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa55c72eb442eb4178a8a1738b6bdb5f2" id="r_aa55c72eb442eb4178a8a1738b6bdb5f2"><td class="memTemplParams" colspan="2">template&lt;class P , class Blob , class Query , class Decode &gt; <br />
+<tr class="memitem:aa2ad5be309e1b44e44f37c30233a3f75" id="r_aa2ad5be309e1b44e44f37c30233a3f75"><td class="memTemplParams" colspan="2">template&lt;class P , class Blob , class Query , class Decode , class Inspect  = ignore_match_position&gt; <br />
 requires std::same_as&lt;std::remove_cvref_t&lt;Query&gt;, <a class="el" href="structeverett_1_1bit__string.html">bit_string</a>&gt; &amp;&amp; (!std::is_reference_v&lt;std::invoke_result_t&lt;Decode &amp;, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&gt;&gt;) &amp;&amp; requires(Blob const &amp; blob, <a class="el" href="structeverett_1_1profile__query__context.html">profile_query_context</a>&lt;P&gt; const &amp; context) { <a class="el" href="structeverett_1_1cola__detail_1_1query__access.html#ab8432e9bba15c029bb2823d961b237c7">query_access::search</a>(blob.view(), 0, context, <a class="el" href="structeverett_1_1cola__detail_1_1query__access_1_1match__probe.html">query_access::match_probe</a>{}); }</td></tr>
-<tr class="memitem:aa55c72eb442eb4178a8a1738b6bdb5f2"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1cola__detail.html#aa55c72eb442eb4178a8a1738b6bdb5f2">first_value</a> (<a class="el" href="structeverett_1_1cola__query__root.html">cola_query_root</a>&lt; P, Blob &gt; const &amp;root, Query &amp;&amp;query, Decode &amp;&amp;decode) -&gt; std::optional&lt; std::invoke_result_t&lt; Decode &amp;, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> &gt; &gt;</td></tr>
-<tr class="separator:aa55c72eb442eb4178a8a1738b6bdb5f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2ad5be309e1b44e44f37c30233a3f75"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1cola__detail.html#aa2ad5be309e1b44e44f37c30233a3f75">first_value</a> (<a class="el" href="structeverett_1_1cola__query__root.html">cola_query_root</a>&lt; P, Blob &gt; const &amp;root, Query &amp;&amp;query, Decode &amp;&amp;decode, Inspect inspect={}) -&gt; std::optional&lt; std::invoke_result_t&lt; Decode &amp;, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> &gt; &gt;</td></tr>
+<tr class="separator:aa2ad5be309e1b44e44f37c30233a3f75"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a96f92585a6613d8cd85c5888b17181f1" name="a96f92585a6613d8cd85c5888b17181f1"></a>
@@ -179,13 +181,13 @@ template&lt;class Live , class Head &gt; </div>
 
 </div>
 </div>
-<a id="aa55c72eb442eb4178a8a1738b6bdb5f2" name="aa55c72eb442eb4178a8a1738b6bdb5f2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa55c72eb442eb4178a8a1738b6bdb5f2">&#9670;&#160;</a></span>first_value()</h2>
+<a id="aa2ad5be309e1b44e44f37c30233a3f75" name="aa2ad5be309e1b44e44f37c30233a3f75"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa2ad5be309e1b44e44f37c30233a3f75">&#9670;&#160;</a></span>first_value()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;class P , class Blob , class Query , class Decode &gt; <br />
+template&lt;class P , class Blob , class Query , class Decode , class Inspect  = ignore_match_position&gt; <br />
 requires std::same_as&lt;std::remove_cvref_t&lt;Query&gt;, <a class="el" href="structeverett_1_1bit__string.html">bit_string</a>&gt; &amp;&amp; (!std::is_reference_v&lt;std::invoke_result_t&lt;Decode &amp;, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&gt;&gt;) &amp;&amp; requires(Blob const &amp; blob, <a class="el" href="structeverett_1_1profile__query__context.html">profile_query_context</a>&lt;P&gt; const &amp; context) { <a class="el" href="structeverett_1_1cola__detail_1_1query__access.html#ab8432e9bba15c029bb2823d961b237c7">query_access::search</a>(blob.view(), 0, context, <a class="el" href="structeverett_1_1cola__detail_1_1query__access_1_1match__probe.html">query_access::match_probe</a>{}); }</div>
 <table class="mlabels">
   <tr>
@@ -207,7 +209,13 @@ requires std::same_as&lt;std::remove_cvref_t&lt;Query&gt;, <a class="el" href="s
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">Decode &amp;&amp;&#160;</td>
-          <td class="paramname"><em>decode</em>&#160;</td>
+          <td class="paramname"><em>decode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Inspect&#160;</td>
+          <td class="paramname"><em>inspect</em> = <code>{}</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
