@@ -38,7 +38,10 @@ namespace diet {
       secondary_spool(std::filesystem::path path, Ops & ops) : path_(std::move(path)), ops_(ops) {}
       secondary_spool(secondary_spool const &) = delete;
       secondary_spool & operator=(secondary_spool const &) = delete;
-      ~secondary_spool() { if (fd_ >= 0) (void)ops_.close(fd_); }
+      ~secondary_spool() {
+        if (fd_ >= 0) (void)ops_.close(fd_);
+        if (named_) (void)ops_.remove(path_);
+      }
       std::uint64_t body_bytes() const noexcept { return bytes_; }
       void append(std::span<std::byte const> bytes) {
         if (bytes.size() > std::uint64_t(std::numeric_limits<std::int64_t>::max()) - bytes_)
@@ -46,7 +49,9 @@ namespace diet {
         if (bytes.empty()) return;
         if (fd_ < 0) {
           fd_ = ops_.create(path_); if (fd_ < 0) fail("create secondary index spool");
+          named_ = true;
           if (ops_.remove(path_) < 0) fail("unlink secondary index spool");
+          named_ = false;
         }
         while (!bytes.empty()) {
           auto part = bytes.first(std::min(bytes.size(), std::size_t{1} << 20));
@@ -71,6 +76,7 @@ namespace diet {
       std::filesystem::path path_;
       Ops & ops_;
       int fd_ = -1;
+      bool named_ = false;
       std::uint64_t bytes_ = 0;
       [[noreturn]] static void fail(char const * operation, int code = errno) {
         throw std::system_error(code, std::generic_category(), operation);
@@ -236,10 +242,17 @@ namespace diet {
         Ops & ops, SpoolOps & spool_ops)
       : output_(std::move(root), std::move(id), std::move(attempt), std::move(dependencies), ops, spool_ops),
         builder_({&output_}, std::move(native), std::move(main), std::move(secondary)) {}
+    cola_file_index_builder(cola_file_index_builder const &) = delete;
+    cola_file_index_builder & operator=(cola_file_index_builder const &) = delete;
+    cola_file_index_builder(cola_file_index_builder &&) = delete;
+    cola_file_index_builder & operator=(cola_file_index_builder &&) = delete;
     bool done() const noexcept { return builder_.done(); }
     bool failed() const noexcept { return builder_.failed(); }
     bool finished() const noexcept { return builder_.finished(); }
     std::uint64_t size() const noexcept { return builder_.size(); }
+    native_pointer native_owner() const noexcept { return builder_.native_owner(); }
+    main_pointer main_target() const noexcept { return builder_.main_target(); }
+    native_pointer secondary_target() const noexcept { return builder_.secondary_target(); }
     std::uint64_t step(std::uint64_t budget) { return builder_.step(budget); }
     object_seal_receipt finish() { return builder_.finish(); }
     std::uint64_t spooled_bytes() const noexcept { return output_.spooled_bytes(); }

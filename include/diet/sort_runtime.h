@@ -96,6 +96,12 @@ namespace diet {
       return std::make_unique<merge_type<Compose>>(std::move(older), std::move(newer), std::move(compose));
     }
     template <class Merge> static auto finish_merge(Merge & merge) { return native_type::from_owned(merge.finish()); }
+    template <class Node> using index_type = cola_index_builder<P, native_type, Node>;
+    template <class Node> static auto make_index(std::shared_ptr<native_type const> native,
+        typename Node::pair_type main = {}, std::shared_ptr<native_type const> secondary = {}) {
+      return std::make_unique<index_type<Node>>(std::move(native), std::move(main), std::move(secondary));
+    }
+    template <class Node> static auto finish_index(index_type<Node> & index) { return Node::from_built(index.finish()); }
     static auto empty() { sort_profile_writer<P, Selector> writer; return native_type::from_owned(writer.finish()); }
     static auto singleton(profile_record const & record) {
       using leaves = typename registry_detail::info<typename P::registry_type>::leaves;

@@ -123,7 +123,8 @@ latency. This adapter keeps completed native arrays in memory before sealing;
 large merges still need memory for their output. The explicit
 [streaming family](sort-runtime-context.md) selects a file-backed native writer
 through an owning execution context. Its native payload buffering is bounded,
-while sparse metadata and fractional-index output still occupy memory.
+while sparse navigation metadata remains in memory. Fractional-index literals
+stream through the same associated storage context.
 
 The profile reader caches its selected leaf parser across records and physical
 blocks. That avoids rerunning the selector for every record, but still makes an

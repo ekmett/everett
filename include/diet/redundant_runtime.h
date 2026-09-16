@@ -29,6 +29,12 @@ namespace diet {
       return std::make_unique<merge_type<Compose>>(std::move(older), std::move(newer), std::move(compose));
     }
     template <class Merge> static auto finish_merge(Merge & merge) { return native_type::from_owned(merge.finish()); }
+    template <class Node> using index_type = cola_index_builder<P, native_type, Node>;
+    template <class Node> static auto make_index(std::shared_ptr<native_type const> native,
+        typename Node::pair_type main = {}, std::shared_ptr<native_type const> secondary = {}) {
+      return std::make_unique<index_type<Node>>(std::move(native), std::move(main), std::move(secondary));
+    }
+    template <class Node> static auto finish_index(index_type<Node> & index) { return Node::from_built(index.finish()); }
     static auto empty() { return native_type::from_owned(profile_array<P>::build({})); }
     static auto singleton(profile_record const & record) {
       profile_native_writer<P> writer; writer.append(record); return native_type::from_owned(writer.finish());
@@ -81,6 +87,20 @@ namespace diet {
     template <class, class, class, class> friend struct runtime_store;
     template <class, class, class, class> friend struct runtime_store_detail::graph_sealer;
     template <class, class, class, class, class> friend struct sort_runtime_context;
+    // Only the execution context constructs an index from acknowledged exact
+    // owner bindings. Original facades may still own small native arrays; the
+    // physical pair owns their canonical mapped counterparts without a tail walk.
+    static pair_type from_sealed_parts(std::shared_ptr<pair_binding<typename Storage::mapped_pair_type> const> binding,
+        std::filesystem::path const & root, native_pointer native, pair_type main, native_pointer secondary) {
+      if (!binding || !binding->mapped || !native || binding->mapped->identity() != binding->identity ||
+          native->size() != binding->mapped->native_object()->size() ||
+          bool(main) != bool(binding->mapped->main_target()) || bool(secondary) != bool(binding->mapped->secondary_target()))
+        throw std::invalid_argument("inexact sealed redundant parts");
+      auto result = std::shared_ptr<redundant_node>(new redundant_node(binding->mapped,
+        std::move(native), std::move(main), std::move(secondary)));
+      result->bindings_.get_or_create(binding->catalog, root, [&] { return binding; });
+      return result;
+    }
     catalog_bindings<pair_binding<typename Storage::mapped_pair_type>> bindings_;
     catalog_bindings<redundant_node> mapped_owners_;
     native_pointer native_, secondary_;
@@ -417,7 +437,7 @@ namespace diet {
     }
     using merge_compose = std::conditional_t<std::is_same_v<Compose, replace_native_value>, Compose, std::reference_wrapper<Compose>>;
     using merge_type = typename Storage::template merge_type<merge_compose>;
-    using index_type = cola_index_builder<P, native_type, node_type>;
+    using index_type = typename Storage::template index_type<node_type>;
     enum class action { native_start, native_step, native_finish, index_start, index_step, index_finish, commit };
     enum class category { native, index, carrier, metadata, root };
     struct worker {
@@ -445,7 +465,7 @@ namespace diet {
         if constexpr (requires { { storage.poison() } noexcept; }) storage.poison();
       }
       native_pointer make_empty() { return storage.empty(); }
-      static pair_type make_empty_pair(native_pointer native) { index_type builder(std::move(native)); return node_type::from_built(builder.finish()); }
+      static pair_type make_empty_pair(native_pointer native) { cola_index_builder<P, native_type, node_type> builder(std::move(native)); return node_type::from_built(builder.finish()); }
       static snapshot_type initial(pair_type pair) {
         redundant_frontier<P, Storage> f; f.levels.resize(1);
         return snapshot_type(std::make_shared<typename snapshot_type::state const>(typename snapshot_type::state{
@@ -529,17 +549,18 @@ namespace diet {
         return std::make_shared<object_type const>(object_type{id, first, last, level, std::move(native), std::move(pair), std::move(next)});
       }
       pair_type build_index(native_pointer native, routes target) {
-        index_type builder(std::move(native), target.main ? target.main->pair : pair_type{}, target.secondary ? target.secondary->native : native_pointer{});
-        while (!builder.done()) { auto n = builder.step(1); work.index_occurrences = add(work.index_occurrences, n); }
-        auto pair = node_type::from_built(builder.finish()); work.indexes = add(work.indexes, 1); return pair;
+        auto builder = storage.template make_index<node_type>(std::move(native),
+          target.main ? target.main->pair : pair_type{}, target.secondary ? target.secondary->native : native_pointer{});
+        while (!builder->done()) { auto n = builder->step(1); work.index_occurrences = add(work.index_occurrences, n); }
+        auto pair = storage.template finish_index<node_type>(*builder); work.indexes = add(work.indexes, 1); return pair;
       }
       pair_type prepare_root(pair_type main, native_pointer secondary = {}) {
         if (!main) return empty_pair;
         if (!secondary && main->virtual_size() <= P::group_size) return main;
         do {
-          index_type builder(empty, main, secondary);
-          while (!builder.done()) { auto n = builder.step(1); work.index_occurrences = add(work.index_occurrences, n); }
-          main = node_type::from_built(builder.finish()); secondary.reset();
+          auto builder = storage.template make_index<node_type>(empty, main, secondary);
+          while (!builder->done()) { auto n = builder->step(1); work.index_occurrences = add(work.index_occurrences, n); }
+          main = storage.template finish_index<node_type>(*builder); secondary.reset();
           work.indexes = add(work.indexes, 1); work.carriers = add(work.carriers, 1);
         } while (main->virtual_size() > P::group_size);
         return main;
@@ -706,7 +727,7 @@ namespace diet {
             break;
           case action::index_start: {
             auto t = index_targets(i);
-            w.index = std::make_unique<index_type>(r.stage == redundant_stage::destination_index ? r.merged : empty,
+            w.index = storage.template make_index<node_type>(r.stage == redundant_stage::destination_index ? r.merged : empty,
               t.main ? t.main->pair : pair_type{}, t.secondary ? t.secondary->native : native_pointer{});
             w.next = w.index->done() ? action::index_finish : action::index_step;
             break;
@@ -716,7 +737,7 @@ namespace diet {
             if (w.index->done()) w.next = action::index_finish;
             break;
           case action::index_finish: {
-            auto pair = node_type::from_built(w.index->finish()); w.index.reset(); work.indexes = add(work.indexes, 1);
+            auto pair = storage.template finish_index<node_type>(*w.index); w.index.reset(); work.indexes = add(work.indexes, 1);
             if (r.stage == redundant_stage::destination_index) {
               r.output = object(r.merged, std::move(pair), r.destination_route, i + 1, source(0)->first, source(1)->last);
               levels[i + 1].slots[r.destination].object = r.output;

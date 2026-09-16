@@ -165,6 +165,8 @@ namespace {
         }
       }
       check(spool.opens == spool.closes, "spool leaked descriptor");
+      for (auto const & entry : std::filesystem::recursive_directory_iterator(dir.root))
+        check(entry.path().extension() != ".secondary", "named spool survived failure");
     }
   }
   void bounded_payload() {

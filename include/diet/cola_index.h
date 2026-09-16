@@ -457,6 +457,9 @@ namespace diet {
     bool failed() const noexcept { return failed_ || output_.failed(); }
     bool finished() const noexcept { return finished_; }
     std::uint64_t size() const noexcept { return count_; }
+    native_pointer native_owner() const noexcept { return native_; }
+    main_pointer main_target() const noexcept { return main_; }
+    native_pointer secondary_target() const noexcept { return secondary_; }
     std::uint64_t step(std::uint64_t budget) {
       require_active();
       std::uint64_t consumed = 0;

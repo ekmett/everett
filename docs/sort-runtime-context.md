@@ -1,8 +1,9 @@
-Streamed native merges
-======================
+Streamed native and fractional-index output
+==========================================
 
 I can give the redundant scheduler an execution-owned storage context so a
-native merge writes directly to its reserved `.kv` file. The context owns its
+native merge writes directly to its reserved `.kv` file, and fractional indexes
+stream into reserved `.index` files. The context owns its
 SQLite connection and concrete file operations. It survives moves and rebases
 of the active engine; immutable snapshots retain their mapped inputs directly.
 
@@ -64,12 +65,18 @@ addition to the native/profile traits, a storage family supplies:
 
 - `make_merge<Compose>(older, newer, compose)` to start an incremental merger.
 - `finish_merge(merge)` to produce its immutable native owner.
+- `make_index<Node>(native, main, secondary)` and `finish_index<Node>(index)`
+  to build an index over exact pinned dependencies.
 - An optional `poison() noexcept` hook for failures during incremental work.
 
 `sort_file_runtime_storage` holds a shared lifetime handle to
 `sort_runtime_context`. Empty and singleton admissions are small owned profiles;
-merge outputs are streamed and mapped. A default-constructed storage can make
-an empty seed snapshot, but it needs `open(root)` before starting a merge.
+merge and index outputs are streamed and mapped. The context shares one empty
+native owner across rebases. Before an index can name an owned dependency, the
+graph sealer installs its catalog binding. An already bound owner ends that
+walk: its mapped dependency tail is retained directly. A default-constructed
+storage can make an empty seed snapshot, but it needs `open(root)` before
+starting a merge or index.
 
 For a direct engine, I can attach an opened storage with
 `engine::from_snapshot(snapshot, family::storage_type::open(root))`.
@@ -88,14 +95,20 @@ selector seeds, the file-local selector dictionary and final Elias–Fano metada
 still occupy memory proportional to their size. Composition callbacks may also
 allocate their result.
 
-Fractional-index construction still produces owned index arrays before
-persistence. The scheduler can have several active merges, so the payload-buffer
-allowance is per writer, not per database. This change bounds native payload
-buffering; it does not claim constant memory for the whole runtime or bounded
-wall-clock latency. Structural work credits do not measure bytes or flush time.
+A fractional index uses two 64 KiB borrowed-payload buffers and a private
+secondary-stream spool. Preserving canonical IX03 sections adds one sequential
+scratch write and read of the secondary payload; the final copy has a 64 KiB
+transfer buffer. [The index writer](cola-file-index.md) keeps rank directories,
+false-borrow flags, cuts and Elias–Fano offsets in memory, but streams FC literals.
+
+The scheduler can have several active merges and indexes, so these allowances
+are per writer, not per database. This bounds encoded payload buffering; it
+does not claim constant memory for the whole runtime or bounded wall-clock
+latency. Structural work credits do not measure bytes or flush time.
 
 Tests compare streamed updates and snapshots with the owned runtime, verify
 mapped sealed owners and historical reads, exercise moves and settled rebases,
-and inject write, file-sync and pre/post-commit failures. The file writer's
+restore all hidden job phases, and inject write, file-sync and pre/post-commit
+failures through both sealing and index registration. The file writer's
 separate tests compare complete output bytes and cap allocations during large
 value and long-control encodings.
