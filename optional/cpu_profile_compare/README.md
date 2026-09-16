@@ -54,6 +54,10 @@ describes collection inputs; `analyze.py results` checks the retained raw eviden
 and regenerates the report, summaries and exact space tables without running a
 benchmark.
 
+The [integration record](results/integration.json) maps the measured harness
+revision to its identical public sources. The original measurement identities
+remain in the manifest.
+
 Space tables count complete file bytes and bits. They also separate the
 front-coded record stream (keys, controls and values), EF sections, and remaining
 metadata/alignment. All formats represent identical logical records; raw fixed

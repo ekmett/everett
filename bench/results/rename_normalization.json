@@ -24,7 +24,7 @@
     {
       "path": "bench/README.md",
       "pre_rename_sha256": "58bfcf60e14cbea648a99b1d8d857e7e1845c692a490b4d0d881659d5dbe1d77",
-      "normalized_sha256": "d4a04836b3188a5cdc2cb117d14e3ce7e291f1a8679b3cb374602a4aee850171"
+      "normalized_sha256": "b11ff71d557c928956a15876d993a8c8e5b4624c9180cefcf5c593411dda4b41"
     },
     {
       "path": "bench/bitmap512.h",
@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "bc1b582854f8621f25d95dfd5318c440790bdd89922828bec050de926a7648cf"
+      "normalized_sha256": "5fdc222aad91980460d2b6196b37aa823c27db344a17d698ae9cf58503228ebb"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "c113da08cb4c8a593a6d1c2b43f2805f075c68ab6c5cc4fef734276cf6d342b6"
+      "normalized_sha256": "6bf478d3d6354700dcaaf4c7996f3425c4871cccd5ae6360b8bb0eabb6bae478"
     }
   ],
   "subsequent_updates": [
@@ -1054,6 +1054,14 @@
     {
       "scope": "Document conservative equal-key literal reuse and its allocation regression.",
       "artifacts": [
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link the matched CPU byte/bit native merge latency and same-data space measurements. Original measurement fingerprints are unchanged.",
+      "artifacts": [
+        "bench/README.md",
         "bench/results/publication_normalization.json",
         "docs/implementation.md"
       ]

@@ -77,6 +77,14 @@ already carries the required suffix. A 128-KiB-key regression detects that
 allocation on the preceding implementation and verifies its removal, with
 identical serialized output in bit and byte profiles.
 
+The [matched CPU comparison](../optional/cpu_profile_compare/report.md) retains
+three fresh processes per mode, revision and case, with three measured merges
+per process. The byte candidate has lower medians in eleven of twelve cases;
+eight process-median ranges are disjoint in its favor. The raw-bit and unchanged
+typed-bit controls have mixed results, so I do not attribute a general speedup
+to the forward EF cursor. The report compares complete byte/bit output sizes
+for identical logical records and states the native-construction timing boundary.
+
 ### Optional GPU construction
 
 The separate [fixed-key experiment](../optional/fixed_gpu_merge/README.md)

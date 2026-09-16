@@ -58,6 +58,11 @@ both Metal paths identical logical keys and values, with fresh output mappings
 and checksums included. It reports complete latency and encoded size for
 structured and hash-like keys, preserving all trials and their variability.
 
+The [matched CPU profile comparison](../optional/cpu_profile_compare/report.md)
+uses those same logical records in raw and typed bit/byte files. It measures
+complete native construction and reports exact file sizes, before/after byte
+transport results and the bit-path controls.
+
 Unadopted experiments
 --------------------
 

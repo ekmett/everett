@@ -73,3 +73,18 @@ framing; ordinary and mixed-sort queries; chronological replacement merges;
 resolved scans; retained snapshots; transaction flushes and branches; saved
 worlds; and mapped reopening. The built-in bit codec and a custom byte codec
 have separate byte-for-byte regression checks.
+
+Time and Space
+--------------
+
+The [matched CPU measurements](../optional/cpu_profile_compare/report.md) compare
+the byte and bit string paths on identical logical records. They include native
+output allocation, encoding, sparse offsets, a fresh mapping and checksums;
+durable publication and fractional-index construction are outside the timer.
+
+On the larger measured fixtures, the byte path runs 2.5–4.3 times as fast during
+native merges. Complete byte files cost about 13.6% more space for the structured
+keys with sixteen-byte values, and about 1% more for those keys with larger
+variable values. The hash-like cases are slightly smaller in byte form. These
+are properties of the tested key and value distributions, not a universal space
+ordering between the codecs. The report retains exact file sizes and all trials.

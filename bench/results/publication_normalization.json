@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "c113da08cb4c8a593a6d1c2b43f2805f075c68ab6c5cc4fef734276cf6d342b6"
+      "normalized_sha256": "6bf478d3d6354700dcaaf4c7996f3425c4871cccd5ae6360b8bb0eabb6bae478"
     }
   ],
   "checks": {
@@ -573,6 +573,12 @@
     },
     {
       "scope": "Document conservative equal-key literal reuse and its allocation regression.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link the matched CPU byte/bit native merge latency and same-data space measurements. Original measurement fingerprints are unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

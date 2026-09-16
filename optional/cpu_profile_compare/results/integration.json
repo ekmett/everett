@@ -1,0 +1,7 @@
+{
+  "measured_harness_revision": "40aecd43f21c8c4a16ebd3978a19042b61779d5f",
+  "public_harness_revision": "48cc3d7355975a7bcbc70159efa8bd9c9063a8d4",
+  "scope": "The five measured harness and fixture files are byte-identical in the public integration. Both frozen production header revisions remain reachable. The original manifest, raw observations and export hashes are unchanged.",
+  "verified_harness_files": 5,
+  "verified_header_files_per_revision": 82
+}
