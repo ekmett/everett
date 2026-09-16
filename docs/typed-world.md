@@ -154,7 +154,8 @@ payload. The runtime's admission intervals are a separate part of a durable
 checkpoint. No table scan is needed to save this metadata.
 
 The default schema ID is `everett.optional-string/code0/v1`. The explicit tagless
-byte policy uses `everett.optional-string/tagless/v1`. Other registries require a
+byte policy uses `everett.optional-string/tagless/byte-profile-v2`
+with the [byte string transport](byte-transport.md). Other registries require a
 caller-supplied stable schema ID when constructing the engine. This identifier
 must name the codecs and semantic policies needed to interpret the saved data;
 it is not a compiler type name, tree fingerprint or additive state signature.

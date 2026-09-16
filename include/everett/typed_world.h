@@ -60,11 +60,37 @@ namespace everett {
     template <class... S> struct all_replacements<registry_detail::sorts<S...>>
       : std::bool_constant<(replacement<S> && ...)> {};
 
+    // The byte profile already frames complete key and value extents. The
+    // built-in string sort can borrow those boundaries instead of escaping
+    // keys or putting a second length and bit-aligned tag inside the value.
+    template <class P, class S> inline constexpr bool byte_strings =
+      P::unit == profile_unit::byte && std::same_as<S, unsorted<std::optional<std::string>>>;
+    inline std::string byte_string(bit_view bits) {
+      if ((bits.offset() | bits.size()) & 7)
+        throw std::invalid_argument("unaligned byte string");
+      if (!bits.size()) return {};
+      return {reinterpret_cast<char const *>(bits.storage().data() + (bits.offset() >> 3)),
+              static_cast<std::size_t>(bits.size() >> 3)};
+    }
+    inline bool byte_string_present(bit_view encoded) {
+      if (((encoded.offset() | encoded.size()) & 7) || encoded.size() < 8)
+        throw std::invalid_argument("truncated or unaligned byte string value");
+      auto tag = std::to_integer<unsigned>(encoded.storage()[encoded.offset() >> 3]);
+      if (tag > 1 || (!tag && encoded.size() != 8))
+        throw std::invalid_argument("noncanonical byte string value");
+      return tag != 0;
+    }
+    template <class P, class S> key_t<S> read_key(sort_bit_reader & input) {
+      if constexpr (byte_strings<P, S>)
+        return byte_string(input.take_bits(input.remaining()));
+      else return sort_codec<S>::key_codec::read_ordered(input);
+    }
     template <class P, class S> bit_string key(key_t<S> const & value) {
       bit_string result;
       sort_bit_writer out(result);
       write_sort_code<typename P::registry_type, S>(out);
-      sort_codec<S>::key_codec::write_ordered(out, value);
+      if constexpr (byte_strings<P, S>) out.append(sort_codec_detail::string_bits(value));
+      else sort_codec<S>::key_codec::write_ordered(out, value);
       if (result.bit_size & (P::bits_per_unit - 1))
         throw std::invalid_argument("sort key is not aligned for its profile policy");
       return result;
@@ -72,7 +98,11 @@ namespace everett {
     template <class P, class S> bit_string value(arrow_t<S> const & value) {
       bit_string result;
       sort_bit_writer out(result);
-      sort_codec<S>::value_codec::write(out, value);
+      if constexpr (byte_strings<P, S>) {
+        result.bytes.reserve(value ? value->size() + 1 : 1);
+        out.write_bits(value ? 1 : 0, 8);
+        if (value) out.append(sort_codec_detail::string_bits(*value));
+      } else sort_codec<S>::value_codec::write(out, value);
       if constexpr (P::unit == profile_unit::byte)
         if (auto tail = result.bit_size & 7) out.write_bits(0, unsigned(8 - tail));
       if (P::value_width && (result.bit_size >> P::unit_shift) != *P::value_width)
@@ -80,18 +110,23 @@ namespace everett {
       return result;
     }
     template <class P, class S> arrow_t<S> value(bit_view encoded) {
-      sort_bit_reader in(encoded);
-      auto result = sort_codec<S>::value_codec::read(in);
-      if constexpr (P::unit == profile_unit::byte) {
-        if (in.remaining() > 7 || (in.remaining() && in.read_bits(unsigned(in.remaining()))))
-          throw std::invalid_argument("noncanonical typed value padding");
-      } else if (!in.empty()) throw std::invalid_argument("trailing typed arrow bits");
-      return result;
+      if constexpr (byte_strings<P, S>) {
+        if (!byte_string_present(encoded)) return std::nullopt;
+        return byte_string(encoded.subview(8, encoded.size() - 8));
+      } else {
+        sort_bit_reader in(encoded);
+        auto result = sort_codec<S>::value_codec::read(in);
+        if constexpr (P::unit == profile_unit::byte) {
+          if (in.remaining() > 7 || (in.remaining() && in.read_bits(unsigned(in.remaining()))))
+            throw std::invalid_argument("noncanonical typed value padding");
+        } else if (!in.empty()) throw std::invalid_argument("trailing typed arrow bits");
+        return result;
+      }
     }
     template <class P, class F> decltype(auto) dispatch_key(bit_view encoded, F && action) {
       sort_bit_reader in(encoded);
       return dispatch_sort<typename P::registry_type>(in, [&]<class S>(std::type_identity<S> tag, auto & source) {
-        auto decoded = sort_codec<S>::key_codec::read_ordered(source);
+        auto decoded = read_key<P, S>(source);
         if (!source.empty()) throw std::invalid_argument("trailing typed key bits");
         return std::invoke(std::forward<F>(action), tag, decoded);
       });
@@ -101,7 +136,7 @@ namespace everett {
       template <class S> static bit_string prefix() { return sort_code<typename P::registry_type, S>(); }
       template <class S> static key_t<S> decode(bit_view bits) {
         sort_bit_reader input(bits);
-        auto result = sort_codec<S>::key_codec::read_ordered(input);
+        auto result = read_key<P, S>(input);
         if (!input.empty()) throw std::invalid_argument("trailing typed key bits");
         return result;
       }
@@ -118,7 +153,8 @@ namespace everett {
       bool is_tombstone(bit_view encoded) const
         requires std::same_as<default_sort_t<P>, unsorted<std::optional<std::string>>> {
         // The optional-value tag is independent of the key and payload length.
-        return !encoded.at(0);
+        if constexpr (P::unit == profile_unit::byte) return !byte_string_present(encoded);
+        else return !encoded.at(0);
       }
       bool is_tombstone(bit_view key, bit_view encoded) const {
         return Transport::dispatch(key, [&]<class S>(std::type_identity<S>, auto const & decoded) {
@@ -574,7 +610,7 @@ namespace everett {
       else if constexpr (std::same_as<typename P::registry_type, string_registry>)
         return "everett.optional-string/code0/v1";
       else if constexpr (std::same_as<typename P::registry_type, unsorted<std::optional<std::string>>>)
-        return "everett.optional-string/tagless/v1";
+        return "everett.optional-string/tagless/byte-profile-v2";
       else return {};
     }
     static std::string checked_schema(std::string value) {
