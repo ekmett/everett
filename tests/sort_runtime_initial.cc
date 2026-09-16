@@ -77,7 +77,8 @@ namespace {
     } else {
       check(bool(actual->sealed()), "streamed sorted native lacks acknowledged seal");
       auto source = file<Policy>::open(actual->sealed()->receipt.path);
-      check(std::ranges::equal(source.body().bytes(), wanted), "streamed sorted native changed canonical encoding");
+      auto body = source.body();
+      check(std::ranges::equal(body.bytes(), wanted), "streamed sorted native changed canonical encoding");
       actual->mapped()->scan();
     }
   }
