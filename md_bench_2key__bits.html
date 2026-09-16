@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: Key prefixes, bit copies, and framing</title>
+<title>Everett: Key prefixes, bit copies, and framing</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -82,7 +82,7 @@ $(function() {
 <div class="textblock"><p><a class="anchor" id="key-prefixes-bit-copies-and-framing"></a> I compared the key/bit changes against a fixed baseline on an Apple M2. The byte-prefix helper uses bounded NEON vectors on this host, with SSE2 and portable word paths for other builds. Shifted bit copies and framing use words and masked bytes; these are not SIMD kernels.</p>
 <h1><a class="anchor" id="reproduce"></a>
 Reproduce</h1>
-<p>The <a href="source/bench/key_bits.py">runner</a> compiles one snapshotted fixture twice. The measurements below use the fixture from <code>b208f18</code> (SHA-256 <code>e6d0ce2b434f7b79dfbf86b6ba11c5d9f133ada2bddc064e82846640a0959d59</code>). Its baseline is <code>62ead3fab9d0ee5bda1b47780b7905a45aae1182</code>; the measured candidate headers come from <code>d027162</code>. Only <code><a class="el" href="profile_8h.html" title="Declares Diet&#39;s profile support.">profile.h</a></code>, <code>front.h</code>, and <code><a class="el" href="key__detail_8h.html" title="Provides bounded byte comparison shared by the key codecs.">key_detail.h</a></code> are overlaid. Every dependency remains at the baseline revision, so this comparison excludes concurrent rank/select changes.</p>
+<p>The <a href="source/bench/key_bits.py">runner</a> compiles one snapshotted fixture twice. The measurements below use the fixture from <code>b208f18</code> (SHA-256 <code>e6d0ce2b434f7b79dfbf86b6ba11c5d9f133ada2bddc064e82846640a0959d59</code>). Its baseline is <code>62ead3fab9d0ee5bda1b47780b7905a45aae1182</code>; the measured candidate headers come from <code>d027162</code>. Only <code><a class="el" href="profile_8h.html" title="Declares Everett&#39;s profile support.">profile.h</a></code>, <code>front.h</code>, and <code><a class="el" href="key__detail_8h.html" title="Provides bounded byte comparison shared by the key codecs.">key_detail.h</a></code> are overlaid. Every dependency remains at the baseline revision, so this comparison excludes concurrent rank/select changes.</p>
 <p>Run these commands under the host's CPU/build-directory resource lease:</p>
 <div class="fragment"><div class="line">python3 bench/key_bits.py --candidate d027162 --harness b208f18 \</div>
 <div class="line">  --isolate-key-headers --trials 5 \</div>

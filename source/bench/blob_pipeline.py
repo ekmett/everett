@@ -12,6 +12,7 @@
 """Compare pinned headers on complete blob builds, pipelines and window queries."""
 
 from snapshot import Snapshot
+from fixture import write_fixture
 
 import argparse
 import csv
@@ -54,7 +55,7 @@ def main():
     # Capture the harness too: an edit while the two variants compile must not
     # silently give the baseline and candidate different benchmark bodies.
     source = build / "blob_pipeline.cc"
-    source.write_bytes((repo / "bench/blob_pipeline.cc").read_bytes())
+    write_fixture(repo / "bench/blob_pipeline.cc", source)
     metadata = {
         "compiler": subprocess.check_output([*compiler, "--version"], text=True),
         "flags": flags,
@@ -72,7 +73,7 @@ def main():
         headers.mkdir(parents=True)
         normalization = None
         if revision == "working-tree":
-            shutil.copytree(repo / "include/diet", headers / "diet")
+            shutil.copytree(repo / "include/everett", headers / "everett")
             commit = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
         else:
             commit = subprocess.check_output(["git", "-C", str(repo), "rev-parse", revision], text=True).strip()

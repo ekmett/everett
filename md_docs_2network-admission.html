@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: Admitting sorted blobs from peers</title>
+<title>Everett: Admitting sorted blobs from peers</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -79,7 +79,7 @@ $(function() {
   <div class="headertitle"><div class="title">Admitting sorted blobs from peers</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="admitting-sorted-blobs-from-peers"></a> Suppose a peer sends us an immutable sorted blob. We can retain its native bytes, chain it onto an existing cola, and build fractional indexes back over the new prefix. Local cascading allows arbitrary incoming sizes. The harder questions are when that index work finishes and how much space and string work it costs. The entry-count argument, counterexample and remaining scheduling obligations follow below; an admission scheduler is not yet implemented.</p>
+<div class="textblock"><p><a class="anchor" id="admitting-sorted-blobs-from-peers"></a> Suppose a peer sends us an immutable sorted blob. We can retain its native bytes, chain it onto an existing world, and build fractional indexes back over the new prefix. Local cascading allows arbitrary incoming sizes. The harder questions are when that index work finishes and how much space and string work it costs. The entry-count argument, counterexample and remaining scheduling obligations follow below. This describes direct admission of prebuilt peer blobs. The <a class="el" href="redundant-cola-execution.html">implemented redundant executor</a> admits encoded records; it does not yet expose this bulk network path.</p>
 <h1><a class="anchor" id="autotoc_md1-what-can-be-adopted-directly"></a>
 1. What can be adopted directly</h1>
 <p>A received native blob can keep its content-addressed identity and bytes. Its receiver-specific fractional index is a separate immutable object. Reusing an existing index also requires its exact downstream augmented catalog version, including sampled ordinals and duplicate ordering. An equal logical-state fingerprint does not establish that routing layout. The exact dependencies stay pinned until a replacement index is complete.</p>
@@ -138,7 +138,7 @@ I_{\mathrm{snapshot}}\le3h+O(1),\qquad
 I_{\mathrm{rebuild}}\le3h+O(1).
 \]
 </p>
-<p>The old and new generations have comparable live cardinalities during the <a class="el" href="md_docs_2rebuild.html">rebuild horizon</a>, so they use the same \(h\) up to an additive constant. This is a conditional budget for exact retained index versions, including replacement outputs occupying the redundant working slots. It requires the <a href="cola-scheduling-with-immutable-pairs.html#current-cola-object-closure">closure and retirement invariant</a>: live jobs and private carriers must not retain dependencies outside those slots. The executable scheduler model checks that invariant on its tested histories; it is not yet an all-histories proof or a production scheduler guarantee. Terminal secondaries have no index of their own. Staging outside the working slots and retained historical roots need separate budgets.</p>
+<p>The old and new generations have comparable live cardinalities during the <a class="el" href="md_docs_2rebuild.html">rebuild horizon</a>, so they use the same \(h\) up to an additive constant. This is a conditional budget for exact retained index versions, including replacement outputs occupying the redundant working slots. It requires the <a href="cola-scheduling-with-immutable-pairs.html#current-world-object-closure">closure and retirement invariant</a>: live jobs and private carriers must not retain dependencies outside those slots. The executable scheduler model checks that invariant on its tested histories; it is not yet an all-histories proof or a production scheduler guarantee. Terminal secondaries have no index of their own. Staging outside the working slots and retained historical roots need separate budgets.</p>
 <p>Let \(\mathcal I\) be those distinct retained index files, and \(\mathcal J\) their separately encoded borrowed streams. IX03 has two streams per index, so \(|\mathcal J|\le2|\mathcal I|\). Let \(S_j\) be stream \(j\)'s borrowed-key sequence, and \(T_{\max}\) their largest first borrowed-key length, counting an empty stream as zero. Their first-literal storage satisfies</p>
 <p class="formulaDsp">
 \[
@@ -168,15 +168,15 @@ S_{\mathrm{index}}\le |\mathcal J|F(D)
 \]
 </p>
 <p>The first-literal bound is part of this total, not an additional charge. Sampling every \(K\)th occurrence does not promise a factor- \(K\) reduction in trie-edge weight. For example, put one native run at each binary level, with geometrically growing entry counts. Put the globally smallest \(T\)-unit key in the largest run and make all other keys distinct, short and greater. Each upstream index samples ordinal zero and repeats that long minimum. This respects level occupancy and can retain \(\Theta(T\log(N+1))\) first-literal units.</p>
-<p>Other saved snapshots retain their own exact dependency sets. Total fridge space counts the union of those sets, sharing each physical object once. Pending received objects, failed attempts and unfinished outputs outside the working slots need their own storage budget. Native payloads, framing, rank, cut-LCP and offset metadata remain separate terms; the bounds above concern borrowed key literals, not the entire encoded database.</p>
+<p>Other saved snapshots retain their own exact dependency sets. Total multiverse space counts the union of those sets, sharing each physical object once. Pending received objects, failed attempts and unfinished outputs outside the working slots need their own storage budget. Native payloads, framing, rank, cut-LCP and offset metadata remain separate terms; the bounds above concern borrowed key literals, not the entire encoded database.</p>
 <p>Cumulative construction can write many generations of these bounded live sets, so merge and admission credits must still pay actual key/framing work. Shared immutable key spans, inherited first-key contexts or distinguishing separators could reduce the logarithmic literal term. That optimization is separate from enforcing the bounded live index set.</p>
 <h1><a class="anchor" id="autotoc_md5-ingestion-state-and-published-state"></a>
 5. Ingestion state and published state</h1>
-<p>Pending received files and unfinished index/merge work may exist in an ingestion state. A published cola needs a completed exact-target dependency chain with the promised depth and its prepared query root, or a separately justified bounded fallback query path. Unbounded independent searches over pending files are not that fallback.</p>
-<p>The completion rule must preserve the previous readable root while work is unfinished, account for both index and native merges, and retain replay/progress metadata. Immutable <code>.kv</code>/<code>.index</code> objects and planned SQLite cola/pin/progress metadata supply the intended boundaries; the network admission scheduler and its byte-budget proof remain implementation work.</p>
+<p>Pending received files and unfinished index/merge work may exist in an ingestion state. A published world needs a completed exact-target dependency chain with the promised depth and its prepared query root, or a separately justified bounded fallback query path. Unbounded independent searches over pending files are not that fallback.</p>
+<p>The completion rule must preserve the previous readable root while work is unfinished, account for both index and native merges, and retain replay/progress metadata. Immutable <code>.kv</code>/<code>.index</code> objects and planned SQLite world/pin/progress metadata supply the intended boundaries; the network admission scheduler and its byte-budget proof remain implementation work.</p>
 <h1><a class="anchor" id="reference-boundary"></a>
 Reference boundary</h1>
-<p>Bender et al., <em>Cache-Oblivious Streaming B-trees</em>, §3: <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=8">original PDF p. 8</a> introduces levels and cascading; <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=9">p. 9</a> gives Lemma 21's level-zero admission and unsafe-level scheduling argument; <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=10">p. 10</a> completes index-linked visibility. The arbitrary-prefix equations and string counterexample above are derived here for Diet; they are not claims from that paper. </p>
+<p>Bender et al., <em>Cache-Oblivious Streaming B-trees</em>, §3: <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=8">original PDF p. 8</a> introduces levels and cascading; <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=9">p. 9</a> gives Lemma 21's level-zero admission and unsafe-level scheduling argument; <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=10">p. 10</a> completes index-linked visibility. The arbitrary-prefix equations and string counterexample above are derived here for Everett; they are not claims from that paper. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->

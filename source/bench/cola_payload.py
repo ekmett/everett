@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
-"""Run under cpu-heavy; snapshot exact Diet revisions and preserve full wire oracles."""
+"""Run under cpu-heavy; snapshot exact Everett revisions and preserve full wire oracles."""
 from snapshot import Snapshot
+from fixture import write_fixture
 
 import argparse, concurrent.futures, csv, datetime, hashlib, io, json, os
 from pathlib import Path
@@ -18,7 +19,7 @@ def main():
     p.add_argument('--rounds',type=int,default=3);p.add_argument('--compiler',default=os.environ.get('CXX','clang++'))
     a=p.parse_args();repo=Path(__file__).resolve().parent.parent;b=a.build_dir.resolve();b.mkdir(parents=True,exist_ok=True)
     git=lambda *args:subprocess.check_output(['git','-C',str(repo),*args])
-    source=b/'cola_payload.cc';source.write_bytes((repo/'bench/cola_payload.cc').read_bytes())
+    source=b/'cola_payload.cc';write_fixture(repo/'bench/cola_payload.cc', source)
     compiler=shlex.split(a.compiler)
     meta={'started':datetime.datetime.now(datetime.timezone.utc).isoformat(),'platform':platform.platform(),'compiler':subprocess.check_output([*compiler,'--version'],text=True),'source_sha256':sha(source.read_bytes()),'runner_sha256':sha(Path(__file__).read_bytes()),'trials':a.trials,'rounds':a.rounds,'variants':{},'execution_order':[],'wires':{}}
     commands=[]
@@ -44,13 +45,13 @@ def main():
                 raise RuntimeError('reconstructed candidate headers differ from measured source or normalization')
             rev='patch applied to '+rev
         meta['variants'][name]={'revision':rev,'headers_sha256':hashes,'normalization':snapshot.metadata(),'commands':[]}
-        for suffix,options in [('',[]),('-alloc',['-DDIET_BENCH_ALLOCATIONS'])]:
+        for suffix,options in [('',[]),('-alloc',['-DEVERETT_BENCH_ALLOCATIONS'])]:
             command=[*compiler,'-std=c++20','-O3','-DNDEBUG','-Wall','-Wextra','-Wpedantic','-Werror','-I'+str(dest/'include'),str(source),'-o',str(dest/('run'+suffix)),*options]
-            if name=='candidate':command+=['-DDIET_REUSE']
+            if name=='candidate':command+=['-DEVERETT_REUSE']
             meta['variants'][name]['commands'].append(command);commands.append(command)
     def compile(command):subprocess.run(command,check=True)
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:list(pool.map(compile,commands))
-    sanitized=[*compiler,'-std=c++20','-O1','-g','-Wall','-Wextra','-Wpedantic','-Werror','-fsanitize=address,undefined','-fno-omit-frame-pointer','-DDIET_REUSE','-I'+str(b/'candidate/include'),str(source),'-o',str(b/'sanitized')]
+    sanitized=[*compiler,'-std=c++20','-O1','-g','-Wall','-Wextra','-Wpedantic','-Werror','-fsanitize=address,undefined','-fno-omit-frame-pointer','-DEVERETT_REUSE','-I'+str(b/'candidate/include'),str(source),'-o',str(b/'sanitized')]
     subprocess.run(sanitized,check=True);meta['sanitizer_command']=sanitized
     with (b/'sanitizer.csv').open('w') as out:subprocess.run([str(b/'sanitized'),'1',str(b/'sanitizer-wire')],check=True,stdout=out,env=dict(os.environ,ASAN_OPTIONS='halt_on_error=1',UBSAN_OPTIONS='halt_on_error=1:print_stacktrace=1'))
     fields='case,operation,mode,round,items,ns,calls,requested,peak,live,checksum'.split(',');rows=[];allocs=[];expected=None

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: Native Windows packed-rank comparison</title>
+<title>Everett: Native Windows packed-rank comparison</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -112,7 +112,7 @@ Pinned inputs and commands</h1>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">CSV variant   </th><th class="markdownTableHeadNone">Header / algorithm    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>bitmap_rank</code>   </td><td class="markdownTableBodyNone">Diet's full-bit-vector 2048/512 directory    </td></tr>
+<td class="markdownTableBodyNone"><code>bitmap_rank</code>   </td><td class="markdownTableBodyNone">Everett's full-bit-vector 2048/512 directory    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>rank15_baseline</code>   </td><td class="markdownTableBodyNone"><code>9f68e4d0fdecae73b7d28b748a0d062cc072fbfa</code>, portable fallback on x86    </td></tr>
 <tr class="markdownTableRowOdd">
@@ -123,10 +123,10 @@ Pinned inputs and commands</h1>
 <td class="markdownTableBodyNone"><code>rank15_simd</code>   </td><td class="markdownTableBodyNone">qword-first <code>aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06</code>, SHA-256 <code>80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c</code>   </td></tr>
 </table>
 <p>The <a href="source/bench/rank15_sad_prototype.patch">SAD reconstruction patch</a> reproduces that snapshot from the pinned qword-first header. The scalar baseline is newer than the original M2 comparison's <code>7732b1e</code> baseline, so those baseline columns should not be treated as the same implementation.</p>
-<p>After preparing those headers under <code>baseline/diet</code>, <code>sad_rank15.h</code> and <code>qword_rank15.h</code>, and initializing the x64 MSVC environment, the essential benchmark build was:</p>
+<p>After preparing those headers under <code>baseline/everett</code>, <code>sad_rank15.h</code> and <code>qword_rank15.h</code>, and initializing the x64 MSVC environment, the essential benchmark build was:</p>
 <div class="fragment"><div class="line">cl /nologo /std:c++20 /EHsc /O2 /DNDEBUG /W4 /WX /permissive- /arch:AVX2 ^</div>
-<div class="line">  /Ibaseline /DDIET_RANK_CANDIDATE=\&quot;sad_rank15.h\&quot; ^</div>
-<div class="line">  /DDIET_RANK_SIMD=\&quot;qword_rank15.h\&quot; rank_compare.cc /Fecompare-avx2.exe</div>
+<div class="line">  /Ibaseline /DEVERETT_RANK_CANDIDATE=\&quot;sad_rank15.h\&quot; ^</div>
+<div class="line">  /DEVERETT_RANK_SIMD=\&quot;qword_rank15.h\&quot; rank_compare.cc /Fecompare-avx2.exe</div>
 <div class="line">start &quot;&quot; /b /wait /affinity 1 compare-avx2.exe hot_packed32KiB 7 1048576 core</div>
 </div><!-- fragment --><p>The second build substitutes <code>/arch:AVX512</code>. The recorded builds additionally force-included the target-check header described above; the transcript contains the complete commands. The actual run used inherited affinity instead of the equivalent <code>start /affinity</code> spelling shown here.</p>
 <h1><a class="anchor" id="shared-input-and-results"></a>

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: include/diet/policy.h File Reference</title>
+<title>Everett: include/everett/policy.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -76,21 +76,23 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_c7071025d4f9f9a9bd9b595194cb3993.html">diet</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_684ffc4129be141202002a94cb0feed4.html">everett</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
+<a href="#typedef-members">Typedefs</a> &#124;
 <a href="#enum-members">Enumerations</a>  </div>
   <div class="headertitle"><div class="title">policy.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
-<p>Declares Diet's policy support.  
+<p>Declares Everett's policy support.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;bit&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="el" href="registry_8h_source.html">everett/registry.h</a>&gt;</code><br />
+<code>#include &lt;bit&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;limits&gt;</code><br />
 <code>#include &lt;optional&gt;</code><br />
@@ -100,49 +102,44 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1exponential__golomb.html">diet::exponential_golomb&lt; Order &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1exponential__golomb.html">everett::exponential_golomb&lt; Order &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1golomb.html">diet::golomb&lt; M &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1golomb.html">everett::golomb&lt; M &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1variable__values.html">diet::variable_values</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1policy__detail_1_1backspace__traits_3_01exponential__golomb_3_01_order_01_4_01_4.html">everett::policy_detail::backspace_traits&lt; exponential_golomb&lt; Order &gt; &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1fixed__values.html">diet::fixed_values&lt; N &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1policy__detail_1_1backspace__traits_3_01golomb_3_01_m_01_4_01_4.html">everett::policy_detail::backspace_traits&lt; golomb&lt; M &gt; &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1policy__detail_1_1backspace__traits_3_01exponential__golomb_3_01_order_01_4_01_4.html">diet::policy_detail::backspace_traits&lt; exponential_golomb&lt; Order &gt; &gt;</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1policy__detail_1_1backspace__traits_3_01golomb_3_01_m_01_4_01_4.html">diet::policy_detail::backspace_traits&lt; golomb&lt; M &gt; &gt;</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1policy__detail_1_1value__traits_3_01variable__values_01_4.html">diet::policy_detail::value_traits&lt; variable_values &gt;</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1policy__detail_1_1value__traits_3_01fixed__values_3_01_n_01_4_01_4.html">diet::policy_detail::value_traits&lt; fixed_values&lt; N &gt; &gt;</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1storage__policy.html">diet::storage_policy&lt; Unit, Values, GroupSize, BackspaceCode, CodecBlockSize &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy&lt; Registry, GroupSize, BackspaceCode, CodecBlockSize &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
-<tr class="memitem:namespacediet" id="r_namespacediet"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet.html">diet</a></td></tr>
+<tr class="memitem:namespaceeverett" id="r_namespaceeverett"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html">everett</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:namespacediet_1_1policy__detail" id="r_namespacediet_1_1policy__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1policy__detail.html">diet::policy_detail</a></td></tr>
+<tr class="memitem:namespaceeverett_1_1policy__detail" id="r_namespaceeverett_1_1policy__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1policy__detail.html">everett::policy_detail</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:a2741097bf1c2e73b5749a9039d367e7e" id="r_a2741097bf1c2e73b5749a9039d367e7e"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a2741097bf1c2e73b5749a9039d367e7e">everett::string_registry</a> = <a class="el" href="structeverett_1_1bin.html">bin</a>&lt; <a class="el" href="structeverett_1_1tip.html">tip</a>&lt; <a class="el" href="structeverett_1_1unsorted.html">unsorted</a>&lt; std::optional&lt; std::string &gt; &gt; &gt;, <a class="el" href="structeverett_1_1sort__undefined.html">sort_undefined</a> &gt;</td></tr>
+<tr class="separator:a2741097bf1c2e73b5749a9039d367e7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0024fbb12310b9faed7bb7c71adb37f2" id="r_a0024fbb12310b9faed7bb7c71adb37f2"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a> = <a class="el" href="structeverett_1_1storage__policy.html">storage_policy</a>&lt; <a class="el" href="namespaceeverett.html#a2741097bf1c2e73b5749a9039d367e7e">string_registry</a> &gt;</td></tr>
+<tr class="separator:a0024fbb12310b9faed7bb7c71adb37f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:ad2bf0e12cd42c0b6276234a7c07342dd" id="r_ad2bf0e12cd42c0b6276234a7c07342dd"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet.html#ad2bf0e12cd42c0b6276234a7c07342dd">diet::profile_unit</a> : std::uint8_t { <a class="el" href="namespacediet.html#ad2bf0e12cd42c0b6276234a7c07342dda40ea57d3ee3c07bf1c102b466e1c3091">diet::byte</a>
-, <a class="el" href="namespacediet.html#ad2bf0e12cd42c0b6276234a7c07342ddaf67169dfbf72c4ca285e9ee12e3e9ac5">diet::bit</a>
+<tr class="memitem:a374f546e980dc1c516a6bca9073270d3" id="r_a374f546e980dc1c516a6bca9073270d3"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a374f546e980dc1c516a6bca9073270d3">everett::stream_role</a> : std::uint8_t { <a class="el" href="namespaceeverett.html#a374f546e980dc1c516a6bca9073270d3a8e5f3adee38c8fccc13c1f3be0143796">everett::native</a>
+, <a class="el" href="namespaceeverett.html#a374f546e980dc1c516a6bca9073270d3a352d46f45140be8dd8a7af1dc223736b">everett::borrowed</a>
  }</td></tr>
-<tr class="separator:ad2bf0e12cd42c0b6276234a7c07342dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae43dfd97f97f6127847565c10e12353a" id="r_ae43dfd97f97f6127847565c10e12353a"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet.html#ae43dfd97f97f6127847565c10e12353a">diet::stream_role</a> : std::uint8_t { <a class="el" href="namespacediet.html#ae43dfd97f97f6127847565c10e12353aa8e5f3adee38c8fccc13c1f3be0143796">diet::native</a>
-, <a class="el" href="namespacediet.html#ae43dfd97f97f6127847565c10e12353aa352d46f45140be8dd8a7af1dc223736b">diet::borrowed</a>
+<tr class="separator:a374f546e980dc1c516a6bca9073270d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5cc5bbbccae07743f192dd109d44e18c" id="r_a5cc5bbbccae07743f192dd109d44e18c"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a5cc5bbbccae07743f192dd109d44e18c">everett::bit_backspace_code</a> : std::uint8_t { <a class="el" href="namespaceeverett.html#a5cc5bbbccae07743f192dd109d44e18ca6c84785c4cc15a6c2c6959721f3ebf25">everett::exponential_golomb</a> = 0
+, <a class="el" href="namespaceeverett.html#a5cc5bbbccae07743f192dd109d44e18ca9f2a577b1282dadac5850e485d4fe9c5">everett::golomb</a> = 1
  }</td></tr>
-<tr class="separator:ae43dfd97f97f6127847565c10e12353a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aed0a885b9a4035b3f23dc0484d8c41f7" id="r_aed0a885b9a4035b3f23dc0484d8c41f7"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet.html#aed0a885b9a4035b3f23dc0484d8c41f7">diet::bit_backspace_code</a> : std::uint8_t { <a class="el" href="namespacediet.html#aed0a885b9a4035b3f23dc0484d8c41f7a6c84785c4cc15a6c2c6959721f3ebf25">diet::exponential_golomb</a> = 0
-, <a class="el" href="namespacediet.html#aed0a885b9a4035b3f23dc0484d8c41f7a9f2a577b1282dadac5850e485d4fe9c5">diet::golomb</a> = 1
- }</td></tr>
-<tr class="separator:aed0a885b9a4035b3f23dc0484d8c41f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a5cc5bbbccae07743f192dd109d44e18c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Declares Diet's policy support. </p>
+<div class="textblock"><p>Declares Everett's policy support. </p>
 <dl class="section author"><dt>Author</dt><dd>Edward Kmett <a href="#" onclick="location.href='mai'+'lto:'+'ekm'+'et'+'t@g'+'ma'+'il.'+'co'+'m'; return false;">ekmet<span class="obfuscator">.nosp@m.</span>t@gm<span class="obfuscator">.nosp@m.</span>ail.c<span class="obfuscator">.nosp@m.</span>om</a> </dd></dl>
 <div class="fragment"><div class="line">SPDX-FileType: SOURCE</div>
 <div class="line">SPDX-FileCopyrightText: 2026 Edward Kmett &lt;ekmett@gmail.com&gt;</div>

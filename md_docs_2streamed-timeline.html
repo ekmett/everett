@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: Streaming a table into a persistent timeline</title>
+<title>Everett: Streaming a table into a persistent timeline</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -81,8 +81,8 @@ $(function() {
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="streaming-a-table-into-a-persistent-timeline"></a> We can write sorted records directly to a private <code>.kv</code> attempt, merge mapped inputs into another attempt, and publish the completed result through SQLite. The payload need not accumulate in an in-memory array. The writer keeps a 64 KiB payload buffer, bounded control scratch and one residual offset per physical block; finishing builds the Elias–Fano directory from those offsets. The checked record writer also retains its previous key. The default merge retains its two input keys as references into the pinned source files.</p>
 <p>This complete program takes an existing empty object directory as its only argument. The caller establishes that directory and its ancestors durably. The example allocates deterministic identities because it creates a fresh catalog; an application supplies its own fresh identity allocator.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="native__file__merge_8h.html">diet/native_file_merge.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="sqlite__catalog_8h.html">diet/sqlite_catalog.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="native__file__merge_8h.html">everett/native_file_merge.h</a>&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="sqlite__catalog_8h.html">everett/sqlite_catalog.h</a>&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;array&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cstdio&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;initializer_list&gt;</span></div>
@@ -91,14 +91,14 @@ $(function() {
 <div class="line"><span class="preprocessor">#include &lt;string_view&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;utility&gt;</span></div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">using namespace </span><a class="code hl_namespace" href="namespacediet.html">diet</a>;</div>
-<div class="line"><span class="keyword">using </span>P = <a class="code hl_struct" href="structdiet_1_1storage__policy.html">storage_policy&lt;profile_unit::byte&gt;</a>;</div>
-<div class="line"><span class="keyword">using </span>catalog = <a class="code hl_struct" href="structdiet_1_1sqlite__catalog.html">sqlite_catalog&lt;P&gt;</a>;</div>
+<div class="line"><span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a>;</div>
+<div class="line"><span class="keyword">using </span>P = <a class="code hl_struct" href="structeverett_1_1storage__policy.html">storage_policy&lt;everett::tip&lt;everett::encoded_sort&lt;everett::byte_encoding&lt;&gt;</a>&gt;&gt;&gt;;</div>
+<div class="line"><span class="keyword">using </span>catalog = <a class="code hl_struct" href="structeverett_1_1sqlite__catalog.html">sqlite_catalog&lt;P&gt;</a>;</div>
 <div class="line"> </div>
-<div class="line">std::optional&lt;bit_string&gt; lookup(<a class="code hl_struct" href="structdiet_1_1query__root.html">mapped_query_root&lt;P&gt;</a> <span class="keyword">const</span> &amp; root,</div>
+<div class="line">std::optional&lt;bit_string&gt; lookup(<a class="code hl_struct" href="structeverett_1_1query__root.html">mapped_query_root&lt;P&gt;</a> <span class="keyword">const</span> &amp; root,</div>
 <div class="line">                                 std::string_view text) {</div>
 <div class="line">  <span class="keyword">auto</span> key = bit_string::from_bytes(text);</div>
-<div class="line">  <span class="keyword">auto</span> cursor = root.<a class="code hl_function" href="structdiet_1_1query__root.html#ab10fe535c500ffab36fec0c67941822a">cursor</a>(key.view());</div>
+<div class="line">  <span class="keyword">auto</span> cursor = root.<a class="code hl_function" href="structeverett_1_1query__root.html#a70cf60e63031f26830e481bcf593cf98">cursor</a>(key.<a class="code hl_function" href="structeverett_1_1bit__string.html#adee15aee9f486dda0ab3cf09cdec9331">view</a>());</div>
 <div class="line">  <span class="keywordflow">while</span> (!cursor.done()) {</div>
 <div class="line">    cursor.step(1);</div>
 <div class="line">    <span class="keywordflow">if</span> (cursor.has_match()) <span class="keywordflow">return</span> cursor.take_match().value;</div>
@@ -106,7 +106,7 @@ $(function() {
 <div class="line">  <span class="keywordflow">return</span> std::nullopt;</div>
 <div class="line">}</div>
 <div class="line"> </div>
-<div class="line"><span class="keywordtype">int</span> <a class="code hl_enumvalue" href="namespacediet.html#a1a5d3241775b3d0e477ebe7efc33c384afad58de7366495db4650cfefac2fcd61">main</a>(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span> ** argv) {</div>
+<div class="line"><span class="keywordtype">int</span> <a class="code hl_enumvalue" href="namespaceeverett.html#a1dca02653d1a6589ff1dffda4078fb96afad58de7366495db4650cfefac2fcd61">main</a>(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span> ** argv) {</div>
 <div class="line">  <span class="keywordflow">if</span> (argc != 2) <span class="keywordflow">return</span> 64;</div>
 <div class="line">  std::filesystem::path directory = std::filesystem::canonical(argv[1]);</div>
 <div class="line">  {</div>
@@ -114,44 +114,44 @@ $(function() {
 <div class="line">    <span class="keyword">auto</span> fresh = [&amp;] {</div>
 <div class="line">      <span class="keywordtype">char</span> digits[33];</div>
 <div class="line">      std::snprintf(digits, <span class="keyword">sizeof</span> digits, <span class="stringliteral">&quot;%032x&quot;</span>, next++);</div>
-<div class="line">      <span class="keywordflow">return</span> <a class="code hl_struct" href="structdiet_1_1object__id.html">object_id</a>(digits);</div>
+<div class="line">      <span class="keywordflow">return</span> <a class="code hl_struct" href="structeverett_1_1object__id.html">object_id</a>(digits);</div>
 <div class="line">    };</div>
 <div class="line">    <span class="keyword">auto</span> metadata = catalog::create(directory, fresh());</div>
-<div class="line">    <span class="keyword">struct </span>reservation { <a class="code hl_struct" href="structdiet_1_1blob__identity.html">blob_identity</a> ids; <a class="code hl_struct" href="structdiet_1_1object__attempt__id.html">object_attempt_id</a> attempt; };</div>
+<div class="line">    <span class="keyword">struct </span>reservation { <a class="code hl_struct" href="structeverett_1_1blob__identity.html">blob_identity</a> ids; <a class="code hl_struct" href="structeverett_1_1object__attempt__id.html">object_attempt_id</a> attempt; };</div>
 <div class="line">    <span class="keyword">auto</span> reserve = [&amp;](std::span&lt;blob_identity const&gt; inputs) {</div>
-<div class="line">      reservation r{{fresh(), fresh()}, <a class="code hl_struct" href="structdiet_1_1object__attempt__id.html">object_attempt_id</a>(fresh().hex())};</div>
+<div class="line">      reservation r{{fresh(), fresh()}, <a class="code hl_struct" href="structeverett_1_1object__attempt__id.html">object_attempt_id</a>(fresh().hex())};</div>
 <div class="line">      std::array outputs{</div>
-<div class="line">        <a class="code hl_struct" href="structdiet_1_1catalog__object__reservation.html">catalog_object_reservation</a>{r.ids.native, file_kind::native_blob},</div>
-<div class="line">        <a class="code hl_struct" href="structdiet_1_1catalog__object__reservation.html">catalog_object_reservation</a>{r.ids.index, file_kind::fractional_index}};</div>
+<div class="line">        <a class="code hl_struct" href="structeverett_1_1catalog__object__reservation.html">catalog_object_reservation</a>{r.ids.native, file_kind::native_blob},</div>
+<div class="line">        <a class="code hl_struct" href="structeverett_1_1catalog__object__reservation.html">catalog_object_reservation</a>{r.ids.index, file_kind::fractional_index}};</div>
 <div class="line">      metadata.reserve(<span class="stringliteral">&quot;reserve-&quot;</span> + r.ids.index.hex(), r.attempt,</div>
 <div class="line">        <span class="stringliteral">&quot;builder-&quot;</span> + r.ids.index.hex(), inputs, outputs);</div>
 <div class="line">      <span class="keywordflow">return</span> r;</div>
 <div class="line">    };</div>
-<div class="line">    <span class="keyword">auto</span> <a class="code hl_enumvalue" href="namespacediet.html#a00c4d01ac0833abb8c85e8ebfefe628fad9a22d7a8178d5b42a8750123cbfe5b1">complete</a> = [&amp;](reservation <span class="keyword">const</span> &amp; r, <a class="code hl_struct" href="structdiet_1_1object__seal__receipt.html">object_seal_receipt</a> receipt) {</div>
+<div class="line">    <span class="keyword">auto</span> <a class="code hl_enumvalue" href="namespaceeverett.html#a17f6895b13a893618f9eac92af8e2bd3ad9a22d7a8178d5b42a8750123cbfe5b1">complete</a> = [&amp;](reservation <span class="keyword">const</span> &amp; r, <a class="code hl_struct" href="structeverett_1_1object__seal__receipt.html">object_seal_receipt</a> receipt) {</div>
 <div class="line">      metadata.record_sealed(<span class="stringliteral">&quot;native-&quot;</span> + r.ids.index.hex(), receipt);</div>
-<div class="line">      <span class="keyword">auto</span> <a class="code hl_enumvalue" href="namespacediet.html#af5e4b8aac25a8ae855db94e9ca5e8383a8e5f3adee38c8fccc13c1f3be0143796">native</a> = std::make_shared&lt;mapped_native&lt;P&gt; <span class="keyword">const</span>&gt;(</div>
-<div class="line">        <a class="code hl_struct" href="structdiet_1_1mapped__profile.html">mapped_native&lt;P&gt;::open</a>(receipt.path));</div>
-<div class="line">      <span class="keyword">auto</span> index = <a class="code hl_struct" href="structdiet_1_1profile__index.html">profile_index&lt;P&gt;::native_only</a>(<a class="code hl_enumvalue" href="namespacediet.html#af5e4b8aac25a8ae855db94e9ca5e8383a8e5f3adee38c8fccc13c1f3be0143796">native</a>-&gt;size());</div>
-<div class="line">      <span class="keyword">auto</span> encoded = <a class="code hl_function" href="namespacediet.html#ae2cb41db1c2fee9f8721fb75e2b54a59">encode_index_sections</a>(index, r.ids.native);</div>
+<div class="line">      <span class="keyword">auto</span> <a class="code hl_enumvalue" href="namespaceeverett.html#ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796">native</a> = std::make_shared&lt;mapped_native&lt;P&gt; <span class="keyword">const</span>&gt;(</div>
+<div class="line">        <a class="code hl_struct" href="structeverett_1_1mapped__profile.html">mapped_native&lt;P&gt;::open</a>(receipt.path));</div>
+<div class="line">      <span class="keyword">auto</span> index = <a class="code hl_struct" href="structeverett_1_1profile__index.html">profile_index&lt;P&gt;::native_only</a>(<a class="code hl_enumvalue" href="namespaceeverett.html#ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796">native</a>-&gt;size());</div>
+<div class="line">      <span class="keyword">auto</span> encoded = <a class="code hl_function" href="namespaceeverett.html#a3920d15c114d218c1f53e866788fb071">encode_index_sections</a>(index, r.ids.native);</div>
 <div class="line">      <span class="keyword">auto</span> sealed = encoded.seal(directory, r.ids.index, r.attempt);</div>
 <div class="line">      metadata.record_sealed(<span class="stringliteral">&quot;index-&quot;</span> + r.ids.index.hex(), sealed);</div>
 <div class="line">      <span class="keyword">auto</span> mapped = std::make_shared&lt;mapped_index&lt;P&gt; <span class="keyword">const</span>&gt;(</div>
-<div class="line">        <a class="code hl_struct" href="structdiet_1_1mapped__index.html">mapped_index&lt;P&gt;::open</a>(sealed.path));</div>
-<div class="line">      <span class="keyword">auto</span> root = <a class="code hl_struct" href="structdiet_1_1query__root.html">mapped_query_root&lt;P&gt;::adopt_prepared</a>(</div>
-<div class="line">        <a class="code hl_struct" href="structdiet_1_1mapped__blob.html">mapped_blob&lt;P&gt;::bind</a>(r.ids, std::move(native), std::move(mapped)));</div>
+<div class="line">        <a class="code hl_struct" href="structeverett_1_1mapped__index.html">mapped_index&lt;P&gt;::open</a>(sealed.path));</div>
+<div class="line">      <span class="keyword">auto</span> root = <a class="code hl_struct" href="structeverett_1_1query__root.html">mapped_query_root&lt;P&gt;::adopt_prepared</a>(</div>
+<div class="line">        <a class="code hl_struct" href="structeverett_1_1mapped__blob.html">mapped_blob&lt;P&gt;::bind</a>(r.ids, std::move(native), std::move(mapped)));</div>
 <div class="line">      metadata.register_chain(<span class="stringliteral">&quot;register-&quot;</span> + r.ids.index.hex(), root,</div>
 <div class="line">        catalog_admission::trusted);</div>
 <div class="line">      <span class="keywordflow">return</span> root;</div>
 <div class="line">    };</div>
 <div class="line">    <span class="keyword">auto</span> write = [&amp;](std::initializer_list&lt;std::pair&lt;std::string_view, std::string_view&gt;&gt; records) {</div>
 <div class="line">      <span class="keyword">auto</span> r = reserve({});</div>
-<div class="line">      <a class="code hl_struct" href="structdiet_1_1native__file__writer.html">native_file_writer&lt;P&gt;</a> writer(directory, r.ids.native, r.attempt);</div>
+<div class="line">      <a class="code hl_struct" href="structeverett_1_1native__file__writer.html">native_file_writer&lt;P&gt;</a> writer(directory, r.ids.native, r.attempt);</div>
 <div class="line">      <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span> &amp; [name, contents] : records) {</div>
-<div class="line">        <span class="keyword">auto</span> key = bit_string::from_bytes(name);</div>
-<div class="line">        <span class="keyword">auto</span> value = bit_string::from_bytes(contents);</div>
-<div class="line">        writer.append(key.view(), value.view());</div>
+<div class="line">        <span class="keyword">auto</span> <a class="code hl_function" href="namespaceeverett_1_1typed__detail.html#aa0bc3228fc77cba75eead4cb1526d630">key</a> = bit_string::from_bytes(name);</div>
+<div class="line">        <span class="keyword">auto</span> <a class="code hl_function" href="namespaceeverett_1_1typed__detail.html#a7eb7b68de93936d543f7e7a909f2b8ff">value</a> = bit_string::from_bytes(contents);</div>
+<div class="line">        writer.append(<a class="code hl_function" href="namespaceeverett_1_1typed__detail.html#aa0bc3228fc77cba75eead4cb1526d630">key</a>.<a class="code hl_function" href="structeverett_1_1bit__string.html#adee15aee9f486dda0ab3cf09cdec9331">view</a>(), <a class="code hl_function" href="namespaceeverett_1_1typed__detail.html#a7eb7b68de93936d543f7e7a909f2b8ff">value</a>.<a class="code hl_function" href="structeverett_1_1bit__string.html#adee15aee9f486dda0ab3cf09cdec9331">view</a>());</div>
 <div class="line">      }</div>
-<div class="line">      <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="namespacediet.html#a00c4d01ac0833abb8c85e8ebfefe628fad9a22d7a8178d5b42a8750123cbfe5b1">complete</a>(r, writer.finish());</div>
+<div class="line">      <span class="keywordflow">return</span> <a class="code hl_enumvalue" href="namespaceeverett.html#a17f6895b13a893618f9eac92af8e2bd3ad9a22d7a8178d5b42a8750123cbfe5b1">complete</a>(r, writer.finish());</div>
 <div class="line">    };</div>
 <div class="line"> </div>
 <div class="line">    <span class="keyword">auto</span> older = write({{<span class="stringliteral">&quot;alpha&quot;</span>, <span class="stringliteral">&quot;before&quot;</span>}, {<span class="stringliteral">&quot;beta&quot;</span>, <span class="stringliteral">&quot;retained&quot;</span>}});</div>
@@ -160,13 +160,13 @@ $(function() {
 <div class="line">    <span class="keyword">auto</span> newer = write({{<span class="stringliteral">&quot;alpha&quot;</span>, <span class="stringliteral">&quot;after&quot;</span>}, {<span class="stringliteral">&quot;gamma&quot;</span>, <span class="stringliteral">&quot;added&quot;</span>}});</div>
 <div class="line">    std::array inputs{older.head()-&gt;identity(), newer.head()-&gt;identity()};</div>
 <div class="line">    <span class="keyword">auto</span> output = reserve(inputs);</div>
-<div class="line">    <a class="code hl_struct" href="structdiet_1_1native__file__merge.html">native_file_merge&lt;P, mapped_native&lt;P&gt;</a>&gt; merge(directory,</div>
+<div class="line">    <a class="code hl_struct" href="structeverett_1_1native__file__merge.html">native_file_merge&lt;P, mapped_native&lt;P&gt;</a>&gt; merge(directory,</div>
 <div class="line">      output.ids.native, output.attempt,</div>
 <div class="line">      older.head()-&gt;native_object(), newer.head()-&gt;native_object());</div>
 <div class="line">    <span class="keywordflow">while</span> (!merge.done()) merge.step(1);</div>
-<div class="line">    <span class="keyword">auto</span> candidate = <a class="code hl_enumvalue" href="namespacediet.html#a00c4d01ac0833abb8c85e8ebfefe628fad9a22d7a8178d5b42a8750123cbfe5b1">complete</a>(output, merge.finish());</div>
-<div class="line">    <span class="keyword">auto</span> <a class="code hl_enumvalue" href="namespacediet.html#a3a23f628991eb0934fb3ecd07d3cf4b7a8f888fedf6bd5ff7c93c6d76bb8dc21c">published</a> = metadata.publish_timeline(<span class="stringliteral">&quot;publish-main&quot;</span>, first, candidate.head()-&gt;identity());</div>
-<div class="line">    <span class="keywordflow">if</span> (!<a class="code hl_enumvalue" href="namespacediet.html#a3a23f628991eb0934fb3ecd07d3cf4b7a8f888fedf6bd5ff7c93c6d76bb8dc21c">published</a>.published) <span class="keywordflow">return</span> 1;</div>
+<div class="line">    <span class="keyword">auto</span> candidate = <a class="code hl_enumvalue" href="namespaceeverett.html#a17f6895b13a893618f9eac92af8e2bd3ad9a22d7a8178d5b42a8750123cbfe5b1">complete</a>(output, merge.finish());</div>
+<div class="line">    <span class="keyword">auto</span> <a class="code hl_enumvalue" href="namespaceeverett.html#a32e7c25e258570adfdbc424e5b59fa80a8f888fedf6bd5ff7c93c6d76bb8dc21c">published</a> = metadata.publish_timeline(<span class="stringliteral">&quot;publish-main&quot;</span>, first, candidate.head()-&gt;identity());</div>
+<div class="line">    <span class="keywordflow">if</span> (!<a class="code hl_enumvalue" href="namespaceeverett.html#a32e7c25e258570adfdbc424e5b59fa80a8f888fedf6bd5ff7c93c6d76bb8dc21c">published</a>.published) <span class="keywordflow">return</span> 1;</div>
 <div class="line">  }</div>
 <div class="line"> </div>
 <div class="line">  <span class="keyword">auto</span> metadata = catalog::open(directory);</div>
@@ -180,30 +180,33 @@ $(function() {
 <div class="line">      lookup(after, <span class="stringliteral">&quot;beta&quot;</span>) != bit_string::from_bytes(<span class="stringliteral">&quot;retained&quot;</span>) ||</div>
 <div class="line">      lookup(after, <span class="stringliteral">&quot;gamma&quot;</span>) != bit_string::from_bytes(<span class="stringliteral">&quot;added&quot;</span>)) <span class="keywordflow">return</span> 4;</div>
 <div class="line">}</div>
-<div class="ttc" id="anamespacediet_html"><div class="ttname"><a href="namespacediet.html">diet</a></div><div class="ttdef"><b>Definition</b> cola.h:35</div></div>
-<div class="ttc" id="anamespacediet_html_a00c4d01ac0833abb8c85e8ebfefe628fad9a22d7a8178d5b42a8750123cbfe5b1"><div class="ttname"><a href="namespacediet.html#a00c4d01ac0833abb8c85e8ebfefe628fad9a22d7a8178d5b42a8750123cbfe5b1">diet::object_write_stage::complete</a></div><div class="ttdeci">@ complete</div></div>
-<div class="ttc" id="anamespacediet_html_a1a5d3241775b3d0e477ebe7efc33c384afad58de7366495db4650cfefac2fcd61"><div class="ttname"><a href="namespacediet.html#a1a5d3241775b3d0e477ebe7efc33c384afad58de7366495db4650cfefac2fcd61">diet::cola_target::main</a></div><div class="ttdeci">@ main</div></div>
-<div class="ttc" id="anamespacediet_html_a3a23f628991eb0934fb3ecd07d3cf4b7a8f888fedf6bd5ff7c93c6d76bb8dc21c"><div class="ttname"><a href="namespacediet.html#a3a23f628991eb0934fb3ecd07d3cf4b7a8f888fedf6bd5ff7c93c6d76bb8dc21c">diet::publication_stage::published</a></div><div class="ttdeci">@ published</div></div>
-<div class="ttc" id="anamespacediet_html_ae2cb41db1c2fee9f8721fb75e2b54a59"><div class="ttname"><a href="namespacediet.html#ae2cb41db1c2fee9f8721fb75e2b54a59">diet::encode_index_sections</a></div><div class="ttdeci">encoded_sections&lt; P &gt; encode_index_sections(profile_blob&lt; P &gt; const &amp;pair, object_id const &amp;native_id, std::optional&lt; blob_identity &gt; exact_target=std::nullopt)</div><div class="ttdef"><b>Definition</b> sections.h:401</div></div>
-<div class="ttc" id="anamespacediet_html_af5e4b8aac25a8ae855db94e9ca5e8383a8e5f3adee38c8fccc13c1f3be0143796"><div class="ttname"><a href="namespacediet.html#af5e4b8aac25a8ae855db94e9ca5e8383a8e5f3adee38c8fccc13c1f3be0143796">diet::cola_origin::native</a></div><div class="ttdeci">@ native</div></div>
+<div class="ttc" id="anamespaceeverett_1_1typed__detail_html_a7eb7b68de93936d543f7e7a909f2b8ff"><div class="ttname"><a href="namespaceeverett_1_1typed__detail.html#a7eb7b68de93936d543f7e7a909f2b8ff">everett::typed_detail::value</a></div><div class="ttdeci">bit_string value(arrow_t&lt; S &gt; const &amp;value)</div><div class="ttdef"><b>Definition</b> typed_world.h:72</div></div>
+<div class="ttc" id="anamespaceeverett_1_1typed__detail_html_aa0bc3228fc77cba75eead4cb1526d630"><div class="ttname"><a href="namespaceeverett_1_1typed__detail.html#aa0bc3228fc77cba75eead4cb1526d630">everett::typed_detail::key</a></div><div class="ttdeci">bit_string key(key_t&lt; S &gt; const &amp;value)</div><div class="ttdef"><b>Definition</b> typed_world.h:63</div></div>
+<div class="ttc" id="anamespaceeverett_html"><div class="ttname"><a href="namespaceeverett.html">everett</a></div><div class="ttdef"><b>Definition</b> active_engine.h:18</div></div>
+<div class="ttc" id="anamespaceeverett_html_a17f6895b13a893618f9eac92af8e2bd3ad9a22d7a8178d5b42a8750123cbfe5b1"><div class="ttname"><a href="namespaceeverett.html#a17f6895b13a893618f9eac92af8e2bd3ad9a22d7a8178d5b42a8750123cbfe5b1">everett::object_write_stage::complete</a></div><div class="ttdeci">@ complete</div></div>
+<div class="ttc" id="anamespaceeverett_html_a1dca02653d1a6589ff1dffda4078fb96afad58de7366495db4650cfefac2fcd61"><div class="ttname"><a href="namespaceeverett.html#a1dca02653d1a6589ff1dffda4078fb96afad58de7366495db4650cfefac2fcd61">everett::cola_target::main</a></div><div class="ttdeci">@ main</div></div>
+<div class="ttc" id="anamespaceeverett_html_a32e7c25e258570adfdbc424e5b59fa80a8f888fedf6bd5ff7c93c6d76bb8dc21c"><div class="ttname"><a href="namespaceeverett.html#a32e7c25e258570adfdbc424e5b59fa80a8f888fedf6bd5ff7c93c6d76bb8dc21c">everett::publication_stage::published</a></div><div class="ttdeci">@ published</div></div>
+<div class="ttc" id="anamespaceeverett_html_a3920d15c114d218c1f53e866788fb071"><div class="ttname"><a href="namespaceeverett.html#a3920d15c114d218c1f53e866788fb071">everett::encode_index_sections</a></div><div class="ttdeci">encoded_sections&lt; P &gt; encode_index_sections(profile_blob&lt; P &gt; const &amp;pair, object_id const &amp;native_id, std::optional&lt; blob_identity &gt; exact_target=std::nullopt)</div><div class="ttdef"><b>Definition</b> sections.h:405</div></div>
+<div class="ttc" id="anamespaceeverett_html_ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796"><div class="ttname"><a href="namespaceeverett.html#ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796">everett::cola_origin::native</a></div><div class="ttdeci">@ native</div></div>
 <div class="ttc" id="anative__file__merge_8h_html"><div class="ttname"><a href="native__file__merge_8h.html">native_file_merge.h</a></div><div class="ttdoc">Merges pinned native inputs into a streamed immutable object.</div></div>
 <div class="ttc" id="asqlite__catalog_8h_html"><div class="ttname"><a href="sqlite__catalog_8h.html">sqlite_catalog.h</a></div><div class="ttdoc">Stores retained roots, timeline generations and exact file graphs in optional SQLite metadata.</div></div>
-<div class="ttc" id="astructdiet_1_1blob__identity_html"><div class="ttname"><a href="structdiet_1_1blob__identity.html">diet::blob_identity</a></div><div class="ttdef"><b>Definition</b> sections.h:34</div></div>
-<div class="ttc" id="astructdiet_1_1catalog__object__reservation_html"><div class="ttname"><a href="structdiet_1_1catalog__object__reservation.html">diet::catalog_object_reservation</a></div><div class="ttdef"><b>Definition</b> sqlite_catalog.h:40</div></div>
-<div class="ttc" id="astructdiet_1_1mapped__blob_html"><div class="ttname"><a href="structdiet_1_1mapped__blob.html">diet::mapped_blob</a></div><div class="ttdef"><b>Definition</b> mapped_blob.h:31</div></div>
-<div class="ttc" id="astructdiet_1_1mapped__index_html"><div class="ttname"><a href="structdiet_1_1mapped__index.html">diet::mapped_index</a></div><div class="ttdef"><b>Definition</b> sections.h:474</div></div>
-<div class="ttc" id="astructdiet_1_1mapped__profile_html"><div class="ttname"><a href="structdiet_1_1mapped__profile.html">diet::mapped_profile</a></div><div class="ttdef"><b>Definition</b> sections.h:430</div></div>
-<div class="ttc" id="astructdiet_1_1native__file__merge_html"><div class="ttname"><a href="structdiet_1_1native__file__merge.html">diet::native_file_merge</a></div><div class="ttdef"><b>Definition</b> native_file_merge.h:38</div></div>
-<div class="ttc" id="astructdiet_1_1native__file__writer_html"><div class="ttname"><a href="structdiet_1_1native__file__writer.html">diet::native_file_writer</a></div><div class="ttdef"><b>Definition</b> native_file_writer.h:29</div></div>
-<div class="ttc" id="astructdiet_1_1object__attempt__id_html"><div class="ttname"><a href="structdiet_1_1object__attempt__id.html">diet::object_attempt_id</a></div><div class="ttdef"><b>Definition</b> object_writer.h:39</div></div>
-<div class="ttc" id="astructdiet_1_1object__id_html"><div class="ttname"><a href="structdiet_1_1object__id.html">diet::object_id</a></div><div class="ttdef"><b>Definition</b> object_path.h:38</div></div>
-<div class="ttc" id="astructdiet_1_1object__seal__receipt_html"><div class="ttname"><a href="structdiet_1_1object__seal__receipt.html">diet::object_seal_receipt</a></div><div class="ttdef"><b>Definition</b> object_writer.h:88</div></div>
-<div class="ttc" id="astructdiet_1_1profile__index_html"><div class="ttname"><a href="structdiet_1_1profile__index.html">diet::profile_index</a></div><div class="ttdef"><b>Definition</b> profile_index.h:39</div></div>
-<div class="ttc" id="astructdiet_1_1query__root_html"><div class="ttname"><a href="structdiet_1_1query__root.html">diet::query_root</a></div><div class="ttdef"><b>Definition</b> query.h:51</div></div>
-<div class="ttc" id="astructdiet_1_1query__root_html_ab10fe535c500ffab36fec0c67941822a"><div class="ttname"><a href="structdiet_1_1query__root.html#ab10fe535c500ffab36fec0c67941822a">diet::query_root::cursor</a></div><div class="ttdeci">query_cursor&lt; P, Blob &gt; cursor(bit_view query) const</div><div class="ttdef"><b>Definition</b> query.h:235</div></div>
-<div class="ttc" id="astructdiet_1_1sqlite__catalog_html"><div class="ttname"><a href="structdiet_1_1sqlite__catalog.html">diet::sqlite_catalog</a></div><div class="ttdef"><b>Definition</b> sqlite_catalog.h:253</div></div>
-<div class="ttc" id="astructdiet_1_1storage__policy_html"><div class="ttname"><a href="structdiet_1_1storage__policy.html">diet::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:65</div></div>
-</div><!-- fragment --><p>Link with <code>diet::sqlite</code> as described in the <a class="el" href="md_docs_2sqlite-catalog.html">catalog guide</a>. The example uses trusted admission because the checked writers establish the sorted-key encoding and the terminal indexes contain no borrowed samples. Received or uncertain objects can require explicit scans instead.</p>
+<div class="ttc" id="astructeverett_1_1bit__string_html_adee15aee9f486dda0ab3cf09cdec9331"><div class="ttname"><a href="structeverett_1_1bit__string.html#adee15aee9f486dda0ab3cf09cdec9331">everett::bit_string::view</a></div><div class="ttdeci">bit_view view() const &amp;</div><div class="ttdef"><b>Definition</b> profile.h:178</div></div>
+<div class="ttc" id="astructeverett_1_1blob__identity_html"><div class="ttname"><a href="structeverett_1_1blob__identity.html">everett::blob_identity</a></div><div class="ttdef"><b>Definition</b> sections.h:34</div></div>
+<div class="ttc" id="astructeverett_1_1catalog__object__reservation_html"><div class="ttname"><a href="structeverett_1_1catalog__object__reservation.html">everett::catalog_object_reservation</a></div><div class="ttdef"><b>Definition</b> sqlite_catalog.h:40</div></div>
+<div class="ttc" id="astructeverett_1_1mapped__blob_html"><div class="ttname"><a href="structeverett_1_1mapped__blob.html">everett::mapped_blob</a></div><div class="ttdef"><b>Definition</b> mapped_blob.h:31</div></div>
+<div class="ttc" id="astructeverett_1_1mapped__index_html"><div class="ttname"><a href="structeverett_1_1mapped__index.html">everett::mapped_index</a></div><div class="ttdef"><b>Definition</b> sections.h:478</div></div>
+<div class="ttc" id="astructeverett_1_1mapped__profile_html"><div class="ttname"><a href="structeverett_1_1mapped__profile.html">everett::mapped_profile</a></div><div class="ttdef"><b>Definition</b> sections.h:434</div></div>
+<div class="ttc" id="astructeverett_1_1native__file__merge_html"><div class="ttname"><a href="structeverett_1_1native__file__merge.html">everett::native_file_merge</a></div><div class="ttdef"><b>Definition</b> native_file_merge.h:38</div></div>
+<div class="ttc" id="astructeverett_1_1native__file__writer_html"><div class="ttname"><a href="structeverett_1_1native__file__writer.html">everett::native_file_writer</a></div><div class="ttdef"><b>Definition</b> native_file_writer.h:29</div></div>
+<div class="ttc" id="astructeverett_1_1object__attempt__id_html"><div class="ttname"><a href="structeverett_1_1object__attempt__id.html">everett::object_attempt_id</a></div><div class="ttdef"><b>Definition</b> object_writer.h:39</div></div>
+<div class="ttc" id="astructeverett_1_1object__id_html"><div class="ttname"><a href="structeverett_1_1object__id.html">everett::object_id</a></div><div class="ttdef"><b>Definition</b> object_path.h:38</div></div>
+<div class="ttc" id="astructeverett_1_1object__seal__receipt_html"><div class="ttname"><a href="structeverett_1_1object__seal__receipt.html">everett::object_seal_receipt</a></div><div class="ttdef"><b>Definition</b> object_writer.h:88</div></div>
+<div class="ttc" id="astructeverett_1_1profile__index_html"><div class="ttname"><a href="structeverett_1_1profile__index.html">everett::profile_index</a></div><div class="ttdef"><b>Definition</b> profile_index.h:39</div></div>
+<div class="ttc" id="astructeverett_1_1query__root_html"><div class="ttname"><a href="structeverett_1_1query__root.html">everett::query_root</a></div><div class="ttdef"><b>Definition</b> query.h:51</div></div>
+<div class="ttc" id="astructeverett_1_1query__root_html_a70cf60e63031f26830e481bcf593cf98"><div class="ttname"><a href="structeverett_1_1query__root.html#a70cf60e63031f26830e481bcf593cf98">everett::query_root::cursor</a></div><div class="ttdeci">query_cursor&lt; P, Blob &gt; cursor(bit_view query) const</div><div class="ttdef"><b>Definition</b> query.h:235</div></div>
+<div class="ttc" id="astructeverett_1_1sqlite__catalog_html"><div class="ttname"><a href="structeverett_1_1sqlite__catalog.html">everett::sqlite_catalog</a></div><div class="ttdef"><b>Definition</b> sqlite_catalog.h:332</div></div>
+<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:53</div></div>
+</div><!-- fragment --><p>Link with <code>everett::sqlite</code> as described in the <a class="el" href="md_docs_2sqlite-catalog.html">catalog guide</a>. The example uses trusted admission because the checked writers establish the sorted-key encoding and the terminal indexes contain no borrowed samples. Received or uncertain objects can require explicit scans instead.</p>
 <p>The tables here have at most \(K\) records, so a terminal pair is already a prepared query root. A larger head needs an empty-native routing prefix built from its augmented samples before publication. The <a class="el" href="md_docs_2file-indexes.html">file-index pipeline</a> builds those links without rewriting the existing native files or accumulating their borrowed payloads in memory.</p>
 <p><code>step</code> limits distinct keys, not bytes or elapsed time. Large literals, values, composition callbacks and final metadata construction have their own costs. The underlying output streams complete bytes and CRC state as construction proceeds, then backpatch the private directory at finalization without a body readback. Both public file wrappers are nonmovable; their input mappings stay pinned while a merge pauses or fails.</p>
 <p>Only a successful <code>finish</code> seals an object. An interrupted private output is retained for reconciliation, but the merge does not yet restore its construction state after a process restart. The <a class="el" href="md_docs_2merge-resumption.html">continuation contract</a> separates that work from the already durable publication of completed files. </p>

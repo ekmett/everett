@@ -10,7 +10,9 @@
  * \endlicense
  */
 
-#include <diet/profile.h>
+#include "policy_compat.h"
+
+#include <everett/profile.h>
 
 #include <algorithm>
 #include <chrono>
@@ -25,7 +27,7 @@
 #endif
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using clock_type = std::chrono::steady_clock;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -120,8 +122,8 @@ int main(int argc, char ** argv) {
 #endif
     std::cout << std::fixed << std::setprecision(3)
       << "profile,records,prefix_bytes,round,build_ns,record_ns,payload_bytes,wire_digest\n";
-    run<storage_policy<profile_unit::byte>>("byte", count, prefix, rounds);
-    run<storage_policy<profile_unit::bit>>("bit", count, prefix, rounds);
+    run<everett_bench::policy<profile_unit::byte>>("byte", count, prefix, rounds);
+    run<everett_bench::policy<profile_unit::bit>>("bit", count, prefix, rounds);
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n'; return 1;
   }

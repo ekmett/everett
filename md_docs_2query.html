@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: Querying an immutable catalog chain</title>
+<title>Everett: Querying an immutable catalog chain</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -80,7 +80,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="querying-an-immutable-catalog-chain"></a> The single-route query layer connects the encoded window operations into a complete search. The <a class="el" href="cola-indexes-and-mapped-queries.html">COLA query layer</a> separately follows a recursive main route and a terminal secondary route, including both level-zero arrays. This guide covers the supported <code>profile_blob</code>/IX02 chain APIs. It returns every matching native entry, together with its exact source pair and native ordinal. The caller decides how those entries compose. An index link describes navigation, so its position alone does not establish an update's age.</p>
-<p><code>query_root&lt;P&gt;</code>, <code>query_root_builder&lt;P&gt;</code> and <code>query_cursor&lt;P&gt;</code> share the same storage policy as their blobs. They are also available through the corresponding aliases in <code>fridge&lt;P&gt;</code>. The <a href="index.html#query-the-whole-chain">README example</a> builds a chain, prepares its root and retrieves two entries for the same key.</p>
+<p><code>query_root&lt;P&gt;</code>, <code>query_root_builder&lt;P&gt;</code> and <code>query_cursor&lt;P&gt;</code> share the same storage policy as their blobs. They are also available through the corresponding aliases in <code>multiverse&lt;P&gt;</code>. The <a href="detailed-usage.html#query-the-whole-chain">usage example</a> builds a chain, prepares its root and retrieves two entries for the same key.</p>
 <h1><a class="anchor" id="preparing-the-first-window"></a>
 Preparing the first window</h1>
 <p>A bounded window search needs its group and an incoming key context. At the start of a chain, neither is known. If the head contains at most <code>P::group_size</code> augmented occurrences, group zero covers it and an empty context suffices: the first physical record in each stream is literal.</p>
@@ -130,7 +130,7 @@ Construction and trust</h1>
 <p>These are navigation-shape checks. They do not compare every sampled key with the target and cannot certify arbitrary equal-count samples manually supplied to <code>index_builder</code>. The content precondition remains the builder's existing one: samples must come from that exact target's trusted sampler. <code>index_pipeline</code> supplies them directly. For <a class="el" href="mapped-blobs-and-exact-query-roots.html">mapped pairs</a>, typed opening checks fixed metadata and <code>mapped_blob::bind</code> checks exact identity and count links. <code>mapped_blob::scan()</code> explicitly checks the complete chain, including every borrowed sample against the actual augmented target stream. That scan or a trusted construction/admission path supplies the content precondition.</p>
 <p><code>query_root&lt;P, Blob&gt;</code> and its cursor share this navigation code. The default <code>Blob</code> is <code>profile_blob&lt;P&gt;</code>; <code>mapped_query_root&lt;P&gt;</code> selects <code>mapped_blob&lt;P&gt;</code>. <code>adopt_prepared</code> checks an already-bounded head without creating routing indexes. <code>open_mapped_query</code> follows persisted identities and adopts that prepared chain, so it reads fixed metadata without reconstructing keys.</p>
 <p>All retained blobs must remain immutable through every alias. A <code>shared_ptr</code> to const supplies read-only access through that handle; it cannot stop a caller from changing the same object through some other mutable handle.</p>
-<p>This query root is a physical navigation owner. It does not publish a durable cola, resolve replacements, infer chronology or evaluate arrows. Keeping those choices with the caller lets the same query machinery retrieve fragments for different per-key categories.</p>
+<p>This query root is a physical navigation owner. It does not publish a durable world, resolve replacements, infer chronology or evaluate arrows. Keeping those choices with the caller lets the same query machinery retrieve fragments for different per-key categories.</p>
 <p>The <a class="el" href="md_bench_2query__compare.html">complete-query benchmark</a> records preparation and query timings, visited catalogs and returned matches with an independent integer-key oracle. Its source, raw trials and reproduction commands are bundled with the documentation. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->

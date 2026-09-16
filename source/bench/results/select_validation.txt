@@ -1,14 +1,14 @@
 SELECT VALIDATION: Apple M2 Max / AppleClang21 / 2026-09-15
 
-Resource-gated log: /Users/ekmett/cult/game/build-agent-logs/20260915-094049-u09k8r1n/output.log
+Resource-gated log: /workspace/game/build-agent-logs/20260915-094049-u09k8r1n/output.log
 + clang++ --version
 Apple clang version 21.0.0 (clang-2100.1.1.101)
 Target: arm64-apple-darwin25.6.0
 Thread model: posix
 InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
-+ shasum -a 256 include/diet/select_groups.h include/diet/select15.h tests/groups.cc bench/select_compare.cc
-c908a56a37041dbc45790a80c10ba78cf46f176faeb2acb84f69eabf0bbcf4a3  include/diet/select_groups.h
-440ec03a90d504a2d526ffef2db69f6ae8a5e9bbeb2e3cf5c39280548dc60f9b  include/diet/select15.h
++ shasum -a 256 include/everett/select_groups.h include/everett/select15.h tests/groups.cc bench/select_compare.cc
+c908a56a37041dbc45790a80c10ba78cf46f176faeb2acb84f69eabf0bbcf4a3  include/everett/select_groups.h
+440ec03a90d504a2d526ffef2db69f6ae8a5e9bbeb2e3cf5c39280548dc60f9b  include/everett/select15.h
 16c8d883c11fa68e5aac209c6f4cb76c428222407c677c5a75b46df1554826a9  tests/groups.cc
 d1514d418f11dc84e96f7b68552b728d7e1db1150fb929b19ad52661b96531e0  bench/select_compare.cc
 + python3 bench/select_compare.py --prototype --entries 4096 --trials 5 --queries 524288 --output build-select/m2-final-hot.csv
@@ -47,53 +47,53 @@ Policy groups 3/7/15/31, packed classes, and residual-address select checks pass
 + clang++ -arch x86_64 -mavx2 -mno-avx512f -mno-bmi2 -std=c++20 -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -Werror -Iinclude tests/groups.cc -o build-select/groups-current-x86
 + arch -x86_64 build-select/groups-current-x86
 Policy groups 3/7/15/31, packed classes, and residual-address select checks passed
-+ shasum -a 256 include/diet/select_groups.h include/diet/select15.h tests/groups.cc bench/select_compare.cc
-c908a56a37041dbc45790a80c10ba78cf46f176faeb2acb84f69eabf0bbcf4a3  include/diet/select_groups.h
-440ec03a90d504a2d526ffef2db69f6ae8a5e9bbeb2e3cf5c39280548dc60f9b  include/diet/select15.h
++ shasum -a 256 include/everett/select_groups.h include/everett/select15.h tests/groups.cc bench/select_compare.cc
+c908a56a37041dbc45790a80c10ba78cf46f176faeb2acb84f69eabf0bbcf4a3  include/everett/select_groups.h
+440ec03a90d504a2d526ffef2db69f6ae8a5e9bbeb2e3cf5c39280548dc60f9b  include/everett/select15.h
 16c8d883c11fa68e5aac209c6f4cb76c428222407c677c5a75b46df1554826a9  tests/groups.cc
 d1514d418f11dc84e96f7b68552b728d7e1db1150fb929b19ad52661b96531e0  bench/select_compare.cc
 
-Resource-gated log: /Users/ekmett/cult/game/build-agent-logs/20260915-094232-a3mbyk6f/output.log
-+ cmake -S . -B build-select/cmake -DCMAKE_BUILD_TYPE=Release -DDIET_BUILD_TESTS=ON -DDIET_SANITIZERS=ON -DDIET_USE_CCACHE=ON
+Resource-gated log: /workspace/game/build-agent-logs/20260915-094232-a3mbyk6f/output.log
++ cmake -S . -B build-select/cmake -DCMAKE_BUILD_TYPE=Release -DEVERETT_BUILD_TESTS=ON -DEVERETT_SANITIZERS=ON -DEVERETT_USE_CCACHE=ON
 -- The CXX compiler identification is AppleClang 21.0.0.21000101
 -- Detecting CXX compiler ABI info
 -- Detecting CXX compiler ABI info - done
 -- Check for working CXX compiler: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++ - skipped
 -- Detecting CXX compile features
 -- Detecting CXX compile features - done
--- Performing Test diet_sanitizers_supported
--- Performing Test diet_sanitizers_supported - Success
+-- Performing Test everett_sanitizers_supported
+-- Performing Test everett_sanitizers_supported - Success
 -- Configuring done (0.7s)
 -- Generating done (0.0s)
--- Build files have been written to: /Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/cmake
-+ cmake --build build-select/cmake --parallel 4 --target diet_test_groups diet_test_rank diet_test_front diet_test_profile
-[ 50%] Building CXX object CMakeFiles/diet_test_groups.dir/tests/groups.cc.o
-[100%] Linking CXX executable diet_test_groups
-[100%] Built target diet_test_groups
-[ 50%] Building CXX object CMakeFiles/diet_test_rank.dir/tests/rank.cc.o
-[100%] Linking CXX executable diet_test_rank
-[100%] Built target diet_test_rank
-[ 50%] Building CXX object CMakeFiles/diet_test_front.dir/tests/front.cc.o
-[100%] Linking CXX executable diet_test_front
-[100%] Built target diet_test_front
-[ 50%] Building CXX object CMakeFiles/diet_test_profile.dir/tests/profile.cc.o
-[100%] Linking CXX executable diet_test_profile
-[100%] Built target diet_test_profile
-+ ctest --test-dir build-select/cmake --parallel 4 --output-on-failure -R 'diet\.(groups|rank|front|profile|package\..*)$'
-Internal ctest changing into directory: /Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/cmake
-Test project /Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/cmake
-    Start  2: diet.rank
-    Start  3: diet.groups
-    Start  4: diet.front
-    Start  5: diet.profile
-1/6 Test  #2: diet.rank .....................   Passed    0.65 sec
-    Start 16: diet.package.installed
-2/6 Test  #4: diet.front ....................   Passed    1.05 sec
-3/6 Test  #3: diet.groups ...................   Passed    1.44 sec
-4/6 Test #16: diet.package.installed ........   Passed    4.46 sec
-    Start 17: diet.package.embedded
-5/6 Test  #5: diet.profile ..................   Passed    5.80 sec
-6/6 Test #17: diet.package.embedded .........   Passed    4.39 sec
+-- Build files have been written to: /workspace/-select-simd/build-select/cmake
++ cmake --build build-select/cmake --parallel 4 --target everett_test_groups everett_test_rank everett_test_front everett_test_profile
+[ 50%] Building CXX object CMakeFiles/everett_test_groups.dir/tests/groups.cc.o
+[100%] Linking CXX executable everett_test_groups
+[100%] Built target everett_test_groups
+[ 50%] Building CXX object CMakeFiles/everett_test_rank.dir/tests/rank.cc.o
+[100%] Linking CXX executable everett_test_rank
+[100%] Built target everett_test_rank
+[ 50%] Building CXX object CMakeFiles/everett_test_front.dir/tests/front.cc.o
+[100%] Linking CXX executable everett_test_front
+[100%] Built target everett_test_front
+[ 50%] Building CXX object CMakeFiles/everett_test_profile.dir/tests/profile.cc.o
+[100%] Linking CXX executable everett_test_profile
+[100%] Built target everett_test_profile
++ ctest --test-dir build-select/cmake --parallel 4 --output-on-failure -R 'everett\.(groups|rank|front|profile|package\..*)$'
+Internal ctest changing into directory: /workspace/-select-simd/build-select/cmake
+Test project /workspace/-select-simd/build-select/cmake
+    Start  2: everett.rank
+    Start  3: everett.groups
+    Start  4: everett.front
+    Start  5: everett.profile
+1/6 Test  #2: everett.rank .....................   Passed    0.65 sec
+    Start 16: everett.package.installed
+2/6 Test  #4: everett.front ....................   Passed    1.05 sec
+3/6 Test  #3: everett.groups ...................   Passed    1.44 sec
+4/6 Test #16: everett.package.installed ........   Passed    4.46 sec
+    Start 17: everett.package.embedded
+5/6 Test  #5: everett.profile ..................   Passed    5.80 sec
+6/6 Test #17: everett.package.embedded .........   Passed    4.39 sec
 
 100% tests passed, 0 tests failed out of 6
 

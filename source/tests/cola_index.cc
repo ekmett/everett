@@ -7,8 +7,8 @@
  * \endlicense
  */
 
-#include <diet/cola_index.h>
-#include <diet/cola_query.h>
+#include <everett/cola_index.h>
+#include <everett/cola_query.h>
 
 #include <algorithm>
 #include <array>
@@ -29,7 +29,7 @@
 #endif
 
 namespace {
-  using namespace diet;
+  using namespace everett;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -428,7 +428,7 @@ namespace {
     auto cursor = [&] {
       auto local = cola_query_root<P>::build(node->encoded);
       auto storage = query;
-      auto result = local.cursor(storage.view());
+      auto result = local.cursor_owned(std::move(storage));
       while (!result.has_match() && !result.done()) result.step();
       return result;
     }();
@@ -578,12 +578,12 @@ namespace {
       if (auto found = find(top->secondary_rows, query))
         wanted.push_back({top->secondary.get(), *found, top->secondary_rows[*found].value});
       check_matches(actual, wanted);
-      auto cursor = query_root.cursor(query);
+      auto cursor = i & 1 ? query_root.cursor_owned(bit_string::copy(query)) : query_root.cursor(query);
       if (i % 29 == 0) {
         cursor.step(1);
         auto copy = cursor;
         check_matches(drain(cursor), drain(copy));
-        cursor = query_root.cursor(query);
+        cursor = query_root.cursor_owned(bit_string::copy(query));
       }
       std::vector<match> query_expected;
       if (auto found = find(top->secondary_rows, query))
@@ -617,17 +617,17 @@ namespace {
 
 int main() {
   try {
-    matrix<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::bit, variable_values, 3, golomb<3>, 16>>();
-    matrix<storage_policy<profile_unit::byte, fixed_values<0>, 7, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<profile_unit::bit, fixed_values<13>, 7, exponential_golomb<2>, 15>>();
-    matrix<storage_policy<profile_unit::byte, fixed_values<7>, 15, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<profile_unit::bit, variable_values, 15, golomb<17>, 15>>();
-    matrix<storage_policy<profile_unit::byte, variable_values, 31, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<profile_unit::bit, fixed_values<0>, 31, exponential_golomb<1>, 16>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 3, golomb<3>, 16>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<13>>>>, 7, exponential_golomb<2>, 15>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<7>>>>, 15, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 15, golomb<17>, 15>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 31, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 31, exponential_golomb<1>, 16>>();
 #if defined(__unix__) || defined(__APPLE__)
-    no_old_prefix_reads<storage_policy<profile_unit::byte, variable_values, 3, exponential_golomb<0>, 15>>();
-    no_old_prefix_reads<storage_policy<profile_unit::bit, fixed_values<13>, 3, exponential_golomb<2>, 16>>();
+    no_old_prefix_reads<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 15>>();
+    no_old_prefix_reads<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<13>>>>, 3, exponential_golomb<2>, 16>>();
 #endif
     std::cout << "COLA index tests passed\n";
   } catch (std::exception const & error) {

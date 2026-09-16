@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: Full-vector and packed-rank comparison</title>
+<title>Everett: Full-vector and packed-rank comparison</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -88,7 +88,7 @@ $(function() {
 <h1><a class="anchor" id="what-the-variants-measure"></a>
 What the variants measure</h1>
 <ul>
-<li><code>bitmap_rank</code>: the original Diet full-bit-vector <code>rank_view::rank</code>, with its 2048/512 directory and scalar loop over the preceding 64-bit words.</li>
+<li><code>bitmap_rank</code>: the original Everett full-bit-vector <code>rank_view::rank</code>, with its 2048/512 directory and scalar loop over the preceding 64-bit words.</li>
 <li><code>poppy512_neon_cpu</code>: a CPU translation using the 2048/512 layout from <a href="https://github.com/ekmett/vr/blob/master/shaders/poppy.glsl">my Poppy shader</a>. It loads all four 128-bit vectors, masks the prefix and reduces byte populations with NEON. The three packed ten-bit counts are summed with explicit parentheses. This is not literal GLSL or GPU timing; the reduction differs from the shader's lane prefix scan. The comparison stays below <code>2^32</code> source bits, and the raw allocation has zero padding sufficient for all four vector loads at its end.</li>
 <li><code>rank15_baseline</code>: the original packed-word summation implementation.</li>
 <li><code>rank_groups15_baseline</code>: the original typed path, which reads and sums individual classes after its checkpoint.</li>

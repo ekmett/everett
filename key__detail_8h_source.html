@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: include/diet/key_detail.h Source File</title>
+<title>Everett: include/everett/key_detail.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -81,7 +81,7 @@ $(document).ready(function() { init_codefold(0); });
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_c7071025d4f9f9a9bd9b595194cb3993.html">diet</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_684ffc4129be141202002a94cb0feed4.html">everett</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -102,10 +102,10 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span> </div>
 <div class="foldopen" id="foldopen00024" data-start="{" data-end="}">
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="namespacediet_1_1key__detail.html">   24</a></span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacediet_1_1key__detail.html">diet::key_detail</a> {</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="namespaceeverett_1_1key__detail.html">   24</a></span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceeverett_1_1key__detail.html">everett::key_detail</a> {</div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>  <span class="comment">// All loads remain within count bytes; neither alignment nor padding is assumed.</span></div>
 <div class="foldopen" id="foldopen00026" data-start="{" data-end="}">
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="namespacediet_1_1key__detail.html#ac92fb750984667644c13db30560bc389">   26</a></span>  <span class="keyword">inline</span> std::size_t <a class="code hl_function" href="namespacediet_1_1key__detail.html#ac92fb750984667644c13db30560bc389">common_bytes</a>(<span class="keywordtype">void</span> <span class="keyword">const</span> * lhs, <span class="keywordtype">void</span> <span class="keyword">const</span> * rhs, std::size_t count) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="namespaceeverett_1_1key__detail.html#a2dd2c1a4412316c43e0569df34302aa3">   26</a></span>  <span class="keyword">inline</span> std::size_t <a class="code hl_function" href="namespaceeverett_1_1key__detail.html#a2dd2c1a4412316c43e0569df34302aa3">common_bytes</a>(<span class="keywordtype">void</span> <span class="keyword">const</span> * lhs, <span class="keywordtype">void</span> <span class="keyword">const</span> * rhs, std::size_t count) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>    <span class="keyword">auto</span> a = <span class="keyword">static_cast&lt;</span><span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> <span class="keyword">const </span>*<span class="keyword">&gt;</span>(lhs);</div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    <span class="keyword">auto</span> b = <span class="keyword">static_cast&lt;</span><span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> <span class="keyword">const </span>*<span class="keyword">&gt;</span>(rhs);</div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    std::size_t at = 0;</div>
@@ -135,17 +135,17 @@ $(document).ready(function() { init_codefold(0); });
 </div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
 <div class="foldopen" id="foldopen00054" data-start="{" data-end="}">
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno"><a class="line" href="namespacediet_1_1key__detail.html#ac41c4a287094ef388cad279014d3f242">   54</a></span>  <span class="keyword">inline</span> std::uint64_t <a class="code hl_function" href="namespacediet_1_1key__detail.html#ac41c4a287094ef388cad279014d3f242">reverse_bytes</a>(std::uint64_t x) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno"><a class="line" href="namespaceeverett_1_1key__detail.html#a4fc42e287d781f601ad32df357acd82c">   54</a></span>  <span class="keyword">inline</span> std::uint64_t <a class="code hl_function" href="namespaceeverett_1_1key__detail.html#a4fc42e287d781f601ad32df357acd82c">reverse_bytes</a>(std::uint64_t x) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    x = ((x &amp; 0x00ff00ff00ff00ffull) &lt;&lt; 8) | ((x &gt;&gt; 8) &amp; 0x00ff00ff00ff00ffull);</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    x = ((x &amp; 0x0000ffff0000ffffull) &lt;&lt; 16) | ((x &gt;&gt; 16) &amp; 0x0000ffff0000ffffull);</div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keywordflow">return</span> (x &lt;&lt; 32) | (x &gt;&gt; 32);</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>  }</div>
 </div>
 <div class="foldopen" id="foldopen00059" data-start="{" data-end="}">
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="namespacediet_1_1key__detail.html#acd12113c4db2238829dec17febdad549">   59</a></span>  <span class="keyword">inline</span> std::uint64_t <a class="code hl_function" href="namespacediet_1_1key__detail.html#acd12113c4db2238829dec17febdad549">load_big</a>(<span class="keywordtype">void</span> <span class="keyword">const</span> * source) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="namespaceeverett_1_1key__detail.html#a24561a1e95f59026f45e282e8fe701ab">   59</a></span>  <span class="keyword">inline</span> std::uint64_t <a class="code hl_function" href="namespaceeverett_1_1key__detail.html#a24561a1e95f59026f45e282e8fe701ab">load_big</a>(<span class="keywordtype">void</span> <span class="keyword">const</span> * source) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::endian::native == std::endian::little || std::endian::native == std::endian::big) {</div>
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>      std::uint64_t value; std::memcpy(&amp;value, source, 8);</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>      <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::endian::native == std::endian::little) <span class="keywordflow">return</span> <a class="code hl_function" href="namespacediet_1_1key__detail.html#ac41c4a287094ef388cad279014d3f242">reverse_bytes</a>(value);</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>      <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::endian::native == std::endian::little) <span class="keywordflow">return</span> <a class="code hl_function" href="namespaceeverett_1_1key__detail.html#a4fc42e287d781f601ad32df357acd82c">reverse_bytes</a>(value);</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>      <span class="keywordflow">else</span> <span class="keywordflow">return</span> value;</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>      <span class="keyword">auto</span> bytes = <span class="keyword">static_cast&lt;</span><span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> <span class="keyword">const </span>*<span class="keyword">&gt;</span>(source);</div>
@@ -156,9 +156,9 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>  }</div>
 </div>
 <div class="foldopen" id="foldopen00071" data-start="{" data-end="}">
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="namespacediet_1_1key__detail.html#a60b5dadb3acdb48adbe74b835c76a420">   71</a></span>  <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code hl_function" href="namespacediet_1_1key__detail.html#a60b5dadb3acdb48adbe74b835c76a420">store_big</a>(<span class="keywordtype">void</span> * target, std::uint64_t value) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno"><a class="line" href="namespaceeverett_1_1key__detail.html#ae6377ae993d884fff611474605f7e447">   71</a></span>  <span class="keyword">inline</span> <span class="keywordtype">void</span> <a class="code hl_function" href="namespaceeverett_1_1key__detail.html#ae6377ae993d884fff611474605f7e447">store_big</a>(<span class="keywordtype">void</span> * target, std::uint64_t value) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::endian::native == std::endian::little) {</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>      value = <a class="code hl_function" href="namespacediet_1_1key__detail.html#ac41c4a287094ef388cad279014d3f242">reverse_bytes</a>(value); std::memcpy(target, &amp;value, 8);</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>      value = <a class="code hl_function" href="namespaceeverett_1_1key__detail.html#a4fc42e287d781f601ad32df357acd82c">reverse_bytes</a>(value); std::memcpy(target, &amp;value, 8);</div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::endian::native == std::endian::big) std::memcpy(target, &amp;value, 8);</div>
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>      <span class="keyword">auto</span> bytes = <span class="keyword">static_cast&lt;</span><span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> *<span class="keyword">&gt;</span>(target);</div>
@@ -168,11 +168,11 @@ $(document).ready(function() { init_codefold(0); });
 </div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>}</div>
 </div>
-<div class="ttc" id="anamespacediet_1_1key__detail_html"><div class="ttname"><a href="namespacediet_1_1key__detail.html">diet::key_detail</a></div><div class="ttdef"><b>Definition</b> key_detail.h:24</div></div>
-<div class="ttc" id="anamespacediet_1_1key__detail_html_a60b5dadb3acdb48adbe74b835c76a420"><div class="ttname"><a href="namespacediet_1_1key__detail.html#a60b5dadb3acdb48adbe74b835c76a420">diet::key_detail::store_big</a></div><div class="ttdeci">void store_big(void *target, std::uint64_t value) noexcept</div><div class="ttdef"><b>Definition</b> key_detail.h:71</div></div>
-<div class="ttc" id="anamespacediet_1_1key__detail_html_ac41c4a287094ef388cad279014d3f242"><div class="ttname"><a href="namespacediet_1_1key__detail.html#ac41c4a287094ef388cad279014d3f242">diet::key_detail::reverse_bytes</a></div><div class="ttdeci">std::uint64_t reverse_bytes(std::uint64_t x) noexcept</div><div class="ttdef"><b>Definition</b> key_detail.h:54</div></div>
-<div class="ttc" id="anamespacediet_1_1key__detail_html_ac92fb750984667644c13db30560bc389"><div class="ttname"><a href="namespacediet_1_1key__detail.html#ac92fb750984667644c13db30560bc389">diet::key_detail::common_bytes</a></div><div class="ttdeci">std::size_t common_bytes(void const *lhs, void const *rhs, std::size_t count) noexcept</div><div class="ttdef"><b>Definition</b> key_detail.h:26</div></div>
-<div class="ttc" id="anamespacediet_1_1key__detail_html_acd12113c4db2238829dec17febdad549"><div class="ttname"><a href="namespacediet_1_1key__detail.html#acd12113c4db2238829dec17febdad549">diet::key_detail::load_big</a></div><div class="ttdeci">std::uint64_t load_big(void const *source) noexcept</div><div class="ttdef"><b>Definition</b> key_detail.h:59</div></div>
+<div class="ttc" id="anamespaceeverett_1_1key__detail_html"><div class="ttname"><a href="namespaceeverett_1_1key__detail.html">everett::key_detail</a></div><div class="ttdef"><b>Definition</b> key_detail.h:24</div></div>
+<div class="ttc" id="anamespaceeverett_1_1key__detail_html_a24561a1e95f59026f45e282e8fe701ab"><div class="ttname"><a href="namespaceeverett_1_1key__detail.html#a24561a1e95f59026f45e282e8fe701ab">everett::key_detail::load_big</a></div><div class="ttdeci">std::uint64_t load_big(void const *source) noexcept</div><div class="ttdef"><b>Definition</b> key_detail.h:59</div></div>
+<div class="ttc" id="anamespaceeverett_1_1key__detail_html_a2dd2c1a4412316c43e0569df34302aa3"><div class="ttname"><a href="namespaceeverett_1_1key__detail.html#a2dd2c1a4412316c43e0569df34302aa3">everett::key_detail::common_bytes</a></div><div class="ttdeci">std::size_t common_bytes(void const *lhs, void const *rhs, std::size_t count) noexcept</div><div class="ttdef"><b>Definition</b> key_detail.h:26</div></div>
+<div class="ttc" id="anamespaceeverett_1_1key__detail_html_a4fc42e287d781f601ad32df357acd82c"><div class="ttname"><a href="namespaceeverett_1_1key__detail.html#a4fc42e287d781f601ad32df357acd82c">everett::key_detail::reverse_bytes</a></div><div class="ttdeci">std::uint64_t reverse_bytes(std::uint64_t x) noexcept</div><div class="ttdef"><b>Definition</b> key_detail.h:54</div></div>
+<div class="ttc" id="anamespaceeverett_1_1key__detail_html_ae6377ae993d884fff611474605f7e447"><div class="ttname"><a href="namespaceeverett_1_1key__detail.html#ae6377ae993d884fff611474605f7e447">everett::key_detail::store_big</a></div><div class="ttdeci">void store_big(void *target, std::uint64_t value) noexcept</div><div class="ttdef"><b>Definition</b> key_detail.h:71</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

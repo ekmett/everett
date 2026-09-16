@@ -1,20 +1,20 @@
 {
   "measured_revision": "7fe6ee841a496497057d31a7c1e291c9d1d8f02c",
   "reachable_revision": "030a7a12bbfeaf395d7f1ae9f27eaf4729372b4c",
-  "comparison": "Every Diet header in the recursive query.h include closure is byte-identical. This excludes unrelated native merge, file-writing and catalog code not included by the harness.",
+  "comparison": "Every Everett header in the recursive query.h include closure is byte-identical. This excludes unrelated native merge, file-writing and catalog code not included by the harness.",
   "closure_sha256": {
-    "include/diet/elias_fano.h": "da0721307af2602201aa9deedf7ecd913d960d88a7d7aeb7f82a8395a1d2685d",
-    "include/diet/error_detail.h": "e112149e16d60030f2ab65e74c604cfc54b9e066a3520af045ac4a9a76e1cbe2",
-    "include/diet/index_builder.h": "addc460226329f0809b5e5b612fc0abd7ce0aca8637c0ee2219dc4dfd060fc87",
-    "include/diet/index_pipeline.h": "5cb2c82e1e46b56b36101126a6e409976b3c9dba2e24eeaa5caf505f149bfa7f",
-    "include/diet/key_detail.h": "3ef132ff61e912cc19882e9e76c4a76e26038592f95cb449ba5f98598dbf2ef2",
-    "include/diet/policy.h": "5c490e8b3e9c8dd157a2c7b7caa3820a9fdf6b80cc1a20e7d0f0a443c3370004",
-    "include/diet/profile.h": "e0b6fb04355c5a3d9d2b14511f4c8b734e1d78be33e404e8a8032fb3b02fe69e",
-    "include/diet/profile_blob.h": "31c20bec176ec54f7da66a7d58a401c107f70b5ee01fd13fb40693262fe88c35",
-    "include/diet/query.h": "025fb12b33971ecac7b73f7ca9ad8d8551790d7082020c369a34d46d719b2f7d",
-    "include/diet/rank15.h": "55bec223493794f8f6387748b6481b0085a50df2bb588e032e38a9e746f135e2",
-    "include/diet/rank_groups.h": "a43813c8526d507c209d39b2eb529e582376c3266ddd62e3a546bf2c3a902837",
-    "include/diet/sampling.h": "baec6c87c09764c2417cd0f2d9e2cf14509b5da76b30d5caf139064559b6e128",
-    "include/diet/word_view.h": "67af7b0c35afeca9c0550885f479f08af7b2a761744beacab621dd6a48b722d7"
+    "include/everett/elias_fano.h": "da0721307af2602201aa9deedf7ecd913d960d88a7d7aeb7f82a8395a1d2685d",
+    "include/everett/error_detail.h": "e112149e16d60030f2ab65e74c604cfc54b9e066a3520af045ac4a9a76e1cbe2",
+    "include/everett/index_builder.h": "addc460226329f0809b5e5b612fc0abd7ce0aca8637c0ee2219dc4dfd060fc87",
+    "include/everett/index_pipeline.h": "5cb2c82e1e46b56b36101126a6e409976b3c9dba2e24eeaa5caf505f149bfa7f",
+    "include/everett/key_detail.h": "3ef132ff61e912cc19882e9e76c4a76e26038592f95cb449ba5f98598dbf2ef2",
+    "include/everett/policy.h": "5c490e8b3e9c8dd157a2c7b7caa3820a9fdf6b80cc1a20e7d0f0a443c3370004",
+    "include/everett/profile.h": "e0b6fb04355c5a3d9d2b14511f4c8b734e1d78be33e404e8a8032fb3b02fe69e",
+    "include/everett/profile_blob.h": "31c20bec176ec54f7da66a7d58a401c107f70b5ee01fd13fb40693262fe88c35",
+    "include/everett/query.h": "025fb12b33971ecac7b73f7ca9ad8d8551790d7082020c369a34d46d719b2f7d",
+    "include/everett/rank15.h": "55bec223493794f8f6387748b6481b0085a50df2bb588e032e38a9e746f135e2",
+    "include/everett/rank_groups.h": "a43813c8526d507c209d39b2eb529e582376c3266ddd62e3a546bf2c3a902837",
+    "include/everett/sampling.h": "baec6c87c09764c2417cd0f2d9e2cf14509b5da76b30d5caf139064559b6e128",
+    "include/everett/word_view.h": "67af7b0c35afeca9c0550885f479f08af7b2a761744beacab621dd6a48b722d7"
   }
 }

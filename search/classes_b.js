@@ -1,7 +1,27 @@
 var searchData=
 [
-  ['query_5fcursor_0',['query_cursor',['../structdiet_1_1query__cursor.html',1,'diet']]],
-  ['query_5fmatch_1',['query_match',['../structdiet_1_1query__match.html',1,'diet']]],
-  ['query_5froot_2',['query_root',['../structdiet_1_1query__root.html',1,'diet']]],
-  ['query_5froot_5fbuilder_3',['query_root_builder',['../structdiet_1_1query__root__builder.html',1,'diet']]]
+  ['mapped_5fblob_0',['mapped_blob',['../structeverett_1_1mapped__blob.html',1,'everett']]],
+  ['mapped_5fcola_5fblob_1',['mapped_cola_blob',['../structeverett_1_1mapped__cola__blob.html',1,'everett']]],
+  ['mapped_5fcola_5findex_2',['mapped_cola_index',['../structeverett_1_1mapped__cola__index.html',1,'everett']]],
+  ['mapped_5fcola_5fresolver_3',['mapped_cola_resolver',['../structeverett_1_1mapped__cola__resolver.html',1,'everett']]],
+  ['mapped_5fcola_5fresolver_3c_20p_2c_20mapped_5ftype_20_3e_4',['mapped_cola_resolver&lt; P, mapped_type &gt;',['../structeverett_1_1mapped__cola__resolver.html',1,'everett']]],
+  ['mapped_5fcola_5fscan_5',['mapped_cola_scan',['../structeverett_1_1mapped__cola__scan.html',1,'everett']]],
+  ['mapped_5ffile_6',['mapped_file',['../structeverett_1_1mapped__file.html',1,'everett']]],
+  ['mapped_5findex_7',['mapped_index',['../structeverett_1_1mapped__index.html',1,'everett']]],
+  ['mapped_5fprofile_8',['mapped_profile',['../structeverett_1_1mapped__profile.html',1,'everett']]],
+  ['mapped_5fprofile_3c_20p_2c_20stream_5frole_3a_3aborrowed_20_3e_9',['mapped_profile&lt; P, stream_role::borrowed &gt;',['../structeverett_1_1mapped__profile.html',1,'everett']]],
+  ['mapped_5fslice_10',['mapped_slice',['../structeverett_1_1mapped__slice.html',1,'everett']]],
+  ['mapped_5fsort_5fcola_11',['mapped_sort_cola',['../structeverett_1_1mapped__sort__cola.html',1,'everett']]],
+  ['mapped_5fsort_5fprofile_12',['mapped_sort_profile',['../structeverett_1_1mapped__sort__profile.html',1,'everett']]],
+  ['match_5fprobe_13',['match_probe',['../structeverett_1_1cola__detail_1_1query__access_1_1match__probe.html',1,'everett::cola_detail::query_access']]],
+  ['merge_5fcheckpoint_14',['merge_checkpoint',['../structeverett_1_1merge__checkpoint.html',1,'everett']]],
+  ['merge_5fidentity_15',['merge_identity',['../structeverett_1_1merge__identity.html',1,'everett']]],
+  ['merge_5finput_5fcursor_16',['merge_input_cursor',['../structeverett_1_1merge__input__cursor.html',1,'everett']]],
+  ['merge_5fpublication_17',['merge_publication',['../structeverett_1_1merge__publication.html',1,'everett']]],
+  ['merge_5fsource_18',['merge_source',['../structeverett_1_1sort__profile__detail_1_1merge__source.html',1,'everett::sort_profile_detail']]],
+  ['merge_5fsource_3c_20view_5ftype_20_3e_19',['merge_source&lt; view_type &gt;',['../structeverett_1_1sort__profile__detail_1_1merge__source.html',1,'everett::sort_profile_detail']]],
+  ['merge_5ftype_20',['merge_type',['../structeverett_1_1sort__runtime__context_1_1merge__type.html',1,'everett::sort_runtime_context']]],
+  ['merged_5fcursor_21',['merged_cursor',['../structeverett_1_1mapped__blob_1_1merged__cursor.html',1,'everett::mapped_blob']]],
+  ['multiverse_22',['multiverse',['../structeverett_1_1multiverse.html',1,'everett']]],
+  ['mutation_23',['mutation',['../structeverett_1_1replacement__rebuild__engine_1_1mutation.html',1,'everett::replacement_rebuild_engine']]]
 ];

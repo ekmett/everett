@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: COLA Linux Portability Check</title>
+<title>Everett: COLA Linux Portability Check</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -108,23 +108,20 @@ Results</h1>
 <td class="markdownTableBodyNone"><code>cola_local_merge</code>   </td><td class="markdownTableBodyNone">Passed ASan/UBSan   </td></tr>
 </table>
 <p>The initial strict <code>cola_index</code> compile failed on a deprecation diagnostic in libstdc++ 12's <code>std::stable_sort</code> implementation: its temporary-buffer helper was marked deprecated. The independent oracle had already appended each origin's entries in ordinal order. I made that tie break explicit and used <code>std::sort</code> on key, origin, then ordinal, preserving its occurrence order. The original compiler diagnostic is retained; no warning suppression was used.</p>
-<p>The suites exercise owning and mapped dual-route indexes, exact targets, metadata-only terminal construction, malformed sections, query results and local merge stages. This check does not cover SQLite, the complete package or Doxygen build, every Diet component, or every x86 SIMD target.</p>
+<p>The suites exercise owning and mapped dual-route indexes, exact targets, metadata-only terminal construction, malformed sections, query results and local merge stages. This check does not cover SQLite, the complete package or Doxygen build, every Everett component, or every x86 SIMD target.</p>
 <h1><a class="anchor" id="reproduction-and-evidence"></a>
 Reproduction and evidence</h1>
-<p>The original and corrected source manifests, exact compiler commands, toolchain output, executable hashes and test output are retained in <a href="source/bench/results/cola_linux/results.json">original results</a> and <a href="source/bench/results/cola_linux/results-patched.json">corrected results</a>. I verified every remote source hash against the pinned Git objects; only <code>tests/cola_index.cc</code> differs between the manifests. The original <a href="source/bench/results/cola_linux/cola_index.compile.txt">compiler diagnostic</a> is also retained. Paths in the evidence use the current Diet spelling. The host check did not edit a checkout; its resource gate wrote the normal run logs.</p>
+<p>The original and corrected source manifests, exact compiler commands, toolchain output, executable hashes and test output are retained in <a href="source/bench/results/cola_linux/results.json">original results</a> and <a href="source/bench/results/cola_linux/results-patched.json">corrected results</a>. I verified every remote source hash against the pinned Git objects; only <code>tests/cola_index.cc</code> differs between the manifests. The original <a href="source/bench/results/cola_linux/cola_index.compile.txt">compiler diagnostic</a> is also retained. Paths in the evidence use the current Everett spelling. The host check did not edit a checkout; its resource gate wrote the normal run logs.</p>
 <p>Each compiler invocation uses this form, with the full argument arrays recorded in the JSON evidence:</p>
 <div class="fragment"><div class="line">/usr/bin/clang++ -std=c++20 -O2 -g -Wall -Wextra -Wpedantic -Werror -UNDEBUG \</div>
 <div class="line">  -fsanitize=address,undefined -fno-omit-frame-pointer -pthread \</div>
-<div class="line">  -I/tmp/diet-cola-linux-YR37tcNZ/include \</div>
-<div class="line">  /tmp/diet-cola-linux-YR37tcNZ/tests/cola_index.cc \</div>
-<div class="line">  -o /tmp/diet-cola-linux-YR37tcNZ/build/cola_index</div>
+<div class="line">  -I/tmp/everett-world-linux-YR37tcNZ/include \</div>
+<div class="line">  /tmp/everett-world-linux-YR37tcNZ/tests/cola_index.cc \</div>
+<div class="line">  -o /tmp/everett-world-linux-YR37tcNZ/build/cola_index</div>
 <div class="line">ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \</div>
 <div class="line">UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \</div>
-<div class="line">  /tmp/diet-cola-linux-YR37tcNZ/build/cola_index</div>
-</div><!-- fragment --><p>The host lease wrapped compilation and execution:</p>
-<div class="fragment"><div class="line">python3 /home/ekmett/cult/tools/resource_run.py --resource cpu-heavy \</div>
-<div class="line">  --build-dir /tmp/diet-cola-linux-YR37tcNZ/build -- python3 -</div>
-</div><!-- fragment --><p>The two host logs were <code>20260915-164154-psa10pzj/output.log</code> and <code>20260915-164356-n87dlnhm/output.log</code> under <code>/home/ekmett/cult/build-agent-logs/</code>. Test runtimes in the raw records are verification metadata and are not comparisons with another implementation. </p>
+<div class="line">  /tmp/everett-world-linux-YR37tcNZ/build/cola_index</div>
+</div><!-- fragment --><p>Compilation and execution ran serially under an exclusive host resource lease. Test runtimes in the raw records are verification metadata and are not comparisons with another implementation. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->

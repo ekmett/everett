@@ -7,6 +7,7 @@ Run under the host CPU/build-directory resource gate. Header snapshots are
 fresh, and only the aligned variants receive the recorded declaration patch.
 """
 from snapshot import Snapshot
+from fixture import write_fixture
 
 import argparse
 import csv
@@ -45,7 +46,7 @@ def main():
     build.mkdir(parents=True, exist_ok=True)
     git = lambda *a: subprocess.check_output(["git", "-C", str(repo), *a])
     source = build / "cola_layout.cc"
-    source.write_bytes((repo / "bench/cola_layout.cc").read_bytes())
+    write_fixture(repo / "bench/cola_layout.cc", source)
     declaration = "  inline bit_comparison compare_common_bits(bit_view a, bit_view b) {"
     patch = ("#if defined(__APPLE__) && defined(__aarch64__) && defined(__clang__)\n"
              "  // Reduce the out-of-line NEON loop's sensitivity to caller code layout.\n"
@@ -79,7 +80,7 @@ def main():
             subprocess.run(["git", "apply", "--unsafe-paths", "--directory=" + str(headers), str(patch_file)],
                            check=True, cwd=repo)
         if name.endswith("_aligned"):
-            profile = headers / "include/diet/profile.h"
+            profile = headers / "include/everett/profile.h"
             text = profile.read_text()
             assert text.count(declaration) == 1
             profile.write_text(text.replace(declaration, patch))
@@ -112,7 +113,7 @@ def main():
         if trial & 1:
             order.reverse()
         for name in order:
-            with tempfile.TemporaryDirectory(prefix="diet-cola-layout-") as directory:
+            with tempfile.TemporaryDirectory(prefix="everett-world-layout-") as directory:
                 command = [str(build / name / "run"), str(args.rounds), directory]
                 output = subprocess.check_output(command, text=True)
                 files = {p.name: p.read_bytes() for p in Path(directory).glob("*.index")}

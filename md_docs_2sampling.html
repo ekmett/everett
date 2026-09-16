@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: Sampling groups and the choice of K</title>
+<title>Everett: Sampling groups and the choice of K</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -79,13 +79,13 @@ $(function() {
   <div class="headertitle"><div class="title">Sampling groups and the choice of K</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="sampling-groups-and-the-choice-of-k"></a> Updated 2026-09-15. <b>K = 15</b> is the default. The typed byte and bit profiles support <b>3, 7, 15 and 31</b> through <code>storage_policy&lt;Unit, Values, K, BackspaceCode, W&gt;</code>. K counts virtual entries; W counts physical records between offset checkpoints and defaults to K. Neither changes whether keys, backspaces, values and offsets count bytes or bits. Exact query agreement and cut LCPs always count bits.</p>
+<div class="textblock"><p><a class="anchor" id="sampling-groups-and-the-choice-of-k"></a> Updated 2026-09-15. <b>K = 15</b> is the default. The typed byte and bit profiles support <b>3, 7, 15 and 31</b> through <code>storage_policy&lt;Registry, K, BackspaceCode, W&gt;</code>. K counts virtual entries; W counts physical records between offset checkpoints and defaults to K. Neither changes whether keys, backspaces, values and offsets count bytes or bits. Exact query agreement and cut LCPs always count bits.</p>
 <p>K = 3 is sufficient for the local navigation rules and for constant per-level augmentation along a single chain whose capacities grow by at most two per link. It increases sampling space while reducing the number of records examined in each window. Below, we derive that statement under explicit assumptions. I still need a complete redundant-level scheduler proof.</p>
 <p>The single-route APIs and recurrence below remain supported as IX02. The <a class="el" href="cola-indexes-and-mapped-queries.html">COLA representation</a> uses IX03 with a recursive main target and a terminal native-only secondary target. Its separate <a href="cola-scheduling-with-immutable-pairs.html#main-and-secondary-capacities">capacity bound</a> also permits K = 3; the secondary contributes samples without adding another recursive route.</p>
 <h1><a class="anchor" id="autotoc_md1-relationship-to-the-cola-reference"></a>
 1. Relationship to the COLA reference</h1>
-<p>Bender et al.'s <em>Cache-Oblivious Streaming B-trees</em>, §3, describes power-of-two COLA levels. Its lookahead layout samples every eighth entry and also allocates duplicate-pointer cells. Its deamortized construction distinguishes visible and shadow arrays; completing a data merge alone does not finish the associated lookahead work. This gives us a precedent for scheduling and multi-catalog search. Diet uses a different count-class layout. <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=8">Original paper, §3</a>.</p>
-<p><b>We derive the recurrence and constants below for Diet's separate native and borrowed streams.</b> The paper's slot allocation and deamortization proof need separate adaptation to this representation.</p>
+<p>Bender et al.'s <em>Cache-Oblivious Streaming B-trees</em>, §3, describes power-of-two COLA levels. Its lookahead layout samples every eighth entry and also allocates duplicate-pointer cells. Its deamortized construction distinguishes visible and shadow arrays; completing a data merge alone does not finish the associated lookahead work. This gives us a precedent for scheduling and multi-catalog search. Everett uses a different count-class layout. <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=8">Original paper, §3</a>.</p>
+<p><b>We derive the recurrence and constants below for Everett's separate native and borrowed streams.</b> The paper's slot allocation and deamortization proof need separate adaptation to this representation.</p>
 <h1><a class="anchor" id="autotoc_md2-why-a-local-window-works-for-k--3"></a>
 2. Why a local window works for K = 3</h1>
 <p>A catalog's augmented order is the virtual sorted interleaving of its native records and borrowed keys. We borrow positions <code>0, K, 2K, ...</code> from the exact <b>augmented</b> target catalog, including its borrowed keys. Sampling only native target keys would leave the size of a target window unbounded.</p>
@@ -173,7 +173,7 @@ What the critical value means</h2>
 \le\frac K{K-1}\left(\sum_i n_i+L-1\right).
 \]
 </p>
-<p>This weaker global entry-count bound holds for K &gt; 1 without a growth assumption. The stronger per-level bound is what controls small catalogs and their reserved capacities. We have not counted encoded string bytes, unfinished outputs or retained historical colas in either expression.</p>
+<p>This weaker global entry-count bound holds for K &gt; 1 without a growth assumption. The stronger per-level bound is what controls small catalogs and their reserved capacities. We have not counted encoded string bytes, unfinished outputs or retained historical worlds in either expression.</p>
 <h1><a class="anchor" id="autotoc_md4-space-and-scan-work"></a>
 4. Space and scan work</h1>
 <p>For \(K=2^b-1\), a group population ranges from 0 to K and occupies exactly b bits. <code>rank_groups&lt;K&gt;</code> stores those classes and prefix checkpoints; it does not store the full origin pattern or require arbitrary within-group rank. The table omits checkpoint overhead and the final partial group's padding. Exact cut LCPs are a separate unsigned 64-bit count per virtual group: currently \(8\lceil A/K\rceil\) bytes for A augmented entries, including unused zero slots where no borrowed predecessor exists. They must be included in total index space; the packed class width is not the whole navigation overhead.</p>
@@ -184,7 +184,7 @@ What the critical value means</h2>
 5. Native-preserving index repair</h1>
 <p>Both physical streams use ordinary FC. The native stream's adjacent prefixes and W-spaced physical checkpoints depend only on its native records. The borrowed stream's prefixes depend only on its borrowed records. The exact cut LCPs depend on their virtual interleaving, so they live in the independently rebuilt index. No prefix needs to be shortened or re-emitted merely to align those two streams.</p>
 <p>For borrowed rank \(i&gt;0\) at a cut, construction records the exact bit LCP of borrowed key \(i-1\) and that cut's boundary. If the same borrowed key precedes several cuts, every cut retains its own scalar. A single minimum across cuts would lose information needed for query comparison. If \(i=0\), the scalar is unused and stored as zero. The terminal \(i=I&gt;0\) case still has a predecessor; the same ordered comparison repair applies without reading its full length.</p>
-<p>Within one P, <code>profile_blob&lt;P&gt;::reindex</code> preserves the exact native allocation and native offset index while rebuilding ordinary borrowed FC, rank classes, cut LCPs and false-borrow flags. Retained colas can continue using the previous index. New routing retains the exact target identities and follows the pin/publication protocol supplied by the surrounding store.</p>
+<p>Within one P, <code>profile_blob&lt;P&gt;::reindex</code> preserves the exact native allocation and native offset index while rebuilding ordinary borrowed FC, rank classes, cut LCPs and false-borrow flags. Retained worlds can continue using the previous index. New routing retains the exact target identities and follows the pin/publication protocol supplied by the surrounding store.</p>
 <p>The policy includes both K and W. Changing W changes physical checkpoints and offset sampling; changing K changes virtual samples and ranks. Typed builders require a common P throughout the chain. Native sharing during <code>reindex</code> applies to one fixed P; it is not permission to reinterpret different policy metadata.</p>
 <h1><a class="anchor" id="autotoc_md6-where-the-chain-proof-stops"></a>
 6. Where the chain proof stops</h1>
@@ -195,7 +195,7 @@ What the critical value means</h2>
 <h1><a class="anchor" id="autotoc_md7-executable-evidence-and-remaining-proof-work"></a>
 7. Executable evidence and remaining proof work</h1>
 <p><a href="source/tests/profile_blob.cc"><code>tests/profile_blob.cc</code></a> and <a href="source/tests/query.cc"><code>tests/query.cc</code></a> compare local windows and complete cascades with independent sorted-record oracles. The relevant cases include byte and bit keys, fixed and variable values, K = 3, 7, 15 and 31, independent physical W, empty streams, proper prefixes, and equal borrowed occurrences spanning cuts. The tests check every native match and its value, query comparison transfer, absent and terminal borrowed frontiers, false-borrow recovery, and old/new indexes sharing native bytes. The <a class="el" href="md_docs_2implementation.html">implementation ledger</a> records the verified configurations and build results.</p>
-<p>The <a class="el" href="diet-an-abstract-proof-core.html">Lean model</a> proves sampled-window and ordered-prefix laws over abstract keys. Those results and the executable oracles address different layers. Neither establishes a complete COLA merge scheduler, disk publication, admission deadline or crash recovery implementation. A store-wide bound for any K also needs a scheduler proof naming the actual active graph, native capacities, index budgets, visible/unfinished representations and retained-history charges. </p>
+<p>The <a class="el" href="everett-an-abstract-proof-core.html">Lean model</a> proves sampled-window and ordered-prefix laws over abstract keys. Those results and the executable oracles address different layers. Neither establishes a complete COLA merge scheduler, disk publication, admission deadline or crash recovery implementation. A store-wide bound for any K also needs a scheduler proof naming the actual active graph, native capacities, index budgets, visible/unfinished representations and retained-history charges. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->

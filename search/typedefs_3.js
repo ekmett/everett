@@ -1,7 +1,5 @@
 var searchData=
 [
-  ['file_0',['file',['../structdiet_1_1fridge.html#a54058bdeaa9d872ac08f4b2c19ea417b',1,'diet::fridge']]],
-  ['file_5findex_5fbuilder_1',['file_index_builder',['../structdiet_1_1fridge.html#af79296e915c98050feb76891cc7a04cc',1,'diet::fridge']]],
-  ['file_5findex_5fpipeline_2',['file_index_pipeline',['../structdiet_1_1fridge.html#a410c007af0de0f04dbc369bc9439673a',1,'diet::fridge']]],
-  ['file_5findex_5fstage_3',['file_index_stage',['../structdiet_1_1fridge.html#aa7435fce7509656c7b322c177761e300',1,'diet::fridge']]]
+  ['default_5fsort_5ft_0',['default_sort_t',['../namespaceeverett_1_1typed__detail.html#abf9d2fd465e492de0ac4bccbceb7fd27',1,'everett::typed_detail']]],
+  ['destination_5ftype_1',['destination_type',['../structeverett_1_1cola__detail_1_1adaptive__index__output.html#a0fcf5caf138ead702e5b6a7bb34badb5',1,'everett::cola_detail::adaptive_index_output::destination_type'],['../structeverett_1_1sort__runtime__context_1_1index__factory.html#a342d0944b7f64597fe87b0c6200e7072',1,'everett::sort_runtime_context::index_factory::destination_type']]]
 ];

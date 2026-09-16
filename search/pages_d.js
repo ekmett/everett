@@ -1,9 +1,17 @@
 var searchData=
 [
-  ['object_20sealing_0',['Immutable object sealing',['../immutable-object-sealing.html',1,'']]],
-  ['of_20k_1',['Sampling groups and the choice of K',['../md_docs_2sampling.html',1,'']]],
-  ['one_20incoming_20key_20context_20for_20index_20construction_2',['One incoming key context for index construction',['../one-incoming-key-context-for-index-construction.html',1,'']]],
-  ['output_3',['Native merge frontiers and framed output',['../native-merge-frontiers-and-framed-output.html',1,'']]],
-  ['ownership_4',['Doxygen metadata and declaration ownership',['../md_docs_2doxygen.html',1,'']]],
-  ['owning_20queries_20with_20shared_20navigation_20views_5',['Owning queries with shared navigation views',['../md_bench_2shared__query.html',1,'']]]
+  ['named_20session_0',['Connecting to a named session',['../connecting-to-a-named-session.html',1,'']]],
+  ['native_20and_20fractional_20index_20output_1',['Adaptive native and fractional-index output',['../adaptive-native-and-fractional-index-output.html',1,'']]],
+  ['native_20avx2_20packed_20rank_20comparison_2',['Native AVX2 packed-rank comparison',['../native-avx2-packed-rank-comparison.html',1,'']]],
+  ['native_20files_3',['Streaming sort-owned native files',['../streaming-sort-owned-native-files.html',1,'']]],
+  ['native_20key_20prefixes_4',['Reusing native-key prefixes',['../md_bench_2native__prefix.html',1,'']]],
+  ['native_20merge_20frontiers_20and_20framed_20output_5',['Native merge frontiers and framed output',['../native-merge-frontiers-and-framed-output.html',1,'']]],
+  ['native_20merge_20outputs_6',['Small native merge outputs',['../small-native-merge-outputs.html',1,'']]],
+  ['native_20merge_20span_20descriptors_7',['Compact native-merge span descriptors',['../compact-native-merge-span-descriptors.html',1,'']]],
+  ['native_20merges_8',['Reusing completed native merges',['../reusing-completed-native-merges.html',1,'']]],
+  ['native_20records_9',['Sort-owned native records',['../sort-owned-native-records.html',1,'']]],
+  ['native_20windows_20packed_20rank_20comparison_10',['Native Windows packed-rank comparison',['../md_bench_2rank__compare__windows.html',1,'']]],
+  ['native_20writing_20and_20merging_11',['Incremental native writing and merging',['../md_docs_2native-merges.html',1,'']]],
+  ['navigation_20views_12',['Owning queries with shared navigation views',['../md_bench_2shared__query.html',1,'']]],
+  ['neon_20reductions_20and_20the_20bitmap512_20rank_13',['NEON reductions and the Bitmap512 rank',['../md_bench_2neon__bitmap__rank.html',1,'']]]
 ];

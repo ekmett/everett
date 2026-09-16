@@ -1,8 +1,7 @@
 var searchData=
 [
-  ['index_0',['index',['../structdiet_1_1fridge.html#abeb658b1f7c6ab5caf0cd6d017d29bca',1,'diet::fridge']]],
-  ['index_5fbuilder_1',['index_builder',['../structdiet_1_1fridge.html#a0ccf9d4f8b10257819e6fc9f538e64dc',1,'diet::fridge']]],
-  ['index_5fbuilder_5ftype_2',['index_builder_type',['../structdiet_1_1cola__local__merge__job.html#a3b44376f0e1c9bf9e05c2bcbb437eacc',1,'diet::cola_local_merge_job']]],
-  ['index_5fpointer_3',['index_pointer',['../structdiet_1_1mapped__cola__blob.html#aeaed25467e737fd799bdb2132c255053',1,'diet::mapped_cola_blob']]],
-  ['index_5ftype_4',['index_type',['../structdiet_1_1cola__index__builder.html#a7fc1e8ed57a2da6b5c377c5cee3d2c83',1,'diet::cola_index_builder::index_type'],['../structdiet_1_1cola__local__merge__job.html#a7f5070c404b2039e40896d219ce14849',1,'diet::cola_local_merge_job::index_type'],['../structdiet_1_1mapped__blob.html#ad4bec1b80c04d2a9963ae96d543f944e',1,'diet::mapped_blob::index_type'],['../structdiet_1_1mapped__cola__blob.html#a4435ce3d8d921c2530392e2c5bcc2f62',1,'diet::mapped_cola_blob::index_type']]]
+  ['element_0',['element',['../structeverett_1_1wrapping__fingerprint__algebra.html#abb44a0eb1b0db21c0d249a83da82afde',1,'everett::wrapping_fingerprint_algebra::element'],['../structeverett_1_1table__fingerprint.html#a0e12b35a97f9f94758febb6e968462b3',1,'everett::table_fingerprint::element'],['../structeverett_1_1pin__set.html#a57f341ec989bb541a64d7832f6827231',1,'everett::pin_set::element'],['../structeverett_1_1reference__world.html#aec50c9d37d72a75b84ef580dd65bc4c7',1,'everett::reference_world::element']]],
+  ['encoding_1',['encoding',['../structeverett_1_1encoded__sort.html#a38515712ec535260598cabee4274fe09',1,'everett::encoded_sort::encoding'],['../structeverett_1_1unsorted.html#ad21c4d99154fe6ae8ce81588d1a05ceb',1,'everett::unsorted::encoding'],['../structeverett_1_1registry__detail_1_1leaf_3_01_s_00_01false_01_4.html#a1b7de86368aa51a503ffc90115bc9d7a',1,'everett::registry_detail::leaf&lt; S, false &gt;::encoding']]],
+  ['engine_2',['engine',['../namespaceeverett_1_1active__detail.html#a7adbb892585ff0c67ddba7e09713bc13',1,'everett::active_detail']]],
+  ['engine_5ftype_3',['engine_type',['../structeverett_1_1connection.html#a443f8a2ce7e843153b94e822bd47a646',1,'everett::connection::engine_type'],['../structeverett_1_1replacement__rebuild__engine.html#a2942fdc9e11836939b0dd6073567994f',1,'everett::replacement_rebuild_engine::engine_type']]]
 ];

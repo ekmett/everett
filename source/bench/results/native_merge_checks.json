@@ -102,7 +102,7 @@
   "checked": "All stored input-header files and source snapshots match recorded hashes; all completed-run payload sizes and complete-output fingerprints agree for matching fixtures. Direct expected-array/key-value comparisons run in the harness.",
   "framing_validation": {
     "revision": "819578c53e67c839eab3bc285f0dca2217262fbb",
-    "gate_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-124938-zpzcraqb/output.log",
+    "gate_log": "/workspace/game/build-agent-logs/20260915-124938-zpzcraqb/output.log",
     "ctests": [
       "native_writer",
       "native_writer_allocations",
@@ -114,6 +114,6 @@
     "result": "6/6 passed",
     "ctest_seconds": 18.01
   },
-  "isolated_timing_gate_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-125531-em436y59/output.log",
-  "final_timing_gate_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-125702-yp4mkuzv/output.log"
+  "isolated_timing_gate_log": "/workspace/game/build-agent-logs/20260915-125531-em436y59/output.log",
+  "final_timing_gate_log": "/workspace/game/build-agent-logs/20260915-125702-yp4mkuzv/output.log"
 }

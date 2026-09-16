@@ -34,7 +34,7 @@
       "-Wextra",
       "-Wpedantic",
       "-Werror",
-      "-DDIET_QUERY_COMPARE_W16=1",
+      "-DEVERETT_QUERY_COMPARE_W16=1",
       "-Ibuild-query-absolute-release/candidate-headers/include",
       "build-query-absolute-release/query_absolute_work.cc",
       "-o",

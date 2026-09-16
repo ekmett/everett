@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: COLA Borrowed Payload Sharing</title>
+<title>Everett: COLA Borrowed Payload Sharing</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -79,7 +79,7 @@ $(function() {
   <div class="headertitle"><div class="title">COLA Borrowed Payload Sharing</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>I kept this prototype off main: current Diet retains inline borrowed payloads and its existing builder API. The two unconditional allocations, extra default owner storage and inability to reuse persisted pairs do not justify adoption from these overlapping timings.</p>
+<div class="textblock"><p>I kept this prototype off main: current Everett retains inline borrowed payloads and its existing builder API. The two unconditional allocations, extra default owner storage and inability to reuse persisted pairs do not justify adoption from these overlapping timings.</p>
 <p>I measured an optional in-memory reuse path for an unchanged target route. The builder shares that route’s immutable borrowed FC/EF owner and rebuilds its ranks, cut LCPs and false-borrow flags. It preserves the existing traversal and checks.</p>
 <p>The prototype preserves exact complete IX03 bytes. Both-route reuse used fewer allocations and had lower build medians in these fixtures, but every observed timing range overlaps its corresponding control. Default build and full-query medians were approximately flat. These measurements do not establish a general speedup or an on-disk storage saving.</p>
 <h1><a class="anchor" id="scope-and-ownership"></a>
@@ -92,7 +92,7 @@ Scope and ownership</h1>
 </ul>
 <h1><a class="anchor" id="method"></a>
 Method</h1>
-<p>Baseline: <code>df1cb2dce83280503d4c2276dffbcace4a26a914</code>. Candidate: <code>63c5de6</code> (only <code><a class="el" href="cola__index_8h.html" title="Declares dual-target main/secondary fractional indexes for COLA.">include/diet/cola_index.h</a></code>). Apple Clang 21, arm64 M2 Max, C++20 <code>-O3 -DNDEBUG</code> and strict warnings. All heavy work used <code>cpu-heavy</code>, with at most two concurrent compiler processes.</p>
+<p>Baseline: <code>df1cb2dce83280503d4c2276dffbcace4a26a914</code>. Candidate: <code>63c5de6</code> (only <code><a class="el" href="cola__index_8h.html" title="Declares dual-target main/secondary fractional indexes for COLA.">include/everett/cola_index.h</a></code>). Apple Clang 21, arm64 M2 Max, C++20 <code>-O3 -DNDEBUG</code> and strict warnings. All heavy work used <code>cpu-heavy</code>, with at most two concurrent compiler processes.</p>
 <p>Each byte or partial-bit <a href="source/bench/cola_payload.cc">fixture</a> uses K3/K15 and W16, 2,048 local native records, a 4,096-record main target with a deeper main and secondary, and a 4,096-record secondary target. Keys share either 0 or 4,096 prefix bytes. Original integer IDs independently determine every full-query match multiplicity; all values are checked against original literals. The eight complete IX03 outputs are compared byte-for-byte across modes, processes and implementations.</p>
 <p>Five alternating baseline/candidate processes each perform one warm round and three recorded rounds with the default path alone. A separate five-process candidate run rotates default, main-only, secondary-only and both-route reuse. I compare reuse only to its control in that second run, not to the earlier baseline run. Reuse sources have different local native keys and, for one-route reuse, a different opposite target.</p>
 <p>Build timing includes constructor, all steps, finish and builder destruction; it excludes source preparation, serialization and destruction of the returned index. Query timing includes owned query creation, complete traversal and consumption of all returned value bytes and ordinals, but excludes root preparation. Each query round has 4,096 deterministic hits/misses and is preceded by a full independent answer check. Allocation tracking runs in separate binaries and is never used for timing.</p>
@@ -170,9 +170,7 @@ Allocation accounting</h1>
 Correctness and reproduction</h1>
 <p>Independent tests cover same-content/different-object ineligibility and fallback, present empty and absent targets, builder moves, moved-from reuse sources, old-graph release, pointer identity, and real mapped-input artifacts that survive source unlinking. Strict O3 ASan/UBSan tests and an O1 ASan/UBSan run of the complete harness passed. The earlier scalar route-stability regression independently checks FC bits, EF packing, changed ranks/cuts and local-equality flags.</p>
 <p>Run the exact benchmark under the host resource gate:</p>
-<div class="fragment"><div class="line">python3 /Users/ekmett/cult/game/tools/resource_run.py --resource cpu-heavy \</div>
-<div class="line">  --build-dir &quot;$PWD/build-payload-reproduce&quot; -- \</div>
-<div class="line">  python3 bench/cola_payload.py --baseline df1cb2d \</div>
+<div class="fragment"><div class="line">python3 bench/cola_payload.py --baseline df1cb2d \</div>
 <div class="line">  --candidate-patch bench/results/cola_payload/candidate.patch \</div>
 <div class="line">  --build-dir build-payload-reproduce --trials 5 --rounds 3</div>
 </div><!-- fragment --><p>The <a href="source/bench/cola_payload.py">reproduction runner</a> applies the <a href="source/bench/results/cola_payload/candidate.patch">archived one-header patch</a> only inside its private candidate snapshot and checks its provenance before compiling. No experimental Git ref is needed in a fresh clone. The <a href="source/bench/results/cola_payload/measured_runner.py">recorded runner</a> retains the measurement procedure; the current runner also supports the archived patch and normalizes snapshot names, recording the resulting source hashes separately.</p>

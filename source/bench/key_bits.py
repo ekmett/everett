@@ -10,6 +10,7 @@
 # \endlicense
 """Compare identical key/bit fixtures using a pinned baseline and current headers."""
 from snapshot import Snapshot
+from fixture import self_contained
 
 import argparse
 import csv
@@ -67,9 +68,9 @@ def main():
         overlay = ["profile.h", "front.h", "key_detail.h"]
         overlay_snapshot = Snapshot(repo, candidate_revision) if args.candidate else None
         for name in overlay:
-            path = "include/diet/" + name
+            path = "include/everett/" + name
             contents = overlay_snapshot.read(path) if overlay_snapshot else (repo / path).read_bytes()
-            (candidate / "diet" / name).write_bytes(contents)
+            (candidate / "everett" / name).write_bytes(contents)
         if overlay_snapshot: normalizations[candidate_revision] = overlay_snapshot.metadata()
         dependency_revision = BASE
     else:
@@ -86,6 +87,9 @@ def main():
     fixture_path = "bench/key_bits.cc"
     fixture_snapshot = Snapshot(repo, harness_revision) if args.harness else None
     source = fixture_snapshot.read(fixture_path) if fixture_snapshot else (repo / fixture_path).read_bytes()
+    adapter = (fixture_snapshot.read("bench/policy_compat.h")
+               if fixture_snapshot and b'#include "policy_compat.h"' in source else None)
+    source = self_contained(source, adapter)
     source_snapshot = build / "key_bits.cc"
     source_snapshot.write_bytes(source)
     compiler = shlex.split(os.environ.get("CXX", "clang++"))
@@ -130,7 +134,7 @@ def main():
                 "compiler": subprocess.check_output([*compiler, "--version"], text=True), "flags": flags,
                 "platform": platform.platform(), "machine": platform.machine(), "trials": args.trials,
                 "work": args.work, "sanitize": args.sanitize,
-                "byte_comparison_api": {"baseline": "front", "candidate": "front" if (candidate / "diet/front.h").exists() else "profile"}}
+                "byte_comparison_api": {"baseline": "front", "candidate": "front" if (candidate / "everett/front.h").exists() else "profile"}}
     output.with_suffix(".json").write_text(json.dumps(metadata, indent=2) + "\n")
     print(output)
 

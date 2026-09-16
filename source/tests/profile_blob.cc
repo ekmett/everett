@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Diet's profile blob behavior.
+ * \brief Tests Everett's profile blob behavior.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/profile_blob.h>
+#include <everett/profile_blob.h>
 
 #include <algorithm>
 #include <array>
@@ -26,7 +26,7 @@
 #include <vector>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -301,7 +301,7 @@ namespace {
     auto retained = original;
     auto replacement = original.reindex(new_samples);
     require(&replacement.native() == &original.native(), "reindex shares exact native FC allocation");
-    require(replacement.native().bytes().data() == retained.native().bytes().data(), "retained cola keeps native bytes");
+    require(replacement.native().bytes().data() == retained.native().bytes().data(), "retained world keeps native bytes");
     for (std::size_t i = 0; i != old_samples.size(); ++i) {
       require(original.false_borrow(i) && retained.false_borrow(i), "old index keeps equality flags");
       require(!replacement.false_borrow(i), "new index recomputes equality flags");
@@ -349,10 +349,10 @@ namespace {
 int main() {
   try {
     [&]<std::size_t... K>(std::index_sequence<K...>) {
-      (profile_suite<storage_policy<profile_unit::byte, variable_values, K>>(), ...);
-      (profile_suite<storage_policy<profile_unit::byte, fixed_values<3>, K>>(), ...);
-      (profile_suite<storage_policy<profile_unit::bit, variable_values, K>>(), ...);
-      (profile_suite<storage_policy<profile_unit::bit, fixed_values<5>, K>>(), ...);
+      (profile_suite<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, K>>(), ...);
+      (profile_suite<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<3>>>>, K>>(), ...);
+      (profile_suite<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, K>>(), ...);
+      (profile_suite<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<5>>>>, K>>(), ...);
     }(std::index_sequence<3, 7, 15, 31>{});
     std::cout << "Typed byte/bit blob, cascade, false-borrow and index-reuse oracles passed\n";
   } catch (std::exception const & error) {

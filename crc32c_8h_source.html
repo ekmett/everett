@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: include/diet/crc32c.h Source File</title>
+<title>Everett: include/everett/crc32c.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -81,7 +81,7 @@ $(document).ready(function() { init_codefold(0); });
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_c7071025d4f9f9a9bd9b595194cb3993.html">diet</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_684ffc4129be141202002a94cb0feed4.html">everett</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -111,32 +111,32 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
 <div class="foldopen" id="foldopen00034" data-start="{" data-end="}">
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="namespacediet_1_1crc32c__detail.html">   34</a></span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacediet_1_1crc32c__detail.html">diet::crc32c_detail</a> {</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="namespaceeverett_1_1crc32c__detail.html">   34</a></span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceeverett_1_1crc32c__detail.html">everett::crc32c_detail</a> {</div>
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>  <span class="comment">// Reflected polynomial representation: bit31 is the multiplicative unit,</span></div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>  <span class="comment">// and one rightward step multiplies by x modulo the Castagnoli polynomial.</span></div>
 <div class="foldopen" id="foldopen00037" data-start="{" data-end="}">
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno"><a class="line" href="namespacediet_1_1crc32c__detail.html#a4fa5a678bd7d60148397dd72c071f685">   37</a></span>  <span class="keyword">constexpr</span> std::uint32_t <a class="code hl_function" href="namespacediet_1_1crc32c__detail.html#a4fa5a678bd7d60148397dd72c071f685">multiply_polynomial</a>(std::uint32_t a, std::uint32_t b) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno"><a class="line" href="namespaceeverett_1_1crc32c__detail.html#a5a40c55fef0379128fbb4f14db53e707">   37</a></span>  <span class="keyword">constexpr</span> std::uint32_t <a class="code hl_function" href="namespaceeverett_1_1crc32c__detail.html#a5a40c55fef0379128fbb4f14db53e707">multiply_polynomial</a>(std::uint32_t a, std::uint32_t b) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    std::uint32_t result = 0;</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keywordflow">for</span> (std::uint32_t <a class="code hl_enumvalue" href="namespacediet.html#ad2bf0e12cd42c0b6276234a7c07342ddaf67169dfbf72c4ca285e9ee12e3e9ac5">bit</a> = 1u &lt;&lt; 31; <a class="code hl_enumvalue" href="namespacediet.html#ad2bf0e12cd42c0b6276234a7c07342ddaf67169dfbf72c4ca285e9ee12e3e9ac5">bit</a>; <a class="code hl_enumvalue" href="namespacediet.html#ad2bf0e12cd42c0b6276234a7c07342ddaf67169dfbf72c4ca285e9ee12e3e9ac5">bit</a> &gt;&gt;= 1) {</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>      <span class="keywordflow">if</span> (a &amp; <a class="code hl_enumvalue" href="namespacediet.html#ad2bf0e12cd42c0b6276234a7c07342ddaf67169dfbf72c4ca285e9ee12e3e9ac5">bit</a>) result ^= b;</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    <span class="keywordflow">for</span> (std::uint32_t <a class="code hl_enumvalue" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aaf67169dfbf72c4ca285e9ee12e3e9ac5">bit</a> = 1u &lt;&lt; 31; <a class="code hl_enumvalue" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aaf67169dfbf72c4ca285e9ee12e3e9ac5">bit</a>; <a class="code hl_enumvalue" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aaf67169dfbf72c4ca285e9ee12e3e9ac5">bit</a> &gt;&gt;= 1) {</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>      <span class="keywordflow">if</span> (a &amp; <a class="code hl_enumvalue" href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aaf67169dfbf72c4ca285e9ee12e3e9ac5">bit</a>) result ^= b;</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>      b = (b &gt;&gt; 1) ^ (0x82f63b78u &amp; (0u - (b &amp; 1)));</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    }</div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="keywordflow">return</span> result;</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>  }</div>
 </div>
 <div class="foldopen" id="foldopen00045" data-start="{" data-end="};">
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="namespacediet_1_1crc32c__detail.html#a3fed3f8b7c7f69ca39cd15121f9e8997">   45</a></span>  <span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_variable" href="namespacediet_1_1crc32c__detail.html#a3fed3f8b7c7f69ca39cd15121f9e8997">byte_powers</a> = [] {</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="namespaceeverett_1_1crc32c__detail.html#a4c906508ae3819e8d326ac271ff9ca70">   45</a></span>  <span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_variable" href="namespaceeverett_1_1crc32c__detail.html#a4c906508ae3819e8d326ac271ff9ca70">byte_powers</a> = [] {</div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    std::array&lt;std::uint32_t, 64&gt; result{};</div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    result[0] = 1u &lt;&lt; 23; <span class="comment">// x^8</span></div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordflow">for</span> (<span class="keywordtype">unsigned</span> i = 1; i != result.size(); ++i)</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>      result[i] = <a class="code hl_function" href="namespacediet_1_1crc32c__detail.html#a4fa5a678bd7d60148397dd72c071f685">multiply_polynomial</a>(result[i - 1], result[i - 1]);</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>      result[i] = <a class="code hl_function" href="namespaceeverett_1_1crc32c__detail.html#a5a40c55fef0379128fbb4f14db53e707">multiply_polynomial</a>(result[i - 1], result[i - 1]);</div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keywordflow">return</span> result;</div>
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>  }();</div>
 </div>
 <div class="foldopen" id="foldopen00052" data-start="{" data-end="}">
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="namespacediet_1_1crc32c__detail.html#a45e744967d22716d416f12d4e0112c9a">   52</a></span>  <span class="keyword">inline</span> std::uint32_t <a class="code hl_function" href="namespacediet_1_1crc32c__detail.html#a45e744967d22716d416f12d4e0112c9a">shift</a>(std::uint32_t crc, std::uint64_t bytes) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="namespaceeverett_1_1crc32c__detail.html#a8749966915803c2ca84506bb49110097">   52</a></span>  <span class="keyword">inline</span> std::uint32_t <a class="code hl_function" href="namespaceeverett_1_1crc32c__detail.html#a8749966915803c2ca84506bb49110097">shift</a>(std::uint32_t crc, std::uint64_t bytes) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="keywordflow">for</span> (<span class="keywordtype">unsigned</span> i = 0; bytes; ++i, bytes &gt;&gt;= 1)</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>      <span class="keywordflow">if</span> (bytes &amp; 1) crc = <a class="code hl_function" href="namespacediet_1_1crc32c__detail.html#a4fa5a678bd7d60148397dd72c071f685">multiply_polynomial</a>(<a class="code hl_variable" href="namespacediet_1_1crc32c__detail.html#a3fed3f8b7c7f69ca39cd15121f9e8997">byte_powers</a>[i], crc);</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>      <span class="keywordflow">if</span> (bytes &amp; 1) crc = <a class="code hl_function" href="namespaceeverett_1_1crc32c__detail.html#a5a40c55fef0379128fbb4f14db53e707">multiply_polynomial</a>(<a class="code hl_variable" href="namespaceeverett_1_1crc32c__detail.html#a4c906508ae3819e8d326ac271ff9ca70">byte_powers</a>[i], crc);</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>    <span class="keywordflow">return</span> crc;</div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>  }</div>
 </div>
@@ -144,7 +144,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>  <span class="comment">// Generated C kernels load scalar words through this C++ alias-safe bridge.</span></div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>  <span class="comment">// Exactly sizeof(T) bytes are read, including unaligned and mmap-tail inputs.</span></div>
 <div class="foldopen" id="foldopen00060" data-start="{" data-end="}">
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno"><a class="line" href="namespacediet_1_1crc32c__detail.html#ad2453b99453e12db4d59d1b0cd1501c6">   60</a></span>  <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; <span class="keyword">inline</span> T <a class="code hl_function" href="namespacediet_1_1crc32c__detail.html#ad2453b99453e12db4d59d1b0cd1501c6">load_little</a>(<span class="keywordtype">void</span> <span class="keyword">const</span> * bytes) <span class="keyword">noexcept</span> {</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno"><a class="line" href="namespaceeverett_1_1crc32c__detail.html#a4a46ceaf46514195b2a4f5ea5f01c062">   60</a></span>  <span class="keyword">template</span> &lt;<span class="keyword">class</span> T&gt; <span class="keyword">inline</span> T <a class="code hl_function" href="namespaceeverett_1_1crc32c__detail.html#a4a46ceaf46514195b2a4f5ea5f01c062">load_little</a>(<span class="keywordtype">void</span> <span class="keyword">const</span> * bytes) <span class="keyword">noexcept</span> {</div>
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>    T value;</div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    std::memcpy(&amp;value, bytes, <span class="keyword">sizeof</span>(T));</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="keywordflow">if</span> <span class="keyword">constexpr</span> (std::endian::native == std::endian::big) {</div>
@@ -160,37 +160,37 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>}</div>
 </div>
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="preprocessor">#include &lt;diet/detail/crc32c_portable.inc&gt;</span></div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="preprocessor">#include &lt;everett/detail/crc32c_portable.inc&gt;</span></div>
 <div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="preprocessor">#if defined(__aarch64__) &amp;&amp; defined(__ARM_FEATURE_CRC32) &amp;&amp; (defined(__GNUC__) || defined(__clang__))</span></div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="preprocessor">#include &lt;diet/detail/crc32c_arm_scalar.inc&gt;</span></div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span><span class="preprocessor">#include &lt;everett/detail/crc32c_arm_scalar.inc&gt;</span></div>
 <div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span><span class="preprocessor">#if (defined(__ARM_FEATURE_CRYPTO) &amp;&amp; __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)</span></div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span><span class="preprocessor">#include &lt;diet/detail/crc32c_arm_pmull.inc&gt;</span></div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span><span class="preprocessor">#include &lt;everett/detail/crc32c_arm_pmull.inc&gt;</span></div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span><span class="preprocessor">#if defined(__ARM_FEATURE_SHA3)</span></div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="preprocessor">#include &lt;diet/detail/crc32c_arm_eor3.inc&gt;</span></div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span><span class="preprocessor">#include &lt;everett/detail/crc32c_arm_eor3.inc&gt;</span></div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="preprocessor">#elif defined(__x86_64__) &amp;&amp; defined(__SSE4_2__)</span></div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="preprocessor">#include &lt;diet/detail/crc32c_x86_scalar.inc&gt;</span></div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="preprocessor">#include &lt;everett/detail/crc32c_x86_scalar.inc&gt;</span></div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span><span class="preprocessor">#if defined(__PCLMUL__)</span></div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="preprocessor">#include &lt;diet/detail/crc32c_x86_pclmul.inc&gt;</span></div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="preprocessor">#include &lt;everett/detail/crc32c_x86_pclmul.inc&gt;</span></div>
 <div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span><span class="preprocessor">#if defined(__AVX512F__) &amp;&amp; defined(__AVX512VL__)</span></div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span><span class="preprocessor">#include &lt;diet/detail/crc32c_x86_avx512.inc&gt;</span></div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span><span class="preprocessor">#include &lt;everett/detail/crc32c_x86_avx512.inc&gt;</span></div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span><span class="preprocessor">#if defined(__VPCLMULQDQ__)</span></div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span><span class="preprocessor">#include &lt;diet/detail/crc32c_x86_vpclmul.inc&gt;</span></div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span><span class="preprocessor">#include &lt;everett/detail/crc32c_x86_vpclmul.inc&gt;</span></div>
 <div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespacediet.html">diet</a> {</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span><span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a> {</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>  <span class="comment">// Combine finalized CRCs of A and B into CRC(A || B) without rereading either</span></div>
 <div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>  <span class="comment">// input. second_bytes is B&#39;s physical byte length. The CRC of empty B is 0.</span></div>
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>  <span class="comment">// Lengths span all 64 bits; no bytes-to-bits multiplication can overflow.</span></div>
 <div class="foldopen" id="foldopen00101" data-start="{" data-end="}">
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno"><a class="line" href="namespacediet.html#a37b6def7d1d8232e3658a048c53de3c2">  101</a></span>  <span class="keyword">inline</span> std::uint32_t <a class="code hl_function" href="namespacediet.html#a37b6def7d1d8232e3658a048c53de3c2">crc32c_combine</a>(std::uint32_t first, std::uint32_t second,</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno"><a class="line" href="namespaceeverett.html#a7d1daae945389c42c996574afcfc139f">  101</a></span>  <span class="keyword">inline</span> std::uint32_t <a class="code hl_function" href="namespaceeverett.html#a7d1daae945389c42c996574afcfc139f">crc32c_combine</a>(std::uint32_t first, std::uint32_t second,</div>
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>                                    std::uint64_t second_bytes) <span class="keyword">noexcept</span> {</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespacediet_1_1crc32c__detail.html#a45e744967d22716d416f12d4e0112c9a">crc32c_detail::shift</a>(first, second_bytes) ^ second;</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keywordflow">return</span> <a class="code hl_function" href="namespaceeverett_1_1crc32c__detail.html#a8749966915803c2ca84506bb49110097">crc32c_detail::shift</a>(first, second_bytes) ^ second;</div>
 <div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>  }</div>
 </div>
 <div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
@@ -200,7 +200,7 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>  <span class="comment">// previous_crc is the finalized result of the preceding chunk, or zero for</span></div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>  <span class="comment">// a new stream. Empty chunks preserve it; callers do not invert the state.</span></div>
 <div class="foldopen" id="foldopen00111" data-start="{" data-end="}">
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno"><a class="line" href="namespacediet.html#aa44af34660164b7d629e7a71da9748b8">  111</a></span>  <span class="keyword">inline</span> std::uint32_t <a class="code hl_function" href="namespacediet.html#aa44af34660164b7d629e7a71da9748b8">crc32c</a>(std::span&lt;std::byte const&gt; bytes,</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno"><a class="line" href="namespaceeverett.html#a1e83ad80494eac7bb571ae6902ec44f4">  111</a></span>  <span class="keyword">inline</span> std::uint32_t <a class="code hl_function" href="namespaceeverett.html#a1e83ad80494eac7bb571ae6902ec44f4">crc32c</a>(std::span&lt;std::byte const&gt; bytes,</div>
 <div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                              std::uint32_t previous_crc = 0) noexcept {</div>
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    <span class="keyword">auto</span> data = <span class="keyword">reinterpret_cast&lt;</span><span class="keywordtype">char</span> <span class="keyword">const </span>*<span class="keyword">&gt;</span>(bytes.data());</div>
 <div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="keyword">auto</span> size = bytes.size();</div>
@@ -233,15 +233,15 @@ $(document).ready(function() { init_codefold(0); });
 <div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span>  }</div>
 </div>
 <div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span>}</div>
-<div class="ttc" id="anamespacediet_1_1crc32c__detail_html"><div class="ttname"><a href="namespacediet_1_1crc32c__detail.html">diet::crc32c_detail</a></div><div class="ttdef"><b>Definition</b> crc32c.h:34</div></div>
-<div class="ttc" id="anamespacediet_1_1crc32c__detail_html_a3fed3f8b7c7f69ca39cd15121f9e8997"><div class="ttname"><a href="namespacediet_1_1crc32c__detail.html#a3fed3f8b7c7f69ca39cd15121f9e8997">diet::crc32c_detail::byte_powers</a></div><div class="ttdeci">constexpr auto byte_powers</div><div class="ttdef"><b>Definition</b> crc32c.h:45</div></div>
-<div class="ttc" id="anamespacediet_1_1crc32c__detail_html_a45e744967d22716d416f12d4e0112c9a"><div class="ttname"><a href="namespacediet_1_1crc32c__detail.html#a45e744967d22716d416f12d4e0112c9a">diet::crc32c_detail::shift</a></div><div class="ttdeci">std::uint32_t shift(std::uint32_t crc, std::uint64_t bytes) noexcept</div><div class="ttdef"><b>Definition</b> crc32c.h:52</div></div>
-<div class="ttc" id="anamespacediet_1_1crc32c__detail_html_a4fa5a678bd7d60148397dd72c071f685"><div class="ttname"><a href="namespacediet_1_1crc32c__detail.html#a4fa5a678bd7d60148397dd72c071f685">diet::crc32c_detail::multiply_polynomial</a></div><div class="ttdeci">constexpr std::uint32_t multiply_polynomial(std::uint32_t a, std::uint32_t b) noexcept</div><div class="ttdef"><b>Definition</b> crc32c.h:37</div></div>
-<div class="ttc" id="anamespacediet_1_1crc32c__detail_html_ad2453b99453e12db4d59d1b0cd1501c6"><div class="ttname"><a href="namespacediet_1_1crc32c__detail.html#ad2453b99453e12db4d59d1b0cd1501c6">diet::crc32c_detail::load_little</a></div><div class="ttdeci">T load_little(void const *bytes) noexcept</div><div class="ttdef"><b>Definition</b> crc32c.h:60</div></div>
-<div class="ttc" id="anamespacediet_html"><div class="ttname"><a href="namespacediet.html">diet</a></div><div class="ttdef"><b>Definition</b> cola.h:35</div></div>
-<div class="ttc" id="anamespacediet_html_a37b6def7d1d8232e3658a048c53de3c2"><div class="ttname"><a href="namespacediet.html#a37b6def7d1d8232e3658a048c53de3c2">diet::crc32c_combine</a></div><div class="ttdeci">std::uint32_t crc32c_combine(std::uint32_t first, std::uint32_t second, std::uint64_t second_bytes) noexcept</div><div class="ttdef"><b>Definition</b> crc32c.h:101</div></div>
-<div class="ttc" id="anamespacediet_html_aa44af34660164b7d629e7a71da9748b8"><div class="ttname"><a href="namespacediet.html#aa44af34660164b7d629e7a71da9748b8">diet::crc32c</a></div><div class="ttdeci">std::uint32_t crc32c(std::span&lt; std::byte const &gt; bytes, std::uint32_t previous_crc=0) noexcept</div><div class="ttdef"><b>Definition</b> crc32c.h:111</div></div>
-<div class="ttc" id="anamespacediet_html_ad2bf0e12cd42c0b6276234a7c07342ddaf67169dfbf72c4ca285e9ee12e3e9ac5"><div class="ttname"><a href="namespacediet.html#ad2bf0e12cd42c0b6276234a7c07342ddaf67169dfbf72c4ca285e9ee12e3e9ac5">diet::profile_unit::bit</a></div><div class="ttdeci">@ bit</div></div>
+<div class="ttc" id="anamespaceeverett_1_1crc32c__detail_html"><div class="ttname"><a href="namespaceeverett_1_1crc32c__detail.html">everett::crc32c_detail</a></div><div class="ttdef"><b>Definition</b> crc32c.h:34</div></div>
+<div class="ttc" id="anamespaceeverett_1_1crc32c__detail_html_a4a46ceaf46514195b2a4f5ea5f01c062"><div class="ttname"><a href="namespaceeverett_1_1crc32c__detail.html#a4a46ceaf46514195b2a4f5ea5f01c062">everett::crc32c_detail::load_little</a></div><div class="ttdeci">T load_little(void const *bytes) noexcept</div><div class="ttdef"><b>Definition</b> crc32c.h:60</div></div>
+<div class="ttc" id="anamespaceeverett_1_1crc32c__detail_html_a4c906508ae3819e8d326ac271ff9ca70"><div class="ttname"><a href="namespaceeverett_1_1crc32c__detail.html#a4c906508ae3819e8d326ac271ff9ca70">everett::crc32c_detail::byte_powers</a></div><div class="ttdeci">constexpr auto byte_powers</div><div class="ttdef"><b>Definition</b> crc32c.h:45</div></div>
+<div class="ttc" id="anamespaceeverett_1_1crc32c__detail_html_a5a40c55fef0379128fbb4f14db53e707"><div class="ttname"><a href="namespaceeverett_1_1crc32c__detail.html#a5a40c55fef0379128fbb4f14db53e707">everett::crc32c_detail::multiply_polynomial</a></div><div class="ttdeci">constexpr std::uint32_t multiply_polynomial(std::uint32_t a, std::uint32_t b) noexcept</div><div class="ttdef"><b>Definition</b> crc32c.h:37</div></div>
+<div class="ttc" id="anamespaceeverett_1_1crc32c__detail_html_a8749966915803c2ca84506bb49110097"><div class="ttname"><a href="namespaceeverett_1_1crc32c__detail.html#a8749966915803c2ca84506bb49110097">everett::crc32c_detail::shift</a></div><div class="ttdeci">std::uint32_t shift(std::uint32_t crc, std::uint64_t bytes) noexcept</div><div class="ttdef"><b>Definition</b> crc32c.h:52</div></div>
+<div class="ttc" id="anamespaceeverett_html"><div class="ttname"><a href="namespaceeverett.html">everett</a></div><div class="ttdef"><b>Definition</b> active_engine.h:18</div></div>
+<div class="ttc" id="anamespaceeverett_html_a1e83ad80494eac7bb571ae6902ec44f4"><div class="ttname"><a href="namespaceeverett.html#a1e83ad80494eac7bb571ae6902ec44f4">everett::crc32c</a></div><div class="ttdeci">std::uint32_t crc32c(std::span&lt; std::byte const &gt; bytes, std::uint32_t previous_crc=0) noexcept</div><div class="ttdef"><b>Definition</b> crc32c.h:111</div></div>
+<div class="ttc" id="anamespaceeverett_html_a7d1daae945389c42c996574afcfc139f"><div class="ttname"><a href="namespaceeverett.html#a7d1daae945389c42c996574afcfc139f">everett::crc32c_combine</a></div><div class="ttdeci">std::uint32_t crc32c_combine(std::uint32_t first, std::uint32_t second, std::uint64_t second_bytes) noexcept</div><div class="ttdef"><b>Definition</b> crc32c.h:101</div></div>
+<div class="ttc" id="anamespaceeverett_html_af34893b56e145b294b646a0db54f232aaf67169dfbf72c4ca285e9ee12e3e9ac5"><div class="ttname"><a href="namespaceeverett.html#af34893b56e145b294b646a0db54f232aaf67169dfbf72c4ca285e9ee12e3e9ac5">everett::profile_unit::bit</a></div><div class="ttdeci">@ bit</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

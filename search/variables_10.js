@@ -1,20 +1,9 @@
 var searchData=
 [
-  ['ranks_5f_0',['ranks_',['../structdiet_1_1cola__index__view.html#a694385e8cb2d79f2e401739e594278d8',1,'diet::cola_index_view::ranks_'],['../structdiet_1_1cola__index.html#a37a18cae8f4d80785c60d83eaccb138e',1,'diet::cola_index::ranks_'],['../structdiet_1_1cola__index__builder.html#a18149a402b612bf93599ddbdcd556faf',1,'diet::cola_index_builder::ranks_'],['../structdiet_1_1mapped__cola__index.html#a3e6cb7fb4d9b4479c3b18fb36e092355',1,'diet::mapped_cola_index::ranks_'],['../structdiet_1_1mapped__index.html#a68d4917874c797ea7571da3920298e34',1,'diet::mapped_index::ranks_']]],
-  ['receipts_5f_1',['receipts_',['../structdiet_1_1file__index__pipeline.html#a4f17676e8905af15f86cc66a4842c6ac',1,'diet::file_index_pipeline']]],
-  ['received_5f_2',['received_',['../structdiet_1_1index__builder.html#a28482d8ca13a4579c5d4f0b9a8c445d0',1,'diet::index_builder']]],
-  ['recipe_3',['recipe',['../structdiet_1_1merge__identity.html#a385af48d1ddadce701d6dd0a25594e8d',1,'diet::merge_identity']]],
-  ['record_5f_4',['record_',['../structdiet_1_1profile__encoded__cursor.html#a697ed4cf64bf2f4627601b296f3bff0b',1,'diet::profile_encoded_cursor::record_'],['../structdiet_1_1profile__cursor.html#a8ca40a0481d0fdda04914d71c91b5b28',1,'diet::profile_cursor::record_']]],
-  ['record_5fcount_5',['record_count',['../structdiet_1_1file__header.html#a03bbe288aa6b4c76a294fc103ca8e758',1,'diet::file_header::record_count'],['../structdiet_1_1profile__metadata.html#aff699551982350935724a3df7e4615ce',1,'diet::profile_metadata::record_count']]],
-  ['records_5f_6',['records_',['../structdiet_1_1cola__run.html#ac03f1f5dd3680cc61f19234aebf9e1b5',1,'diet::cola_run']]],
-  ['request_7',['request',['../structdiet_1_1catalog__operation.html#a4a0b2f332fb20bc4214323b107b189f0',1,'diet::catalog_operation']]],
-  ['results_5f_8',['results_',['../structdiet_1_1index__pipeline.html#abd8880241b280b2cb65554941942a7b5',1,'diet::index_pipeline']]],
-  ['retained_9',['retained',['../structdiet_1_1profile__encoded__record.html#a548d67376c57ce5c9860e03ef0ee9475',1,'diet::profile_encoded_record']]],
-  ['role_10',['role',['../structdiet_1_1profile__native__writer.html#a74681875099a86934af54ece29f71255',1,'diet::profile_native_writer::role'],['../structdiet_1_1profile__metadata.html#a2a80d20ba41941e6960bfc270eebc7b3',1,'diet::profile_metadata::role'],['../structdiet_1_1profile__view.html#ad0a2bab2db84493c4e2dcdc35ae4a012',1,'diet::profile_view::role'],['../structdiet_1_1profile__encoded__cursor.html#af6d2bd3e8460e13bb989d6813aad5ca5',1,'diet::profile_encoded_cursor::role'],['../structdiet_1_1profile__cursor.html#a458966f99b73119763baac31002f5a55',1,'diet::profile_cursor::role'],['../structdiet_1_1profile__array.html#af5de7282d77d33715a9dbd82be96e71b',1,'diet::profile_array::role'],['../structdiet_1_1profile__borrowed__writer.html#a00435e2ece02a18998a34d3479f79c0b',1,'diet::profile_borrowed_writer::role']]],
-  ['root_11',['root',['../structdiet_1_1object__writer_1_1operation.html#aa190fed096381d5a45c0c33c675a4d49',1,'diet::object_writer::operation']]],
-  ['root_5f_12',['root_',['../structdiet_1_1fridge.html#a6f4699d303380303ccd2ec6fd28ab98f',1,'diet::fridge::root_'],['../structdiet_1_1object__stream.html#a432dd933efe2c73a0cc718e3af5aa007',1,'diet::object_stream::root_'],['../structdiet_1_1sqlite__catalog.html#ae754a861b5d7ab3316e4b09c2cb8169f',1,'diet::sqlite_catalog::root_']]],
-  ['round_5fid_13',['round_id',['../structdiet_1_1cola__batch.html#a2cc7504a87bde5d29bdcd1e043ea8688',1,'diet::cola_batch']]],
-  ['round_5fid_5f_14',['round_id_',['../structdiet_1_1partition__round.html#a71099aa518aeae36a4f6801715d5cd86',1,'diet::partition_round']]],
-  ['run_5f_15',['run_',['../structdiet_1_1object__stream.html#a475fffca446ed8b231dbd8f20e314ba4',1,'diet::object_stream']]],
-  ['runs_16',['runs',['../structdiet_1_1rank__block.html#a57191917bcefb10a5f1f97ab2bf31aa0',1,'diet::rank_block']]]
+  ['quantum_0',['quantum',['../structeverett_1_1replacement__rebuild__status.html#ad51aec3313ad0cd49a75a641b5294e88',1,'everett::replacement_rebuild_status::quantum'],['../structeverett_1_1replacement__rebuild__engine_1_1rebuild.html#ab92953cb1017febec496941938d7989c',1,'everett::replacement_rebuild_engine::rebuild::quantum']]],
+  ['query_1',['query',['../structeverett_1_1cola__runtime__snapshot_1_1state.html#ad707b02dcc94df21558a798781de3937',1,'everett::cola_runtime_snapshot::state::query'],['../structeverett_1_1redundant__snapshot_1_1state.html#a5eb9cb64555d3793a1a8529d9df975a4',1,'everett::redundant_snapshot::state::query'],['../structeverett_1_1redundant__runtime_1_1execution.html#a81dbe4eb1058a4cccc4f1dd03352611b',1,'everett::redundant_runtime::execution::query']]],
+  ['query_5f_2',['query_',['../structeverett_1_1profile__query__context.html#ae19021530b0451a8e4703cb11b257e7f',1,'everett::profile_query_context']]],
+  ['queue_3',['queue',['../structeverett_1_1replacement__rebuild__engine_1_1rebuild.html#ae001d86fc715f4513ac2e286aa9a9a8a',1,'everett::replacement_rebuild_engine::rebuild']]],
+  ['queue_5f_4',['queue_',['../structeverett_1_1session.html#a8f5ce4f9b36474e51d0a01ebd058d60a',1,'everett::session']]],
+  ['queued_5',['queued',['../structeverett_1_1replacement__rebuild__status.html#add09eb166622e39a1b45bbfef73aed31',1,'everett::replacement_rebuild_status']]]
 ];

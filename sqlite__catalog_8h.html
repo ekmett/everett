@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: include/diet/sqlite_catalog.h File Reference</title>
+<title>Everett: include/everett/sqlite_catalog.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -76,7 +76,7 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_c7071025d4f9f9a9bd9b595194cb3993.html">diet</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_684ffc4129be141202002a94cb0feed4.html">everett</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -93,9 +93,9 @@ $(function() {
 
 <p>Stores retained roots, timeline generations and exact file graphs in optional SQLite metadata.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;<a class="el" href="mapped__blob_8h_source.html">diet/mapped_blob.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="mapped__cola_8h_source.html">diet/mapped_cola.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="object__writer_8h_source.html">diet/object_writer.h</a>&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="el" href="mapped__blob_8h_source.html">everett/mapped_blob.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="mapped__cola_8h_source.html">everett/mapped_cola.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="object__writer_8h_source.html">everett/object_writer.h</a>&gt;</code><br />
 <code>#include &lt;sqlite3.h&gt;</code><br />
 <code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;cstddef&gt;</code><br />
@@ -116,77 +116,101 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1catalog__options.html">diet::catalog_options</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__options.html">everett::catalog_options</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1catalog__object__reservation.html">diet::catalog_object_reservation</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__object__reservation.html">everett::catalog_object_reservation</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1catalog__saved__root.html">diet::catalog_saved_root</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__saved__root.html">everett::catalog_saved_root</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1catalog__timeline__head.html">diet::catalog_timeline_head</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__native__merge.html">everett::catalog_native_merge</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1catalog__timeline__publication.html">diet::catalog_timeline_publication</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__timeline__head.html">everett::catalog_timeline_head</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1catalog__operation.html">diet::catalog_operation</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__timeline__publication.html">everett::catalog_timeline_publication</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1catalog__error.html">diet::catalog_error</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__auxiliary__roots.html">everett::catalog_auxiliary_roots</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1sqlite__catalog__ops.html">diet::sqlite_catalog_ops</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__session__head.html">everett::catalog_session_head</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1catalog__detail_1_1outcome__reader.html">diet::catalog_detail::outcome_reader</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__session__publication.html">everett::catalog_session_publication</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1catalog__detail_1_1statement.html">diet::catalog_detail::statement</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__operation.html">everett::catalog_operation</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1sqlite__catalog.html">diet::sqlite_catalog&lt; P, Ops &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__error.html">everett::catalog_error</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sqlite__catalog__ops.html">everett::sqlite_catalog_ops</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__detail_1_1outcome__reader.html">everett::catalog_detail::outcome_reader</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1catalog__detail_1_1statement.html">everett::catalog_detail::statement</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sqlite__catalog.html">everett::sqlite_catalog&lt; P, Ops &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sqlite__catalog_1_1cola__pair__descriptor.html">everett::sqlite_catalog&lt; P, Ops &gt;::cola_pair_descriptor</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sqlite__catalog_1_1cola__pair__files.html">everett::sqlite_catalog&lt; P, Ops &gt;::cola_pair_files</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1sqlite__catalog_1_1prepared__cola__pair.html">everett::sqlite_catalog&lt; P, Ops &gt;::prepared_cola_pair&lt; Mapped &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
-<tr class="memitem:namespacediet" id="r_namespacediet"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet.html">diet</a></td></tr>
+<tr class="memitem:namespaceeverett" id="r_namespaceeverett"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html">everett</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:namespacediet_1_1catalog__detail" id="r_namespacediet_1_1catalog__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html">diet::catalog_detail</a></td></tr>
+<tr class="memitem:namespaceeverett_1_1catalog__detail" id="r_namespaceeverett_1_1catalog__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html">everett::catalog_detail</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:afd266fb1de883aec345cbfd62095e8f9" id="r_afd266fb1de883aec345cbfd62095e8f9"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#afd266fb1de883aec345cbfd62095e8f9">diet::catalog_detail::bytes</a> = std::vector&lt; std::byte &gt;</td></tr>
-<tr class="separator:afd266fb1de883aec345cbfd62095e8f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af77b3ba3d6c8ca4fbb10fdc6bc18402b" id="r_af77b3ba3d6c8ca4fbb10fdc6bc18402b"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#af77b3ba3d6c8ca4fbb10fdc6bc18402b">everett::catalog_detail::bytes</a> = std::vector&lt; std::byte &gt;</td></tr>
+<tr class="separator:af77b3ba3d6c8ca4fbb10fdc6bc18402b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:a97b47ec552cb87cd8e1a11aa40be5aae" id="r_a97b47ec552cb87cd8e1a11aa40be5aae"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet.html#a97b47ec552cb87cd8e1a11aa40be5aae">diet::catalog_admission</a> { <a class="el" href="namespacediet.html#a97b47ec552cb87cd8e1a11aa40be5aaeaa21fda5ea719f17fcf0ba17d5d0b8a75">diet::trusted</a>
-, <a class="el" href="namespacediet.html#a97b47ec552cb87cd8e1a11aa40be5aaea53aefec08170b2ebed981a0a86d0dbe0">diet::scan</a>
+<tr class="memitem:a99834ef96e497098ad861535607a98f2" id="r_a99834ef96e497098ad861535607a98f2"><td class="memItemLeft" align="right" valign="top">enum class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a99834ef96e497098ad861535607a98f2">everett::catalog_admission</a> { <a class="el" href="namespaceeverett.html#a99834ef96e497098ad861535607a98f2aa21fda5ea719f17fcf0ba17d5d0b8a75">everett::trusted</a>
+, <a class="el" href="namespaceeverett.html#a99834ef96e497098ad861535607a98f2a53aefec08170b2ebed981a0a86d0dbe0">everett::scan</a>
  }</td></tr>
-<tr class="separator:a97b47ec552cb87cd8e1a11aa40be5aae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a99834ef96e497098ad861535607a98f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a044914aded53054bbc56973f60022be3" id="r_a044914aded53054bbc56973f60022be3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#a044914aded53054bbc56973f60022be3">diet::catalog_detail::number</a> (<a class="el" href="namespacediet_1_1catalog__detail.html#afd266fb1de883aec345cbfd62095e8f9">bytes</a> &amp;out, std::uint64_t value)</td></tr>
-<tr class="separator:a044914aded53054bbc56973f60022be3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a75eb4bf0c675692c80701a756bab04a4" id="r_a75eb4bf0c675692c80701a756bab04a4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#a75eb4bf0c675692c80701a756bab04a4">diet::catalog_detail::field</a> (<a class="el" href="namespacediet_1_1catalog__detail.html#afd266fb1de883aec345cbfd62095e8f9">bytes</a> &amp;out, std::string_view value)</td></tr>
-<tr class="separator:a75eb4bf0c675692c80701a756bab04a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28be87d35e64c834977ae2905656609a" id="r_a28be87d35e64c834977ae2905656609a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#a28be87d35e64c834977ae2905656609a">diet::catalog_detail::identity</a> (<a class="el" href="namespacediet_1_1catalog__detail.html#afd266fb1de883aec345cbfd62095e8f9">bytes</a> &amp;out, <a class="el" href="structdiet_1_1object__id.html">object_id</a> const &amp;value)</td></tr>
-<tr class="separator:a28be87d35e64c834977ae2905656609a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a069b0cb1dbc37c8452e6aef92fbc035e" id="r_a069b0cb1dbc37c8452e6aef92fbc035e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#a069b0cb1dbc37c8452e6aef92fbc035e">diet::catalog_detail::pair</a> (<a class="el" href="namespacediet_1_1catalog__detail.html#afd266fb1de883aec345cbfd62095e8f9">bytes</a> &amp;out, <a class="el" href="structdiet_1_1blob__identity.html">blob_identity</a> const &amp;value)</td></tr>
-<tr class="separator:a069b0cb1dbc37c8452e6aef92fbc035e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a399908cea37a04093032d7e0531a7680" id="r_a399908cea37a04093032d7e0531a7680"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#a399908cea37a04093032d7e0531a7680">diet::catalog_detail::timeline</a> (<a class="el" href="namespacediet_1_1catalog__detail.html#afd266fb1de883aec345cbfd62095e8f9">bytes</a> &amp;out, <a class="el" href="structdiet_1_1catalog__timeline__head.html">catalog_timeline_head</a> const &amp;value)</td></tr>
-<tr class="separator:a399908cea37a04093032d7e0531a7680"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab3760af9ac7e1636ad257187829af0cd" id="r_ab3760af9ac7e1636ad257187829af0cd"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#ab3760af9ac7e1636ad257187829af0cd">diet::catalog_detail::name</a> (std::string_view value)</td></tr>
-<tr class="separator:ab3760af9ac7e1636ad257187829af0cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a303d95fe17c1f1601c3a1c19889925ac" id="r_a303d95fe17c1f1601c3a1c19889925ac"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#a303d95fe17c1f1601c3a1c19889925ac">diet::catalog_detail::integer</a> (std::uint64_t value)</td></tr>
-<tr class="separator:a303d95fe17c1f1601c3a1c19889925ac"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa501ba85913610233c5f83aaea2496c" id="r_aaa501ba85913610233c5f83aaea2496c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#aaa501ba85913610233c5f83aaea2496c">diet::catalog_detail::storage_error</a> (int code) noexcept</td></tr>
-<tr class="separator:aaa501ba85913610233c5f83aaea2496c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab7db0bb03afb373e265fc324b7f1ea11" id="r_ab7db0bb03afb373e265fc324b7f1ea11"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#ab7db0bb03afb373e265fc324b7f1ea11">diet::catalog_detail::fail</a> (sqlite3 *db, int code)</td></tr>
-<tr class="separator:ab7db0bb03afb373e265fc324b7f1ea11"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a16644802c89ede66065ce15308ac36d4" id="r_a16644802c89ede66065ce15308ac36d4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#a16644802c89ede66065ce15308ac36d4">diet::catalog_detail::exec</a> (sqlite3 *db, char const *sql)</td></tr>
-<tr class="separator:a16644802c89ede66065ce15308ac36d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7992f5042c295c25e9728bdd217618ff" id="r_a7992f5042c295c25e9728bdd217618ff"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#a7992f5042c295c25e9728bdd217618ff">diet::catalog_detail::schema_for</a> (unsigned version)</td></tr>
-<tr class="separator:a7992f5042c295c25e9728bdd217618ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1400ba4ab3077311db805867a2f66a10" id="r_a1400ba4ab3077311db805867a2f66a10"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#a1400ba4ab3077311db805867a2f66a10">everett::catalog_detail::number</a> (<a class="el" href="namespaceeverett_1_1catalog__detail.html#af77b3ba3d6c8ca4fbb10fdc6bc18402b">bytes</a> &amp;out, std::uint64_t value)</td></tr>
+<tr class="separator:a1400ba4ab3077311db805867a2f66a10"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc8960db334849c475353f72cc83ad4a" id="r_afc8960db334849c475353f72cc83ad4a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#afc8960db334849c475353f72cc83ad4a">everett::catalog_detail::field</a> (<a class="el" href="namespaceeverett_1_1catalog__detail.html#af77b3ba3d6c8ca4fbb10fdc6bc18402b">bytes</a> &amp;out, std::string_view value)</td></tr>
+<tr class="separator:afc8960db334849c475353f72cc83ad4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa5bc671c2b2006ddb5231da1abfbe6f5" id="r_aa5bc671c2b2006ddb5231da1abfbe6f5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#aa5bc671c2b2006ddb5231da1abfbe6f5">everett::catalog_detail::identity</a> (<a class="el" href="namespaceeverett_1_1catalog__detail.html#af77b3ba3d6c8ca4fbb10fdc6bc18402b">bytes</a> &amp;out, <a class="el" href="structeverett_1_1object__id.html">object_id</a> const &amp;value)</td></tr>
+<tr class="separator:aa5bc671c2b2006ddb5231da1abfbe6f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a677e5a9ac59b74abe0390c704f906f30" id="r_a677e5a9ac59b74abe0390c704f906f30"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#a677e5a9ac59b74abe0390c704f906f30">everett::catalog_detail::pair</a> (<a class="el" href="namespaceeverett_1_1catalog__detail.html#af77b3ba3d6c8ca4fbb10fdc6bc18402b">bytes</a> &amp;out, <a class="el" href="structeverett_1_1blob__identity.html">blob_identity</a> const &amp;value)</td></tr>
+<tr class="separator:a677e5a9ac59b74abe0390c704f906f30"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a94fd27dad40c950cece2e5b8af720eb4" id="r_a94fd27dad40c950cece2e5b8af720eb4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#a94fd27dad40c950cece2e5b8af720eb4">everett::catalog_detail::timeline</a> (<a class="el" href="namespaceeverett_1_1catalog__detail.html#af77b3ba3d6c8ca4fbb10fdc6bc18402b">bytes</a> &amp;out, <a class="el" href="structeverett_1_1catalog__timeline__head.html">catalog_timeline_head</a> const &amp;value)</td></tr>
+<tr class="separator:a94fd27dad40c950cece2e5b8af720eb4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac384e69e0d984b86c58e97915f1f69ad" id="r_ac384e69e0d984b86c58e97915f1f69ad"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#ac384e69e0d984b86c58e97915f1f69ad">everett::catalog_detail::binary</a> (<a class="el" href="namespaceeverett_1_1catalog__detail.html#af77b3ba3d6c8ca4fbb10fdc6bc18402b">bytes</a> &amp;out, std::span&lt; std::byte const &gt; value)</td></tr>
+<tr class="separator:ac384e69e0d984b86c58e97915f1f69ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad6d1e8584727e911435de3b9e1db4f66" id="r_ad6d1e8584727e911435de3b9e1db4f66"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#ad6d1e8584727e911435de3b9e1db4f66">everett::catalog_detail::auxiliary</a> (<a class="el" href="namespaceeverett_1_1catalog__detail.html#af77b3ba3d6c8ca4fbb10fdc6bc18402b">bytes</a> &amp;out, <a class="el" href="structeverett_1_1catalog__auxiliary__roots.html">catalog_auxiliary_roots</a> const &amp;value)</td></tr>
+<tr class="separator:ad6d1e8584727e911435de3b9e1db4f66"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ac974852297ee2ad995828c566988d9" id="r_a7ac974852297ee2ad995828c566988d9"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1catalog__auxiliary__roots.html">catalog_auxiliary_roots</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#a7ac974852297ee2ad995828c566988d9">everett::catalog_detail::canonical_auxiliary</a> (<a class="el" href="structeverett_1_1catalog__auxiliary__roots.html">catalog_auxiliary_roots</a> value, <a class="el" href="structeverett_1_1blob__identity.html">blob_identity</a> const &amp;primary)</td></tr>
+<tr class="separator:a7ac974852297ee2ad995828c566988d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a01554ef158294b0752d9a8a2d0b594d7" id="r_a01554ef158294b0752d9a8a2d0b594d7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#a01554ef158294b0752d9a8a2d0b594d7">everett::catalog_detail::session</a> (<a class="el" href="namespaceeverett_1_1catalog__detail.html#af77b3ba3d6c8ca4fbb10fdc6bc18402b">bytes</a> &amp;out, <a class="el" href="structeverett_1_1catalog__session__head.html">catalog_session_head</a> const &amp;value)</td></tr>
+<tr class="separator:a01554ef158294b0752d9a8a2d0b594d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3ce4b6c413e8588b520d38d8a4ae3f48" id="r_a3ce4b6c413e8588b520d38d8a4ae3f48"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#a3ce4b6c413e8588b520d38d8a4ae3f48">everett::catalog_detail::name</a> (std::string_view value)</td></tr>
+<tr class="separator:a3ce4b6c413e8588b520d38d8a4ae3f48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaeee1356d53e6bef07730882a44761ed" id="r_aaeee1356d53e6bef07730882a44761ed"><td class="memItemLeft" align="right" valign="top">std::int64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#aaeee1356d53e6bef07730882a44761ed">everett::catalog_detail::integer</a> (std::uint64_t value)</td></tr>
+<tr class="separator:aaeee1356d53e6bef07730882a44761ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acab43660740d0aa98eed7727467aeeb0" id="r_acab43660740d0aa98eed7727467aeeb0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#acab43660740d0aa98eed7727467aeeb0">everett::catalog_detail::storage_error</a> (int code) noexcept</td></tr>
+<tr class="separator:acab43660740d0aa98eed7727467aeeb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2490aa24581dde2352fac70e49fec26c" id="r_a2490aa24581dde2352fac70e49fec26c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#a2490aa24581dde2352fac70e49fec26c">everett::catalog_detail::fail</a> (sqlite3 *db, int code)</td></tr>
+<tr class="separator:a2490aa24581dde2352fac70e49fec26c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad93ad2bcf21ffe0c28f667ec9a22eafb" id="r_ad93ad2bcf21ffe0c28f667ec9a22eafb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#ad93ad2bcf21ffe0c28f667ec9a22eafb">everett::catalog_detail::exec</a> (sqlite3 *db, char const *sql)</td></tr>
+<tr class="separator:ad93ad2bcf21ffe0c28f667ec9a22eafb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a02b0aeae42bad95ab3a28588bcbf137b" id="r_a02b0aeae42bad95ab3a28588bcbf137b"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#a02b0aeae42bad95ab3a28588bcbf137b">everett::catalog_detail::schema_for</a> (unsigned version)</td></tr>
+<tr class="separator:a02b0aeae42bad95ab3a28588bcbf137b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>
-<tr class="memitem:a2a4636335638115d7ceeb83da5191f09" id="r_a2a4636335638115d7ceeb83da5191f09"><td class="memItemLeft" align="right" valign="top">constexpr char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet_1_1catalog__detail.html#a2a4636335638115d7ceeb83da5191f09">diet::catalog_detail::schema</a> []</td></tr>
-<tr class="separator:a2a4636335638115d7ceeb83da5191f09"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f759c74781231299318834bd75475c7" id="r_a4f759c74781231299318834bd75475c7"><td class="memItemLeft" align="right" valign="top">constexpr char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#a4f759c74781231299318834bd75475c7">everett::catalog_detail::schema</a> []</td></tr>
+<tr class="separator:a4f759c74781231299318834bd75475c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aabf09800ce2ac7867979c9ca0dc96791" id="r_aabf09800ce2ac7867979c9ca0dc96791"><td class="memItemLeft" align="right" valign="top">constexpr char&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html#aabf09800ce2ac7867979c9ca0dc96791">everett::catalog_detail::native_merges_schema</a> []</td></tr>
+<tr class="separator:aabf09800ce2ac7867979c9ca0dc96791"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Stores retained roots, timeline generations and exact file graphs in optional SQLite metadata. </p>

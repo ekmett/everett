@@ -4,8 +4,8 @@
   "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
   "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
   "hashes": {
-    "include/diet/select_groups.h": "c908a56a37041dbc45790a80c10ba78cf46f176faeb2acb84f69eabf0bbcf4a3",
-    "include/diet/select15.h": "440ec03a90d504a2d526ffef2db69f6ae8a5e9bbeb2e3cf5c39280548dc60f9b",
+    "include/everett/select_groups.h": "c908a56a37041dbc45790a80c10ba78cf46f176faeb2acb84f69eabf0bbcf4a3",
+    "include/everett/select15.h": "440ec03a90d504a2d526ffef2db69f6ae8a5e9bbeb2e3cf5c39280548dc60f9b",
     "tests/groups.cc": "16c8d883c11fa68e5aac209c6f4cb76c428222407c677c5a75b46df1554826a9",
     "bench/select_compare.cc": "d1514d418f11dc84e96f7b68552b728d7e1db1150fb929b19ad52661b96531e0",
     "bench/select_stage1.patch": "5310e651368ae226023d54dcdc569f6112daad07da774f934e9e131072ee1499",
@@ -30,13 +30,13 @@
       "-Wextra",
       "-Wpedantic",
       "-Werror",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-select-simd/include",
-      "-DSELECT_BASELINE_GROUPS=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/baseline_select_groups.h\"",
-      "-DSELECT_BASELINE_FIXED=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/baseline_select15.h\"",
-      "-DSELECT_PROTOTYPE=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/prototype_select_groups.h\"",
-      "/Users/ekmett/cult/ai/worktrees/diet-select-simd/bench/select_compare.cc",
+      "-I/workspace/-select-simd/include",
+      "-DSELECT_BASELINE_GROUPS=\"/workspace/-select-simd/build-select/baseline_select_groups.h\"",
+      "-DSELECT_BASELINE_FIXED=\"/workspace/-select-simd/build-select/baseline_select15.h\"",
+      "-DSELECT_PROTOTYPE=\"/workspace/-select-simd/build-select/prototype_select_groups.h\"",
+      "/workspace/-select-simd/bench/select_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/select-arm64"
+      "/workspace/-select-simd/build-select/select-arm64"
     ],
     "x86_64": [
       "clang++",
@@ -52,13 +52,13 @@
       "-mavx2",
       "-mno-avx512f",
       "-mno-bmi2",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-select-simd/include",
-      "-DSELECT_BASELINE_GROUPS=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/baseline_select_groups.h\"",
-      "-DSELECT_BASELINE_FIXED=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/baseline_select15.h\"",
-      "-DSELECT_PROTOTYPE=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/prototype_select_groups.h\"",
-      "/Users/ekmett/cult/ai/worktrees/diet-select-simd/bench/select_compare.cc",
+      "-I/workspace/-select-simd/include",
+      "-DSELECT_BASELINE_GROUPS=\"/workspace/-select-simd/build-select/baseline_select_groups.h\"",
+      "-DSELECT_BASELINE_FIXED=\"/workspace/-select-simd/build-select/baseline_select15.h\"",
+      "-DSELECT_PROTOTYPE=\"/workspace/-select-simd/build-select/prototype_select_groups.h\"",
+      "/workspace/-select-simd/bench/select_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/select-x86_64"
+      "/workspace/-select-simd/build-select/select-x86_64"
     ],
     "x86_64-bmi2": [
       "clang++",
@@ -74,13 +74,13 @@
       "-mavx2",
       "-mno-avx512f",
       "-mbmi2",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-select-simd/include",
-      "-DSELECT_BASELINE_GROUPS=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/baseline_select_groups.h\"",
-      "-DSELECT_BASELINE_FIXED=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/baseline_select15.h\"",
-      "-DSELECT_PROTOTYPE=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/prototype_select_groups.h\"",
-      "/Users/ekmett/cult/ai/worktrees/diet-select-simd/bench/select_compare.cc",
+      "-I/workspace/-select-simd/include",
+      "-DSELECT_BASELINE_GROUPS=\"/workspace/-select-simd/build-select/baseline_select_groups.h\"",
+      "-DSELECT_BASELINE_FIXED=\"/workspace/-select-simd/build-select/baseline_select15.h\"",
+      "-DSELECT_PROTOTYPE=\"/workspace/-select-simd/build-select/prototype_select_groups.h\"",
+      "/workspace/-select-simd/bench/select_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/select-x86_64-bmi2"
+      "/workspace/-select-simd/build-select/select-x86_64-bmi2"
     ]
   },
   "candidate_revision": "bc24f443cdee7d12492ac8a6f48e8587de0fc147",

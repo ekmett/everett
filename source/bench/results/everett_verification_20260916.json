@@ -1,0 +1,703 @@
+{
+  "revision": "a51904c",
+  "date_utc": "2026-09-16",
+  "compiler": "AppleClang 21",
+  "standard": "C++20",
+  "optimization": "O2",
+  "warnings_as_errors": true,
+  "sanitizers": [
+    "address",
+    "undefined"
+  ],
+  "components": 103,
+  "package_consumers": 3,
+  "doxygen": 1,
+  "initial_run": {
+    "passed": 106,
+    "failed": 1,
+    "elapsed_seconds": 485.03,
+    "tests": [
+      {
+        "number": 1,
+        "name": "everett.registry",
+        "status": "Passed",
+        "seconds": 0.42
+      },
+      {
+        "number": 2,
+        "name": "everett.registry_compat",
+        "status": "Passed",
+        "seconds": 0.63
+      },
+      {
+        "number": 3,
+        "name": "everett.crc32c",
+        "status": "Passed",
+        "seconds": 1.2
+      },
+      {
+        "number": 4,
+        "name": "everett.rank",
+        "status": "Passed",
+        "seconds": 1.41
+      },
+      {
+        "number": 5,
+        "name": "everett.groups",
+        "status": "Passed",
+        "seconds": 0.93
+      },
+      {
+        "number": 6,
+        "name": "everett.rank_groups_builder",
+        "status": "Passed",
+        "seconds": 0.4
+      },
+      {
+        "number": 7,
+        "name": "everett.elias_fano",
+        "status": "Passed",
+        "seconds": 0.33
+      },
+      {
+        "number": 8,
+        "name": "everett.profile",
+        "status": "Passed",
+        "seconds": 3.95
+      },
+      {
+        "number": 9,
+        "name": "everett.borrowed_writer",
+        "status": "Passed",
+        "seconds": 0.75
+      },
+      {
+        "number": 10,
+        "name": "everett.profile_blob",
+        "status": "Passed",
+        "seconds": 2.18
+      },
+      {
+        "number": 11,
+        "name": "everett.comparison_fc",
+        "status": "Passed",
+        "seconds": 69.98
+      },
+      {
+        "number": 12,
+        "name": "everett.sampling",
+        "status": "Passed",
+        "seconds": 1.17
+      },
+      {
+        "number": 13,
+        "name": "everett.index_builder",
+        "status": "Passed",
+        "seconds": 2.65
+      },
+      {
+        "number": 14,
+        "name": "everett.index_builder_allocations",
+        "status": "Passed",
+        "seconds": 0.38
+      },
+      {
+        "number": 15,
+        "name": "everett.index_pipeline",
+        "status": "Passed",
+        "seconds": 0.52
+      },
+      {
+        "number": 16,
+        "name": "everett.query",
+        "status": "Passed",
+        "seconds": 1.51
+      },
+      {
+        "number": 17,
+        "name": "everett.cola_index",
+        "status": "Passed",
+        "seconds": 106.68
+      },
+      {
+        "number": 18,
+        "name": "everett.cola_frontier",
+        "status": "Passed",
+        "seconds": 0.53
+      },
+      {
+        "number": 19,
+        "name": "everett.cola_route_reuse",
+        "status": "Passed",
+        "seconds": 0.4
+      },
+      {
+        "number": 20,
+        "name": "everett.cola_schedule",
+        "status": "Passed",
+        "seconds": 26.78
+      },
+      {
+        "number": 21,
+        "name": "everett.native_writer",
+        "status": "Passed",
+        "seconds": 0.72
+      },
+      {
+        "number": 22,
+        "name": "everett.native_writer_allocations",
+        "status": "Passed",
+        "seconds": 1.05
+      },
+      {
+        "number": 23,
+        "name": "everett.native_file_writer",
+        "status": "Passed",
+        "seconds": 0.64
+      },
+      {
+        "number": 24,
+        "name": "everett.profile_file_output",
+        "status": "Passed",
+        "seconds": 0.8
+      },
+      {
+        "number": 25,
+        "name": "everett.native_merge",
+        "status": "Passed",
+        "seconds": 1.34
+      },
+      {
+        "number": 26,
+        "name": "everett.native_merge_mapped",
+        "status": "Passed",
+        "seconds": 2.57
+      },
+      {
+        "number": 27,
+        "name": "everett.world",
+        "status": "Passed",
+        "seconds": 0.33
+      },
+      {
+        "number": 28,
+        "name": "everett.pins",
+        "status": "Passed",
+        "seconds": 0.28
+      },
+      {
+        "number": 29,
+        "name": "everett.durability",
+        "status": "Passed",
+        "seconds": 0.3
+      },
+      {
+        "number": 30,
+        "name": "everett.mapped_file",
+        "status": "Passed",
+        "seconds": 0.32
+      },
+      {
+        "number": 31,
+        "name": "everett.files",
+        "status": "Failed",
+        "seconds": 0.63
+      },
+      {
+        "number": 32,
+        "name": "everett.object_writer",
+        "status": "Passed",
+        "seconds": 0.41
+      },
+      {
+        "number": 33,
+        "name": "everett.object_stream",
+        "status": "Passed",
+        "seconds": 0.45
+      },
+      {
+        "number": 34,
+        "name": "everett.mapped_blob",
+        "status": "Passed",
+        "seconds": 1.76
+      },
+      {
+        "number": 35,
+        "name": "everett.multiverse",
+        "status": "Passed",
+        "seconds": 0.45
+      },
+      {
+        "number": 36,
+        "name": "everett.catalog_bindings",
+        "status": "Passed",
+        "seconds": 0.36
+      },
+      {
+        "number": 37,
+        "name": "everett.output_budget",
+        "status": "Passed",
+        "seconds": 0.3
+      },
+      {
+        "number": 38,
+        "name": "everett.mapped_index_builder",
+        "status": "Passed",
+        "seconds": 1.86
+      },
+      {
+        "number": 39,
+        "name": "everett.file_index_builder",
+        "status": "Passed",
+        "seconds": 1.5
+      },
+      {
+        "number": 40,
+        "name": "everett.file_index_pipeline",
+        "status": "Passed",
+        "seconds": 3.64
+      },
+      {
+        "number": 41,
+        "name": "everett.mapped_cola",
+        "status": "Passed",
+        "seconds": 3.46
+      },
+      {
+        "number": 42,
+        "name": "everett.mapped_cola_builder",
+        "status": "Passed",
+        "seconds": 1.55
+      },
+      {
+        "number": 43,
+        "name": "everett.cola_terminal",
+        "status": "Passed",
+        "seconds": 0.49
+      },
+      {
+        "number": 44,
+        "name": "everett.cola_file_index",
+        "status": "Passed",
+        "seconds": 0.59
+      },
+      {
+        "number": 45,
+        "name": "everett.cola_adaptive_index",
+        "status": "Passed",
+        "seconds": 0.71
+      },
+      {
+        "number": 46,
+        "name": "everett.cola_local_merge",
+        "status": "Passed",
+        "seconds": 0.57
+      },
+      {
+        "number": 47,
+        "name": "everett.cola_local_merge_failure",
+        "status": "Passed",
+        "seconds": 0.47
+      },
+      {
+        "number": 48,
+        "name": "everett.cola_runtime",
+        "status": "Passed",
+        "seconds": 1.14
+      },
+      {
+        "number": 49,
+        "name": "everett.redundant_runtime",
+        "status": "Passed",
+        "seconds": 9.35
+      },
+      {
+        "number": 50,
+        "name": "everett.redundant_initial",
+        "status": "Passed",
+        "seconds": 1.22
+      },
+      {
+        "number": 51,
+        "name": "everett.runtime_registry",
+        "status": "Passed",
+        "seconds": 0.33
+      },
+      {
+        "number": 52,
+        "name": "everett.sort_codec",
+        "status": "Passed",
+        "seconds": 0.44
+      },
+      {
+        "number": 53,
+        "name": "everett.sort_profile",
+        "status": "Passed",
+        "seconds": 0.47
+      },
+      {
+        "number": 54,
+        "name": "everett.sort_profile_query",
+        "status": "Passed",
+        "seconds": 0.26
+      },
+      {
+        "number": 55,
+        "name": "everett.sort_profile_file_writer",
+        "status": "Passed",
+        "seconds": 0.45
+      },
+      {
+        "number": 56,
+        "name": "everett.sort_runtime",
+        "status": "Passed",
+        "seconds": 0.66
+      },
+      {
+        "number": 57,
+        "name": "everett.typed_world",
+        "status": "Passed",
+        "seconds": 0.6
+      },
+      {
+        "number": 58,
+        "name": "everett.typed_initial",
+        "status": "Passed",
+        "seconds": 0.95
+      },
+      {
+        "number": 59,
+        "name": "everett.typed_depth",
+        "status": "Passed",
+        "seconds": 0.51
+      },
+      {
+        "number": 60,
+        "name": "everett.typed_preflight",
+        "status": "Passed",
+        "seconds": 0.45
+      },
+      {
+        "number": 61,
+        "name": "everett.typed_query_value",
+        "status": "Passed",
+        "seconds": 0.41
+      },
+      {
+        "number": 62,
+        "name": "everett.typed_redundant",
+        "status": "Passed",
+        "seconds": 0.9
+      },
+      {
+        "number": 63,
+        "name": "everett.typed_scan",
+        "status": "Passed",
+        "seconds": 0.56
+      },
+      {
+        "number": 64,
+        "name": "everett.replacement_rebuild",
+        "status": "Passed",
+        "seconds": 2.8
+      },
+      {
+        "number": 65,
+        "name": "everett.session",
+        "status": "Passed",
+        "seconds": 0.33
+      },
+      {
+        "number": 66,
+        "name": "everett.redundant_checkpoint",
+        "status": "Passed",
+        "seconds": 2.56
+      },
+      {
+        "number": 67,
+        "name": "everett.sqlite_catalog",
+        "status": "Passed",
+        "seconds": 1.16
+      },
+      {
+        "number": 68,
+        "name": "everett.sqlite_catalog_adversarial",
+        "status": "Passed",
+        "seconds": 3.08
+      },
+      {
+        "number": 69,
+        "name": "everett.sqlite_catalog_vfs",
+        "status": "Passed",
+        "seconds": 13.95
+      },
+      {
+        "number": 70,
+        "name": "everett.sqlite_catalog_restart",
+        "status": "Passed",
+        "seconds": 5.21
+      },
+      {
+        "number": 71,
+        "name": "everett.sqlite_catalog_timeline",
+        "status": "Passed",
+        "seconds": 3.74
+      },
+      {
+        "number": 72,
+        "name": "everett.sqlite_catalog_streamed",
+        "status": "Passed",
+        "seconds": 8.61
+      },
+      {
+        "number": 73,
+        "name": "everett.sqlite_catalog_cola",
+        "status": "Passed",
+        "seconds": 2.1
+      },
+      {
+        "number": 74,
+        "name": "everett.sqlite_catalog_sessions",
+        "status": "Passed",
+        "seconds": 1.01
+      },
+      {
+        "number": 75,
+        "name": "everett.sqlite_catalog_runtime",
+        "status": "Passed",
+        "seconds": 2.28
+      },
+      {
+        "number": 76,
+        "name": "everett.sqlite_catalog_redundant",
+        "status": "Passed",
+        "seconds": 8.34
+      },
+      {
+        "number": 77,
+        "name": "everett.sqlite_catalog_connection",
+        "status": "Passed",
+        "seconds": 6.16
+      },
+      {
+        "number": 78,
+        "name": "everett.sqlite_catalog_scan",
+        "status": "Passed",
+        "seconds": 1.79
+      },
+      {
+        "number": 79,
+        "name": "everett.sqlite_catalog_bindings",
+        "status": "Passed",
+        "seconds": 2.01
+      },
+      {
+        "number": 80,
+        "name": "everett.sqlite_catalog_binding_failures",
+        "status": "Passed",
+        "seconds": 2.47
+      },
+      {
+        "number": 81,
+        "name": "everett.sqlite_catalog_graphs",
+        "status": "Passed",
+        "seconds": 0.69
+      },
+      {
+        "number": 82,
+        "name": "everett.sqlite_catalog_sort_runtime",
+        "status": "Passed",
+        "seconds": 6.41
+      },
+      {
+        "number": 83,
+        "name": "everett.sqlite_catalog_snapshot",
+        "status": "Passed",
+        "seconds": 0.44
+      },
+      {
+        "number": 84,
+        "name": "everett.sqlite_catalog_rebuild",
+        "status": "Passed",
+        "seconds": 5.34
+      },
+      {
+        "number": 85,
+        "name": "everett.sqlite_catalog_rebuild_streaming",
+        "status": "Passed",
+        "seconds": 24.74
+      },
+      {
+        "number": 86,
+        "name": "everett.sqlite_catalog_rebuild_default",
+        "status": "Passed",
+        "seconds": 4.46
+      },
+      {
+        "number": 87,
+        "name": "everett.sqlite_catalog_tiny_rebuild",
+        "status": "Passed",
+        "seconds": 3.75
+      },
+      {
+        "number": 88,
+        "name": "everett.sqlite_catalog_active",
+        "status": "Passed",
+        "seconds": 6.93
+      },
+      {
+        "number": 89,
+        "name": "everett.sqlite_catalog_seals",
+        "status": "Passed",
+        "seconds": 0.69
+      },
+      {
+        "number": 90,
+        "name": "everett.sqlite_catalog_seal_pair",
+        "status": "Passed",
+        "seconds": 1.21
+      },
+      {
+        "number": 91,
+        "name": "everett.sqlite_catalog_native_pair",
+        "status": "Passed",
+        "seconds": 2.7
+      },
+      {
+        "number": 92,
+        "name": "everett.sqlite_catalog_ready_reservations",
+        "status": "Passed",
+        "seconds": 3.63
+      },
+      {
+        "number": 93,
+        "name": "everett.sqlite_catalog_initial",
+        "status": "Passed",
+        "seconds": 7.13
+      },
+      {
+        "number": 94,
+        "name": "everett.sqlite_catalog_empty",
+        "status": "Passed",
+        "seconds": 1.34
+      },
+      {
+        "number": 95,
+        "name": "everett.sqlite_catalog_pair",
+        "status": "Passed",
+        "seconds": 0.99
+      },
+      {
+        "number": 96,
+        "name": "everett.sqlite_catalog_streaming_runtime",
+        "status": "Passed",
+        "seconds": 6.44
+      },
+      {
+        "number": 97,
+        "name": "everett.sqlite_catalog_streaming_restart",
+        "status": "Passed",
+        "seconds": 8.56
+      },
+      {
+        "number": 98,
+        "name": "everett.sqlite_catalog_streaming_diagnostics",
+        "status": "Passed",
+        "seconds": 1.83
+      },
+      {
+        "number": 99,
+        "name": "everett.sqlite_catalog_adaptive_native",
+        "status": "Passed",
+        "seconds": 1.05
+      },
+      {
+        "number": 100,
+        "name": "everett.sqlite_catalog_native_reuse",
+        "status": "Passed",
+        "seconds": 5.91
+      },
+      {
+        "number": 101,
+        "name": "everett.sort_runtime_context",
+        "status": "Passed",
+        "seconds": 19.59
+      },
+      {
+        "number": 102,
+        "name": "everett.sort_runtime_adaptive_index",
+        "status": "Passed",
+        "seconds": 0.84
+      },
+      {
+        "number": 103,
+        "name": "everett.sort_runtime_initial",
+        "status": "Passed",
+        "seconds": 1.25
+      },
+      {
+        "number": 104,
+        "name": "everett.package.sqlite",
+        "status": "Passed",
+        "seconds": 14.75
+      },
+      {
+        "number": 105,
+        "name": "everett.package.installed",
+        "status": "Passed",
+        "seconds": 4.21
+      },
+      {
+        "number": 106,
+        "name": "everett.package.embedded",
+        "status": "Passed",
+        "seconds": 4.14
+      },
+      {
+        "number": 107,
+        "name": "everett.doxygen",
+        "status": "Passed",
+        "seconds": 9.31
+      }
+    ]
+  },
+  "correction": {
+    "revision": "922d67a",
+    "scope": "Four golden empty-envelope header CRC fixtures retained the previous signature. No production code changed.",
+    "oracle": "Independent bitwise CRC32C with polynomial 0x82f63b78, checked against 123456789 -> 0xe3069283 and the four original signature fixtures.",
+    "rerun": {
+      "name": "everett.files",
+      "status": "Passed",
+      "seconds": 0.63
+    }
+  },
+  "final_result": {
+    "passed": 107,
+    "failed": 0,
+    "basis": "106 passing tests from the complete run plus the corrected, rebuilt file-format test in a focused CTest rerun."
+  },
+  "optional_gpu": {
+    "source_revision": "6c1bbd2",
+    "passed": 13,
+    "failed": 0,
+    "elapsed_seconds": 7.06,
+    "scope": "Separate opt-in Metal prototype and host tools; not the durable runtime.",
+    "prototype_sha256": "8206e2fd4a49e91438a752267177ddb8c26b599a52dc4d62eb8f25a5c4e827b2",
+    "metallib_sha256": "1af9ecde98985c57d861be3a6b261fdcf34269e2093131f6986a758ae6574763"
+  },
+  "lean": {
+    "revision": "a51904c",
+    "version": "4.19.0",
+    "declarations": 995,
+    "logical_axioms": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+    ],
+    "build": "lake --wfail build",
+    "examples": "lake env lean --run Main.lean",
+    "status": "Passed",
+    "scope": "List/natural-number model; not a proof of packed C++ execution."
+  },
+  "timing_note": "All durations in this record are verification metadata, not benchmark observations."
+}

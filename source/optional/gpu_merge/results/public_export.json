@@ -1,0 +1,389 @@
+{
+  "schema_version": 1,
+  "source_revision": "7df7fd2e268a3f61bf15588f1013fa6f982ce35e",
+  "scope": "Only optional/gpu_merge files; no repository history or generated binaries.",
+  "target_names": "Everett / world / multiverse / session; fixed-width signatures use EVRT.",
+  "normalization": "The main benchmark snapshot normalizer relabels project/API names and wire signatures. The report describes the optional directory rather than a development branch. Algorithms and numerical observations are unchanged.",
+  "hash_semantics": {
+    "original_sha256": "Frozen source subtree bytes before this export.",
+    "normalized_sha256": "Published copy bytes after normalization.",
+    "existing_measurement_hashes": "All existing measured source, binary, wire and result hashes are retained verbatim and identify original measured bytes, not normalized copies."
+  },
+  "validation": {
+    "json_files": 14,
+    "numeric_values_preserved": 4892,
+    "existing_hashes_preserved": 200,
+    "byte_identical_logs": 19,
+    "private_identifier_scan": "passed",
+    "normalization_idempotent": true,
+    "performance_rerun": false,
+    "compiled_after_normalization": false
+  },
+  "files": [
+    {
+      "path": "optional/gpu_merge/CMakeLists.txt",
+      "original_sha256": "8f18614e2573071de04d96de2a3b6a84d905d9f996b11fbbf0f1d086adbce0e8",
+      "normalized_sha256": "2a063b2a710068c704596555faa82be7e0e82df70a41971e2190c2145218cbc3",
+      "export_sha256": "3ea9c3313261565db076c319f5e15c622daec1d61c1e4ea5938b6a84cf0429cf"
+    },
+    {
+      "path": "optional/gpu_merge/adversarial.h",
+      "original_sha256": "8223aebb78590030743e9808a51085f177a68cc7040dac2d1b39b7102a9f366a",
+      "normalized_sha256": "a5ad85fc43e3bee3449373c21be9850ed0b2c4177a864d4dbf8ee893d688f96c"
+    },
+    {
+      "path": "optional/gpu_merge/build.py",
+      "original_sha256": "4e8653d729adf207bc3d63301c6f6d28280039c1e560d56b45fa56d329a35cf3",
+      "normalized_sha256": "1e805da4894385f4b65ab55726c5488b3c82bbfe02d93319497fb64598e4a57f"
+    },
+    {
+      "path": "optional/gpu_merge/calibrate_cutover.py",
+      "original_sha256": "8895ae32266ffd33d13381f7e4fe1bb72d45571d3064a9e69fdea1c7116131da",
+      "normalized_sha256": "990bab42da35b8ea4fb6c5c2b114f480fa2d8596f75c5ba4b361020e8027d154"
+    },
+    {
+      "path": "optional/gpu_merge/collision-report.md",
+      "original_sha256": "35f09a3fce0d752484356ac165c11d98dd063a7892b09f4424a3e415a54a137f",
+      "normalized_sha256": "35f09a3fce0d752484356ac165c11d98dd063a7892b09f4424a3e415a54a137f"
+    },
+    {
+      "path": "optional/gpu_merge/collision_rank.hlsl",
+      "original_sha256": "83609305d01c30196aea0bdbed85c3c66735cd69a4da22d5e277ed71857126f2",
+      "normalized_sha256": "b3cdf99f597f2b3f6a86896f0a799eddfa460ee675d670c02fd4ce2798ae6c49"
+    },
+    {
+      "path": "optional/gpu_merge/collision_rank.md",
+      "original_sha256": "69788ae2f0616e724cf86280ea0113e2e8eca7d6bd9c4dced68f0ae0c9fefdc7",
+      "normalized_sha256": "fb0ebec6080624cd75f36fc09fa6611ee36efd320a6108ffff532190693a4576"
+    },
+    {
+      "path": "optional/gpu_merge/collision_rank_scalar.py",
+      "original_sha256": "e4c02a88e5044942d0ae71ef66f57bee57a5136faf674be3895b24a276636bd8",
+      "normalized_sha256": "bd47cf1c50833a0f55fd40f2a8ce9ec58043b4015789cfba70707d17c8fd584f"
+    },
+    {
+      "path": "optional/gpu_merge/collision_rank_test.h",
+      "original_sha256": "8994a821f556b9041a9c26f209242eb23c46b7548bbbaedbf0b0a9f325446e50",
+      "normalized_sha256": "8994a821f556b9041a9c26f209242eb23c46b7548bbbaedbf0b0a9f325446e50"
+    },
+    {
+      "path": "optional/gpu_merge/cutover.h",
+      "original_sha256": "29ac9a2f4cbe1b3a00d084c532805fca1c9bf1b9b2dd1342d766cab1c9c33c8a",
+      "normalized_sha256": "d431c88573ae33dc27819f9be1367b7aef4e8053d20fe8e51250102652b24bbb"
+    },
+    {
+      "path": "optional/gpu_merge/cutover.md",
+      "original_sha256": "e599803e08dd9738aeab69b85f29c9a292f99ddd5880942802a8b6a0302ffecd",
+      "normalized_sha256": "e31e2c0832d76685142547345bf9ab5fa6b61acad9c7a249ac546a3cc74aaf1b",
+      "export_sha256": "e599803e08dd9738aeab69b85f29c9a292f99ddd5880942802a8b6a0302ffecd"
+    },
+    {
+      "path": "optional/gpu_merge/cutover_calibration_test.py",
+      "original_sha256": "c4ce8978eaeadb5ca8960f6299adb6a32fa491e60cb78e90b87900acb6569030",
+      "normalized_sha256": "c4ce8978eaeadb5ca8960f6299adb6a32fa491e60cb78e90b87900acb6569030"
+    },
+    {
+      "path": "optional/gpu_merge/cutover_cases.h",
+      "original_sha256": "0d672c40e78ee2a690a81c725e06bc1d64d813a13a727cf13af664addc0194c4",
+      "normalized_sha256": "ea2a83d29d9c67255ef4c18013b7112a14b1c3b1b31fcd036f1fc5523e79f6cd"
+    },
+    {
+      "path": "optional/gpu_merge/cutover_test.cc",
+      "original_sha256": "410ee50024c477d8933e0af3ca71952b84acf9d9a76e72a535938c52c88411cb",
+      "normalized_sha256": "dd34f3873a192a3c4dbb324cde9f61d312082d26e6dda992e249b1fccb24fb0b"
+    },
+    {
+      "path": "optional/gpu_merge/design.md",
+      "original_sha256": "5e051c88a04beaa948760f16acca20f1f25afa2e9af2d2654505c352c07db1d4",
+      "normalized_sha256": "b3bdf05fa1911627861da992e6beef6a22d58129e9bda0512f69452e29bdffd1",
+      "export_sha256": "89350dcef5c6d3f3d85e338f478a59d0b6d118e381f2f624d3880a2ce1219648"
+    },
+    {
+      "path": "optional/gpu_merge/ef_input_test.h",
+      "original_sha256": "912d9fff2aae5d01e33a85d63ebeb73a5d4ecfed1f42d9c47b4be47ad7b9a522",
+      "normalized_sha256": "13136dd039cc2e2918d990408f3566273287f91133b99392630347cfeb4a2afc"
+    },
+    {
+      "path": "optional/gpu_merge/ef_output.hlsl",
+      "original_sha256": "cffe63a8ae253c867e5a00052ea98e2a7d19b41af9236ba01b5db6cb7d135d0b",
+      "normalized_sha256": "cffe63a8ae253c867e5a00052ea98e2a7d19b41af9236ba01b5db6cb7d135d0b"
+    },
+    {
+      "path": "optional/gpu_merge/ef_output_test.h",
+      "original_sha256": "549aa917dbd4997247c16a916ab9cafc65c6e36c3695a94eaf8b430500348b5f",
+      "normalized_sha256": "7053e6e08878a65347af7bd1962f15a8d6873c1bccda9525603e0911b1fab40f"
+    },
+    {
+      "path": "optional/gpu_merge/emit_word.hlsl",
+      "original_sha256": "e10a1d7ad6376bd26627c20c39de0ae7d114b177847700cc15cb80290a65e9c4",
+      "normalized_sha256": "e10a1d7ad6376bd26627c20c39de0ae7d114b177847700cc15cb80290a65e9c4"
+    },
+    {
+      "path": "optional/gpu_merge/emit_word_test.h",
+      "original_sha256": "23534e1f638d5672464bfa034ae3db2d322e0313d1f1c3adadec5fd5d7bb961a",
+      "normalized_sha256": "23534e1f638d5672464bfa034ae3db2d322e0313d1f1c3adadec5fd5d7bb961a"
+    },
+    {
+      "path": "optional/gpu_merge/gpu_sort.h",
+      "original_sha256": "6950b72225a2a633176cc839659eacda11770c49c13850b56cfcb82761c344e0",
+      "normalized_sha256": "00c478494e34e2d938a9fa82ff40a1f4bb37b40d77fda0fde946e8da1c91483f"
+    },
+    {
+      "path": "optional/gpu_merge/index_rank.hlsl",
+      "original_sha256": "e3e88f08afec61954e8f705ced52c1321aad3cb33a99069a9a2eaf4490f83ad7",
+      "normalized_sha256": "e3e88f08afec61954e8f705ced52c1321aad3cb33a99069a9a2eaf4490f83ad7"
+    },
+    {
+      "path": "optional/gpu_merge/index_rank_test.h",
+      "original_sha256": "93ada7a202b4dadcd11bf62c58da084fcf6013edd5cd13ce5b15c4a397c29fc7",
+      "normalized_sha256": "0c848dc80a32d69677f703e50fa85fb552b940c82ea515d71f3e4188399b3e70"
+    },
+    {
+      "path": "optional/gpu_merge/kernels.hlsl",
+      "original_sha256": "39e6f6e08308ac77956144e053a678fca057d1595735943c014e0b85436e5191",
+      "normalized_sha256": "098c65f8b710f2b64812ece22c2007cbc6acf25a94dc2876432039976dff5d9e"
+    },
+    {
+      "path": "optional/gpu_merge/parse_input.hlsl",
+      "original_sha256": "5450bbdae5d4e64e9bf289b480878d4afe8b466b4cd69c9019414d37e4c84d5a",
+      "normalized_sha256": "5450bbdae5d4e64e9bf289b480878d4afe8b466b4cd69c9019414d37e4c84d5a"
+    },
+    {
+      "path": "optional/gpu_merge/prefix_cache.hlsl",
+      "original_sha256": "b2fd01cb52b50e01f11b394f768e8d09b26a14f16ae58cdae7ff875625d02a0f",
+      "normalized_sha256": "b2fd01cb52b50e01f11b394f768e8d09b26a14f16ae58cdae7ff875625d02a0f"
+    },
+    {
+      "path": "optional/gpu_merge/prefix_owner.hlsl",
+      "original_sha256": "8e83ee0650a734bd71c614683aadda67d6949056f929114e26b0092583e1db5c",
+      "normalized_sha256": "8e83ee0650a734bd71c614683aadda67d6949056f929114e26b0092583e1db5c"
+    },
+    {
+      "path": "optional/gpu_merge/prepared_input.h",
+      "original_sha256": "0ce3c71faef230c19ac5a8e8e4b63c83e6560b9cbb044ddebc9b3bcec8264ff1",
+      "normalized_sha256": "772d2f4cd71137c62ee44830576a816e3c3faac8fc184e9a7da01585fe20d594"
+    },
+    {
+      "path": "optional/gpu_merge/prototype.mm",
+      "original_sha256": "b10b30f19d95881ca55500743692c676639d9eb5260cc130d803d13bba4c2b93",
+      "normalized_sha256": "cdeedb9531df19c68f33f7bfa5427122d836681884b3995e5b3679ac6ffa640a"
+    },
+    {
+      "path": "optional/gpu_merge/rank512.hlsl",
+      "original_sha256": "df9a4f337df1aa3f205a6aadde0f677f88788cdefb978d1d7aa87cd2fc7d9dba",
+      "normalized_sha256": "2caf1091e8e40769ae04d5982f2cea083b4e51f39d3a131edaaabfc83c273642"
+    },
+    {
+      "path": "optional/gpu_merge/rank512_notice.txt",
+      "original_sha256": "41a219cd5ff74a64af6d650ce9d608298a4ed8152b4dde58e9fb20dfb1f075cc",
+      "normalized_sha256": "2117b10f028b7e3ba4d09ac51689d36ea626e5fec51ab7aa995d2bfdbdca2c9d",
+      "export_sha256": "41a219cd5ff74a64af6d650ce9d608298a4ed8152b4dde58e9fb20dfb1f075cc"
+    },
+    {
+      "path": "optional/gpu_merge/rank_shared.h",
+      "original_sha256": "40e376eedec63af0b04f044429b9b74b126f43b583e0278dd292dd9400f1ccb0",
+      "normalized_sha256": "d7224318acf92c51d1ad2fb66bbcf49f5895b2d59039cc9a066939ae473871ab"
+    },
+    {
+      "path": "optional/gpu_merge/report.md",
+      "original_sha256": "9ac0e375f7e12409335cf61febbd700a72018455cd82823edf30d10f686cd1ca",
+      "normalized_sha256": "5d375dc36cbfc998edf20d4c7f6a8ba1edac7e937cddc0aa416a183d78ef45c1"
+    },
+    {
+      "path": "optional/gpu_merge/results/adversarial-v1.log",
+      "original_sha256": "66e34f8256a7aad76b52372c5bbf3fa8b981853ae745f411ccdaa91157cf5bc1",
+      "normalized_sha256": "66e34f8256a7aad76b52372c5bbf3fa8b981853ae745f411ccdaa91157cf5bc1"
+    },
+    {
+      "path": "optional/gpu_merge/results/adversarial-v2.log",
+      "original_sha256": "f229cc54dc9bfc2d415527787886eef529da6f376a809677b87ae3584f534f22",
+      "normalized_sha256": "f229cc54dc9bfc2d415527787886eef529da6f376a809677b87ae3584f534f22"
+    },
+    {
+      "path": "optional/gpu_merge/results/adversarial-v3.log",
+      "original_sha256": "3c9065f012dde3baaf5e43820b6f4f54897baa7540defafd830678b4b28ce99d",
+      "normalized_sha256": "3c9065f012dde3baaf5e43820b6f4f54897baa7540defafd830678b4b28ce99d"
+    },
+    {
+      "path": "optional/gpu_merge/results/adversarial-v4.log",
+      "original_sha256": "9730a83179a703c6a76325dadec8848a681afc1f6e4a6e8bb1ca8b715e72c5fa",
+      "normalized_sha256": "9730a83179a703c6a76325dadec8848a681afc1f6e4a6e8bb1ca8b715e72c5fa"
+    },
+    {
+      "path": "optional/gpu_merge/results/adversarial-v5.log",
+      "original_sha256": "199a7364c54c2c0212474e440dd6d92c5daf11196e48450b676e69c0d4d2d7a7",
+      "normalized_sha256": "199a7364c54c2c0212474e440dd6d92c5daf11196e48450b676e69c0d4d2d7a7"
+    },
+    {
+      "path": "optional/gpu_merge/results/collision-collision2048-compact.log",
+      "original_sha256": "d71c46ccecb5bdc3adda9b6d2947e2da1b79c3bacffd0584d3ede79ca4079563",
+      "normalized_sha256": "d71c46ccecb5bdc3adda9b6d2947e2da1b79c3bacffd0584d3ede79ca4079563"
+    },
+    {
+      "path": "optional/gpu_merge/results/collision-collision2048-tiled.log",
+      "original_sha256": "f99ac2d80bcc1e423cb5aaaa94351b6a33e43f847ea11a7783e5bbd127f0b364",
+      "normalized_sha256": "f99ac2d80bcc1e423cb5aaaa94351b6a33e43f847ea11a7783e5bbd127f0b364"
+    },
+    {
+      "path": "optional/gpu_merge/results/collision-collision2048.log",
+      "original_sha256": "dff0146eb4cd2c74151feb4ba404cf11254d4b507a870e09cde764d8933ff93a",
+      "normalized_sha256": "dff0146eb4cd2c74151feb4ba404cf11254d4b507a870e09cde764d8933ff93a"
+    },
+    {
+      "path": "optional/gpu_merge/results/collision-collision512-compact.log",
+      "original_sha256": "2d0be3213140bc367e1aa6ad966af404fe8a3fa1c02dd0d4192096612d242907",
+      "normalized_sha256": "2d0be3213140bc367e1aa6ad966af404fe8a3fa1c02dd0d4192096612d242907"
+    },
+    {
+      "path": "optional/gpu_merge/results/collision-collision512-tiled.log",
+      "original_sha256": "3f017b1f60e7b757545dde5fed8bfc5819b891342dbeee236973e2e7f5599716",
+      "normalized_sha256": "3f017b1f60e7b757545dde5fed8bfc5819b891342dbeee236973e2e7f5599716"
+    },
+    {
+      "path": "optional/gpu_merge/results/collision-collision512.log",
+      "original_sha256": "309e39f810027ff7c612d52612b41e71f96f32f6620149208ca5c6232dcd1c4e",
+      "normalized_sha256": "309e39f810027ff7c612d52612b41e71f96f32f6620149208ca5c6232dcd1c4e"
+    },
+    {
+      "path": "optional/gpu_merge/results/collision-manifest.json",
+      "original_sha256": "2aed203238ba22ec0667a6c74029e3c2a1876eee59bccd9ea50e48d7e1357a80",
+      "normalized_sha256": "9db402eb707be6adfc0f3130ee0083238e5034d76829432d7f260701ed29c7a3"
+    },
+    {
+      "path": "optional/gpu_merge/results/collision-optimized.log",
+      "original_sha256": "57fd7a27a59147654cbb32bc1eda9c0fa6f50808c0296363472081d3b5666075",
+      "normalized_sha256": "57fd7a27a59147654cbb32bc1eda9c0fa6f50808c0296363472081d3b5666075"
+    },
+    {
+      "path": "optional/gpu_merge/results/collision-rows.json",
+      "original_sha256": "d33970e86cba0d73fe886aff8df2262521dfc1f034e9b9507f4d92c4a6a20218",
+      "normalized_sha256": "d33970e86cba0d73fe886aff8df2262521dfc1f034e9b9507f4d92c4a6a20218"
+    },
+    {
+      "path": "optional/gpu_merge/results/merge-v1.json",
+      "original_sha256": "e9e5c5346b21aa432cbd8fe39460666499e897e83f70e3440dbc5485769fba58",
+      "normalized_sha256": "e9e5c5346b21aa432cbd8fe39460666499e897e83f70e3440dbc5485769fba58"
+    },
+    {
+      "path": "optional/gpu_merge/results/merge-v1.log",
+      "original_sha256": "0698545503cb3c739072ed11498419e3606062e14fcdd8e6689e05d9d6c72fe7",
+      "normalized_sha256": "0698545503cb3c739072ed11498419e3606062e14fcdd8e6689e05d9d6c72fe7"
+    },
+    {
+      "path": "optional/gpu_merge/results/merge-v2.json",
+      "original_sha256": "e0c857e036bd9c368ff2c0afb4c303c5a71ddc65af4f64336b88f11f8ce0d1b6",
+      "normalized_sha256": "e0c857e036bd9c368ff2c0afb4c303c5a71ddc65af4f64336b88f11f8ce0d1b6"
+    },
+    {
+      "path": "optional/gpu_merge/results/merge-v2.log",
+      "original_sha256": "d83aa2e49a5a00d78f07c0b08f04ba742175b7ba29fe00f0913ac77a1421b14d",
+      "normalized_sha256": "d83aa2e49a5a00d78f07c0b08f04ba742175b7ba29fe00f0913ac77a1421b14d"
+    },
+    {
+      "path": "optional/gpu_merge/results/merge-v3.json",
+      "original_sha256": "a5c313369ce48b70efa40f9256c935f95360306c7de53b4b22209ac74f144785",
+      "normalized_sha256": "a5c313369ce48b70efa40f9256c935f95360306c7de53b4b22209ac74f144785"
+    },
+    {
+      "path": "optional/gpu_merge/results/merge-v3.log",
+      "original_sha256": "b8ab27505cb54f1dabbfe3fd0acdf11ee90916adc33cfbde7e3af18ed129c627",
+      "normalized_sha256": "b8ab27505cb54f1dabbfe3fd0acdf11ee90916adc33cfbde7e3af18ed129c627"
+    },
+    {
+      "path": "optional/gpu_merge/results/merge-v4.json",
+      "original_sha256": "47db6b8bd7a73b514cea0de806d2faabec90241e1726fabd8cb3cb3f6db48638",
+      "normalized_sha256": "47db6b8bd7a73b514cea0de806d2faabec90241e1726fabd8cb3cb3f6db48638"
+    },
+    {
+      "path": "optional/gpu_merge/results/merge-v4.log",
+      "original_sha256": "78112dbc106b14a8dcee88a398931cf71736c233347d5ef52daa77b62e6b2d5c",
+      "normalized_sha256": "78112dbc106b14a8dcee88a398931cf71736c233347d5ef52daa77b62e6b2d5c"
+    },
+    {
+      "path": "optional/gpu_merge/results/merge-v5.json",
+      "original_sha256": "9f2b15f9b57b8d0a42ddaa63aaab2ab875416e64e3e0c548cf262304ff9f01c6",
+      "normalized_sha256": "9f2b15f9b57b8d0a42ddaa63aaab2ab875416e64e3e0c548cf262304ff9f01c6"
+    },
+    {
+      "path": "optional/gpu_merge/results/merge-v5.log",
+      "original_sha256": "72751756498ee07806c78b2b353a74a2555444a67d382285ce30c75c4be5e47c",
+      "normalized_sha256": "72751756498ee07806c78b2b353a74a2555444a67d382285ce30c75c4be5e47c"
+    },
+    {
+      "path": "optional/gpu_merge/results/normalization.json",
+      "original_sha256": "79825250bc6c33a7254af1e8f31aaf4d8d78feaad258e9163e1905d4bb81f88b",
+      "normalized_sha256": "79825250bc6c33a7254af1e8f31aaf4d8d78feaad258e9163e1905d4bb81f88b"
+    },
+    {
+      "path": "optional/gpu_merge/results/rank-pilot.log",
+      "original_sha256": "633c15644556a20726b34531b13938b88a0042b7f06d507496bd1233f239e9bd",
+      "normalized_sha256": "633c15644556a20726b34531b13938b88a0042b7f06d507496bd1233f239e9bd"
+    },
+    {
+      "path": "optional/gpu_merge/results/rank-shared-v5.json",
+      "original_sha256": "7c7fa78f3ce67751ed29b465ee2544a1b8a9866f1a6de847636f6a8483c699fd",
+      "normalized_sha256": "7c7fa78f3ce67751ed29b465ee2544a1b8a9866f1a6de847636f6a8483c699fd"
+    },
+    {
+      "path": "optional/gpu_merge/results/rank-shared-v5.log",
+      "original_sha256": "7884079fc09262db6df24d0b07a5d86c53b3997e4786be23342f267dc65e15fe",
+      "normalized_sha256": "7884079fc09262db6df24d0b07a5d86c53b3997e4786be23342f267dc65e15fe"
+    },
+    {
+      "path": "optional/gpu_merge/results/v1-manifest.json",
+      "original_sha256": "3b530ae2856cc51c3af244cc4ea6e90664be0745683411842ce9e2de3eac72a4",
+      "normalized_sha256": "3b530ae2856cc51c3af244cc4ea6e90664be0745683411842ce9e2de3eac72a4"
+    },
+    {
+      "path": "optional/gpu_merge/results/v2-manifest.json",
+      "original_sha256": "30c25a5350dd12e1114e5d129c9b2fe27e29c9abc656a174a69e51221a9bebad",
+      "normalized_sha256": "30c25a5350dd12e1114e5d129c9b2fe27e29c9abc656a174a69e51221a9bebad"
+    },
+    {
+      "path": "optional/gpu_merge/results/v3-manifest.json",
+      "original_sha256": "0f9611073ef44ce7604d9a181e0e2bf30e909653420351eb1bfaca1b68394de0",
+      "normalized_sha256": "0f9611073ef44ce7604d9a181e0e2bf30e909653420351eb1bfaca1b68394de0"
+    },
+    {
+      "path": "optional/gpu_merge/results/v4-manifest.json",
+      "original_sha256": "0e54d356d2ee77816eb3ea8035b4fd4a00ce293d6bc716fafaf9d7b6180a4c60",
+      "normalized_sha256": "0e54d356d2ee77816eb3ea8035b4fd4a00ce293d6bc716fafaf9d7b6180a4c60"
+    },
+    {
+      "path": "optional/gpu_merge/results/v5-manifest.json",
+      "original_sha256": "482a61077d80be9c8c9c4ff042be6c85638f68a862661bcb3e2a9c5109d2af4e",
+      "normalized_sha256": "482a61077d80be9c8c9c4ff042be6c85638f68a862661bcb3e2a9c5109d2af4e"
+    },
+    {
+      "path": "optional/gpu_merge/shader-toolchain.md",
+      "original_sha256": "5904353bb93f4caa4519c7e59e79409850f063a58d7f3d19e6681bae16fec290",
+      "normalized_sha256": "4272974a1f564558bfd145a74b74ba2d195ff861a7516607638a6d2e7a7c0e28"
+    },
+    {
+      "path": "optional/gpu_merge/shader_compile.py",
+      "original_sha256": "c7585da233ed134531196738cc8ea05109b015b247a2820f255bfb7d4237c361",
+      "normalized_sha256": "33c06ed4045dd69ebda64fe133c2617fee3f8fc5c74659f7cd61d60ad6b488ff"
+    },
+    {
+      "path": "optional/gpu_merge/shader_compile_test.py",
+      "original_sha256": "d2472aea320116a8ccea5beec2f20ea0b2a4d84c83b22dd0105c6536ac70a611",
+      "normalized_sha256": "693cee878ca661cb792eac10898db3cb385593f9649d7863594401da29d82c5f"
+    }
+  ],
+  "integration_edits": {
+    "optional/gpu_merge/CMakeLists.txt": "Register the existing selector, calibration, shader-helper and scalar-oracle tests in CTest.",
+    "optional/gpu_merge/design.md": "Clarify that fresh output storage is zero-initialized; the optimized path does not clear the entire mapped output with a host memset.",
+    "optional/gpu_merge/rank512_notice.txt": "Remove trailing whitespace while retaining the complete original notice.",
+    "optional/gpu_merge/cutover.md": "Link the subsequent final-named calibration; its qualified source hash retains the pre-link guide bytes."
+  },
+  "post_export_validation": {
+    "source_revision": "6c1bbd2e1e1bb364389dd9f2b6977caf02a92527",
+    "qualification": "cutover/qualification.json",
+    "calibration": "cutover/calibration.json",
+    "original_metadata_sha256": "bb7d854713ca3272b486a4efa327679fe537ae44589645af70e65d96630e5030",
+    "passed_ctests": 13,
+    "measured_pairs": 150,
+    "heldout_passed": true,
+    "generated_header_parity_passed": true
+  }
+}

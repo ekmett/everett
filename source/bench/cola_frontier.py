@@ -6,6 +6,7 @@
 Run under the host CPU resource gate. Uses the shared cola_layout.cc fixture.
 """
 from snapshot import Snapshot
+from fixture import write_fixture
 
 import argparse
 import csv
@@ -40,7 +41,7 @@ def main():
     build.mkdir(parents=True, exist_ok=False)
     git = lambda *a: subprocess.check_output(["git", "-C", str(repo), *a])
     source = build / "cola_layout.cc"
-    source.write_bytes((repo / "bench/cola_layout.cc").read_bytes())
+    write_fixture(repo / "bench/cola_layout.cc", source)
     compiler = shlex.split(args.compiler)
     metadata = {
         "started_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: UPSTREAM</title>
+<title>Everett: UPSTREAM</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -94,14 +94,14 @@ fast-crc32 provenance</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code><a class="el" href="licensezlib.html">LICENSE.zlib.md</a></code>   </td><td class="markdownTableBodyNone"><code>715a5af28f2eb61eae78b857a77d796787ccc71b31ead1078aa5fc9e9727f900</code>   </td></tr>
 </table>
-<p>The generator explicitly applies its MIT-or-zlib choice to both the program and its output. I preserve those terms in the generated files; they are not relicensed as Diet-authored code. I do not vendor the upstream benchmark harness or its separate <code>third_party</code> collection.</p>
+<p>The generator explicitly applies its MIT-or-zlib choice to both the program and its output. I preserve those terms in the generated files; they are not relicensed as Everett-authored code. I do not vendor the upstream benchmark harness or its separate <code>third_party</code> collection.</p>
 <h2><a class="anchor" id="regeneration"></a>
 Regeneration</h2>
-<p>From an Diet source checkout, with Python 3 and a host C compiler available:</p>
+<p>From an Everett source checkout, with Python 3 and a host C compiler available:</p>
 <div class="fragment"><div class="line">python3 tools/generate_crc32c.py</div>
 <div class="line">python3 tools/generate_crc32c.py --check</div>
 </div><!-- fragment --><p>The script compiles the pinned generator in a temporary directory and selects CRC32C's Castagnoli polynomial for each backend. Its adaptations give the C output C++ header linkage and separate namespaces, use alias-safe scalar loads, adjust C literals, and scope helper macros. Each generated file records its exact ISA and algorithm arguments. Regeneration is a developer operation; it is not part of configuration, compilation, installation or ordinary consumption.</p>
-<p>I check in all generated backends under <code>include/diet/detail/</code> and install them with the headers. The generator and script remain in the source checkout; the installed package needs neither. This provenance document and all three upstream license files are installed together so their relative links remain valid.</p>
+<p>I check in all generated backends under <code>include/everett/detail/</code> and install them with the headers. The generator and script remain in the source checkout; the installed package needs neither. This provenance document and all three upstream license files are installed together so their relative links remain valid.</p>
 <p>The available backends include a portable fallback, ARM variants and x86 variants. Selection depends on the compiler and available target features; shipping a generated backend does not establish that it has been executed or benchmarked on every platform. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->

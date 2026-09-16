@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['input_5fmode_0',['input_mode',['../structdiet_1_1index__builder.html#a7e2fe3a279d1eca1ca210806f0cd1edc',1,'diet::index_builder']]]
+  ['file_5fkind_0',['file_kind',['../namespaceeverett.html#afb3ec78839f4e10d47ce9b6bb33ed0f4',1,'everett']]],
+  ['file_5fopen_5fmode_1',['file_open_mode',['../namespaceeverett.html#aaad24667f9b400ca6d79599e36c74412',1,'everett']]]
 ];

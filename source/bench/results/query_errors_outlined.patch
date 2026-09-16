@@ -1,13 +1,13 @@
---- a/include/diet/index_builder.h
-+++ b/include/diet/index_builder.h
+--- a/include/everett/index_builder.h
++++ b/include/everett/index_builder.h
 @@ -8,6 +8,8 @@
   */
  
  #pragma once
 +
-+#include <diet/error_detail.h>
++#include <everett/error_detail.h>
  
- #include <diet/sampling.h>
+ #include <everett/sampling.h>
  
 @@ -60,14 +62,14 @@
  
@@ -95,16 +95,16 @@
        auto copy = bit_string::copy(key);
        incoming_.emplace(std::move(copy));
        incoming_false_ = !order && pending_false_;
---- a/include/diet/index_pipeline.h
-+++ b/include/diet/index_pipeline.h
+--- a/include/everett/index_pipeline.h
++++ b/include/everett/index_pipeline.h
 @@ -8,6 +8,8 @@
   */
  
  #pragma once
 +
-+#include <diet/error_detail.h>
++#include <everett/error_detail.h>
  
- #include <diet/index_builder.h>
+ #include <everett/index_builder.h>
  
 @@ -42,7 +44,7 @@
        : target_(std::move(target)), source_(target_) {
@@ -140,17 +140,17 @@
        if (!finished_) {
          try {
            auto target = target_;
---- a/include/diet/profile.h
-+++ b/include/diet/profile.h
+--- a/include/everett/profile.h
++++ b/include/everett/profile.h
 @@ -8,6 +8,8 @@
   */
  
  #pragma once
 +
-+#include <diet/error_detail.h>
++#include <everett/error_detail.h>
  
- #include <diet/policy.h>
- #include <diet/key_detail.h>
+ #include <everett/policy.h>
+ #include <everett/key_detail.h>
 @@ -31,12 +33,12 @@
    namespace profile_detail {
      inline std::uint64_t add(std::uint64_t a, std::uint64_t b) {
@@ -658,17 +658,17 @@
        profile_array<P, stream_role::borrowed> result;
        auto extent = data_.bit_size / P::bits_per_unit;
        offsets_.push_back(extent);
---- a/include/diet/profile_blob.h
-+++ b/include/diet/profile_blob.h
+--- a/include/everett/profile_blob.h
++++ b/include/everett/profile_blob.h
 @@ -8,6 +8,8 @@
   */
  
  #pragma once
 +
-+#include <diet/error_detail.h>
++#include <everett/error_detail.h>
  
- #include <diet/profile.h>
- #include <diet/rank_groups.h>
+ #include <everett/profile.h>
+ #include <everett/rank_groups.h>
 @@ -79,7 +81,7 @@
            interleave.size() != virtual_count || interleave.count() != borrowed.size() ||
            false_borrows.size() != borrowed.size() / 8 + (borrowed.size() % 8 != 0) ||
@@ -769,16 +769,16 @@
          }
          while (native_at != native.size() &&
                 compare_bits(native[native_at].key.view(), borrowed[i].view()) < 0) {
---- a/include/diet/query.h
-+++ b/include/diet/query.h
+--- a/include/everett/query.h
++++ b/include/everett/query.h
 @@ -8,6 +8,8 @@
   */
  
  #pragma once
 +
-+#include <diet/error_detail.h>
++#include <everett/error_detail.h>
  
- #include <diet/index_pipeline.h>
+ #include <everett/index_pipeline.h>
  
 @@ -55,7 +57,7 @@
      static query_root adopt_prepared(pair_type source) {
@@ -875,16 +875,16 @@
        auto result = std::move(*pending_);
        pending_.reset();
        return result;
---- a/include/diet/rank15.h
-+++ b/include/diet/rank15.h
+--- a/include/everett/rank15.h
++++ b/include/everett/rank15.h
 @@ -8,6 +8,8 @@
   */
  
  #pragma once
 +
-+#include <diet/error_detail.h>
++#include <everett/error_detail.h>
  
- #include <diet/word_view.h>
+ #include <everett/word_view.h>
  
 @@ -47,7 +49,7 @@
        if (classes.size() != groups / 16 + (groups % 16 != 0) ||
@@ -937,16 +937,16 @@
          if (i % 128 == 0) result.checkpoints.push_back(result.total);
          result.classes[i / 16] |= std::uint64_t(source[i]) << (4 * (i % 16));
          result.total += source[i];
---- a/include/diet/rank_groups.h
-+++ b/include/diet/rank_groups.h
+--- a/include/everett/rank_groups.h
++++ b/include/everett/rank_groups.h
 @@ -8,6 +8,8 @@
   */
  
  #pragma once
 +
-+#include <diet/error_detail.h>
++#include <everett/error_detail.h>
  
- #include <diet/rank15.h>
+ #include <everett/rank15.h>
  
 @@ -133,11 +135,11 @@
        : classes_(classes), checkpoints_(checkpoints), virtual_count_(virtual_count), total_(total) {
@@ -1007,15 +1007,15 @@
          if (i % 128 == 0) result.checkpoints.push_back(result.total);
          auto bit = i * class_bits;
          unsigned shift = unsigned(bit % 64);
---- a/include/diet/sampling.h
-+++ b/include/diet/sampling.h
+--- a/include/everett/sampling.h
++++ b/include/everett/sampling.h
 @@ -9,6 +9,8 @@
  
  #pragma once
  
-+#include <diet/error_detail.h>
++#include <everett/error_detail.h>
 +
- #include <diet/profile_blob.h>
+ #include <everett/profile_blob.h>
  
  #include <algorithm>
 @@ -47,7 +49,7 @@
@@ -1094,14 +1094,14 @@
        return target;
      }
  
---- a/include/diet/select_groups.h
-+++ b/include/diet/select_groups.h
+--- a/include/everett/select_groups.h
++++ b/include/everett/select_groups.h
 @@ -8,6 +8,8 @@
   */
  
  #pragma once
 +
-+#include <diet/error_detail.h>
++#include <everett/error_detail.h>
  
  #include <algorithm>
  #include <array>
@@ -1217,14 +1217,14 @@
        select_groups result;
        result.record_count = records;
        result.universe = residuals.back();
---- a/include/diet/word_view.h
-+++ b/include/diet/word_view.h
+--- a/include/everett/word_view.h
++++ b/include/everett/word_view.h
 @@ -8,6 +8,8 @@
   */
  
  #pragma once
 +
-+#include <diet/error_detail.h>
++#include <everett/error_detail.h>
  
  #include <bit>
  #include <cstddef>
@@ -1274,7 +1274,7 @@
      }
  
 --- /dev/null
-+++ b/include/diet/error_detail.h
++++ b/include/everett/error_detail.h
 @@ -0,0 +1,18 @@
 +/**
 + * \file
@@ -1287,7 +1287,7 @@
 +#pragma once
 +#include <cstdlib>
 +#include <stdexcept>
-+namespace diet::error_detail {
++namespace everett::error_detail {
 +  template <class E> [[noreturn]]
 +#if defined(__GNUC__) || defined(__clang__)
 +  [[gnu::cold, gnu::noinline]]

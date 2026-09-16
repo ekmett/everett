@@ -3,25 +3,25 @@
   "cmake_revision": "06c3450b13bba4541f6b49c9a0b4e443e45857a2",
   "sanitizers": "AddressSanitizer and UndefinedBehaviorSanitizer",
   "cmake_configuration": [
-    "-DDIET_SANITIZERS=ON",
+    "-DEVERETT_SANITIZERS=ON",
     "-DCMAKE_BUILD_TYPE=Release",
     "-DCMAKE_CXX_FLAGS_RELEASE=-O1 -g -DNDEBUG"
   ],
   "compile_targets": [
-    "diet_test_native_writer_allocations",
-    "diet_test_native_writer"
+    "everett_test_native_writer_allocations",
+    "everett_test_native_writer"
   ],
   "compile_parallelism": 2,
-  "ctest_regex": "^diet\\.(native_writer_allocations|native_writer|package.installed)$",
+  "ctest_regex": "^everett\\.(native_writer_allocations|native_writer|package.installed)$",
   "resource_lease": [
     "cpu-heavy",
     "unique build directory"
   ],
   "files_sha256": {
-    "include/diet/native_writer.h": "8a6b4c07a4eb2b835245a0eae97c5d8f10d77d6d60872dbf5d930c4ff8fc669c",
+    "include/everett/native_writer.h": "8a6b4c07a4eb2b835245a0eae97c5d8f10d77d6d60872dbf5d930c4ff8fc669c",
     "tests/native_writer.cc": "3cbddadcf70ce104badc4274cd03eb6fd5d35a8f07053b21b5ad65af1c568b5e",
     "tests/native_writer_allocations.cc": "d54d9872e99aa3ecb790cb9b06756adfb21c23d18a8138a752414c0e0170202a",
-    "cmake/diet-tests.cmake": "ce5ec92ba06e6923b7ce8e5645ae7ed4ab63ea2218017b02ea87264d2b8de99b"
+    "cmake/everett-tests.cmake": "ce5ec92ba06e6923b7ce8e5645ae7ed4ab63ea2218017b02ea87264d2b8de99b"
   },
-  "ctest_log": "Start testing: Sep 15 12:11 EDT\n----------------------------------------------------------\n19/22 Testing: diet.native_writer\n19/22 Test: diet.native_writer\nCommand: \"/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-check/build/diet_test_native_writer\"\nDirectory: /Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-check/build\n\"diet.native_writer\" start time: Sep 15 12:11 EDT\nOutput:\n----------------------------------------------------------\nnative writer tests passed\n<end of output>\nTest time =   0.75 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.native_writer\" end time: Sep 15 12:12 EDT\n\"diet.native_writer\" time elapsed: 00:00:00\n----------------------------------------------------------\n\n20/22 Testing: diet.native_writer_allocations\n20/22 Test: diet.native_writer_allocations\nCommand: \"/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-check/build/diet_test_native_writer_allocations\"\nDirectory: /Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-check/build\n\"diet.native_writer_allocations\" start time: Sep 15 12:12 EDT\nOutput:\n----------------------------------------------------------\nNative predecessor reuse, exact encoding and allocation rollback passed\n<end of output>\nTest time =   1.27 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.native_writer_allocations\" end time: Sep 15 12:12 EDT\n\"diet.native_writer_allocations\" time elapsed: 00:00:01\n----------------------------------------------------------\n\n21/22 Testing: diet.package.installed\n21/22 Test: diet.package.installed\nCommand: \"/opt/homebrew/Cellar/cmake/3.27.7/bin/cmake\" \"-Ddiet_smoke_mode=installed\" \"-Ddiet_smoke_config=Release\" \"-P\" \"/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-check/build/diet-package-smoke.cmake\"\nDirectory: /Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-check/build\n\"diet.package.installed\" start time: Sep 15 12:12 EDT\nOutput:\n----------------------------------------------------------\n<end of output>\nTest time =   5.04 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.package.installed\" end time: Sep 15 12:12 EDT\n\"diet.package.installed\" time elapsed: 00:00:05\n----------------------------------------------------------\n\nEnd testing: Sep 15 12:12 EDT\n"
+  "ctest_log": "Start testing: Sep 15 12:11 EDT\n----------------------------------------------------------\n19/22 Testing: everett.native_writer\n19/22 Test: everett.native_writer\nCommand: \"/workspace/-native-prefix/build-native-prefix-check/build/everett_test_native_writer\"\nDirectory: /workspace/-native-prefix/build-native-prefix-check/build\n\"everett.native_writer\" start time: Sep 15 12:11 EDT\nOutput:\n----------------------------------------------------------\nnative writer tests passed\n<end of output>\nTest time =   0.75 sec\n----------------------------------------------------------\nTest Passed.\n\"everett.native_writer\" end time: Sep 15 12:12 EDT\n\"everett.native_writer\" time elapsed: 00:00:00\n----------------------------------------------------------\n\n20/22 Testing: everett.native_writer_allocations\n20/22 Test: everett.native_writer_allocations\nCommand: \"/workspace/-native-prefix/build-native-prefix-check/build/everett_test_native_writer_allocations\"\nDirectory: /workspace/-native-prefix/build-native-prefix-check/build\n\"everett.native_writer_allocations\" start time: Sep 15 12:12 EDT\nOutput:\n----------------------------------------------------------\nNative predecessor reuse, exact encoding and allocation rollback passed\n<end of output>\nTest time =   1.27 sec\n----------------------------------------------------------\nTest Passed.\n\"everett.native_writer_allocations\" end time: Sep 15 12:12 EDT\n\"everett.native_writer_allocations\" time elapsed: 00:00:01\n----------------------------------------------------------\n\n21/22 Testing: everett.package.installed\n21/22 Test: everett.package.installed\nCommand: \"/opt/homebrew/Cellar/cmake/3.27.7/bin/cmake\" \"-Deverett_smoke_mode=installed\" \"-Deverett_smoke_config=Release\" \"-P\" \"/workspace/-native-prefix/build-native-prefix-check/build/everett-package-smoke.cmake\"\nDirectory: /workspace/-native-prefix/build-native-prefix-check/build\n\"everett.package.installed\" start time: Sep 15 12:12 EDT\nOutput:\n----------------------------------------------------------\n<end of output>\nTest time =   5.04 sec\n----------------------------------------------------------\nTest Passed.\n\"everett.package.installed\" end time: Sep 15 12:12 EDT\n\"everett.package.installed\" time elapsed: 00:00:05\n----------------------------------------------------------\n\nEnd testing: Sep 15 12:12 EDT\n"
 }

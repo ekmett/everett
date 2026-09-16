@@ -3,25 +3,25 @@
   "cmake_revision": "93b5ef4cdf4f94b0e3ebe6be465862c5ee6965ab",
   "sanitizers": "AddressSanitizer and UndefinedBehaviorSanitizer",
   "cmake_configuration": [
-    "-DDIET_SANITIZERS=ON",
+    "-DEVERETT_SANITIZERS=ON",
     "-DCMAKE_BUILD_TYPE=Release",
     "-DCMAKE_CXX_FLAGS_RELEASE=-O1 -g -DNDEBUG"
   ],
   "compile_targets": [
-    "diet_test_borrowed_writer",
-    "diet_test_profile"
+    "everett_test_borrowed_writer",
+    "everett_test_profile"
   ],
   "compile_parallelism": 2,
-  "ctest_regex": "^diet\\.(borrowed_writer|profile|package.installed)$",
+  "ctest_regex": "^everett\\.(borrowed_writer|profile|package.installed)$",
   "resource_lease": [
     "cpu-heavy",
     "unique build directory"
   ],
   "files_sha256": {
-    "include/diet/profile.h": "83ca652983bd78854b718c0b51f06114109565d9f09f337f6bd7c0c1ff03c3f9",
+    "include/everett/profile.h": "83ca652983bd78854b718c0b51f06114109565d9f09f337f6bd7c0c1ff03c3f9",
     "tests/profile.cc": "5ad0237883a7aa018486482fd8abd592d6e345bd863525d434d21043a2fa8729",
     "tests/borrowed_writer.cc": "1d2af808ca3b77224450af640098f2dc9e3c5148318965b94c37d5f9ca1fae4e",
-    "cmake/diet-tests.cmake": "2f82828e2d4017a11632ba86d0d9849e38d995a60dfd88983c7d1ce0a2dfb058"
+    "cmake/everett-tests.cmake": "2f82828e2d4017a11632ba86d0d9849e38d995a60dfd88983c7d1ce0a2dfb058"
   },
-  "ctest_log": "Start testing: Sep 15 12:05 EDT\n----------------------------------------------------------\n4/21 Testing: diet.profile\n4/21 Test: diet.profile\nCommand: \"/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-check/build/diet_test_profile\"\nDirectory: /Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-check/build\n\"diet.profile\" start time: Sep 15 12:05 EDT\nOutput:\n----------------------------------------------------------\nprofile tests passed\n<end of output>\nTest time =   5.83 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.profile\" end time: Sep 15 12:05 EDT\n\"diet.profile\" time elapsed: 00:00:05\n----------------------------------------------------------\n\n5/21 Testing: diet.borrowed_writer\n5/21 Test: diet.borrowed_writer\nCommand: \"/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-check/build/diet_test_borrowed_writer\"\nDirectory: /Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-check/build\n\"diet.borrowed_writer\" start time: Sep 15 12:05 EDT\nOutput:\n----------------------------------------------------------\nBorrowed predecessor reuse, exact encoding and allocation rollback passed\n<end of output>\nTest time =   1.08 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.borrowed_writer\" end time: Sep 15 12:05 EDT\n\"diet.borrowed_writer\" time elapsed: 00:00:01\n----------------------------------------------------------\n\n20/21 Testing: diet.package.installed\n20/21 Test: diet.package.installed\nCommand: \"/opt/homebrew/Cellar/cmake/3.27.7/bin/cmake\" \"-Ddiet_smoke_mode=installed\" \"-Ddiet_smoke_config=Release\" \"-P\" \"/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-check/build/diet-package-smoke.cmake\"\nDirectory: /Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-check/build\n\"diet.package.installed\" start time: Sep 15 12:05 EDT\nOutput:\n----------------------------------------------------------\n<end of output>\nTest time =   5.02 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.package.installed\" end time: Sep 15 12:05 EDT\n\"diet.package.installed\" time elapsed: 00:00:05\n----------------------------------------------------------\n\nEnd testing: Sep 15 12:05 EDT\n"
+  "ctest_log": "Start testing: Sep 15 12:05 EDT\n----------------------------------------------------------\n4/21 Testing: everett.profile\n4/21 Test: everett.profile\nCommand: \"/workspace/-borrowed-prefix/build-borrowed-prefix-check/build/everett_test_profile\"\nDirectory: /workspace/-borrowed-prefix/build-borrowed-prefix-check/build\n\"everett.profile\" start time: Sep 15 12:05 EDT\nOutput:\n----------------------------------------------------------\nprofile tests passed\n<end of output>\nTest time =   5.83 sec\n----------------------------------------------------------\nTest Passed.\n\"everett.profile\" end time: Sep 15 12:05 EDT\n\"everett.profile\" time elapsed: 00:00:05\n----------------------------------------------------------\n\n5/21 Testing: everett.borrowed_writer\n5/21 Test: everett.borrowed_writer\nCommand: \"/workspace/-borrowed-prefix/build-borrowed-prefix-check/build/everett_test_borrowed_writer\"\nDirectory: /workspace/-borrowed-prefix/build-borrowed-prefix-check/build\n\"everett.borrowed_writer\" start time: Sep 15 12:05 EDT\nOutput:\n----------------------------------------------------------\nBorrowed predecessor reuse, exact encoding and allocation rollback passed\n<end of output>\nTest time =   1.08 sec\n----------------------------------------------------------\nTest Passed.\n\"everett.borrowed_writer\" end time: Sep 15 12:05 EDT\n\"everett.borrowed_writer\" time elapsed: 00:00:01\n----------------------------------------------------------\n\n20/21 Testing: everett.package.installed\n20/21 Test: everett.package.installed\nCommand: \"/opt/homebrew/Cellar/cmake/3.27.7/bin/cmake\" \"-Deverett_smoke_mode=installed\" \"-Deverett_smoke_config=Release\" \"-P\" \"/workspace/-borrowed-prefix/build-borrowed-prefix-check/build/everett-package-smoke.cmake\"\nDirectory: /workspace/-borrowed-prefix/build-borrowed-prefix-check/build\n\"everett.package.installed\" start time: Sep 15 12:05 EDT\nOutput:\n----------------------------------------------------------\n<end of output>\nTest time =   5.02 sec\n----------------------------------------------------------\nTest Passed.\n\"everett.package.installed\" end time: Sep 15 12:05 EDT\n\"everett.package.installed\" time elapsed: 00:00:05\n----------------------------------------------------------\n\nEnd testing: Sep 15 12:05 EDT\n"
 }

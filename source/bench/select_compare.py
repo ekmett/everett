@@ -34,17 +34,17 @@ build=(a.build_dir or root/'build-select').resolve();build.mkdir(parents=True,ex
 baseline_snapshot=Snapshot(root,BASE)
 candidate_snapshot=Snapshot(root,CANDIDATE)
 for name in ('select_groups','select15'):
-    (build/('baseline_'+name+'.h')).write_bytes(baseline_snapshot.read('include/diet/'+name+'.h'))
+    (build/('baseline_'+name+'.h')).write_bytes(baseline_snapshot.read('include/everett/'+name+'.h'))
 stage1=build/'stage1'
 if a.prototype:
-    (stage1/'include/diet').mkdir(parents=True,exist_ok=True)
+    (stage1/'include/everett').mkdir(parents=True,exist_ok=True)
     for name in ('select_groups','select15'):
-        (stage1/('include/diet/'+name+'.h')).write_bytes((build/('baseline_'+name+'.h')).read_bytes())
+        (stage1/('include/everett/'+name+'.h')).write_bytes((build/('baseline_'+name+'.h')).read_bytes())
     subprocess.run(['patch','--silent','-p1','-d',str(stage1),'-i',str(root/'bench/select_stage1.patch')],check=True)
-candidate=build/'candidate/diet'
+candidate=build/'candidate/everett'
 candidate.mkdir(parents=True,exist_ok=True)
 for name in ('select_groups','select15'):
-    (candidate/(name+'.h')).write_bytes(candidate_snapshot.read('include/diet/'+name+'.h'))
+    (candidate/(name+'.h')).write_bytes(candidate_snapshot.read('include/everett/'+name+'.h'))
 baseline_snapshot.record(build/'baseline-snapshot.json')
 candidate_snapshot.record(build/'candidate-snapshot.json')
 flags=['-std=c++20','-O3','-DNDEBUG','-Wall','-Wextra','-Wpedantic','-Werror']
@@ -57,7 +57,7 @@ command=[os.environ.get('CXX','clang++'),*flags,'-I'+str(candidate.parent),
  '-DSELECT_BASELINE_FIXED="'+str(build/'baseline_select15.h')+'"']
 if a.prototype:
     prototype=build/'prototype_select_groups.h'
-    prototype.write_bytes((stage1/'include/diet/select_groups.h').read_bytes())
+    prototype.write_bytes((stage1/'include/everett/select_groups.h').read_bytes())
     subprocess.run(['patch','--silent',str(prototype),str(root/'bench/select_simd_prototype.patch')],check=True)
     command+=['-DSELECT_PROTOTYPE="'+str(prototype)+'"']
 command += [str(root/'bench/select_compare.cc'),'-o',str(exe)]

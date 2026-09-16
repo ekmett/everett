@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: Native AVX2 packed-rank comparison</title>
+<title>Everett: Native AVX2 packed-rank comparison</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -112,7 +112,7 @@ Host and method</h1>
 </ul>
 <p>Each row contains five trials of 1,048,576 queries. The five variants run in one process, with their order rotated each trial so each runs first once. Source bits use deterministic SplitMix64 output; query positions are also deterministic and shared between variants. Construction, allocation, oracle checking and file I/O are outside the timed region. Timed calls include query indexing and indirect function dispatch. Inspection of native assembly confirmed query loads and indirect calls remain inside the timing loops.</p>
 <p><code>pair_two_ranks</code> computes <code>rank(g) + rank(g+1)</code>. The equivalent <code>pair_rank_plus_class</code> computes <code>2*rank(g) + class_at(g)</code>. Dependent rank uses the previous answer to choose the next group; it includes the common XOR/multiply/query-selection work and limits overlap between queries. It is not an isolated hardware memory-latency measurement.</p>
-<p>Every generated query, including each complete dependent chain, was checked against an independent raw-word population-prefix oracle before timing. Timed checksums agree across all variants. The public <code>diet.rank</code> and <code>diet.groups</code> tests from <code>aeaaa9d</code> passed both Release and ASan/UBSan builds on this host with AVX2 enabled. Those tests include every nybble position and protected-page tails. Oracle tests retained assertions with <code>-UNDEBUG</code> and also used <code>-Wpedantic</code>. The sanitizer build used <code>-O2 -g -fsanitize=address,undefined -fno-omit-frame-pointer</code>.</p>
+<p>Every generated query, including each complete dependent chain, was checked against an independent raw-word population-prefix oracle before timing. Timed checksums agree across all variants. The public <code>everett.rank</code> and <code>everett.groups</code> tests from <code>aeaaa9d</code> passed both Release and ASan/UBSan builds on this host with AVX2 enabled. Those tests include every nybble position and protected-page tails. Oracle tests retained assertions with <code>-UNDEBUG</code> and also used <code>-Wpedantic</code>. The sanitizer build used <code>-O2 -g -fsanitize=address,undefined -fno-omit-frame-pointer</code>.</p>
 <h1><a class="anchor" id="storage-1"></a>
 Storage</h1>
 <table class="markdownTable">
@@ -158,16 +158,16 @@ Reproduction</h1>
 <div class="fragment"><div class="line">repo=$(git rev-parse --show-toplevel)</div>
 <div class="line">build=&quot;$repo/build-rank-quartus-repro&quot;</div>
 <div class="line">python3 bench/snapshot.py 9f68e4d0fdecae73b7d28b748a0d062cc072fbfa &quot;$build/baseline&quot;</div>
-<div class="line">python3 bench/snapshot.py aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06 &quot;$build/qword&quot; include/diet/rank15.h</div>
-<div class="line">cp &quot;$build/qword/include/diet/rank15.h&quot; &quot;$build/qword_rank15.h&quot;</div>
+<div class="line">python3 bench/snapshot.py aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06 &quot;$build/qword&quot; include/everett/rank15.h</div>
+<div class="line">cp &quot;$build/qword/include/everett/rank15.h&quot; &quot;$build/qword_rank15.h&quot;</div>
 <div class="line">cp &quot;$build/qword_rank15.h&quot; &quot;$build/sad_rank15.h&quot;</div>
 <div class="line">patch &quot;$build/sad_rank15.h&quot; &lt; &quot;$repo/bench/rank15_sad_prototype.patch&quot;</div>
 <div class="line">python3 bench/snapshot.py ca93a619a45f1a7ab3a923e2f5793fa9211678d5 &quot;$build/fixture&quot; bench/rank_compare.cc</div>
 <div class="line">cp &quot;$build/fixture/bench/rank_compare.cc&quot; &quot;$build/rank_compare.cc&quot;</div>
 <div class="line">clang++ -std=c++20 -O3 -DNDEBUG -mavx2 -mpopcnt -mno-avx512f \</div>
 <div class="line">  -Wall -Wextra -Werror -I&quot;$build/baseline/include&quot; \</div>
-<div class="line">  &quot;-DDIET_RANK_CANDIDATE=\&quot;$build/sad_rank15.h\&quot;&quot; \</div>
-<div class="line">  &quot;-DDIET_RANK_SIMD=\&quot;$build/qword_rank15.h\&quot;&quot; \</div>
+<div class="line">  &quot;-DEVERETT_RANK_CANDIDATE=\&quot;$build/sad_rank15.h\&quot;&quot; \</div>
+<div class="line">  &quot;-DEVERETT_RANK_SIMD=\&quot;$build/qword_rank15.h\&quot;&quot; \</div>
 <div class="line">  &quot;$build/rank_compare.cc&quot; -o &quot;$build/rank_compare&quot;</div>
 <div class="line">taskset -c 12 &quot;$build/rank_compare&quot; check 1 32768 core</div>
 <div class="line">taskset -c 12 &quot;$build/rank_compare&quot; hot_packed32KiB 5 1048576 core \</div>

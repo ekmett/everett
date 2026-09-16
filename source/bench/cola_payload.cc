@@ -1,7 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 // SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
-#include <diet/cola_sections.h>
-#include <diet/cola_query.h>
+#include "policy_compat.h"
+
+#include <everett/cola_sections.h>
+#include <everett/cola_query.h>
 #include <algorithm>
 #include <chrono>
 #include <cstddef>
@@ -17,7 +19,7 @@
 #include <vector>
 namespace allocation_probe {
   struct totals { std::uint64_t requested = 0, peak = 0, live = 0, calls = 0; };
-#if defined(DIET_BENCH_ALLOCATIONS)
+#if defined(EVERETT_BENCH_ALLOCATIONS)
   thread_local totals counts;
   thread_local std::uint64_t epoch = 0;
   thread_local bool active = false;
@@ -50,7 +52,7 @@ namespace allocation_probe {
   totals end() { return {}; }
 #endif
 }
-#if defined(DIET_BENCH_ALLOCATIONS)
+#if defined(EVERETT_BENCH_ALLOCATIONS)
 void * operator new(std::size_t size) { return allocation_probe::allocate(size, alignof(std::max_align_t)); }
 void * operator new[](std::size_t size) { return allocation_probe::allocate(size, alignof(std::max_align_t)); }
 void * operator new(std::size_t size, std::align_val_t align) { return allocation_probe::allocate(size, std::size_t(align)); }
@@ -65,7 +67,7 @@ void operator delete(void * p, std::size_t, std::align_val_t) noexcept { allocat
 void operator delete[](void * p, std::size_t, std::align_val_t) noexcept { allocation_probe::release(p); }
 #endif
 
-using namespace diet;
+using namespace everett;
 using clock_type = std::chrono::steady_clock;
 void require(bool ok, char const * message) { if (!ok) throw std::runtime_error(message); }
 volatile std::uint64_t observed = 0;
@@ -127,7 +129,7 @@ template <class P> void run(unsigned prefix, unsigned rounds, std::filesystem::p
   object_id native_id("00000000000000000000000000000001"),side_id("00000000000000000000000000000002");
   blob_identity main_id{object_id("00000000000000000000000000000003"),object_id("00000000000000000000000000000004")};
   std::vector<std::byte> expected;
-#if defined(DIET_REUSE)
+#if defined(EVERETT_REUSE)
   unsigned modes=default_only?1:4;
 #else
   (void)default_only;
@@ -138,7 +140,7 @@ template <class P> void run(unsigned prefix, unsigned rounds, std::filesystem::p
     allocation_probe::begin();
     auto start=clock_type::now();
     auto result=[&] {
-#if defined(DIET_REUSE)
+#if defined(EVERETT_REUSE)
       cola_index_builder<P> builder(native,main,secondary,sources[mode]);
 #else
       cola_index_builder<P> builder(native,main,secondary);
@@ -151,7 +153,7 @@ template <class P> void run(unsigned prefix, unsigned rounds, std::filesystem::p
     auto encoded=encode_cola_sections(result,native_id,main_id,side_id).materialize();
     if(expected.empty()) expected=encoded;
     require(expected==encoded,"complete IX03 bytes differ between modes/rounds");
-#if defined(DIET_REUSE)
+#if defined(EVERETT_REUSE)
     if(mode) for(unsigned route=0;route<2;++route) {
       bool reused=mode==3 || mode==route+1;
       require((&result.borrowed(route)==&sources[mode]->borrowed(route))==reused,"payload sharing identity");
@@ -167,7 +169,7 @@ template <class P> void run(unsigned prefix, unsigned rounds, std::filesystem::p
       std::cout<<name<<",build,"<<mode<<','<<round<<','<<result.virtual_size()<<','<<ns<<','
         <<allocations.calls<<','<<allocations.requested<<','<<allocations.peak<<','<<allocations.live<<','<<crc32c(encoded)<<'\n';
     }
-#ifndef DIET_BENCH_ALLOCATIONS
+#ifndef EVERETT_BENCH_ALLOCATIONS
     if(!mode) {
       auto shared=std::make_shared<node const>(std::move(result));
       auto root=cola_query_root<P>::build(shared);
@@ -185,9 +187,9 @@ int main(int argc,char **argv) {
   std::filesystem::path dump=argc>2?argv[2]:"build-payload-wire";std::filesystem::create_directories(dump);
   bool default_only=argc>3 && std::string(argv[3])=="1";
   for(unsigned prefix:{0u,4096u}) {
-    run<storage_policy<profile_unit::byte,variable_values,3,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
-    run<storage_policy<profile_unit::byte,variable_values,15,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
-    run<storage_policy<profile_unit::bit,variable_values,3,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
-    run<storage_policy<profile_unit::bit,variable_values,15,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
+    run<everett_bench::policy<profile_unit::byte,variable_values,3,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
+    run<everett_bench::policy<profile_unit::byte,variable_values,15,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
+    run<everett_bench::policy<profile_unit::bit,variable_values,3,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
+    run<everett_bench::policy<profile_unit::bit,variable_values,15,exponential_golomb<0>,16>>(prefix,rounds,dump,default_only);
   }
 }

@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['taken_0',['taken',['../namespacediet.html#acdb9a59edf0e16e76442bf2824b56ad0abad841dbbeb7132a68b2c649f4a7b875',1,'diet']]],
-  ['trusted_1',['trusted',['../namespacediet.html#a9c03a17a203e43e8750e7fa8f42b4c82aa21fda5ea719f17fcf0ba17d5d0b8a75',1,'diet::trusted'],['../namespacediet.html#a97b47ec552cb87cd8e1a11aa40be5aaeaa21fda5ea719f17fcf0ba17d5d0b8a75',1,'diet::trusted']]]
+  ['taken_0',['taken',['../namespaceeverett.html#ab3f818236c69ae70203d7950adf3da06abad841dbbeb7132a68b2c649f4a7b875',1,'everett']]],
+  ['trusted_1',['trusted',['../namespaceeverett.html#aaad24667f9b400ca6d79599e36c74412aa21fda5ea719f17fcf0ba17d5d0b8a75',1,'everett::trusted'],['../namespaceeverett.html#a99834ef96e497098ad861535607a98f2aa21fda5ea719f17fcf0ba17d5d0b8a75',1,'everett::trusted']]]
 ];

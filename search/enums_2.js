@@ -1,5 +1,9 @@
 var searchData=
 [
-  ['file_5fkind_0',['file_kind',['../namespacediet.html#a4e0bcf7a2700e77beb4d27e45e014978',1,'diet']]],
-  ['file_5fopen_5fmode_1',['file_open_mode',['../namespacediet.html#a9c03a17a203e43e8750e7fa8f42b4c82',1,'diet']]]
+  ['catalog_5fadmission_0',['catalog_admission',['../namespaceeverett.html#a99834ef96e497098ad861535607a98f2',1,'everett']]],
+  ['category_1',['category',['../structeverett_1_1redundant__runtime.html#a3093dd07e84022343807d0660830e97f',1,'everett::redundant_runtime']]],
+  ['cola_5fdestination_5fkind_2',['cola_destination_kind',['../namespaceeverett.html#a12fc4e4ef24e9ccedc02b022c705cacd',1,'everett']]],
+  ['cola_5fmerge_5fphase_3',['cola_merge_phase',['../namespaceeverett.html#ab3f818236c69ae70203d7950adf3da06',1,'everett']]],
+  ['cola_5forigin_4',['cola_origin',['../namespaceeverett.html#ae2eda95776ceb35f9e15467187334242',1,'everett']]],
+  ['cola_5ftarget_5',['cola_target',['../namespaceeverett.html#a1dca02653d1a6589ff1dffda4078fb96',1,'everett']]]
 ];

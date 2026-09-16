@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: Streaming a fractional-index chain to disk</title>
+<title>Everett: Streaming a fractional-index chain to disk</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -83,8 +83,8 @@ $(function() {
 <p>We can build several <code>.index</code> files together while keeping their native <code>.kv</code> files unchanged. <code>file_index_pipeline&lt;P&gt;</code> samples the exact mapped target pair once. Each stage merges those samples with its own native keys and passes a front-coded sample stream to the next stage. A downstream result need not be sealed before it supplies samples to an upstream builder.</p>
 <p>The stages are ordered nearest the existing target first, new head last. Each stage carries a pinned native owner, the new pair's reserved identity and a private output attempt. <code>step</code> budgets cursor events through bounded queues. <code>seal_next</code> finalizes one <code>.index</code>, proceeding from the target toward the head. The completed receipts remain available if a later stage fails.</p>
 <p>This complete example takes an existing empty object directory. It writes some native files to stand in for already received or merged data, then indexes them without recoding those files. Deterministic IDs are suitable for this fresh example directory; a store reserves fresh IDs and durable dependency pins through its catalog before opening the pipeline.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="file__index__pipeline_8h.html">diet/file_index_pipeline.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="native__file__writer_8h.html">diet/native_file_writer.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="file__index__pipeline_8h.html">everett/file_index_pipeline.h</a>&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="native__file__writer_8h.html">everett/native_file_writer.h</a>&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;array&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cstdio&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;filesystem&gt;</span></div>
@@ -92,10 +92,10 @@ $(function() {
 <div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;vector&gt;</span></div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">using namespace </span><a class="code hl_namespace" href="namespacediet.html">diet</a>;</div>
-<div class="line"><span class="keyword">using </span>P = <a class="code hl_struct" href="structdiet_1_1storage__policy.html">storage_policy&lt;profile_unit::byte, fixed_values&lt;1&gt;</a>&gt;;</div>
+<div class="line"><span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a>;</div>
+<div class="line"><span class="keyword">using </span>P = <a class="code hl_struct" href="structeverett_1_1storage__policy.html">storage_policy&lt;everett::tip&lt;everett::encoded_sort&lt;everett::byte_encoding&lt;fixed_values&lt;1&gt;</a>&gt;&gt;&gt;&gt;;</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_struct" href="structdiet_1_1bit__string.html">bit_string</a> key(<span class="keywordtype">unsigned</span> i) {</div>
+<div class="line"><a class="code hl_struct" href="structeverett_1_1bit__string.html">bit_string</a> key(<span class="keywordtype">unsigned</span> i) {</div>
 <div class="line">  <span class="keywordtype">char</span> text[16];</div>
 <div class="line">  std::snprintf(text, <span class="keyword">sizeof</span> text, <span class="stringliteral">&quot;k%06u&quot;</span>, i);</div>
 <div class="line">  <span class="keywordflow">return</span> bit_string::from_bytes(text);</div>
@@ -108,51 +108,51 @@ $(function() {
 <div class="line">  <span class="keyword">auto</span> fresh = [&amp;] {</div>
 <div class="line">    <span class="keywordtype">char</span> text[33];</div>
 <div class="line">    std::snprintf(text, <span class="keyword">sizeof</span> text, <span class="stringliteral">&quot;%032x&quot;</span>, next++);</div>
-<div class="line">    <span class="keywordflow">return</span> <a class="code hl_struct" href="structdiet_1_1object__id.html">object_id</a>(text);</div>
+<div class="line">    <span class="keywordflow">return</span> <a class="code hl_struct" href="structeverett_1_1object__id.html">object_id</a>(text);</div>
 <div class="line">  };</div>
 <div class="line">  <span class="keyword">struct </span>native_file {</div>
-<div class="line">    <a class="code hl_struct" href="structdiet_1_1object__id.html">object_id</a> id;</div>
+<div class="line">    <a class="code hl_struct" href="structeverett_1_1object__id.html">object_id</a> id;</div>
 <div class="line">    std::shared_ptr&lt;mapped_native&lt;P&gt; <span class="keyword">const</span>&gt; owner;</div>
 <div class="line">  };</div>
 <div class="line">  <span class="keyword">auto</span> write = [&amp;](<span class="keywordtype">unsigned</span> count, <span class="keywordtype">unsigned</span> stride, <span class="keywordtype">char</span> tag) {</div>
 <div class="line">    <span class="keyword">auto</span> <span class="keywordtype">id</span> = fresh();</div>
-<div class="line">    <a class="code hl_struct" href="structdiet_1_1native__file__writer.html">native_file_writer&lt;P&gt;</a> writer(directory, <span class="keywordtype">id</span>, <a class="code hl_struct" href="structdiet_1_1object__attempt__id.html">object_attempt_id</a>(fresh().hex()));</div>
-<div class="line">    <span class="keyword">auto</span> value = bit_string::from_bytes(std::string(1, tag));</div>
+<div class="line">    <a class="code hl_struct" href="structeverett_1_1native__file__writer.html">native_file_writer&lt;P&gt;</a> writer(directory, <span class="keywordtype">id</span>, <a class="code hl_struct" href="structeverett_1_1object__attempt__id.html">object_attempt_id</a>(fresh().hex()));</div>
+<div class="line">    <span class="keyword">auto</span> <a class="code hl_function" href="namespaceeverett_1_1typed__detail.html#a7eb7b68de93936d543f7e7a909f2b8ff">value</a> = bit_string::from_bytes(std::string(1, tag));</div>
 <div class="line">    <span class="keywordflow">for</span> (<span class="keywordtype">unsigned</span> i = 0; i != count; ++i) {</div>
-<div class="line">      <span class="keyword">auto</span> k = key(i * stride);</div>
-<div class="line">      writer.append(k.view(), value.view());</div>
+<div class="line">      <span class="keyword">auto</span> k = <a class="code hl_function" href="namespaceeverett_1_1typed__detail.html#aa0bc3228fc77cba75eead4cb1526d630">key</a>(i * stride);</div>
+<div class="line">      writer.append(k.view(), <a class="code hl_function" href="namespaceeverett_1_1typed__detail.html#a7eb7b68de93936d543f7e7a909f2b8ff">value</a>.<a class="code hl_function" href="structeverett_1_1bit__string.html#adee15aee9f486dda0ab3cf09cdec9331">view</a>());</div>
 <div class="line">    }</div>
 <div class="line">    <span class="keyword">auto</span> receipt = writer.finish();</div>
 <div class="line">    <span class="keywordflow">return</span> native_file{id, std::make_shared&lt;mapped_native&lt;P&gt; <span class="keyword">const</span>&gt;(</div>
-<div class="line">      <a class="code hl_struct" href="structdiet_1_1mapped__profile.html">mapped_native&lt;P&gt;::open</a>(receipt.path))};</div>
+<div class="line">      <a class="code hl_struct" href="structeverett_1_1mapped__profile.html">mapped_native&lt;P&gt;::open</a>(receipt.path))};</div>
 <div class="line">  };</div>
 <div class="line"> </div>
 <div class="line">  <span class="keyword">auto</span> base = write(1024, 1, <span class="charliteral">&#39;a&#39;</span>);</div>
-<div class="line">  <a class="code hl_struct" href="structdiet_1_1blob__identity.html">blob_identity</a> base_id{base.id, fresh()};</div>
-<div class="line">  <span class="keyword">auto</span> terminal = <a class="code hl_struct" href="structdiet_1_1profile__index.html">profile_index&lt;P&gt;::native_only</a>(base.owner-&gt;size());</div>
-<div class="line">  <span class="keyword">auto</span> terminal_receipt = <a class="code hl_function" href="namespacediet.html#ae2cb41db1c2fee9f8721fb75e2b54a59">encode_index_sections</a>(terminal, base.id).seal(</div>
-<div class="line">    directory, base_id.index, <a class="code hl_struct" href="structdiet_1_1object__attempt__id.html">object_attempt_id</a>(fresh().hex()));</div>
-<div class="line">  <span class="keyword">auto</span> target = <a class="code hl_struct" href="structdiet_1_1mapped__blob.html">mapped_blob&lt;P&gt;::bind</a>(base_id, base.owner,</div>
-<div class="line">    std::make_shared&lt;<a class="code hl_struct" href="structdiet_1_1mapped__index.html">mapped_index&lt;P&gt;</a> <span class="keyword">const</span>&gt;(<a class="code hl_struct" href="structdiet_1_1mapped__index.html">mapped_index&lt;P&gt;::open</a>(terminal_receipt.path)));</div>
+<div class="line">  <a class="code hl_struct" href="structeverett_1_1blob__identity.html">blob_identity</a> base_id{base.id, fresh()};</div>
+<div class="line">  <span class="keyword">auto</span> terminal = <a class="code hl_struct" href="structeverett_1_1profile__index.html">profile_index&lt;P&gt;::native_only</a>(base.owner-&gt;size());</div>
+<div class="line">  <span class="keyword">auto</span> terminal_receipt = <a class="code hl_function" href="namespaceeverett.html#a3920d15c114d218c1f53e866788fb071">encode_index_sections</a>(terminal, base.id).seal(</div>
+<div class="line">    directory, base_id.index, <a class="code hl_struct" href="structeverett_1_1object__attempt__id.html">object_attempt_id</a>(fresh().hex()));</div>
+<div class="line">  <span class="keyword">auto</span> target = <a class="code hl_struct" href="structeverett_1_1mapped__blob.html">mapped_blob&lt;P&gt;::bind</a>(base_id, base.owner,</div>
+<div class="line">    std::make_shared&lt;<a class="code hl_struct" href="structeverett_1_1mapped__index.html">mapped_index&lt;P&gt;</a> <span class="keyword">const</span>&gt;(<a class="code hl_struct" href="structeverett_1_1mapped__index.html">mapped_index&lt;P&gt;::open</a>(terminal_receipt.path)));</div>
 <div class="line"> </div>
 <div class="line">  <span class="keyword">auto</span> middle = write(64, 8, <span class="charliteral">&#39;b&#39;</span>);</div>
 <div class="line">  <span class="keyword">auto</span> upper = write(8, 64, <span class="charliteral">&#39;c&#39;</span>);</div>
-<div class="line">  <span class="keyword">auto</span> empty = write(0, 1, <span class="charliteral">&#39; &#39;</span>);</div>
+<div class="line">  <span class="keyword">auto</span> <a class="code hl_enumvalue" href="namespaceeverett.html#a47aa22dc5cd07f677c4d7b09d4a886eaaa2e4822a98337283e39f7b60acf85ec9">empty</a> = write(0, 1, <span class="charliteral">&#39; &#39;</span>);</div>
 <div class="line">  std::vector&lt;file_index_stage&lt;P&gt;&gt; stages;</div>
-<div class="line">  <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span> &amp; native : std::array{middle, upper, empty})</div>
-<div class="line">    stages.push_back({<a class="code hl_enumvalue" href="namespacediet.html#af5e4b8aac25a8ae855db94e9ca5e8383a8e5f3adee38c8fccc13c1f3be0143796">native</a>.owner, {<a class="code hl_enumvalue" href="namespacediet.html#af5e4b8aac25a8ae855db94e9ca5e8383a8e5f3adee38c8fccc13c1f3be0143796">native</a>.id, fresh()}, <a class="code hl_struct" href="structdiet_1_1object__attempt__id.html">object_attempt_id</a>(fresh().hex())});</div>
+<div class="line">  <span class="keywordflow">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span> &amp; native : std::array{middle, upper, <a class="code hl_enumvalue" href="namespaceeverett.html#a47aa22dc5cd07f677c4d7b09d4a886eaaa2e4822a98337283e39f7b60acf85ec9">empty</a>})</div>
+<div class="line">    stages.push_back({<a class="code hl_enumvalue" href="namespaceeverett.html#ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796">native</a>.owner, {<a class="code hl_enumvalue" href="namespaceeverett.html#ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796">native</a>.id, fresh()}, <a class="code hl_struct" href="structeverett_1_1object__attempt__id.html">object_attempt_id</a>(fresh().hex())});</div>
 <div class="line"> </div>
-<div class="line">  <a class="code hl_struct" href="structdiet_1_1file__index__pipeline.html">file_index_pipeline&lt;P&gt;</a> pipeline(directory, target, stages);</div>
+<div class="line">  <a class="code hl_struct" href="structeverett_1_1file__index__pipeline.html">file_index_pipeline&lt;P&gt;</a> pipeline(directory, target, stages);</div>
 <div class="line">  <span class="keywordflow">while</span> (!pipeline.done()) pipeline.step(256);</div>
 <div class="line">  <span class="keyword">auto</span> head = target;</div>
 <div class="line">  <span class="keywordflow">while</span> (pipeline.seal_next()) {</div>
 <div class="line">    <span class="keyword">auto</span> i = pipeline.completed_receipts().size() - 1;</div>
 <div class="line">    <span class="keyword">auto</span> <span class="keyword">const</span> &amp; receipt = pipeline.completed_receipts().back();</div>
-<div class="line">    <span class="keyword">auto</span> index = std::make_shared&lt;mapped_index&lt;P&gt; <span class="keyword">const</span>&gt;(<a class="code hl_struct" href="structdiet_1_1mapped__index.html">mapped_index&lt;P&gt;::open</a>(receipt.path));</div>
-<div class="line">    head = <a class="code hl_struct" href="structdiet_1_1mapped__blob.html">mapped_blob&lt;P&gt;::bind</a>(stages[i].identity, stages[i].source, std::move(index), head);</div>
+<div class="line">    <span class="keyword">auto</span> index = std::make_shared&lt;mapped_index&lt;P&gt; <span class="keyword">const</span>&gt;(<a class="code hl_struct" href="structeverett_1_1mapped__index.html">mapped_index&lt;P&gt;::open</a>(receipt.path));</div>
+<div class="line">    head = <a class="code hl_struct" href="structeverett_1_1mapped__blob.html">mapped_blob&lt;P&gt;::bind</a>(stages[i].identity, stages[i].source, std::move(index), head);</div>
 <div class="line">  }</div>
-<div class="line">  <span class="keyword">auto</span> root = <a class="code hl_struct" href="structdiet_1_1query__root.html">mapped_query_root&lt;P&gt;::adopt_prepared</a>(head);</div>
-<div class="line">  <span class="keyword">auto</span> query = key(0);</div>
+<div class="line">  <span class="keyword">auto</span> root = <a class="code hl_struct" href="structeverett_1_1query__root.html">mapped_query_root&lt;P&gt;::adopt_prepared</a>(head);</div>
+<div class="line">  <span class="keyword">auto</span> query = <a class="code hl_function" href="namespaceeverett_1_1typed__detail.html#aa0bc3228fc77cba75eead4cb1526d630">key</a>(0);</div>
 <div class="line">  <span class="keyword">auto</span> cursor = root.cursor(query.view());</div>
 <div class="line">  std::vector&lt;bit_string&gt; values;</div>
 <div class="line">  <span class="keywordflow">while</span> (!cursor.done()) {</div>
@@ -163,23 +163,27 @@ $(function() {
 <div class="line">    bit_string::from_bytes(<span class="stringliteral">&quot;b&quot;</span>), bit_string::from_bytes(<span class="stringliteral">&quot;a&quot;</span>)} ? 0 : 1;</div>
 <div class="line">}</div>
 <div class="ttc" id="afile__index__pipeline_8h_html"><div class="ttname"><a href="file__index__pipeline_8h.html">file_index_pipeline.h</a></div><div class="ttdoc">Streams complete fractional-index chains over pinned mapped inputs.</div></div>
-<div class="ttc" id="anamespacediet_html"><div class="ttname"><a href="namespacediet.html">diet</a></div><div class="ttdef"><b>Definition</b> cola.h:35</div></div>
-<div class="ttc" id="anamespacediet_html_ae2cb41db1c2fee9f8721fb75e2b54a59"><div class="ttname"><a href="namespacediet.html#ae2cb41db1c2fee9f8721fb75e2b54a59">diet::encode_index_sections</a></div><div class="ttdeci">encoded_sections&lt; P &gt; encode_index_sections(profile_blob&lt; P &gt; const &amp;pair, object_id const &amp;native_id, std::optional&lt; blob_identity &gt; exact_target=std::nullopt)</div><div class="ttdef"><b>Definition</b> sections.h:401</div></div>
-<div class="ttc" id="anamespacediet_html_af5e4b8aac25a8ae855db94e9ca5e8383a8e5f3adee38c8fccc13c1f3be0143796"><div class="ttname"><a href="namespacediet.html#af5e4b8aac25a8ae855db94e9ca5e8383a8e5f3adee38c8fccc13c1f3be0143796">diet::cola_origin::native</a></div><div class="ttdeci">@ native</div></div>
+<div class="ttc" id="anamespaceeverett_1_1typed__detail_html_a7eb7b68de93936d543f7e7a909f2b8ff"><div class="ttname"><a href="namespaceeverett_1_1typed__detail.html#a7eb7b68de93936d543f7e7a909f2b8ff">everett::typed_detail::value</a></div><div class="ttdeci">bit_string value(arrow_t&lt; S &gt; const &amp;value)</div><div class="ttdef"><b>Definition</b> typed_world.h:72</div></div>
+<div class="ttc" id="anamespaceeverett_1_1typed__detail_html_aa0bc3228fc77cba75eead4cb1526d630"><div class="ttname"><a href="namespaceeverett_1_1typed__detail.html#aa0bc3228fc77cba75eead4cb1526d630">everett::typed_detail::key</a></div><div class="ttdeci">bit_string key(key_t&lt; S &gt; const &amp;value)</div><div class="ttdef"><b>Definition</b> typed_world.h:63</div></div>
+<div class="ttc" id="anamespaceeverett_html"><div class="ttname"><a href="namespaceeverett.html">everett</a></div><div class="ttdef"><b>Definition</b> active_engine.h:18</div></div>
+<div class="ttc" id="anamespaceeverett_html_a3920d15c114d218c1f53e866788fb071"><div class="ttname"><a href="namespaceeverett.html#a3920d15c114d218c1f53e866788fb071">everett::encode_index_sections</a></div><div class="ttdeci">encoded_sections&lt; P &gt; encode_index_sections(profile_blob&lt; P &gt; const &amp;pair, object_id const &amp;native_id, std::optional&lt; blob_identity &gt; exact_target=std::nullopt)</div><div class="ttdef"><b>Definition</b> sections.h:405</div></div>
+<div class="ttc" id="anamespaceeverett_html_a47aa22dc5cd07f677c4d7b09d4a886eaaa2e4822a98337283e39f7b60acf85ec9"><div class="ttname"><a href="namespaceeverett.html#a47aa22dc5cd07f677c4d7b09d4a886eaaa2e4822a98337283e39f7b60acf85ec9">everett::redundant_slot_state::empty</a></div><div class="ttdeci">@ empty</div></div>
+<div class="ttc" id="anamespaceeverett_html_ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796"><div class="ttname"><a href="namespaceeverett.html#ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796">everett::cola_origin::native</a></div><div class="ttdeci">@ native</div></div>
 <div class="ttc" id="anative__file__writer_8h_html"><div class="ttname"><a href="native__file__writer_8h.html">native_file_writer.h</a></div><div class="ttdoc">Streams ordinary front-coded native objects with bounded payload buffering.</div></div>
-<div class="ttc" id="astructdiet_1_1bit__string_html"><div class="ttname"><a href="structdiet_1_1bit__string.html">diet::bit_string</a></div><div class="ttdef"><b>Definition</b> profile.h:165</div></div>
-<div class="ttc" id="astructdiet_1_1blob__identity_html"><div class="ttname"><a href="structdiet_1_1blob__identity.html">diet::blob_identity</a></div><div class="ttdef"><b>Definition</b> sections.h:34</div></div>
-<div class="ttc" id="astructdiet_1_1file__index__pipeline_html"><div class="ttname"><a href="structdiet_1_1file__index__pipeline.html">diet::file_index_pipeline</a></div><div class="ttdef"><b>Definition</b> file_index_pipeline.h:49</div></div>
-<div class="ttc" id="astructdiet_1_1mapped__blob_html"><div class="ttname"><a href="structdiet_1_1mapped__blob.html">diet::mapped_blob</a></div><div class="ttdef"><b>Definition</b> mapped_blob.h:31</div></div>
-<div class="ttc" id="astructdiet_1_1mapped__index_html"><div class="ttname"><a href="structdiet_1_1mapped__index.html">diet::mapped_index</a></div><div class="ttdef"><b>Definition</b> sections.h:474</div></div>
-<div class="ttc" id="astructdiet_1_1mapped__profile_html"><div class="ttname"><a href="structdiet_1_1mapped__profile.html">diet::mapped_profile</a></div><div class="ttdef"><b>Definition</b> sections.h:430</div></div>
-<div class="ttc" id="astructdiet_1_1native__file__writer_html"><div class="ttname"><a href="structdiet_1_1native__file__writer.html">diet::native_file_writer</a></div><div class="ttdef"><b>Definition</b> native_file_writer.h:29</div></div>
-<div class="ttc" id="astructdiet_1_1object__attempt__id_html"><div class="ttname"><a href="structdiet_1_1object__attempt__id.html">diet::object_attempt_id</a></div><div class="ttdef"><b>Definition</b> object_writer.h:39</div></div>
-<div class="ttc" id="astructdiet_1_1object__id_html"><div class="ttname"><a href="structdiet_1_1object__id.html">diet::object_id</a></div><div class="ttdef"><b>Definition</b> object_path.h:38</div></div>
-<div class="ttc" id="astructdiet_1_1profile__index_html"><div class="ttname"><a href="structdiet_1_1profile__index.html">diet::profile_index</a></div><div class="ttdef"><b>Definition</b> profile_index.h:39</div></div>
-<div class="ttc" id="astructdiet_1_1query__root_html"><div class="ttname"><a href="structdiet_1_1query__root.html">diet::query_root</a></div><div class="ttdef"><b>Definition</b> query.h:51</div></div>
-<div class="ttc" id="astructdiet_1_1storage__policy_html"><div class="ttname"><a href="structdiet_1_1storage__policy.html">diet::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:65</div></div>
-</div><!-- fragment --><p>The final empty-native stage makes this example's head fit in one sampling group. The low-level query returns every matching native value; here the chosen chain order gives <code>c</code>, <code>b</code>, then <code>a</code>. Resolving those matches according to semantic chronology or an arrow policy belongs to the cola owner.</p>
+<div class="ttc" id="astructeverett_1_1bit__string_html"><div class="ttname"><a href="structeverett_1_1bit__string.html">everett::bit_string</a></div><div class="ttdef"><b>Definition</b> profile.h:166</div></div>
+<div class="ttc" id="astructeverett_1_1bit__string_html_adee15aee9f486dda0ab3cf09cdec9331"><div class="ttname"><a href="structeverett_1_1bit__string.html#adee15aee9f486dda0ab3cf09cdec9331">everett::bit_string::view</a></div><div class="ttdeci">bit_view view() const &amp;</div><div class="ttdef"><b>Definition</b> profile.h:178</div></div>
+<div class="ttc" id="astructeverett_1_1blob__identity_html"><div class="ttname"><a href="structeverett_1_1blob__identity.html">everett::blob_identity</a></div><div class="ttdef"><b>Definition</b> sections.h:34</div></div>
+<div class="ttc" id="astructeverett_1_1file__index__pipeline_html"><div class="ttname"><a href="structeverett_1_1file__index__pipeline.html">everett::file_index_pipeline</a></div><div class="ttdef"><b>Definition</b> file_index_pipeline.h:49</div></div>
+<div class="ttc" id="astructeverett_1_1mapped__blob_html"><div class="ttname"><a href="structeverett_1_1mapped__blob.html">everett::mapped_blob</a></div><div class="ttdef"><b>Definition</b> mapped_blob.h:31</div></div>
+<div class="ttc" id="astructeverett_1_1mapped__index_html"><div class="ttname"><a href="structeverett_1_1mapped__index.html">everett::mapped_index</a></div><div class="ttdef"><b>Definition</b> sections.h:478</div></div>
+<div class="ttc" id="astructeverett_1_1mapped__profile_html"><div class="ttname"><a href="structeverett_1_1mapped__profile.html">everett::mapped_profile</a></div><div class="ttdef"><b>Definition</b> sections.h:434</div></div>
+<div class="ttc" id="astructeverett_1_1native__file__writer_html"><div class="ttname"><a href="structeverett_1_1native__file__writer.html">everett::native_file_writer</a></div><div class="ttdef"><b>Definition</b> native_file_writer.h:29</div></div>
+<div class="ttc" id="astructeverett_1_1object__attempt__id_html"><div class="ttname"><a href="structeverett_1_1object__attempt__id.html">everett::object_attempt_id</a></div><div class="ttdef"><b>Definition</b> object_writer.h:39</div></div>
+<div class="ttc" id="astructeverett_1_1object__id_html"><div class="ttname"><a href="structeverett_1_1object__id.html">everett::object_id</a></div><div class="ttdef"><b>Definition</b> object_path.h:38</div></div>
+<div class="ttc" id="astructeverett_1_1profile__index_html"><div class="ttname"><a href="structeverett_1_1profile__index.html">everett::profile_index</a></div><div class="ttdef"><b>Definition</b> profile_index.h:39</div></div>
+<div class="ttc" id="astructeverett_1_1query__root_html"><div class="ttname"><a href="structeverett_1_1query__root.html">everett::query_root</a></div><div class="ttdef"><b>Definition</b> query.h:51</div></div>
+<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:53</div></div>
+</div><!-- fragment --><p>The final empty-native stage makes this example's head fit in one sampling group. The low-level query returns every matching native value; here the chosen chain order gives <code>c</code>, <code>b</code>, then <code>a</code>. Resolving those matches according to semantic chronology or an arrow policy belongs to the world owner.</p>
 <p>Each file stage buffers at most 64 KiB of encoded payload, plus bounded control scratch, current key contexts and navigation under construction. Navigation includes rank classes, false-borrow flags, cut LCPs and sampled residual offsets; it grows with the index. Sampling reduces occurrence counts, not necessarily string bytes. Finishing builds Elias–Fano and rank metadata and performs file barriers, outside the <code>step</code> event budget.</p>
 <p>Only sealed receipts may be recorded as completed objects. The <a class="el" href="md_docs_2sqlite-catalog.html">SQLite catalog</a> records those receipts, registers the exact prepared chain and conditionally publishes its root. Until then, <code>planned_head</code> is an intended identity. It is not an admission or durability receipt. On any failure, keep catalog ownership of inputs and surviving outputs while resolving the outcome. These builders pause in a live process; they do not restore an unfinished pipeline after restart. </p>
 </div></div><!-- contents -->

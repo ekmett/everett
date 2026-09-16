@@ -12,6 +12,7 @@
 """Compare pinned native merges with a shared wire/key-checked harness."""
 
 from snapshot import Snapshot
+from fixture import write_fixture
 
 import argparse
 import csv
@@ -58,9 +59,9 @@ def main():
     flags += (["-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer"]
               if args.sanitize else ["-O3", "-DNDEBUG"])
     if args.allocations:
-        flags.append("-DDIET_BENCH_ALLOCATIONS")
+        flags.append("-DEVERETT_BENCH_ALLOCATIONS")
     source = build / "native_encoded.cc"
-    source.write_bytes((repo / "bench/native_encoded.cc").read_bytes())
+    write_fixture(repo / "bench/native_encoded.cc", source)
     metadata = {
         "started_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "source_sha256": digest(source.read_bytes()),

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: COLA scheduling with immutable pairs</title>
+<title>Everett: COLA scheduling with immutable pairs</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -127,7 +127,7 @@ T\le\frac K{K-1}N+2(h-1).
 <p>These are entry counts. Encoded literals, values, incomplete outputs and the union of historical snapshot dependencies have separate space charges.</p>
 <h1><a class="anchor" id="navigation-and-sampling"></a>
 Navigation and sampling</h1>
-<p>The original construction uses eighth-position samples for a sole main target and sixteenth-position samples from each target when both are present, together with duplicate-pointer cells. Its shadow arrays become visible through linked arrays from level zero; its safety condition includes lookahead construction. These are the scheduling ideas I adopt, while reserving space for Diet's different index representation. <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=9">Bender et al., §3, pp. 9–10</a>.</p>
+<p>The original construction uses eighth-position samples for a sole main target and sixteenth-position samples from each target when both are present, together with duplicate-pointer cells. Its shadow arrays become visible through linked arrays from level zero; its safety condition includes lookahead construction. These are the scheduling ideas I adopt, while reserving space for Everett's different index representation. <a href="https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=9">Bender et al., §3, pp. 9–10</a>.</p>
 <p>I initially use K for both target sampling intervals and virtual cut spacing. Copying the paper's 8/16 rates without changing the cut grid would leave some sampled ordinals between stored cuts or require larger query windows. For independent target strides \(k_m,k_s\) and capacity growth g, the corresponding main coefficient would be</p>
 <p class="formulaDsp">
 \[
@@ -157,9 +157,9 @@ Logical slots, work and visibility</h1>
 <p>A later lower-level merge prefers the prepared carrier slot. It fills the native run and builds the final index against the carrier's unchanged target set. Lower carriers link to that final immutable pair identity. Above level zero, the empty carrier remains private until this fill. At level zero its bounded empty-native pair can immediately replace the root.</p>
 <p>A complete pair becomes visible when reached from the root. If it replaces two already-consumed arrays at its level, their current logical slots are retired. A complete shadow can participate in a higher merge before it becomes visible; visibility must still occur before another merge into that level needs its slot. Tests check this deadline rather than assuming that native completion establishes it.</p>
 <p>Snapshot owners retain exact old dependency graphs independently of those logical slots. Dropping an old pair from the current graph does not revoke its saved owners. The model keeps an immutable archive for its oracle and separately computes the union of owned main-pair and secondary-native IDs; it does not implement physical reclamation. A secondary node in the model is a handle for that native file, not an additional index object. Three logical slots consequently do not claim three physical <code>.index</code> files including snapshots and partially constructed carriers.</p>
-<h1><a class="anchor" id="current-cola-object-closure"></a>
-Current-cola object closure</h1>
-<p>The useful space invariant is stronger than counting slots: every exact target owned by the current root, a live array or a private carrier must still occupy a logical slot. Otherwise a retired slot could hide an arbitrarily long tail of immutable dependencies. The model tests this closure independently after admissions and paused service transitions. Its current-cola closure has at most \(3h\) completed array handles across h levels. A main handle owns a native file and index; a secondary handle owns only a native file. Unfinished output and index stages add only a constant number of owners per active job.</p>
+<h1><a class="anchor" id="current-world-object-closure"></a>
+Current-world object closure</h1>
+<p>The useful space invariant is stronger than counting slots: every exact target owned by the current root, a live array or a private carrier must still occupy a logical slot. Otherwise a retired slot could hide an arbitrarily long tail of immutable dependencies. The model tests this closure independently after admissions and paused service transitions. Its current-world closure has at most \(3h\) completed array handles across h levels. A main handle owns a native file and index; a secondary handle owns only a native file. Unfinished output and index stages add only a constant number of owners per active job.</p>
 <p>The retirement obligation is that a newly visible replacement leaves no private carrier or unfinished job referring to an input whose slot is being released. The smallest-unsafe schedule and visibility-before-reuse rule are what must establish that obligation; root unreachability alone is insufficient. The executable histories satisfy it, but I have not proved it for all histories. A production scheduler must also release completed builders and input owners.</p>
 <p>This \(O(h)\) working-owner argument excludes saved roots, timeline generations, failed attempts and durable continuation checkpoints. Their retained graphs must be counted as a union of exact identities, with separate retention limits. The current insert-only catalog does not reclaim these records or files, so this is not a bound on its on-disk history or an implemented garbage collector.</p>
 <h1><a class="anchor" id="counted-service-and-its-limits"></a>
@@ -185,7 +185,7 @@ I=t_m+t_s+v+5\lceil v/K\rceil
 <h1><a class="anchor" id="scope-of-the-first-model"></a>
 Scope of the first model</h1>
 <p>The tests cover K=3,7,15,31; W=1,16; distinct, repeated and mixed keys; fixed admissions across power-of-two boundaries; pauses in every stage; hidden merge inputs; immutable snapshots; and failure to admit without enough service. History coverage comes from an independent traversal of exact pair edges and contiguous native intervals. Per-key values are chronological token sequences, so reversing intervals would change the oracle result.</p>
-<p>I have not added arbitrary-size received-file admission, fork adoption, deletion elision, durable scheduler recovery or live-size rebuilding to this model. Shared native completion can later serve several colas, but each cola's index adoption needs its own work budget. A large received file bypasses the level-zero arrival slack; sorting files by size also does not authorize merging nonadjacent same-key history. Those extensions retain the separate obligations in <a class="el" href="md_docs_2network-admission.html">network admission</a> and <a class="el" href="md_docs_2rebuild.html">rebuilding</a>. </p>
+<p>I have not added arbitrary-size received-file admission, fork adoption, deletion elision, durable scheduler recovery or live-size rebuilding to this model. Shared native completion can later serve several worlds, but each world's index adoption needs its own work budget. A large received file bypasses the level-zero arrival slack; sorting files by size also does not authorize merging nonadjacent same-key history. Those extensions retain the separate obligations in <a class="el" href="md_docs_2network-admission.html">network admission</a> and <a class="el" href="md_docs_2rebuild.html">rebuilding</a>. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->

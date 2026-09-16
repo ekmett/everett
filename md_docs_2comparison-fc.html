@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: Front coding with comparison state</title>
+<title>Everett: Front coding with comparison state</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -176,7 +176,7 @@ L_j=L_0+\sum_{t=1}^{j}(s_t-b_t),\qquad r_j=L_j-s_j.
 <p>The scalar implementation defaults to \(W=K\). The <a class="el" href="md_bench_2query__compare.html">whole-query comparison</a> favors \(W=15\) over \(W=16\) with \(K=15\) in its measured fixtures. That does not select a transposed control layout or establish a SIMD speedup. The policy's other Golomb and exponential-Golomb choices also need an explicit encoding decision before this layout can replace them.</p>
 <h1><a class="anchor" id="verification-boundary"></a>
 Verification boundary</h1>
-<p>The existing fractional-index proof establishes ranks, sampled windows, exact target retention and false-borrow ordinals over abstract ordered keys. It does not yet connect these string comparisons to encoded bytes or bit positions. The <a class="el" href="diet-an-abstract-proof-core.html">proof guide</a> records the checked mathematical pieces.</p>
+<p>The existing fractional-index proof establishes ranks, sampled windows, exact target retention and false-borrow ordinals over abstract ordered keys. It does not yet connect these string comparisons to encoded bytes or bit positions. The <a class="el" href="everett-an-abstract-proof-core.html">proof guide</a> records the checked mathematical pieces.</p>
 <p>The independent tests compare exact cut LCPs, per-candidate states and complete queries with full-key oracles. They cover reindexing, equality across cuts, empty projections and the preceding-frontier counterexample. Protected pages verify that control-only entry skips key payloads and borrowed-frontier repair does not replay the preceding block. Reindexing preserves native bytes and pins the exact new index dependencies. Construction reconstructs sequentially. The explicit <a class="el" href="mapped-blobs-and-exact-query-roots.html">mapped codec scan</a> verifies sequential FC framing, ordinary prefix retention, navigation directories, cut LCPs and exact target samples. <code>file&lt;P&gt;::scan</code> supplies the lower-level envelope, CRC and padding check.</p>
 <p><code>profile_view::reconstruct_at</code> is a separate full-reconstruction operation. Under ordinary FC its cost includes the preceding context it traverses. A standalone profile encoder can opt into locality-preserving restarts for this operation; blob construction and cascade queries use ordinary FC. </p>
 </div></div><!-- contents -->

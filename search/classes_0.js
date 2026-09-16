@@ -1,12 +1,9 @@
 var searchData=
 [
-  ['backspace_5ftraits_0',['backspace_traits',['../structdiet_1_1policy__detail_1_1backspace__traits.html',1,'diet::policy_detail']]],
-  ['backspace_5ftraits_3c_20exponential_5fgolomb_3c_20order_20_3e_20_3e_1',['backspace_traits&lt; exponential_golomb&lt; Order &gt; &gt;',['../structdiet_1_1policy__detail_1_1backspace__traits_3_01exponential__golomb_3_01_order_01_4_01_4.html',1,'diet::policy_detail']]],
-  ['backspace_5ftraits_3c_20golomb_3c_20m_20_3e_20_3e_2',['backspace_traits&lt; golomb&lt; M &gt; &gt;',['../structdiet_1_1policy__detail_1_1backspace__traits_3_01golomb_3_01_m_01_4_01_4.html',1,'diet::policy_detail']]],
-  ['binding_3',['binding',['../structdiet_1_1cola__sample__cursor_1_1binding.html',1,'diet::cola_sample_cursor&lt; P, Target &gt;::binding'],['../structdiet_1_1sample__cursor_1_1binding.html',1,'diet::sample_cursor&lt; P, Target &gt;::binding']]],
-  ['bit_5fcomparison_4',['bit_comparison',['../structdiet_1_1bit__comparison.html',1,'diet']]],
-  ['bit_5fstring_5',['bit_string',['../structdiet_1_1bit__string.html',1,'diet']]],
-  ['bit_5fview_6',['bit_view',['../structdiet_1_1bit__view.html',1,'diet']]],
-  ['blob_5fidentity_7',['blob_identity',['../structdiet_1_1blob__identity.html',1,'diet']]],
-  ['branch_5fpoint_8',['branch_point',['../structdiet_1_1branch__point.html',1,'diet']]]
+  ['active_5fengine_0',['active_engine',['../structeverett_1_1active__engine.html',1,'everett']]],
+  ['active_5fslots_1',['active_slots',['../structeverett_1_1redundant__runtime_1_1execution_1_1active__slots.html',1,'everett::redundant_runtime::execution']]],
+  ['adaptive_5findex_5foutput_2',['adaptive_index_output',['../structeverett_1_1cola__detail_1_1adaptive__index__output.html',1,'everett::cola_detail']]],
+  ['adaptive_5findex_5foutput_3c_20p_2c_20native_2c_20main_2c_20posix_5fobject_5fops_2c_20posix_5findex_5fspool_5fops_2c_20factory_20_3e_3',['adaptive_index_output&lt; P, Native, Main, posix_object_ops, posix_index_spool_ops, Factory &gt;',['../structeverett_1_1cola__detail_1_1adaptive__index__output.html',1,'everett::cola_detail']]],
+  ['all_5freplacements_4',['all_replacements',['../structeverett_1_1typed__detail_1_1all__replacements.html',1,'everett::typed_detail']]],
+  ['all_5freplacements_3c_20registry_5fdetail_3a_3asorts_3c_20s_2e_2e_2e_20_3e_20_3e_5',['all_replacements&lt; registry_detail::sorts&lt; S... &gt; &gt;',['../structeverett_1_1typed__detail_1_1all__replacements_3_01registry__detail_1_1sorts_3_01_s_8_8_8_01_4_01_4.html',1,'everett::typed_detail']]]
 ];

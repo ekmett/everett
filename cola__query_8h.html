@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: include/diet/cola_query.h File Reference</title>
+<title>Everett: include/everett/cola_query.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -76,20 +76,23 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_c7071025d4f9f9a9bd9b595194cb3993.html">diet</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_684ffc4129be141202002a94cb0feed4.html">everett</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#namespaces">Namespaces</a>  </div>
+<a href="#namespaces">Namespaces</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">cola_query.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Enumerates native matches along a COLA main chain and its terminal secondaries.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;<a class="el" href="cola__index_8h_source.html">diet/cola_index.h</a>&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="el" href="cola__index_8h_source.html">everett/cola_index.h</a>&gt;</code><br />
+<code>#include &lt;concepts&gt;</code><br />
+<code>#include &lt;functional&gt;</code><br />
 <code>#include &lt;array&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;optional&gt;</code><br />
@@ -101,17 +104,44 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1cola__query__match.html">diet::cola_query_match&lt; P, Blob &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__query__match.html">everett::cola_query_match&lt; P, Blob &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1cola__query__root.html">diet::cola_query_root&lt; P, Blob &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__query__root.html">everett::cola_query_root&lt; P, Blob &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1cola__query__cursor.html">diet::cola_query_cursor&lt; P, Blob &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__detail_1_1scoped__native__view.html">everett::cola_detail::scoped_native_view&lt; class &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__detail_1_1scoped__native__view_3_01profile__view_3_01_p_00_01stream__role_1_1native_01_4_01_4.html">everett::cola_detail::scoped_native_view&lt; profile_view&lt; P, stream_role::native &gt; &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__detail_1_1scoped__native__view_3_01sort__profile__view_3_01_p_00_01_selector_01_4_01_4.html">everett::cola_detail::scoped_native_view&lt; sort_profile_view&lt; P, Selector &gt; &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__detail_1_1scoped__borrowed__view.html">everett::cola_detail::scoped_borrowed_view&lt; class &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__detail_1_1scoped__borrowed__view_3_01profile__view_3_01_p_00_01stream__role_1_1borrowed_01_4_01_4.html">everett::cola_detail::scoped_borrowed_view&lt; profile_view&lt; P, stream_role::borrowed &gt; &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__detail_1_1first__window__result.html">everett::cola_detail::first_window_result&lt; P &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__detail_1_1query__access.html">everett::cola_detail::query_access</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__detail_1_1query__access_1_1match__probe.html">everett::cola_detail::query_access::match_probe</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__query__cursor.html">everett::cola_query_cursor&lt; P, Blob &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1cola__query__cursor_1_1prepared__query.html">everett::cola_query_cursor&lt; P, Blob &gt;::prepared_query</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
-<tr class="memitem:namespacediet" id="r_namespacediet"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet.html">diet</a></td></tr>
+<tr class="memitem:namespaceeverett" id="r_namespaceeverett"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html">everett</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceeverett_1_1cola__detail" id="r_namespaceeverett_1_1cola__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1cola__detail.html">everett::cola_detail</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:aa55c72eb442eb4178a8a1738b6bdb5f2" id="r_aa55c72eb442eb4178a8a1738b6bdb5f2"><td class="memTemplParams" colspan="2">template&lt;class P , class Blob , class Query , class Decode &gt; <br />
+requires std::same_as&lt;std::remove_cvref_t&lt;Query&gt;, <a class="el" href="structeverett_1_1bit__string.html">bit_string</a>&gt; &amp;&amp; (!std::is_reference_v&lt;std::invoke_result_t&lt;Decode &amp;, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a>&gt;&gt;) &amp;&amp; requires(Blob const &amp; blob, <a class="el" href="structeverett_1_1profile__query__context.html">profile_query_context</a>&lt;P&gt; const &amp; context) { <a class="el" href="structeverett_1_1cola__detail_1_1query__access.html#ab8432e9bba15c029bb2823d961b237c7">query_access::search</a>(blob.view(), 0, context, <a class="el" href="structeverett_1_1cola__detail_1_1query__access_1_1match__probe.html">query_access::match_probe</a>{}); }</td></tr>
+<tr class="memitem:aa55c72eb442eb4178a8a1738b6bdb5f2"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1cola__detail.html#aa55c72eb442eb4178a8a1738b6bdb5f2">everett::cola_detail::first_value</a> (<a class="el" href="structeverett_1_1cola__query__root.html">cola_query_root</a>&lt; P, Blob &gt; const &amp;root, Query &amp;&amp;query, Decode &amp;&amp;decode) -&gt; std::optional&lt; std::invoke_result_t&lt; Decode &amp;, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> &gt; &gt;</td></tr>
+<tr class="separator:aa55c72eb442eb4178a8a1738b6bdb5f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Enumerates native matches along a COLA main chain and its terminal secondaries. </p>

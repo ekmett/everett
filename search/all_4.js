@@ -7,5 +7,6 @@ var searchData=
   ['5_20publish_20files_20before_20adopting_20their_20catalog_20roots_4',['5. Publish files before adopting their catalog roots',['../md_docs_2catalog.html#autotoc_md5-publish-files-before-adopting-their-catalog-roots',1,'']]],
   ['5_20redundant_20levels_20and_20merge_20work_5',['5. Redundant levels and merge work',['../md_docs_2design.html#autotoc_md5-redundant-levels-and-merge-work',1,'']]],
   ['5_20why_20the_20replay_20queue_20actually_20finishes_6',['5. Why the replay queue actually finishes',['../md_docs_2rebuild.html#autotoc_md5-why-the-replay-queue-actually-finishes',1,'']]],
-  ['512_20bit_20rank_20prefixes_7',['Intel paths for bounded 512-bit rank prefixes',['../intel-paths-for-bounded-512-bit-rank-prefixes.html',1,'']]]
+  ['50_20case_20summaries_7',['All 50 case summaries',['../header-based-cpugpu-cutover.html#all-50-case-summaries',1,'']]],
+  ['512_20bit_20rank_20prefixes_8',['Intel paths for bounded 512-bit rank prefixes',['../intel-paths-for-bounded-512-bit-rank-prefixes.html',1,'']]]
 ];

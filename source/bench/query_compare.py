@@ -17,6 +17,7 @@ pass before one measured trial, followed by another exact result verification.
 """
 
 from snapshot import Snapshot
+from fixture import write_fixture
 
 import argparse
 import csv
@@ -81,14 +82,14 @@ def main():
         header_hashes[name] = hashes
         normalizations[name] = snapshot.metadata()
     source = build / "query_compare.cc"
-    source.write_bytes((repo / "bench/query_compare.cc").read_bytes())
+    write_fixture(repo / "bench/query_compare.cc", source)
     compiler = shlex.split(os.environ.get("CXX", "clang++"))
     flags = ["-std=c++20", "-Wall", "-Wextra", "-Wpedantic", "-Werror"]
     flags += (["-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer"]
               if args.sanitize else ["-O3", "-DNDEBUG"])
     variants = [("baseline_w15", "baseline", []), ("candidate_w15", "candidate", [])]
     if args.w16:
-        variants.append(("candidate_w16", "candidate", ["-DDIET_QUERY_COMPARE_W16=1"]))
+        variants.append(("candidate_w16", "candidate", ["-DEVERETT_QUERY_COMPARE_W16=1"]))
     commands = {}
     executables = {}
     for name, revision, definitions in variants:

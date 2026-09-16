@@ -1,0 +1,21 @@
+{
+  "everett_revision": "aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06",
+  "everett_rank_sha256": "80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c",
+  "candidate_sha256": "0eced9c87eeedf1f36e15251e221de346599a64692c90777ce25f18720a93fe7",
+  "measured_bitmap_source_revision": "ce97bdaea4a1f6134225eb613acc6b0d16981b45",
+  "measured_bitmap_source_sha256": "96773e2dbaa8dacd92c22173f97e63bb5bbc2604f1194541cfefe83eb1f79ed0",
+  "source_sha256": "9669f7e957e78c31afb7b1149d16446397f134d4e7ebb5bc00f3793b352a60af",
+  "compiler": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.6.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+  "flags": [
+    "-std=c++20",
+    "-O3",
+    "-DNDEBUG",
+    "-Wall",
+    "-Wextra",
+    "-Werror"
+  ],
+  "case": "large",
+  "trials": 3,
+  "queries": 524288,
+  "sanitize": false
+}

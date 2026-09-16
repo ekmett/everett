@@ -10,8 +10,8 @@
  * \endlicense
  */
 // Run with bench/rank_bounds.py; both revisions encode the same logical input.
-#include <diet/rank.h>
-#include <diet/rank_groups.h>
+#include <everett/rank.h>
+#include <everett/rank_groups.h>
 #include "old_rank.h"
 #include "old_rank15.h"
 #include "old_rank_groups.h"
@@ -83,7 +83,7 @@ namespace {
     std::uint64_t seed = 0xabcdef123456;
     std::vector<std::uint64_t> populations(n), oracle(n + 1);
     for (std::size_t i = 0; i < n; ++i) { populations[i] = random_word(seed) & K; oracle[i+1] = oracle[i] + populations[i]; }
-    auto index = diet::rank_groups<K>::build(populations, n * K);
+    auto index = everett::rank_groups<K>::build(populations, n * K);
     auto current = index.view();
     old::rank_groups_view<K> previous(index.classes, index.checkpoints, n * K, oracle.back());
     auto bytes = 8 * (index.classes.size() + index.checkpoints.size());
@@ -104,7 +104,7 @@ namespace {
     std::vector<std::uint64_t> words(n / 64), oracle(n + 1);
     for (auto & word : words) word = random_word(seed);
     for (std::size_t i = 0; i < n; ++i) oracle[i+1] = oracle[i] + ((words[i / 64] >> (i % 64)) & 1);
-    auto index = diet::rank_index::build(words, n);
+    auto index = everett::rank_index::build(words, n);
     auto old_index = old::rank_index::build(words, n);
     bitmap current{index.view(), std::span<std::uint64_t const>(index.words)};
     bitmap previous{old_index.view(), std::span<std::uint64_t const>(old_index.words)};

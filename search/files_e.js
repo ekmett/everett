@@ -8,6 +8,19 @@ var searchData=
   ['rank_5fcompare_5fwindows_2emd_5',['rank_compare_windows.md',['../rank__compare__windows_8md.html',1,'']]],
   ['rank_5fgroups_2eh_6',['rank_groups.h',['../rank__groups_8h.html',1,'']]],
   ['rank_5fspacers_2emd_7',['rank_spacers.md',['../rank__spacers_8md.html',1,'']]],
-  ['readme_2emd_8',['readme.md',['../bench_2_r_e_a_d_m_e_8md.html',1,'(Global Namespace)'],['../proof_2_r_e_a_d_m_e_8md.html',1,'(Global Namespace)'],['../_r_e_a_d_m_e_8md.html',1,'(Global Namespace)']]],
-  ['rebuild_2emd_9',['rebuild.md',['../rebuild_8md.html',1,'']]]
+  ['readme_2emd_8',['readme.md',['../_r_e_a_d_m_e_8md.html',1,'(Global Namespace)'],['../proof_2_r_e_a_d_m_e_8md.html',1,'(Global Namespace)'],['../bench_2_r_e_a_d_m_e_8md.html',1,'(Global Namespace)']]],
+  ['rebuild_2emd_9',['rebuild.md',['../rebuild_8md.html',1,'']]],
+  ['redundant_2druntime_2emd_10',['redundant-runtime.md',['../redundant-runtime_8md.html',1,'']]],
+  ['redundant_5fcheckpoint_2eh_11',['redundant_checkpoint.h',['../redundant__checkpoint_8h.html',1,'']]],
+  ['redundant_5fruntime_2eh_12',['redundant_runtime.h',['../redundant__runtime_8h.html',1,'']]],
+  ['registry_2eh_13',['registry.h',['../registry_8h.html',1,'']]],
+  ['replacement_2drebuild_2emd_14',['replacement-rebuild.md',['../replacement-rebuild_8md.html',1,'']]],
+  ['replacement_5frebuild_2eh_15',['replacement_rebuild.h',['../replacement__rebuild_8h.html',1,'']]],
+  ['report_2emd_16',['report.md',['../report_8md.html',1,'']]],
+  ['runtime_2dstore_2emd_17',['runtime-store.md',['../runtime-store_8md.html',1,'']]],
+  ['runtime_5fcheckpoint_2eh_18',['runtime_checkpoint.h',['../runtime__checkpoint_8h.html',1,'']]],
+  ['runtime_5fgraph_5fsealer_2eh_19',['runtime_graph_sealer.h',['../runtime__graph__sealer_8h.html',1,'']]],
+  ['runtime_5fregistry_2eh_20',['runtime_registry.h',['../runtime__registry_8h.html',1,'']]],
+  ['runtime_5fseal_2eh_21',['runtime_seal.h',['../runtime__seal_8h.html',1,'']]],
+  ['runtime_5fstore_2eh_22',['runtime_store.h',['../runtime__store_8h.html',1,'']]]
 ];

@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Diet: include/diet/mapped_cola.h File Reference</title>
+<title>Everett: include/everett/mapped_cola.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -28,7 +28,7 @@ MathJax.Hub.Config({
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">Diet
+   <div id="projectname">Everett
    </div>
   </td>
  </tr>
@@ -76,7 +76,7 @@ $(function() {
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_c7071025d4f9f9a9bd9b595194cb3993.html">diet</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_684ffc4129be141202002a94cb0feed4.html">everett</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -91,14 +91,15 @@ $(function() {
 
 <p>Binds mapped COLA main and secondary targets with exact immutable pins.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;<a class="el" href="cola__query_8h_source.html">diet/cola_query.h</a>&gt;</code><br />
-<code>#include &lt;<a class="el" href="cola__sections_8h_source.html">diet/cola_sections.h</a>&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="el" href="cola__query_8h_source.html">everett/cola_query.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="cola__sections_8h_source.html">everett/cola_sections.h</a>&gt;</code><br />
 <code>#include &lt;array&gt;</code><br />
 <code>#include &lt;memory&gt;</code><br />
 <code>#include &lt;optional&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;unordered_map&gt;</code><br />
 <code>#include &lt;unordered_set&gt;</code><br />
+<code>#include &lt;set&gt;</code><br />
 <code>#include &lt;utility&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 </div>
@@ -106,33 +107,38 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1mapped__cola__blob.html">diet::mapped_cola_blob&lt; P &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1mapped__cola__blob.html">everett::mapped_cola_blob&lt; P &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdiet_1_1mapped__cola__blob_1_1merged__cursor.html">diet::mapped_cola_blob&lt; P &gt;::merged_cursor</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1mapped__cola__scan.html">everett::mapped_cola_scan&lt; Blob &gt;</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1mapped__cola__resolver.html">everett::mapped_cola_resolver&lt; P, Blob &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
 Namespaces</h2></td></tr>
-<tr class="memitem:namespacediet" id="r_namespacediet"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacediet.html">diet</a></td></tr>
+<tr class="memitem:namespaceeverett" id="r_namespaceeverett"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html">everett</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:a15f279a56b3b968db99168e6f3c39c94" id="r_a15f279a56b3b968db99168e6f3c39c94"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
-<tr class="memitem:a15f279a56b3b968db99168e6f3c39c94"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacediet.html#a15f279a56b3b968db99168e6f3c39c94">diet::mapped_cola_artifact</a> = <a class="el" href="structdiet_1_1cola__index.html">cola_index</a>&lt; P, <a class="el" href="namespacediet.html#a74e9d939c552a7024db855aa57e6e6de">mapped_native</a>&lt; P &gt;, <a class="el" href="structdiet_1_1mapped__cola__blob.html">mapped_cola_blob</a>&lt; P &gt; &gt;</td></tr>
-<tr class="separator:a15f279a56b3b968db99168e6f3c39c94"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aabf4ef011e6a396ec1ed8aea508a2de7" id="r_aabf4ef011e6a396ec1ed8aea508a2de7"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
-<tr class="memitem:aabf4ef011e6a396ec1ed8aea508a2de7"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacediet.html#aabf4ef011e6a396ec1ed8aea508a2de7">diet::mapped_cola_index_builder</a> = <a class="el" href="structdiet_1_1cola__index__builder.html">cola_index_builder</a>&lt; P, <a class="el" href="namespacediet.html#a74e9d939c552a7024db855aa57e6e6de">mapped_native</a>&lt; P &gt;, <a class="el" href="structdiet_1_1mapped__cola__blob.html">mapped_cola_blob</a>&lt; P &gt; &gt;</td></tr>
-<tr class="separator:aabf4ef011e6a396ec1ed8aea508a2de7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae7a33d718698cada1cbb1fb2becc92d2" id="r_ae7a33d718698cada1cbb1fb2becc92d2"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
-<tr class="memitem:ae7a33d718698cada1cbb1fb2becc92d2"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacediet.html#ae7a33d718698cada1cbb1fb2becc92d2">diet::mapped_cola_query_root</a> = <a class="el" href="structdiet_1_1cola__query__root.html">cola_query_root</a>&lt; P, <a class="el" href="structdiet_1_1mapped__cola__blob.html">mapped_cola_blob</a>&lt; P &gt; &gt;</td></tr>
-<tr class="separator:ae7a33d718698cada1cbb1fb2becc92d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acbc89ce3dfcbc1da3357c097cc94f9cc" id="r_acbc89ce3dfcbc1da3357c097cc94f9cc"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
+<tr class="memitem:acbc89ce3dfcbc1da3357c097cc94f9cc"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#acbc89ce3dfcbc1da3357c097cc94f9cc">everett::mapped_cola_artifact</a> = <a class="el" href="structeverett_1_1cola__index.html">cola_index</a>&lt; P, <a class="el" href="namespaceeverett.html#afa278093ab9986aa7514136e446c648e">mapped_native</a>&lt; P &gt;, <a class="el" href="structeverett_1_1mapped__cola__blob.html">mapped_cola_blob</a>&lt; P &gt; &gt;</td></tr>
+<tr class="separator:acbc89ce3dfcbc1da3357c097cc94f9cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab88854a76d210390fcca46d04a4b6236" id="r_ab88854a76d210390fcca46d04a4b6236"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
+<tr class="memitem:ab88854a76d210390fcca46d04a4b6236"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#ab88854a76d210390fcca46d04a4b6236">everett::mapped_cola_index_builder</a> = <a class="el" href="structeverett_1_1cola__index__builder.html">cola_index_builder</a>&lt; P, <a class="el" href="namespaceeverett.html#afa278093ab9986aa7514136e446c648e">mapped_native</a>&lt; P &gt;, <a class="el" href="structeverett_1_1mapped__cola__blob.html">mapped_cola_blob</a>&lt; P &gt; &gt;</td></tr>
+<tr class="separator:ab88854a76d210390fcca46d04a4b6236"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4102abdfc9fbdd85f687d668605c4ab2" id="r_a4102abdfc9fbdd85f687d668605c4ab2"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
+<tr class="memitem:a4102abdfc9fbdd85f687d668605c4ab2"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a4102abdfc9fbdd85f687d668605c4ab2">everett::mapped_cola_query_root</a> = <a class="el" href="structeverett_1_1cola__query__root.html">cola_query_root</a>&lt; P, <a class="el" href="structeverett_1_1mapped__cola__blob.html">mapped_cola_blob</a>&lt; P &gt; &gt;</td></tr>
+<tr class="separator:a4102abdfc9fbdd85f687d668605c4ab2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a77212bbc61bf5bf23ce695f5afc8fe60" id="r_a77212bbc61bf5bf23ce695f5afc8fe60"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
-<tr class="memitem:a77212bbc61bf5bf23ce695f5afc8fe60"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespacediet.html#ae7a33d718698cada1cbb1fb2becc92d2">mapped_cola_query_root</a>&lt; P &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespacediet.html#a77212bbc61bf5bf23ce695f5afc8fe60">diet::open_mapped_cola_query</a> (std::filesystem::path const &amp;root, <a class="el" href="structdiet_1_1blob__identity.html">blob_identity</a> const &amp;head)</td></tr>
-<tr class="separator:a77212bbc61bf5bf23ce695f5afc8fe60"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a150870be950bed1b825506bf02813f92" id="r_a150870be950bed1b825506bf02813f92"><td class="memTemplParams" colspan="2">template&lt;class Blob &gt; </td></tr>
+<tr class="memitem:a150870be950bed1b825506bf02813f92"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a150870be950bed1b825506bf02813f92">everett::scan_mapped_cola</a> (Blob const &amp;source)</td></tr>
+<tr class="separator:a150870be950bed1b825506bf02813f92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a408c5a14aad947fa633925c739eec743" id="r_a408c5a14aad947fa633925c739eec743"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
+<tr class="memitem:a408c5a14aad947fa633925c739eec743"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="namespaceeverett.html#a4102abdfc9fbdd85f687d668605c4ab2">mapped_cola_query_root</a>&lt; P &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a408c5a14aad947fa633925c739eec743">everett::open_mapped_cola_query</a> (std::filesystem::path const &amp;root, <a class="el" href="structeverett_1_1blob__identity.html">blob_identity</a> const &amp;head)</td></tr>
+<tr class="separator:a408c5a14aad947fa633925c739eec743"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Binds mapped COLA main and secondary targets with exact immutable pins. </p>
