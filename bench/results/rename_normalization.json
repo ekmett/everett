@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "4c9f1e93c73765d90c6a1a9277a6333892351bf04f5ff47c894bc1a305664f01"
+      "normalized_sha256": "b07e97e7eb491d38a64afa153bc8d024dcc6cd755bb730b9d93fe9c4a59e6ce0"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "f547bb4828bc7e80afa1a582b01558cd5349653b9657cf4f002c9b0b5d352cb0"
+      "normalized_sha256": "f381ae2236dc0c04b2d9961c8ca4053a02c4f446306713255bc16dc11f36deeb"
     }
   ],
   "subsequent_updates": [
@@ -1039,6 +1039,13 @@
     },
     {
       "scope": "Document forward Elias-Fano traversal and aligned byte string framing; original measurement hashes are preserved.",
+      "artifacts": [
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Expose byte string tables in the API guides and distinguish framed raw keys from standalone prefix-free codes.",
       "artifacts": [
         "bench/results/publication_normalization.json",
         "docs/implementation.md"

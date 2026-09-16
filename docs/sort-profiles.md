@@ -115,7 +115,9 @@ A key's comparison sequence is its selector code followed by its local order
 bits, with an explicit logical length. String order bits are the string's bytes;
 integer order bits are its fixed-width unsigned representation. A proper-prefix
 string sorts before its extension because their logical lengths differ. Native
-strings do not carry the zero escapes used by the opaque typed adapter.
+strings use their raw bytes. The built-in byte string transport also uses raw
+keys; standalone `write_ordered` string codes retain zero escaping and a
+terminator when no enclosing key extent is available.
 
 `sort_profile_key<Codec>` connects a leaf codec to navigation. The supplied
 specializations cover FC byte strings, FC bit strings, raw byte strings and

@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "f547bb4828bc7e80afa1a582b01558cd5349653b9657cf4f002c9b0b5d352cb0"
+      "normalized_sha256": "f381ae2236dc0c04b2d9961c8ca4053a02c4f446306713255bc16dc11f36deeb"
     }
   ],
   "checks": {
@@ -561,6 +561,12 @@
     },
     {
       "scope": "Document forward Elias-Fano traversal and aligned byte string framing; original measurement hashes are preserved.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Expose byte string tables in the API guides and distinguish framed raw keys from standalone prefix-free codes.",
       "artifacts": [
         "docs/implementation.md"
       ]

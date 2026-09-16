@@ -57,6 +57,21 @@ this package.
 
 ## Implemented foundations
 
+### Byte string tables
+
+`multiverse<storage_policy<>>` supplies the ordinary string connection API over
+byte-counted KV02 native files. Its built-in optional-string sort stores raw
+keys and a byte presence tag followed by raw value bytes, using the surrounding
+record's extents. This removes key escaping and nested bit counts while keeping
+custom sort codecs unchanged. The default byte schema identifies this grammar.
+The [byte table guide](byte-transport.md) covers its API and framing; focused
+tests exercise binary and prefix keys, typed merges, scans, snapshots, private
+transactions, rebuilding and durable reopening.
+
+The byte native writer encodes each frame's LEB128 controls into bounded scratch,
+grows the destination once and copies literals and values to their final byte
+positions. Failure tests check allocation rollback and unaligned source views.
+
 ### Optional GPU construction
 
 The separate [fixed-key experiment](../optional/fixed_gpu_merge/README.md)

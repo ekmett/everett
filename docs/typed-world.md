@@ -221,10 +221,11 @@ retained graph bytes and saved history need their own storage accounting.
 
 The binary family and the byte-profile redundant family transport ordered
 sort-qualified keys and encoded arrows through the opaque FC profile.
-Ordered strings escape zero bytes and
-terminate with a separate zero escape. Bit profiles store the arrow grammar
-exactly; the explicit byte profile adds and validates at most seven zero padding
-bits around an arrow.
+The built-in optional-string sort in a byte profile uses raw key bytes and a
+byte presence tag followed by raw value bytes; the surrounding record supplies
+their extents. Other opaque string transports escape zero bytes and terminate
+with a separate zero escape. Bit profiles store the arrow grammar exactly;
+custom byte-profile arrows add and validate at most seven zero padding bits.
 
 The [sort-owned runtime](sort-runtime.md) instead uses each sort's physical key
 and value grammar directly in its native files. Ordinary bit-profile

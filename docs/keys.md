@@ -35,8 +35,8 @@ but it receives the complete key. Equal stringlike components in different
 sorts are distinct keys. An empty stringlike component is a valid key; it does
 not denote an absent binding.
 
-We choose canonical bit encodings $E_S(s)$ and $E_s(x)$. Both the sort-code
-family and each sort's key-code family are prefix-free: no complete codeword
+For standalone keys, we choose canonical bit encodings $E_S(s)$ and $E_s(x)$.
+Both the sort-code family and each sort's key-code family are prefix-free: no complete codeword
 is a proper prefix of another. Encode the pair by direct concatenation:
 
 $$
@@ -48,6 +48,15 @@ key decoder to use and where its bits begin. Under a bit policy, **there is no
 implicit byte alignment between the two components**: a three-bit sort code
 can be followed immediately by the first bit of a byte-oriented key code.
 A byte policy requires both components to be encoded in whole bytes.
+
+When a record supplies the key's extent, its comparison sequence can instead
+be the prefix-free sort code followed by the key's finite order sequence.
+The enclosing grammar tells us where that sequence ends. Native sort-profile
+strings and the built-in [byte string transport](byte-transport.md) therefore
+compare raw string bytes, including empty strings and proper prefixes, without
+storing standalone terminators. The sort code still self-terminates so it can
+select the record grammar. Both representations identify the same logical pair;
+hashing operates on that pair's logical key and value, independently of framing.
 
 The prefix-free sort codes determine order between sorts. Within a sort, its
 key handler supplies the agreed logical order. Prefix freedom makes each sort's

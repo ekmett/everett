@@ -23,6 +23,10 @@ bit encoding, **15:1 index sampling** and **order-zero exponential-Golomb**
 backspaces. Ordinary keys and values are `std::string`; embedded zero bytes work.
 There are no codec parameters to choose before getting started.
 
+For byte-aligned string storage, use
+`everett::multiverse<everett::storage_policy<>>` with the same API. The
+[byte table guide](docs/byte-transport.md) explains its space and parsing choices.
+
 Version 0.1.0 is experimental; APIs and file formats may change. The
 [connection guide](docs/connection.md) covers the mutable API and its failure
 rules. The [implementation ledger](docs/implementation.md) records tested

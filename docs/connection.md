@@ -26,6 +26,10 @@ table and code one remains reserved.
 The free function `everett::connect(directory, name)` provides the same operation
 without keeping a multiverse object.
 
+Use `multiverse<storage_policy<>>` for the [byte string profile](byte-transport.md).
+It keeps the same connection API and 15:1 sampling, with byte-counted front
+coding, raw string payloads and byte tombstone tags.
+
 The ordinary `active_engine<P>` uses the redundant scheduler. Bit registries
 write sort-owned native records, retaining small private merge and index
 outputs under a shared allowance and streaming larger ones to files.

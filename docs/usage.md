@@ -7,6 +7,11 @@ tickets, snapshots and forks. This guide goes underneath that API to file
 construction, explicit updates and merges, then explains representation and
 tuning choices. We keep the same policy from input records to mapped queries.
 
+For an ordinary byte-aligned string table, select
+`everett::multiverse<everett::storage_policy<>>`. Its `connect`, snapshots and
+transactions work like the default bit table; the [byte table guide](byte-transport.md)
+covers raw string framing and the matching schema.
+
 For low-level encoded blobs, use a sort exposing `using encoding = byte_encoding<>` for byte strings,
 or `bit_encoding<>` for packed bits, then use `storage_policy<tip<YourSort>>`.
 The registry derives the storage units from its sorts. Both encodings default

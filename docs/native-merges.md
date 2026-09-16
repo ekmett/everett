@@ -173,7 +173,8 @@ erase or replacement-to-absence acquires its limit at admission.
 During a merge, an unmatched tombstone retains its input's stored limit. When
 equal keys compose to a tombstone, I use the smaller of both input positions.
 A live replacement resumes ordinary FC. The unary predicate takes precedence
-and the default optional-string sort reads only its presence bit; key-dependent
+and the default optional-string sort reads only its presence tag (one byte in
+the byte profile, one bit in the bit profile); key-dependent
 predicates may reconstruct the key. The opaque native merger may also need a
 temporary reconstructed key when its new literal begins before the chosen
 source literal; the direct sort merger emits from its existing prefix spans.
