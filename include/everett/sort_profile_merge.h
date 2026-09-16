@@ -83,10 +83,10 @@ namespace everett {
         while (work.keys < budget && !done()) {
           auto comparison = compare();
           if (comparison.order < 0) {
-            output_.append_frame(left_.frame(), left_.spans(), left_common_, left_.frame().value);
+            append(left_, left_common_, left_.frame().value, left_.frame().retained);
             right_common_ = comparison.common_bits; left_common_ = advance(left_);
           } else if (comparison.order > 0) {
-            output_.append_frame(right_.frame(), right_.spans(), right_common_, right_.frame().value);
+            append(right_, right_common_, right_.frame().value, right_.frame().retained);
             left_common_ = comparison.common_bits; right_common_ = advance(right_);
           } else {
             bit_string key;
@@ -96,9 +96,10 @@ namespace everett {
                 return std::invoke(compose_, key.view(), left_.frame().value, right_.frame().value);
               } else return std::invoke(compose_, left_.frame().value, right_.frame().value);
             }();
+            auto limit = std::min(left_.frame().retained, right_.frame().retained);
             if constexpr (std::is_same_v<decltype(value), bit_view>)
-              output_.append_frame(left_.frame(), left_.spans(), left_common_, value);
-            else output_.append_frame(left_.frame(), left_.spans(), left_common_, value.view());
+              append(left_, left_common_, value, limit);
+            else append(left_, left_common_, value.view(), limit);
             left_common_ = advance(left_); right_common_ = advance(right_);
           }
           ++work.keys; work.input_records += comparison.order ? 1 : 2;
@@ -120,6 +121,14 @@ namespace everett {
     native_merge_progress progress_;
     std::uint64_t left_common_ = 0, right_common_ = 0, materialized_keys_ = 0;
     bool failed_ = false, finished_ = false;
+    void append(sort_profile_detail::merge_source<view_type> const & source,
+        std::uint64_t common, bit_view value, std::uint64_t limit) {
+      auto frame = source.frame();
+      if (native_merge_detail::is_tombstone(compose_, value, [&] {
+          ++materialized_keys_; return source.materialize();
+        })) frame.retained_limit_bits = limit;
+      output_.append_frame(frame, source.spans(), common, value);
+    }
     static source_pointer checked(source_pointer value) {
       if (!value) throw std::invalid_argument("null sort merge input");
       return value;

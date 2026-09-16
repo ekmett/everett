@@ -32,6 +32,18 @@ namespace everett {
   };
 
   namespace native_merge_detail {
+    template <class T> T & composer(T & value) { return value; }
+    template <class T> T & composer(std::reference_wrapper<T> value) { return value.get(); }
+    template <class Compose, class Key> bool is_tombstone(Compose & compose, bit_view value, Key && key) {
+      auto & semantic = composer(compose);
+      if constexpr (requires { semantic.is_tombstone(value); })
+        return semantic.is_tombstone(value);
+      else if constexpr (requires { semantic.is_tombstone(bit_view{}, value); }) {
+        auto full = std::invoke(std::forward<Key>(key));
+        if constexpr (std::is_same_v<decltype(full), bit_view>) return semantic.is_tombstone(full, value);
+        else return semantic.is_tombstone(full.view(), value);
+      } else return false;
+    }
     // Keep the predecessor as immutable literal spans, without copying its
     // inherited prefix. A new retained boundary can precede the immediately
     // preceding literal, so checking that one literal alone is insufficient.
@@ -45,6 +57,17 @@ namespace everett {
       bool done() const noexcept { return cursor_.done(); }
       profile_encoded_record const & peek() const & { return cursor_.peek(); }
       profile_encoded_record const & peek() const && = delete;
+      std::uint64_t retained_bits() const { return peek().retained << P::unit_shift; }
+      bit_string materialize() const {
+        bit_string result;
+        std::uint64_t begin = 0;
+        for (auto const & part : spans_) {
+          profile_detail::append(result, data_.subview(part.source_bit_offset,
+            (part.end_units - begin) << P::unit_shift));
+          begin = part.end_units;
+        }
+        return result;
+      }
 
       std::optional<bit_comparison> advance_comparison() {
         cursor_.advance();
@@ -211,12 +234,12 @@ namespace everett {
           auto total_records = profile_detail::add(progress_.input_records, consumed);
           if (order < 0) {
             auto item = older_cursor_.peek();
-            append(item, item.value, older_prefix_);
+            append(older_cursor_, item, item.value, older_prefix_, older_cursor_.retained_bits());
             newer_prefix_ = comparison.common_bits >> P::unit_shift;
             older_prefix_ = advance(older_cursor_);
           } else if (order > 0) {
             auto item = newer_cursor_.peek();
-            append(item, item.value, newer_prefix_);
+            append(newer_cursor_, item, item.value, newer_prefix_, newer_cursor_.retained_bits());
             older_prefix_ = comparison.common_bits >> P::unit_shift;
             newer_prefix_ = advance(newer_cursor_);
           } else {
@@ -225,9 +248,10 @@ namespace everett {
               if constexpr (encoded_keys) return std::invoke(compose_, older.value, newer.value);
               else return std::invoke(compose_, older.key.prefix, older.value, newer.value);
             }();
+            auto limit = std::min(older_cursor_.retained_bits(), newer_cursor_.retained_bits());
             if constexpr (std::is_same_v<decltype(value), bit_view>)
-              append(older, value, older_prefix_);
-            else append(older, value.view(), older_prefix_);
+              append(older_cursor_, older, value, older_prefix_, limit);
+            else append(older_cursor_, older, value.view(), older_prefix_, limit);
             older_prefix_ = advance(older_cursor_);
             newer_prefix_ = advance(newer_cursor_);
           }
@@ -268,7 +292,20 @@ namespace everett {
         return item.key.prefix.subview(first, item.key.prefix.size() - first);
       }
     }
-    void append(auto const & item, bit_view value, std::uint64_t retained) {
+    void append(cursor_type const & source, auto const & item, bit_view value,
+        std::uint64_t retained, std::uint64_t limit_bits) {
+      if (native_merge_detail::is_tombstone(compose_, value, [&] {
+          if constexpr (encoded_keys) return source.materialize();
+          else return item.key.prefix;
+        })) retained = std::min(retained, limit_bits >> P::unit_shift);
+      if constexpr (encoded_keys) {
+        if (retained < item.retained) {
+          auto key = source.materialize();
+          auto first = retained << P::unit_shift;
+          writer_.append(retained, key.view().subview(first, key.bit_size - first), value);
+          return;
+        }
+      }
       writer_.append(retained, suffix(item, retained), value);
     }
     // Both heads follow the last emitted key p. The head sharing more of p

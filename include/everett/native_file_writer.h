@@ -45,7 +45,7 @@ namespace everett {
     object_write_paths const & paths() const & noexcept { return output_.paths(); }
     object_write_paths const & paths() const && = delete;
 
-    void append(bit_view key, bit_view value) {
+    void append(bit_view key, bit_view value, std::optional<std::uint64_t> retained_limit_bits = {}) {
       output_.require_active();
       if ((key.size() & (P::bits_per_unit - 1)) || (value.size() & (P::bits_per_unit - 1)))
         error_detail::raise<std::invalid_argument>("native file record disagrees with policy units");
@@ -55,7 +55,7 @@ namespace everett {
       auto comparison = compare_common_bits(previous_.view(), key);
       if (size() && comparison.order >= 0)
         error_detail::raise<std::invalid_argument>("native file keys must be strictly increasing");
-      auto retained = comparison.common_bits >> P::unit_shift;
+      auto retained = std::min(comparison.common_bits, retained_limit_bits.value_or(comparison.common_bits)) >> P::unit_shift;
       auto retained_bits = retained << P::unit_shift;
       if (key.size() > std::numeric_limits<std::uint64_t>::max() - 7)
         error_detail::raise<std::length_error>("native file key is too large");
@@ -72,7 +72,7 @@ namespace everett {
       profile_detail::resize(previous_, key.size());
       profile_detail::copy_into(previous_, retained_bits, literal);
     }
-    void append(profile_record const & record) { append(record.key.view(), record.value.view()); }
+    void append(profile_record const & record) { append(record.key.view(), record.value.view(), record.retained_limit_bits); }
     object_seal_receipt finish() {
       auto receipt = output_.finish(); previous_ = {}; return receipt;
     }

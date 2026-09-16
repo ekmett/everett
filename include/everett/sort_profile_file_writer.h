@@ -195,7 +195,7 @@ namespace everett {
     }
     // Checked full logical keys plus already sort-encoded values. The value
     // never gets another length or a materialized record-sized scratch buffer.
-    void append_encoded(bit_view key, bit_view value) {
+    void append_encoded(bit_view key, bit_view value, std::optional<std::uint64_t> retained_limit_bits = {}) {
       require_active();
       if (frame_only_) throw std::logic_error("encoded append after trusted frame stream");
       auto comparison = compare_common_bits(previous_.view(), key);
@@ -204,12 +204,12 @@ namespace everett {
         sort_bit_reader input(key);
         Selector::select(input, [&]<class S>(std::type_identity<S>, auto &) {
           std::array<bit_view, 1> spans{key};
-          encoder_.template append<S>(sink_, key.prefix(input.position()), input.remaining(), spans, value, comparison.common_bits);
+          encoder_.template append<S>(sink_, key.prefix(input.position()), input.remaining(), spans, value, comparison.common_bits, retained_limit_bits);
         });
         previous_ = bit_string::copy(key);
       } catch (...) { failed_ = true; throw; }
     }
-    void append_encoded(profile_record const & record) { append_encoded(record.key.view(), record.value.view()); }
+    void append_encoded(profile_record const & record) { append_encoded(record.key.view(), record.value.view(), record.retained_limit_bits); }
     object_seal_receipt finish() {
       require_active();
       try {

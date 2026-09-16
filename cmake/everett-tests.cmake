@@ -33,7 +33,7 @@ set(everett_test_names registry registry_compat crc32c rank groups rank_groups_b
 if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # These suites seal real mapped inputs through posix_object_ops throughout.
   # Model-ops writer tests above retain their platform-independent coverage.
-  list(APPEND everett_test_names mapped_index_builder file_index_builder file_index_pipeline mapped_cola mapped_cola_builder cola_terminal cola_file_index cola_adaptive_index)
+  list(APPEND everett_test_names mapped_index_builder file_index_builder file_index_pipeline mapped_cola mapped_cola_builder cola_terminal cola_file_index cola_adaptive_index tombstone_codec)
 endif()
 list(APPEND everett_test_names cola_local_merge cola_local_merge_failure cola_runtime redundant_runtime redundant_initial runtime_registry sort_codec sort_profile sort_profile_query sort_profile_file_writer sort_runtime typed_world typed_initial typed_depth typed_preflight typed_query_value typed_redundant typed_scan replacement_rebuild session)
 if(EVERETT_ENABLE_SQLITE)

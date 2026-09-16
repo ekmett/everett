@@ -295,6 +295,9 @@ namespace everett {
   struct profile_record {
     bit_string key;
     bit_string value;
+    // Encoding hint in complete logical-key bits, including any selector.
+    // Null means ordinary FC; a finite bound emits the full extra suffix.
+    std::optional<std::uint64_t> retained_limit_bits{};
   };
 
   template <class P> struct profile_item {
@@ -1065,6 +1068,10 @@ namespace everett {
       return {ordinal_, {scratch_.view(), context_}, record_.value};
     }
     profile_item<P> peek() const && = delete;
+    std::uint64_t retained_bits() const {
+      if (done()) error_detail::raise<std::out_of_range>("profile cursor at end");
+      return record_.retained << P::unit_shift;
+    }
 
     void advance() { advance_impl<false>(nullptr); }
 
@@ -1170,6 +1177,8 @@ namespace everett {
           offsets.push_back(position - profile_detail::multiply(i, common.value_or(0)));
         auto key_units = (key.size() >> P::unit_shift);
         auto retained = (comparison.common_bits >> P::unit_shift);
+        if (records[i].retained_limit_bits)
+          retained = std::min(retained, *records[i].retained_limit_bits >> P::unit_shift);
         if (!prefix_ceilings.empty()) retained = std::min(retained, prefix_ceilings[i]);
         auto start = (data.bit_size >> P::unit_shift);
         if (retained && restart_factor && key_units <= std::numeric_limits<std::uint64_t>::max() / restart_factor &&

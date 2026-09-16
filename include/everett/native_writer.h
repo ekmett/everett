@@ -153,7 +153,7 @@ namespace everett {
 
     // Keys must be strictly increasing. Input views need only survive this
     // call. A rejected append leaves the preceding committed records intact.
-    void append(bit_view key, bit_view value) {
+    void append(bit_view key, bit_view value, std::optional<std::uint64_t> retained_limit_bits = {}) {
       output_.require_active();
       if ((key.size() & (P::bits_per_unit - 1)) || (value.size() & (P::bits_per_unit - 1)))
         error_detail::raise<std::invalid_argument>("native writer record length disagrees with policy units");
@@ -163,7 +163,7 @@ namespace everett {
       auto comparison = compare_common_bits(previous_.view(), key);
       if (output_.size() && comparison.order >= 0)
         error_detail::raise<std::invalid_argument>("native writer keys must be strictly increasing");
-      auto retained = comparison.common_bits >> P::unit_shift;
+      auto retained = std::min(comparison.common_bits, retained_limit_bits.value_or(comparison.common_bits)) >> P::unit_shift;
       auto retained_bits = retained * P::bits_per_unit;
       // Reserve before fallible output writes. Once the frame commits, updating
       // the logical predecessor cannot allocate or leave a partial bit string.
@@ -176,7 +176,7 @@ namespace everett {
       profile_detail::resize(previous_, key.size());
       profile_detail::copy_into(previous_, retained_bits, literal);
     }
-    void append(profile_record const & record) { append(record.key.view(), record.value.view()); }
+    void append(profile_record const & record) { append(record.key.view(), record.value.view(), record.retained_limit_bits); }
 
     // Finalizing Elias–Fano visits the staged block offsets. This operation
     // is neither byte-budgeted nor a durable checkpoint.

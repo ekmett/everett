@@ -108,6 +108,7 @@ namespace everett {
           frame.path = key.prefix(source.position());
           frame.leaf = sort_profile_detail::ordinal<leaves, S>::value;
           frame.key_units = key.size();
+          frame.retained_limit_bits = record.retained_limit_bits;
           frame.front_coded = sort_profile_key<typename sort_codec<S>::key_codec>::front_coded;
           std::array<bit_view, 1> spans{key};
           writer.append_frame(frame, spans, comparison.common_bits, record.value.view());

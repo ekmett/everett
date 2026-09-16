@@ -166,6 +166,8 @@ namespace everett {
     bit_view path;
     std::size_t leaf = 0;
     bool front_coded = false;
+    // Transient output hint, not a field in the encoded grammar.
+    std::optional<std::uint64_t> retained_limit_bits{};
     sort_profile_payload (*parse)(sort_bit_reader &, std::uint64_t) = nullptr;
     std::uint64_t continuation() const noexcept { return front_coded ? key_units : path.size(); }
   };
@@ -439,11 +441,12 @@ namespace everett {
       template <class Output> void append_frame(Output & out, sort_profile_frame const & frame,
           std::span<bit_view const> spans, std::uint64_t common, bit_view value) {
         visit<leaves>::at(frame.leaf, [&]<class S>(std::type_identity<S>) {
-          append<S>(out, frame.path, frame.key_units - frame.path.size(), spans, value, common);
+          append<S>(out, frame.path, frame.key_units - frame.path.size(), spans, value, common, frame.retained_limit_bits);
         });
       }
       template <class S, class Output> void append(Output & out, bit_view path, std::uint64_t key_bits,
-          std::span<bit_view const> key, bit_view value, std::uint64_t common) {
+          std::span<bit_view const> key, bit_view value, std::uint64_t common,
+          std::optional<std::uint64_t> retained_limit_bits = {}) {
         using codec = sort_profile_key<typename sort_codec<S>::key_codec>;
         sort_bit_reader validate(value);
         sort_codec<S>::value_codec::skip(validate);
@@ -462,6 +465,8 @@ namespace everett {
         auto same = size() && compare_bits(previous_path_.view(), path) == 0;
         auto retained = same && codec::front_coded ? common : path.size();
         if (retained < path.size() || retained > total) throw std::invalid_argument("sort retained prefix outside key");
+        if (retained_limit_bits)
+          retained = std::min(retained, std::max(path.size(), *retained_limit_bits));
         if (!(size() % P::codec_block_size)) {
           raw_offsets_.push_back(out.position()); block_seeds_.push_back(id);
           out.template write_count<exponential_golomb<0>>(retained);
@@ -517,7 +522,8 @@ namespace everett {
     using policy_type = P;
     using array_type = sort_profile_array<P, Selector>;
     template <class S> void append(typename sort_codec<S>::key_codec::value_type const & key,
-                                  typename sort_codec<S>::value_codec::value_type const & value) {
+                                  typename sort_codec<S>::value_codec::value_type const & value,
+                                  std::optional<std::uint64_t> retained_limit_bits = {}) {
       require_active();
       if (encoded_only_) throw std::logic_error("typed append after encoded sort frames");
       sort_codec_detail::validate_value_width<S>();
@@ -532,7 +538,7 @@ namespace everett {
       std::array<bit_view, 1> spans{logical.view()};
       try {
         sort_bit_writer out(data_);
-        encoder_.template append<S>(out, path.view(), bits.bit_size, spans, encoded_value.view(), comparison.common_bits);
+        encoder_.template append<S>(out, path.view(), bits.bit_size, spans, encoded_value.view(), comparison.common_bits, retained_limit_bits);
         previous_ = std::move(logical);
       } catch (...) { failed_ = true; throw; }
     }
