@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "dd138eadbf47d30a7a0de13811fae6597f57b74958af8cf8c3d6cc62c4d3c06c"
+      "normalized_sha256": "57d9cacdf892c41ab8818f6e6f6e0c8984aaa8c74892701293fcc226d314f485"
     }
   ],
   "checks": {
@@ -537,6 +537,12 @@
     },
     {
       "scope": "Document implemented persistent nurseries, private transactions and construction-scope recovery. Original measurements and measurement fingerprints are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link the isolated complete fixed-key Metal experiment and integrated transaction verification. Original measurement observations and fingerprints are unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

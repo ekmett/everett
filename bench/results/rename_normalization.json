@@ -24,7 +24,7 @@
     {
       "path": "bench/README.md",
       "pre_rename_sha256": "58bfcf60e14cbea648a99b1d8d857e7e1845c692a490b4d0d881659d5dbe1d77",
-      "normalized_sha256": "f3608608d74b9d5b9392e65ada4cbbf3c21a32808abeede63eeb125afff4bdd1"
+      "normalized_sha256": "6fc1aee34c6ff22eaf0d5c220811ef0f09d657e2c88495970839ad494bda3f80"
     },
     {
       "path": "bench/bitmap512.h",
@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "668860e28b8fff98ab57b0a618be4630006f245b9d28c7dad7768ac756da618e"
+      "normalized_sha256": "986a4dfbd4a47af15ba59cf059050a6e34093bd408689cd7b96c54b29ce05758"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "dd138eadbf47d30a7a0de13811fae6597f57b74958af8cf8c3d6cc62c4d3c06c"
+      "normalized_sha256": "57d9cacdf892c41ab8818f6e6f6e0c8984aaa8c74892701293fcc226d314f485"
     }
   ],
   "subsequent_updates": [
@@ -1009,6 +1009,14 @@
     {
       "scope": "Document implemented persistent nurseries, private transactions and construction-scope recovery. Original measurements and measurement fingerprints are unchanged.",
       "artifacts": [
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Link the isolated complete fixed-key Metal experiment and integrated transaction verification. Original measurement observations and fingerprints are unchanged.",
+      "artifacts": [
+        "bench/README.md",
         "bench/results/publication_normalization.json",
         "docs/implementation.md"
       ]

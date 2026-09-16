@@ -20,6 +20,10 @@ Elias–Fano universe includes the value payload extent, not the fixed key array
 This directory samples every value, so its select latency and storage tradeoff
 differ from the current every-$W$ record directory.
 
+The [fixed-key Metal experiment](../optional/fixed_gpu_merge/README.md) constructs
+complete native outputs for candidate `.fv` and `.ff` layouts. Its fixture
+envelope is experimental; these formats are not yet persistent runtime choices.
+
 For `.ff`, both addresses are arithmetic and there is no native Elias–Fano
 directory. Each fixed-stride region needs one physical slot width. How mixed
 sorts share those regions belongs to the wire-format design; per-sort widths
@@ -56,5 +60,6 @@ coverage, regardless of key encoding.
 
 The current Elias–Fano implementation is tuned for sampled offsets. Before
 choosing its `.fv` layout, I want to measure finer select directories and paired
-adjacent-boundary access for per-value navigation. There is no measured speedup
-for these proposed formats yet.
+adjacent-boundary access for per-value navigation. Sequential merge traversal
+also needs its own baseline: repeatedly selecting independent offsets can cost
+more than walking the encoded sequence once.

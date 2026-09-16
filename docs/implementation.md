@@ -59,6 +59,14 @@ this package.
 
 ### Optional GPU construction
 
+The separate [fixed-key experiment](../optional/fixed_gpu_merge/README.md)
+constructs complete candidate `.ff` and `.fv` outputs from mapped inputs.
+The Metal path performs scheduled cancellation, survivor compaction, Merge Path,
+payload copying and native EF construction, including select samples and sparse
+exceptions. Fixtures compare complete bytes with the CPU oracle. This is an
+experimental native envelope, with no fractional-index reconstruction, catalog
+publication or production dispatch threshold.
+
 The separate [GPU experiment](../optional/gpu_merge/design.md) merges default
 bit-profile string replacement files through Metal. GPU passes select input
 Elias–Fano offsets, parse compressed frames, recover inherited prefixes, merge
@@ -142,6 +150,12 @@ Process-exit tests exercise lost owners and interruption after release; they do
 not simulate torn storage or power loss. File collection and retirement of
 published history remain unimplemented. Private construction suppresses
 advisory native-cache ownership so abort does not create permanent cache pins.
+
+The [integrated verification](../bench/results/transactions_verification_20260916.json)
+records 109 passing runtime/documentation checks and three passing package
+checks, including the installed transaction and recovery APIs. Runtime tests
+used ASan/UBSan; the package consumers also verify separate installed and
+embedded use.
 
 `cola_runtime<P, Compose>` admits encoded records, creates a real private binary
 carry queue, and publishes completed equivalent layouts. Its immutable snapshots

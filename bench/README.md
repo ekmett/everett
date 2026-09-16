@@ -45,6 +45,11 @@ removes one host wait, with mixed complete-path results. It also remains opt-in.
 This is a separate opt-in Metal program. It does not publish durable catalog
 updates, and the ordinary library has no shader-toolchain dependency.
 
+The [fixed-key experiment](../optional/fixed_gpu_merge/README.md) separately
+constructs native `.ff` and `.fv` candidates, including scheduled cancellations,
+actual payload copying and complete native Elias–Fano output. It uses an
+experimental envelope and has its own correctness and timing boundaries.
+
 Unadopted experiments
 --------------------
 
