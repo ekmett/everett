@@ -100,8 +100,8 @@ Space is the sum of unique complete `.kv` and `.index` file lengths, including
 envelopes, section descriptors and alignment. It excludes filesystem block
 allocation and temporary fixture/oracle memory. The space rows also retain
 individual payload, offset, rank, cut and flag byte counts. This is a paired
-string/string workload, not the fixed-key or NUL-terminated codec fixtures in
-the separate space study.
+string/string workload, separate from the fixed-width controls and the
+NUL-termination model in the space study.
 
 Reproduction
 ------------

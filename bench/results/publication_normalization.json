@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "8046befb32d8c12912a0afe5d883c1bda4a70951f21ac7e426ecfa6634ce37e7"
+      "normalized_sha256": "5068b00290040ded8522eba20e9d3ecf78323a71fdeccdd1191d32f528b17826"
     }
   ],
   "checks": {
@@ -615,6 +615,12 @@
     },
     {
       "scope": "Record the complete 119-check range, reservoir and bounded-search integration qualification. Original measurement identities are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Document byte defaults and the current matched lookup measurements, and record the future column-value and secondary-index design. Original measurement identities are unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

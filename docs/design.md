@@ -76,6 +76,13 @@ and `.ff` formats alongside `.kv`. They share the logical store and specialize
 key access, value offsets and merge kernels; string compression is one physical
 choice rather than a requirement of snapshotting or partitioned updates.
 
+The [column-value direction](column-values.md) keeps byte-oriented keys while
+separating sort-owned values into columns. Bit-sliced integer columns with rank
+can answer additive range aggregates without visiting every matching row.
+Signed update contributions preserve the accounting across immutable runs.
+Secondary indexes and atomic publication of their derived updates are further
+extensions of the same snapshot model.
+
 The outer dynamization mechanism needs a merge operation, a query operation,
 and laws relating them. Maps give us one useful instance. Sort semantics supply
 those operations for the typed engine. Its key space is sort-qualified: each

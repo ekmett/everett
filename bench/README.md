@@ -67,6 +67,11 @@ uses those same logical records in raw and typed bit/byte files. It measures
 complete native construction and reports exact file sizes, before/after byte
 transport results and the bit-path controls.
 
+The [current matched lookup comparison](../optional/byte_lookup_compare/README.md)
+uses identical logical tables and queries in byte and bit formats, including
+the reservoir decoder. It reports complete-file space alongside whole-query
+latency over three table sizes and retains CPU/wall diagnostics for every trial.
+
 The [select comparison](../optional/select_compare/README.md) gives every
 candidate the same sampled offsets from native and fractional-index fixtures.
 It separates alternatives to Elias–Fano from changes to its internal selector,

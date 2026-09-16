@@ -83,6 +83,14 @@ have separate byte-for-byte regression checks.
 Time and Space
 --------------
 
+The [matched whole-lookup comparison](../optional/byte_lookup_compare/README.md)
+includes the current reservoir decoder on the bit side. Across 54 matched
+M2 Max cases, byte lookups deliver 2.04 times the throughput, with every byte
+process-median range faster than its bit counterpart. The bit files save about
+4.7–5.0% for structured keys and are about 0.66–1.14% larger for hash-like keys
+in those ordinary string fixtures. These measured tradeoffs are why I make
+byte encoding the default for common tables.
+
 The [matched CPU measurements](../optional/cpu_profile_compare/report.md) compare
 the byte and bit string paths on identical logical records. They include native
 output allocation, encoding, sparse offsets, a fresh mapping and checksums;

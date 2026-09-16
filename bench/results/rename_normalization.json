@@ -24,7 +24,7 @@
     {
       "path": "bench/README.md",
       "pre_rename_sha256": "58bfcf60e14cbea648a99b1d8d857e7e1845c692a490b4d0d881659d5dbe1d77",
-      "normalized_sha256": "8fb3e9d08578210fc4eea42f872089055744a1fdf121b02491f9b445aafb987e"
+      "normalized_sha256": "ec520377a85454dc5c48a38517c292d7d8e658ef73c438528ad740c32206a700"
     },
     {
       "path": "bench/bitmap512.h",
@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "80b421de490ce68fbe5b33a3b67f6b407d53cde8f664c3ffbf622cd9746cdf16"
+      "normalized_sha256": "eaf18004ff17807f09e6239214a007859592aaf6740a2e04f74e1eb91294b09c"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "8046befb32d8c12912a0afe5d883c1bda4a70951f21ac7e426ecfa6634ce37e7"
+      "normalized_sha256": "5068b00290040ded8522eba20e9d3ecf78323a71fdeccdd1191d32f528b17826"
     }
   ],
   "subsequent_updates": [
@@ -1106,6 +1106,14 @@
     {
       "scope": "Record the complete 119-check range, reservoir and bounded-search integration qualification. Original measurement identities are unchanged.",
       "artifacts": [
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Document byte defaults and the current matched lookup measurements, and record the future column-value and secondary-index design. Original measurement identities are unchanged.",
+      "artifacts": [
+        "bench/README.md",
         "bench/results/publication_normalization.json",
         "docs/implementation.md"
       ]

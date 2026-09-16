@@ -26,7 +26,7 @@ before getting started.
 
 I use the byte path for ordinary tables. The
 [byte table guide](docs/byte-transport.md) explains its framing and measured
-space and merge costs. Explicit bit policies remain available for applications
+space and performance costs. Explicit bit policies remain available for applications
 with bit-oriented keys.
 
 Version 0.1.0 is experimental; APIs and file formats may change. The

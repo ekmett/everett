@@ -116,7 +116,7 @@ and fractional-index header decoders retain their existing implementation.
 
 ### Byte string tables
 
-`multiverse<storage_policy<>>` supplies the ordinary string connection API over
+`multiverse<>` uses `storage_policy<>` for the ordinary string connection API over
 byte-counted KV02 native files. Its built-in optional-string sort stores raw
 keys and a byte presence tag followed by raw value bytes, using the surrounding
 record's extents. This removes key escaping and nested bit counts while keeping
@@ -124,6 +124,19 @@ custom sort codecs unchanged. The default byte schema identifies this grammar.
 The [byte table guide](byte-transport.md) covers its API and framing; focused
 tests exercise binary and prefix keys, typed merges, scans, snapshots, private
 transactions, rebuilding and durable reopening.
+
+I prioritize the byte path for ordinary string tables. Small space reductions
+alone do not justify substantially slower lookups. Bit encoding remains an
+explicit policy choice whose engineering case needs a measured whole-workload
+benefit. The bit-specific sort runtime retains its existing physical contract.
+
+The [current matched lookup study](../optional/byte_lookup_compare/README.md)
+includes the reservoir bit reader and explicitly fixes both policies. Byte
+lookups deliver 2.04 times the throughput across 54 matched cases, with all
+process-median ranges disjoint in the byte path's favor. Its 972 observations,
+complete-file sizes, logical/query fingerprints and sanitizer qualification
+are retained. It is a warmed mapped-query comparison, not a durable transaction
+or cold-storage measurement.
 
 The byte native writer encodes each frame's LEB128 controls into bounded scratch,
 grows the destination once and copies literals and values to their final byte
@@ -148,6 +161,12 @@ fixtures. It separates actual typed byte/bit formats, identical-grammar controls
 and the byte writer's explicit common-width hint. Independent file decoding,
 component totals and logical hashes agree. The report measures space only;
 its terminated-suffix alternative is an exact stream model, not a new codec.
+
+The [column-value and secondary-index direction](column-values.md) separates
+byte-oriented key navigation from sort-owned value columns. It describes
+rank-based integer aggregates, signed update accounting and atomic derived
+indexes. These are future extensions; the current range API resolves and
+iterates records rather than answering these aggregates from bit planes.
 
 ### Optional offset-selection measurements
 

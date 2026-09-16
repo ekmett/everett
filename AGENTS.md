@@ -70,6 +70,12 @@ use the results to identify the library's strengths. Keep regressions and
 workload boundaries visible; a small regression in another case is not an
 automatic veto on a worthwhile optimization.
 
+Prioritize byte-oriented encoding for ordinary tables, including the shader
+path. A small space saving alone does not justify substantially slower common
+operations. Keep explicit bit policies correct; further bit-path optimization
+needs a demonstrated whole-workload benefit. Bit-sliced value columns are a
+separate future layout choice and do not require bit-oriented key framing.
+
 Keep the library independent of application policy. A multiverse owns backing
 storage, a world is a logical state, and a timeline is an ordered progression.
 Do not label design-only codecs, schedulers or persistence as implemented.
