@@ -39,6 +39,12 @@ namespace diet {
   struct catalog_options { int busy_timeout_ms = 250; };
   struct catalog_object_reservation { object_id object; file_kind kind; };
   struct catalog_saved_root { blob_identity head; std::string owner; };
+  // Ordered physical inputs to the library's KV03 replacement merge. Schema
+  // bytes are application-owned; the operation and physical policy are not.
+  struct catalog_native_merge {
+    std::string schema;
+    object_id older, newer;
+  };
   // Every generation has its own permanent root owner. Names and owners are
   // arbitrary nonempty byte strings; generations never wrap or get reused.
   struct catalog_timeline_head {
@@ -280,6 +286,10 @@ CREATE TABLE owner_roots(owner_kind TEXT NOT NULL, owner_id BLOB NOT NULL, nativ
 CREATE TABLE saves(name BLOB PRIMARY KEY, native_id TEXT NOT NULL, index_id TEXT NOT NULL, FOREIGN KEY(native_id,index_id) REFERENCES pairs(native_id,index_id)) STRICT;
 CREATE TRIGGER sealed_immutable BEFORE UPDATE ON objects WHEN OLD.bytes IS NOT NULL OR NEW.id<>OLD.id OR NEW.kind<>OLD.kind OR NEW.attempt<>OLD.attempt BEGIN SELECT RAISE(ABORT,'immutable object'); END;
 )sql";
+    // Optional advisory extension. Core v4 readers can ignore it: its durable
+    // pins use their existing reader owners, and no logical root depends on it.
+    inline constexpr char native_merges_schema[] =
+      "CREATE TABLE completed_native_merges(domain BLOB NOT NULL,older TEXT NOT NULL REFERENCES objects(id),newer TEXT NOT NULL REFERENCES objects(id),output TEXT NOT NULL REFERENCES objects(id),owner_kind TEXT NOT NULL CHECK(owner_kind='reader'),owner_id BLOB NOT NULL UNIQUE,PRIMARY KEY(domain,older,newer),FOREIGN KEY(owner_kind,owner_id,output) REFERENCES owner_objects(owner_kind,owner_id,object_id)) STRICT";
     // Version 1 is retained verbatim for old-catalog validation. No open path
     // rewrites it. Creation explicitly chooses the timeline or COLA extension.
     inline std::string schema_for(unsigned version) {
@@ -466,6 +476,73 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
         record_sealed_row(receipt, path);
         return catalog_detail::bytes{};
       });
+    }
+
+    // Trusted semantic attestation: the caller must have performed the exact
+    // built-in KV03 replacement merge of these ordered inputs under this schema.
+    // Receipts prove durable bytes, not that semantic relationship. The runtime
+    // context supplies it only for its known replacement kernel and registry.
+    // First acknowledgment wins; valid competing completions keep their own
+    // sealed outputs. Replay also rechecks the supplied envelope.
+    void record_native_merge(std::string_view op, catalog_native_merge const & key,
+        object_seal_receipt const & receipt, std::string_view owner) {
+      require_taps(); catalog_detail::name(op); catalog_detail::name(owner);
+      auto domain = native_merge_domain(key);
+      auto path = std::filesystem::canonical(receipt.path);
+      catalog_detail::bytes request; append_native_merge(request, domain, key);
+      append_seal_request(request, receipt, path); catalog_detail::field(request, owner);
+      transaction(op, "remember_native_merge", request, [&] {
+        verify_sealed(receipt, file_kind::native_blob);
+        require_sealed(key.older, file_kind::native_blob);
+        require_sealed(key.newer, file_kind::native_blob);
+        if (!has_table("completed_native_merges")) {
+          catalog_detail::exec(db_, catalog_detail::native_merges_schema);
+          for (auto action : {"UPDATE", "DELETE"}) {
+            std::string sql = "CREATE TRIGGER immutable_completed_native_merges_" + std::string(action) +
+              " BEFORE " + action + " ON completed_native_merges BEGIN SELECT RAISE(ABORT,'immutable catalog row'); END";
+            catalog_detail::exec(db_, sql.c_str());
+          }
+        } else validate_native_merges();
+        if (auto old = native_merge_output(domain, key)) {
+          require_sealed(*old, file_kind::native_blob);
+          catalog_detail::bytes result; catalog_detail::identity(result, *old); return result;
+        }
+        add_native_pin(owner, receipt.object);
+        catalog_detail::statement row(db_, "INSERT INTO completed_native_merges VALUES(?,?,?,?,'reader',?)");
+        row.blob(1, domain); row.text(2, key.older.hex()); row.text(3, key.newer.hex());
+        row.text(4, receipt.object.hex()); row.key(5, owner); row.done();
+        catalog_detail::bytes result; catalog_detail::identity(result, receipt.object); return result;
+      });
+      native_merges_validated_ = true;
+      verify_sealed(receipt, file_kind::native_blob);
+    }
+
+    // A missing hint is a read-only miss. A hit acquires its own durable pin in
+    // the same acknowledged transaction that selects the exact native result.
+    std::optional<object_seal_receipt> acquire_native_merge(std::string_view op,
+        catalog_native_merge const & key, std::string_view owner) {
+      require_taps(); catalog_detail::name(op); catalog_detail::name(owner);
+      auto domain = native_merge_domain(key);
+      catalog_detail::bytes request; append_native_merge(request, domain, key);
+      catalog_detail::field(request, owner);
+      if (!read([&] {
+          // Even a miss must reject reuse of an acknowledged operation ID for
+          // different arguments; the transaction performs that exact check.
+          if (lookup_operation(op)) return true;
+          if (!has_table("completed_native_merges")) return false;
+          validate_native_merges();
+          return bool(native_merge_output(domain, key));
+        })) return {};
+      auto outcome = transaction(op, "acquire_native_merge", request, [&] {
+        auto output = native_merge_output(domain, key);
+        if (!output) throw std::invalid_argument("completed native merge disappeared");
+        require_sealed(*output, file_kind::native_blob);
+        add_native_pin(owner, *output);
+        catalog_detail::bytes result; catalog_detail::identity(result, *output); return result;
+      });
+      catalog_detail::outcome_reader reader{outcome};
+      object_id output(reader.field()); reader.end();
+      return sealed_receipt(output, file_kind::native_blob);
     }
 
     // The supplied head names catalog paths, which are reopened and pinned for
@@ -977,11 +1054,12 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
     std::filesystem::path root_;
     Ops ops_;
     mutable bool poisoned_ = false;
+    mutable bool native_merges_validated_ = false;
     unsigned schema_version_ = 2;
     std::optional<object_id> identity_;
     inline static constexpr char const * immutable_tables[] = {
       "catalog_info", "operations", "owners", "attempts", "pairs", "owner_objects", "owner_roots", "saves",
-      "timelines", "timeline_generations", "tap_checkpoints", "tap_saves"
+      "timelines", "timeline_generations", "tap_checkpoints", "tap_saves", "completed_native_merges"
     };
     sqlite_catalog(sqlite3 * db, std::filesystem::path root, Ops ops)
       : db_(db), root_(std::move(root)), ops_(std::move(ops)) {}
@@ -1043,7 +1121,13 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
       if (schema_version_ < 4)
         throw std::logic_error("Diet named taps require catalog version 4; no automatic migration");
     }
-    bool has_table(std::string_view table) const noexcept {
+    bool has_table(std::string_view table) const {
+      if (table == "completed_native_merges") {
+        // Unlike core version-selected tables, this advisory extension can
+        // appear later through another connection. Do not cache an absence.
+        catalog_detail::statement query(db_, "SELECT 1 FROM sqlite_schema WHERE name=?");
+        query.text(1, table); return query.row();
+      }
       if (table == "tap_checkpoints" || table == "tap_saves") return schema_version_ >= 4;
       if (table == "timelines" || table == "timeline_generations") return schema_version_ >= 2;
       return true;
@@ -1242,6 +1326,7 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
           definition("trigger", name, sql);
         }
       }
+      if (has_table("completed_native_merges")) validate_native_merges();
       definition("trigger", "objects_no_delete", "CREATE TRIGGER objects_no_delete BEFORE DELETE ON objects BEGIN SELECT RAISE(ABORT,'retained object'); END");
       std::string trigger_query = "SELECT count(*) FROM sqlite_schema WHERE type='trigger' AND tbl_name IN('objects'";
       std::int64_t trigger_count = 2;
@@ -1252,6 +1337,43 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
       catalog_detail::statement triggers(db_, trigger_query.c_str());
       if (!triggers.row() || triggers.integer(0) != trigger_count)
         throw std::invalid_argument("unexpected trigger on Diet catalog tables");
+    }
+    static catalog_detail::bytes native_merge_domain(catalog_native_merge const & key) {
+      catalog_detail::name(key.schema);
+      catalog_detail::bytes result;
+      catalog_detail::field(result, "diet.KV03.right-biased-native-merge/1");
+      catalog_detail::field(result, key.schema);
+      auto physical = policy(); result.insert(result.end(), physical.begin(), physical.end());
+      return result;
+    }
+    static void append_native_merge(catalog_detail::bytes & out, std::span<std::byte const> domain,
+        catalog_native_merge const & key) {
+      catalog_detail::number(out, domain.size()); out.insert(out.end(), domain.begin(), domain.end());
+      catalog_detail::identity(out, key.older); catalog_detail::identity(out, key.newer);
+    }
+    std::optional<object_id> native_merge_output(std::span<std::byte const> domain,
+        catalog_native_merge const & key) const {
+      catalog_detail::statement query(db_, "SELECT output FROM completed_native_merges WHERE domain=? AND older=? AND newer=?");
+      query.blob(1, domain); query.text(2, key.older.hex()); query.text(3, key.newer.hex());
+      if (!query.row()) return {};
+      return object_id(query.text(0));
+    }
+    void validate_native_merges() const {
+      if (native_merges_validated_) return;
+      definition("table", "completed_native_merges", catalog_detail::native_merges_schema);
+      for (auto action : {"UPDATE", "DELETE"}) {
+        auto name = "immutable_completed_native_merges_" + std::string(action);
+        definition("trigger", name, "CREATE TRIGGER " + name + " BEFORE " + action +
+          " ON completed_native_merges BEGIN SELECT RAISE(ABORT,'immutable catalog row'); END");
+      }
+      catalog_detail::statement count(db_, "SELECT count(*) FROM sqlite_schema WHERE type='trigger' AND tbl_name='completed_native_merges'");
+      if (!count.row() || count.integer(0) != 2) throw std::invalid_argument("unexpected native merge hint trigger");
+      native_merges_validated_ = true;
+    }
+    void add_native_pin(std::string_view owner, object_id const & native) {
+      add_owner("reader", owner);
+      catalog_detail::statement pin(db_, "INSERT INTO owner_objects VALUES('reader',?,?)");
+      pin.key(1, owner); pin.text(2, native.hex()); pin.done();
     }
     void add_owner(std::string_view kind, std::string_view name) {
       catalog_detail::statement insert(db_, "INSERT INTO owners VALUES(?,?)");

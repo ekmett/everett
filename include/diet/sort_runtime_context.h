@@ -52,16 +52,18 @@ namespace diet {
       using base_type = sort_profile_adaptive_merge<P, native_type, Compose, Selector, FileOps, native_stream_factory>;
     private:
       friend struct sort_runtime_context;
-      merge_type(std::shared_ptr<sort_runtime_context> owner, native_pointer older, native_pointer newer, Compose compose)
+      std::optional<catalog_native_merge> recipe_;
+      merge_type(std::shared_ptr<sort_runtime_context> owner, native_pointer older, native_pointer newer, Compose compose,
+          std::optional<catalog_native_merge> recipe)
         : context_pin(owner), base_type(native_stream_factory{owner.get()}, owner->budget_, owner->outputs_.object_bytes,
-            std::move(older), std::move(newer), std::move(compose)) {}
+            std::move(older), std::move(newer), std::move(compose)), recipe_(std::move(recipe)) {}
     };
     static std::shared_ptr<sort_runtime_context> open(std::filesystem::path const & root, Ids ids = {},
         catalog_options options = {}, CatalogOps catalog_ops = {}, FileOps file_ops = {},
-        runtime_output_options outputs = {}) {
+        runtime_output_options outputs = {}, std::string schema = {}) {
       auto catalog = catalog_type::open(root, options, std::move(catalog_ops));
       if (catalog.schema_version() != 4) throw std::invalid_argument("streamed runtime requires a named catalog");
-      return std::shared_ptr<sort_runtime_context>(new sort_runtime_context(std::move(catalog), std::move(ids), std::move(file_ops), outputs));
+      return std::shared_ptr<sort_runtime_context>(new sort_runtime_context(std::move(catalog), std::move(ids), std::move(file_ops), outputs, std::move(schema)));
     }
     sort_runtime_context(sort_runtime_context const &) = delete;
     sort_runtime_context & operator=(sort_runtime_context const &) = delete;
@@ -71,6 +73,10 @@ namespace diet {
     void poison() noexcept { failed_ = true; }
     std::uint64_t sealed_outputs() const noexcept { return sealed_outputs_; }
     std::uint64_t sealed_indexes() const noexcept { return sealed_indexes_; }
+    std::uint64_t reused_outputs() const noexcept { return reused_outputs_; }
+    void check_schema(std::string_view schema) const {
+      if (!schema_.empty() && schema_ != schema) throw std::invalid_argument("runtime merge schema differs from typed snapshot");
+    }
     std::size_t retained_output_bytes() const noexcept { return budget_.used(); }
     std::size_t output_limit() const noexcept { return budget_.limit(); }
     native_pointer empty() const noexcept { return empty_; }
@@ -82,8 +88,20 @@ namespace diet {
     template <class Compose> auto make_merge(native_pointer older, native_pointer newer, Compose compose) {
       require_active();
       try {
+        auto recipe = merge_recipe<Compose>(older, newer);
         return std::unique_ptr<merge_type<Compose>>(new merge_type<Compose>(this->shared_from_this(),
-          std::move(older), std::move(newer), std::move(compose)));
+          std::move(older), std::move(newer), std::move(compose), std::move(recipe)));
+      } catch (...) { failed_ = true; throw; }
+    }
+    template <class Compose> native_pointer reuse_merge(native_pointer const & older, native_pointer const & newer) {
+      require_active();
+      try {
+        auto recipe = merge_recipe<Compose>(older, newer);
+        if (!recipe) return {}; // No SQL, reservations or forced input sealing.
+        auto receipt = catalog_.acquire_native_merge(ids_().hex(), *recipe, ids_().hex());
+        if (!receipt) return {};
+        auto result = native_type::from_sealed(root(), identity_, std::move(*receipt));
+        ++reused_outputs_; return result;
       } catch (...) { failed_ = true; throw; }
     }
     template <class Merge> native_pointer finish_merge(Merge & merge) {
@@ -94,6 +112,9 @@ namespace diet {
         if (auto owned = std::get_if<0>(&completed)) return native_type::from_owned(std::move(*owned));
         auto receipt = std::get<1>(std::move(completed));
         catalog_.record_sealed(ids_().hex(), receipt);
+        // Only naturally streamed completions install durable hints. Owned
+        // adaptive outputs retain their existing no-I/O path.
+        if (merge.recipe_) catalog_.record_native_merge(ids_().hex(), *merge.recipe_, receipt, ids_().hex());
         auto native = native_type::from_sealed(root(), identity_, std::move(receipt));
         ++sealed_outputs_; return native;
       } catch (...) { failed_ = true; throw; }
@@ -170,11 +191,28 @@ namespace diet {
     output_budget budget_;
     native_pointer empty_ = sort_runtime_storage<P, Selector>::empty();
     object_id identity_;
-    std::uint64_t sealed_outputs_ = 0, sealed_indexes_ = 0;
+    std::uint64_t sealed_outputs_ = 0, sealed_indexes_ = 0, reused_outputs_ = 0;
+    std::string schema_;
     bool failed_ = false;
-    sort_runtime_context(catalog_type catalog, Ids ids, FileOps file_ops, runtime_output_options outputs)
+    sort_runtime_context(catalog_type catalog, Ids ids, FileOps file_ops, runtime_output_options outputs, std::string schema)
       : catalog_(std::move(catalog)), ids_(std::move(ids)), file_ops_(std::move(file_ops)), outputs_(outputs),
-        budget_(outputs.retained_bytes), identity_(catalog_.identity()) {}
+        budget_(outputs.retained_bytes), identity_(catalog_.identity()), schema_(std::move(schema)) {}
+    template <class Compose> std::optional<catalog_native_merge> merge_recipe(
+        native_pointer const & older, native_pointer const & newer) const {
+      if (!older || !newer) throw std::invalid_argument("null native merge input");
+      // This recognizes one known kernel and registry, not arbitrary allegedly
+      // stateless user code. The persisted domain supplies stable wire identity.
+      if constexpr (std::is_same_v<Compose, replace_native_value> && P::unit == profile_unit::bit &&
+          std::is_same_v<typename P::registry_type, string_registry> &&
+          std::is_same_v<Selector, registry_selector<string_registry>>) {
+        if (schema_.empty()) return {};
+        auto a = older->bindings_.find(identity_, root());
+        if (!a) return {};
+        auto b = newer->bindings_.find(identity_, root());
+        if (!b) return {};
+        return catalog_native_merge{schema_, a->receipt.object, b->receipt.object};
+      } else return {};
+    }
     std::unique_ptr<object_stream<P, FileOps>> start_native_stream() {
       require_active();
       try {
@@ -207,6 +245,13 @@ namespace diet {
         catalog_options options = {}, CatalogOps catalog_ops = {}, FileOps file_ops = {},
         runtime_output_options outputs = {}) {
       return sort_file_runtime_storage(context_type::open(root, std::move(ids), options, std::move(catalog_ops), std::move(file_ops), outputs));
+    }
+    static sort_file_runtime_storage open_for_schema(std::filesystem::path const & root, std::string_view schema) {
+      return sort_file_runtime_storage(context_type::open(root, {}, {}, {}, {}, {}, std::string(schema)));
+    }
+    void check_schema(std::string_view schema) const { if (context_) context_->check_schema(schema); }
+    template <class Compose> native_pointer reuse_merge(native_pointer const & older, native_pointer const & newer) {
+      require_context(); return context_->template reuse_merge<Compose>(older, newer);
     }
     std::shared_ptr<context_type> context() const noexcept { return context_; }
     native_pointer empty() const { return context_ ? context_->empty() : sort_runtime_storage<P, Selector>::empty(); }

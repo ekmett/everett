@@ -180,7 +180,7 @@ namespace diet {
     std::uint64_t granted = 0, charged = 0;
     std::uint64_t native_work = 0, index_work = 0, carrier_work = 0;
     std::uint64_t metadata_work = 0, root_work = 0;
-    std::uint64_t native_inputs = 0, native_outputs = 0, index_occurrences = 0;
+    std::uint64_t native_inputs = 0, native_outputs = 0, native_reuses = 0, index_occurrences = 0;
     std::uint64_t admissions = 0, merges = 0, indexes = 0, carriers = 0, checkpoints = 0;
     std::uint64_t max_job_charge_per_mass = 0;
   };
@@ -705,12 +705,30 @@ namespace diet {
         destination.slots[dest].state = redundant_slot_state::reserved;
         levels[i].job = std::move(recipe); workers[i] = std::move(worker); changed = true;
       }
+      void complete_native(unsigned i, native_pointer native) {
+        auto & r = *levels[i].job; auto & w = *workers[i];
+        r.merged = std::move(native);
+        if (r.new_main) r.stage = redundant_stage::destination_index;
+        else {
+          auto older = levels[i].slots[r.inputs[0]].object;
+          auto newer = levels[i].slots[r.inputs[1]].object;
+          r.output = object(r.merged, {}, {}, i + 1, older->first, newer->last);
+          levels[i + 1].slots[r.destination].object = r.output;
+          r.stage = redundant_stage::carrier_index;
+        }
+        w.next = action::index_start; changed = true;
+      }
       void perform(unsigned i) {
         if (!levels[i].job) { begin(i); return; }
         auto & r = *levels[i].job; auto & w = *workers[i];
         auto source = [&](unsigned which) { return levels[i].slots[r.inputs[which]].object; };
         switch (w.next) {
           case action::native_start:
+            if constexpr (requires { storage.template reuse_merge<merge_compose>(source(0)->native, source(1)->native); }) {
+              if (auto result = storage.template reuse_merge<merge_compose>(source(0)->native, source(1)->native)) {
+                complete_native(i, std::move(result)); work.native_reuses = add(work.native_reuses, 1); break;
+              }
+            }
             w.merge = storage.template make_merge<merge_compose>(source(0)->native, source(1)->native, merger());
             w.next = w.merge->done() ? action::native_finish : action::native_step;
             break;
@@ -720,16 +738,10 @@ namespace diet {
             if (w.merge->done()) w.next = action::native_finish;
             break;
           }
-          case action::native_finish:
-            r.merged = storage.finish_merge(*w.merge); w.merge.reset();
-            if (r.new_main) r.stage = redundant_stage::destination_index;
-            else {
-              r.output = object(r.merged, {}, {}, i + 1, source(0)->first, source(1)->last);
-              levels[i + 1].slots[r.destination].object = r.output;
-              r.stage = redundant_stage::carrier_index;
-            }
-            w.next = action::index_start; changed = true;
-            break;
+          case action::native_finish: {
+            auto result = storage.finish_merge(*w.merge); w.merge.reset();
+            complete_native(i, std::move(result)); break;
+          }
           case action::index_start: {
             auto t = index_targets(i);
             w.index = storage.template make_index<node_type>(r.stage == redundant_stage::destination_index ? r.merged : empty,

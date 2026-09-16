@@ -443,7 +443,11 @@ namespace diet {
     explicit typed_engine(cola_type state)
       : runtime_(runtime_type::from_snapshot(state.runtime())), current_(std::move(state)) {}
     template <class Storage> typed_engine(cola_type state, Storage storage)
-      : runtime_(runtime_type::from_snapshot(state.runtime(), std::move(storage))), current_(std::move(state)) {}
+      : runtime_([&] {
+          if constexpr (requires { storage.check_schema(state.metadata().schema_id); })
+            storage.check_schema(state.metadata().schema_id);
+          return runtime_type::from_snapshot(state.runtime(), std::move(storage));
+        }()), current_(std::move(state)) {}
     static std::string default_schema() {
       if constexpr (requires { Family::default_schema(); }) return Family::default_schema();
       else if constexpr (std::same_as<typename P::registry_type, string_registry>)

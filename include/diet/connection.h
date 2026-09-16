@@ -90,7 +90,9 @@ namespace diet {
       }
       auto current = restore(std::move(*found), schema);
       auto core = [&] {
-        if constexpr (requires { family_type::open_storage(store.root()); })
+        if constexpr (requires { family_type::open_storage(store.root(), schema); })
+          return Core::from_snapshot(current, family_type::open_storage(store.root(), schema));
+        else if constexpr (requires { family_type::open_storage(store.root()); })
           return Core::from_snapshot(current, family_type::open_storage(store.root()));
         else return Core::from_snapshot(current);
       }();

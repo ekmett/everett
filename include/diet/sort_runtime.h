@@ -134,6 +134,12 @@ namespace diet {
     static auto open_storage(std::filesystem::path const & root) requires requires { Storage::open(root); } {
       return Storage::open(root);
     }
+    static auto open_storage(std::filesystem::path const & root, std::string_view schema)
+        requires requires { Storage::open(root); } {
+      if constexpr (requires { { Storage::open_for_schema(root, schema) } -> std::same_as<Storage>; })
+        return Storage::open_for_schema(root, schema);
+      else return Storage::open(root);
+    }
     static std::string default_schema() {
       if constexpr (std::same_as<typename P::registry_type, string_registry> &&
                     std::same_as<Selector, registry_selector<typename P::registry_type>>)
