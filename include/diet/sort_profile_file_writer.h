@@ -16,9 +16,9 @@
 
 namespace diet {
   namespace sort_profile_detail {
-    template <class P, class Ops> struct file_bit_sink {
+    template <class P, class Ops, class Stream = object_stream<P, Ops>> struct file_bit_sink {
       static constexpr std::size_t buffer_bytes = 64 * 1024;
-      explicit file_bit_sink(object_stream<P, Ops> & stream) : stream_(stream) {}
+      explicit file_bit_sink(Stream & stream) : stream_(stream) {}
       std::uint64_t position() const noexcept { return bits_; }
       void append(bit_view source) {
         auto next = profile_detail::add(bits_, source.size());
@@ -99,7 +99,7 @@ namespace diet {
         }
       }
     private:
-      object_stream<P, Ops> & stream_;
+      Stream & stream_;
       std::array<std::byte, buffer_bytes> buffer_{};
       std::uint64_t buffered_ = 0, bits_ = 0;
       void zeroes(std::uint64_t count) {

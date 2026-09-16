@@ -661,6 +661,7 @@ namespace diet {
   template <class P> struct profile_borrowed_writer;
   template <class P, class Native, class Output> struct index_builder;
   namespace profile_detail { template <class P> struct index_output; }
+  namespace cola_detail { template <class P, class Native, class Main> struct index_output; }
   template <class P> struct profile_native_writer;
   namespace profile_detail { template <class P> struct native_output; }
 
@@ -1237,7 +1238,7 @@ namespace diet {
 
   private:
     template <class, class, class> friend struct index_builder;
-    template <class, class, class> friend struct cola_index_builder;
+    template <class, class, class> friend struct cola_detail::index_output;
     friend struct profile_detail::index_output<P>;
     // The index builders bypass the public comparison, using the exact
     // LCP already obtained when this borrowed key was accepted. Framing and

@@ -226,7 +226,17 @@ namespace diet {
 
   template <class P, class Native = profile_array<P>, class Main = void> struct cola_index;
   template <class P, class Target = cola_index<P>> struct cola_sample_cursor;
-  template <class P, class Native = profile_array<P>, class Main = void> struct cola_index_builder;
+  namespace cola_detail {
+    template <class P, class Native, class Main> struct index_output;
+    template <class P> struct index_metadata {
+      std::array<rank_groups<P::group_size>, 2> ranks;
+      std::array<std::vector<std::byte>, 2> flags;
+      std::array<std::vector<std::uint64_t>, 2> cuts;
+      std::uint64_t count = 0;
+    };
+  }
+  template <class P, class Native = profile_array<P>, class Main = void,
+            class Output = cola_detail::index_output<P, Native, Main>> struct cola_index_builder;
   template <class P> struct cola_sample_view {
     bit_view key;
     std::uint64_t target_ordinal = 0;
@@ -300,7 +310,7 @@ namespace diet {
       return view().search_window(group, lower, native_work, borrowed_work);
     }
   private:
-    friend struct cola_index_builder<P, Native, Main>;
+    friend struct cola_detail::index_output<P, Native, Main>;
     native_pointer native_;
     main_pointer main_;
     native_pointer secondary_;
@@ -319,6 +329,25 @@ namespace diet {
       : native_(std::move(native)), main_(std::move(main)), secondary_(std::move(secondary)),
         borrowed_(std::move(borrowed)), ranks_(std::move(ranks)), flags_(std::move(flags)), cuts_(std::move(cuts)), count_(count) {}
   };
+
+  namespace cola_detail {
+    // Default output owns the two FC payloads. Alternate concrete outputs
+    // consume the same known-prefix stream and final sparse navigation.
+    template <class P, class Native, class Main> struct index_output {
+      using index_type = cola_index<P, Native, Main>;
+      using native_pointer = typename index_type::native_pointer;
+      using main_pointer = typename index_type::main_pointer;
+      bool failed() const noexcept { return false; }
+      void append_known(unsigned route, bit_view key, std::uint64_t common) { writers_[route].append_known(key, common); }
+      index_type finish(native_pointer native, main_pointer main, native_pointer secondary, index_metadata<P> metadata) {
+        std::array<typename index_type::borrowed_array, 2> borrowed{writers_[0].finish(), writers_[1].finish()};
+        return index_type(std::move(native), std::move(main), std::move(secondary), std::move(borrowed),
+          std::move(metadata.ranks), std::move(metadata.flags), std::move(metadata.cuts), metadata.count);
+      }
+    private:
+      std::array<typename index_type::stream_family::borrowed_writer, 2> writers_;
+    };
+  }
 
   // Samples the exact local three-way augmented order, retaining its owner.
   // Generic mapped targets provide the same cola_index_view through view().
@@ -398,7 +427,7 @@ namespace diet {
   // while doing one zero-navigation update per crossed K-group, without keys.
   // Native contents must already be trusted/admitted; this metadata-only path
   // deliberately does not revalidate their framing or strictly sorted order.
-  template <class P, class Native, class Main> struct cola_index_builder {
+  template <class P, class Native, class Main, class Output> struct cola_index_builder {
     using policy_type = P;
     using index_type = cola_index<P, Native, Main>;
     using native_pointer = typename index_type::native_pointer;
@@ -406,7 +435,9 @@ namespace diet {
     using main_pointer = typename index_type::main_pointer;
     using target_type = typename index_type::target_type;
     explicit cola_index_builder(native_pointer native, main_pointer main = {}, native_pointer secondary = {})
-      : native_(checked(std::move(native))), main_(std::move(main)), secondary_(std::move(secondary)) {
+      : cola_index_builder(Output{}, std::move(native), std::move(main), std::move(secondary)) {}
+    cola_index_builder(Output output, native_pointer native, main_pointer main = {}, native_pointer secondary = {})
+      : native_(checked(std::move(native))), main_(std::move(main)), secondary_(std::move(secondary)), output_(std::move(output)) {
       auto remaining = std::numeric_limits<std::uint64_t>::max() - native_->size();
       auto primary_count = main_ ? main_->group_count() : 0;
       auto secondary_count = secondary_ ? secondary_->size() / P::group_size + (secondary_->size() % P::group_size != 0) : 0;
@@ -423,7 +454,7 @@ namespace diet {
     bool done() const noexcept {
       return native_ && !failed_ && (native_cursor_ ? !live(0) && !live(1) && !live(2) : count_ == native_->size());
     }
-    bool failed() const noexcept { return failed_; }
+    bool failed() const noexcept { return failed_ || output_.failed(); }
     bool finished() const noexcept { return finished_; }
     std::uint64_t size() const noexcept { return count_; }
     std::uint64_t step(std::uint64_t budget) {
@@ -453,7 +484,7 @@ namespace diet {
             // Along a sorted walk the minimum adjacent LCP since the preceding
             // borrow is its exact LCP with this key. Reuse that same frontier
             // for FC output instead of comparing the inherited prefix again.
-            writers_[route].append_known(key, borrowed_count_[route] ? cut_common_[route] : 0);
+            output_.append_known(route, key, borrowed_count_[route] ? cut_common_[route] : 0);
             auto ordinal = borrowed_count_[route]++;
             if (!(ordinal & 7)) flags_[route].push_back(std::byte{0});
             if (native_equal_) flags_[route].back() |= std::byte(1u << (ordinal & 7));
@@ -478,15 +509,14 @@ namespace diet {
       } catch (...) { failed_ = true; throw; }
       return consumed;
     }
-    index_type finish() {
+    auto finish() {
       require_active();
       if (!done()) error_detail::raise<std::logic_error>("COLA builder has remaining input");
       try {
         if (width_) flush_group();
-        std::array<typename index_type::borrowed_array, 2> borrowed{writers_[0].finish(), writers_[1].finish()};
-        std::array<rank_groups<P::group_size>, 2> ranks{ranks_[0].finish(), ranks_[1].finish()};
-        index_type result(native_, main_, secondary_, std::move(borrowed), std::move(ranks),
-          std::move(flags_), std::move(cuts_), count_);
+        cola_detail::index_metadata<P> metadata{{ranks_[0].finish(), ranks_[1].finish()},
+          std::move(flags_), std::move(cuts_), count_};
+        auto result = output_.finish(native_, main_, secondary_, std::move(metadata));
         finished_ = true;
         return result;
       } catch (...) { failed_ = true; throw; }
@@ -499,7 +529,7 @@ namespace diet {
     std::optional<native_cursor_type> native_cursor_;
     std::optional<cola_sample_cursor<P, target_type>> primary_cursor_;
     std::optional<native_cursor_type> secondary_cursor_;
-    std::array<typename index_type::stream_family::borrowed_writer, 2> writers_;
+    Output output_;
     std::array<rank_groups_builder<P::group_size>, 2> ranks_;
     std::array<std::vector<std::byte>, 2> flags_;
     std::array<std::vector<std::uint64_t>, 2> cuts_;
@@ -512,7 +542,7 @@ namespace diet {
       return native;
     }
     void require_active() const {
-      if (!native_ || failed_ || finished_) error_detail::raise<std::logic_error>("COLA builder is no longer active");
+      if (!native_ || failed() || finished_) error_detail::raise<std::logic_error>("COLA builder is no longer active");
     }
     bool live(unsigned origin) const noexcept {
       if (!origin) return native_cursor_ && !native_cursor_->done();
