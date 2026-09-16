@@ -162,6 +162,7 @@ namespace diet {
   template <class P, class Selector = registry_selector<typename P::registry_type>, class Ids = random_object_ids,
             class CatalogOps = sqlite_catalog_ops, class FileOps = posix_object_ops>
   struct sort_file_runtime_storage : sort_runtime_storage<P, Selector> {
+    using clean_storage_type = sort_runtime_storage<P, Selector>;
     using context_type = sort_runtime_context<P, Selector, Ids, CatalogOps, FileOps>;
     using native_type = typename context_type::native_type;
     using native_pointer = typename context_type::native_pointer;

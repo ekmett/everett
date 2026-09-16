@@ -14,8 +14,19 @@
 #include <diet/redundant_runtime.h>
 #include <diet/typed_scan.h>
 #include <deque>
+#include <unordered_map>
 
 namespace diet {
+  namespace replacement_detail {
+    template <class Family, class = void> struct clean_family {
+      using type = Family;
+      static constexpr bool enabled = false;
+    };
+    template <class Family> struct clean_family<Family, std::void_t<typename Family::storage_type::clean_storage_type>> {
+      using type = typename Family::template rebind_storage<typename Family::storage_type::clean_storage_type>;
+      static constexpr bool enabled = !std::is_same_v<Family, type>;
+    };
+  }
   // Trusted semantic checkpoint extension; the runtime frontier is stored
   // separately. Generation fields never authenticate the payload or its hash.
   template <class A = wrapping_fingerprint_algebra>
@@ -98,6 +109,7 @@ namespace diet {
     std::uint64_t reserved = 0, granted = 0, committed = 0;
     std::uint64_t scan_records = 0, clean_rows = 0, replayed = 0;
     std::uint64_t maximum_replay = 0, maximum_handoff_mutations = 0;
+    std::uint64_t tiny_generations = 0, tiny_indexes = 0, tiny_conversion_charged = 0;
   };
   struct replacement_rebuild_status {
     std::uint64_t clean_base = 0, mutations = 0;
@@ -135,6 +147,7 @@ namespace diet {
     using scan_type = typed_scan<sort_type, typed_cola_type>;
     static_assert(DepthLimit >= 3);
     static constexpr std::uint64_t small_limit = 64;
+    static constexpr std::uint64_t tiny_record_limit = 256;
 
     replacement_rebuild_engine() : foreground_(std::make_unique<engine_type>()), published_(foreground_->snapshot()) { work_.foreground_charged = foreground_->work().charged; }
     explicit replacement_rebuild_engine(std::string schema)
@@ -235,6 +248,7 @@ namespace diet {
       auto small = add(setup + 321 * scan, add(mul(130, action_bound(7)), mul(512, add(c, 32))));
       auto query = mul(mul(64, add(DepthLimit, 1)), add(add(P::group_size, P::codec_block_size), 16));
       auto extra = add(add(std::max(large, small), query), runs * 8 + 32);
+      if constexpr (replacement_detail::clean_family<Family>::enabled) extra = add(extra, tiny_conversion_bound());
       quote.work = add(quote.work, mul(input.records().size(), extra));
       return quote;
     }
@@ -299,6 +313,7 @@ namespace diet {
       std::uint64_t bound = 0, quantum = 0, action = 0, scan_price = 0, setup = 0;
       std::uint64_t committed = 0, credit = 0;
       bool building = true;
+      bool tiny = false;
       explicit rebuild(typed_cola_type value) : frozen(std::move(value)) {}
     };
     std::unique_ptr<engine_type> foreground_;
@@ -403,6 +418,8 @@ namespace diet {
       auto runs = next->frozen.runtime().runs();
       for (auto const & run : runs) physical = add(physical, run->native->size());
       next->source_records = physical;
+      if constexpr (replacement_detail::clean_family<Family>::enabled)
+        next->tiny = small && next->live <= small_limit && physical <= tiny_record_limit;
       next->scan_price = add(mul(2, std::bit_width(runs.size())), 16);
       next->setup = add(mul(runs.size(), add(next->scan_price, 8)), 32);
       auto r = add(next->setup, mul(add(add(physical, next->live), 1), next->scan_price));
@@ -413,6 +430,7 @@ namespace diet {
       r = add(r, mul(limit, next->action)); // Nested grant fragments at settlement.
       r = add(r, mul(next->horizon, next->action)); // Outer atomic-action fragments.
       next->bound = add(r, next->action); // Final metadata check and ownership handoff.
+      if (next->tiny) next->bound = add(next->bound, tiny_conversion_bound());
       next->quantum = ceil(next->bound, next->horizon);
       work_.reserved = add(work_.reserved, next->bound);
       job_ = std::move(next);
@@ -423,6 +441,7 @@ namespace diet {
     }
     std::uint64_t price() const {
       auto const & j = *job_;
+      if (j.tiny) return j.bound;
       if (!j.candidate) return j.setup;
       if (j.building && !j.scan->has_row() && !j.scan->done()) return j.scan_price;
       return j.action;
@@ -436,6 +455,130 @@ namespace diet {
       }
       work_.candidate_charged = add(work_.candidate_charged, job_->candidate->work().charged - before);
     }
+    // A settled candidate with at most 64 admissions has at most seven levels.
+    // Checked restore confines every object route to the three slots per
+    // level. Their pairs, at most one carrier per level, and the prepared
+    // head chain use fewer than 8*(height+1) distinct pairs. Each pair has at most 2*64+4 occurrences:
+    // V <= 64 + ceil(V/K) + ceil(64/K), with K >= 3. Charge an index allowance
+    // including both directory streams, plus object/level admission metadata.
+    static std::uint64_t tiny_conversion_bound() {
+      auto pairs = mul(8, add(std::bit_width(small_limit), 1));
+      return add(mul(pairs, add(32, mul(add(mul(2, small_limit), 4), add(P::group_size, 8)))), 1024);
+    }
+    template <class Source> auto convert_tiny(Source const & source) {
+      using source_pair = typename Source::query_type::pair_type;
+      using source_node = std::remove_const_t<typename source_pair::element_type>;
+      using source_object = typename Source::object_pointer::element_type;
+      using target_node = typename Family::node_type;
+      using target_pair = typename target_node::pair_type;
+      using target_object = typename Family::snapshot_type::object_pointer;
+      static_assert(std::is_same_v<typename source_node::native_type, typename Family::native_type>);
+      auto const & old = source.frontier();
+      require(old.admissions <= small_limit && old.levels.size() <= std::bit_width(small_limit) && !old.service_due,
+        "tiny conversion exceeds its bounded settled frontier");
+      std::uint64_t charged = 0;
+      auto charge = [&](std::uint64_t amount) {
+        charged = add(charged, amount);
+        require(charged <= tiny_conversion_bound(), "tiny conversion exceeded its allowance");
+        work_.tiny_conversion_charged = add(work_.tiny_conversion_charged, amount);
+        work_.candidate_charged = add(work_.candidate_charged, amount);
+      };
+      charge(add(32, mul(old.levels.size(), 16)));
+      std::unordered_map<source_node const *, target_pair> pairs;
+      auto copy_pair = [&](auto && self, source_pair const & value) -> target_pair {
+        if (!value) return {};
+        if (auto found = pairs.find(value.get()); found != pairs.end()) return found->second;
+        auto main = self(self, value->main_target());
+        require(pairs.size() < 8 * (std::bit_width(small_limit) + 1), "too many tiny conversion pairs");
+        auto secondary = value->secondary_target();
+        auto a = main ? ceil(main->virtual_size(), P::group_size) : 0;
+        auto b = secondary ? ceil(secondary->size(), P::group_size) : 0;
+        auto n = add(value->native_owner()->size(), add(a, b));
+        require(n <= 2 * small_limit + 4, "tiny pair exceeds its occurrence allowance");
+        charge(add(add(16, mul(n, P::group_size + 6)), add(ceil(a, P::codec_block_size), ceil(b, P::codec_block_size))));
+        cola_index_builder<P, typename Family::native_type, target_node> builder(value->native_owner(), main, secondary);
+        while (!builder.done()) builder.step(1);
+        auto result = target_node::from_built(builder.finish());
+        work_.tiny_indexes = add(work_.tiny_indexes, 1);
+        pairs.emplace(value.get(), result); return result;
+      };
+      std::unordered_map<source_object const *, target_object> objects;
+      auto copy_object = [&](auto && self, typename Source::object_pointer const & value) -> target_object {
+        if (!value) return {};
+        if (auto found = objects.find(value.get()); found != objects.end()) return found->second;
+        typename Family::routes_type next{self(self, value->next.main), self(self, value->next.secondary)};
+        require(objects.size() < 3 * old.levels.size(), "too many tiny conversion objects");
+        charge(16);
+        auto result = std::make_shared<typename Family::object_type const>(typename Family::object_type{
+          value->identity, value->first, value->last, value->level, value->native,
+          copy_pair(copy_pair, value->pair), std::move(next)});
+        objects.emplace(value.get(), result); return result;
+      };
+      auto copy_route = [&](auto const & route) {
+        return typename Family::routes_type{copy_object(copy_object, route.main), copy_object(copy_object, route.secondary)};
+      };
+      typename Family::frontier_type out;
+      out.admissions = old.admissions; out.next_identity = old.next_identity; out.service_due = old.service_due;
+      out.levels.resize(old.levels.size());
+      for (std::size_t i = 0; i != old.levels.size(); ++i) {
+        auto const & before = old.levels[i]; auto & after = out.levels[i];
+        require(!before.job, "tiny conversion requires completed jobs");
+        unsigned active = 0;
+        for (std::size_t j = 0; j != before.slots.size(); ++j) {
+          auto const & slot = before.slots[j]; active += slot.state == redundant_slot_state::active;
+          after.slots[j] = {slot.state, copy_object(copy_object, slot.object), copy_route(slot.route),
+            copy_pair(copy_pair, slot.carrier), slot.ever_visible};
+        }
+        require(active < 2, "tiny conversion requires a settled level");
+        after.last_destination = before.last_destination; after.last_destination_visible = before.last_destination_visible;
+      }
+      out.root = copy_route(old.root);
+      auto head = copy_pair(copy_pair, source.query_root().head());
+      auto result = Family::snapshot_type::restore(std::move(out), std::move(head));
+      return result;
+    }
+    void tiny_rebuild() requires replacement_detail::clean_family<Family>::enabled {
+      using clean_family = typename replacement_detail::clean_family<Family>::type;
+      using clean_engine = typed_engine<P, A, DepthLimit, clean_family>;
+      auto & j = *job_;
+      require(j.tiny && j.live <= small_limit && j.source_records <= tiny_record_limit &&
+        j.queue.empty() && !j.admitted, "tiny rebuild escaped its bounded eager path");
+      clean_engine candidate(j.frozen.metadata().schema_id);
+      work_.candidate_charged = add(work_.candidate_charged, candidate.work().charged);
+      auto execute = [&](auto && operation) {
+        auto before = candidate.work().charged;
+        try { operation(); }
+        catch (...) { work_.candidate_charged = add(work_.candidate_charged, candidate.work().charged - before); throw; }
+        work_.candidate_charged = add(work_.candidate_charged, candidate.work().charged - before);
+      };
+      scan_type rows(j.frozen);
+      while (!rows.done()) {
+        if (!rows.has_row()) work_.scan_records = add(work_.scan_records, rows.step(1));
+        if (!rows.has_row()) continue;
+        auto row = rows.take_row();
+        auto arrow = clean(row.key, row.value);
+        require(semantics::apply(row.key, semantics::initial(row.key), arrow) == row.value, "invalid clean replacement arrow");
+        while (!candidate.admission_ready()) execute([&] { candidate.advance(j.action); });
+        execute([&] { candidate.contribute(clean_engine::template change<sort_type>(row.key, arrow)); });
+        ++j.rows; work_.clean_rows = add(work_.clean_rows, 1);
+        require(j.rows <= j.live, "tiny scan exceeds frozen live count");
+      }
+      auto scanned = candidate.snapshot();
+      require(rows.consumed() == j.source_records && j.rows == j.live &&
+        scanned.runtime().admissions() == j.live && scanned.metadata() == j.frozen.metadata(),
+        "tiny rebuild differs from frozen source");
+      while (candidate.pending()) execute([&] { candidate.advance(j.action); });
+      auto clean = candidate.snapshot();
+      auto runtime = convert_tiny(clean.runtime());
+      auto state = typed_cola_type::restore(std::move(runtime), clean.metadata(), j.frozen.metadata().schema_id);
+      require(state.metadata() == foreground_->snapshot().metadata() && state.runtime().admissions() == j.live,
+        "tiny handoff differs from foreground");
+      auto replacement = engine_type::from_snapshot(std::move(state), foreground_->storage());
+      work_.candidate_charged = add(work_.candidate_charged, replacement.work().charged);
+      base_ = j.live; mutations_ = 0;
+      work_.generations = add(work_.generations, 1); work_.tiny_generations = add(work_.tiny_generations, 1);
+      foreground_ = std::make_unique<engine_type>(std::move(replacement)); job_.reset(); recovering_ = false;
+    }
     void service() {
       while (job_) {
         auto cost = price(); if (job_->credit < cost) break;
@@ -443,6 +586,9 @@ namespace diet {
         require(job_->committed <= limit && cost <= limit - job_->committed, "rebuild exceeded its reserved work bound");
         job_->credit -= cost; job_->committed += cost; work_.committed = add(work_.committed, cost);
         auto & j = *job_;
+        if constexpr (replacement_detail::clean_family<Family>::enabled) {
+          if (j.tiny) { tiny_rebuild(); continue; }
+        }
         if (!j.candidate) {
           auto seed = std::make_unique<engine_type>(j.frozen.metadata().schema_id);
           work_.candidate_charged = add(work_.candidate_charged, seed->work().charged);

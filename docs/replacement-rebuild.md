@@ -41,9 +41,9 @@ table.save("before-edit", saved);
 For streamed native merges, select `streaming_sort_runtime_family<P>` from
 `<diet/sort_runtime_context.h>` as the engine's `Family`. The connection opens
 a catalog-bound storage context and shares it between the foreground and every
-cleanup candidate. Completed native merges are sealed and mapped. Other output
-choices remain those of the selected runtime family; the rebuilding wrapper
-does not introduce another payload buffer.
+large cleanup candidate. Completed native and fractional-index outputs are
+sealed and mapped. Bounded small cleanups use the in-memory construction below
+and retain the same storage context for their final handoff.
 
 `from_snapshot(state, storage)` and `from_clean(state, storage)` accept that
 same concrete context when scheduling directly. `storage()` returns a copy of
@@ -108,6 +108,36 @@ routing through the frozen generation.
 
 The count and fingerprint checks supplement the coverage-complete scan and
 ordered replay. A fingerprint is not a proof of equality or authentication.
+
+Small streamed cleanups
+----------------------
+
+For an eager cleanup with at most 64 live rows and at most 256 physical input
+occurrences, I build the candidate with the corresponding owning runtime. Its
+intermediate singleton admissions and merges create no durable files. This
+also applies to an active recovery that satisfies both bounds. Larger frozen
+states keep the incremental streamed path.
+
+The owning candidate still performs the full resolved scan, validates each
+clean arrow, checks the scan count and table fingerprint, and finishes its
+ordinary scheduler work. I then translate its settled frontier to the streamed
+family, preserving admission intervals, object identities, slots, routes and
+visibility history. Native owners are shared; only the final fractional indexes
+are rebuilt for the new node type. The translated frontier passes the ordinary
+checked restore before handoff. Publication seals this final graph once.
+
+This deliberately preserves the scheduler's carrier history. A sparse binary
+decomposition alone would skip levels that its routing invariants require.
+There is no padding of the clean admission mass: it remains exactly the live
+row count. The owning construction is bounded in records, not bytes; large keys
+or values can still require substantial memory.
+
+The whole tiny cleanup is one funded structural action. A separate conversion
+allowance covers its final indexes and metadata. With at most seven levels,
+the slots, carriers and prepared query head use fewer than 64 distinct pairs.
+Each contains at most 132 occurrences for sampling factors at least three.
+`work().tiny_generations`, `tiny_indexes` and `tiny_conversion_charged` expose
+this path; conversion charges are also included in `candidate_charged`.
 
 Structural reservations
 -----------------------
@@ -191,7 +221,9 @@ $T+321S+130G(7)+512(C+32)$. The quote takes the larger ceiling, adds the
 freeze allowance 1056 and a depth-limited preflight query allowance, then adds
 the foreground typed engine quote. The default policy's resulting single-record
 quote is 40,164,546 structural units, within the connection's 128,000,000-unit
-accepted-input limit. Arithmetic is checked. Restored generations
+accepted-input limit. A streamed family that enables small owning construction
+adds its explicit conversion allowance; at the recommended policy the quote is
+40,361,922 units. Arithmetic is checked. Restored generations
 must pass the same mass/trigger validation that justifies these ratios.
 
 These deliberately generous quotes are separate from `work()`'s actual runtime

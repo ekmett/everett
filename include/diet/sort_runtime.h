@@ -126,6 +126,7 @@ namespace diet {
             class Storage = sort_runtime_storage<P, Selector>>
   struct sort_runtime_family : redundant_runtime_family<P, Storage> {
     using key_transport = sort_key_transport<P, Selector>;
+    template <class OtherStorage> using rebind_storage = sort_runtime_family<P, Selector, OtherStorage>;
     static auto open_storage(std::filesystem::path const & root) requires requires { Storage::open(root); } {
       return Storage::open(root);
     }

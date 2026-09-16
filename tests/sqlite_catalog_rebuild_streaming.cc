@@ -122,7 +122,8 @@ namespace {
     auto initial = typed_core::from_snapshot(empty.snapshot(), disk);
     std::map<std::string, std::string> expected;
     auto batch = typed_core::batch();
-    for (unsigned n = 0; n != 64; ++n) {
+    // Stay above the bounded tiny path so restart exercises partial streamed cleanup.
+    for (unsigned n = 0; n != 128; ++n) {
       auto value = std::string(257, char('a' + n % 26));
       expected[key(n)] = value;
       batch.put(key(n), value);
@@ -145,7 +146,7 @@ namespace {
       while (!active.admission_ready()) active.advance(100'000);
       active.contribute(core::put(key(0), "at-freeze"));
       expected[key(0)] = "at-freeze";
-      check(++mutations <= 16, "large trigger missed");
+      check(++mutations <= 32, "large trigger missed");
     }
     active.contribute(core::put(key(1), "queued"));
     expected[key(1)] = "queued";
@@ -203,7 +204,7 @@ namespace {
     drain(*durable);
     auto cleaned = durable->snapshot();
     verify(cleaned, expected, true);
-    check(!cleaned.metadata().rebuilding && cleaned.metadata().clean_base == 64 &&
+    check(!cleaned.metadata().rebuilding && cleaned.metadata().clean_base == 128 &&
       !cleaned.metadata().mutations, "recovery handoff counters");
     check(cleaned.head().timeline.generation > recorded.head.timeline.generation, "handoff was not durable");
     // A later merge uses the context retained by settled durable rebasing.
