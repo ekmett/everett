@@ -1,0 +1,227 @@
+/**
+ * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Searches bounded windows of portable fixed-width keys with scalar or SIMD pivots.
+ *
+ * \license
+ * SPDX-FileType: SOURCE
+ * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+ * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+ * \endlicense
+ */
+
+#pragma once
+
+#include <everett/error_detail.h>
+
+#include <algorithm>
+#include <array>
+#include <bit>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <limits>
+#include <span>
+#include <stdexcept>
+
+#if defined(__AVX512F__) || defined(__AVX2__) || defined(__SSE2__)
+#include <immintrin.h>
+#endif
+#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#include <arm_neon.h>
+#endif
+
+namespace everett {
+  namespace fixed_search_detail {
+    inline std::uint32_t load_word(std::byte const *source) noexcept {
+      std::uint32_t value;
+      std::memcpy(&value, source, sizeof(value));
+      if constexpr (std::endian::native == std::endian::big) {
+        value = ((value & 0x00ff00ffu) << 8) | ((value >> 8) & 0x00ff00ffu);
+        value = (value << 16) | (value >> 16);
+      }
+      return value;
+    }
+
+    template <std::size_t Words, std::size_t Lanes>
+    inline std::array<std::uint32_t, Lanes> repeated(std::array<std::uint32_t, Words> const &query) noexcept {
+      std::array<std::uint32_t, Lanes> result{};
+      for (std::size_t i = 0; i < Lanes; ++i) result[i] = query[i % Words];
+      return result;
+    }
+
+    template <std::size_t Words, bool Upper>
+    inline bool precedes(std::byte const *source, std::array<std::uint32_t, Words> const &query) noexcept {
+      bool less = false, equal = true;
+      for (std::size_t i = 0; i < Words; ++i) {
+        auto value = load_word(source + (i << 2));
+        less |= equal & (value < query[i]);
+        equal &= value == query[i];
+      }
+      if constexpr (Upper) return less | equal;
+      else return less;
+    }
+
+    // Count keys satisfying < query (or <= query), not individual word lanes.
+    // The first word of each key is the most significant comparison word.
+    // Callers supply at most four complete keys; no padding is required.
+    template <std::size_t Words, bool Upper>
+    inline unsigned population(std::byte const *source, unsigned count,
+        std::array<std::uint32_t, Words> const &query) noexcept {
+      if (!count) return 0;
+      unsigned less = 0, equal = 0;
+      unsigned word_count = count * unsigned(Words);
+#if defined(__AVX512F__)
+      auto q = repeated<Words, 16>(query);
+      auto active = __mmask16((std::uint32_t{1} << word_count) - 1);
+      // Masked-off lanes do not access memory, including across a guard page.
+      auto values = _mm512_maskz_loadu_epi32(active, source);
+      auto queries = _mm512_loadu_si512(q.data());
+      less = unsigned(_mm512_cmplt_epu32_mask(values, queries));
+      equal = unsigned(_mm512_cmpeq_epu32_mask(values, queries));
+#elif defined(__AVX2__)
+      auto q = repeated<Words, 8>(query);
+      auto queries = _mm256_loadu_si256(reinterpret_cast<__m256i const *>(q.data()));
+      auto sign = _mm256_set1_epi32(std::numeric_limits<std::int32_t>::min());
+      auto positions = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
+      for (unsigned at = 0; at < word_count; at += 8) {
+        auto active = _mm256_cmpgt_epi32(_mm256_set1_epi32(int(word_count - at)), positions);
+        // VPMASKMOVD suppresses memory access for inactive dword lanes.
+        auto values = _mm256_maskload_epi32(reinterpret_cast<int const *>(source + (at << 2)), active);
+        auto lt = _mm256_cmpgt_epi32(_mm256_xor_si256(queries, sign), _mm256_xor_si256(values, sign));
+        auto eq = _mm256_cmpeq_epi32(values, queries);
+        less |= unsigned(_mm256_movemask_ps(_mm256_castsi256_ps(lt))) << at;
+        equal |= unsigned(_mm256_movemask_ps(_mm256_castsi256_ps(eq))) << at;
+      }
+#elif defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+      auto q = repeated<Words, 4>(query);
+      auto queries = vld1q_u32(q.data());
+      uint32x4_t weights{1, 2, 4, 8};
+      for (unsigned at = 0; at < word_count; at += 4) {
+        std::array<std::uint32_t, 4> buffer{};
+        // NEON has no fault-suppressing load here: copy only the valid bytes.
+        std::memcpy(buffer.data(), source + (at << 2), std::min(4u, word_count - at) << 2);
+        auto values = vld1q_u32(buffer.data());
+        less |= vaddvq_u32(vandq_u32(vcltq_u32(values, queries), weights)) << at;
+        equal |= vaddvq_u32(vandq_u32(vceqq_u32(values, queries), weights)) << at;
+      }
+#elif defined(__SSE2__)
+      auto q = repeated<Words, 4>(query);
+      auto queries = _mm_loadu_si128(reinterpret_cast<__m128i const *>(q.data()));
+      auto sign = _mm_set1_epi32(std::numeric_limits<std::int32_t>::min());
+      for (unsigned at = 0; at < word_count; at += 4) {
+        std::array<std::uint32_t, 4> buffer{};
+        std::memcpy(buffer.data(), source + (at << 2), std::min(4u, word_count - at) << 2);
+        auto values = _mm_loadu_si128(reinterpret_cast<__m128i const *>(buffer.data()));
+        auto lt = _mm_cmpgt_epi32(_mm_xor_si128(queries, sign), _mm_xor_si128(values, sign));
+        auto eq = _mm_cmpeq_epi32(values, queries);
+        less |= unsigned(_mm_movemask_ps(_mm_castsi128_ps(lt))) << at;
+        equal |= unsigned(_mm_movemask_ps(_mm_castsi128_ps(eq))) << at;
+      }
+#else
+      unsigned scalar_count = 0;
+      for (unsigned i = 0; i < count; ++i) scalar_count += precedes<Words, Upper>(source + i * Words * 4, query);
+      return scalar_count;
+#endif
+      constexpr unsigned starts = Words == 1 ? 0xffffu : Words == 2 ? 0x5555u : 0x1111u;
+      unsigned prefix = starts & ((1u << word_count) - 1);
+      unsigned matches = prefix, result = 0;
+      for (unsigned word = 0; word < Words; ++word) {
+        result |= matches & (less >> word);
+        matches &= equal >> word;
+      }
+      if constexpr (Upper) result |= matches;
+      return unsigned(std::popcount(result));
+    }
+  }
+
+  // Borrows sorted keys encoded as one, two, or four little-endian uint32 words.
+  // Word zero is compared first; this is not a native-endian uint128 array.
+  // The owner must outlive the view. Construction checks extent, not sortedness.
+  // Bounds use local ordinals, permit duplicate keys and never allocate.
+  template <std::size_t Words> struct fixed_key_view {
+    static_assert(Words == 1 || Words == 2 || Words == 4, "fixed keys have 1, 2, or 4 words");
+    using key_type = std::array<std::uint32_t, Words>;
+    static constexpr std::size_t key_bytes = Words * 4;
+    static constexpr std::size_t simd_cutoff = 16; // Provisional, not a measured crossover.
+    static constexpr std::size_t explicit_simd_limit = 32;
+    fixed_key_view() = default;
+    explicit fixed_key_view(std::span<std::byte const> bytes) : bytes_(bytes) {
+      if (bytes.size() % key_bytes)
+        error_detail::raise<std::invalid_argument>("fixed-key extent is not a whole number of keys");
+    }
+    std::size_t size() const noexcept { return bytes_.size() / key_bytes; }
+    bool empty() const noexcept { return bytes_.empty(); }
+    std::span<std::byte const> bytes() const noexcept { return bytes_; }
+    key_type key_at(std::size_t ordinal) const {
+      if (ordinal >= size()) error_detail::raise<std::out_of_range>("fixed-key ordinal");
+      key_type result;
+      auto source = bytes_.data() + ordinal * key_bytes;
+      for (std::size_t i = 0; i < Words; ++i) result[i] = fixed_search_detail::load_word(source + (i << 2));
+      return result;
+    }
+    fixed_key_view subview(std::size_t first, std::size_t count) const {
+      if (first > size() || count > size() - first)
+        error_detail::raise<std::out_of_range>("fixed-key subview");
+      return fixed_key_view(bytes_.subspan(first * key_bytes, count * key_bytes));
+    }
+    std::size_t lower_bound(key_type const &query) const noexcept {
+      return size() <= simd_cutoff ? simd_bound<false>(query) : binary_bound<false>(query);
+    }
+    std::size_t upper_bound(key_type const &query) const noexcept {
+      return size() <= simd_cutoff ? simd_bound<true>(query) : binary_bound<true>(query);
+    }
+    std::size_t lower_bound_binary(key_type const &query) const noexcept { return binary_bound<false>(query); }
+    std::size_t upper_bound_binary(key_type const &query) const noexcept { return binary_bound<true>(query); }
+    std::size_t lower_bound_simd(key_type const &query) const noexcept { return simd_bound<false>(query); }
+    std::size_t upper_bound_simd(key_type const &query) const noexcept { return simd_bound<true>(query); }
+  private:
+    std::span<std::byte const> bytes_;
+    template <bool Upper> std::size_t binary_bound(key_type const &query) const noexcept {
+      auto count = size();
+      std::size_t first = 0;
+      auto step = std::bit_floor(count);
+      if (std::has_single_bit(count + 1)) {
+        // Exactly log2(count+1) comparisons for a complete 2^m-1 window.
+        for (; step; step >>= 1)
+          first += step * fixed_search_detail::precedes<Words, Upper>(
+            bytes_.data() + (first + step - 1) * key_bytes, query);
+      } else {
+        for (; step; step >>= 1) {
+          auto next = first + step;
+          auto probe = std::min(next, count) - 1;
+          auto below = fixed_search_detail::precedes<Words, Upper>(bytes_.data() + probe * key_bytes, query);
+          first += step * ((next <= count) & below);
+        }
+      }
+      return first;
+    }
+    template <bool Upper> void pivot_step(key_type const &query, std::size_t &first, std::size_t &count) const noexcept {
+      // Called only with at least three keys, giving three distinct pivots.
+      std::array<std::size_t, 3> positions{count >> 2, count >> 1, (3 * count) >> 2};
+      std::array<std::byte, 3 * key_bytes> pivots;
+      for (unsigned i = 0; i < 3; ++i)
+        std::memcpy(pivots.data() + i * key_bytes, bytes_.data() + (first + positions[i]) * key_bytes, key_bytes);
+      auto rank = fixed_search_detail::population<Words, Upper>(pivots.data(), 3, query);
+      std::array<std::size_t, 4> starts{0, positions[0] + 1, positions[1] + 1, positions[2] + 1};
+      std::array<std::size_t, 4> ends{positions[0], positions[1], positions[2], count};
+      first += starts[rank];
+      count = ends[rank] - starts[rank];
+    }
+    template <bool Upper, unsigned Bucket> std::size_t small_bound(key_type const &query) const noexcept {
+      std::size_t first = 0, count = size();
+      if constexpr (Bucket > 4) pivot_step<Upper>(query, first, count);
+      // Original sizes 17..32 leave 3..8 keys after the first pivot step.
+      if constexpr (Bucket > 16) pivot_step<Upper>(query, first, count);
+      if (!count) return first;
+      return first + fixed_search_detail::population<Words, Upper>(bytes_.data() + first * key_bytes, unsigned(count), query);
+    }
+    template <bool Upper> std::size_t simd_bound(key_type const &query) const noexcept {
+      if (size() <= 4) return small_bound<Upper, 4>(query);
+      if (size() <= 8) return small_bound<Upper, 8>(query);
+      if (size() <= 16) return small_bound<Upper, 16>(query);
+      if (size() <= explicit_simd_limit) return small_bound<Upper, 32>(query);
+      return binary_bound<Upper>(query);
+    }
+  };
+}
