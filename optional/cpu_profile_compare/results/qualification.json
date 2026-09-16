@@ -1,0 +1,27 @@
+{
+  "builds": {
+    "baseline-release": {
+      "binary_sha256": "700e85721452886c9ae74ff46a09ae92849ec12b04a826e3e342b6d387212e84",
+      "header_revision": "5868b32afae9e78cd86a71289ca119670d6c3748",
+      "log_sha256": "315d5beb531f6e93c3cdf13dc47fad759f2ada040b6bd339ab3cace2229ad7c0",
+      "passed": 16,
+      "tests": 16
+    },
+    "candidate-asan-ubsan": {
+      "binary_sha256": "4457a7d56499f62f0cd917cb66b9eef97669ac0c595227f9daeec73e9dbb45b9",
+      "header_revision": "a760695c23c41deb4b8b64c2d7024e9919737b9a",
+      "log_sha256": "de93003b9e1efb533072bb8826270c64641f07c17487fdbff566d06b3da48dee",
+      "passed": 16,
+      "tests": 16
+    },
+    "candidate-release": {
+      "binary_sha256": "68b06d1e9841f7b4b7682c49440404b1e9223638abc2d458ec65a411c2d61115",
+      "header_revision": "a760695c23c41deb4b8b64c2d7024e9919737b9a",
+      "log_sha256": "1c82a74ab169550989e85c4c974baf5f6e89c3452f39766b6cb1ea733209ef30",
+      "passed": 16,
+      "tests": 16
+    }
+  },
+  "harness_revision": "40aecd43f21c8c4a16ebd3978a19042b61779d5f",
+  "scope": "Correctness only; performance uses the two O3 release binaries in manifest.json. Logs are path-normalized copies; test output numbers are unchanged."
+}

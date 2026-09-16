@@ -1,0 +1,291 @@
+Start testing: Sep 16 05:35 EDT
+----------------------------------------------------------
+1/16 Testing: cpu_raw-bit_0
+1/16 Test: cpu_raw-bit_0
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "raw-bit" "<checkout>/build-cpu-profile-asan/check-raw-bit-0" "0" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_raw-bit_0" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+0,raw-bit,structured,4096,4096,0,-1,72688,72688,142528,8192,131072,6.7402920000000002,6.2142499999999998,0.43049999999999999
+0,raw-bit,structured,4096,4096,0,0,72688,72688,142528,8192,131072,6.7522080000000004,6.277209,0.38037500000000002
+<end of output>
+Test time =   0.60 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_raw-bit_0" end time: Sep 16 05:35 EDT
+"cpu_raw-bit_0" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/16 Testing: cpu_raw-bit_3
+2/16 Test: cpu_raw-bit_3
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "raw-bit" "<checkout>/build-cpu-profile-asan/check-raw-bit-3" "3" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_raw-bit_3" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+3,raw-bit,structured,4096,4096,0,-1,1066328,1066688,2130192,8192,2096697,13.699166999999999,11.454542,0.93458399999999997
+3,raw-bit,structured,4096,4096,0,0,1066328,1066688,2130192,8192,2096697,13.779999999999999,11.121458000000001,1.3454170000000001
+<end of output>
+Test time =   0.33 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_raw-bit_3" end time: Sep 16 05:35 EDT
+"cpu_raw-bit_3" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/16 Testing: cpu_raw-bit_6
+3/16 Test: cpu_raw-bit_6
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "raw-bit" "<checkout>/build-cpu-profile-asan/check-raw-bit-6" "6" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_raw-bit_6" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+6,raw-bit,hash-like,4096,4096,0,-1,139328,139320,277376,8192,131072,7.8997919999999997,7.234083,0.47616599999999998
+6,raw-bit,hash-like,4096,4096,0,0,139328,139320,277376,8192,131072,8.0670000000000002,7.3372080000000004,0.55395799999999995
+<end of output>
+Test time =   0.15 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_raw-bit_6" end time: Sep 16 05:35 EDT
+"cpu_raw-bit_6" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/16 Testing: cpu_raw-bit_9
+4/16 Test: cpu_raw-bit_9
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "raw-bit" "<checkout>/build-cpu-profile-asan/check-raw-bit-9" "9" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_raw-bit_9" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+9,raw-bit,hash-like,4096,4096,0,-1,1132848,1133200,2264776,8192,2096697,15.417624999999999,13.150167,0.85595900000000003
+9,raw-bit,hash-like,4096,4096,0,0,1132848,1133200,2264776,8192,2096697,15.205083,12.984208000000001,0.82995799999999997
+<end of output>
+Test time =   0.36 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_raw-bit_9" end time: Sep 16 05:35 EDT
+"cpu_raw-bit_9" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/16 Testing: cpu_raw-byte_0
+5/16 Test: cpu_raw-byte_0
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "raw-byte" "<checkout>/build-cpu-profile-asan/check-raw-byte-0" "0" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_raw-byte_0" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+0,raw-byte,structured,4096,4096,0,-1,78872,78872,156960,8192,131072,4.545458,4.0600829999999997,0.37841599999999997
+0,raw-byte,structured,4096,4096,0,0,78872,78872,156960,8192,131072,4.5209999999999999,4.037458,0.37987500000000002
+<end of output>
+Test time =   0.12 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_raw-byte_0" end time: Sep 16 05:35 EDT
+"cpu_raw-byte_0" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/16 Testing: cpu_raw-byte_3
+6/16 Test: cpu_raw-byte_3
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "raw-byte" "<checkout>/build-cpu-profile-asan/check-raw-byte-3" "3" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_raw-byte_3" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+3,raw-byte,structured,4096,4096,0,-1,1068896,1069264,2137376,8192,2096697,9.3081250000000004,6.8847079999999998,0.91145799999999999
+3,raw-byte,structured,4096,4096,0,0,1068896,1069264,2137376,8192,2096697,9.1423330000000007,6.6520419999999998,1.1305829999999999
+<end of output>
+Test time =   0.30 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_raw-byte_3" end time: Sep 16 05:35 EDT
+"cpu_raw-byte_3" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/16 Testing: cpu_raw-byte_6
+7/16 Test: cpu_raw-byte_6
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "raw-byte" "<checkout>/build-cpu-profile-asan/check-raw-byte-6" "6" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_raw-byte_6" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+6,raw-byte,hash-like,4096,4096,0,-1,135912,135896,271048,8192,131072,4.6211669999999998,4.0552089999999996,0.37887500000000002
+6,raw-byte,hash-like,4096,4096,0,0,135912,135896,271048,8192,131072,4.6279170000000001,3.9845000000000002,0.46570899999999998
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_raw-byte_6" end time: Sep 16 05:35 EDT
+"cpu_raw-byte_6" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/16 Testing: cpu_raw-byte_9
+8/16 Test: cpu_raw-byte_9
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "raw-byte" "<checkout>/build-cpu-profile-asan/check-raw-byte-9" "9" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_raw-byte_9" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+9,raw-byte,hash-like,4096,4096,0,-1,1125848,1126200,2251296,8192,2096697,8.8554999999999993,6.6965000000000003,0.77462500000000001
+9,raw-byte,hash-like,4096,4096,0,0,1125848,1126200,2251296,8192,2096697,9.5036670000000001,6.8530420000000003,1.18275
+<end of output>
+Test time =   0.31 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_raw-byte_9" end time: Sep 16 05:35 EDT
+"cpu_raw-byte_9" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/16 Testing: cpu_typed-bit_0
+9/16 Test: cpu_typed-bit_0
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "typed-bit" "<checkout>/build-cpu-profile-asan/check-typed-bit-0" "0" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_typed-bit_0" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+0,typed-bit,structured,4096,4096,0,-1,77928,77928,152888,8192,131072,15.409458000000001,14.71475,0.57550000000000001
+0,typed-bit,structured,4096,4096,0,0,77928,77928,152888,8192,131072,14.657833,14.094167000000001,0.45583299999999999
+<end of output>
+Test time =   0.20 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_typed-bit_0" end time: Sep 16 05:35 EDT
+"cpu_typed-bit_0" time elapsed: 00:00:00
+----------------------------------------------------------
+
+10/16 Testing: cpu_typed-bit_3
+10/16 Test: cpu_typed-bit_3
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "typed-bit" "<checkout>/build-cpu-profile-asan/check-typed-bit-3" "3" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_typed-bit_3" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+3,typed-bit,structured,4096,4096,0,-1,1063912,1064280,2125240,8192,2096697,22.976709,20.544667,1.052834
+3,typed-bit,structured,4096,4096,0,0,1063912,1064280,2125240,8192,2096697,23.391124999999999,20.716666,1.2885
+<end of output>
+Test time =   0.40 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_typed-bit_3" end time: Sep 16 05:35 EDT
+"cpu_typed-bit_3" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/16 Testing: cpu_typed-bit_6
+11/16 Test: cpu_typed-bit_6
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "typed-bit" "<checkout>/build-cpu-profile-asan/check-typed-bit-6" "6" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_typed-bit_6" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+6,typed-bit,hash-like,4096,4096,0,-1,144544,144536,287712,8192,131072,16.200416000000001,15.519458,0.479375
+6,typed-bit,hash-like,4096,4096,0,0,144544,144536,287712,8192,131072,16.618416,15.948917,0.38933400000000001
+<end of output>
+Test time =   0.22 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_typed-bit_6" end time: Sep 16 05:35 EDT
+"cpu_typed-bit_6" time elapsed: 00:00:00
+----------------------------------------------------------
+
+12/16 Testing: cpu_typed-bit_9
+12/16 Test: cpu_typed-bit_9
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "typed-bit" "<checkout>/build-cpu-profile-asan/check-typed-bit-9" "9" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_typed-bit_9" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+9,typed-bit,hash-like,4096,4096,0,-1,1130408,1130760,2259808,8192,2096697,24.705334000000001,22.069583999999999,1.0035829999999999
+9,typed-bit,hash-like,4096,4096,0,0,1130408,1130760,2259808,8192,2096697,24.579584000000001,22.246375,0.85287500000000005
+<end of output>
+Test time =   0.42 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_typed-bit_9" end time: Sep 16 05:35 EDT
+"cpu_typed-bit_9" time elapsed: 00:00:00
+----------------------------------------------------------
+
+13/16 Testing: cpu_typed-byte_0
+13/16 Test: cpu_typed-byte_0
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "typed-byte" "<checkout>/build-cpu-profile-asan/check-typed-byte-0" "0" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_typed-byte_0" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+0,typed-byte,structured,4096,4096,0,-1,87160,87160,173544,8192,131072,4.5320419999999997,4.0478329999999998,0.36908299999999999
+0,typed-byte,structured,4096,4096,0,0,87160,87160,173544,8192,131072,4.5856669999999999,3.915041,0.55800000000000005
+<end of output>
+Test time =   0.12 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_typed-byte_0" end time: Sep 16 05:35 EDT
+"cpu_typed-byte_0" time elapsed: 00:00:00
+----------------------------------------------------------
+
+14/16 Testing: cpu_typed-byte_3
+14/16 Test: cpu_typed-byte_3
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "typed-byte" "<checkout>/build-cpu-profile-asan/check-typed-byte-3" "3" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_typed-byte_3" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+3,typed-byte,structured,4096,4096,0,-1,1073000,1073368,2145584,8192,2096697,8.6659579999999998,6.5956250000000001,0.75566699999999998
+3,typed-byte,structured,4096,4096,0,0,1073000,1073368,2145584,8192,2096697,8.8387089999999997,6.280208,1.2055
+<end of output>
+Test time =   0.30 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_typed-byte_3" end time: Sep 16 05:35 EDT
+"cpu_typed-byte_3" time elapsed: 00:00:00
+----------------------------------------------------------
+
+15/16 Testing: cpu_typed-byte_6
+15/16 Test: cpu_typed-byte_6
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "typed-byte" "<checkout>/build-cpu-profile-asan/check-typed-byte-6" "6" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_typed-byte_6" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+6,typed-byte,hash-like,4096,4096,0,-1,144136,144120,287512,8192,131072,4.7736660000000004,4.0519170000000004,0.52733300000000005
+6,typed-byte,hash-like,4096,4096,0,0,144136,144120,287512,8192,131072,4.5452500000000002,3.998875,0.35991699999999999
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_typed-byte_6" end time: Sep 16 05:35 EDT
+"cpu_typed-byte_6" time elapsed: 00:00:00
+----------------------------------------------------------
+
+16/16 Testing: cpu_typed-byte_9
+16/16 Test: cpu_typed-byte_9
+Command: "<checkout>/build-cpu-profile-asan/cpu-profile" "typed-byte" "<checkout>/build-cpu-profile-asan/check-typed-byte-9" "9" "1"
+Directory: <checkout>/build-cpu-profile-asan
+"cpu_typed-byte_9" start time: Sep 16 05:35 EDT
+Output:
+----------------------------------------------------------
+case,mode,distribution,older,newer,cancelled,trial,input_a_bytes,input_b_bytes,output_bytes,output_records,value_bytes,complete_ms,merge_ms,output_ms
+9,typed-byte,hash-like,4096,4096,0,-1,1129952,1130304,2259504,8192,2096697,8.6901250000000001,6.4180409999999997,0.83787500000000004
+9,typed-byte,hash-like,4096,4096,0,0,1129952,1130304,2259504,8192,2096697,9.534459,6.8933749999999998,1.0865419999999999
+<end of output>
+Test time =   0.31 sec
+----------------------------------------------------------
+Test Passed.
+"cpu_typed-byte_9" end time: Sep 16 05:35 EDT
+"cpu_typed-byte_9" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Sep 16 05:35 EDT

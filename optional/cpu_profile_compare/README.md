@@ -1,8 +1,10 @@
 Matched CPU profile merges
 ==========================
 
-This source-only experiment compares native CPU merges on the exact logical
+This experiment compares native CPU merges on the exact logical
 fixtures used by [the matched fixed-key Metal comparison](../fixed_kv_compare/README.md).
+The [measured report](report.md) compares the frozen production revisions
+`5868b32` and `a760695`, including complete latency and same-data file space.
 The source supports four separate modes:
 
 - `raw-bit`: KV02 opaque keys and values, bit controls and bit units.
@@ -45,5 +47,16 @@ build-cpu-profile/cpu-profile raw-byte /path/to/scratch 0 3
 
 The chosen header tree determines the implementation under test. Compile the
 unchanged harness against each frozen revision, retain both source manifests,
-and verify matching logical hashes before interpreting performance. No measured
-results are claimed yet.
+and verify matching logical hashes before interpreting performance. The retained
+collection uses three fresh processes per case, mode and revision, with one
+excluded warmup and three timed iterations per process. `collect.py --help`
+describes collection inputs; `analyze.py results` checks the retained raw evidence
+and regenerates the report, summaries and exact space tables without running a
+benchmark.
+
+Space tables count complete file bytes and bits. They also separate the
+front-coded record stream (keys, controls and values), EF sections, and remaining
+metadata/alignment. All formats represent identical logical records; raw fixed
+values declare their width, while typed optional values retain their actual
+transport framing. These comparisons do not measure catalog publication,
+fractional-index construction or durable synchronization.
