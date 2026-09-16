@@ -190,6 +190,13 @@ namespace {
       auto root = cola_query_root<p, retaining_blob>::adopt_prepared(source);
       auto state = typed(root, 1, 1);
       check(state.get(key) == "retained", "custom retaining view query");
+      auto borrowed = expected;
+      auto value = cola_detail::first_value(root, std::as_const(borrowed), [](bit_view bits) {
+        sort_bit_reader input(bits);
+        return observed_value::read(input);
+      });
+      check(value && *value == "retained", "custom view borrowed-key query");
+      borrowed = {};
       check(retaining_view::retained.has_value(), "custom view never retained a comparison");
       check(!compare_common_bits(retaining_view::retained->query(), expected.view()).order,
         "custom view's retained context outlived its query storage");

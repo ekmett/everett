@@ -184,20 +184,41 @@ namespace diet {
     }
     template <class S = typed_detail::default_sort_t<P>> typed_detail::state_t<S>
     get(typed_detail::key_t<S> const & key) const {
+      return get_encoded<S>(key, key_transport::template encode<S>(key));
+    }
+    batch_type batch() const;
+    template <class S = typed_detail::default_sort_t<P>> contribution_type
+    change(typed_detail::key_t<S> const & key, typed_detail::arrow_t<S> const & arrow) const;
+    template <class S = typed_detail::default_sort_t<P>> contribution_type
+    put(typed_detail::key_t<S> const & key, typed_detail::state_t<S> const & value) const
+      requires typed_detail::replacement<S>;
+    template <class S = typed_detail::default_sort_t<P>> contribution_type
+    erase(typed_detail::key_t<S> const & key) const requires typed_detail::replacement<S>;
+  private:
+    template <class, class, std::uint64_t, class> friend struct typed_engine;
+    template <class, class, std::uint64_t, class> friend struct replacement_rebuild_engine;
+    // A contribution already owns its encoded key. The logical key remains
+    // available for sort semantics, while this synchronous query shares the
+    // same implementation as get without encoding it again. Only typed_batch
+    // creates contribution records, through this same Family's transport;
+    // preflight still dispatches and validates the encoded key first. Custom views and
+    // all escaping cursor contexts still take an owning copy.
+    template <class S, class Query> typed_detail::state_t<S>
+    get_encoded(typed_detail::key_t<S> const & key, Query && encoded) const {
+      static_assert(std::same_as<std::remove_cvref_t<Query>, bit_string>);
       using semantics = sort_semantics<S>;
-      auto encoded = key_transport::template encode<S>(key);
       if constexpr (typed_detail::replacement<S>) {
         auto decode = [&](bit_view value) -> typed_detail::state_t<S> {
           return semantics::apply(key, semantics::initial(key), typed_detail::value<P, S>(value));
         };
-        if constexpr (requires { cola_detail::first_value(state_->runtime.query_root(), std::move(encoded), decode); }) {
-          auto value = cola_detail::first_value(state_->runtime.query_root(), std::move(encoded), decode);
+        if constexpr (requires { cola_detail::first_value(state_->runtime.query_root(), std::forward<Query>(encoded), decode); }) {
+          auto value = cola_detail::first_value(state_->runtime.query_root(), std::forward<Query>(encoded), decode);
           return value ? std::move(*value) : semantics::initial(key);
         }
       }
       auto cursor = [&] {
-        if constexpr (requires { state_->runtime.cursor_owned(std::move(encoded)); })
-          return state_->runtime.cursor_owned(std::move(encoded));
+        if constexpr (requires { state_->runtime.cursor_owned(std::forward<Query>(encoded)); })
+          return state_->runtime.cursor_owned(std::forward<Query>(encoded));
         else return state_->runtime.cursor(encoded.view());
       }();
       if constexpr (typed_detail::replacement<S>) {
@@ -223,16 +244,6 @@ namespace diet {
         return state;
       }
     }
-    batch_type batch() const;
-    template <class S = typed_detail::default_sort_t<P>> contribution_type
-    change(typed_detail::key_t<S> const & key, typed_detail::arrow_t<S> const & arrow) const;
-    template <class S = typed_detail::default_sort_t<P>> contribution_type
-    put(typed_detail::key_t<S> const & key, typed_detail::state_t<S> const & value) const
-      requires typed_detail::replacement<S>;
-    template <class S = typed_detail::default_sort_t<P>> contribution_type
-    erase(typed_detail::key_t<S> const & key) const requires typed_detail::replacement<S>;
-  private:
-    template <class, class, std::uint64_t, class> friend struct typed_engine;
     struct state {
       runtime_snapshot runtime;
       metadata_type metadata;
@@ -431,8 +442,8 @@ namespace diet {
       for (auto const & record : input.records()) {
         key_transport::dispatch(record.key.view(), [&]<class S>(std::type_identity<S>, auto const & key) {
           using semantics = sort_semantics<S>;
-          auto old = current_.template get<S>(key);
-          if (input.base() && old != input.base()->template get<S>(key))
+          auto old = current_.template get_encoded<S>(key, record.key);
+          if (input.base() && old != input.base()->template get_encoded<S>(key, record.key))
             throw std::invalid_argument("stale typed key value");
           auto arrow = typed_detail::value<P, S>(record.value.view());
           auto next = semantics::apply(key, old, std::move(arrow));

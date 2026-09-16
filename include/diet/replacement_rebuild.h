@@ -300,8 +300,8 @@ namespace diet {
       for (auto const & record : input.records()) {
         engine_type::key_transport::dispatch(record.key.view(), [&]<class S>(std::type_identity<S>, auto const & key) {
           static_assert(std::is_same_v<S, sort_type>);
-          auto before = published_.template get<S>(key);
-          if (input.base() && before != input.base()->template get<S>(key))
+          auto before = published_.template get_encoded<S>(key, record.key);
+          if (input.base() && before != input.base()->template get_encoded<S>(key, record.key))
             throw std::invalid_argument("stale rebuilt key value");
           auto arrow = typed_detail::value<P, S>(record.value.view());
           auto after = semantics::apply(key, before, arrow);

@@ -14,6 +14,7 @@
 
 #include <diet/cola_index.h>
 
+#include <concepts>
 #include <functional>
 #include <array>
 #include <memory>
@@ -105,21 +106,23 @@ namespace diet {
 
     // Synchronous replacement reads decode under the current node's owner.
     // The callback finishes before that pin is released; public matches stay owned.
-    template <class P, class Blob, class Decode>
-      requires (!std::is_reference_v<std::invoke_result_t<Decode &, bit_view>>) &&
+    template <class P, class Blob, class Query, class Decode>
+      requires std::same_as<std::remove_cvref_t<Query>, bit_string> &&
+        (!std::is_reference_v<std::invoke_result_t<Decode &, bit_view>>) &&
         requires(Blob const & blob, profile_query_context<P> const & context) {
           query_access::search(blob.view(), 0, context, query_access::match_probe{});
         }
-    auto first_value(cola_query_root<P, Blob> const & root, bit_string query, Decode && decode)
+    auto first_value(cola_query_root<P, Blob> const & root, Query && query, Decode && decode)
         -> std::optional<std::invoke_result_t<Decode &, bit_view>> {
       using value_type = std::invoke_result_t<Decode &, bit_view>;
       auto current = root.head();
-      // Built-in views release all context copies before this by-value query
-      // parameter dies, including on decoder exceptions and nested reads. A
-      // custom view may retain a copy, so preserve its shared query ownership.
+      // Built-in views release all context copies before this synchronous
+      // call returns, including on decoder exceptions and nested reads. A
+      // custom view may retain a copy, so copy borrowed queries into shared
+      // ownership and move rvalue queries.
       auto context = [&] {
         if constexpr (query_access::scoped_views<Blob>) return query_access::borrow_query<P>(query);
-        else return profile_query_context<P>::from_owned(std::move(query));
+        else return profile_query_context<P>::from_owned(std::forward<Query>(query));
       }();
       if (!current) error_detail::raise<std::invalid_argument>("COLA query root has no head");
       if (!current->virtual_size()) return std::nullopt;
