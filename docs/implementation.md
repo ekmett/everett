@@ -1380,6 +1380,14 @@ forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
 
+The fractional-cascade range, bit-reader reservoir and bounded-search integration
+passed all **119 checks** under strict O2 ASan/UBSan on AppleClang 21: component
+suites, SQLite recovery, three package consumers and Doxygen. The
+[verification record](../bench/results/range_reservoir_verification_20260916.json)
+retains each result and the exact header fingerprints. Optional performance
+and space experiments keep their own qualification records; test durations
+are not performance measurements.
+
 At `a51904c`, the restored public names and file signatures passed all **107
 checks** after correcting four stale checksum fixtures: the complete run passed
 106 checks, then the rebuilt file-format suite passed its focused rerun. The

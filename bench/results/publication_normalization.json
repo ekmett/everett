@@ -475,7 +475,7 @@
     {
       "path": "docs/implementation.md",
       "original_sha256": "2c7e2da277b37874c4777e9d177976a502cf171e233c7129c782c155da165fdd",
-      "normalized_sha256": "6d2d98b951e616039ae2f7990cb2e34a94e98e603863f3d16debeec835f27088"
+      "normalized_sha256": "8046befb32d8c12912a0afe5d883c1bda4a70951f21ac7e426ecfa6634ce37e7"
     }
   ],
   "checks": {
@@ -609,6 +609,12 @@
     },
     {
       "scope": "Link the matched complete byte/bit chain measurements; original measurement identities and values are unchanged.",
+      "artifacts": [
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Record the complete 119-check range, reservoir and bounded-search integration qualification. Original measurement identities are unchanged.",
       "artifacts": [
         "docs/implementation.md"
       ]

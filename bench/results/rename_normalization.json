@@ -629,7 +629,7 @@
     {
       "path": "bench/results/publication_normalization.json",
       "pre_rename_sha256": "39ee9ca7672fc0a3a9bbfafd6e25845b41599f99c47d32d8bae0d5e2021c583d",
-      "normalized_sha256": "99dffae8a8ba43ebd5450b5b0ed1254ca75aa3d5f996c85ace9c3bdf9ded0598"
+      "normalized_sha256": "80b421de490ce68fbe5b33a3b67f6b407d53cde8f664c3ffbf622cd9746cdf16"
     },
     {
       "path": "bench/results/query_absolute_asan_m2max.json",
@@ -929,7 +929,7 @@
     {
       "path": "docs/implementation.md",
       "pre_rename_sha256": "1c966756e6e56f06b5cbada601e1e591293782a91e27a11f0b3aff57cfc00116",
-      "normalized_sha256": "6d2d98b951e616039ae2f7990cb2e34a94e98e603863f3d16debeec835f27088"
+      "normalized_sha256": "8046befb32d8c12912a0afe5d883c1bda4a70951f21ac7e426ecfa6634ce37e7"
     }
   ],
   "subsequent_updates": [
@@ -1098,6 +1098,13 @@
     },
     {
       "scope": "Link the matched complete byte/bit chain measurements; original measurement identities and values are unchanged.",
+      "artifacts": [
+        "bench/results/publication_normalization.json",
+        "docs/implementation.md"
+      ]
+    },
+    {
+      "scope": "Record the complete 119-check range, reservoir and bounded-search integration qualification. Original measurement identities are unchanged.",
       "artifacts": [
         "bench/results/publication_normalization.json",
         "docs/implementation.md"
