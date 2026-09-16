@@ -1,16 +1,19 @@
 # Updates in a category chosen per key
 
-Design extension, 2026-09-15. A replacement tells us the new value of a key.
+A replacement tells us the new value of a key.
 A patch tells us how to get there. To extend the [Diet design](design.md)
 to patches and other composable changes, we need to say when two changes can
 compose and what their composition means. Ordinary category theory gives us
 just those laws.
 
-`reference_cola` implements replacement-valued updates. The
-[native merge builder](native-merges.md) also accepts a composition callback
-over encoded values; typed per-key categories and endpoint validation remain
-the design developed here. The [implementation ledger](implementation.md)
-records the tested contracts.
+The [typed executor](typed-cola.md) dispatches updates and chronological
+composition through the selected sort. Replacement, counter and noncommutative
+append instances exercise that path; the append instance also survives mapped
+publication and reopening. Conditional contributions validate their source
+values before applying a batch. The richer dependency and evaluation contracts
+below describe what a sort needs when an arrow is a program rather than a small
+encoded value. The [implementation ledger](implementation.md) records the
+tested boundaries.
 The [Lean proof core](../proof/README.md) checks typed composition, disjoint
 updates and adjacent-merge adoption in an abstract model.
 
@@ -296,12 +299,16 @@ Extending it requires a clean representation and construction bound for the
 chosen arrow policies. Essential diff programs, retained source data and
 materialization work cannot be charged away solely by counting live keys.
 
-## 7. Implementation boundary and next contract
+## 7. Sort contracts and larger arrows
 
-The replacement store gives us the first concrete instance. A second instance
-with noncommuting diffs will exercise the laws that replacement hides. Before
-generalizing the merge/query executor, we need the following semantic contracts;
-they do not yet commit us to generic runtime dispatch or a file ABI:
+The executable replacement, counter and append sorts provide initial state,
+application, chronological composition, presence and hashing through the typed
+registry. Their tests check heterogeneous dispatch, disjoint contributions,
+noncommuting update order and signatures. The physical sort-owned codec supplies
+key and value framing. These interfaces make the laws the sort's responsibility;
+they do not establish them for an arbitrary user callback.
+
+For richer arrow representations, I separate five contracts:
 
 1. Stable category selection per key and version, with source validation.
 2. Identity and composition, semantic equality laws, and optional normalization.
@@ -309,10 +316,14 @@ they do not yet commit us to generic runtime dispatch or a file ABI:
 4. Fingerprint and presence deltas, with validation and actual work bounds.
 5. Dependency enumeration and resumable encoding/composition/evaluation.
 
-Acceptance tests should cover heterogeneous keys; invalid intermediate
-states; identity insertion; different parenthesizations of noncommuting changes;
-permutations of disjoint batches; loops with zero endpoint delta; retained
-snapshots; and checkpoints preserving supported observations. We should compare
-semantic results even when composed bytes differ, and count work in examples
-with growing programs and output so record-count bounds cannot conceal
+The current executor composes encoded values synchronously. External source
+dependencies, suspended evaluation and a compaction rule for general categories
+need the additional ownership and continuation contracts above. Replacement
+rebuilding supplies that compaction rule for the default table.
+
+For each additional category, acceptance should cover invalid intermediate
+states, identity insertion, different parenthesizations, loops with zero endpoint
+delta, retained snapshots and checkpoints preserving supported observations.
+We compare semantic results even when composed bytes differ, and count work in
+examples with growing programs and output so record-count bounds cannot conceal
 deferred work.

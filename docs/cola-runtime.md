@@ -3,8 +3,10 @@ Charged encoded COLA execution
 
 `cola_runtime<P, Compose>` is a low-level active executor over the existing
 encoded FC records. I supply `Compose` from the active sort registry; the
-immutable cola does not choose value semantics. The executor does not yet
-implement arbitrary per-sort physical grammars or publish catalog roots itself.
+immutable cola does not choose value semantics. This binary executor transports
+opaque encoded keys and arrows. The [sort-owned runtime](sort-runtime.md) uses
+each sort's physical grammar, and [runtime persistence](runtime-store.md)
+publishes the selected executor's complete frontier.
 
 A contribution creates a queryable immutable snapshot and pays for structural
 work. A private queue then merges native runs, builds the replacement fractional

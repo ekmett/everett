@@ -5,7 +5,9 @@ chain it onto an existing cola, and build fractional indexes back over the new
 prefix. Local cascading allows arbitrary incoming sizes. The harder questions
 are when that index work finishes and how much space and string work it costs.
 The entry-count argument, counterexample and remaining scheduling obligations
-follow below; an admission scheduler is not yet implemented.
+follow below. This describes direct admission of prebuilt peer blobs. The
+[implemented redundant executor](redundant-runtime.md) admits encoded records;
+it does not yet expose this bulk network path.
 
 ## 1. What can be adopted directly
 

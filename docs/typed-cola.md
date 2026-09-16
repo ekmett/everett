@@ -206,10 +206,16 @@ snapshot.
 The tap's contribution-count limit bounds the number of accepted base pins;
 retained graph bytes and saved history need their own storage accounting.
 
-This adapter currently transports ordered sort-qualified keys and encoded
-arrows through the existing FC profile. Ordered strings escape zero bytes and
+The binary family and the byte-profile redundant family transport ordered
+sort-qualified keys and encoded arrows through the opaque FC profile.
+Ordered strings escape zero bytes and
 terminate with a separate zero escape. Bit profiles store the arrow grammar
 exactly; the explicit byte profile adds and validates at most seven zero padding
-bits around an arrow. The independent [sort-owned record codec](sort-codecs.md)
-can encode different physical key grammars, but that direct mixed record stream
-is not yet the native transport used by this runtime adapter.
+bits around an arrow.
+
+The [sort-owned runtime](sort-runtime.md) instead uses each sort's physical key
+and value grammar directly in its native files. Ordinary bit-profile
+[connections](connection.md) select its streamed redundant family, with
+replacement rebuilding for the default optional-string registry. These storage
+families share typed validation, chronological composition and signature
+accounting; their physical encodings differ.
