@@ -57,8 +57,15 @@ namespace {
     assert(catalog.identity() == id(1));
     auto receipt = produce(catalog, 10);
     rejects([&] { catalog.verify_sealed(receipt, file_kind::native_blob); }); // File exists, catalog has no completed seal.
+    rejects([&] { (void)catalog.sealed_receipt(receipt.object, file_kind::native_blob); });
+    rejects([&] { (void)catalog.sealed_receipt(id(999), file_kind::native_blob); });
     catalog.record_sealed("sealed", receipt);
     catalog.verify_sealed(receipt, file_kind::native_blob);
+    auto recovered = catalog.sealed_receipt(receipt.object, file_kind::native_blob);
+    assert(recovered.object == receipt.object && recovered.attempt == receipt.attempt &&
+      recovered.bytes == receipt.bytes && recovered.body_crc32c == receipt.body_crc32c &&
+      recovered.barrier == receipt.barrier && recovered.path == receipt.path);
+    rejects([&] { (void)catalog.sealed_receipt(receipt.object, file_kind::fractional_index); });
     for (unsigned field = 0; field != 6; ++field) {
       auto changed = receipt;
       switch (field) {
@@ -82,10 +89,12 @@ namespace {
     moved.verify_sealed(receipt, file_kind::native_blob);
     flip(receipt.path, 64); // The object envelope must still match.
     rejects([&] { moved.verify_sealed(receipt, file_kind::native_blob); });
+    rejects([&] { (void)moved.sealed_receipt(receipt.object, file_kind::native_blob); });
     flip(receipt.path, 64);
     moved.verify_sealed(receipt, file_kind::native_blob);
     flip(receipt.path, 8192); // Receipt verification deliberately does not checksum the body.
     moved.verify_sealed(receipt, file_kind::native_blob);
+    (void)moved.sealed_receipt(receipt.object, file_kind::native_blob);
     rejects([&] { file<P>::open(receipt.path).scan(); });
   }
   struct failing_ops {

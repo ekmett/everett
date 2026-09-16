@@ -371,6 +371,26 @@ CREATE TABLE tap_saves(name BLOB PRIMARY KEY REFERENCES saves(name), tap_name BL
     }
     object_id const & identity() const && = delete;
 
+    // Recover acknowledged seal evidence for an existing immutable owner.
+    // The catalog supplies the attempt and barrier; the file supplies only
+    // checked envelope evidence, never a new durability claim.
+    object_seal_receipt sealed_receipt(object_id const & id, file_kind expected) const {
+      require_active(); (void)file_extension(expected);
+      return read([&] {
+        catalog_detail::statement query(db_, "SELECT kind,attempt,bytes,crc,barrier FROM objects WHERE id=?");
+        query.text(1, id.hex());
+        if (!query.row() || query.integer(0) != kind(expected) || query.is_null(2))
+          throw std::invalid_argument("object has no completed seal in this catalog");
+        auto size = query.integer(2), crc = query.integer(3), barrier = query.integer(4);
+        if (size < 96 || crc < 0 || crc > 0xffffffffLL || barrier < 0 || barrier > 1)
+          throw std::invalid_argument("invalid completed seal metadata");
+        object_seal_receipt receipt{id, object_attempt_id(query.text(1)), root_ / object_path(id, expected),
+          std::uint64_t(size), std::uint32_t(crc), static_cast<object_sync_barrier>(barrier)};
+        verify_object_envelope(id, expected, receipt.bytes, receipt.body_crc32c);
+        return receipt;
+      });
+    }
+
     // A completed receipt is an attestation of barriers, not a request to
     // repeat them. Verify its exact immutable catalog row and object envelope;
     // recovery payload checks remain explicit.
