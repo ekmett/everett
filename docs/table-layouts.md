@@ -43,6 +43,44 @@ The `.kv` representation retains its sampled native offset directory and a
 separate directory for each front-coded borrowed stream. Changing the physical
 key representation does not change what the downstream sampling refers to.
 
+Searching fixed-key windows
+---------------------------
+
+`<everett/fixed_search.h>` supplies a bounded search over the flat key arrays.
+`fixed_key_view<1>`, `<2>` and `<4>` read 32-, 64- and 128-bit keys represented
+as one, two or four little-endian unsigned 32-bit words. Comparison follows
+word order, with word zero first, as in the fixed-key merge experiment. A raw
+native-endian 128-bit integer has a different ordering.
+
+```cpp
+everett::fixed_key_view<4> keys(mapped_key_bytes);
+auto window = keys.subview(first, count);
+auto local = window.lower_bound(query);
+if (local != window.size() && window.key_at(local) == query) {
+  auto ordinal = first + local;
+  // Locate the value for ordinal in its separate payload region.
+}
+```
+
+The view borrows its exact byte span, allocates nothing and supports unaligned
+starts. `upper_bound` handles the other equality boundary. Explicit `_binary`
+and `_simd` variants make the choice measurable. SIMD searches subdivide small
+windows with parallel pivots, then compare a bounded leaf; larger windows use
+binary search. These are key-array primitives, not yet a complete fixed-format
+fractional-index reader.
+
+AVX2 and AVX-512 use fault-suppressing masked loads for partial vectors. NEON
+and SSE2 load only the valid bytes in a partial vector. Crossing a readable
+page is allowed; reading beyond the supplied span is not. The tests put spans
+against protected pages, including empty spans and short final windows.
+
+I keep 15:1 sampling independent of this search choice. A virtual sampling cut
+projects through rank to an arbitrary native or borrowed ordinal, so aligning
+the beginning of a key array does not align every projected search window.
+Khuong and Morin's [array-layout study](https://arxiv.org/abs/1509.05053)
+motivates comparing flat branch-free search with alternatives; its machine
+measurements do not establish the best cutoff for these short windows.
+
 Logical keys and shared machinery
 --------------------------------
 

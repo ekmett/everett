@@ -14,6 +14,7 @@
 #include <everett/durability.h>
 #include <everett/fingerprint.h>
 #include <everett/file.h>
+#include <everett/fixed_search.h>
 #include <everett/index_pipeline.h>
 #include <everett/mapped_file.h>
 #include <everett/mapped_blob.h>
@@ -57,6 +58,9 @@ static_assert(std::is_same_v<store::native_merge_builder<>::policy_type, policy>
 std::uint32_t crc32c_from_other_translation_unit(std::span<std::byte const> bytes);
 
 int main() {
+  std::array<std::uint32_t, 3> fixed_keys{0, 0, 0};
+  everett::fixed_key_view<1> fixed(std::as_bytes(std::span(fixed_keys)));
+  if (fixed.lower_bound({0}) != 0 || fixed.upper_bound({0}) != 3) return 30;
   std::array<std::uint8_t, 2> classes{7, 1};
   auto ranks = everett::rank15_index::build(classes, 16);
   std::array<std::uint64_t, 3> offsets{0, 33, 40};
