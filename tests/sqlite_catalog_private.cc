@@ -51,6 +51,7 @@ namespace {
     auto head = published.create_session("visible", base.runtime(), base.metadata().encode());
     auto scope = private_construction<P>::create(d.root);
     auto options = scope->options();
+    auto lease_path = d.root / (".private-" + scope->identity().hex() + ".lock");
     auto writer = store::open(d.root, {}, options);
     auto engine = core::from_snapshot(base, family::open_storage(d.root, base.metadata().schema_id, options));
     auto changed = engine.contribute(core::put("private", std::optional<std::string>("value")));
@@ -65,6 +66,7 @@ namespace {
     auto next = published.publish(head.head, changed.runtime(), changed.metadata().encode());
     auto permanent = scalar(d.root, "SELECT count(*) FROM live_owner_roots WHERE owner_kind='timeline'");
     pin.reset();
+    check(!std::filesystem::exists(lease_path), "released lease name was retained");
     check(scalar(d.root, private_pins) == 0, "released construction still pins output");
     check(scalar(d.root, "SELECT count(*) FROM live_owner_roots WHERE owner_kind='timeline'") == permanent,
       "scope release removed a published owner");
@@ -101,8 +103,38 @@ namespace {
     check(scalar(d.root, private_pins) == 0, "recovery left private pins active");
     check(private_construction<P>::recover(d.root) == 0, "recovery was not idempotent");
   }
+  void interrupted_lease_cleanup() {
+    temporary d;
+    auto child = ::fork();
+    check(child >= 0, "fork");
+    if (!child) {
+      try {
+        auto scope = private_construction<P>::create(d.root);
+        auto catalog = sqlite_catalog<P>::open(d.root);
+        catalog.release_private_scope("released-before-exit", scope->identity());
+        ::_exit(0); // Released pins, but no destructor to remove the name.
+      } catch (...) { ::_exit(2); }
+    }
+    int status = 0;
+    check(::waitpid(child, &status, 0) == child && WIFEXITED(status) && !WEXITSTATUS(status), "child release failed");
+    auto unregistered = d.root / ".private-0123456789abcdef0123456789abcdef.lock";
+    int fd = ::open(unregistered.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600);
+    check(fd >= 0 && !::flock(fd, LOCK_EX | LOCK_NB), "create unregistered lease");
+    auto lease_count = [&] {
+      std::size_t count = 0;
+      for (auto const & entry : std::filesystem::directory_iterator(d.root))
+        if (entry.path().filename().string().starts_with(".private-")) ++count;
+      return count;
+    };
+    check(lease_count() == 2, "interrupted leases missing");
+    check(private_construction<P>::recover(d.root) == 0, "cleanup counted an already released scope");
+    check(lease_count() == 1 && std::filesystem::exists(unregistered), "cleanup stole an unregistered live lease");
+    ::close(fd);
+    check(private_construction<P>::recover(d.root) == 0 && lease_count() == 0, "unregistered lease not cleaned");
+    check(private_construction<P>::recover(d.root) == 0, "cleanup was not idempotent");
+  }
 }
 int main() {
-  try { private_publication(); abandoned_writer(); }
+  try { private_publication(); abandoned_writer(); interrupted_lease_cleanup(); }
   catch (std::exception const & e) { std::cerr << e.what() << '\n'; return 1; }
 }

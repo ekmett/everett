@@ -432,6 +432,18 @@ CREATE TABLE session_saves(name BLOB PRIMARY KEY REFERENCES saves(name), session
         return catalog_detail::bytes{};
       });
     }
+    enum struct private_scope_state { missing, active, released };
+    private_scope_state scope_state(object_id const & id) const {
+      require_sessions();
+      return read([&] {
+        if (!has_table("private_scopes")) return private_scope_state::missing;
+        validate_private_scopes();
+        catalog_detail::statement query(db_, "SELECT EXISTS(SELECT 1 FROM released_private_scopes WHERE scope=id) FROM private_scopes WHERE id=?");
+        query.text(1, id.hex());
+        if (!query.row()) return private_scope_state::missing;
+        return query.integer(0) ? private_scope_state::released : private_scope_state::active;
+      });
+    }
     std::vector<object_id> private_scopes() const {
       require_sessions();
       return read([&] {
