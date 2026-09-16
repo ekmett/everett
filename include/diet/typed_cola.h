@@ -300,8 +300,9 @@ namespace diet {
     auto result = batch(); result.template erase<S>(key); return std::move(result).finish();
   }
 
-  // The depth limit is enforced support, not an inferred COLA theorem. It gives
-  // an input-only conservative allowance for ready singleton admissions.
+  // DepthLimit bounds the main-chain nodes of every imported or published
+  // root, including routing ancestors. It is enforced support, not an inferred
+  // COLA theorem, and bounds the allowance for ready singleton admissions.
   template <class P = string_policy, class A = wrapping_fingerprint_algebra, std::uint64_t DepthLimit = 256,
     class Family = binary_runtime_family<P>>
   struct typed_engine {
@@ -330,7 +331,7 @@ namespace diet {
     static_assert(DepthLimit && DepthLimit < (std::uint64_t{1} << 32) && P::group_size < (std::uint64_t{1} << 32));
 
     explicit typed_engine(std::string schema_id = default_schema())
-      : runtime_(), current_(runtime_.snapshot(), metadata_type{A::zero(), 0, checked_schema(std::move(schema_id))}) {}
+      : runtime_(), current_(checked_snapshot(runtime_.snapshot()), metadata_type{A::zero(), 0, checked_schema(std::move(schema_id))}) {}
     static typed_engine from_snapshot(cola_type state) { return typed_engine(std::move(state)); }
     template <class Storage> static typed_engine from_snapshot(cola_type state, Storage storage)
       requires requires { runtime_type::from_snapshot(state.runtime(), std::move(storage)); } {
@@ -342,6 +343,7 @@ namespace diet {
       require_active();
       if (pending() || state.metadata() != current_.metadata() || state.runtime().admissions() != current_.runtime().admissions())
         throw std::invalid_argument("typed rebase requires a settled equivalent snapshot");
+      require_depth(state.runtime());
       auto replacement = [&] {
         if constexpr (requires { runtime_.storage(); }) return runtime_type::from_snapshot(state.runtime(), runtime_.storage());
         else return runtime_type::from_snapshot(state.runtime());
@@ -385,9 +387,10 @@ namespace diet {
       try {
         auto updated = runtime_.advance(budget);
         if (updated.same_layout(current_.runtime())) return std::nullopt;
+        require_depth(updated);
         current_ = cola_type(std::move(updated), current_.metadata());
         return current_;
-      } catch (...) { failed_ = true; throw; }
+      } catch (...) { poison(); throw; }
     }
     cola_type contribute(contribution_type input) {
       require_active();
@@ -409,9 +412,10 @@ namespace diet {
           if constexpr (requires { runtime_.checkpoint(); }) return runtime_.checkpoint();
           else return runtime_.snapshot();
         }();
+        require_depth(state);
         current_ = cola_type(std::move(state), std::move(metadata));
         return current_;
-      } catch (...) { failed_ = true; throw; }
+      } catch (...) { poison(); throw; }
     }
   private:
     template <class, class, std::uint64_t, class> friend struct replacement_rebuild_engine;
@@ -453,7 +457,7 @@ namespace diet {
           auto count = input.records().size();
           if (count >= 2 && std::has_single_bit(count) && !current_.runtime().admissions() && !runtime_.pending() &&
               runtime_.try_initialize_sorted(input.records(), reservation_work(count), DepthLimit)) {
-            current_ = cola_type(runtime_.snapshot(), metadata);
+            current_ = cola_type(checked_snapshot(runtime_.snapshot()), metadata);
             return true;
           }
         }
@@ -463,10 +467,22 @@ namespace diet {
     runtime_type runtime_;
     cola_type current_;
     bool failed_ = false;
+    static void require_depth(typename cola_type::runtime_snapshot const & state) {
+      if (state.query_root().head()->depth() > DepthLimit)
+        throw std::length_error("typed runtime exceeds publication depth allowance");
+    }
+    static auto checked_snapshot(typename cola_type::runtime_snapshot state) {
+      require_depth(state);
+      return state;
+    }
     explicit typed_engine(cola_type state)
-      : runtime_(runtime_type::from_snapshot(state.runtime())), current_(std::move(state)) {}
+      : runtime_([&] {
+          require_depth(state.runtime());
+          return runtime_type::from_snapshot(state.runtime());
+        }()), current_(std::move(state)) {}
     template <class Storage> typed_engine(cola_type state, Storage storage)
       : runtime_([&] {
+          require_depth(state.runtime());
           if constexpr (requires { storage.check_schema(state.metadata().schema_id); })
             storage.check_schema(state.metadata().schema_id);
           return runtime_type::from_snapshot(state.runtime(), std::move(storage));
