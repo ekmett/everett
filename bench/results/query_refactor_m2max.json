@@ -101,10 +101,10 @@
       "-Werror",
       "-O3",
       "-DNDEBUG",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-refactor/build-query-refactor/release/baseline-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-refactor/build-query-refactor/release/query_compare.cc",
+      "-I/workspace/-query-refactor/build-query-refactor/release/baseline-headers/include",
+      "/workspace/-query-refactor/build-query-refactor/release/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-refactor/build-query-refactor/release/baseline_w15"
+      "/workspace/-query-refactor/build-query-refactor/release/baseline_w15"
     ],
     "candidate_w15": [
       "clang++",
@@ -115,10 +115,10 @@
       "-Werror",
       "-O3",
       "-DNDEBUG",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-refactor/build-query-refactor/release/candidate-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-refactor/build-query-refactor/release/query_compare.cc",
+      "-I/workspace/-query-refactor/build-query-refactor/release/candidate-headers/include",
+      "/workspace/-query-refactor/build-query-refactor/release/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-refactor/build-query-refactor/release/candidate_w15"
+      "/workspace/-query-refactor/build-query-refactor/release/candidate_w15"
     ]
   },
   "cases": [

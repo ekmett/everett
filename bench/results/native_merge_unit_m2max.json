@@ -65,10 +65,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/diet/build-native-merge-unit-bench/baseline/headers/include",
-        "/Users/ekmett/cult/diet/build-native-merge-unit-bench/native_merge.cc",
+        "-I/workspace/diet/build-native-merge-unit-bench/baseline/headers/include",
+        "/workspace/diet/build-native-merge-unit-bench/native_merge.cc",
         "-o",
-        "/Users/ekmett/cult/diet/build-native-merge-unit-bench/baseline/native_merge"
+        "/workspace/diet/build-native-merge-unit-bench/baseline/native_merge"
       ]
     },
     "candidate": {
@@ -121,10 +121,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/diet/build-native-merge-unit-bench/candidate/headers/include",
-        "/Users/ekmett/cult/diet/build-native-merge-unit-bench/native_merge.cc",
+        "-I/workspace/diet/build-native-merge-unit-bench/candidate/headers/include",
+        "/workspace/diet/build-native-merge-unit-bench/native_merge.cc",
         "-o",
-        "/Users/ekmett/cult/diet/build-native-merge-unit-bench/candidate/native_merge"
+        "/workspace/diet/build-native-merge-unit-bench/candidate/native_merge"
       ]
     }
   },

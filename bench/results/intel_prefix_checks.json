@@ -45,14 +45,14 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O1",
         "-g",
         "-fsanitize=address,undefined",
         "-fno-omit-frame-pointer",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/rank.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/rank.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/native"
+        "/workspace/-rank-spacers/build-intel-prefix/native"
       ],
       "returncode": 0,
       "stdout": "",
@@ -67,7 +67,7 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O1",
         "-g",
         "-fsanitize=address,undefined",
@@ -76,9 +76,9 @@
         "x86_64",
         "-mno-avx",
         "-mno-popcnt",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/rank.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/rank.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/scalar"
+        "/workspace/-rank-spacers/build-intel-prefix/scalar"
       ],
       "returncode": 0,
       "stdout": "",
@@ -93,16 +93,16 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O3",
         "-arch",
         "x86_64",
         "-mno-avx",
         "-mno-popcnt",
         "-S",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/assembly.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/assembly.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/scalar.s"
+        "/workspace/-rank-spacers/build-intel-prefix/scalar.s"
       ],
       "returncode": 0,
       "stdout": "",
@@ -117,7 +117,7 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O1",
         "-g",
         "-fsanitize=address,undefined",
@@ -126,9 +126,9 @@
         "x86_64",
         "-mavx2",
         "-mno-avx512f",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/rank.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/rank.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/avx2"
+        "/workspace/-rank-spacers/build-intel-prefix/avx2"
       ],
       "returncode": 0,
       "stdout": "",
@@ -143,16 +143,16 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O3",
         "-arch",
         "x86_64",
         "-mavx2",
         "-mno-avx512f",
         "-S",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/assembly.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/assembly.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/avx2.s"
+        "/workspace/-rank-spacers/build-intel-prefix/avx2.s"
       ],
       "returncode": 0,
       "stdout": "",
@@ -167,7 +167,7 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O2",
         "-arch",
         "x86_64",
@@ -177,9 +177,9 @@
         "-mno-avx512dq",
         "-mno-avx512vl",
         "-c",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/rank.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/rank.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/avx512f.o"
+        "/workspace/-rank-spacers/build-intel-prefix/avx512f.o"
       ],
       "returncode": 0,
       "stdout": "",
@@ -194,7 +194,7 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O3",
         "-arch",
         "x86_64",
@@ -204,9 +204,9 @@
         "-mno-avx512dq",
         "-mno-avx512vl",
         "-S",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/assembly.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/assembly.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/avx512f.s"
+        "/workspace/-rank-spacers/build-intel-prefix/avx512f.s"
       ],
       "returncode": 0,
       "stdout": "",
@@ -221,7 +221,7 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O2",
         "-arch",
         "x86_64",
@@ -231,9 +231,9 @@
         "-mno-avx512dq",
         "-mno-avx512vl",
         "-c",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/rank.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/rank.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/vpopcnt.o"
+        "/workspace/-rank-spacers/build-intel-prefix/vpopcnt.o"
       ],
       "returncode": 0,
       "stdout": "",
@@ -248,7 +248,7 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O3",
         "-arch",
         "x86_64",
@@ -258,9 +258,9 @@
         "-mno-avx512dq",
         "-mno-avx512vl",
         "-S",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/assembly.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/assembly.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/vpopcnt.s"
+        "/workspace/-rank-spacers/build-intel-prefix/vpopcnt.s"
       ],
       "returncode": 0,
       "stdout": "",
@@ -275,7 +275,7 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O2",
         "-arch",
         "x86_64",
@@ -285,9 +285,9 @@
         "-mno-avx512dq",
         "-mno-avx512vl",
         "-c",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/rank.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/rank.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/avx512bw.o"
+        "/workspace/-rank-spacers/build-intel-prefix/avx512bw.o"
       ],
       "returncode": 0,
       "stdout": "",
@@ -302,7 +302,7 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O3",
         "-arch",
         "x86_64",
@@ -312,9 +312,9 @@
         "-mno-avx512dq",
         "-mno-avx512vl",
         "-S",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/assembly.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/assembly.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/avx512bw.s"
+        "/workspace/-rank-spacers/build-intel-prefix/avx512bw.s"
       ],
       "returncode": 0,
       "stdout": "",
@@ -329,7 +329,7 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O2",
         "-arch",
         "x86_64",
@@ -339,9 +339,9 @@
         "-mno-avx512dq",
         "-mno-avx512vl",
         "-c",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/rank.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/rank.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/avx512both.o"
+        "/workspace/-rank-spacers/build-intel-prefix/avx512both.o"
       ],
       "returncode": 0,
       "stdout": "",
@@ -356,7 +356,7 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/headers/include",
+        "-I/workspace/-rank-spacers/build-intel-prefix/headers/include",
         "-O3",
         "-arch",
         "x86_64",
@@ -366,9 +366,9 @@
         "-mno-avx512dq",
         "-mno-avx512vl",
         "-S",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/assembly.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/assembly.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/avx512both.s"
+        "/workspace/-rank-spacers/build-intel-prefix/avx512both.s"
       ],
       "returncode": 0,
       "stdout": "",
@@ -381,9 +381,9 @@
         "-std=c++20",
         "-arch",
         "x86_64",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/caps.cc",
+        "/workspace/-rank-spacers/build-intel-prefix/caps.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/caps"
+        "/workspace/-rank-spacers/build-intel-prefix/caps"
       ],
       "returncode": 0,
       "stdout": "",
@@ -400,7 +400,7 @@
     {
       "name": "native",
       "command": [
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/native"
+        "/workspace/-rank-spacers/build-intel-prefix/native"
       ],
       "stdout": "Storage rank, packed rank15, and Elias-Fano oracle checks passed\n",
       "stderr": "",
@@ -411,7 +411,7 @@
       "command": [
         "arch",
         "-x86_64",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/scalar"
+        "/workspace/-rank-spacers/build-intel-prefix/scalar"
       ],
       "stdout": "Storage rank, packed rank15, and Elias-Fano oracle checks passed\n",
       "stderr": "",
@@ -423,7 +423,7 @@
         "python3",
         "bench/rank_bounds.py",
         "--build-dir",
-        "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-intel-prefix/rank-bounds-adapter",
+        "/workspace/-rank-spacers/build-intel-prefix/rank-bounds-adapter",
         "--trials",
         "1",
         "--queries",

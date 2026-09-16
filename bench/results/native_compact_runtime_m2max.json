@@ -68,10 +68,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/ai/agents/worktrees/diet/native-encoded-merge-20260915/build-native-compact/baseline/headers/include",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/native-encoded-merge-20260915/build-native-compact/native_encoded.cc",
+        "-I/workspace/native-encoded-merge-20260915/build-native-compact/baseline/headers/include",
+        "/workspace/native-encoded-merge-20260915/build-native-compact/native_encoded.cc",
         "-o",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/native-encoded-merge-20260915/build-native-compact/baseline/native_encoded"
+        "/workspace/native-encoded-merge-20260915/build-native-compact/baseline/native_encoded"
       ]
     },
     "candidate": {
@@ -124,10 +124,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/ai/agents/worktrees/diet/native-encoded-merge-20260915/build-native-compact/candidate/headers/include",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/native-encoded-merge-20260915/build-native-compact/native_encoded.cc",
+        "-I/workspace/native-encoded-merge-20260915/build-native-compact/candidate/headers/include",
+        "/workspace/native-encoded-merge-20260915/build-native-compact/native_encoded.cc",
         "-o",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/native-encoded-merge-20260915/build-native-compact/candidate/native_encoded"
+        "/workspace/native-encoded-merge-20260915/build-native-compact/candidate/native_encoded"
       ]
     }
   },

@@ -63,7 +63,7 @@ python3 bench/rank_bounds.py --candidate f02434a94b7c1250c29d6d4e20a1401a0700cd4
 ```
 
 The runner normalizes both pinned header snapshots. `rank_compare.sh` and
-`neon_cult_rank.py` retain their pinned
+`neon_bitmap_rank.py` retain their pinned
 historical headers and original observations. `other_rank.py` accepts either
 old constructors or the new API without changing its default historical pins.
 

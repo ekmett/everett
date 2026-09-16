@@ -67,10 +67,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/ai/agents/worktrees/diet/native-merge-report-20260915/build-native-merge-isolated/baseline/headers/include",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/native-merge-report-20260915/build-native-merge-isolated/native_merge.cc",
+        "-I/workspace/native-merge-report-20260915/build-native-merge-isolated/baseline/headers/include",
+        "/workspace/native-merge-report-20260915/build-native-merge-isolated/native_merge.cc",
         "-o",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/native-merge-report-20260915/build-native-merge-isolated/baseline/native_merge"
+        "/workspace/native-merge-report-20260915/build-native-merge-isolated/baseline/native_merge"
       ]
     },
     "candidate": {
@@ -125,10 +125,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/ai/agents/worktrees/diet/native-merge-report-20260915/build-native-merge-isolated/candidate/headers/include",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/native-merge-report-20260915/build-native-merge-isolated/native_merge.cc",
+        "-I/workspace/native-merge-report-20260915/build-native-merge-isolated/candidate/headers/include",
+        "/workspace/native-merge-report-20260915/build-native-merge-isolated/native_merge.cc",
         "-o",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/native-merge-report-20260915/build-native-merge-isolated/candidate/native_merge"
+        "/workspace/native-merge-report-20260915/build-native-merge-isolated/candidate/native_merge"
       ]
     }
   },

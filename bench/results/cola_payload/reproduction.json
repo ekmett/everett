@@ -5,8 +5,8 @@
     "git",
     "apply",
     "--unsafe-paths",
-    "--directory=/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-report-20260915/build-reproduction-check",
-    "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-report-20260915/bench/results/cola_payload/candidate.patch"
+    "--directory=/workspace/cola-route-payload-report-20260915/build-reproduction-check",
+    "/workspace/cola-route-payload-report-20260915/bench/results/cola_payload/candidate.patch"
   ],
   "patch_sha256": "f046a2f02215f0669c764bf9fa0f0ea62ffff313fa22015f15010a5ca9163ce8",
   "reproduction_runner_sha256": "45dd2465791b65caee9a7590d2fb866ec680176e0e7af6b354bd1dd975fb86fe",

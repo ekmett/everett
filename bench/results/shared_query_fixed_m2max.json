@@ -88,10 +88,10 @@
       "-Werror",
       "-O3",
       "-DNDEBUG",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-owning-view/build-owning-view-m2max/baseline-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-owning-view/build-owning-view-m2max/query_compare.cc",
+      "-I/workspace/-owning-view/build-owning-view-m2max/baseline-headers/include",
+      "/workspace/-owning-view/build-owning-view-m2max/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-owning-view/build-owning-view-m2max/baseline_w15"
+      "/workspace/-owning-view/build-owning-view-m2max/baseline_w15"
     ],
     "candidate_w15": [
       "clang++",
@@ -102,10 +102,10 @@
       "-Werror",
       "-O3",
       "-DNDEBUG",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-owning-view/build-owning-view-m2max/candidate-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-owning-view/build-owning-view-m2max/query_compare.cc",
+      "-I/workspace/-owning-view/build-owning-view-m2max/candidate-headers/include",
+      "/workspace/-owning-view/build-owning-view-m2max/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-owning-view/build-owning-view-m2max/candidate_w15"
+      "/workspace/-owning-view/build-owning-view-m2max/candidate_w15"
     ]
   },
   "cases": [

@@ -76,15 +76,6 @@ UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
   /tmp/diet-cola-linux-YR37tcNZ/build/cola_index
 ```
 
-The host lease wrapped compilation and execution:
-
-```sh
-python3 /home/ekmett/cult/tools/resource_run.py --resource cpu-heavy \
-  --build-dir /tmp/diet-cola-linux-YR37tcNZ/build -- python3 -
-```
-
-The two host logs were
-`20260915-164154-psa10pzj/output.log` and
-`20260915-164356-n87dlnhm/output.log` under
-`/home/ekmett/cult/build-agent-logs/`. Test runtimes in the raw records are
-verification metadata and are not comparisons with another implementation.
+Compilation and execution ran serially under an exclusive host resource lease.
+Test runtimes in the raw records are verification metadata and are not
+comparisons with another implementation.

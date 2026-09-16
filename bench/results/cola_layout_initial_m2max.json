@@ -6,40 +6,40 @@
       "-O3",
       "-DNDEBUG",
       "-std=c++20",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-lcp-diagnosis/baseline/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-lcp-diagnosis/cola_lcp.cc",
+      "-I/workspace/-cola-lcp-diagnosis/build-cola-lcp-diagnosis/baseline/include",
+      "/workspace/-cola-lcp-diagnosis/build-cola-lcp-diagnosis/cola_lcp.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-lcp-diagnosis/baseline/run"
+      "/workspace/-cola-lcp-diagnosis/build-cola-lcp-diagnosis/baseline/run"
     ],
     [
       "c++",
       "-O3",
       "-DNDEBUG",
       "-std=c++20",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-lcp-diagnosis/candidate/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-lcp-diagnosis/cola_lcp.cc",
+      "-I/workspace/-cola-lcp-diagnosis/build-cola-lcp-diagnosis/candidate/include",
+      "/workspace/-cola-lcp-diagnosis/build-cola-lcp-diagnosis/cola_lcp.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-lcp-diagnosis/candidate/run"
+      "/workspace/-cola-lcp-diagnosis/build-cola-lcp-diagnosis/candidate/run"
     ],
     [
       "c++",
       "-O3",
       "-DNDEBUG",
       "-std=c++20",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-lcp-diagnosis/baseline_aligned/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-lcp-diagnosis/cola_lcp.cc",
+      "-I/workspace/-cola-lcp-diagnosis/build-cola-lcp-diagnosis/baseline_aligned/include",
+      "/workspace/-cola-lcp-diagnosis/build-cola-lcp-diagnosis/cola_lcp.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-lcp-diagnosis/baseline_aligned/run"
+      "/workspace/-cola-lcp-diagnosis/build-cola-lcp-diagnosis/baseline_aligned/run"
     ],
     [
       "c++",
       "-O3",
       "-DNDEBUG",
       "-std=c++20",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-lcp-diagnosis/candidate_aligned/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-lcp-diagnosis/cola_lcp.cc",
+      "-I/workspace/-cola-lcp-diagnosis/build-cola-lcp-diagnosis/candidate_aligned/include",
+      "/workspace/-cola-lcp-diagnosis/build-cola-lcp-diagnosis/cola_lcp.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-lcp-diagnosis/candidate_aligned/run"
+      "/workspace/-cola-lcp-diagnosis/build-cola-lcp-diagnosis/candidate_aligned/run"
     ]
   ],
   "inputs": {

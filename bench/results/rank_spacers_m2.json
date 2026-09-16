@@ -58,14 +58,14 @@
     "-Werror",
     "-O3",
     "-DNDEBUG",
-    "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-rank-spacers/release/candidate-headers/include",
-    "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-rank-spacers/release",
-    "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-rank-spacers/release/rank_spacers.cc",
+    "-I/workspace/-rank-spacers/build-rank-spacers/release/candidate-headers/include",
+    "-I/workspace/-rank-spacers/build-rank-spacers/release",
+    "/workspace/-rank-spacers/build-rank-spacers/release/rank_spacers.cc",
     "-o",
-    "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-rank-spacers/release/rank_spacers"
+    "/workspace/-rank-spacers/build-rank-spacers/release/rank_spacers"
   ],
   "invocation": [
-    "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-rank-spacers/release/rank_spacers",
+    "/workspace/-rank-spacers/build-rank-spacers/release/rank_spacers",
     "5",
     "1048576"
   ],

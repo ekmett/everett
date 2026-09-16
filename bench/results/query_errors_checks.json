@@ -48,10 +48,10 @@
         "-Werror",
         "-fsanitize=address,undefined",
         "-fno-omit-frame-pointer",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/release/baseline/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/errors.cc",
+        "-I/workspace/-query-errors/build-query-errors/release/baseline/headers/include",
+        "/workspace/-query-errors/build-query-errors/checks/errors.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/errors-baseline"
+        "/workspace/-query-errors/build-query-errors/checks/errors-baseline"
       ],
       "stdout": "Exception type, message and decoder error-offset probes passed\n",
       "stderr": "",
@@ -70,10 +70,10 @@
         "-Werror",
         "-fsanitize=address,undefined",
         "-fno-omit-frame-pointer",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/release/outlined/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/errors.cc",
+        "-I/workspace/-query-errors/build-query-errors/release/outlined/headers/include",
+        "/workspace/-query-errors/build-query-errors/checks/errors.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/errors-outlined"
+        "/workspace/-query-errors/build-query-errors/checks/errors-outlined"
       ],
       "stdout": "Exception type, message and decoder error-offset probes passed\n",
       "stderr": "",
@@ -92,10 +92,10 @@
         "-Werror",
         "-fsanitize=address,undefined",
         "-fno-omit-frame-pointer",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-query-errors/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/errors.cc",
+        "-I/workspace/-query-errors/include",
+        "/workspace/-query-errors/build-query-errors/checks/errors.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/errors-production"
+        "/workspace/-query-errors/build-query-errors/checks/errors-production"
       ],
       "stdout": "Exception type, message and decoder error-offset probes passed\n",
       "stderr": "",
@@ -106,9 +106,9 @@
     [
       "cmake",
       "-S",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/source",
+      "/workspace/-query-errors/build-query-errors/checks/source",
       "-B",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/cmake",
+      "/workspace/-query-errors/build-query-errors/checks/cmake",
       "-DDIET_SANITIZERS=ON",
       "-DCMAKE_BUILD_TYPE=Release",
       "-DCMAKE_CXX_FLAGS_RELEASE=-O1 -g -DNDEBUG"
@@ -116,7 +116,7 @@
     [
       "cmake",
       "--build",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/cmake",
+      "/workspace/-query-errors/build-query-errors/checks/cmake",
       "--target",
       "diet_test_profile",
       "diet_test_groups",
@@ -127,11 +127,11 @@
     [
       "ctest",
       "--test-dir",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/cmake",
+      "/workspace/-query-errors/build-query-errors/checks/cmake",
       "--output-on-failure",
       "-R",
       "^diet\\.(profile|groups|query|package.installed)$"
     ]
   ],
-  "ctest_log": "Start testing: Sep 15 12:39 EDT\n----------------------------------------------------------\n3/25 Testing: diet.groups\n3/25 Test: diet.groups\nCommand: \"/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/cmake/diet_test_groups\"\nDirectory: /Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/cmake\n\"diet.groups\" start time: Sep 15 12:39 EDT\nOutput:\n----------------------------------------------------------\nPolicy groups 3/7/15/31, packed classes, and residual-address select checks passed\n<end of output>\nTest time =   1.87 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.groups\" end time: Sep 15 12:39 EDT\n\"diet.groups\" time elapsed: 00:00:01\n----------------------------------------------------------\n\n4/25 Testing: diet.profile\n4/25 Test: diet.profile\nCommand: \"/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/cmake/diet_test_profile\"\nDirectory: /Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/cmake\n\"diet.profile\" start time: Sep 15 12:39 EDT\nOutput:\n----------------------------------------------------------\nprofile tests passed\n<end of output>\nTest time =   5.88 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.profile\" end time: Sep 15 12:39 EDT\n\"diet.profile\" time elapsed: 00:00:05\n----------------------------------------------------------\n\n11/25 Testing: diet.query\n11/25 Test: diet.query\nCommand: \"/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/cmake/diet_test_query\"\nDirectory: /Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/cmake\n\"diet.query\" start time: Sep 15 12:39 EDT\nOutput:\n----------------------------------------------------------\nPrepared query roots, ordered exact-chain matches, ownership and budgets passed\n<end of output>\nTest time =   1.81 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.query\" end time: Sep 15 12:39 EDT\n\"diet.query\" time elapsed: 00:00:01\n----------------------------------------------------------\n\n24/25 Testing: diet.package.installed\n24/25 Test: diet.package.installed\nCommand: \"/opt/homebrew/Cellar/cmake/3.27.7/bin/cmake\" \"-Ddiet_smoke_mode=installed\" \"-Ddiet_smoke_config=Release\" \"-P\" \"/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/cmake/diet-package-smoke.cmake\"\nDirectory: /Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/checks/cmake\n\"diet.package.installed\" start time: Sep 15 12:39 EDT\nOutput:\n----------------------------------------------------------\n<end of output>\nTest time =   5.38 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.package.installed\" end time: Sep 15 12:39 EDT\n\"diet.package.installed\" time elapsed: 00:00:05\n----------------------------------------------------------\n\nEnd testing: Sep 15 12:39 EDT\n"
+  "ctest_log": "Start testing: Sep 15 12:39 EDT\n----------------------------------------------------------\n3/25 Testing: diet.groups\n3/25 Test: diet.groups\nCommand: \"/workspace/-query-errors/build-query-errors/checks/cmake/diet_test_groups\"\nDirectory: /workspace/-query-errors/build-query-errors/checks/cmake\n\"diet.groups\" start time: Sep 15 12:39 EDT\nOutput:\n----------------------------------------------------------\nPolicy groups 3/7/15/31, packed classes, and residual-address select checks passed\n<end of output>\nTest time =   1.87 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.groups\" end time: Sep 15 12:39 EDT\n\"diet.groups\" time elapsed: 00:00:01\n----------------------------------------------------------\n\n4/25 Testing: diet.profile\n4/25 Test: diet.profile\nCommand: \"/workspace/-query-errors/build-query-errors/checks/cmake/diet_test_profile\"\nDirectory: /workspace/-query-errors/build-query-errors/checks/cmake\n\"diet.profile\" start time: Sep 15 12:39 EDT\nOutput:\n----------------------------------------------------------\nprofile tests passed\n<end of output>\nTest time =   5.88 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.profile\" end time: Sep 15 12:39 EDT\n\"diet.profile\" time elapsed: 00:00:05\n----------------------------------------------------------\n\n11/25 Testing: diet.query\n11/25 Test: diet.query\nCommand: \"/workspace/-query-errors/build-query-errors/checks/cmake/diet_test_query\"\nDirectory: /workspace/-query-errors/build-query-errors/checks/cmake\n\"diet.query\" start time: Sep 15 12:39 EDT\nOutput:\n----------------------------------------------------------\nPrepared query roots, ordered exact-chain matches, ownership and budgets passed\n<end of output>\nTest time =   1.81 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.query\" end time: Sep 15 12:39 EDT\n\"diet.query\" time elapsed: 00:00:01\n----------------------------------------------------------\n\n24/25 Testing: diet.package.installed\n24/25 Test: diet.package.installed\nCommand: \"/opt/homebrew/Cellar/cmake/3.27.7/bin/cmake\" \"-Ddiet_smoke_mode=installed\" \"-Ddiet_smoke_config=Release\" \"-P\" \"/workspace/-query-errors/build-query-errors/checks/cmake/diet-package-smoke.cmake\"\nDirectory: /workspace/-query-errors/build-query-errors/checks/cmake\n\"diet.package.installed\" start time: Sep 15 12:39 EDT\nOutput:\n----------------------------------------------------------\n<end of output>\nTest time =   5.38 sec\n----------------------------------------------------------\nTest Passed.\n\"diet.package.installed\" end time: Sep 15 12:39 EDT\n\"diet.package.installed\" time elapsed: 00:00:05\n----------------------------------------------------------\n\nEnd testing: Sep 15 12:39 EDT\n"
 }

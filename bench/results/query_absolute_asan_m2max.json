@@ -101,10 +101,10 @@
       "-g",
       "-fsanitize=address,undefined",
       "-fno-omit-frame-pointer",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-absolute/build-query-absolute-asan/baseline-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-absolute/build-query-absolute-asan/query_compare.cc",
+      "-I/workspace/-query-absolute/build-query-absolute-asan/baseline-headers/include",
+      "/workspace/-query-absolute/build-query-absolute-asan/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-absolute/build-query-absolute-asan/baseline_w15"
+      "/workspace/-query-absolute/build-query-absolute-asan/baseline_w15"
     ],
     "candidate_w15": [
       "clang++",
@@ -117,10 +117,10 @@
       "-g",
       "-fsanitize=address,undefined",
       "-fno-omit-frame-pointer",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-absolute/build-query-absolute-asan/candidate-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-absolute/build-query-absolute-asan/query_compare.cc",
+      "-I/workspace/-query-absolute/build-query-absolute-asan/candidate-headers/include",
+      "/workspace/-query-absolute/build-query-absolute-asan/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-absolute/build-query-absolute-asan/candidate_w15"
+      "/workspace/-query-absolute/build-query-absolute-asan/candidate_w15"
     ],
     "candidate_w16": [
       "clang++",
@@ -134,10 +134,10 @@
       "-fsanitize=address,undefined",
       "-fno-omit-frame-pointer",
       "-DDIET_QUERY_COMPARE_W16=1",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-absolute/build-query-absolute-asan/candidate-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-absolute/build-query-absolute-asan/query_compare.cc",
+      "-I/workspace/-query-absolute/build-query-absolute-asan/candidate-headers/include",
+      "/workspace/-query-absolute/build-query-absolute-asan/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-absolute/build-query-absolute-asan/candidate_w16"
+      "/workspace/-query-absolute/build-query-absolute-asan/candidate_w16"
     ]
   },
   "cases": [

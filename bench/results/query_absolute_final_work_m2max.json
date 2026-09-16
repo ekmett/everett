@@ -47,10 +47,10 @@
     "-Wextra",
     "-Wpedantic",
     "-Werror",
-    "-I/Users/ekmett/cult/ai/worktrees/diet-query-absolute-fast/build-query-accepted-compare/candidate-headers/include",
-    "/Users/ekmett/cult/ai/worktrees/diet-query-absolute/bench/query_absolute_work.cc",
+    "-I/workspace/-query-absolute-fast/build-query-accepted-compare/candidate-headers/include",
+    "/workspace/-query-absolute/bench/query_absolute_work.cc",
     "-o",
-    "/Users/ekmett/cult/ai/worktrees/diet-query-absolute/build-query-final-work/query_absolute_work"
+    "/workspace/-query-absolute/build-query-final-work/query_absolute_work"
   ],
   "source_sha256": "539cc1e95d8eb708bcc5e6396043cc0b19a35c677596add7b8b6ce0668e455f5",
   "executable_sha256": "3f9c3bc1024409dcf19dc586d4a800c2e509c0ee143e596d9106ce16687502b4",

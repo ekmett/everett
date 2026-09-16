@@ -66,10 +66,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/ai/agents/worktrees/diet/index-lcp-20260915/build-index-lcp/short-repeat/baseline/headers/include",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/index-lcp-20260915/build-index-lcp/short-repeat/sample_frontier.cc",
+        "-I/workspace/index-lcp-20260915/build-index-lcp/short-repeat/baseline/headers/include",
+        "/workspace/index-lcp-20260915/build-index-lcp/short-repeat/sample_frontier.cc",
         "-o",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/index-lcp-20260915/build-index-lcp/short-repeat/baseline/sample_frontier"
+        "/workspace/index-lcp-20260915/build-index-lcp/short-repeat/baseline/sample_frontier"
       ]
     },
     "candidate": {
@@ -125,10 +125,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/ai/agents/worktrees/diet/index-lcp-20260915/build-index-lcp/short-repeat/candidate/headers/include",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/index-lcp-20260915/build-index-lcp/short-repeat/sample_frontier.cc",
+        "-I/workspace/index-lcp-20260915/build-index-lcp/short-repeat/candidate/headers/include",
+        "/workspace/index-lcp-20260915/build-index-lcp/short-repeat/sample_frontier.cc",
         "-o",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/index-lcp-20260915/build-index-lcp/short-repeat/candidate/sample_frontier"
+        "/workspace/index-lcp-20260915/build-index-lcp/short-repeat/candidate/sample_frontier"
       ]
     }
   },

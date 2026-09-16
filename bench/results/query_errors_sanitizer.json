@@ -760,10 +760,10 @@
         "-g",
         "-fsanitize=address,undefined",
         "-fno-omit-frame-pointer",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/sanitize/baseline/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/sanitize/query_compare.cc",
+        "-I/workspace/-query-errors/build-query-errors/sanitize/baseline/headers/include",
+        "/workspace/-query-errors/build-query-errors/sanitize/query_compare.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/sanitize/baseline/query_compare"
+        "/workspace/-query-errors/build-query-errors/sanitize/baseline/query_compare"
       ],
       "executable_sha256": "8c9c7e6586d322a30d4de6c5fa1b18f0f24ff8cb91b160e1fa21b91eb6241f67",
       "file_bytes": 2631984,
@@ -827,10 +827,10 @@
         "-g",
         "-fsanitize=address,undefined",
         "-fno-omit-frame-pointer",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/sanitize/outlined/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/sanitize/query_compare.cc",
+        "-I/workspace/-query-errors/build-query-errors/sanitize/outlined/headers/include",
+        "/workspace/-query-errors/build-query-errors/sanitize/query_compare.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/sanitize/outlined/query_compare"
+        "/workspace/-query-errors/build-query-errors/sanitize/outlined/query_compare"
       ],
       "executable_sha256": "3c9b53c2974eb7212cd7a6519ec61df54e82620ca7aa76b3bd2105744ebb185b",
       "file_bytes": 2595840,
@@ -894,10 +894,10 @@
         "-g",
         "-fsanitize=address,undefined",
         "-fno-omit-frame-pointer",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/sanitize/fail_stop/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/sanitize/query_compare.cc",
+        "-I/workspace/-query-errors/build-query-errors/sanitize/fail_stop/headers/include",
+        "/workspace/-query-errors/build-query-errors/sanitize/query_compare.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-query-errors/build-query-errors/sanitize/fail_stop/query_compare"
+        "/workspace/-query-errors/build-query-errors/sanitize/fail_stop/query_compare"
       ],
       "executable_sha256": "9ba613ca495a5aa2a8851daabd8fcf6d41ba47e2c0c6c0908a1319d5d512c690",
       "file_bytes": 2593648,

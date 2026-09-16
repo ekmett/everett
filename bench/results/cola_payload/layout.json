@@ -10,10 +10,10 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/baseline/include",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/layout.cc",
+        "-I/workspace/cola-route-payload-20260915/build-payload-matched/baseline/include",
+        "/workspace/cola-route-payload-20260915/build-payload-matched/layout.cc",
         "-o",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/baseline/layout"
+        "/workspace/cola-route-payload-20260915/build-payload-matched/baseline/layout"
       ],
       "index_bytes": 744,
       "builder_bytes": 2776,
@@ -28,10 +28,10 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/candidate/include",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/layout.cc",
+        "-I/workspace/cola-route-payload-20260915/build-payload-matched/candidate/include",
+        "/workspace/cola-route-payload-20260915/build-payload-matched/layout.cc",
         "-o",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/candidate/layout"
+        "/workspace/cola-route-payload-20260915/build-payload-matched/candidate/layout"
       ],
       "index_bytes": 296,
       "builder_bytes": 2808,

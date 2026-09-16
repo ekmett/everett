@@ -62,10 +62,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-bench/release/baseline/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-bench/release/borrowed_prefix.cc",
+        "-I/workspace/-borrowed-prefix/build-borrowed-prefix-bench/release/baseline/headers/include",
+        "/workspace/-borrowed-prefix/build-borrowed-prefix-bench/release/borrowed_prefix.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-bench/release/baseline/borrowed_prefix"
+        "/workspace/-borrowed-prefix/build-borrowed-prefix-bench/release/baseline/borrowed_prefix"
       ]
     },
     "candidate": {
@@ -115,10 +115,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-bench/release/candidate/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-bench/release/borrowed_prefix.cc",
+        "-I/workspace/-borrowed-prefix/build-borrowed-prefix-bench/release/candidate/headers/include",
+        "/workspace/-borrowed-prefix/build-borrowed-prefix-bench/release/borrowed_prefix.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-bench/release/candidate/borrowed_prefix"
+        "/workspace/-borrowed-prefix/build-borrowed-prefix-bench/release/candidate/borrowed_prefix"
       ]
     }
   },

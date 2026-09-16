@@ -26,5 +26,5 @@
   },
   "exit_code": 0,
   "output": "profile tests passed",
-  "gate_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-161948-qzx60mj0/output.log"
+  "gate_log": "/workspace/game/build-agent-logs/20260915-161948-qzx60mj0/output.log"
 }

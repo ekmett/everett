@@ -103,10 +103,10 @@
       "-g",
       "-fsanitize=address,undefined",
       "-fno-omit-frame-pointer",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-refactor/build-query-refactor/sanitize/baseline-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-refactor/build-query-refactor/sanitize/query_compare.cc",
+      "-I/workspace/-query-refactor/build-query-refactor/sanitize/baseline-headers/include",
+      "/workspace/-query-refactor/build-query-refactor/sanitize/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-refactor/build-query-refactor/sanitize/baseline_w15"
+      "/workspace/-query-refactor/build-query-refactor/sanitize/baseline_w15"
     ],
     "candidate_w15": [
       "clang++",
@@ -119,10 +119,10 @@
       "-g",
       "-fsanitize=address,undefined",
       "-fno-omit-frame-pointer",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-refactor/build-query-refactor/sanitize/candidate-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-refactor/build-query-refactor/sanitize/query_compare.cc",
+      "-I/workspace/-query-refactor/build-query-refactor/sanitize/candidate-headers/include",
+      "/workspace/-query-refactor/build-query-refactor/sanitize/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-refactor/build-query-refactor/sanitize/candidate_w15"
+      "/workspace/-query-refactor/build-query-refactor/sanitize/candidate_w15"
     ]
   },
   "cases": [

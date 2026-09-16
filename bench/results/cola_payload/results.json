@@ -71,10 +71,10 @@
           "-Wextra",
           "-Wpedantic",
           "-Werror",
-          "-I/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/baseline/include",
-          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
+          "-I/workspace/cola-route-payload-20260915/build-payload-matched/baseline/include",
+          "/workspace/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
           "-o",
-          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/baseline/run"
+          "/workspace/cola-route-payload-20260915/build-payload-matched/baseline/run"
         ],
         [
           "clang++",
@@ -85,10 +85,10 @@
           "-Wextra",
           "-Wpedantic",
           "-Werror",
-          "-I/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/baseline/include",
-          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
+          "-I/workspace/cola-route-payload-20260915/build-payload-matched/baseline/include",
+          "/workspace/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
           "-o",
-          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/baseline/run-alloc",
+          "/workspace/cola-route-payload-20260915/build-payload-matched/baseline/run-alloc",
           "-DDIET_BENCH_ALLOCATIONS"
         ]
       ],
@@ -161,10 +161,10 @@
           "-Wextra",
           "-Wpedantic",
           "-Werror",
-          "-I/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/candidate/include",
-          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
+          "-I/workspace/cola-route-payload-20260915/build-payload-matched/candidate/include",
+          "/workspace/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
           "-o",
-          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/candidate/run",
+          "/workspace/cola-route-payload-20260915/build-payload-matched/candidate/run",
           "-DDIET_REUSE"
         ],
         [
@@ -176,10 +176,10 @@
           "-Wextra",
           "-Wpedantic",
           "-Werror",
-          "-I/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/candidate/include",
-          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
+          "-I/workspace/cola-route-payload-20260915/build-payload-matched/candidate/include",
+          "/workspace/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
           "-o",
-          "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/candidate/run-alloc",
+          "/workspace/cola-route-payload-20260915/build-payload-matched/candidate/run-alloc",
           "-DDIET_BENCH_ALLOCATIONS",
           "-DDIET_REUSE"
         ]
@@ -396,10 +396,10 @@
     "-fsanitize=address,undefined",
     "-fno-omit-frame-pointer",
     "-DDIET_REUSE",
-    "-I/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/candidate/include",
-    "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
+    "-I/workspace/cola-route-payload-20260915/build-payload-matched/candidate/include",
+    "/workspace/cola-route-payload-20260915/build-payload-matched/cola_payload.cc",
     "-o",
-    "/Users/ekmett/cult/ai/agents/worktrees/diet/cola-route-payload-20260915/build-payload-matched/sanitized"
+    "/workspace/cola-route-payload-20260915/build-payload-matched/sanitized"
   ],
   "results.csv_sha256": "2a8acf347c1cf8828ca4848f46d55c8b28be1981c85a407e0bdef6128a547699",
   "allocations.csv_sha256": "d1a20de1e96c0141587303725a6c502c0afee83e89924e114279b3fca40988e3",

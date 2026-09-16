@@ -60,14 +60,14 @@
     "-g",
     "-fsanitize=address,undefined",
     "-fno-omit-frame-pointer",
-    "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-rank-spacers/sanitize/candidate-headers/include",
-    "-I/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-rank-spacers/sanitize",
-    "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-rank-spacers/sanitize/rank_spacers.cc",
+    "-I/workspace/-rank-spacers/build-rank-spacers/sanitize/candidate-headers/include",
+    "-I/workspace/-rank-spacers/build-rank-spacers/sanitize",
+    "/workspace/-rank-spacers/build-rank-spacers/sanitize/rank_spacers.cc",
     "-o",
-    "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-rank-spacers/sanitize/rank_spacers"
+    "/workspace/-rank-spacers/build-rank-spacers/sanitize/rank_spacers"
   ],
   "invocation": [
-    "/Users/ekmett/cult/ai/worktrees/diet-rank-spacers/build-rank-spacers/sanitize/rank_spacers",
+    "/workspace/-rank-spacers/build-rank-spacers/sanitize/rank_spacers",
     "1",
     "65536",
     "check"

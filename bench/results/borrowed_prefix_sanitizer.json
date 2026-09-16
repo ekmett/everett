@@ -64,10 +64,10 @@
         "-g",
         "-fsanitize=address,undefined",
         "-fno-omit-frame-pointer",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-bench/sanitize/baseline/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-bench/sanitize/borrowed_prefix.cc",
+        "-I/workspace/-borrowed-prefix/build-borrowed-prefix-bench/sanitize/baseline/headers/include",
+        "/workspace/-borrowed-prefix/build-borrowed-prefix-bench/sanitize/borrowed_prefix.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-bench/sanitize/baseline/borrowed_prefix"
+        "/workspace/-borrowed-prefix/build-borrowed-prefix-bench/sanitize/baseline/borrowed_prefix"
       ]
     },
     "candidate": {
@@ -119,10 +119,10 @@
         "-g",
         "-fsanitize=address,undefined",
         "-fno-omit-frame-pointer",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-bench/sanitize/candidate/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-bench/sanitize/borrowed_prefix.cc",
+        "-I/workspace/-borrowed-prefix/build-borrowed-prefix-bench/sanitize/candidate/headers/include",
+        "/workspace/-borrowed-prefix/build-borrowed-prefix-bench/sanitize/borrowed_prefix.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-borrowed-prefix/build-borrowed-prefix-bench/sanitize/candidate/borrowed_prefix"
+        "/workspace/-borrowed-prefix/build-borrowed-prefix-bench/sanitize/candidate/borrowed_prefix"
       ]
     }
   },

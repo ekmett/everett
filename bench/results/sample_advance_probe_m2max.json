@@ -12,11 +12,11 @@
       "-Wpedantic",
       "-Werror",
       "-I",
-      "/Users/ekmett/cult/ai/worktrees/diet-bit-subview/build-bit-subview/cursor-baseline/include",
+      "/workspace/-bit-subview/build-bit-subview/cursor-baseline/include",
       "-c",
-      "/Users/ekmett/cult/ai/worktrees/diet-bit-subview/build-bit-subview/cursor_probe.cc",
+      "/workspace/-bit-subview/build-bit-subview/cursor_probe.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-bit-subview/build-bit-subview/cursor-baseline.o"
+      "/workspace/-bit-subview/build-bit-subview/cursor-baseline.o"
     ],
     "candidate": [
       "/usr/bin/clang++",
@@ -27,11 +27,11 @@
       "-Wpedantic",
       "-Werror",
       "-I",
-      "/Users/ekmett/cult/ai/worktrees/diet-bit-subview/include",
+      "/workspace/-bit-subview/include",
       "-c",
-      "/Users/ekmett/cult/ai/worktrees/diet-bit-subview/build-bit-subview/cursor_probe.cc",
+      "/workspace/-bit-subview/build-bit-subview/cursor_probe.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-bit-subview/build-bit-subview/cursor-candidate.o"
+      "/workspace/-bit-subview/build-bit-subview/cursor-candidate.o"
     ]
   },
   "variants": {
@@ -138,11 +138,11 @@
           "-Wpedantic",
           "-Werror",
           "-I",
-          "/Users/ekmett/cult/ai/worktrees/diet-bit-subview/build-bit-subview/baseline/include",
+          "/workspace/-bit-subview/build-bit-subview/baseline/include",
           "-S",
-          "/Users/ekmett/cult/ai/worktrees/diet-bit-subview/build-bit-subview/probe.cc",
+          "/workspace/-bit-subview/build-bit-subview/probe.cc",
           "-o",
-          "/Users/ekmett/cult/ai/worktrees/diet-bit-subview/build-bit-subview/baseline.s"
+          "/workspace/-bit-subview/build-bit-subview/baseline.s"
         ],
         [
           "/usr/bin/clang++",
@@ -153,11 +153,11 @@
           "-Wpedantic",
           "-Werror",
           "-I",
-          "/Users/ekmett/cult/ai/worktrees/diet-bit-subview/include",
+          "/workspace/-bit-subview/include",
           "-S",
-          "/Users/ekmett/cult/ai/worktrees/diet-bit-subview/build-bit-subview/probe.cc",
+          "/workspace/-bit-subview/build-bit-subview/probe.cc",
           "-o",
-          "/Users/ekmett/cult/ai/worktrees/diet-bit-subview/build-bit-subview/candidate.s"
+          "/workspace/-bit-subview/build-bit-subview/candidate.s"
         ]
       ],
       "success_path_conditional_branches": {
@@ -169,7 +169,7 @@
         "candidate": 0
       },
       "validation": "Existing exhaustive profile test plus new exhaustive32-bit-storage subview/nested/error oracle passed ASan/UBSan Debug; additional O0 comparison suite intentionally interrupted and not claimed.",
-      "log": "/Users/ekmett/cult/game/build-agent-logs/20260915-132806-uaro872e/output.log"
+      "log": "/workspace/game/build-agent-logs/20260915-132806-uaro872e/output.log"
     },
     "cursor": {
       "baseline_revision": "37b8b2825b17b6634909a0ca1cec427dd3793ab3",
@@ -211,7 +211,7 @@
         }
       },
       "validation": "Existing native_merge and sampling tests pass O3 ASan/UBSan; native_merge includes ordinary FC, redundant retained prefixes, LP restarts, duplicates, malformed order and EOF.",
-      "log": "/Users/ekmett/cult/game/build-agent-logs/20260915-133631-r6p86a_3/output.log"
+      "log": "/workspace/game/build-agent-logs/20260915-133631-r6p86a_3/output.log"
     },
     "files_sha256": {
       "probe.cc": "79d7c923368c1e2200b2761369619f547c5b66c4e4c74fbf2e8ab74144bb2ca0",

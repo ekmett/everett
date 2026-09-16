@@ -30,13 +30,13 @@
       "-Wextra",
       "-Wpedantic",
       "-Werror",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-select-simd/include",
-      "-DSELECT_BASELINE_GROUPS=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/baseline_select_groups.h\"",
-      "-DSELECT_BASELINE_FIXED=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/baseline_select15.h\"",
-      "-DSELECT_PROTOTYPE=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/prototype_select_groups.h\"",
-      "/Users/ekmett/cult/ai/worktrees/diet-select-simd/bench/select_compare.cc",
+      "-I/workspace/-select-simd/include",
+      "-DSELECT_BASELINE_GROUPS=\"/workspace/-select-simd/build-select/baseline_select_groups.h\"",
+      "-DSELECT_BASELINE_FIXED=\"/workspace/-select-simd/build-select/baseline_select15.h\"",
+      "-DSELECT_PROTOTYPE=\"/workspace/-select-simd/build-select/prototype_select_groups.h\"",
+      "/workspace/-select-simd/bench/select_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/select-arm64"
+      "/workspace/-select-simd/build-select/select-arm64"
     ],
     "x86_64": [
       "clang++",
@@ -52,13 +52,13 @@
       "-mavx2",
       "-mno-avx512f",
       "-mno-bmi2",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-select-simd/include",
-      "-DSELECT_BASELINE_GROUPS=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/baseline_select_groups.h\"",
-      "-DSELECT_BASELINE_FIXED=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/baseline_select15.h\"",
-      "-DSELECT_PROTOTYPE=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/prototype_select_groups.h\"",
-      "/Users/ekmett/cult/ai/worktrees/diet-select-simd/bench/select_compare.cc",
+      "-I/workspace/-select-simd/include",
+      "-DSELECT_BASELINE_GROUPS=\"/workspace/-select-simd/build-select/baseline_select_groups.h\"",
+      "-DSELECT_BASELINE_FIXED=\"/workspace/-select-simd/build-select/baseline_select15.h\"",
+      "-DSELECT_PROTOTYPE=\"/workspace/-select-simd/build-select/prototype_select_groups.h\"",
+      "/workspace/-select-simd/bench/select_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/select-x86_64"
+      "/workspace/-select-simd/build-select/select-x86_64"
     ],
     "x86_64-bmi2": [
       "clang++",
@@ -74,13 +74,13 @@
       "-mavx2",
       "-mno-avx512f",
       "-mbmi2",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-select-simd/include",
-      "-DSELECT_BASELINE_GROUPS=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/baseline_select_groups.h\"",
-      "-DSELECT_BASELINE_FIXED=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/baseline_select15.h\"",
-      "-DSELECT_PROTOTYPE=\"/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/prototype_select_groups.h\"",
-      "/Users/ekmett/cult/ai/worktrees/diet-select-simd/bench/select_compare.cc",
+      "-I/workspace/-select-simd/include",
+      "-DSELECT_BASELINE_GROUPS=\"/workspace/-select-simd/build-select/baseline_select_groups.h\"",
+      "-DSELECT_BASELINE_FIXED=\"/workspace/-select-simd/build-select/baseline_select15.h\"",
+      "-DSELECT_PROTOTYPE=\"/workspace/-select-simd/build-select/prototype_select_groups.h\"",
+      "/workspace/-select-simd/bench/select_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-select-simd/build-select/select-x86_64-bmi2"
+      "/workspace/-select-simd/build-select/select-x86_64-bmi2"
     ]
   },
   "candidate_revision": "bc24f443cdee7d12492ac8a6f48e8587de0fc147",

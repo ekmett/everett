@@ -69,10 +69,10 @@
         "-O3",
         "-DNDEBUG",
         "-DDIET_BENCH_ALLOCATIONS",
-        "-I/Users/ekmett/cult/ai/agents/worktrees/diet/native-encoded-merge-20260915/build-native-encoded-allocations/baseline/headers/include",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/native-encoded-merge-20260915/build-native-encoded-allocations/native_encoded.cc",
+        "-I/workspace/native-encoded-merge-20260915/build-native-encoded-allocations/baseline/headers/include",
+        "/workspace/native-encoded-merge-20260915/build-native-encoded-allocations/native_encoded.cc",
         "-o",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/native-encoded-merge-20260915/build-native-encoded-allocations/baseline/native_encoded"
+        "/workspace/native-encoded-merge-20260915/build-native-encoded-allocations/baseline/native_encoded"
       ]
     },
     "candidate": {
@@ -126,10 +126,10 @@
         "-O3",
         "-DNDEBUG",
         "-DDIET_BENCH_ALLOCATIONS",
-        "-I/Users/ekmett/cult/ai/agents/worktrees/diet/native-encoded-merge-20260915/build-native-encoded-allocations/candidate/headers/include",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/native-encoded-merge-20260915/build-native-encoded-allocations/native_encoded.cc",
+        "-I/workspace/native-encoded-merge-20260915/build-native-encoded-allocations/candidate/headers/include",
+        "/workspace/native-encoded-merge-20260915/build-native-encoded-allocations/native_encoded.cc",
         "-o",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/native-encoded-merge-20260915/build-native-encoded-allocations/candidate/native_encoded"
+        "/workspace/native-encoded-merge-20260915/build-native-encoded-allocations/candidate/native_encoded"
       ]
     }
   },

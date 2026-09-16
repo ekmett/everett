@@ -65,10 +65,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-bench/release/baseline/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-bench/release/native_prefix.cc",
+        "-I/workspace/-native-prefix/build-native-prefix-bench/release/baseline/headers/include",
+        "/workspace/-native-prefix/build-native-prefix-bench/release/native_prefix.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-bench/release/baseline/native_prefix"
+        "/workspace/-native-prefix/build-native-prefix-bench/release/baseline/native_prefix"
       ]
     },
     "candidate": {
@@ -121,10 +121,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-bench/release/candidate/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-bench/release/native_prefix.cc",
+        "-I/workspace/-native-prefix/build-native-prefix-bench/release/candidate/headers/include",
+        "/workspace/-native-prefix/build-native-prefix-bench/release/native_prefix.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-bench/release/candidate/native_prefix"
+        "/workspace/-native-prefix/build-native-prefix-bench/release/candidate/native_prefix"
       ]
     }
   },

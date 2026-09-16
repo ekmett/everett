@@ -1,5 +1,5 @@
 {
-  "log": "/Users/ekmett/cult/game/build-agent-logs/20260915-144612-lwr_fftd/output.log",
+  "log": "/workspace/game/build-agent-logs/20260915-144612-lwr_fftd/output.log",
   "source_sha256": "b873c5ff77553627d4e1698a328e379102239a0ca58c67d50e3e9ea591f81d71",
   "commands": [
     [

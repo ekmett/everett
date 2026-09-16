@@ -123,10 +123,10 @@
       "-Werror",
       "-O3",
       "-DNDEBUG",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-alignment-validation/query/baseline-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-alignment-validation/query/query_compare.cc",
+      "-I/workspace/-cola-lcp-diagnosis/build-cola-alignment-validation/query/baseline-headers/include",
+      "/workspace/-cola-lcp-diagnosis/build-cola-alignment-validation/query/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-alignment-validation/query/baseline_w15"
+      "/workspace/-cola-lcp-diagnosis/build-cola-alignment-validation/query/baseline_w15"
     ],
     "candidate_w15": [
       "clang++",
@@ -137,10 +137,10 @@
       "-Werror",
       "-O3",
       "-DNDEBUG",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-alignment-validation/query/candidate-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-alignment-validation/query/query_compare.cc",
+      "-I/workspace/-cola-lcp-diagnosis/build-cola-alignment-validation/query/candidate-headers/include",
+      "/workspace/-cola-lcp-diagnosis/build-cola-alignment-validation/query/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-cola-lcp-diagnosis/build-cola-alignment-validation/query/candidate_w15"
+      "/workspace/-cola-lcp-diagnosis/build-cola-alignment-validation/query/candidate_w15"
     ]
   },
   "cases": [

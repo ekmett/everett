@@ -1,4 +1,4 @@
-/Users/ekmett/cult/ai/worktrees/diet-bit-subview/build-bit-subview/cursor-candidate.o:
+/workspace/-bit-subview/build-bit-subview/cursor-candidate.o:
 (__TEXT,__text) section
 __Z12advance_byteRN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EEE:
 0000000000000000	mov	x1, #0x0

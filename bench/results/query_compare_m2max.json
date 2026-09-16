@@ -89,10 +89,10 @@
       "-Werror",
       "-O3",
       "-DNDEBUG",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-m2max/baseline-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-m2max/query_compare.cc",
+      "-I/workspace/-query-compare/build-query-compare-m2max/baseline-headers/include",
+      "/workspace/-query-compare/build-query-compare-m2max/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-m2max/baseline_w15"
+      "/workspace/-query-compare/build-query-compare-m2max/baseline_w15"
     ],
     "candidate_w15": [
       "clang++",
@@ -103,10 +103,10 @@
       "-Werror",
       "-O3",
       "-DNDEBUG",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-m2max/candidate-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-m2max/query_compare.cc",
+      "-I/workspace/-query-compare/build-query-compare-m2max/candidate-headers/include",
+      "/workspace/-query-compare/build-query-compare-m2max/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-m2max/candidate_w15"
+      "/workspace/-query-compare/build-query-compare-m2max/candidate_w15"
     ],
     "candidate_w16": [
       "clang++",
@@ -118,10 +118,10 @@
       "-O3",
       "-DNDEBUG",
       "-DDIET_QUERY_COMPARE_W16=1",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-m2max/candidate-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-m2max/query_compare.cc",
+      "-I/workspace/-query-compare/build-query-compare-m2max/candidate-headers/include",
+      "/workspace/-query-compare/build-query-compare-m2max/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-m2max/candidate_w16"
+      "/workspace/-query-compare/build-query-compare-m2max/candidate_w16"
     ]
   },
   "cases": [

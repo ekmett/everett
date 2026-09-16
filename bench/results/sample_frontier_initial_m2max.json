@@ -65,10 +65,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/ai/agents/worktrees/diet/sample-frontier-bench-20260915/build-sample-frontier-m2max/baseline/headers/include",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/sample-frontier-bench-20260915/build-sample-frontier-m2max/sample_frontier.cc",
+        "-I/workspace/sample-frontier-bench-20260915/build-sample-frontier-m2max/baseline/headers/include",
+        "/workspace/sample-frontier-bench-20260915/build-sample-frontier-m2max/sample_frontier.cc",
         "-o",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/sample-frontier-bench-20260915/build-sample-frontier-m2max/baseline/sample_frontier"
+        "/workspace/sample-frontier-bench-20260915/build-sample-frontier-m2max/baseline/sample_frontier"
       ]
     },
     "candidate": {
@@ -121,10 +121,10 @@
         "-Werror",
         "-O3",
         "-DNDEBUG",
-        "-I/Users/ekmett/cult/ai/agents/worktrees/diet/sample-frontier-bench-20260915/build-sample-frontier-m2max/candidate/headers/include",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/sample-frontier-bench-20260915/build-sample-frontier-m2max/sample_frontier.cc",
+        "-I/workspace/sample-frontier-bench-20260915/build-sample-frontier-m2max/candidate/headers/include",
+        "/workspace/sample-frontier-bench-20260915/build-sample-frontier-m2max/sample_frontier.cc",
         "-o",
-        "/Users/ekmett/cult/ai/agents/worktrees/diet/sample-frontier-bench-20260915/build-sample-frontier-m2max/candidate/sample_frontier"
+        "/workspace/sample-frontier-bench-20260915/build-sample-frontier-m2max/candidate/sample_frontier"
       ]
     }
   },

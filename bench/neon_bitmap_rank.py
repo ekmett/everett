@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # \file
 # \author Edward Kmett
-# \brief Runs the pinned NEON/Cult rank comparison with an external source header.
+# \brief Runs the pinned NEON/bitmap rank comparison with the bundled bitmap directory.
 #
 # \license
 # SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 # \endlicense
-"""Reproduce NEON rank15/Cult rank checks without copying the external header."""
+"""Reproduce NEON rank15/bitmap rank checks with the bundled bitmap directory."""
 from snapshot import Snapshot
 
 import argparse
@@ -19,13 +19,12 @@ from pathlib import Path
 import subprocess
 
 BASE = "aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06"
-CULT_SHA256 = "96773e2dbaa8dacd92c22173f97e63bb5bbc2604f1194541cfefe83eb1f79ed0"
+BITMAP_SHA256 = "d47a4cff06edd9c319fedb4857346d0c76771ca8c3a752d7af85bb95cfca8138"
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("case", choices=("check", "hot", "large", "all"))
-    parser.add_argument("--cult-header", type=Path, required=True)
     parser.add_argument("--build-dir", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--trials", type=int, default=5)
@@ -33,11 +32,11 @@ def main():
     parser.add_argument("--sanitize", action="store_true")
     args = parser.parse_args()
     repo = Path(__file__).resolve().parent.parent
-    build = (args.build_dir or repo / "build-neon-cult-rank").resolve()
+    build = (args.build_dir or repo / "build-neon-bitmap-rank").resolve()
     build.mkdir(parents=True, exist_ok=True)
-    cult = args.cult_header.resolve()
-    if hashlib.sha256(cult.read_bytes()).hexdigest() != CULT_SHA256:
-        raise SystemExit("external Cult header differs from the reviewed source hash")
+    bitmap = repo / "bench/bitmap512.h"
+    if hashlib.sha256(bitmap.read_bytes()).hexdigest() != BITMAP_SHA256:
+        raise SystemExit("bundled bitmap header differs from the reviewed source hash")
     snapshot = Snapshot(repo, BASE)
     base = snapshot.read("include/diet/rank15.h")
     baseline_dir = build / "baseline/diet"
@@ -51,18 +50,16 @@ def main():
     candidate = build / "neon_qword_rank15.h"
     candidate.write_text(text.replace(old, new))
     compiler = os.environ.get("CXX", "clang++")
-    executable = build / ("neon_cult_rank_sanitize" if args.sanitize else "neon_cult_rank")
+    executable = build / ("neon_bitmap_rank_sanitize" if args.sanitize else "neon_bitmap_rank")
     flags = ["-std=c++20", "-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer"] if args.sanitize else ["-std=c++20", "-O3", "-DNDEBUG"]
     command = [compiler, *flags, "-Wall", "-Wextra", "-Werror", "-I" + str(baseline_dir.parent),
                '-DDIET_NEON_QWORD_HEADER="' + str(candidate) + '"',
-               '-DDIET_EXTERNAL_CULT_RANK_HEADER="' + str(cult) + '"',
-               str(repo / "bench/neon_cult_rank.cc"), "-o", str(executable)]
+               str(repo / "bench/neon_bitmap_rank.cc"), "-o", str(executable)]
     subprocess.run(command, check=True)
-    cult_revision = subprocess.check_output(["git", "-C", str(cult.parent), "rev-parse", "HEAD"], text=True).strip()
     metadata = {"diet_revision": BASE, "normalization": snapshot.metadata(), "diet_rank_sha256": hashlib.sha256(base).hexdigest(),
                 "candidate_sha256": hashlib.sha256(candidate.read_bytes()).hexdigest(),
-                "cult_revision": cult_revision, "cult_rank_sha256": CULT_SHA256,
-                "source_sha256": hashlib.sha256((repo / "bench/neon_cult_rank.cc").read_bytes()).hexdigest(),
+                "bitmap_header_sha256": BITMAP_SHA256,
+                "source_sha256": hashlib.sha256((repo / "bench/neon_bitmap_rank.cc").read_bytes()).hexdigest(),
                 "compiler": subprocess.check_output([compiler, "--version"], text=True),
                 "flags": flags + ["-Wall", "-Wextra", "-Werror"], "case": args.case,
                 "trials": args.trials, "queries": args.queries, "sanitize": args.sanitize}

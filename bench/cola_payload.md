@@ -139,9 +139,7 @@ packing, changed ranks/cuts and local-equality flags.
 Run the exact benchmark under the host resource gate:
 
 ```sh
-python3 /Users/ekmett/cult/game/tools/resource_run.py --resource cpu-heavy \
-  --build-dir "$PWD/build-payload-reproduce" -- \
-  python3 bench/cola_payload.py --baseline df1cb2d \
+python3 bench/cola_payload.py --baseline df1cb2d \
   --candidate-patch bench/results/cola_payload/candidate.patch \
   --build-dir build-payload-reproduce --trials 5 --rounds 3
 ```

@@ -91,10 +91,10 @@
       "-g",
       "-fsanitize=address,undefined",
       "-fno-omit-frame-pointer",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-check/baseline-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-check/query_compare.cc",
+      "-I/workspace/-query-compare/build-query-compare-check/baseline-headers/include",
+      "/workspace/-query-compare/build-query-compare-check/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-check/baseline_w15"
+      "/workspace/-query-compare/build-query-compare-check/baseline_w15"
     ],
     "candidate_w15": [
       "clang++",
@@ -107,10 +107,10 @@
       "-g",
       "-fsanitize=address,undefined",
       "-fno-omit-frame-pointer",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-check/candidate-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-check/query_compare.cc",
+      "-I/workspace/-query-compare/build-query-compare-check/candidate-headers/include",
+      "/workspace/-query-compare/build-query-compare-check/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-check/candidate_w15"
+      "/workspace/-query-compare/build-query-compare-check/candidate_w15"
     ],
     "candidate_w16": [
       "clang++",
@@ -124,10 +124,10 @@
       "-fsanitize=address,undefined",
       "-fno-omit-frame-pointer",
       "-DDIET_QUERY_COMPARE_W16=1",
-      "-I/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-check/candidate-headers/include",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-check/query_compare.cc",
+      "-I/workspace/-query-compare/build-query-compare-check/candidate-headers/include",
+      "/workspace/-query-compare/build-query-compare-check/query_compare.cc",
       "-o",
-      "/Users/ekmett/cult/ai/worktrees/diet-query-compare/build-query-compare-check/candidate_w16"
+      "/workspace/-query-compare/build-query-compare-check/candidate_w16"
     ]
   },
   "cases": [

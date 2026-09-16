@@ -57,12 +57,12 @@
   ],
   "authorization": "User authorized Compiler Explorer execution of public helper code; integration owner submitted requests",
   "local_standalone_validation": {
-    "bounded_prefix_compile_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-130528-g97428rk/output.log",
-    "bounded_prefix_runtime_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-130551-zf1y4_th/output.log",
-    "complete_rank_compile_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-131021-ijflgovy/output.log",
-    "complete_rank_runtime_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-131037-hgll6l95/output.log",
-    "same_isa_rank_compile_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-131344-tuhnjqup/output.log",
-    "same_isa_rank_runtime_log": "/Users/ekmett/cult/game/build-agent-logs/20260915-131509-6zfxszln/output.log",
+    "bounded_prefix_compile_log": "/workspace/game/build-agent-logs/20260915-130528-g97428rk/output.log",
+    "bounded_prefix_runtime_log": "/workspace/game/build-agent-logs/20260915-130551-zf1y4_th/output.log",
+    "complete_rank_compile_log": "/workspace/game/build-agent-logs/20260915-131021-ijflgovy/output.log",
+    "complete_rank_runtime_log": "/workspace/game/build-agent-logs/20260915-131037-hgll6l95/output.log",
+    "same_isa_rank_compile_log": "/workspace/game/build-agent-logs/20260915-131344-tuhnjqup/output.log",
+    "same_isa_rank_runtime_log": "/workspace/game/build-agent-logs/20260915-131509-6zfxszln/output.log",
     "runtime": "Rosetta scalar only; AVX2 and AVX-512 unsupported and skipped; translated timing is not native evidence"
   },
   "limitations": [

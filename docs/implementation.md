@@ -327,7 +327,7 @@ predictions:
 | [Packed rank / full bitmap](../bench/rank_compare.md) | Complete rank and window endpoints, resident sizes and dependent queries on M2 Max |
 | [Linux rank](../bench/rank_compare_quartus.md) | AVX2 scalar, SAD and qword-first reductions on Core i9-12900K |
 | [Windows rank](../bench/rank_compare_windows.md) | AVX2/AVX512 on Ryzen 9 7950X3D, including scheduling outliers |
-| [NEON and Cult rank](../bench/neon_cult_rank.md) | Packed rank against the actual external Cult CPU directory |
+| [NEON and bitmap rank](../bench/neon_bitmap_rank.md) | Packed rank against the bundled Bitmap512 CPU directory |
 | [Other grouped / bitmap rank](../bench/other_rank.md) | Groups 3, 7 and 31 and complete bitmap queries |
 | [Rank without cached totals](../bench/rank_bounds.md) | Existing-position queries, whole-query timing and view size |
 | [Stored spacer lanes](../bench/rank_spacers.md) | Complete bitmap queries with the gaps written during construction |
@@ -1100,6 +1100,15 @@ With SQLite enabled, additional suites cover the catalog, adversarial operations
 forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
+
+At `296a025`, the combined strict O2 ASan/UBSan build passed all **107 checks**
+on AppleClang 21: 103 C++ component suites, three independent package consumers
+and Doxygen. This includes arbitrary initial batches, encoded preflight,
+ready reservation groups, concurrent bindings, restart and cleanup recovery.
+The [verification record](../bench/results/main_verification_20260916.json)
+retains each result. Test durations are verification metadata, not benchmarks.
+The bundled bitmap comparison runner also passes its independent query oracle
+under ASan/UBSan; Doxygen passed again after publication cleanup.
 
 At `1128378`, the complete strict O2 ASan/UBSan build and all **95 C++ component
 suites** passed on AppleClang 21. All three independent package consumers and

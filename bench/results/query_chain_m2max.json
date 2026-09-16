@@ -48,10 +48,10 @@
     "-Werror",
     "-O3",
     "-DNDEBUG",
-    "-I/Users/ekmett/cult/diet/build-query-chain/headers/include",
-    "/Users/ekmett/cult/diet/build-query-chain/query_chain.cc",
+    "-I/workspace/diet/build-query-chain/headers/include",
+    "/workspace/diet/build-query-chain/query_chain.cc",
     "-o",
-    "/Users/ekmett/cult/diet/build-query-chain/query_chain"
+    "/workspace/diet/build-query-chain/query_chain"
   ],
   "records": 4096,
   "queries": 4096,

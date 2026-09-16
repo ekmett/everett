@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Compares NEON rank15 reductions with an externally supplied Cult bitmap rank.
+ * \brief Compares NEON rank15 reductions with an externally supplied Bitmap512 rank.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -10,13 +10,12 @@
  * \endlicense
  */
 
-// The runner supplies a pinned Diet header and an unchanged external Cult
-// header. No Cult source is copied into this repository or uploaded anywhere.
+// The runner supplies a pinned rank15 header; the bitmap directory is bundled.
 #include <diet/rank15.h>
 #define diet diet_neon_qword
 #include DIET_NEON_QWORD_HEADER
 #undef diet
-#include DIET_EXTERNAL_CULT_RANK_HEADER
+#include "bitmap512.h"
 
 #include <algorithm>
 #include <array>
@@ -53,8 +52,8 @@ namespace {
     return unsigned(std::popcount(value & ((std::uint64_t{1} << count) - 1)));
   }
 
-  template <unsigned N> struct cult_adapter {
-    cult::sim::rank_view<N> view;
+  template <unsigned N> struct bitmap_adapter {
+    diet_bench::rank_view<N> view;
     std::uint64_t rank(std::uint64_t group) const { return view.rank(unsigned(group * 15)); }
     unsigned class_at(std::uint64_t group) const {
       auto first = unsigned(group * 15), word = first / 32, shift = first % 32;
@@ -119,11 +118,11 @@ namespace {
       if (at % 64) result += unsigned(std::popcount(words[at / 64] & ((std::uint64_t{1} << (at % 64)) - 1)));
       return mode ? 2 * result + population(words, at, 15) : result;
     };
-    auto cult = std::unique_ptr<cult::sim::rank_index<N>>(new cult::sim::rank_index<N>);
+    auto bitmap = std::unique_ptr<diet_bench::rank_index<N>>(new diet_bench::rank_index<N>);
     for (std::size_t i = 0; i != words.size(); ++i) {
-      cult->raw[2 * i] = unsigned(words[i]); cult->raw[2 * i + 1] = unsigned(words[i] >> 32);
+      bitmap->raw[2 * i] = unsigned(words[i]); bitmap->raw[2 * i + 1] = unsigned(words[i] >> 32);
     }
-    cult::sim::build_rank(*cult);
+    diet_bench::build_rank(*bitmap);
     std::vector<std::uint8_t> classes(groups);
     for (std::uint64_t g = 0; g != groups; ++g) classes[g] = std::uint8_t(population(words, g * 15, 15));
     auto packed = diet::rank15_index::build(classes, N);
@@ -131,13 +130,13 @@ namespace {
     packed.classes.shrink_to_fit(); packed.checkpoints.shrink_to_fit();
     auto byte_first = packed.view();
     diet_neon_qword::rank15_view qword_first{packed.classes, packed.checkpoints, N, packed.total};
-    cult_adapter<N> cult_view{{cult.get()}};
+    bitmap_adapter<N> bitmap_view{{bitmap.get()}};
     auto data_bytes = packed.classes.size() * 8, metadata_bytes = packed.checkpoints.size() * 8;
-    static_assert(sizeof(*cult) == sizeof(cult->raw) + sizeof(cult->directory) + sizeof(cult->total));
+    static_assert(sizeof(*bitmap) == sizeof(bitmap->raw) + sizeof(bitmap->directory) + sizeof(bitmap->total));
     std::array variants{
       make_variant("neon_byte_first", byte_first, data_bytes, metadata_bytes, 8, packed.classes.data(), packed.checkpoints.data()),
       make_variant("neon_qword_first", qword_first, data_bytes, metadata_bytes, 8, packed.classes.data(), packed.checkpoints.data()),
-      make_variant("cult_bitmap_rank", cult_view, sizeof(cult->raw), sizeof(cult->directory), sizeof(cult->total), cult->raw, cult->directory)
+      make_variant("bitmap512_rank", bitmap_view, sizeof(bitmap->raw), sizeof(bitmap->directory), sizeof(bitmap->total), bitmap->raw, bitmap->directory)
     };
     for (auto const & v : variants) {
       if (v.functions[0](v.pointer, groups) != oracle.back()) throw std::runtime_error("terminal rank mismatch");

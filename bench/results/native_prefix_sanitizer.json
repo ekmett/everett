@@ -67,10 +67,10 @@
         "-g",
         "-fsanitize=address,undefined",
         "-fno-omit-frame-pointer",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-bench/sanitize/baseline/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-bench/sanitize/native_prefix.cc",
+        "-I/workspace/-native-prefix/build-native-prefix-bench/sanitize/baseline/headers/include",
+        "/workspace/-native-prefix/build-native-prefix-bench/sanitize/native_prefix.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-bench/sanitize/baseline/native_prefix"
+        "/workspace/-native-prefix/build-native-prefix-bench/sanitize/baseline/native_prefix"
       ]
     },
     "candidate": {
@@ -125,10 +125,10 @@
         "-g",
         "-fsanitize=address,undefined",
         "-fno-omit-frame-pointer",
-        "-I/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-bench/sanitize/candidate/headers/include",
-        "/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-bench/sanitize/native_prefix.cc",
+        "-I/workspace/-native-prefix/build-native-prefix-bench/sanitize/candidate/headers/include",
+        "/workspace/-native-prefix/build-native-prefix-bench/sanitize/native_prefix.cc",
         "-o",
-        "/Users/ekmett/cult/ai/worktrees/diet-native-prefix/build-native-prefix-bench/sanitize/candidate/native_prefix"
+        "/workspace/-native-prefix/build-native-prefix-bench/sanitize/candidate/native_prefix"
       ]
     }
   },
