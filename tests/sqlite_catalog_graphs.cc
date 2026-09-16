@@ -9,16 +9,16 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/runtime_store.h>
+#include <everett/runtime_store.h>
 
 #include <cassert>
 #include <iostream>
 #include <set>
 
 int main() {
-  using namespace diet;
+  using namespace everett;
   using P = storage_policy<tip<encoded_sort<bit_encoding<>>>, 3>;
-  auto pattern = (std::filesystem::temp_directory_path() / "diet-graphs-XXXXXX").string();
+  auto pattern = (std::filesystem::temp_directory_path() / "everett-graphs-XXXXXX").string();
   if (!::mkdtemp(pattern.data())) return 1;
   struct cleanup {
     std::filesystem::path root;
@@ -31,7 +31,7 @@ int main() {
       while (runtime.pending()) runtime.advance(1024);
       (void)runtime.contribute({bit_string::from_bytes(std::to_string(i)), bit_string::from_bytes("value")}, 0);
     }
-    auto saved = storage.create_tap("many-roots", runtime.snapshot());
+    auto saved = storage.create_session("many-roots", runtime.snapshot());
     using mapped = mapped_cola_blob<P>;
     std::vector<mapped::pair_type> roots;
     for (auto pair = saved.snapshot.query_root().head()->mapped(); pair; pair = pair->main_target()) roots.push_back(pair);
@@ -59,6 +59,6 @@ int main() {
     catalog.register_graphs<mapped>("closure", roots, catalog_admission::scan);
     auto replayed = catalog.lookup_operation("closure");
     assert(replayed && replayed->request == recorded->request && replayed->outcome == recorded->outcome);
-    assert(catalog.find_tap("many-roots") == saved.head);
+    assert(catalog.find_session("many-roots") == saved.head);
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }

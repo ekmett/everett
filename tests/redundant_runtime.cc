@@ -9,14 +9,14 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/redundant_runtime.h>
+#include <everett/redundant_runtime.h>
 #include <iostream>
 #include <map>
 #include <set>
 #include <string>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void check(bool value, char const * message) { if (!value) throw std::runtime_error(message); }
   template <class E = std::logic_error, class F> void rejects(F && f) {
     bool caught = false; try { f(); } catch (E const &) { caught = true; } check(caught, "expected rejection");
@@ -283,8 +283,8 @@ namespace {
   }
 }
 int main(){
-  using bit=diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>,3,diet::golomb<3>,5>;
-  using byte=diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>,15,diet::exponential_golomb<0>,4>;
+  using bit=everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>,3,everett::golomb<3>,5>;
+  using byte=everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>,15,everett::exponential_golomb<0>,4>;
   scenario<bit>(512);scenario<byte>(512);composed<bit>();composed<byte>();restart_stages<bit>();restart_stages<byte>();
   budget_fuzz<bit>();budget_fuzz<byte>();failures<bit>();failures<byte>();
   overlapping_levels<bit>();partial_bits<bit>();fixed_width();

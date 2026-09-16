@@ -9,15 +9,15 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/sort_runtime_context.h>
-#include <diet/typed_scan.h>
+#include <everett/sort_runtime_context.h>
+#include <everett/typed_scan.h>
 
 #include <cassert>
 #include <iostream>
 #include <map>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   using P = storage_policy<string_registry, 3>;
   using family = streaming_sort_runtime_family<P>;
@@ -30,7 +30,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-stream-context-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-stream-context-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -42,7 +42,7 @@ namespace {
   }
   template <class E> void drain(E & engine) { while (engine.pending()) engine.advance(4096); }
   template <class C> void verify(C const & state, std::map<std::string, std::string> const & expected) {
-    auto rows = diet::scan(state); auto oracle = expected.begin();
+    auto rows = everett::scan(state); auto oracle = expected.begin();
     while (auto row = rows.next()) {
       assert(oracle != expected.end() && row->key == oracle->first && row->value == oracle->second);
       assert(state.get(row->key) == row->value); ++oracle;
@@ -50,12 +50,12 @@ namespace {
     assert(oracle == expected.end());
   }
   void owned_parity(runtime_output_options outputs = {}) {
-    temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     auto disk = storage::open(dir.root, {}, {}, {}, {}, outputs); auto context = disk.context();
     core seed; owned_core reference;
     auto active = core::from_snapshot(seed.snapshot(), disk);
     std::map<std::string, std::string> expected;
-    std::vector<std::pair<core::cola_type, decltype(expected)>> saved;
+    std::vector<std::pair<core::world_type, decltype(expected)>> saved;
     for (unsigned n = 0; n != 129; ++n) {
       auto key = std::string("a\0", 2) + std::to_string(n % 29);
       auto value = std::string(n % 31, char(n));
@@ -105,7 +105,7 @@ namespace {
     verify(snapshot, expected);
   }
   void hidden_stages() {
-    temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     auto disk = storage::open(dir.root);
     using Runtime = family::runtime_type<replace_native_value>;
     Runtime active(disk);
@@ -136,7 +136,7 @@ namespace {
     assert(seen == 15 && !disk.context()->failed());
   }
   void retained_index_jobs() {
-    temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     auto owner = storage::open(dir.root, {}, {}, {}, {}, {0, 0}), other = storage::open(dir.root);
     auto input = core::put("key", "value");
     auto native = storage::singleton(input.records()[0]);
@@ -168,7 +168,7 @@ namespace {
     assert(owner.context()->failed());
   }
   void job_context_lifetimes() {
-    temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     auto older = core::put("a", "old"), newer = core::put("b", "new");
     auto a = storage::singleton(older.records()[0]), b = storage::singleton(newer.records()[0]);
     auto disk = storage::open(dir.root), other = storage::open(dir.root);
@@ -225,7 +225,7 @@ namespace {
   using faulty_core = typed_engine<P, wrapping_fingerprint_algebra, 256, faulty_family>;
   void failures() {
     for (unsigned mode = 0; mode != 14; ++mode) {
-      temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+      temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
       auto state = std::make_shared<failure_state>();
       auto disk = faulty_family::storage_type::open(dir.root, {}, {}, catalog_ops(state), file_ops(state), {0, 0});
       auto context = disk.context(); faulty_core seed;

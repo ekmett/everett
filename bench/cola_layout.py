@@ -80,7 +80,7 @@ def main():
             subprocess.run(["git", "apply", "--unsafe-paths", "--directory=" + str(headers), str(patch_file)],
                            check=True, cwd=repo)
         if name.endswith("_aligned"):
-            profile = headers / "include/diet/profile.h"
+            profile = headers / "include/everett/profile.h"
             text = profile.read_text()
             assert text.count(declaration) == 1
             profile.write_text(text.replace(declaration, patch))
@@ -113,7 +113,7 @@ def main():
         if trial & 1:
             order.reverse()
         for name in order:
-            with tempfile.TemporaryDirectory(prefix="diet-cola-layout-") as directory:
+            with tempfile.TemporaryDirectory(prefix="everett-world-layout-") as directory:
                 command = [str(build / name / "run"), str(args.rounds), directory]
                 output = subprocess.check_output(command, text=True)
                 files = {p.name: p.read_bytes() for p in Path(directory).glob("*.index")}

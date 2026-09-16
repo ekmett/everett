@@ -9,21 +9,21 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/replacement_rebuild.h>
-#include <diet/sort_runtime.h>
+#include <everett/replacement_rebuild.h>
+#include <everett/sort_runtime.h>
 #include <iostream>
 #include <map>
 #include <set>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   using engine = replacement_rebuild_engine<>;
   void check(bool value, char const * message) { if (!value) throw std::runtime_error(message); }
-  template<class Cola>auto mass(Cola const & state){return state.runtime().admissions();}
-  template<class Cola>bool same(Cola const & a,Cola const & b){return a.runtime().same_layout(b.runtime());}
+  template<class World>auto mass(World const & state){return state.runtime().admissions();}
+  template<class World>bool same(World const & a,World const & b){return a.runtime().same_layout(b.runtime());}
   template<class F>void rejects(F && f){bool rejected=false;try{f();}catch(std::exception const&){rejected=true;}check(rejected,"expected rejection");}
-  template<class Cola>void verify(Cola state,std::map<std::string,std::string> const & expected){
+  template<class World>void verify(World state,std::map<std::string,std::string> const & expected){
     check(state.metadata().live_count==expected.size(),"live count");
     std::uint64_t hash=0;
     for(auto const &[k,v]:expected){check(state.get(k)==v,"point query");hash+=sort_semantics<strings>::hash_key(k)*sort_semantics<strings>::hash_value(k,v);}
@@ -95,18 +95,18 @@ namespace {
     while(e.pending())e.advance(1000000);
     quoted(e,engine::put("0","dirty"));
     auto dirty=e.snapshot();check(dirty.metadata().mutations&& !dirty.metadata().rebuilding,"inactive dirty fixture");
-    auto restored=engine::cola_type::restore(dirty.runtime(),engine::metadata_type::decode(dirty.metadata().encode()),dirty.metadata().schema_id);
+    auto restored=engine::world_type::restore(dirty.runtime(),engine::metadata_type::decode(dirty.metadata().encode()),dirty.metadata().schema_id);
     auto resumed=engine::from_snapshot(restored);
     check(resumed.status().clean_base==e.status().clean_base&&resumed.status().mutations==e.status().mutations,"restore reset dirty generation");
     while(!e.status().rebuilding)quoted(e,engine::put("0","changed"));
     auto active=e.snapshot();auto bytes=active.metadata().encode();
-    check(bytes.size()>56&&bytes[0]==std::byte{'D'}&&bytes[7]==std::byte{0}&&bytes[8]==std::byte{1},"metadata header");
+    check(bytes.size()>56&&bytes[0]==std::byte{'E'}&&bytes[7]==std::byte{0}&&bytes[8]==std::byte{1},"metadata header");
     for(std::size_t i=0;i<=56;++i)rejects([&]{(void)engine::metadata_type::decode(std::span(bytes).first(i));});
     for(auto at:{0u,7u,8u,15u,32u,39u}){auto bad=bytes;bad[at]^=std::byte{2};rejects([&]{(void)engine::metadata_type::decode(bad);});}
-    auto bad=active.metadata();bad.mutations++;rejects([&]{(void)engine::cola_type::restore(active.runtime(),bad,bad.schema_id);});
-    bad=active.metadata();bad.rebuilding=false;rejects([&]{(void)engine::cola_type::restore(active.runtime(),bad,bad.schema_id);});
-    bad=active.metadata();bad.clean_base=0;bad.mutations=mass(active);rejects([&]{(void)engine::cola_type::restore(active.runtime(),bad,bad.schema_id);});
-    rejects([&]{(void)engine::metadata_type::decode(static_cast<engine::typed_cola_type const&>(active).metadata().encode());});
+    auto bad=active.metadata();bad.mutations++;rejects([&]{(void)engine::world_type::restore(active.runtime(),bad,bad.schema_id);});
+    bad=active.metadata();bad.rebuilding=false;rejects([&]{(void)engine::world_type::restore(active.runtime(),bad,bad.schema_id);});
+    bad=active.metadata();bad.clean_base=0;bad.mutations=mass(active);rejects([&]{(void)engine::world_type::restore(active.runtime(),bad,bad.schema_id);});
+    rejects([&]{(void)engine::metadata_type::decode(static_cast<engine::typed_world_type const&>(active).metadata().encode());});
     auto recovering=engine::from_snapshot(active);
     check(recovering.pending()&&!recovering.admission_ready()&&recovering.work().scan_records==0,"recovery not lazy/gated");
     rejects([&]{recovering.contribute(engine::put("forbidden","before cleanup"));});
@@ -125,7 +125,7 @@ namespace {
   }
   void sequences(){
     engine e;std::map<std::string,std::string> expected;
-    std::vector<std::pair<engine::cola_type,std::map<std::string,std::string>>> saved;
+    std::vector<std::pair<engine::world_type,std::map<std::string,std::string>>> saved;
     auto batch=engine::batch();
     for(unsigned n=0;n!=256;++n){auto k="key/"+std::to_string(n);batch.put(k,"initial");expected[k]="initial";}
     e.contribute(std::move(batch).finish());verify(e.snapshot(),expected);invariant(e);
@@ -139,7 +139,7 @@ namespace {
     }
     check(rebuilding&&e.work().replayed,"no live FIFO replay");
     for(unsigned n=0;n!=256;++n){auto k="key/"+std::to_string(n);quoted(e,engine::erase(k));expected.erase(k);invariant(e);if(n%31==0)verify(e.snapshot(),expected);}
-    verify(e.snapshot(),expected);check(mass(e.snapshot())==0,"empty cola retained tombstone mass");
+    verify(e.snapshot(),expected);check(mass(e.snapshot())==0,"empty world retained tombstone mass");
     for(auto const &[state,want]:saved)verify(state,want);
     auto prior=e.snapshot();auto count=e.work().mutations;
     rejects([&]{e.contribute(engine::erase("absent"));});

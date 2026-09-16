@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/redundant_checkpoint.h>
+#include <everett/redundant_checkpoint.h>
 
 #include <cassert>
 #include <iostream>
@@ -17,7 +17,7 @@
 #include <set>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   template <class F> void rejects(F && action, std::string_view fragment) {
     try { action(); }
     catch (std::invalid_argument const & error) {

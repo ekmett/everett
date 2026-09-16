@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/sqlite_catalog.h>
+#include <everett/sqlite_catalog.h>
 
 #include <array>
 #include <barrier>
@@ -27,8 +27,8 @@
 #include <unistd.h>
 
 namespace {
-  using namespace diet;
-  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 4>;
+  using namespace everett;
+  using policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 4>;
   using catalog = sqlite_catalog<policy>;
   void require(bool condition, char const * message) { if (!condition) throw std::runtime_error(message); }
   template<class F> void rejects(F && action) {
@@ -43,7 +43,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto text = (std::filesystem::temp_directory_path() / "diet-timeline-XXXXXX").string();
+      auto text = (std::filesystem::temp_directory_path() / "everett-timeline-XXXXXX").string();
       auto result = ::mkdtemp(text.data());
       if (!result) throw std::runtime_error("mkdtemp");
       root = result;
@@ -482,7 +482,7 @@ namespace {
   }
   void bits() {
     temporary directory;
-    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, golomb<3>, 16>;
+    using P = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 7, golomb<3>, 16>;
     auto db = sqlite_catalog<P>::create(directory.root, id(1));
     auto a = persist(db, 100);
     auto initial = db.create_timeline("create", "bits", a.head);

@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/sqlite_catalog.h>
+#include <everett/sqlite_catalog.h>
 
 #include <algorithm>
 #include <array>
@@ -31,8 +31,8 @@
 #include <unistd.h>
 
 namespace {
-  using namespace diet;
-  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 4>;
+  using namespace everett;
+  using policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 4>;
   using catalog = sqlite_catalog<policy>;
   using clock_type = std::chrono::steady_clock;
   void require(bool okay, char const * message) { if (!okay) throw std::runtime_error(message); }
@@ -48,7 +48,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-restart-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-restart-XXXXXX").string();
       auto made = ::mkdtemp(name.data());
       if (!made) throw std::runtime_error("mkdtemp restart fixture");
       root = made;

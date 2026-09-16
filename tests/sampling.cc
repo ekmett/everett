@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Diet's sequential sampling of pinned encoded blob pairs.
+ * \brief Tests Everett's sequential sampling of pinned encoded blob pairs.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/sampling.h>
+#include <everett/sampling.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -25,7 +25,7 @@
 #include <vector>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -401,10 +401,10 @@ namespace {
   }
 
   template <std::uint64_t K> void check_groups() {
-    check_policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, K>>();
-    check_policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, K>>();
-    check_policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, K>>();
-    check_policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, K>>();
+    check_policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, K>>();
+    check_policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<3>>>>, K>>();
+    check_policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, K>>();
+    check_policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<3>>>>, K>>();
   }
 }
 
@@ -414,10 +414,10 @@ int main() {
     check_groups<7>();
     check_groups<15>();
     check_groups<31>();
-    prefix_and_tie_cases<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
-    prefix_and_tie_cases<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>();
-    prefix_and_tie_cases<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<3>, 7>>();
-    prefix_and_tie_cases<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 31, exponential_golomb<3>, 16>>();
+    prefix_and_tie_cases<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+    prefix_and_tie_cases<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>();
+    prefix_and_tie_cases<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 15, golomb<3>, 7>>();
+    prefix_and_tie_cases<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<3>>>>, 31, exponential_golomb<3>, 16>>();
     std::cout << "sampling tests passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';

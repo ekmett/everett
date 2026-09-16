@@ -5,10 +5,10 @@
 #
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
-"""Normalize a Git benchmark snapshot to current Diet names, retaining both hashes.
+"""Normalize a Git benchmark snapshot to Everett names, retaining both hashes.
 
 Usage: snapshot.py REVISION DESTINATION [PATH ...]
-Without paths, extract the complete header tree to DESTINATION/include/diet.
+Without paths, extract the complete header tree to DESTINATION/include/everett.
 Paths use current names; explicitly listed fixtures are normalized the same way.
 Names and wire identifiers are relabeled; API structure and algorithms remain
 unchanged. The normalized encoding is not byte-identical to its historical
@@ -33,7 +33,8 @@ def git(repo, *arguments):
 
 @lru_cache(maxsize=None)
 def replacements(repo):
-    # Obtain source vocabulary from the actual semantic file/package renames.
+    # Invert the historical file/package rename. Deriving its vocabulary keeps
+    # old checkout names out of the public runner and handles both naming eras.
     changes = git(repo, 'diff-tree', '-r', '-M', '--name-status',
                   RENAME_REVISION + '^', RENAME_REVISION, '--', 'include').decode()
     pairs = {}
@@ -43,30 +44,114 @@ def replacements(repo):
             continue
         before, after = Path(fields[1]), Path(fields[2])
         if before.parts[1] != after.parts[1]:
-            pairs[before.parts[1]] = after.parts[1]
+            pairs[after.parts[1]] = before.parts[1]
         if before.stem != after.stem:
-            pairs[before.stem] = after.stem
-    source_roots = {Path(line.split('\t')[1]).parts[1] for line in changes.splitlines()
-                    if line.startswith('R') and len(line.split('\t')) == 3}
-    if len(source_roots) == 1:
-        framing = git(repo, 'show', RENAME_REVISION + '^:include/' + source_roots.pop() + '/file.h').decode()
-        signature = re.search(r'case file_kind::native_blob: return \{"([A-Z]+)\.KV', framing)
-        if signature: pairs[signature.group(1)] = 'DIET'
-    if not pairs:
+            pairs[after.stem] = before.stem
+    roots = {(Path(line.split('\t')[1]).parts[1], Path(line.split('\t')[2]).parts[1])
+             for line in changes.splitlines()
+             if line.startswith('R') and len(line.split('\t')) == 3}
+    if len(roots) != 1 or pairs.get('cola') != 'world':
         raise RuntimeError('semantic rename metadata is unavailable')
-    return sorted(pairs.items(), key=lambda item: -len(item[0]))
+    before, after = roots.pop()
+    framing = git(repo, 'show', RENAME_REVISION + '^:include/' + before + '/file.h').decode()
+    signature = re.search(r'case file_kind::native_blob: return \{"([A-Z]+)\.KV', framing)
+    if not signature or len(signature.group(1)) != 4 or len(after) != 4:
+        raise RuntimeError('historical four-byte file signature is unavailable')
+    # The package rename and its later wire-signature rename were separate
+    # commits. Early snapshots already use the target signature unchanged.
+    return pairs, (signature.group(1), after.upper())
 
 
-def normalize(repo, data):
+def spelling(value, replacement):
+    if value.isupper(): return replacement.upper()
+    if value[:1].isupper(): return replacement.capitalize()
+    return replacement
+
+
+def wire_names(text, before, after):
+    # The outer signature has four brand bytes plus four kind/version bytes.
+    # Expanding it to the full project name would collide at the fixed width.
+    text = re.sub(re.escape(after) + r'(?=\.(?:KV|IX|RC|RB))', before, text)
+    atoms = [r"(?:std::byte\s*\{\s*)?'" + c + r"'(?:\s*\})?" for c in after]
+    pattern = r'\s*,\s*'.join(atoms)
+    pattern += r"(?=\s*,\s*(?:std::byte\s*\{\s*)?'[.R]')"
+    def split_signature(match):
+        letters = iter(before)
+        return re.sub(r"'[A-Z]'", lambda _: "'" + next(letters) + "'", match.group())
+    text = re.sub(pattern, split_signature, text)
+
+    # Explicitly extracted file tests also contain a canonical 96-byte golden
+    # header. Relabel only a valid header and repair its independent CRC32C;
+    # malformed-byte fixtures and body checksums must remain untouched.
+    def crc32c(data):
+        crc = 0xffffffff
+        for byte in data:
+            crc ^= byte
+            for _ in range(8):
+                crc = (crc >> 1) ^ (0x82f63b78 if crc & 1 else 0)
+        return crc ^ 0xffffffff
+
+    def golden_header(match):
+        chunks = re.findall(r'"([0-9a-fA-F]+)"', match.group())
+        joined = ''.join(chunks)
+        if len(joined) != 192:
+            return match.group()
+        header = bytearray.fromhex(joined)
+        if header[:8] not in (after.encode() + b'.KV\0', after.encode() + b'.IX\0'):
+            return match.group()
+        if header[8:12] != b'\1\0\x60\0':
+            return match.group()
+        checksum = int.from_bytes(header[68:72], 'little')
+        header[68:72] = bytes(4)
+        if crc32c(header) != checksum:
+            return match.group()
+        header[:4] = before.encode()
+        header[68:72] = crc32c(header).to_bytes(4, 'little')
+        encoded, at = header.hex(), 0
+        def chunk(part):
+            nonlocal at
+            end = at + len(part.group(1))
+            result = '"' + encoded[at:end] + '"'
+            at = end
+            return result
+        return re.sub(r'"([0-9a-fA-F]+)"', chunk, match.group())
+
+    return re.sub(r'(?:"[0-9a-fA-F]+"\s*)+', golden_header, text)
+
+
+def normalize(repo, data, path=None):
     text = data.decode('utf-8')
-    for old, new in replacements(str(Path(repo).resolve())):
-        def replace(match):
-            value = match.group()
-            if value.isupper(): return new.upper()
-            if value[:1].isupper(): return new.capitalize()
-            return new
-        pattern = re.escape(old) + (r'(?!wide)' if new == 'cola' else '')
-        text = re.sub(pattern, replace, text, flags=re.IGNORECASE)
+    reference_world = re.search(r'\bstruct\s+(?:reference_cola|cola_record)\b', text)
+    pairs, signatures = replacements(str(Path(repo).resolve()))
+    text = wire_names(text, *signatures)
+    if path is not None and Path(path).as_posix() == 'tests/replacement_rebuild.cc':
+        # This fixture checks just the first byte of the RB envelope. Keep the
+        # rewrite local to that assertion; ordinary character payloads do not
+        # acquire the file signature's new spelling.
+        first_byte = (r"(\bbytes\s*\[\s*0\s*\]\s*==\s*std::byte\s*\{\s*)'" +
+                      re.escape(signatures[1][0]) + r"'(\s*\})")
+        text = re.sub(first_byte,
+                      lambda m: m.group(1) + "'" + signatures[0][0] + "'" + m.group(2), text)
+    for old, new in pairs.items():
+        if old == 'cola':
+            continue
+        text = re.sub(re.escape(old), lambda m: spelling(m.group(), new), text, flags=re.IGNORECASE)
+
+    # COLA is still the physical algorithm. Only the logical state vocabulary
+    # changes; cola_index, cola_runtime, mapped_cola and their relatives stay.
+    semantic = r'(?:reference|typed|stored|replacement|saved)_cola(?:_(?:metadata|type))?'
+    semantic += r'|cola_(?:record|edit|run|apply_result|batch|import_limits|type)'
+    semantic += r'|u64_cola_codec'
+    text = re.sub(r'\b(?:' + semantic + r')\b',
+                  lambda m: m.group().replace('cola', 'world'), text)
+    if reference_world:
+        text = re.sub(r'\bcola_detail\b', 'world_detail', text)
+    text = re.sub(r'\b(?:cola|Cola|colas|Colas)\b',
+                  lambda m: spelling(m.group(), 'worlds' if m.group().endswith('s') else 'world'), text)
+    # Underscores delimit the public session vocabulary in compound symbols.
+    text = re.sub(r'(?<![A-Za-z0-9])taps?(?![A-Za-z0-9])',
+                  lambda m: spelling(m.group(), 'sessions' if m.group().lower().endswith('s') else 'session'),
+                  text, flags=re.IGNORECASE)
     return text.encode('utf-8')
 
 
@@ -84,7 +169,7 @@ class Snapshot:
         roots = {Path(path).parts[1] for path in original if path.startswith('include/') and len(Path(path).parts) >= 3}
         if len(roots) != 1:
             raise RuntimeError('snapshot must have one library include root')
-        self.paths = tuple(sorted(path for path in self._paths if path.startswith('include/diet/')))
+        self.paths = tuple(sorted(path for path in self._paths if path.startswith('include/everett/')))
         if not self.paths:
             raise RuntimeError('snapshot has no library headers')
         self.files = {}
@@ -94,13 +179,14 @@ class Snapshot:
         if original_path is None:
             raise FileNotFoundError(path + ' is absent from ' + self.revision)
         original = git(self.repo, 'show', self.revision + ':' + original_path)
-        current = normalize(self.repo, original)
+        current = normalize(self.repo, original, path=path)
         self.files[path] = {'original_sha256': hashlib.sha256(original).hexdigest(),
                             'normalized_sha256': hashlib.sha256(current).hexdigest()}
         return current
 
     def metadata(self):
         return {'revision': self.revision, 'normalization_revision': RENAME_REVISION,
+                'target_names': 'everett/world/multiverse/session', 'normalization_version': 2,
                 'hash_scope': 'original Git bytes and name-normalized build inputs',
                 'files': self.files}
 
@@ -111,8 +197,8 @@ class Snapshot:
 
     def write(self, destination, paths=None):
         destination = Path(destination)
-        if paths is None and (destination / 'include/diet').exists():
-            shutil.rmtree(destination / 'include/diet')
+        if paths is None and (destination / 'include/everett').exists():
+            shutil.rmtree(destination / 'include/everett')
         for path in self.paths if paths is None else paths:
             output = destination / path
             output.parent.mkdir(parents=True, exist_ok=True)

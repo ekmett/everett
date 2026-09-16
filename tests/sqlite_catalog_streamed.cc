@@ -10,8 +10,8 @@
  * \endlicense
  */
 
-#include <diet/sqlite_catalog.h>
-#include <diet/native_file_merge.h>
+#include <everett/sqlite_catalog.h>
+#include <everett/native_file_merge.h>
 
 #include <algorithm>
 #include <array>
@@ -38,7 +38,7 @@
 #include <unistd.h>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using clock_type = std::chrono::steady_clock;
   void require(bool okay, char const * message) { if (!okay) throw std::runtime_error(message); }
   object_id id(unsigned value) {
@@ -54,7 +54,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-streamed-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-streamed-XXXXXX").string();
       auto made = ::mkdtemp(name.data());
       if (!made) throw std::runtime_error("mkdtemp restart fixture");
       root = made;
@@ -471,8 +471,8 @@ namespace {
 
 int main() {
   try {
-    using byte_policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15, exponential_golomb<0>, 4>;
-    using bit_policy = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<3>, 4>;
+    using byte_policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 15, exponential_golomb<0>, 4>;
+    using bit_policy = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 15, golomb<3>, 4>;
     auto cases = exercise<byte_policy>() + exercise<bit_policy>();
     std::cout << "SQLite streamed merge: " << cases << " bounded SIGKILL cuts; SQLite "
       << sqlite_catalog<byte_policy>::runtime_version() << '\n';

@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/native_merge.h>
+#include <everett/native_merge.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -30,7 +30,7 @@
 #endif
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }
@@ -425,7 +425,7 @@ namespace {
     }
   }
   void value_callback_failure() {
-    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
+    using P = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>;
     auto records = prefix_records<P>();
     auto source = std::make_shared<profile_array<P> const>(profile_array<P>::build(records));
     std::weak_ptr<profile_array<P> const> retained = source;
@@ -552,11 +552,11 @@ namespace {
     }
   }
   void output_sink_tests() {
-    alternate_output<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>();
-    alternate_output<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<13>>>>>>();
-    alternate_output<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>(
+    alternate_output<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>>();
+    alternate_output<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<13>>>>>>();
+    alternate_output<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>>(
       [](bit_view, bit_view newer) { return newer; });
-    alternate_output<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>>(
+    alternate_output<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>>(
       [](bit_view, bit_view, bit_view newer) { return newer; });
   }
 #if defined(__unix__) || defined(__APPLE__)
@@ -629,7 +629,7 @@ namespace {
   }
 #endif
   void failure_and_pins() {
-    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
+    using P = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
     auto records = fixture<P>({1}, 1);
     auto source = std::make_shared<profile_array<P> const>(profile_array<P>::build(records));
     std::weak_ptr<profile_array<P> const> weak = source;
@@ -655,29 +655,29 @@ namespace {
 
 int main() {
   try {
-    replacement<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>();
-    replacement<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 7, exponential_golomb<0>, 16>>();
-    replacement<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 7>>();
-    replacement<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 15, exponential_golomb<3>, 16>>();
-    associative_composition<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>();
-    associative_composition<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, golomb<3>, 16>>();
+    replacement<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>>();
+    replacement<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<3>>>>, 7, exponential_golomb<0>, 16>>();
+    replacement<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 7>>();
+    replacement<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<3>>>>, 15, exponential_golomb<3>, 16>>();
+    associative_composition<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>>();
+    associative_composition<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 7, golomb<3>, 16>>();
     failure_and_pins();
     output_sink_tests();
 #if defined(__unix__) || defined(__APPLE__)
-    guarded_fragments<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>();
-    guarded_fragments<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, golomb<3>, 16>>();
+    guarded_fragments<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>>();
+    guarded_fragments<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 7, golomb<3>, 16>>();
 #endif
-    frontier_suite<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>();
-    frontier_suite<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 7, exponential_golomb<0>, 16>>();
-    frontier_suite<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 7>>();
-    frontier_suite<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 15, exponential_golomb<3>, 16>>();
-    frontier_suite<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, golomb<3>, 16>>();
-    fragmented_prefixes<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>();
-    fragmented_prefixes<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>>();
-    fragmented_prefixes<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 7>>();
+    frontier_suite<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>>();
+    frontier_suite<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<3>>>>, 7, exponential_golomb<0>, 16>>();
+    frontier_suite<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 7>>();
+    frontier_suite<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<3>>>>, 15, exponential_golomb<3>, 16>>();
+    frontier_suite<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 7, golomb<3>, 16>>();
+    fragmented_prefixes<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>>();
+    fragmented_prefixes<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>>();
+    fragmented_prefixes<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 7>>();
     value_callback_failure();
-    malformed_fragment<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7, exponential_golomb<0>, 4>>();
-    malformed_fragment<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 4>>();
+    malformed_fragment<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 7, exponential_golomb<0>, 4>>();
+    malformed_fragment<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 4>>();
     std::cout << "native merge tests passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';

@@ -12,7 +12,7 @@
 
 #include "policy_compat.h"
 
-#include <diet/index_pipeline.h>
+#include <everett/index_pipeline.h>
 
 #include <algorithm>
 #include <array>
@@ -57,21 +57,21 @@ namespace {
       for (auto v : values) integer(v);
     }
   };
-  template <class P> diet::bit_string key_for(std::uint64_t id, unsigned prefix) {
+  template <class P> everett::bit_string key_for(std::uint64_t id, unsigned prefix) {
     std::string text(prefix, 'p');
     for (unsigned i = 8; i; --i) text.push_back(char((id >> ((i - 1) * 8)) & 255));
-    auto result = diet::bit_string::from_bytes(text);
-    if constexpr (P::unit == diet::profile_unit::bit) {
+    auto result = everett::bit_string::from_bytes(text);
+    if constexpr (P::unit == everett::profile_unit::bit) {
       // Build the oracle input directly, independently of the bit-copy helpers.
       result.bytes.push_back((id & 1) ? std::byte{128} : std::byte{0});
       ++result.bit_size;
     }
     return result;
   }
-  template <class P> diet::bit_string value_for(std::uint64_t id) {
+  template <class P> everett::bit_string value_for(std::uint64_t id) {
     auto units = P::value_width.value_or(8 + id % 17);
     auto bits = units * P::bits_per_unit;
-    diet::bit_string value;
+    everett::bit_string value;
     value.bit_size = bits;
     value.bytes.resize(static_cast<std::size_t>(bits / 8 + (bits % 8 != 0)));
     for (std::size_t i = 0; i != value.bytes.size(); ++i)
@@ -80,19 +80,19 @@ namespace {
     return value;
   }
   template <class P> struct fixture {
-    using blob = diet::profile_blob<P>;
+    using blob = everett::profile_blob<P>;
     using pair = std::shared_ptr<blob const>;
     struct entry { std::uint64_t id; bool borrowed; };
     struct lookup {
-      diet::bit_string key;
-      diet::bit_string boundary;
+      everett::bit_string key;
+      everett::bit_string boundary;
       std::uint64_t group;
       std::optional<std::uint64_t> native;
       std::optional<std::uint64_t> borrowed;
-      diet::bit_string value;
+      everett::bit_string value;
     };
     std::array<std::vector<std::uint64_t>, 4> ids;
-    std::array<std::vector<diet::profile_record>, 4> records;
+    std::array<std::vector<everett::profile_record>, 4> records;
     std::array<std::vector<std::uint64_t>, 4> borrowed_ids;
     std::array<pair, 4> sources;
     std::vector<lookup> queries;
@@ -145,12 +145,12 @@ namespace {
       return result;
     }
     pair build_chain() const {
-      diet::index_pipeline<P> pipeline(sources[0], {sources[1], sources[2], sources[3]});
+      everett::index_pipeline<P> pipeline(sources[0], {sources[1], sources[2], sources[3]});
       while (!pipeline.done()) pipeline.step(256);
       return pipeline.finish();
     }
     auto search(blob const & head, lookup const & q) const {
-      return head.search_window(q.key.view(), q.group, diet::profile_anchor<P>::complete(q.boundary.view()));
+      return head.search_window(q.key.view(), q.group, everett::profile_anchor<P>::complete(q.boundary.view()));
     }
     void verify(pair head) const {
       auto current = head;
@@ -281,10 +281,10 @@ int main(int argc, char ** argv) try {
   auto rounds = argc > 4 ? unsigned(std::stoul(argv[4])) : 3u;
   require(count >= 64 && count <= 1048576 && prefix <= 4096 && queries && rounds, "invalid benchmark dimensions");
   std::cout << "profile,group_size,base_records,prefix_bytes,queries,rounds,operation,ns_per_operation,digest_bytes,encoding_digest,checksum\n";
-  run<diet_bench::policy<diet::profile_unit::byte>>("byte_variable", count, prefix, queries, rounds);
-  run<diet_bench::policy<diet::profile_unit::bit>>("bit_variable", count, prefix, queries, rounds);
-  run<diet_bench::policy<diet::profile_unit::byte, diet::fixed_values<8>, 7>>("byte_fixed", count, prefix, queries, rounds);
-  run<diet_bench::policy<diet::profile_unit::bit, diet::fixed_values<13>, 31>>("bit_fixed", count, prefix, queries, rounds);
+  run<everett_bench::policy<everett::profile_unit::byte>>("byte_variable", count, prefix, queries, rounds);
+  run<everett_bench::policy<everett::profile_unit::bit>>("bit_variable", count, prefix, queries, rounds);
+  run<everett_bench::policy<everett::profile_unit::byte, everett::fixed_values<8>, 7>>("byte_fixed", count, prefix, queries, rounds);
+  run<everett_bench::policy<everett::profile_unit::bit, everett::fixed_values<13>, 31>>("bit_fixed", count, prefix, queries, rounds);
 } catch (std::exception const & error) {
   std::cerr << error.what() << '\n';
   return 1;

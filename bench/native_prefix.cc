@@ -12,7 +12,7 @@
 
 #include "policy_compat.h"
 
-#include <diet/native_writer.h>
+#include <everett/native_writer.h>
 
 #include <algorithm>
 #include <chrono>
@@ -27,7 +27,7 @@
 #endif
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using clock_type = std::chrono::steady_clock;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -135,10 +135,10 @@ int main(int argc, char ** argv) {
 #endif
     std::cout << std::fixed << std::setprecision(3)
       << "profile,records,prefix_bytes,round,build_ns,record_ns,payload_bytes,wire_digest\n";
-    run<diet_bench::policy<profile_unit::byte, fixed_values<8>>>("byte_fixed", count, prefix, rounds);
-    run<diet_bench::policy<profile_unit::byte>>("byte_variable", count, prefix, rounds);
-    run<diet_bench::policy<profile_unit::bit, fixed_values<13>>>("bit_fixed", count, prefix, rounds);
-    run<diet_bench::policy<profile_unit::bit>>("bit_variable", count, prefix, rounds);
+    run<everett_bench::policy<profile_unit::byte, fixed_values<8>>>("byte_fixed", count, prefix, rounds);
+    run<everett_bench::policy<profile_unit::byte>>("byte_variable", count, prefix, rounds);
+    run<everett_bench::policy<profile_unit::bit, fixed_values<13>>>("bit_fixed", count, prefix, rounds);
+    run<everett_bench::policy<profile_unit::bit>>("bit_variable", count, prefix, rounds);
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n'; return 1;
   }

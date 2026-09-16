@@ -2,7 +2,7 @@ Benchmark evidence
 ==================
 
 I keep source, fixture, command and result names consistent with the current
-Diet API throughout pre-release development.
+Everett API throughout pre-release development.
 
 Timing and allocation samples retain their measured values. Recorded measurement
 hashes identify the original source and binary bytes, before name normalization;
@@ -16,7 +16,7 @@ current runners with the revisions named in each report. Reproduction makes new
 measurements with normalized source names; it does not replace the recorded
 observations.
 
-New measurements of Diet should record their own source hashes and results.
+New measurements of Everett should record their own source hashes and results.
 The [implementation ledger](../docs/implementation.md) links the accepted
 measurements and describes the current library.
 

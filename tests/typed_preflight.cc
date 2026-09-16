@@ -9,15 +9,15 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/replacement_rebuild.h>
-#include <diet/sort_runtime.h>
+#include <everett/replacement_rebuild.h>
+#include <everett/sort_runtime.h>
 
 #include <cassert>
 #include <stdexcept>
 #include <string>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   template <class P, class Base> struct observed_family : Base {
     struct key_transport : typed_detail::transport_t<P, Base> {

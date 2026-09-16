@@ -2,7 +2,7 @@
 ##
 # \file
 # \author Edward Kmett <ekmett@gmail.com>
-# \brief Adapts Markdown dollar math for Diet's Doxygen build.
+# \brief Adapts Markdown dollar math for Everett's Doxygen build.
 #
 # \license
 # SPDX-FileType: SOURCE

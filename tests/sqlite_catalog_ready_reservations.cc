@@ -9,10 +9,10 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/runtime_graph_sealer.h>
-#include <diet/sort_runtime.h>
-#include <diet/sort_runtime_store.h>
-#include <diet/typed_scan.h>
+#include <everett/runtime_graph_sealer.h>
+#include <everett/sort_runtime.h>
+#include <everett/sort_runtime_store.h>
+#include <everett/typed_scan.h>
 
 #include <atomic>
 #include <cassert>
@@ -22,7 +22,7 @@
 #include <thread>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using P = storage_policy<string_registry, 3>;
   using input_core = typed_engine<P, wrapping_fingerprint_algebra, 256, sort_runtime_family<P>>;
   object_id id(std::uint64_t value) {
@@ -36,7 +36,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-ready-reservation-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-ready-reservation-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -104,7 +104,7 @@ namespace {
 
   template <class Storage> void independent() {
     temporary dir; ids next;
-    auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     sealer<Storage> graph(catalog, next);
     auto left = pair<Storage>(native<Storage>("left"));
     auto right = pair<Storage>(native<Storage>("right"));
@@ -143,7 +143,7 @@ namespace {
 
   template <class Storage> void aliases_and_unready() {
     temporary dir; ids next;
-    auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     sealer<Storage> graph(catalog, next);
     auto shared = native<Storage>("shared");
     auto left = pair<Storage>(shared), right = pair<Storage>(shared);
@@ -168,7 +168,7 @@ namespace {
   void bounded_batch() {
     using Storage = sort_runtime_storage<P>;
     temporary dir; ids next;
-    auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     sealer<Storage> graph(catalog, next);
     std::vector<typename node<Storage>::pair_type> roots;
     for (unsigned i = 0; i != 18; ++i) roots.push_back(pair<Storage>(native<Storage>("key-" + std::to_string(i))));
@@ -182,7 +182,7 @@ namespace {
   void secondary_alias() {
     using Storage = sort_runtime_storage<P>;
     temporary dir; ids next;
-    auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     sealer<Storage> graph(catalog, next);
     auto shared = native<Storage>("shared");
     auto alias = pair<Storage>(shared, {}, shared);
@@ -210,7 +210,7 @@ namespace {
     assert(!active.pending() && source.runtime().admissions() == 64);
     struct counts { std::size_t selected, files; std::int64_t reservations, fused; };
     auto prepare = [&](std::filesystem::path const & root, bool batched) {
-      ids next; auto catalog = sqlite_catalog<Q>::create_taps(root, id(1));
+      ids next; auto catalog = sqlite_catalog<Q>::create_sessions(root, id(1));
       runtime_store_detail::graph_sealer<Q, ids, sqlite_catalog_ops, F> graph(catalog, next);
       std::vector<typename F::node_type::pair_type> pairs;
       std::vector<typename F::node_type::native_pointer> natives;
@@ -226,17 +226,17 @@ namespace {
       auto checkpoint = Codec::encode(source.runtime(), source.metadata().encode(),
         [&](auto const & pair) { return graph.pair_id(pair); },
         [&](auto const & native) { return graph.native_id(native); });
-      auto published = catalog.create_tap("publication", "main", head, checkpoint, auxiliary);
+      auto published = catalog.create_session("publication", "main", head, checkpoint, auxiliary);
       auto reopened = runtime_store<Q, ids, sqlite_catalog_ops, F>::open(root);
       auto saved = reopened.find("main"); assert(saved && saved->head == published);
       assert(Codec::object_count(saved->snapshot) == Codec::object_count(source.runtime()));
       assert(saved->snapshot.admissions() == source.runtime().admissions());
       assert(saved->semantic == source.metadata().encode());
-      auto restored = Core::cola_type::restore(saved->snapshot, source.metadata(), source.metadata().schema_id);
+      auto restored = Core::world_type::restore(saved->snapshot, source.metadata(), source.metadata().schema_id);
       for (unsigned i = 1; i <= 64; ++i)
         assert(restored.get("key-" + std::to_string(i)) == "value-" + std::to_string(i));
       assert(!restored.get("missing") && restored.signature() == source.signature() && restored.live_count() == 64);
-      auto scan = diet::scan(restored); unsigned found = 0;
+      auto scan = everett::scan(restored); unsigned found = 0;
       while (auto row = scan.next()) { assert(row->value == "value-" + row->key.substr(4)); ++found; }
       assert(found == 64);
       return counts{selected, files(root), scalar(root, "SELECT count(*) FROM operations WHERE kind='reserve'"),
@@ -288,12 +288,12 @@ namespace {
     for (bool reservation : {false, true}) for (bool after : {false, true}) {
       temporary dir; ids next;
       auto state = std::make_shared<fault_state>();
-      auto catalog = sqlite_catalog<P, fault_ops>::create_taps(dir.root, id(1), {}, fault_ops{state});
+      auto catalog = sqlite_catalog<P, fault_ops>::create_sessions(dir.root, id(1), {}, fault_ops{state});
       std::string last;
       sealer<Storage, fault_ops> graph(catalog, next, &last);
       auto old = pair<Storage>(native<Storage>("old"));
       auto old_id = graph.ensure_pair(old)->identity;
-      auto old_head = catalog.create_tap("old-head", "main", old_id, {});
+      auto old_head = catalog.create_session("old-head", "main", old_id, {});
       auto left = pair<Storage>(native<Storage>("left")), right = pair<Storage>(native<Storage>("right"));
       std::array roots{left, right};
       state->kind = reservation ? "reserve" : "seal_native_cola_pair";
@@ -312,7 +312,7 @@ namespace {
       }
       rejects([&] { (void)retry.pair_id(right); });
       assert(bool(healthy.lookup_operation(last)) == after);
-      assert(healthy.find_tap("main") == old_head);
+      assert(healthy.find_session("main") == old_head);
       if (reservation) {
         // Reconcile the exact uncertain multi-object reservation; successful
         // replay must neither add pins nor duplicate the four output rows.
@@ -333,14 +333,14 @@ namespace {
       (void)retry.prepare_ready(roots, {});
       auto a = retry.ensure_pair(left), b = retry.ensure_pair(right);
       if (acknowledged) assert(a->identity == *acknowledged);
-      assert(healthy.find_tap("main") == old_head);
+      assert(healthy.find_session("main") == old_head);
       query(a->mapped, "left"); query(b->mapped, "right");
     }
   }
 
   template <class Storage> void concurrent() {
     temporary dir; ids next;
-    { auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1)); }
+    { auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1)); }
     std::array roots{pair<Storage>(native<Storage>("a")), pair<Storage>(native<Storage>("b")),
       pair<Storage>(native<Storage>("c")), pair<Storage>(native<Storage>("d"))};
     std::latch start(1);

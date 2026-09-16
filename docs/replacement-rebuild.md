@@ -8,9 +8,9 @@ history that is no longer needed by its current state. It uses the
 contributions. Existing snapshots keep their own dependencies.
 
 ```cpp
-#include <diet/replacement_rebuild.h>
+#include <everett/replacement_rebuild.h>
 
-diet::replacement_rebuild_engine<> table;
+everett::replacement_rebuild_engine<> table;
 auto first = table.contribute(decltype(table)::put("name", "Edward"));
 auto empty = table.contribute(decltype(table)::erase("name"));
 while (table.pending()) table.advance(4096);
@@ -24,21 +24,21 @@ and arrow type, declare replacement semantics, and provide
 that applying this arrow to the initial state reproduces the scanned state.
 Type equality alone does not supply that semantic law.
 
-The executor also satisfies the `tap` and `persistent_engine` contracts. The
+The executor also satisfies the `session` and `persistent_engine` contracts. The
 ordinary named connection selects it when the registry contains only the
 optional-string sort:
 
 ```cpp
-#include <diet/connection.h>
+#include <everett/connection.h>
 
-auto table = diet::connect(existing_directory, "earth-616");
+auto table = everett::connect(existing_directory, "earth-616");
 table.put("name", "Edward");
 auto saved = table.snapshot();
 table.save("before-edit", saved);
 ```
 
 The ordinary bit-profile connection selects `streaming_sort_runtime_family<P>`
-from `<diet/sort_runtime_context.h>` as its `Family`. The connection opens
+from `<everett/sort_runtime_context.h>` as its `Family`. The connection opens
 a catalog-bound storage context and shares it between the foreground and every
 large cleanup candidate. Completed native and fractional-index outputs are
 sealed and mapped. Bounded small cleanups use the in-memory construction below
@@ -192,10 +192,10 @@ time. Existing EF finalization and a ready typed contribution remain atomic;
 their structural work is prepaid. The separate byte-accounting requirement in
 [Strong deletion](rebuild.md) still applies.
 
-Static tap quotes
+Static session quotes
 -----------------
 
-A tap needs a quote before it owns the mutable executor. `reservation(input)`
+A session needs a quote before it owns the mutable executor. `reservation(input)`
 therefore uses a conservative, state-independent ceiling per admitted record,
 plus the underlying typed engine's allowance. It counts every record in a
 batch, including unchanged replacements. The byte quote is the encoded input
@@ -246,9 +246,9 @@ and all-delete sequences.
 Restore and failure boundaries
 ------------------------------
 
-`replacement_cola` retains the typed snapshot plus `replacement_metadata`:
+`replacement_world` retains the typed snapshot plus `replacement_metadata`:
 the signature, live count and schema, followed logically by b, u and the active
-rebuild marker. Its semantic encoding has the `DIET.RB` signature with a zero
+rebuild marker. Its semantic encoding has the `EVRT.RB` signature with a zero
 terminator, a separate version 1 word, b, u and flags, then the existing typed
 metadata. This is a checkpoint extension; native and index file formats do not
 change. Plain typed semantic checkpoints are not automatically converted.
@@ -266,7 +266,7 @@ to the published table; only then does it publish b'=N, u'=0 and clear the
 marker. A second interruption repeats this recovery, charging the repeated
 work. Reads, saved states and forks remain available during recovery.
 
-The restart cost is explicit existing debt, serviced before a tap claims a
+The restart cost is explicit existing debt, serviced before a session claims a
 queued input. There is no finite work guarantee under infinitely repeated
 interruptions. Lost private candidate files are not claimed as resumable work;
 the next recovery restarts that candidate from its acknowledged source.

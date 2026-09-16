@@ -13,13 +13,13 @@
 // 512-bit blocks and packed nine-bit ranks in place of its 2K/512 hierarchy.
 #ifdef __METAL_VERSION__
 #include <metal_stdlib>
-#define diet_bench_rank_device device
+#define everett_bench_rank_device device
 #else
 #include <bit>
 #include <cstdint>
-#define diet_bench_rank_device
+#define everett_bench_rank_device
 #endif
-namespace diet_bench {
+namespace everett_bench {
 #ifdef __METAL_VERSION__
   using rank_wide = unsigned long;
   inline unsigned rank_popcount(unsigned x){return metal::popcount(x);}
@@ -37,7 +37,7 @@ namespace diet_bench {
     unsigned total;
   };
   template <unsigned N> struct rank_view {
-    diet_bench_rank_device rank_index<N> const * data;
+    everett_bench_rank_device rank_index<N> const * data;
     unsigned count() const {return data->total;}
     bool contains(unsigned i) const {return i<N&&(data->raw[i/32]&(1u<<(i%32)));}
     // Exclusive rank: the compact index of a populated grid location.
@@ -76,5 +76,5 @@ namespace diet_bench {
   }
 #endif
 }
-#undef diet_bench_rank_device
+#undef everett_bench_rank_device
 

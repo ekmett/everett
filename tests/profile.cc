@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Diet's profile behavior.
+ * \brief Tests Everett's profile behavior.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/profile.h>
+#include <everett/profile.h>
 
 #include <algorithm>
 #include <array>
@@ -29,9 +29,9 @@
 #endif
 
 namespace {
-  using namespace diet;
-  using byte_policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
-  using bit_policy = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
+  using namespace everett;
+  using byte_policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
+  using bit_policy = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -734,7 +734,7 @@ namespace {
     }
   }
 
-  template <class Code> using backspace_policy = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, Code>;
+  template <class Code> using backspace_policy = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 15, Code>;
 
   template <class Code> void known_backspace(std::uint64_t value, std::string_view word) {
     using policy = backspace_policy<Code>;
@@ -900,7 +900,7 @@ namespace {
     require(bit_array.metadata().extent == bit_expected.bit_size &&
             std::ranges::equal(bit_array.bytes(), bit_expected.bytes), "default bit profile golden encoding");
 
-    using block_bytes = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 2>;
+    using block_bytes = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 2>;
     std::vector<profile_record> boundary_bytes;
     for (auto key : {"abcd", "abce", "abcf", "z"}) boundary_bytes.push_back({bit_string::from_bytes(key), {}});
     auto byte_blocks = profile_array<block_bytes>::build(boundary_bytes);
@@ -912,7 +912,7 @@ namespace {
             "absolute byte controls have no predecessor checkpoint");
     check_cursor(byte_blocks, std::span<profile_record const>(boundary_bytes));
 
-    using block_bits = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, golomb<1>, 2>;
+    using block_bits = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 3, golomb<1>, 2>;
     std::vector<profile_record> boundary_bits;
     for (auto key : {"0010", "0011", "0100", "0101"}) boundary_bits.push_back({bit_string::from_bits(key), {}});
     auto bit_blocks = profile_array<block_bits>::build(boundary_bits);
@@ -1367,14 +1367,14 @@ namespace {
   }
 
   template <std::uint64_t K> void policies() {
-    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, K>>();
-    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, K>>();
-    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, K>>();
-    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, K>>();
-    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, K>>();
-    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, K>>();
-    lpfc<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, K>>();
-    lpfc<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, K>>();
+    roundtrip<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, K>>();
+    roundtrip<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<3>>>>, K>>();
+    roundtrip<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, K>>();
+    roundtrip<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, K>>();
+    roundtrip<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<3>>>>, K>>();
+    roundtrip<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, K>>();
+    lpfc<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, K>>();
+    lpfc<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, K>>();
   }
 }
 
@@ -1383,8 +1383,8 @@ int main() {
     rounded_bit_extents();
     subview_oracle();
     byte_comparison_oracle();
-    offset_metadata<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7, exponential_golomb<0>, 16>>();
-    offset_metadata<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<3>, 7>>();
+    offset_metadata<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 7, exponential_golomb<0>, 16>>();
+    offset_metadata<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 3, golomb<3>, 7>>();
     intermediate_byte_anchors();
     bit_primitives();
     count_primitives();
@@ -1396,20 +1396,20 @@ int main() {
     backspace_codes();
     default_profile_bytes();
     long_golomb_backspace();
-    coded_profiles<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<3>>>();
-    coded_profiles<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 7, golomb<5>>>();
-    coded_profiles<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 15, exponential_golomb<2>>>();
-    coded_profiles<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31, exponential_golomb<63>>>();
-    mapped_profile_sections<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>, stream_role::native>();
-    mapped_profile_sections<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 15, exponential_golomb<0>, 7>, stream_role::native>();
-    mapped_profile_sections<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, golomb<3>, 16>, stream_role::native>();
-    mapped_profile_sections<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 31, exponential_golomb<2>, 1>, stream_role::native>();
-    mapped_profile_sections<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 15, exponential_golomb<0>, 16>, stream_role::borrowed>();
-    mapped_profile_sections<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 15, golomb<7>, 16>, stream_role::borrowed>();
-    owning_views<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15>, stream_role::native>();
-    owning_views<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, golomb<3>, 16>, stream_role::native>();
-    owning_views<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 15>, stream_role::borrowed>();
-    owning_views<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 15>, stream_role::borrowed>();
+    coded_profiles<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 3, golomb<3>>>();
+    coded_profiles<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<3>>>>, 7, golomb<5>>>();
+    coded_profiles<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 15, exponential_golomb<2>>>();
+    coded_profiles<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 31, exponential_golomb<63>>>();
+    mapped_profile_sections<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 16>, stream_role::native>();
+    mapped_profile_sections<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<3>>>>, 15, exponential_golomb<0>, 7>, stream_role::native>();
+    mapped_profile_sections<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 7, golomb<3>, 16>, stream_role::native>();
+    mapped_profile_sections<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<3>>>>, 31, exponential_golomb<2>, 1>, stream_role::native>();
+    mapped_profile_sections<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<3>>>>, 15, exponential_golomb<0>, 16>, stream_role::borrowed>();
+    mapped_profile_sections<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<3>>>>, 15, golomb<7>, 16>, stream_role::borrowed>();
+    owning_views<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 15>, stream_role::native>();
+    owning_views<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 7, golomb<3>, 16>, stream_role::native>();
+    owning_views<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<3>>>>, 15>, stream_role::borrowed>();
+    owning_views<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<3>>>>, 15>, stream_role::borrowed>();
     policies<3>();
     policies<7>();
     policies<15>();
@@ -1418,13 +1418,13 @@ int main() {
     surrogate_anchor<bit_policy>();
     malformed_streams<byte_policy>();
     malformed_streams<bit_policy>();
-    absolute_boundaries<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 2>>();
-    absolute_boundaries<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, golomb<3>, 1>>();
-    absolute_boundaries<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 15, exponential_golomb<2>, 16>>();
-    guarded_encoded_payloads<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 2>>();
-    guarded_encoded_payloads<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<1>, 2>>();
-    absolute_extent_bounds<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 1>>();
-    absolute_extent_bounds<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 1>>();
+    absolute_boundaries<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 2>>();
+    absolute_boundaries<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 7, golomb<3>, 1>>();
+    absolute_boundaries<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 15, exponential_golomb<2>, 16>>();
+    guarded_encoded_payloads<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 2>>();
+    guarded_encoded_payloads<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 3, golomb<1>, 2>>();
+    absolute_extent_bounds<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 1>>();
+    absolute_extent_bounds<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 1>>();
     std::cout << "profile tests passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';

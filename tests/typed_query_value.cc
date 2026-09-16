@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/sort_runtime.h>
+#include <everett/sort_runtime.h>
 
 #include <fstream>
 #include <functional>
@@ -20,7 +20,7 @@
 #endif
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void check(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }
@@ -92,10 +92,10 @@ namespace {
   template <bool Direct = true, class P, class Blob> auto typed(cola_query_root<P, Blob> root,
       std::uint64_t mass, std::uint64_t live) {
     using f = family<P, Blob, Direct>;
-    typed_cola_metadata<> metadata;
+    typed_world_metadata<> metadata;
     metadata.schema_id = "query-value-fixture/1";
     metadata.live_count = live;
-    return typed_cola<P, wrapping_fingerprint_algebra, f>::restore(
+    return typed_world<P, wrapping_fingerprint_algebra, f>::restore(
       typename f::snapshot_type{std::move(root), mass}, std::move(metadata), "query-value-fixture/1");
   }
   template <class S> auto three(rows const & local, rows const & side, rows const & older) {
@@ -354,7 +354,7 @@ namespace {
     using p = policy<replacement_sort>;
     using mapped = mapped_sort_profile<p>;
     using blob = mapped_sort_cola<p>;
-    auto directory = std::filesystem::temp_directory_path() / ("diet-query-value-" + std::to_string(::getpid()));
+    auto directory = std::filesystem::temp_directory_path() / ("everett-query-value-" + std::to_string(::getpid()));
     std::filesystem::create_directory(directory);
     auto write = [](auto const & path, auto const & bytes) {
       std::ofstream file(path, std::ios::binary);

@@ -58,7 +58,7 @@ The historical names in the raw CSV mean:
 
 | CSV variant | Header / algorithm |
 | --- | --- |
-| `bitmap_rank` | Diet's full-bit-vector 2048/512 directory |
+| `bitmap_rank` | Everett's full-bit-vector 2048/512 directory |
 | `rank15_baseline` | `9f68e4d0fdecae73b7d28b748a0d062cc072fbfa`, portable fallback on x86 |
 | `rank_groups15_baseline` | the same revision's typed wrapper around that fallback |
 | `rank15_candidate` | SAD-first snapshot, SHA-256 `ed125be1898573ec2b926df930c96b909921fc506536d9c2e1c8b0363e0fb686` |
@@ -69,14 +69,14 @@ snapshot from the pinned qword-first header. The scalar baseline is newer than
 the original M2 comparison's `7732b1e` baseline, so those baseline columns should
 not be treated as the same implementation.
 
-After preparing those headers under `baseline/diet`, `sad_rank15.h` and
+After preparing those headers under `baseline/everett`, `sad_rank15.h` and
 `qword_rank15.h`, and initializing the x64 MSVC environment, the essential
 benchmark build was:
 
 ```bat
 cl /nologo /std:c++20 /EHsc /O2 /DNDEBUG /W4 /WX /permissive- /arch:AVX2 ^
-  /Ibaseline /DDIET_RANK_CANDIDATE=\"sad_rank15.h\" ^
-  /DDIET_RANK_SIMD=\"qword_rank15.h\" rank_compare.cc /Fecompare-avx2.exe
+  /Ibaseline /DEVERETT_RANK_CANDIDATE=\"sad_rank15.h\" ^
+  /DEVERETT_RANK_SIMD=\"qword_rank15.h\" rank_compare.cc /Fecompare-avx2.exe
 start "" /b /wait /affinity 1 compare-avx2.exe hot_packed32KiB 7 1048576 core
 ```
 

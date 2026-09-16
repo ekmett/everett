@@ -45,7 +45,7 @@ path:
 
 ```cpp
 auto storage = storage_type::open(root, {}, {}, {}, {},
-  diet::runtime_output_options{0, 0});
+  everett::runtime_output_options{0, 0});
 ```
 
 `sort_runtime_context::retained_output_bytes()` reports the current charge and

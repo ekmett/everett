@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/sort_codec.h>
+#include <everett/sort_codec.h>
 
 #include <array>
 #include <cassert>
@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   struct names {
     using key_codec = fc_string_key<>;
     using value_codec = tombstone_value<string_value<>>;

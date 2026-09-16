@@ -149,7 +149,7 @@ the two rounding terms $2(K-1)/K$ sum to two.
 Parameterized comparison
 ------------------------
 
-[space_accounting.py](space_accounting.py) reports measured Diet array bytes and
+[space_accounting.py](space_accounting.py) reports measured Everett array bytes and
 explicit scenarios. Its defaults are choices, not inferred paper constants.
 For the experimental COLA, with observed redundant/native ratio $r$:
 
@@ -169,7 +169,7 @@ $$
 $$
 
 This is a conditional model using a representation upper bound, **not a lower
-bound establishing Diet's savings**. The script uses our native key encoding as
+bound establishing Everett's savings**. The script uses our native key encoding as
 an explicitly named FC proxy; it is not the paper's specified bit-exact framing.
 PMA occupancies should ideally be separate for the three layers; the script's
 single density is a deliberately simplified sensitivity parameter. Test $h=2,3,4$
@@ -195,7 +195,7 @@ Reproduction
 ------------
 
 Compile C++20 with `-O2 -I include`, then run `space_accounting.cc`. For the dual
-build, use `-DDIET_DUAL` and the include snapshot of `ff0588a`. Capture stdout to
+build, use `-DEVERETT_DUAL` and the include snapshot of `ff0588a`. Capture stdout to
 CSV. The host resource gate should wrap compilation and execution; no runtime
 benchmark is required. Run the Python calculator with `--measurements PATH` and
 explicit chosen scenario parameters. Raw array figures do not depend on compiler

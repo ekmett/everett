@@ -9,15 +9,15 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
-#include <diet/sort_runtime_context.h>
+#include <everett/connection.h>
+#include <everett/sort_runtime_context.h>
 
 #include <array>
 #include <cstring>
 #include <iostream>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void check(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }
@@ -68,7 +68,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-stream-diagnostic-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-stream-diagnostic-XXXXXX").string();
       if (!::mkdtemp(name.data())) throw std::runtime_error("mkdtemp");
       root = name;
     }
@@ -101,7 +101,7 @@ namespace {
       metadata.signature += hash(key, "retained");
     }
     check(runtime.pending(), "fixture has no deferred streamed work");
-    saved.create_tap("latest", runtime.checkpoint(), metadata.encode());
+    saved.create_session("latest", runtime.checkpoint(), metadata.encode());
   }
   void run_case(bool service, bool after) {
     temporary dir;

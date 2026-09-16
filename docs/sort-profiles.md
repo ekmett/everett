@@ -8,18 +8,18 @@ changing an index never rewrites the native grammar.
 
 ```cpp
 struct numbers {
-  using encoding = diet::bit_encoding<diet::fixed_values<64>>;
-  using key_codec = diet::unsigned_key<64>;
-  using value_codec = diet::unsigned_value<64>;
+  using encoding = everett::bit_encoding<everett::fixed_values<64>>;
+  using key_codec = everett::unsigned_key<64>;
+  using value_codec = everett::unsigned_value<64>;
 };
-using registry = diet::bin<diet::tip<numbers>, diet::sort_undefined>;
-using policy = diet::storage_policy<registry>;
+using registry = everett::bin<everett::tip<numbers>, everett::sort_undefined>;
+using policy = everett::storage_policy<registry>;
 
-diet::sort_profile_writer<policy> writer;
+everett::sort_profile_writer<policy> writer;
 writer.append<numbers>(17, 100);
 writer.append<numbers>(23, 200);
 auto native = writer.finish();
-auto sections = diet::encoded_sort_sections<policy>::from(native);
+auto sections = everett::encoded_sort_sections<policy>::from(native);
 // sections.seal(root, object_id, attempt_id) uses the normal durable writer.
 ```
 
@@ -148,7 +148,7 @@ once with `sort_profile_query<P,S>(key)`. Matches own their encoded values and
 retain their source node; decoding a match uses the sort's value codec.
 
 `encoded_sort_sections` writes the KV03 section revision. It has the ordinary
-Diet file envelope, native payload, Elias–Fano components, selector dictionary,
+Everett file envelope, native payload, Elias–Fano components, selector dictionary,
 dictionary offsets and packed block seeds. Existing KV02 readers reject it.
 Fractional-index bytes retain IX03 because their physical grammar is unchanged.
 Opening checks the envelope and fixed directory but touches no payload, EF,

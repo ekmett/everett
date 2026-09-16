@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/sqlite_catalog.h>
+#include <everett/sqlite_catalog.h>
 
 #include <algorithm>
 #include <array>
@@ -27,8 +27,8 @@
 
 #if defined(__APPLE__) || defined(__linux__)
 namespace {
-  using namespace diet;
-  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
+  using namespace everett;
+  using policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3>;
   using catalog = sqlite_catalog<policy>;
 
   void require(bool value, char const * message) {
@@ -88,7 +88,7 @@ namespace {
       wrapper.iVersion = std::min(delegate->iVersion, 3);
       wrapper.mxPathname = delegate->mxPathname;
       wrapper.szOsFile = sizeof(file_state);
-      wrapper.zName = "diet-forwarding-fault-test";
+      wrapper.zName = "everett-forwarding-fault-test";
       wrapper.pAppData = this;
       wrapper.pNext = nullptr;
       wrapper.xOpen = open;
@@ -291,7 +291,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto path = (std::filesystem::temp_directory_path() / "diet-vfs-XXXXXX").string();
+      auto path = (std::filesystem::temp_directory_path() / "everett-vfs-XXXXXX").string();
       auto result = ::mkdtemp(path.data());
       if (!result) throw std::runtime_error("create temporary VFS directory");
       root = result;

@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/cola_index.h>
+#include <everett/cola_index.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -24,7 +24,7 @@
 #include <vector>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using keys = std::vector<std::string>; // Original logical bits, independent of codec/navigation.
 
   void require(bool ok, char const * message) {
@@ -233,10 +233,10 @@ namespace {
 
 int main() {
   try {
-    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>();
-    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>();
-    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 15, exponential_golomb<0>, 16>>();
-    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 15, exponential_golomb<0>, 16>>();
+    exercise<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>();
+    exercise<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>();
+    exercise<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 15, exponential_golomb<0>, 16>>();
+    exercise<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 15, exponential_golomb<0>, 16>>();
     std::cout << "COLA route reuse tests passed\n";
   } catch (std::exception const & error) {
     std::cerr << error.what() << '\n';

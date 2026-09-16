@@ -1,8 +1,8 @@
-diff --git a/include/diet/cola_index.h b/include/diet/cola_index.h
+diff --git a/include/everett/cola_index.h b/include/everett/cola_index.h
 index e67440b..293cac5 100644
---- a/include/diet/cola_index.h
-+++ b/include/diet/cola_index.h
-@@ -224,13 +224,15 @@ namespace diet {
+--- a/include/everett/cola_index.h
++++ b/include/everett/cola_index.h
+@@ -224,13 +224,15 @@ namespace everett {
    // This is a fractional-index representation, not a scheduler or chronology.
    // Default parameters own native arrays and a homogeneous main chain. A
    // supplied Native/Main pair instead yields a construction artifact retaining
@@ -19,7 +19,7 @@ index e67440b..293cac5 100644
      using native_pointer = std::shared_ptr<native_array const>;
      using pair_type = std::shared_ptr<cola_index const>;
      using main_pointer = std::shared_ptr<target_type const>;
-@@ -250,7 +252,7 @@ namespace diet {
+@@ -250,7 +252,7 @@ namespace everett {
      native_pointer native_owner() const noexcept { return native_; }
      native_array const & native() const & { require_active(); return *native_; }
      native_array const & native() const && = delete;
@@ -28,7 +28,7 @@ index e67440b..293cac5 100644
      borrowed_array const & borrowed(unsigned) const && = delete;
      borrowed_array const & borrowed(cola_target route) const & { return borrowed(unsigned(route)); }
      borrowed_array const & borrowed(cola_target) const && = delete;
-@@ -272,7 +274,7 @@ namespace diet {
+@@ -272,7 +274,7 @@ namespace everett {
      std::uint64_t group_count() const noexcept { auto n = virtual_size(); return n / group_size + (n % group_size != 0); }
      cola_index_view<P> view() const & {
        require_active();
@@ -37,7 +37,7 @@ index e67440b..293cac5 100644
          {flags_[0], flags_[1]}, {word_view(std::span<std::uint64_t const>(cuts_[0])),
            word_view(std::span<std::uint64_t const>(cuts_[1]))}, count_};
      }
-@@ -288,7 +290,7 @@ namespace diet {
+@@ -288,7 +290,7 @@ namespace everett {
      native_pointer native_;
      main_pointer main_;
      native_pointer secondary_;
@@ -46,7 +46,7 @@ index e67440b..293cac5 100644
      std::array<rank_groups<group_size>, 2> ranks_;
      std::array<std::vector<std::byte>, 2> flags_;
      std::array<std::vector<std::uint64_t>, 2> cuts_;
-@@ -297,7 +299,7 @@ namespace diet {
+@@ -297,7 +299,7 @@ namespace everett {
        if (!native_) error_detail::raise<std::logic_error>("moved-from COLA index");
      }
      cola_index(native_pointer native, main_pointer main, native_pointer secondary,
@@ -55,7 +55,7 @@ index e67440b..293cac5 100644
          std::array<std::vector<std::byte>, 2> flags, std::array<std::vector<std::uint64_t>, 2> cuts,
          std::uint64_t count)
        : native_(std::move(native)), main_(std::move(main)), secondary_(std::move(secondary)),
-@@ -387,7 +389,11 @@ namespace diet {
+@@ -387,7 +389,11 @@ namespace everett {
      using pair_type = typename index_type::pair_type;
      using main_pointer = typename index_type::main_pointer;
      using target_type = typename index_type::target_type;
@@ -68,7 +68,7 @@ index e67440b..293cac5 100644
        : native_(checked(std::move(native))), main_(std::move(main)), secondary_(std::move(secondary)) {
        auto remaining = std::numeric_limits<std::uint64_t>::max() - native_->size();
        auto primary_count = main_ ? main_->group_count() : 0;
-@@ -397,6 +403,11 @@ namespace diet {
+@@ -397,6 +403,11 @@ namespace everett {
        if (main_ || secondary_) native_cursor_.emplace(native_->view());
        if (main_) primary_cursor_.emplace(main_);
        if (secondary_) secondary_cursor_.emplace(secondary_->view());
@@ -80,7 +80,7 @@ index e67440b..293cac5 100644
      }
      cola_index_builder(cola_index_builder const &) = delete;
      cola_index_builder & operator=(cola_index_builder const &) = delete;
-@@ -435,7 +446,7 @@ namespace diet {
+@@ -435,7 +446,7 @@ namespace everett {
              // Along a sorted walk the minimum adjacent LCP since the preceding
              // borrow is its exact LCP with this key. Reuse that same frontier
              // for FC output instead of comparing the inherited prefix again.
@@ -89,7 +89,7 @@ index e67440b..293cac5 100644
              auto ordinal = borrowed_count_[route]++;
              if (!(ordinal & 7)) flags_[route].push_back(std::byte{0});
              if (native_equal_) flags_[route].back() |= std::byte(1u << (ordinal & 7));
-@@ -465,7 +476,10 @@ namespace diet {
+@@ -465,7 +476,10 @@ namespace everett {
        if (!done()) error_detail::raise<std::logic_error>("COLA builder has remaining input");
        try {
          if (width_) flush_group();
@@ -101,7 +101,7 @@ index e67440b..293cac5 100644
          std::array<rank_groups<P::group_size>, 2> ranks{ranks_[0].finish(), ranks_[1].finish()};
          index_type result(native_, main_, secondary_, std::move(borrowed), std::move(ranks),
            std::move(flags_), std::move(cuts_), count_);
-@@ -481,6 +495,7 @@ namespace diet {
+@@ -481,6 +495,7 @@ namespace everett {
      std::optional<cola_sample_cursor<P, target_type>> primary_cursor_;
      std::optional<profile_cursor<P>> secondary_cursor_;
      std::array<profile_borrowed_writer<P>, 2> writers_;

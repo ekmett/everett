@@ -14,15 +14,15 @@ its context until its writer and scratch resources have been destroyed, even
 if the last external storage handle is released.
 
 ```cpp
-#include <diet/sort_runtime_context.h>
-#include <diet/connection.h>
+#include <everett/sort_runtime_context.h>
+#include <everett/connection.h>
 
-using policy = diet::string_policy;
-using family = diet::streaming_sort_runtime_family<policy>;
-using engine = diet::typed_engine<policy, diet::wrapping_fingerprint_algebra,
+using policy = everett::string_policy;
+using family = everett::streaming_sort_runtime_family<policy>;
+using engine = everett::typed_engine<policy, everett::wrapping_fingerprint_algebra,
                                   256, family>;
 
-auto live = diet::connect<engine>(existing_directory, "settings");
+auto live = everett::connect<engine>(existing_directory, "settings");
 live.put("config/theme", "dark");
 auto before = live.snapshot();
 live.put("config/theme", "light");
@@ -139,7 +139,7 @@ streaming:
 
 ```cpp
 auto storage = family::storage_type::open(existing_directory,
-  {}, {}, {}, {}, diet::runtime_output_options{0, 0});
+  {}, {}, {}, {}, everett::runtime_output_options{0, 0});
 ```
 
 I charge the completed object, its lifetime lease and actual vector capacities:

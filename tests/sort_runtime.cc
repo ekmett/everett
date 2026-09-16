@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/sort_runtime.h>
-#include <diet/typed_scan.h>
+#include <everett/sort_runtime.h>
+#include <everett/typed_scan.h>
 
 #include <fstream>
 #include <iostream>
@@ -18,11 +18,11 @@
 #include <unordered_map>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   using family = sort_runtime_family<>;
   using engine = typed_engine<string_policy, wrapping_fingerprint_algebra, 256, family>;
-  using cola = engine::cola_type;
+  using world = engine::world_type;
   void check(bool value, char const * why) { if (!value) throw std::runtime_error(why); }
   template <class F> void rejects(F && fn) {
     try { fn(); } catch (std::exception const &) { return; }
@@ -37,7 +37,7 @@ namespace {
         sort_semantics<strings>::hash_value(key, std::optional<std::string>(value));
     }
     check(state.signature() == signature && state.live_count() == entries.size(), "hash/count differs from oracle");
-    auto scan = diet::scan(state); auto oracle = entries.begin();
+    auto scan = everett::scan(state); auto oracle = entries.begin();
     check(scan.step(0) == 0, "zero scan budget changed state");
     while (!scan.done()) {
       scan.step(1);
@@ -66,9 +66,9 @@ namespace {
     check(!compare_bits(wire, newer.records()[0].value.view()), "replacement merge changed newer arrow encoding");
     engine old_schema("explicit/user-version");
     auto initial = active.snapshot(); auto metadata = initial.metadata();
-    rejects([&] { cola::restore(initial.runtime(), metadata, "diet.optional-string/code0/v1"); });
+    rejects([&] { world::restore(initial.runtime(), metadata, "everett.optional-string/code0/v1"); });
     std::map<std::string, std::string> expected;
-    std::vector<std::pair<cola, decltype(expected)>> saved;
+    std::vector<std::pair<world, decltype(expected)>> saved;
     std::uint64_t random = 0x742da371;
     for (unsigned i = 0; i != 513; ++i) {
       random ^= random << 13; random ^= random >> 7; random ^= random << 17;
@@ -212,7 +212,7 @@ namespace {
     }
   }
 
-  void partition_and_tap() {
+  void partition_and_session() {
     engine start; auto base = start.snapshot();
     auto a = base.put("a", "one"), b = base.put("b", "two");
     auto left = engine::from_snapshot(base), right = engine::from_snapshot(base);
@@ -221,14 +221,14 @@ namespace {
     check(ab.signature() == ba.signature() && ab.live_count() == ba.live_count(), "disjoint order changed signature");
     rejects([&] { left.contribute(base.put("a", "stale")); });
     check(!left.failed() && left.snapshot().get("a") == "one", "stale mutation changed state");
-    tap<engine> active(engine{}, {16 * engine::admission_allowance, 1 << 20, 16, 4096});
+    session<engine> active(engine{}, {16 * engine::admission_allowance, 1 << 20, 16, 4096});
     auto initial = active.snapshot();
     auto one = active.submit(engine::put("same", "one"));
     auto two = active.submit(engine::put("same", "two"));
-    check(one.get()->cola.get("same") == "one" && two.get()->cola.get("same") == "two", "tap FIFO command semantics");
+    check(one.get()->world.get("same") == "one" && two.get()->world.get("same") == "two", "session FIFO command semantics");
     auto bad = active.submit(engine::erase("missing")); rejects([&] { bad.get(); });
-    check(active.apply(engine::put("next", "okay"))->cola.get("next") == "okay", "tap rejected healthy command");
-    active.shutdown(); check(!active.failure() && !initial->cola.get("same"), "tap snapshots or failure");
+    check(active.apply(engine::put("next", "okay"))->world.get("next") == "okay", "session rejected healthy command");
+    active.shutdown(); check(!active.failure() && !initial->world.get("same"), "session snapshots or failure");
   }
 
   // Test-only graph copier: exercises physical family seams without pretending
@@ -313,7 +313,7 @@ namespace {
     check(merged, "fixture omitted completed hidden native artifact");
     mapped_copy copy{root, 0, {}, {}, {}};
     auto mapped = copy.save(source.checkpoint());
-    auto saved = cola::restore(mapped, expected.snapshot().metadata(), expected.snapshot().metadata().schema_id);
+    auto saved = world::restore(mapped, expected.snapshot().metadata(), expected.snapshot().metadata().schema_id);
     verify(saved, {{"a", "old"}, {"b", "old"}});
     for (auto const & entry : std::filesystem::directory_iterator(root)) std::filesystem::remove(entry.path());
     auto reopened = engine::from_snapshot(saved); drain(reopened);
@@ -325,11 +325,11 @@ namespace {
   }
 }
 int main() {
-  auto root = std::filesystem::temp_directory_path() / ("diet-sort-runtime-" + std::to_string(
+  auto root = std::filesystem::temp_directory_path() / ("everett-sort-runtime-" + std::to_string(
     std::chrono::steady_clock::now().time_since_epoch().count()));
   std::filesystem::create_directories(root);
   try {
-    replacements(); heterogeneous(); partial_keys(); partition_and_tap(); mapped_restart(root);
+    replacements(); heterogeneous(); partial_keys(); partition_and_session(); mapped_restart(root);
     std::filesystem::remove_all(root); std::cout << "sort runtime tests passed\n";
   } catch (...) { std::filesystem::remove_all(root); throw; }
 }

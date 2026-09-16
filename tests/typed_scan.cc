@@ -9,21 +9,21 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/typed_scan.h>
+#include <everett/typed_scan.h>
 
 #include <cassert>
 #include <iostream>
 #include <map>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   template <class F> void rejects(F && fn) {
     bool rejected = false;
     try { fn(); } catch (std::exception const &) { rejected = true; }
     assert(rejected);
   }
-  template <class Cola> void verify(Cola snapshot, std::map<std::string, std::string> const & expected) {
+  template <class World> void verify(World snapshot, std::map<std::string, std::string> const & expected) {
     auto rows = scan(snapshot);
     assert(rows.step(0) == 0 && rows.consumed() == 0);
     auto row = expected.begin();
@@ -125,8 +125,8 @@ namespace {
   }
 }
 int main() {
-  replacement<diet::string_policy>();
-  replacement<diet::storage_policy<strings, 7, diet::exponential_golomb<0>, 4>>();
+  replacement<everett::string_policy>();
+  replacement<everett::storage_policy<strings, 7, everett::exponential_golomb<0>, 4>>();
   arrows();
   std::cout << "typed scan: replacements, chronological arrows, budgets and captured snapshots passed\n";
 }

@@ -129,11 +129,11 @@ against changing working-tree headers. The build directory must not exist.
 
 ```sh
 python3 bench/cola_frontier.py --baseline 77507b8 --candidate ac5d4c4 \
-  --trials 5 --rounds 3 --build-dir build-cola-frontier-overall
+  --trials 5 --rounds 3 --build-dir build-world-frontier-overall
 python3 bench/cola_frontier.py --baseline 77507b8 --candidate d1d74e7 \
-  --trials 5 --rounds 3 --build-dir build-cola-sampler-frontier
+  --trials 5 --rounds 3 --build-dir build-world-sampler-frontier
 python3 bench/cola_frontier.py --baseline d1d74e7 --candidate ac5d4c4 \
-  --trials 5 --rounds 3 --build-dir build-cola-builder-frontier
+  --trials 5 --rounds 3 --build-dir build-world-builder-frontier
 ```
 
 The original measured fixture SHA-256 is
@@ -154,5 +154,5 @@ The metadata records full measured source revisions, every header hash, compile
 commands, compiler/platform, binary hashes, execution order, whole-file hashes
 and start/completion times. Accepted revision spellings in the reproduction
 commands retain every measured header in this fixture's include closure. Their
-`fridge.h` differs from the recorded tree, but this fixture does not include
+`multiverse.h` differs from the recorded tree, but this fixture does not include
 that facade.

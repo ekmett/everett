@@ -6,8 +6,8 @@
  * \endlicense
  */
 
-#include <diet/file_index_pipeline.h>
-#include <diet/index_pipeline.h>
+#include <everett/file_index_pipeline.h>
+#include <everett/index_pipeline.h>
 
 #include <algorithm>
 #include <array>
@@ -24,7 +24,7 @@
 #include <unistd.h>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }
@@ -42,7 +42,7 @@ namespace {
   struct directory {
     std::filesystem::path path;
     directory() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-file-pipeline-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-file-pipeline-XXXXXX").string();
       auto made = ::mkdtemp(pattern.data()); require(made, "file pipeline temporary directory"); path = made;
     }
     ~directory() { std::error_code ignored; std::filesystem::remove_all(path, ignored); }
@@ -254,7 +254,7 @@ namespace {
       require(bytes(f.native_paths[i]) == f.native_bytes[i], "file index pipeline modified native bytes");
   }
   void invalid_and_zero_stages() {
-    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>;
+    using P = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>;
     fixture<P> f;
     auto reject = [&](auto target, auto stages) {
       observed_ops ops;
@@ -289,7 +289,7 @@ namespace {
     static_assert(!std::is_copy_constructible_v<file_index_pipeline<P>>);
   }
   void partial_seal_failure() {
-    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, golomb<3>, 16>;
+    using P = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 7, golomb<3>, 16>;
     fixture<P> f;
     std::weak_ptr<mapped_blob<P> const> pin = f.target;
     std::array<std::weak_ptr<mapped_native<P> const>, 3> sources{f.native[1], f.native[2], f.native[3]};
@@ -332,14 +332,14 @@ namespace {
 int main() {
   try {
 #if defined(__APPLE__) || defined(__linux__)
-    matrix<diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, diet::exponential_golomb<0>, 16>>(true);
-    matrix<diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<diet::fixed_values<0>>>>, 7, diet::exponential_golomb<0>, 15>>();
-    matrix<diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<diet::fixed_values<8>>>>, 15, diet::exponential_golomb<0>, 16>>();
-    matrix<diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 31, diet::exponential_golomb<0>, 15>>();
-    matrix<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, diet::golomb<3>, 16>>();
-    matrix<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<diet::fixed_values<0>>>>, 7, diet::exponential_golomb<2>, 15>>();
-    matrix<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<diet::fixed_values<13>>>>, 15, diet::golomb<5>, 16>>();
-    matrix<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31, diet::exponential_golomb<0>, 1>>();
+    matrix<everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, everett::exponential_golomb<0>, 16>>(true);
+    matrix<everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<everett::fixed_values<0>>>>, 7, everett::exponential_golomb<0>, 15>>();
+    matrix<everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<everett::fixed_values<8>>>>, 15, everett::exponential_golomb<0>, 16>>();
+    matrix<everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 31, everett::exponential_golomb<0>, 15>>();
+    matrix<everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 3, everett::golomb<3>, 16>>();
+    matrix<everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<everett::fixed_values<0>>>>, 7, everett::exponential_golomb<2>, 15>>();
+    matrix<everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<everett::fixed_values<13>>>>, 15, everett::golomb<5>, 16>>();
+    matrix<everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 31, everett::exponential_golomb<0>, 1>>();
     invalid_and_zero_stages(); partial_seal_failure();
 #endif
   } catch (std::exception const & e) { std::cerr << e.what() << '\n'; return 1; }

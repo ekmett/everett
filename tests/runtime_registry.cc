@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/runtime_registry.h>
+#include <everett/runtime_registry.h>
 
 #include <cassert>
 #include <cstdio>
@@ -34,7 +34,7 @@ void operator delete(void * p, std::size_t) noexcept { std::free(p); }
 void operator delete[](void * p, std::size_t) noexcept { std::free(p); }
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   object_id id(unsigned n) {
     char text[33]; std::snprintf(text, sizeof text, "%032x", n); return object_id(text);
   }

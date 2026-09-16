@@ -14,11 +14,11 @@ owners have stopped using an external file.
 
 ## Build and use
 
-The normal `diet::diet` target remains independent of SQLite. I enable the
+The normal `everett::everett` target remains independent of SQLite. I enable the
 adapter explicitly:
 
 ```sh
-cmake -S . -B build -DDIET_ENABLE_SQLITE=ON -DDIET_BUILD_TESTS=ON
+cmake -S . -B build -DEVERETT_ENABLE_SQLITE=ON -DEVERETT_BUILD_TESTS=ON
 cmake --build build --parallel 4
 ctest --test-dir build --output-on-failure
 ```
@@ -33,11 +33,11 @@ If several SQLite installations are present, CMake accepts explicit
 requests the separate component:
 
 ```cmake
-find_package(diet CONFIG REQUIRED COMPONENTS sqlite)
-target_link_libraries(my_program PRIVATE diet::sqlite)
+find_package(everett CONFIG REQUIRED COMPONENTS sqlite)
+target_link_libraries(my_program PRIVATE everett::sqlite)
 ```
 
-A consumer that only requests `diet` neither finds nor links SQLite, even
+A consumer that only requests `everett` neither finds nor links SQLite, even
 when both components were installed. The adapter is header-only but calls the
 linked SQLite C library. It requires a thread-safe build and a serialized
 connection; a process-wide single-thread configuration is rejected. All WAL
@@ -52,35 +52,35 @@ persist every pair in its prepared chain, including the empty-native routing
 prefix. The mapped reader adopts that already prepared graph.
 
 ```cpp
-#include <diet/sqlite_catalog.h>
+#include <everett/sqlite_catalog.h>
 #include <array>
 
-using P = diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
-using catalog = diet::sqlite_catalog<P>;
+using P = everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
+using catalog = everett::sqlite_catalog<P>;
 
 void make_save(std::filesystem::path const & directory) {
   // The existing directory and its ancestors are trusted and durable.
   auto metadata = catalog::create(directory,
-    diet::object_id("00000000000000000000000000000001"));
-  diet::blob_identity ids{
-    diet::object_id("00000000000000000000000000000002"),
-    diet::object_id("00000000000000000000000000000003")};
-  diet::object_attempt_id attempt("00000000000000000000000000000004");
+    everett::object_id("00000000000000000000000000000001"));
+  everett::blob_identity ids{
+    everett::object_id("00000000000000000000000000000002"),
+    everett::object_id("00000000000000000000000000000003")};
+  everett::object_attempt_id attempt("00000000000000000000000000000004");
   std::array outputs{
-    diet::catalog_object_reservation{ids.native, diet::file_kind::native_blob},
-    diet::catalog_object_reservation{ids.index, diet::file_kind::fractional_index}};
+    everett::catalog_object_reservation{ids.native, everett::file_kind::native_blob},
+    everett::catalog_object_reservation{ids.index, everett::file_kind::fractional_index}};
   metadata.reserve("reserve-table", attempt, "table-builder", {}, outputs);
 
-  std::array records{diet::profile_record{
-    diet::bit_string::from_bytes("alpha"),
-    diet::bit_string::from_bytes("first")}};
-  auto pair = diet::profile_blob<P>::build(records);
-  auto native = diet::encode_native_sections(pair.native());
-  auto index = diet::encode_index_sections(pair, ids.native);
+  std::array records{everett::profile_record{
+    everett::bit_string::from_bytes("alpha"),
+    everett::bit_string::from_bytes("first")}};
+  auto pair = everett::profile_blob<P>::build(records);
+  auto native = everett::encode_native_sections(pair.native());
+  auto index = everett::encode_index_sections(pair, ids.native);
   metadata.record_sealed("seal-native", native.seal(directory, ids.native, attempt));
   metadata.record_sealed("seal-index", index.seal(directory, ids.index, attempt));
-  auto query = diet::open_mapped_query<P>(directory, ids);
-  metadata.register_chain("register-table", query, diet::catalog_admission::scan);
+  auto query = everett::open_mapped_query<P>(directory, ids);
+  metadata.register_chain("register-table", query, everett::catalog_admission::scan);
   metadata.save("save-table", "initial", ids);
 }
 
@@ -88,8 +88,8 @@ void read_save(std::filesystem::path const & directory) {
   auto metadata = catalog::open(directory);
   auto pin = metadata.acquire_save("read-initial", "initial", "reader-1");
   // The committed reader pin precedes opening any external objects.
-  auto query = diet::open_mapped_query<P>(directory, pin.head);
-  auto key = diet::bit_string::from_bytes("alpha");
+  auto query = everett::open_mapped_query<P>(directory, pin.head);
+  auto key = everett::bit_string::from_bytes("alpha");
   auto cursor = query.cursor(key.view());
   while (!cursor.done()) {
     cursor.step(1);
@@ -140,7 +140,7 @@ highest generation is current. Publishing a new generation never updates or
 releases an old one.
 
 ```cpp
-void move_timeline(catalog & metadata, diet::blob_identity const & prepared) {
+void move_timeline(catalog & metadata, everett::blob_identity const & prepared) {
   // `prepared` was already sealed and admitted with register_chain.
   auto first = metadata.create_timeline("create-main", "main", prepared);
   auto branch = metadata.fork_timeline("fork-experiment", "experiment", first);
@@ -198,7 +198,7 @@ physical objects. [SQLite foreign-key contracts](https://sqlite.org/foreignkeys.
 
 `create` selects schema version 2; `create_cola` selects version 3 for
 two-route IX03 graphs as well as linear IX02 chains. Both support timelines.
-`create_taps` selects version 4, adding a small checkpoint to each named-tap
+`create_sessions` selects version 4, adding a small checkpoint to each named-session
 generation and immutable saves of those generations.
 Version 1 catalogs still open and support
 reservations, seals, graph registration, immutable saves and reader acquisition.
@@ -212,29 +212,29 @@ sampling, block size and backspace code. Each file owns its actual value framing
 a newly admitted sort with a different width does not invalidate older files.
 This physical check does not verify semantic schema compatibility.
 
-## Named taps and restart checkpoints
+## Named sessions and restart checkpoints
 
-A named tap needs more than a root pointer to resume maintenance. I keep its
+A named session needs more than a root pointer to resume maintenance. I keep its
 small runtime checkpoint beside that exact generation in SQLite. The checkpoint
 can record admission intervals, live count, semantic signature and schema
 identity; its version and interpretation belong to the typed runtime.
 
-`create_tap(operation, name, head, checkpoint)` creates the initial generation.
-`publish_tap(operation, expected, candidate, checkpoint)` commits its root pin
+`create_session(operation, name, head, checkpoint)` creates the initial generation.
+`publish_session(operation, expected, candidate, checkpoint)` commits its root pin
 and checkpoint in one transaction. The comparison includes every field of the
 expected generation and its checkpoint. A conflict returns the observed pair;
-replay returns the original outcome even if the tap has advanced again.
-`find_tap(name)` reads the latest retained pair without scanning native payloads.
+replay returns the original outcome even if the session has advanced again.
+`find_session(name)` reads the latest retained pair without scanning native payloads.
 The catalog accepts opaque checkpoint bytes and does not certify their semantic
 contents. The reopening runtime validates them against the mapped graph.
 
-`fork_tap(operation, name, source)` starts another named tap at an exact
-historical generation. `save_tap(operation, name, source)` retains that generation
-under an immutable save name; `find_saved_tap(name)` returns its root and
+`fork_session(operation, name, source)` starts another named session at an exact
+historical generation. `save_session(operation, name, source)` retains that generation
+under an immutable save name; `find_saved_session(name)` returns its root and
 checkpoint. The saved root also works with the ordinary save-reader API. These
 operations copy only small metadata and pin existing files.
 
-Ordinary `publish_timeline` rejects a named tap, so it cannot accidentally
+Ordinary `publish_timeline` rejects a named session, so it cannot accidentally
 advance its root without recording the matching checkpoint. A plain timeline
 still works in a version-4 catalog. Checkpoint and save rows have the same
 immutable-row protections and schema validation as the other catalog tables.
@@ -315,7 +315,7 @@ one permitted object transition fills all seal metadata once. The catalog is
 trusted application metadata, not a sandbox for hostile SQL clients. External
 SQL writes that bypass the API's transactional invariants are unsupported.
 
-These retention rows do not add terms to a cola fingerprint. I have not chosen
+These retention rows do not add terms to a world fingerprint. I have not chosen
 a serialized algebra-element policy for this adapter. The in-memory pin owner
 continues to distinguish a file's additive contribution from its own-record
 hash, while this component stores physical identities and retention.

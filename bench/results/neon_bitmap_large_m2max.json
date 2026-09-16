@@ -1,6 +1,6 @@
 {
-  "diet_revision": "aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06",
-  "diet_rank_sha256": "80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c",
+  "everett_revision": "aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06",
+  "everett_rank_sha256": "80bbeb9777caf634abaf990863f7d93753c1c4e15e72f1537ad554b82352a34c",
   "candidate_sha256": "0eced9c87eeedf1f36e15251e221de346599a64692c90777ce25f18720a93fe7",
   "measured_bitmap_source_revision": "ce97bdaea4a1f6134225eb613acc6b0d16981b45",
   "measured_bitmap_source_sha256": "96773e2dbaa8dacd92c22173f97e63bb5bbc2604f1194541cfefe83eb1f79ed0",

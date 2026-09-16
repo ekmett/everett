@@ -1,12 +1,12 @@
 /workspace/-bit-subview/build-bit-subview/cursor-baseline.o:
 (__TEXT,__text) section
-__Z12advance_byteRN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EEE:
+__Z12advance_byteRN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EEE:
 0000000000000000	mov	x1, #0x0
 0000000000000004	b	0x4
-__Z11advance_bitRN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EEE:
+__Z11advance_bitRN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EEE:
 0000000000000008	mov	x1, #0x0
 000000000000000c	b	0xc
-__Z12compare_byteRN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EEE:
+__Z12compare_byteRN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EEE:
 0000000000000010	sub	sp, sp, #0x30
 0000000000000014	stp	x20, x19, [sp, #0x10]
 0000000000000018	stp	x29, x30, [sp, #0x20]
@@ -36,7 +36,7 @@ __Z12compare_byteRN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE
 0000000000000078	ldp	x20, x19, [sp, #0x10]
 000000000000007c	add	sp, sp, #0x30
 0000000000000080	ret
-__Z11compare_bitRN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EEE:
+__Z11compare_bitRN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EEE:
 0000000000000084	sub	sp, sp, #0x30
 0000000000000088	stp	x20, x19, [sp, #0x10]
 000000000000008c	stp	x29, x30, [sp, #0x20]
@@ -66,7 +66,7 @@ __Z11compare_bitRN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE1
 00000000000000ec	ldp	x20, x19, [sp, #0x10]
 00000000000000f0	add	sp, sp, #0x30
 00000000000000f4	ret
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE:
 00000000000000f8	sub	sp, sp, #0xe0
 00000000000000fc	stp	x22, x21, [sp, #0xb0]
 0000000000000100	stp	x20, x19, [sp, #0xc0]
@@ -204,7 +204,7 @@ __ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable
 0000000000000310	bl	0x310
 0000000000000314	bl	0x314
 0000000000000318	bl	0x318
-__ZN7diet12error_detail5raiseISt12out_of_rangeEEvPKc:
+__ZN7everett12error_detail5raiseISt12out_of_rangeEEvPKc:
 000000000000031c	stp	x20, x19, [sp, #-0x20]!
 0000000000000320	stp	x29, x30, [sp, #0x10]
 0000000000000324	add	x29, sp, #0x10
@@ -225,7 +225,7 @@ __ZN7diet12error_detail5raiseISt12out_of_rangeEEvPKc:
 0000000000000360	bl	0x360
 0000000000000364	mov	x0, x20
 0000000000000368	bl	0x368
-__ZN7diet12error_detail5raiseISt16invalid_argumentEEvPKc:
+__ZN7everett12error_detail5raiseISt16invalid_argumentEEvPKc:
 000000000000036c	stp	x20, x19, [sp, #-0x20]!
 0000000000000370	stp	x29, x30, [sp, #0x10]
 0000000000000374	add	x29, sp, #0x10
@@ -246,7 +246,7 @@ __ZN7diet12error_detail5raiseISt16invalid_argumentEEvPKc:
 00000000000003b0	bl	0x3b0
 00000000000003b4	mov	x0, x20
 00000000000003b8	bl	0x3b8
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy:
 00000000000003bc	sub	sp, sp, #0x80
 00000000000003c0	stp	x26, x25, [sp, #0x30]
 00000000000003c4	stp	x24, x23, [sp, #0x40]
@@ -317,7 +317,7 @@ __ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_
 00000000000004c8	bl	0x4c8
 00000000000004cc	bl	0x4cc
 00000000000004d0	bl	0x4d0
-__ZN7diet19compare_common_bitsENS_8bit_viewES0_:
+__ZN7everett19compare_common_bitsENS_8bit_viewES0_:
 00000000000004d4	stp	x20, x19, [sp, #-0x10]!
 00000000000004d8	mov	x8, x0
 00000000000004dc	ldr	x9, [x0, #0x18]
@@ -527,7 +527,7 @@ __ZN7diet19compare_common_bitsENS_8bit_viewES0_:
 000000000000080c	cmp	x16, #0x8
 0000000000000810	b.lo	0x554
 0000000000000814	b	0x7c4
-__ZN7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy:
+__ZN7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy:
 0000000000000818	sub	sp, sp, #0x90
 000000000000081c	stp	x28, x27, [sp, #0x30]
 0000000000000820	stp	x26, x25, [sp, #0x40]
@@ -648,7 +648,7 @@ __ZNSt16invalid_argumentC1B9nqe210106EPKc:
 00000000000009e4	str	x8, [x0]
 00000000000009e8	ldp	x29, x30, [sp], #0x10
 00000000000009ec	ret
-__ZN7diet14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy:
+__ZN7everett14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy:
 00000000000009f0	stp	x29, x30, [sp, #-0x10]!
 00000000000009f4	mov	x29, sp
 00000000000009f8	ldr	x9, [x1]
@@ -749,7 +749,7 @@ __ZN7diet14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE0EN
 0000000000000b74	bl	0xb74
 0000000000000b78	bl	0xb78
 0000000000000b7c	bl	0xb7c
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy:
 0000000000000b80	sub	sp, sp, #0x70
 0000000000000b84	stp	x24, x23, [sp, #0x30]
 0000000000000b88	stp	x22, x21, [sp, #0x40]
@@ -846,7 +846,7 @@ __ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_
 0000000000000cf4	bl	0xcf4
 0000000000000cf8	bl	0xcf8
 0000000000000cfc	bl	0xcfc
-__ZNK7diet15elias_fano_view6selectEy:
+__ZNK7everett15elias_fano_view6selectEy:
 0000000000000d00	stp	x20, x19, [sp, #-0x20]!
 0000000000000d04	stp	x29, x30, [sp, #0x10]
 0000000000000d08	add	x29, sp, #0x10
@@ -905,7 +905,7 @@ __ZNK7diet15elias_fano_view6selectEy:
 0000000000000ddc	bl	0xddc
 0000000000000de0	bl	0xde0
 0000000000000de4	bl	0xde4
-__ZNK7diet15elias_fano_view11select_highEy:
+__ZNK7everett15elias_fano_view11select_highEy:
 0000000000000de8	stp	x29, x30, [sp, #-0x10]!
 0000000000000dec	mov	x29, sp
 0000000000000df0	lsr	x8, x1, #8
@@ -1054,7 +1054,7 @@ __ZNK7diet15elias_fano_view11select_highEy:
 000000000000102c	bl	0x102c
 0000000000001030	bl	0x1030
 0000000000001034	bl	0x1034
-__ZN7diet12error_detail5raiseISt14overflow_errorEEvPKc:
+__ZN7everett12error_detail5raiseISt14overflow_errorEEvPKc:
 0000000000001038	stp	x20, x19, [sp, #-0x20]!
 000000000000103c	stp	x29, x30, [sp, #0x10]
 0000000000001040	add	x29, sp, #0x10
@@ -1085,7 +1085,7 @@ __ZNSt14overflow_errorC1B9nqe210106EPKc:
 00000000000010a0	str	x8, [x0]
 00000000000010a4	ldp	x29, x30, [sp], #0x10
 00000000000010a8	ret
-__ZN7diet14profile_detail6appendERNS_10bit_stringENS_8bit_viewE:
+__ZN7everett14profile_detail6appendERNS_10bit_stringENS_8bit_viewE:
 00000000000010ac	sub	sp, sp, #0xa0
 00000000000010b0	stp	x28, x27, [sp, #0x40]
 00000000000010b4	stp	x26, x25, [sp, #0x50]
@@ -1354,7 +1354,7 @@ __ZN7diet14profile_detail6appendERNS_10bit_stringENS_8bit_viewE:
 00000000000014d0	bl	0x14d0
 00000000000014d4	mov	x0, x19
 00000000000014d8	bl	0x14d8
-__ZN7diet12error_detail5raiseISt12length_errorEEvPKc:
+__ZN7everett12error_detail5raiseISt12length_errorEEvPKc:
 00000000000014dc	stp	x20, x19, [sp, #-0x20]!
 00000000000014e0	stp	x29, x30, [sp, #0x10]
 00000000000014e4	add	x29, sp, #0x10
@@ -1385,7 +1385,7 @@ __ZNSt12length_errorC1B9nqe210106EPKc:
 0000000000001544	str	x8, [x0]
 0000000000001548	ldp	x29, x30, [sp], #0x10
 000000000000154c	ret
-__ZN7diet14profile_detail9copy_bitsEPSt4byteyNS_8bit_viewE:
+__ZN7everett14profile_detail9copy_bitsEPSt4byteyNS_8bit_viewE:
 0000000000001550	stp	x24, x23, [sp, #-0x40]!
 0000000000001554	stp	x22, x21, [sp, #0x10]
 0000000000001558	stp	x20, x19, [sp, #0x20]
@@ -1653,7 +1653,7 @@ __ZN7diet14profile_detail9copy_bitsEPSt4byteyNS_8bit_viewE:
 0000000000001970	ldp	x22, x21, [sp, #0x10]
 0000000000001974	ldp	x24, x23, [sp], #0x40
 0000000000001978	ret
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE:
 000000000000197c	sub	sp, sp, #0xe0
 0000000000001980	stp	x22, x21, [sp, #0xb0]
 0000000000001984	stp	x20, x19, [sp, #0xc0]
@@ -1780,7 +1780,7 @@ __ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable
 0000000000001b68	bl	0x1b68
 0000000000001b6c	bl	0x1b6c
 0000000000001b70	bl	0x1b70
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy:
 0000000000001b74	sub	sp, sp, #0x80
 0000000000001b78	stp	x26, x25, [sp, #0x30]
 0000000000001b7c	stp	x24, x23, [sp, #0x40]
@@ -1851,7 +1851,7 @@ __ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_
 0000000000001c80	bl	0x1c80
 0000000000001c84	bl	0x1c84
 0000000000001c88	bl	0x1c88
-__ZN7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy:
+__ZN7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy:
 0000000000001c8c	sub	sp, sp, #0x90
 0000000000001c90	stp	x28, x27, [sp, #0x30]
 0000000000001c94	stp	x26, x25, [sp, #0x40]
@@ -1964,7 +1964,7 @@ __ZN7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_v
 0000000000001e40	bl	0x1e40
 0000000000001e44	bl	0x1e44
 0000000000001e48	bl	0x1e48
-__ZN7diet14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy:
+__ZN7everett14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy:
 0000000000001e4c	stp	x29, x30, [sp, #-0x10]!
 0000000000001e50	mov	x29, sp
 0000000000001e54	ldr	x10, [x1]
@@ -2140,7 +2140,7 @@ __ZN7diet14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE1EN
 00000000000020fc	add	x0, x0, #0x0
 0000000000002100	bl	0x2100
 0000000000002104	bl	0x2104
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy:
 0000000000002108	sub	sp, sp, #0x70
 000000000000210c	stp	x24, x23, [sp, #0x30]
 0000000000002110	stp	x22, x21, [sp, #0x40]
@@ -2227,307 +2227,307 @@ __ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_
 0000000000002254	bl	0x2254
 0000000000002258	bl	0x2258
 000000000000225c	bl	0x225c
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.1:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.1:
 0000000000002260	stp	x29, x30, [sp, #-0x10]!
 0000000000002264	mov	x29, sp
 0000000000002268	bl	0x2268
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.2:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.2:
 000000000000226c	stp	x29, x30, [sp, #-0x10]!
 0000000000002270	mov	x29, sp
 0000000000002274	bl	0x2274
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.3:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.3:
 0000000000002278	stp	x29, x30, [sp, #-0x10]!
 000000000000227c	mov	x29, sp
 0000000000002280	bl	0x2280
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.4:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.4:
 0000000000002284	stp	x29, x30, [sp, #-0x10]!
 0000000000002288	mov	x29, sp
 000000000000228c	bl	0x228c
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.5:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.5:
 0000000000002290	stp	x29, x30, [sp, #-0x10]!
 0000000000002294	mov	x29, sp
 0000000000002298	bl	0x2298
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.6:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.6:
 000000000000229c	stp	x29, x30, [sp, #-0x10]!
 00000000000022a0	mov	x29, sp
 00000000000022a4	bl	0x22a4
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.7:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.7:
 00000000000022a8	stp	x29, x30, [sp, #-0x10]!
 00000000000022ac	mov	x29, sp
 00000000000022b0	bl	0x22b0
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.8:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.8:
 00000000000022b4	stp	x29, x30, [sp, #-0x10]!
 00000000000022b8	mov	x29, sp
 00000000000022bc	bl	0x22bc
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy.cold.1:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy.cold.1:
 00000000000022c0	stp	x29, x30, [sp, #-0x10]!
 00000000000022c4	mov	x29, sp
 00000000000022c8	bl	0x22c8
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy.cold.2:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy.cold.2:
 00000000000022cc	stp	x29, x30, [sp, #-0x10]!
 00000000000022d0	mov	x29, sp
 00000000000022d4	bl	0x22d4
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy.cold.3:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy.cold.3:
 00000000000022d8	stp	x29, x30, [sp, #-0x10]!
 00000000000022dc	mov	x29, sp
 00000000000022e0	bl	0x22e0
-__ZN7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.1:
+__ZN7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.1:
 00000000000022e4	stp	x29, x30, [sp, #-0x10]!
 00000000000022e8	mov	x29, sp
 00000000000022ec	bl	0x22ec
-__ZN7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.2:
+__ZN7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.2:
 00000000000022f0	stp	x29, x30, [sp, #-0x10]!
 00000000000022f4	mov	x29, sp
 00000000000022f8	bl	0x22f8
-__ZN7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.3:
+__ZN7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.3:
 00000000000022fc	stp	x29, x30, [sp, #-0x10]!
 0000000000002300	mov	x29, sp
 0000000000002304	bl	0x2304
-__ZN7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.4:
+__ZN7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.4:
 0000000000002308	stp	x29, x30, [sp, #-0x10]!
 000000000000230c	mov	x29, sp
 0000000000002310	bl	0x2310
-__ZN7diet14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy.cold.1:
+__ZN7everett14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy.cold.1:
 0000000000002314	stp	x29, x30, [sp, #-0x10]!
 0000000000002318	mov	x29, sp
 000000000000231c	adrp	x0, 0 ; 0x2000
 0000000000002320	add	x0, x0, #0x0
 0000000000002324	bl	0x2324
-__ZN7diet14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy.cold.2:
+__ZN7everett14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy.cold.2:
 0000000000002328	stp	x29, x30, [sp, #-0x10]!
 000000000000232c	mov	x29, sp
 0000000000002330	adrp	x0, 0 ; 0x2000
 0000000000002334	add	x0, x0, #0x0
 0000000000002338	bl	0x2338
-__ZN7diet14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy.cold.3:
+__ZN7everett14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy.cold.3:
 000000000000233c	stp	x29, x30, [sp, #-0x10]!
 0000000000002340	mov	x29, sp
 0000000000002344	adrp	x0, 0 ; 0x2000
 0000000000002348	add	x0, x0, #0x0
 000000000000234c	bl	0x234c
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.1:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.1:
 0000000000002350	stp	x29, x30, [sp, #-0x10]!
 0000000000002354	mov	x29, sp
 0000000000002358	bl	0x2358
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.2:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.2:
 000000000000235c	stp	x29, x30, [sp, #-0x10]!
 0000000000002360	mov	x29, sp
 0000000000002364	bl	0x2364
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.3:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.3:
 0000000000002368	stp	x29, x30, [sp, #-0x10]!
 000000000000236c	mov	x29, sp
 0000000000002370	bl	0x2370
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.4:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.4:
 0000000000002374	stp	x29, x30, [sp, #-0x10]!
 0000000000002378	mov	x29, sp
 000000000000237c	bl	0x237c
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.5:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.5:
 0000000000002380	stp	x29, x30, [sp, #-0x10]!
 0000000000002384	mov	x29, sp
 0000000000002388	bl	0x2388
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.6:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.6:
 000000000000238c	stp	x29, x30, [sp, #-0x10]!
 0000000000002390	mov	x29, sp
 0000000000002394	bl	0x2394
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.7:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.7:
 0000000000002398	stp	x29, x30, [sp, #-0x10]!
 000000000000239c	mov	x29, sp
 00000000000023a0	bl	0x23a0
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.8:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.8:
 00000000000023a4	stp	x29, x30, [sp, #-0x10]!
 00000000000023a8	mov	x29, sp
 00000000000023ac	bl	0x23ac
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.9:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE0ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.9:
 00000000000023b0	stp	x29, x30, [sp, #-0x10]!
 00000000000023b4	mov	x29, sp
 00000000000023b8	bl	0x23b8
-__ZNK7diet15elias_fano_view6selectEy.cold.1:
+__ZNK7everett15elias_fano_view6selectEy.cold.1:
 00000000000023bc	stp	x29, x30, [sp, #-0x10]!
 00000000000023c0	mov	x29, sp
 00000000000023c4	adrp	x0, 0 ; 0x2000
 00000000000023c8	add	x0, x0, #0x0
 00000000000023cc	bl	0x23cc
-__ZNK7diet15elias_fano_view6selectEy.cold.2:
+__ZNK7everett15elias_fano_view6selectEy.cold.2:
 00000000000023d0	stp	x29, x30, [sp, #-0x10]!
 00000000000023d4	mov	x29, sp
 00000000000023d8	bl	0x23d8
-__ZNK7diet15elias_fano_view6selectEy.cold.3:
+__ZNK7everett15elias_fano_view6selectEy.cold.3:
 00000000000023dc	stp	x29, x30, [sp, #-0x10]!
 00000000000023e0	mov	x29, sp
 00000000000023e4	bl	0x23e4
-__ZNK7diet15elias_fano_view6selectEy.cold.4:
+__ZNK7everett15elias_fano_view6selectEy.cold.4:
 00000000000023e8	stp	x29, x30, [sp, #-0x10]!
 00000000000023ec	mov	x29, sp
 00000000000023f0	adrp	x0, 0 ; 0x2000
 00000000000023f4	add	x0, x0, #0x0
 00000000000023f8	bl	0x23f8
-__ZNK7diet15elias_fano_view6selectEy.cold.5:
+__ZNK7everett15elias_fano_view6selectEy.cold.5:
 00000000000023fc	stp	x29, x30, [sp, #-0x10]!
 0000000000002400	mov	x29, sp
 0000000000002404	adrp	x0, 0 ; 0x2000
 0000000000002408	add	x0, x0, #0x0
 000000000000240c	bl	0x240c
-__ZNK7diet15elias_fano_view6selectEy.cold.6:
+__ZNK7everett15elias_fano_view6selectEy.cold.6:
 0000000000002410	stp	x29, x30, [sp, #-0x10]!
 0000000000002414	mov	x29, sp
 0000000000002418	adrp	x0, 0 ; 0x2000
 000000000000241c	add	x0, x0, #0x0
 0000000000002420	bl	0x2420
-__ZNK7diet15elias_fano_view11select_highEy.cold.1:
+__ZNK7everett15elias_fano_view11select_highEy.cold.1:
 0000000000002424	stp	x29, x30, [sp, #-0x10]!
 0000000000002428	mov	x29, sp
 000000000000242c	adrp	x0, 0 ; 0x2000
 0000000000002430	add	x0, x0, #0x0
 0000000000002434	bl	0x2434
-__ZNK7diet15elias_fano_view11select_highEy.cold.2:
+__ZNK7everett15elias_fano_view11select_highEy.cold.2:
 0000000000002438	stp	x29, x30, [sp, #-0x10]!
 000000000000243c	mov	x29, sp
 0000000000002440	bl	0x2440
-__ZNK7diet15elias_fano_view11select_highEy.cold.3:
+__ZNK7everett15elias_fano_view11select_highEy.cold.3:
 0000000000002444	stp	x29, x30, [sp, #-0x10]!
 0000000000002448	mov	x29, sp
 000000000000244c	bl	0x244c
-__ZNK7diet15elias_fano_view11select_highEy.cold.4:
+__ZNK7everett15elias_fano_view11select_highEy.cold.4:
 0000000000002450	stp	x29, x30, [sp, #-0x10]!
 0000000000002454	mov	x29, sp
 0000000000002458	bl	0x2458
-__ZNK7diet15elias_fano_view11select_highEy.cold.5:
+__ZNK7everett15elias_fano_view11select_highEy.cold.5:
 000000000000245c	stp	x29, x30, [sp, #-0x10]!
 0000000000002460	mov	x29, sp
 0000000000002464	adrp	x0, 0 ; 0x2000
 0000000000002468	add	x0, x0, #0x0
 000000000000246c	bl	0x246c
-__ZNK7diet15elias_fano_view11select_highEy.cold.6:
+__ZNK7everett15elias_fano_view11select_highEy.cold.6:
 0000000000002470	stp	x29, x30, [sp, #-0x10]!
 0000000000002474	mov	x29, sp
 0000000000002478	adrp	x0, 0 ; 0x2000
 000000000000247c	add	x0, x0, #0x0
 0000000000002480	bl	0x2480
-__ZNK7diet15elias_fano_view11select_highEy.cold.7:
+__ZNK7everett15elias_fano_view11select_highEy.cold.7:
 0000000000002484	stp	x29, x30, [sp, #-0x10]!
 0000000000002488	mov	x29, sp
 000000000000248c	adrp	x0, 0 ; 0x2000
 0000000000002490	add	x0, x0, #0x0
 0000000000002494	bl	0x2494
-__ZNK7diet15elias_fano_view11select_highEy.cold.8:
+__ZNK7everett15elias_fano_view11select_highEy.cold.8:
 0000000000002498	stp	x29, x30, [sp, #-0x10]!
 000000000000249c	mov	x29, sp
 00000000000024a0	bl	0x24a0
-__ZNK7diet15elias_fano_view11select_highEy.cold.9:
+__ZNK7everett15elias_fano_view11select_highEy.cold.9:
 00000000000024a4	stp	x29, x30, [sp, #-0x10]!
 00000000000024a8	mov	x29, sp
 00000000000024ac	adrp	x0, 0 ; 0x2000
 00000000000024b0	add	x0, x0, #0x0
 00000000000024b4	bl	0x24b4
-__ZNK7diet15elias_fano_view11select_highEy.cold.10:
+__ZNK7everett15elias_fano_view11select_highEy.cold.10:
 00000000000024b8	stp	x29, x30, [sp, #-0x10]!
 00000000000024bc	mov	x29, sp
 00000000000024c0	adrp	x0, 0 ; 0x2000
 00000000000024c4	add	x0, x0, #0x0
 00000000000024c8	bl	0x24c8
-__ZN7diet14profile_detail6appendERNS_10bit_stringENS_8bit_viewE.cold.1:
+__ZN7everett14profile_detail6appendERNS_10bit_stringENS_8bit_viewE.cold.1:
 00000000000024cc	stp	x29, x30, [sp, #-0x10]!
 00000000000024d0	mov	x29, sp
 00000000000024d4	adrp	x0, 0 ; 0x2000
 00000000000024d8	add	x0, x0, #0x0
 00000000000024dc	bl	0x24dc
-__ZN7diet14profile_detail6appendERNS_10bit_stringENS_8bit_viewE.cold.2:
+__ZN7everett14profile_detail6appendERNS_10bit_stringENS_8bit_viewE.cold.2:
 00000000000024e0	stp	x29, x30, [sp, #-0x10]!
 00000000000024e4	mov	x29, sp
 00000000000024e8	bl	0x24e8
-__ZN7diet14profile_detail6appendERNS_10bit_stringENS_8bit_viewE.cold.3:
+__ZN7everett14profile_detail6appendERNS_10bit_stringENS_8bit_viewE.cold.3:
 00000000000024ec	stp	x29, x30, [sp, #-0x10]!
 00000000000024f0	mov	x29, sp
 00000000000024f4	bl	0x24f4
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.1:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.1:
 00000000000024f8	stp	x29, x30, [sp, #-0x10]!
 00000000000024fc	mov	x29, sp
 0000000000002500	bl	0x2500
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.2:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.2:
 0000000000002504	stp	x29, x30, [sp, #-0x10]!
 0000000000002508	mov	x29, sp
 000000000000250c	bl	0x250c
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.3:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.3:
 0000000000002510	stp	x29, x30, [sp, #-0x10]!
 0000000000002514	mov	x29, sp
 0000000000002518	bl	0x2518
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.4:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.4:
 000000000000251c	stp	x29, x30, [sp, #-0x10]!
 0000000000002520	mov	x29, sp
 0000000000002524	bl	0x2524
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.5:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.5:
 0000000000002528	stp	x29, x30, [sp, #-0x10]!
 000000000000252c	mov	x29, sp
 0000000000002530	bl	0x2530
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.6:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.6:
 0000000000002534	stp	x29, x30, [sp, #-0x10]!
 0000000000002538	mov	x29, sp
 000000000000253c	bl	0x253c
-__ZN7diet14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.7:
+__ZN7everett14profile_cursorINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE12advance_implEPNS_14bit_comparisonE.cold.7:
 0000000000002540	stp	x29, x30, [sp, #-0x10]!
 0000000000002544	mov	x29, sp
 0000000000002548	bl	0x2548
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy.cold.1:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy.cold.1:
 000000000000254c	stp	x29, x30, [sp, #-0x10]!
 0000000000002550	mov	x29, sp
 0000000000002554	bl	0x2554
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy.cold.2:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy.cold.2:
 0000000000002558	stp	x29, x30, [sp, #-0x10]!
 000000000000255c	mov	x29, sp
 0000000000002560	bl	0x2560
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy.cold.3:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11next_recordERKNS_22profile_encoded_recordEy.cold.3:
 0000000000002564	stp	x29, x30, [sp, #-0x10]!
 0000000000002568	mov	x29, sp
 000000000000256c	bl	0x256c
-__ZN7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.1:
+__ZN7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.1:
 0000000000002570	stp	x29, x30, [sp, #-0x10]!
 0000000000002574	mov	x29, sp
 0000000000002578	bl	0x2578
-__ZN7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.2:
+__ZN7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.2:
 000000000000257c	stp	x29, x30, [sp, #-0x10]!
 0000000000002580	mov	x29, sp
 0000000000002584	bl	0x2584
-__ZN7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.3:
+__ZN7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE11decode_intoERKNS_22profile_encoded_recordEyRNS_10bit_stringERy.cold.3:
 0000000000002588	stp	x29, x30, [sp, #-0x10]!
 000000000000258c	mov	x29, sp
 0000000000002590	bl	0x2590
-__ZN7diet14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy.cold.1:
+__ZN7everett14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy.cold.1:
 0000000000002594	stp	x29, x30, [sp, #-0x10]!
 0000000000002598	mov	x29, sp
 000000000000259c	adrp	x0, 0 ; 0x2000
 00000000000025a0	add	x0, x0, #0x0
 00000000000025a4	bl	0x25a4
-__ZN7diet14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy.cold.2:
+__ZN7everett14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy.cold.2:
 00000000000025a8	stp	x29, x30, [sp, #-0x10]!
 00000000000025ac	mov	x29, sp
 00000000000025b0	adrp	x0, 0 ; 0x2000
 00000000000025b4	add	x0, x0, #0x0
 00000000000025b8	bl	0x25b8
-__ZN7diet14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy.cold.3:
+__ZN7everett14profile_detail10read_countINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEEEEyNS_8bit_viewERy.cold.3:
 00000000000025bc	stp	x29, x30, [sp, #-0x10]!
 00000000000025c0	mov	x29, sp
 00000000000025c4	bl	0x25c4
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.1:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.1:
 00000000000025c8	stp	x29, x30, [sp, #-0x10]!
 00000000000025cc	mov	x29, sp
 00000000000025d0	bl	0x25d0
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.2:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.2:
 00000000000025d4	stp	x29, x30, [sp, #-0x10]!
 00000000000025d8	mov	x29, sp
 00000000000025dc	bl	0x25dc
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.3:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.3:
 00000000000025e0	stp	x29, x30, [sp, #-0x10]!
 00000000000025e4	mov	x29, sp
 00000000000025e8	bl	0x25e8
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.4:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.4:
 00000000000025ec	stp	x29, x30, [sp, #-0x10]!
 00000000000025f0	mov	x29, sp
 00000000000025f4	bl	0x25f4
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.5:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.5:
 00000000000025f8	stp	x29, x30, [sp, #-0x10]!
 00000000000025fc	mov	x29, sp
 0000000000002600	bl	0x2600
-__ZNK7diet12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.6:
+__ZNK7everett12profile_viewINS_14storage_policyILNS_12profile_unitE1ENS_15variable_valuesELy15ENS_18exponential_golombILy0EEELy15EEELNS_11stream_roleE0EE5parseEyy.cold.6:
 0000000000002604	stp	x29, x30, [sp, #-0x10]!
 0000000000002608	mov	x29, sp
 000000000000260c	bl	0x260c

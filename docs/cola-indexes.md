@@ -99,15 +99,15 @@ readable until its owner chooses to publish the completed replacement.
 This complete program finds both contributions to one key:
 
 ```cpp
-#include <diet/cola_query.h>
+#include <everett/cola_query.h>
 
 #include <array>
 #include <cassert>
 #include <memory>
 
 int main() {
-  using namespace diet;
-  using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
+  using namespace everett;
+  using P = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
   using node = cola_index<P>;
   std::array older{profile_record{bit_string::from_bytes("path"),
                                  bit_string::from_bytes("before")}};
@@ -190,7 +190,7 @@ objects and main pair. The caller authenticates physical object identities.
 
 `open_mapped_cola_query<P>(directory, head)` follows the main chain, opens each
 secondary native file and caches shared native mappings. It adopts the already
-prepared root without rebuilding indexes. `fridge<P>::open_cola_query`
+prepared root without rebuilding indexes. `multiverse<P>::open_cola_query`
 provides the same operation through the policy-bound backing directory.
 
 For recovery or admission checks, `head->scan()` explicitly verifies checksums,

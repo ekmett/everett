@@ -12,7 +12,7 @@ buffer and has no acknowledged catalog binding, we can prepare both outputs
 locally. One reservation names both objects, and one transaction acknowledges
 both seals and the pair. Individually, this takes two catalog commits instead
 of the separate native and index paths' four; ready units can also share the
-reservation as described below. The final named tap compare-and-swap remains a
+reservation as described below. The final named session compare-and-swap remains a
 separate transaction.
 
 This saving applies to an eligible pair, not every file produced by a write.
@@ -32,7 +32,7 @@ unbound pair stays available for joint preparation, even when that pair's
 targets are not ready yet.
 
 The group shares one reservation transaction. Each unit still writes and
-flushes its own files and acknowledges its seals separately; the final tap
+flushes its own files and acknowledges its seals separately; the final session
 compare-and-swap remains separate too. For $b$ selected units, this removes
 $b-1$ reservation commits. Once that group finishes, the ordinary walk prepares
 the rest of the graph. The cap bounds selected units, not dependency discovery
@@ -104,7 +104,7 @@ operation with the same two receipts and pair identity.
 Mapping or binding allocation can still fail after acknowledgment. The durable
 rows remain valid. An installed native binding can survive a later pair-binding
 failure, so a healthy retry can reuse that native and prepare another index.
-Preparation does not change the named tap's logical head. Losing a later tap
+Preparation does not change the named session's logical head. Losing a later session
 compare-and-swap can leave prepared objects; an uncertain publication can also
 leave a committed new generation, which must be reconciled after reopening.
 This protocol does not reclaim retained attempts or historical graphs.

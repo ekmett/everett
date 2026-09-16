@@ -15,18 +15,18 @@
 // silently change the baselines. Optional candidates use distinct namespaces;
 // encoded bytes
 // are shared, so every backend answers the same g*15 boundary on the same bits.
-#include <diet/rank.h>
-#include <diet/rank15.h>
-#include <diet/rank_groups.h>
-#ifdef DIET_RANK_CANDIDATE
-#define diet diet_candidate
-#include DIET_RANK_CANDIDATE
-#undef diet
+#include <everett/rank.h>
+#include <everett/rank15.h>
+#include <everett/rank_groups.h>
+#ifdef EVERETT_RANK_CANDIDATE
+#define everett everett_candidate
+#include EVERETT_RANK_CANDIDATE
+#undef everett
 #endif
-#ifdef DIET_RANK_SIMD
-#define diet diet_simd
-#include DIET_RANK_SIMD
-#undef diet
+#ifdef EVERETT_RANK_SIMD
+#define everett everett_simd
+#include EVERETT_RANK_SIMD
+#undef everett
 #endif
 
 #include <algorithm>
@@ -66,9 +66,9 @@ namespace {
   }
 
   struct bitmap {
-    diet::rank_view view;
+    everett::rank_view view;
     std::span<std::uint64_t const> words;
-    std::span<diet::rank_block const> blocks;
+    std::span<everett::rank_block const> blocks;
     std::uint64_t groups;
     std::uint64_t rank(std::uint64_t group) const { return view.rank(group * 15); }
     unsigned class_at(std::uint64_t group) const { return range_population(words, group * 15, 15); }
@@ -176,7 +176,7 @@ namespace {
     std::vector<std::uint64_t> source((bits + 63) / 64);
     std::uint64_t seed = 0x123456789abcdef;
     for (auto & word : source) word = random_word(seed);
-    auto full = diet::rank_index::build(source, bits);
+    auto full = everett::rank_index::build(source, bits);
     source.clear(); source.shrink_to_fit();
     auto logical_words = full.words.size();
     // All four vector loads are readable even in the final partial run.
@@ -184,7 +184,7 @@ namespace {
     full.words.shrink_to_fit(); full.blocks.shrink_to_fit(); full.supers.shrink_to_fit();
     std::vector<std::uint8_t> counts(groups);
     for (std::uint64_t g = 0; g != groups; ++g) counts[g] = std::uint8_t(range_population(full.words, g * 15, 15));
-    auto packed = diet::rank15_index::build(counts, bits);
+    auto packed = everett::rank15_index::build(counts, bits);
     counts.clear(); counts.shrink_to_fit();
     packed.classes.shrink_to_fit(); packed.checkpoints.shrink_to_fit();
     bitmap raw{{std::span(full.words).first(logical_words), full.blocks, full.supers, bits, full.total}, full.words, full.blocks, groups};
@@ -192,7 +192,7 @@ namespace {
     poppy512 poppy{raw};
 #endif
     auto rank15 = packed.view();
-    diet::rank_groups_view<15> typed{packed.classes, packed.checkpoints, bits, packed.total};
+    everett::rank_groups_view<15> typed{packed.classes, packed.checkpoints, bits, packed.total};
     auto raw_data = full.words.size() * 8, raw_metadata = full.blocks.size() * 8 + full.supers.size() * 8;
     auto packed_data = packed.classes.size() * 8, packed_metadata = packed.checkpoints.size() * 8;
     std::vector<variant> variants{
@@ -203,12 +203,12 @@ namespace {
       make_variant("rank15_baseline", rank15, packed_data, packed_metadata, packed.classes.capacity() * 8 + packed.checkpoints.capacity() * 8),
       make_variant("rank_groups15_baseline", typed, packed_data, packed_metadata, packed.classes.capacity() * 8 + packed.checkpoints.capacity() * 8)
     };
-#ifdef DIET_RANK_CANDIDATE
-    diet_candidate::rank15_view candidate{packed.classes, packed.checkpoints, bits, packed.total};
+#ifdef EVERETT_RANK_CANDIDATE
+    everett_candidate::rank15_view candidate{packed.classes, packed.checkpoints, bits, packed.total};
     variants.push_back(make_variant("rank15_candidate", candidate, packed_data, packed_metadata, packed.classes.capacity() * 8 + packed.checkpoints.capacity() * 8));
 #endif
-#ifdef DIET_RANK_SIMD
-    diet_simd::rank15_view simd{packed.classes, packed.checkpoints, bits, packed.total};
+#ifdef EVERETT_RANK_SIMD
+    everett_simd::rank15_view simd{packed.classes, packed.checkpoints, bits, packed.total};
     variants.push_back(make_variant("rank15_simd", simd, packed_data, packed_metadata, packed.classes.capacity() * 8 + packed.checkpoints.capacity() * 8));
 #endif
     for (auto & variant : variants) {

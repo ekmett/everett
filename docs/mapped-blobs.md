@@ -24,8 +24,8 @@ Given an immutable `profile_blob<P>` named `pair`, its reserved native/index
 identities, and an optional exact target identity:
 
 ```cpp
-auto native = diet::encode_native_sections(pair.native());
-auto index = diet::encode_index_sections(pair, native_id, exact_target);
+auto native = everett::encode_native_sections(pair.native());
+auto index = everett::encode_index_sections(pair, native_id, exact_target);
 auto sealed_native = native.seal(object_directory, native_id, native_attempt);
 auto sealed_index = index.seal(object_directory, index_id, index_attempt);
 ```
@@ -47,7 +47,7 @@ semantic scan below checks both properties.
 Sealing uses the [immutable writer](object-writer.md). It requires durable root
 creation and reserved object/attempt identities from its caller. A pair becomes
 eligible for catalog publication only after both files and their dependencies
-are ready. These encoders do not publish a saved cola or reserve identities.
+are ready. These encoders do not publish a saved world or reserve identities.
 
 Preparing and reopening a chain
 ------------------------------
@@ -57,7 +57,7 @@ any empty-native routing prefix produced by `query_root<P>::build`. Persist the
 identity of the resulting head through the catalog that owns the save.
 
 ```cpp
-diet::fridge<P> storage(object_directory);
+everett::multiverse<P> storage(object_directory);
 auto root = storage.open_query(saved_head_identity);
 auto cursor = root.cursor(query_key);
 while (!cursor.done()) {

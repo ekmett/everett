@@ -59,7 +59,7 @@ def main():
     flags += (["-O1", "-g", "-fsanitize=address,undefined", "-fno-omit-frame-pointer"]
               if args.sanitize else ["-O3", "-DNDEBUG"])
     if args.allocations:
-        flags.append("-DDIET_BENCH_ALLOCATIONS")
+        flags.append("-DEVERETT_BENCH_ALLOCATIONS")
     source = build / "native_encoded.cc"
     write_fixture(repo / "bench/native_encoded.cc", source)
     metadata = {

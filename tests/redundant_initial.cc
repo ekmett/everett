@@ -9,13 +9,13 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/redundant_runtime.h>
+#include <everett/redundant_runtime.h>
 
 #include <iostream>
 #include <string>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void check(bool value, char const * message) { if (!value) throw std::runtime_error(message); }
   template <class E = std::exception, class F> void rejects(F && action) {
     bool caught = false;
@@ -237,8 +237,8 @@ namespace {
 
 int main() {
   try {
-    using bit = diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, diet::golomb<3>, 5>;
-    using byte = diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15, diet::exponential_golomb<0>, 4>;
+    using bit = everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 3, everett::golomb<3>, 5>;
+    using byte = everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 15, everett::exponential_golomb<0>, 4>;
     initial_sizes<bit>(); initial_sizes<byte>();
     refusals<bit>(); refusals<byte>(); composition<bit>(); composition<byte>();
     partial_keys<bit>(); failures<bit>(); failures<byte>();

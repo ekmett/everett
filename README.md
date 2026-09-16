@@ -1,24 +1,24 @@
-Diet: A Reduced COLA
-====================
+Everett: Persistent Storage
+==========================
 
-Diet is a C++20 library for compact string-keyed tables, cheap snapshots and
+Everett is a C++20 library for compact string-keyed tables, cheap snapshots and
 independent branches. Connect to a named table, read and write strings, and keep
 an earlier state whenever you need one.
 
-I call a logical state a **cola**, its backing store a **fridge**, and a mutable
-connection a **tap**. A tap follows your latest cola as writes and background
-merges produce new versions. Older snapshots keep their data.
+A **world** is an immutable logical table state. A **multiverse** owns its
+backing storage, and a mutable **session** follows the current world as writes
+and background merges produce new versions. Older snapshots keep their data.
 
 ```cpp
-auto pantry = diet::fridge<>::create("data");
-auto db = pantry.connect("earth-616");
-db.put("name", "Diet");
+auto storage = everett::multiverse<>::create("data");
+auto db = storage.connect("earth-616");
+db.put("name", "Everett");
 auto saved = db.snapshot();
-db.put("name", "A reduced COLA");
-// saved.get("name") still returns "Diet".
+db.put("name", "Persistent snapshots");
+// saved.get("name") still returns "Everett".
 ```
 
-Include `<diet/connection.h>` and link `diet::sqlite`. The default uses compact
+Include `<everett/connection.h>` and link `everett::sqlite`. The default uses compact
 bit encoding, **15:1 index sampling** and **order-zero exponential-Golomb**
 backspaces. Ordinary keys and values are `std::string`; embedded zero bytes work.
 There are no codec parameters to choose before getting started.
@@ -37,21 +37,21 @@ Quick Start
 Here is a complete program:
 
 ```cpp
-#include <diet/connection.h>
+#include <everett/connection.h>
 
 int main() {
-  auto pantry = diet::fridge<>::create("data");
-  auto db = pantry.connect("earth-616");
-  db.put("name", "Diet");
+  auto storage = everett::multiverse<>::create("data");
+  auto db = storage.connect("earth-616");
+  db.put("name", "Everett");
   auto name = db.get("name");
-  return name != "Diet";
+  return name != "Everett";
 }
 ```
 
 `create` establishes missing directories and flushes their new names. `connect`
-opens the latest state of the named tap, creating an empty table if needed.
-Run the program again and it reopens the same table. An existing fridge can
-also be opened with `diet::fridge pantry("data")`.
+opens the latest state of the named session, creating an empty table if needed.
+Run the program again and it reopens the same table. An existing multiverse can
+also be opened with `everett::multiverse storage("data")`.
 
 `get` returns `std::optional<std::string>`. A missing key and a stored empty
 string are distinct. `put` replaces a value; `erase` removes an existing key.
@@ -75,9 +75,9 @@ auto branch = db.fork("earth-617", *saved);
 branch.put("name", "Another branch");
 ```
 
-The two taps can now evolve independently while the saved snapshot stays fixed.
-`load` returns an optional snapshot; it leaves the live tap where it is. Save
-names are immutable, and a fork needs an unused tap name. `save(name)` and
+The two sessions can now evolve independently while the saved snapshot stays fixed.
+`load` returns an optional snapshot; it leaves the live session where it is. Save
+names are immutable, and a fork needs an unused session name. `save(name)` and
 `fork(name)` use the current snapshot.
 
 Snapshots also expose `live_count()` and `signature()`. The signature describes
@@ -104,7 +104,7 @@ first.get();  // Check the earlier write's outcome too.
 
 The queue has bounded admission capacity and applies backpressure when it fills
 or earlier merge work needs service. A ticket keeps its own result even after
-the live tap advances. Separate connections writing the same tap compete through
+the live session advances. Separate connections writing the same session compete through
 checked publication; a stale writer fails instead of overwriting another writer.
 
 For work partitioned by key, prepare contributions from a common snapshot:
@@ -120,7 +120,7 @@ db.apply(std::move(left));
 These disjoint changes can arrive in either order and give the same contents
 and signature. Each contribution checks its affected old values. Custom sorts
 can compose changes instead of replacing values; see the
-[typed update guide](docs/typed-cola.md).
+[typed update guide](docs/typed-world.md).
 
 Building
 --------
@@ -128,20 +128,20 @@ Building
 Use CMake 3.20 or later and a C++20 compiler. For the named table API:
 
 ```cmake
-set(DIET_ENABLE_SQLITE ON CACHE BOOL "Build the persistent catalog")
-add_subdirectory(path/to/diet)
-target_link_libraries(your_target PRIVATE diet::sqlite)
+set(EVERETT_ENABLE_SQLITE ON CACHE BOOL "Build the persistent catalog")
+add_subdirectory(path/to/everett)
+target_link_libraries(your_target PRIVATE everett::sqlite)
 ```
 
 The catalog requires SQLite 3.51.3 or later. An installed package supports:
 
 ```cmake
-find_package(diet CONFIG REQUIRED COMPONENTS sqlite)
-target_link_libraries(your_target PRIVATE diet::sqlite)
+find_package(everett CONFIG REQUIRED COMPONENTS sqlite)
+target_link_libraries(your_target PRIVATE everett::sqlite)
 ```
 
-Diet is header-only. The lower-level codecs, indexes and in-memory engines use
-`diet::diet` and do not require SQLite. The supported persistent file writer
+Everett is header-only. The lower-level codecs, indexes and in-memory engines use
+`everett::everett` and do not require SQLite. The supported persistent file writer
 uses POSIX operations on macOS and Linux. See
 [building and testing](docs/usage.md#building-and-testing) for installation,
 sanitizers and Doxygen commands.
@@ -155,7 +155,7 @@ Sampling lets a lookup carry its position from one run into the next, so it
 only searches a small window at each step. Shared prefixes keep string keys
 compact, and immutable runs make snapshots inexpensive.
 
-Diet keeps data and fractional indexes separate. We can build a new index while
+Everett keeps data and fractional indexes separate. We can build a new index while
 older readers retain the exact files their indexes describe. A completed merge
 changes the representation without changing the table's contents.
 
@@ -179,7 +179,7 @@ Contact Information
 -------------------
 
 Contributions, examples, and bug reports are welcome. Please use
-[GitHub issues](https://github.com/ekmett/diet/issues) for reproducible problems
+[GitHub issues](https://github.com/ekmett/everett/issues) for reproducible problems
 or design discussion, or contact me at [ekmett@gmail.com](mailto:ekmett@gmail.com).
 
 -Edward Kmett

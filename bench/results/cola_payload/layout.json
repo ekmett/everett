@@ -10,10 +10,10 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/workspace/cola-route-payload-20260915/build-payload-matched/baseline/include",
-        "/workspace/cola-route-payload-20260915/build-payload-matched/layout.cc",
+        "-I/workspace/world-route-payload-20260915/build-payload-matched/baseline/include",
+        "/workspace/world-route-payload-20260915/build-payload-matched/layout.cc",
         "-o",
-        "/workspace/cola-route-payload-20260915/build-payload-matched/baseline/layout"
+        "/workspace/world-route-payload-20260915/build-payload-matched/baseline/layout"
       ],
       "index_bytes": 744,
       "builder_bytes": 2776,
@@ -28,15 +28,15 @@
         "-Wextra",
         "-Wpedantic",
         "-Werror",
-        "-I/workspace/cola-route-payload-20260915/build-payload-matched/candidate/include",
-        "/workspace/cola-route-payload-20260915/build-payload-matched/layout.cc",
+        "-I/workspace/world-route-payload-20260915/build-payload-matched/candidate/include",
+        "/workspace/world-route-payload-20260915/build-payload-matched/layout.cc",
         "-o",
-        "/workspace/cola-route-payload-20260915/build-payload-matched/candidate/layout"
+        "/workspace/world-route-payload-20260915/build-payload-matched/candidate/layout"
       ],
       "index_bytes": 296,
       "builder_bytes": 2808,
       "borrowed_array_bytes": 240
     }
   },
-  "source": "#include <diet/cola_index.h>\n#include <iostream>\nint main() {\n  using P = diet::storage_policy<diet::profile_unit::byte,diet::variable_values,3,diet::exponential_golomb<0>,16>;\n  std::cout << sizeof(diet::cola_index<P>) << ' ' << sizeof(diet::cola_index_builder<P>) << ' '\n    << sizeof(diet::profile_array<P,diet::stream_role::borrowed>) << '\\n';\n}\n"
+  "source": "#include <everett/cola_index.h>\n#include <iostream>\nint main() {\n  using P = everett::storage_policy<everett::profile_unit::byte,everett::variable_values,3,everett::exponential_golomb<0>,16>;\n  std::cout << sizeof(everett::cola_index<P>) << ' ' << sizeof(everett::cola_index_builder<P>) << ' '\n    << sizeof(everett::profile_array<P,everett::stream_role::borrowed>) << '\\n';\n}\n"
 }

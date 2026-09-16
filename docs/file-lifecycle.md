@@ -21,26 +21,26 @@ and the [failure and resumption protocol](durability.md).
 Separating a fractional index from its native file lets several index versions
 share the same native bytes. We select compatible objects, their
 precedence and additive contributions through SQLite's immutable representation
-rows. A logical cola can have several representations, and a saved branch point
+rows. A logical world can have several representations, and a saved branch point
 retains one exact representation. Jobs and checkpoints also live in SQLite;
 their owners retain unfinished work without adding its fingerprint a second time.
 
 Here **manifest** means a representation recorded in the catalog, and **root
 publication** means an atomic catalog transaction selecting it. SQLite owns the
-database and journaling files; Diet adds no custom manifest file, root-selector
+database and journaling files; Everett adds no custom manifest file, root-selector
 file or metadata journal.
 
 ### Debug dumps
 
-`reference_cola::export_rc` and `import_rc` provide a `.rc` debug dump:
+`reference_world::export_rc` and `import_rc` provide a `.rc` debug dump:
 a fully resolved table with full keys in sorted order and codec-encoded values. Its eight-byte
-magic is `DIET.RC` followed by zero. Separate 64-bit little-endian fields carry
+magic is `EVRT.RC` followed by zero. Separate 64-bit little-endian fields carry
 the export version, value-codec tag and live-entry count. Each entry contains
 its 64-bit key byte length, key bytes and encoded value.
 
 This is a debugging feature, not an intended access pattern. It materializes
 all live entries. Catalog saves retain object roots; reference snapshots share
-their immutable state. These debug files are outside the fridge's `.kv` and
+their immutable state. These debug files are outside the multiverse's `.kv` and
 `.index` object graph.
 
 I reserve `.fc` and `export_fc`/`import_fc` for a front-coded table dump. That
@@ -65,7 +65,7 @@ must prevent ID reuse, check collisions and distribute the shard prefixes.
 The sharing contract calls for content-addressed native files. Such an address
 must identify verified encoded bytes under a specified hash algorithm and
 format; the weak fingerprint of the resolved logical contents cannot do that
-job. Different merge or codec layouts can represent the same cola and have
+job. Different merge or codec layouts can represent the same world and have
 different content addresses. We reserve a private construction ID before knowing
 the final content, then establish its final content descriptor and name when
 sealing it, before publication. To reuse an existing candidate, we must verify
@@ -76,7 +76,7 @@ canonical hash input. We must bind kind, interpretation metadata, meaningful bit
 extent and payload in the preimage, with an explicit rule for derived fields.
 Including the address itself would make the hash self-referential. A future
 digest may require a wider path format than today's 128-bit primitive. Neither
-CRC32C nor the algebraic cola signature supplies this content identity.
+CRC32C nor the algebraic world signature supplies this content identity.
 
 Create shard directories as needed. Sharding bounds the entries in each
 directory, while leaving the total inode count unchanged. We can eventually pack
@@ -92,10 +92,10 @@ integrity metadata. Kind-specific magic is:
 
 | Kind | Eight magic bytes |
 | --- | --- |
-| Native | `DIET.KV` followed by zero |
-| Fractional index | `DIET.IX` followed by zero |
+| Native | `EVRT.KV` followed by zero |
+| Fractional index | `EVRT.IX` followed by zero |
 
-Only these signatures identify Diet objects; checked readers reject every
+Only these signatures identify Everett objects; checked readers reject every
 other magic value, even when the rest of the header and its CRC are valid.
 
 The extension helps people; the header establishes the object's actual kind.
@@ -104,13 +104,13 @@ magic, version, reserved fields, policy unit, K, W, fixed-width descriptor,
 backspace code and parameter, and header CRC32C. They do not read body pages or
 inspect the final padding byte.
 CRC32C detects accidental corruption; it is not authentication and is separate
-from the algebraic cola fingerprint.
+from the algebraic world fingerprint.
 
 When an object is already trusted, `file_open_mode::trusted` skips all header
 reads during `open` or `from_slice`. It also skips the filename/header kind
 comparison. The only envelope check at this point is that the physical mapping
 has at least 96 bytes, so slicing off the header remains well-defined.
-`fridge<P>::open_object` forwards the same option without inspecting the
+`multiverse<P>::open_object` forwards the same option without inspecting the
 header. This is useful when the caller already knows the type and policy and
 wants to avoid faulting in the header page on every open.
 
@@ -171,7 +171,7 @@ records a main pair and a terminal secondary native identity, with separate
 borrowed streams for those routes. Both use the same KV02 native layout.
 Section descriptors count physical bytes; the inner FC extent and residual
 offsets retain the byte/bit policy units.
-Cola manifests and merge continuations belong in SQLite rows and versioned BLOBs.
+World manifests and merge continuations belong in SQLite rows and versioned BLOBs.
 
 ## Mapped lifetime
 
@@ -215,7 +215,7 @@ construction finishes and synchronizes the file before offering it to the
 version update. Metadata installation appends and synchronizes a version edit;
 a newly created manifest also needs root selection before the in-memory
 version is installed. These publication boundaries apply independently of the
-compaction schedule we choose for Diet.
+compaction schedule we choose for Everett.
 [Table builder](https://github.com/google/leveldb/blob/main/db/builder.cc),
 [version installation](https://github.com/google/leveldb/blob/main/db/version_set.cc)
 
@@ -226,7 +226,7 @@ with explicit saves, old fractional targets and shared merge candidates.
 Completing our merge does not release another owner's old index dependency.
 [Live files and pending outputs](https://github.com/google/leveldb/blob/main/db/db_impl.cc)
 
-Diet's catalog records exact dependency edges and explicit owners. Runtime
+Everett's catalog records exact dependency edges and explicit owners. Runtime
 reference counts can cache that graph, but recovery must reconstruct its durable
 roots. The LevelDB examples supply useful publication and retention rules;
 SQLite supplies our metadata transactions and recovery machinery.
@@ -259,7 +259,7 @@ checksums and file synchronization outside the catalog write transaction. Exact
 SQL relationships, retry identities and transitions are in [catalog.md](catalog.md).
 
 File synchronization and directory-entry persistence are separate obligations.
-SQLite's commit cannot flush Diet's external outputs for us. The backend
+SQLite's commit cannot flush Everett's external outputs for us. The backend
 must specify its file, directory and device barriers, including initial catalog
 creation. Platform details and failed-`fsync` handling are in
 [durability.md](durability.md).
@@ -298,7 +298,7 @@ a readable representation or selected checkpoint is corruption. A reserved
 output may legitimately not have been created yet; a GC intent may explain an
 unlinked, unrooted object. Interpret these cases through the catalog lifecycle
 state, not by silently dropping missing dependencies. Neither a directory listing
-nor a weak cola signature establishes reachability or content integrity.
+nor a weak world signature establishes reachability or content integrity.
 
 Reader-owner cleanup requires reliable session-liveness evidence. Heartbeats
 alone are not deletion authority: a paused live process may still access its mapping or
@@ -330,7 +330,7 @@ validation additionally needs:
   beat a GC claim or reject cleanly.
 - SQLite transaction errors, concurrent checkpointing, reader-session death,
   stale liveness observations and directory synchronization failures.
-- Persistent recovery compared with an independent logical-cola oracle.
+- Persistent recovery compared with an independent logical-world oracle.
 
 Parser, mapping and writer tests exercise current implementations, and the
 protocol-model tests check publication decisions. The injected syscall failures

@@ -3,24 +3,24 @@ Persisting a runtime frontier
 
 `runtime_store<P>` connects the encoded runtime to the SQLite catalog. I persist
 the exact searchable graph and its admission intervals together, so reopening
-can restore a named tap without decoding all its keys. The native files and
+can restore a named session without decoding all its keys. The native files and
 fractional indexes remain immutable.
 
 The directory must already exist and have durable ancestors. `create` creates
-a version-4 catalog; `open` checks an existing one. Link with `diet::sqlite`.
+a version-4 catalog; `open` checks an existing one. Link with `everett::sqlite`.
 
 ```cpp
-#include <diet/runtime_store.h>
+#include <everett/runtime_store.h>
 
-using P = diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
+using P = everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>;
 
 void initialize(std::filesystem::path const & directory) {
-  auto storage = diet::runtime_store<P>::create(directory);
-  diet::cola_runtime<P> runtime;
-  auto current = storage.create_tap("earth-616", runtime.snapshot());
-  auto record = diet::profile_record{
-    diet::bit_string::from_bytes("alpha"),
-    diet::bit_string::from_bytes("one")};
+  auto storage = everett::runtime_store<P>::create(directory);
+  everett::cola_runtime<P> runtime;
+  auto current = storage.create_session("earth-616", runtime.snapshot());
+  auto record = everett::profile_record{
+    everett::bit_string::from_bytes("alpha"),
+    everett::bit_string::from_bytes("one")};
   auto next = runtime.contribute(record);
   current = storage.publish(current.head, next);
   storage.save("initial", current.head);
@@ -48,7 +48,7 @@ with their owners, so there is no weak-owner table to sweep.
 An unbound owned native and its new index share one reservation and one
 [joint acknowledgment](publication-preparation.md). Both files complete all
 their barriers before that acknowledgment. Already sealed natives retain their
-existing identity and use the separate index-only path; the final tap generation
+existing identity and use the separate index-only path; the final session generation
 is still committed independently. One initial group of up to 16 ready units
 can share a reservation transaction. Each unit keeps its own seal acknowledgment
 and file barriers; the remaining dependencies use the ordinary walk.
@@ -125,12 +125,12 @@ template parameter selects the runtime family; the second selects physical ID
 allocation and the third supplies the SQLite fault-injection seam:
 
 ```cpp
-#include <diet/redundant_checkpoint.h>
-#include <diet/runtime_store.h>
+#include <everett/redundant_checkpoint.h>
+#include <everett/runtime_store.h>
 
-using family = diet::redundant_runtime_family<P>;
-using storage = diet::runtime_store<P, diet::random_object_ids,
-  diet::sqlite_catalog_ops, family>;
+using family = everett::redundant_runtime_family<P>;
+using storage = everett::runtime_store<P, everett::random_object_ids,
+  everett::sqlite_catalog_ops, family>;
 ```
 
 A redundant checkpoint owns more than its query root. I record every occupied
@@ -163,15 +163,15 @@ keys need not acquire the framing of a front-coded string. The fractional
 indexes retain their IX03 representation.
 
 ```cpp
-#include <diet/connection.h>
+#include <everett/connection.h>
 #include <cassert>
 
-using family = diet::sort_runtime_family<>;
-using engine = diet::typed_engine<diet::string_policy,
-  diet::wrapping_fingerprint_algebra, 256, family>;
+using family = everett::sort_runtime_family<>;
+using engine = everett::typed_engine<everett::string_policy,
+  everett::wrapping_fingerprint_algebra, 256, family>;
 
 void update(std::filesystem::path const & existing_directory) {
-  auto live = diet::connect<engine>(existing_directory, "earth-616");
+  auto live = everett::connect<engine>(existing_directory, "earth-616");
   live.put("alpha", "one");
   auto before = live.snapshot();
   live.save("before", before);
@@ -180,14 +180,14 @@ void update(std::filesystem::path const & existing_directory) {
 }
 ```
 
-For lower-level frontier work, include `diet/sort_runtime_store.h` and use
+For lower-level frontier work, include `everett/sort_runtime_store.h` and use
 `sort_runtime_store<P, Selector>`. The selector defaults to the policy's sort
 registry. Both storage paths intern mapped owners across the complete visible
 and hidden graph, preserve native identities when only an index changes, and
 check the exact durable pin closure on recovery.
 
 The default string schema for this family is
-`diet.optional-string/code0/sort-profile-v1`. A custom registry requires its
+`everett.optional-string/code0/sort-profile-v1`. A custom registry requires its
 application schema identity. The physical native format is also checked: an
 opaque-profile connection cannot reinterpret KV03 records merely because its
 sampling policy happens to match.
@@ -215,14 +215,14 @@ This is the ordinary bit-profile connection backend. The typed core carries one
 concrete storage context through equivalent snapshot replacements:
 
 ```cpp
-#include <diet/connection.h>
-#include <diet/sort_runtime_context.h>
+#include <everett/connection.h>
+#include <everett/sort_runtime_context.h>
 
-using family = diet::streaming_sort_runtime_family<>;
-using engine = diet::typed_engine<diet::string_policy,
-  diet::wrapping_fingerprint_algebra, 256, family>;
+using family = everett::streaming_sort_runtime_family<>;
+using engine = everett::typed_engine<everett::string_policy,
+  everett::wrapping_fingerprint_algebra, 256, family>;
 
-auto live = diet::connect<engine>(existing_directory, "earth-616");
+auto live = everett::connect<engine>(existing_directory, "earth-616");
 live.put("alpha", "one");
 ```
 

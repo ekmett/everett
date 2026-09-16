@@ -9,14 +9,14 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/sqlite_catalog.h>
-#include <diet/sort_runtime.h>
+#include <everett/sqlite_catalog.h>
+#include <everett/sort_runtime.h>
 
 #include <cassert>
 #include <iostream>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using P = storage_policy<string_registry, 3>;
   using core = typed_engine<P, wrapping_fingerprint_algebra, 256, sort_runtime_family<P>>;
   object_id id(unsigned n) {
@@ -25,7 +25,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-atomic-pair-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-atomic-pair-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -53,7 +53,7 @@ namespace {
     using mapped = typename Storage::mapped_pair_type;
     using node = redundant_node<P, Storage>;
     for (unsigned mode = 0; mode != 3; ++mode) {
-      temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+      temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
       auto input = core::put("key", "value");
       auto native = Storage::singleton(input.records()[0]);
       auto pair = node::from_built(node::built_type::adopt_native(native));

@@ -9,13 +9,13 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/runtime_store.h>
+#include <everett/runtime_store.h>
 
 #include <cassert>
 #include <iostream>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using P = storage_policy<tip<encoded_sort<bit_encoding<>>>, 3>;
   using family = binary_runtime_family<P>;
   using node = family::node_type;
@@ -27,7 +27,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-binding-failure-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-binding-failure-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -100,12 +100,12 @@ namespace {
       auto state = std::make_shared<failure_state>(failure_state{stage, 0, after});
       using faulty_store = runtime_store<P, random_object_ids, failure_ops>;
       auto faulty = faulty_store::open(dir.root, {}, {}, {state});
-      try { (void)faulty.create_tap("uncertain", source); assert(false); }
+      try { (void)faulty.create_session("uncertain", source); assert(false); }
       catch (catalog_error const & error) {
         assert(error.outcome_unknown && error.operation == faulty.last_operation());
       }
       assert(faulty.failed() && state->commits == stage);
-      rejects([&] { (void)faulty.create_tap("forbidden-retry", source); });
+      rejects([&] { (void)faulty.create_session("forbidden-retry", source); });
 
       auto catalog = sqlite_catalog<P>::open(dir.root);
       random_object_ids ids;
@@ -119,7 +119,7 @@ namespace {
 
       auto before_natives = files(dir.root, ".kv"), before_indexes = files(dir.root, ".index");
       auto healthy = store::open(dir.root);
-      auto result = healthy.create_tap("healthy-retry", source); // The exact same original owners.
+      auto result = healthy.create_session("healthy-retry", source); // The exact same original owners.
       assert(!healthy.failed() && matches(result.snapshot, "key") == std::vector{bit_string::from_bytes("value")});
       auto actual = result.head.timeline.head;
       if (acknowledged_native) assert(actual.native == *acknowledged_native);
@@ -148,7 +148,7 @@ namespace {
       for (auto p = source.query_root().head(); p; p = p->main_target()) {
         original_pairs.push_back(p); original_natives.push_back(p->native_owner());
       }
-      retained = adapter.create_tap("lifetime", source);
+      retained = adapter.create_session("lifetime", source);
       for (auto p = retained->snapshot.query_root().head(); p; p = p->main_target()) {
         mapped_pairs.push_back(p); mapped_natives.push_back(p->native_owner());
         physical_pairs.push_back(p->mapped()); physical_natives.push_back(p->native_owner()->mapped());
@@ -167,7 +167,7 @@ namespace {
     // The adapter retains exactly its latest restored frontier. Replacing
     // that frontier releases its old owners without disturbing saved pins.
     for (auto const & weak : mapped_pairs) assert(!weak.expired());
-    { (void)adapter.create_tap("replacement", singleton()); }
+    { (void)adapter.create_session("replacement", singleton()); }
     for (auto const & weak : mapped_pairs) assert(weak.expired());
     for (auto const & weak : mapped_natives) assert(weak.expired());
     for (auto const & weak : physical_pairs) assert(weak.expired());
@@ -185,7 +185,7 @@ namespace {
   void distinct_facades() {
     temporary dir;
     auto adapter = store::create(dir.root);
-    { (void)adapter.create_tap("original", singleton()); }
+    { (void)adapter.create_session("original", singleton()); }
     auto left = store::open(dir.root).find("original"), right = store::open(dir.root).find("original");
     assert(left && right && left->head.timeline.head == right->head.timeline.head);
     auto own = left->snapshot.query_root().head()->native_owner();
@@ -203,7 +203,7 @@ namespace {
     }
     auto source = snapshot::restore(parent, intervals);
     auto natives = files(dir.root, ".kv"), indexes = files(dir.root, ".index");
-    auto combined = adapter.create_tap("combined", source);
+    auto combined = adapter.create_session("combined", source);
     assert(files(dir.root, ".kv") == natives + 6 && files(dir.root, ".index") == indexes + 7);
     auto canonical = combined.snapshot.query_root().head();
     for (unsigned n = 0; n != 6; ++n) canonical = canonical->main_target();

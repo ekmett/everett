@@ -4,9 +4,9 @@ Scanning a table
 `scan(snapshot)` walks the live rows of a typed snapshot in key order:
 
 ```cpp
-#include <diet/typed_scan.h>
+#include <everett/typed_scan.h>
 
-auto rows = diet::scan(db.snapshot());
+auto rows = everett::scan(db.snapshot());
 while (auto row = rows.next()) {
   // row->key is an owned string.
   // row->value is the same state type returned by get, present here.

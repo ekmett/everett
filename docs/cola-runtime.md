@@ -3,7 +3,7 @@ Charged encoded COLA execution
 
 `cola_runtime<P, Compose>` is a low-level active executor over the existing
 encoded FC records. I supply `Compose` from the active sort registry; the
-immutable cola does not choose value semantics. This binary executor transports
+immutable world does not choose value semantics. This binary executor transports
 opaque encoded keys and arrows. The [sort-owned runtime](sort-runtime.md) uses
 each sort's physical grammar, and [runtime persistence](runtime-store.md)
 publishes the selected executor's complete frontier.
@@ -15,9 +15,9 @@ work and can return a different physical representation of the same logical
 state. It does not merely decrease a debt counter.
 
 ```cpp
-using bits = diet::tip<diet::encoded_sort<diet::bit_encoding<>>>;
-using policy = diet::storage_policy<bits>;
-diet::cola_runtime<policy> active;
+using bits = everett::tip<everett::encoded_sort<everett::bit_encoding<>>>;
+using policy = everett::storage_policy<bits>;
+everett::cola_runtime<policy> active;
 
 auto first = active.contribute(record, 0); // leave eligible cleanup queued
 while (active.pending())
@@ -134,9 +134,9 @@ and exact main target, so the adapter can reuse existing files and seal newly
 built nodes without rewriting unchanged natives.
 
 ```cpp
-auto head = diet::cola_runtime_node<policy>::from_mapped(mapped_head);
-auto saved = diet::cola_runtime_snapshot<policy>::restore(head, intervals);
-auto active = diet::cola_runtime<policy>::from_snapshot(saved);
+auto head = everett::cola_runtime_node<policy>::from_mapped(mapped_head);
+auto saved = everett::cola_runtime_snapshot<policy>::restore(head, intervals);
+auto active = everett::cola_runtime<policy>::from_snapshot(saved);
 ```
 
 Wrapping and restoring inspect metadata only. They require an already admitted

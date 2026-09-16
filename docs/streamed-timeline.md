@@ -14,8 +14,8 @@ The example allocates deterministic identities because it creates a fresh
 catalog; an application supplies its own fresh identity allocator.
 
 ```cpp
-#include <diet/native_file_merge.h>
-#include <diet/sqlite_catalog.h>
+#include <everett/native_file_merge.h>
+#include <everett/sqlite_catalog.h>
 #include <array>
 #include <cstdio>
 #include <initializer_list>
@@ -24,8 +24,8 @@ catalog; an application supplies its own fresh identity allocator.
 #include <string_view>
 #include <utility>
 
-using namespace diet;
-using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
+using namespace everett;
+using P = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
 using catalog = sqlite_catalog<P>;
 
 std::optional<bit_string> lookup(mapped_query_root<P> const & root,
@@ -115,7 +115,7 @@ int main(int argc, char ** argv) {
 }
 ```
 
-Link with `diet::sqlite` as described in the [catalog guide](sqlite-catalog.md).
+Link with `everett::sqlite` as described in the [catalog guide](sqlite-catalog.md).
 The example uses trusted admission because the checked writers establish the
 sorted-key encoding and the terminal indexes contain no borrowed samples.
 Received or uncertain objects can require explicit scans instead.

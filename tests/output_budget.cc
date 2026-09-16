@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/output_budget.h>
+#include <everett/output_budget.h>
 
 #include <barrier>
 #include <iostream>
@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void check(bool value, char const * message) {
     if (!value) throw std::runtime_error(message);
   }

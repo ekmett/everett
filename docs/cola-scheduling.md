@@ -80,7 +80,7 @@ The original construction uses eighth-position samples for a sole main target
 and sixteenth-position samples from each target when both are present, together
 with duplicate-pointer cells. Its shadow arrays become visible through linked
 arrays from level zero; its safety condition includes lookahead construction.
-These are the scheduling ideas I adopt, while reserving space for Diet's
+These are the scheduling ideas I adopt, while reserving space for Everett's
 different index representation.
 [Bender et al., §3, pp. 9–10](https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=9).
 
@@ -166,14 +166,14 @@ that native file, not an additional index object.
 Three logical slots consequently do not claim three physical `.index` files
 including snapshots and partially constructed carriers.
 
-Current-cola object closure
+Current-world object closure
 ----------------------------
 
 The useful space invariant is stronger than counting slots: every exact target
 owned by the current root, a live array or a private carrier must still occupy
 a logical slot. Otherwise a retired slot could hide an arbitrarily long tail
 of immutable dependencies. The model tests this closure independently after
-admissions and paused service transitions. Its current-cola closure has at
+admissions and paused service transitions. Its current-world closure has at
 most $3h$ completed array handles across h levels. A main handle owns a native
 file and index; a secondary handle owns only a native file. Unfinished output
 and index stages add only a constant number of owners per active job.
@@ -253,7 +253,7 @@ so reversing intervals would change the oracle result.
 
 I have not added arbitrary-size received-file admission, fork adoption, deletion
 elision, durable scheduler recovery or live-size rebuilding to this model.
-Shared native completion can later serve several colas, but each cola's
+Shared native completion can later serve several worlds, but each world's
 index adoption needs its own work budget. A large received file bypasses the
 level-zero arrival slack; sorting files by size also does not authorize merging
 nonadjacent same-key history. Those extensions retain the separate obligations

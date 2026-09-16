@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/runtime_graph_sealer.h>
-#include <diet/sort_runtime.h>
+#include <everett/runtime_graph_sealer.h>
+#include <everett/sort_runtime.h>
 
 #include <atomic>
 #include <barrier>
@@ -20,7 +20,7 @@
 #include <thread>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using P = storage_policy<string_registry, 3>;
   using input_core = typed_engine<P, wrapping_fingerprint_algebra, 256, sort_runtime_family<P>>;
 
@@ -36,7 +36,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-native-pair-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-native-pair-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -125,7 +125,7 @@ namespace {
     using mapped = typename Storage::mapped_pair_type;
     for (unsigned mode = 0; mode != 3; ++mode) {
       temporary dir;
-      auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+      auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
       auto native = singleton<Storage>("key", "value");
       auto source = pair<Storage>(native);
       blob_identity identity{id(2), id(3)};
@@ -215,7 +215,7 @@ namespace {
   template <class Storage> void aliases_and_races() {
     using sealer = runtime_store_detail::graph_sealer<P, ids, sqlite_catalog_ops, family<Storage>>;
     temporary dir;
-    auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     ids identity;
     sealer seal(catalog, identity);
     auto native = singleton<Storage>("key", "value");
@@ -280,7 +280,7 @@ namespace {
   template <class Storage> void uncertain_producer() {
     for (bool after : {false, true}) {
       temporary dir;
-      auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+      auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
       ids identity;
       using regular = runtime_store_detail::graph_sealer<P, ids, sqlite_catalog_ops, family<Storage>>;
       regular original(catalog, identity);
@@ -312,7 +312,7 @@ namespace {
     using mapped = storage::mapped_pair_type;
     for (unsigned mode = 0; mode != 3; ++mode) {
       temporary dir;
-      auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+      auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
       auto native = singleton<storage>("key", "value");
       auto source = pair<storage>(native);
       blob_identity identity{id(2), id(3)};
@@ -333,7 +333,7 @@ namespace {
 
   template <class Storage> void interrupted_installation() {
     temporary dir;
-    auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     ids identity;
     using sealer = runtime_store_detail::graph_sealer<P, ids, sqlite_catalog_ops, family<Storage>>;
     sealer seal(catalog, identity);
@@ -392,7 +392,7 @@ namespace {
   struct failing_storage : sort_runtime_storage<P> { using mapped_pair_type = failing_mapped; };
   void acknowledged_mapping_failure() {
     temporary dir;
-    auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     ids identity;
     runtime_store_detail::graph_sealer<P, ids, sqlite_catalog_ops, family<failing_storage>> seal(catalog, identity);
     auto native = singleton<failing_storage>("key", "value");

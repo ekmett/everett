@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Diet's incremental fractional-index builder.
+ * \brief Tests Everett's incremental fractional-index builder.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/index_builder.h>
+#include <everett/index_builder.h>
 
 #include <algorithm>
 #include <array>
@@ -25,7 +25,7 @@
 #include <vector>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
 
   void require(bool condition, char const * reason) {
     if (!condition) throw std::runtime_error(reason);
@@ -457,10 +457,10 @@ namespace {
 int main() {
   try {
     [&]<std::size_t... K>(std::index_sequence<K...>) {
-      (suite<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, K>>(), ...);
-      (suite<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, K>>(), ...);
-      (suite<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, K>>(), ...);
-      (suite<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<5>>>>, K>>(), ...);
+      (suite<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, K>>(), ...);
+      (suite<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<3>>>>, K>>(), ...);
+      (suite<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, K>>(), ...);
+      (suite<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<5>>>>, K>>(), ...);
     }(std::index_sequence<3, 7, 15, 31>{});
     std::cout << "Incremental index encoding, backpressure, target pins and lookup oracles passed\n";
   } catch (std::exception const & error) {

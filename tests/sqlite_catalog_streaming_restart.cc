@@ -9,9 +9,9 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
-#include <diet/sort_runtime_context.h>
-#include <diet/typed_scan.h>
+#include <everett/connection.h>
+#include <everett/sort_runtime_context.h>
+#include <everett/typed_scan.h>
 
 #include <array>
 #include <chrono>
@@ -24,7 +24,7 @@
 #include <unistd.h>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using clock_type = std::chrono::steady_clock;
   void check(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -108,7 +108,7 @@ namespace {
         // for each obligation, with the same operation as its recovery oracle.
         point = admission ? event::admission_native : event::service_native;
         joint = admission ? event::admission_index_pair : event::service_index_pair;
-      } else if (std::strcmp(kind, "publish_tap") == 0) {
+      } else if (std::strcmp(kind, "publish_session") == 0) {
         if (phase == stage::logical_publication) point = event::logical_publication;
         if (phase == stage::equivalent_publication) point = event::equivalent_publication;
       }
@@ -176,7 +176,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-stream-restart-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-stream-restart-XXXXXX").string();
       if (!::mkdtemp(name.data())) throw std::runtime_error("mkdtemp");
       root = name;
     }
@@ -251,11 +251,11 @@ namespace {
       result += sort_semantics<strings>::hash_key(k) * sort_semantics<strings>::hash_value(k, v);
     return result;
   }
-  template <class Cola> void verify(Cola const & state, oracle const & expected) {
+  template <class World> void verify(World const & state, oracle const & expected) {
     check(state.live_count() == expected.size() && state.signature() == signature(expected), "logical count/hash");
     for (auto const & [k, v] : expected) check(state.get(k) == v, "logical query");
     check(!state.get("absent"), "unexpected key");
-    auto cursor = diet::scan(state);
+    auto cursor = everett::scan(state);
     auto entry = expected.begin();
     while (auto row = cursor.next()) {
       check(entry != expected.end() && row->key == entry->first && row->value == entry->second, "resolved scan");
@@ -263,7 +263,7 @@ namespace {
     }
     check(entry == expected.end(), "scan missing key");
     state.runtime().query_root().head()->mapped()->scan();
-    for (auto const & object : runtime_storage_codec<typename Cola::runtime_family>::objects(state.runtime().frontier())) {
+    for (auto const & object : runtime_storage_codec<typename World::runtime_family>::objects(state.runtime().frontier())) {
       check(object->native->mapped() && !object->native->owned(), "restored frontier retained owned native");
       object->native->mapped()->scan();
     }
@@ -387,7 +387,7 @@ namespace {
     auto saved = store::open(dir.root).find_save("old");
     check(bool(saved), "old save vanished");
     auto old_meta = engine::metadata_type::decode(saved->semantic);
-    auto old = engine::typed_cola_type::restore(saved->snapshot, old_meta, old_meta.schema_id);
+    auto old = engine::typed_world_type::restore(saved->snapshot, old_meta, old_meta.schema_id);
     verify(old, contents(old_value));
     // The snapshot opened before recovery and later writes remains immutable.
     verify(state, contents(newer ? new_value : old_value));

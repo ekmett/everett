@@ -1,7 +1,7 @@
 COLA Borrowed Payload Sharing
 =============================
 
-I kept this prototype off main: current Diet retains inline borrowed payloads
+I kept this prototype off main: current Everett retains inline borrowed payloads
 and its existing builder API. The two unconditional allocations, extra default
 owner storage and inability to reuse persisted pairs do not justify adoption
 from these overlapping timings.
@@ -36,7 +36,7 @@ Method
 ------
 
 Baseline: `df1cb2dce83280503d4c2276dffbcace4a26a914`. Candidate:
-`63c5de6` (only `include/diet/cola_index.h`). Apple Clang 21, arm64 M2 Max,
+`63c5de6` (only `include/everett/cola_index.h`). Apple Clang 21, arm64 M2 Max,
 C++20 `-O3 -DNDEBUG` and strict warnings. All heavy work used `cpu-heavy`,
 with at most two concurrent compiler processes.
 

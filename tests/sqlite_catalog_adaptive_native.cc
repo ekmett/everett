@@ -9,14 +9,14 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/sort_runtime_context.h>
+#include <everett/sort_runtime_context.h>
 
 #include <cassert>
 #include <iostream>
 #include <thread>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using P = string_policy;
   using strings = unsorted<std::optional<std::string>>;
   using family = streaming_sort_runtime_family<P>;
@@ -28,7 +28,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-adaptive-native-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-adaptive-native-XXXXXX").string();
       if (!::mkdtemp(name.data())) throw std::runtime_error("mkdtemp");
       root = name;
     }
@@ -106,7 +106,7 @@ namespace {
   }
 
   void small_and_budget() {
-    temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id());
+    temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id());
     auto disk = storage::open(dir.root); auto context = disk.context();
     auto empty = merge(context, disk.empty(), disk.empty());
     assert(empty->owned() && !empty->size()); empty->view().scan(); empty.reset();
@@ -141,7 +141,7 @@ namespace {
   }
 
   void eager_and_spill() {
-    temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id());
+    temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id());
     auto a = row("prefix/a", "one"), b = row("prefix/b", "two");
     for (auto options : {runtime_output_options{0, 128 * 1024}, runtime_output_options{8 * 1024 * 1024, 0},
                          runtime_output_options{8 * 1024 * 1024, 512}}) {
@@ -169,7 +169,7 @@ namespace {
     bit_view operator()(bit_view, bit_view) const { ++*calls; return value->view(); }
   };
   void composition_once() {
-    temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id());
+    temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id());
     auto context = storage::open(dir.root).context();
     auto a = row("same", "a"), b = row("same", "b");
     auto command = core::put("same", std::string(200'000, 'q'));
@@ -207,7 +207,7 @@ namespace {
   void spill_failures() {
     using F = streaming_sort_runtime_family<P, registry_selector<string_registry>, random_object_ids, catalog_ops, file_ops>;
     for (unsigned mode = 0; mode != 6; ++mode) {
-      temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id());
+      temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id());
       auto state = std::make_shared<faults>();
       auto context = F::storage_type::open(dir.root, {}, {}, catalog_ops(state), file_ops(state)).context();
       auto a = row("a", "old"), b = row("b", std::string(100'001, 'b'));

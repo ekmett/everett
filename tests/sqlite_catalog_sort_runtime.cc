@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
-#include <diet/typed_scan.h>
+#include <everett/connection.h>
+#include <everett/typed_scan.h>
 
 #include <cassert>
 #include <fstream>
@@ -20,14 +20,14 @@
 #include <unistd.h>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   using family = sort_runtime_family<>;
   using core = typed_engine<string_policy, wrapping_fingerprint_algebra, 256, family>;
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-sort-store-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-sort-store-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -43,8 +43,8 @@ namespace {
       if (entry.path().extension() == ".kv" || entry.path().extension() == ".index") ++count;
     return count;
   }
-  template <class S = strings, class Cola, class Map> void verify(Cola const & snapshot, Map const & values) {
-    auto cursor = diet::scan<S>(snapshot); auto expected = values.begin();
+  template <class S = strings, class World, class Map> void verify(World const & snapshot, Map const & values) {
+    auto cursor = everett::scan<S>(snapshot); auto expected = values.begin();
     while (auto row = cursor.next()) {
       assert(expected != values.end() && row->key == expected->first && row->value == expected->second);
       assert(snapshot.template get<S>(row->key) == row->value); ++expected;
@@ -113,7 +113,7 @@ namespace {
     using Runtime = typename F::template runtime_type<replace_native_value>;
     using Store = sort_runtime_store<P>;
     temporary dir; auto storage = Store::create(dir.root); Runtime active;
-    auto current = storage.create_tap("stages", active.snapshot());
+    auto current = storage.create_session("stages", active.snapshot());
     auto a = E::put("a", "one"), b = E::put("b", "two");
     active.try_contribute(a.records()[0]); active.try_contribute(b.records()[0]);
     unsigned seen = 0, calls = 0;

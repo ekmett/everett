@@ -115,7 +115,7 @@ namespace {
     for (bool pending : reserved) check(!pending, "undrained destination reservation");
   }
   void state_check(scheduler const & s) {
-    // Ignore saved snapshots here: this is the current cola's working set.
+    // Ignore saved snapshots here: this is the current world's working set.
     // Walk exact dependencies independently of retained_node_ids(), including
     // private carrier routes that are not yet reachable from the root.
     std::set<identity> slots, live;

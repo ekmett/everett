@@ -2,19 +2,19 @@
 
 The [file lifecycle](file-lifecycle.md) covers immutable `.kv` and `.index`
 objects, checked envelopes and mapping lifetime. The [SQLite catalog](catalog.md)
-covers cola representations, pins, publication outcomes and merge continuations.
+covers world representations, pins, publication outcomes and merge continuations.
 A save needs both: durable bytes and a durable way to find them.
 
 The [immutable writer](object-writer.md) and [SQLite adapter](sqlite-catalog.md)
 implement object sealing and immutable save/reopen operations. This chapter
 specifies replacement publication and merge resumption. We check its ordering
 and retention decisions with injected backend outcomes using
-[`durability.h`](../include/diet/durability.h); that protocol model itself
+[`durability.h`](../include/everett/durability.h); that protocol model itself
 performs no filesystem operations. Physical power-loss testing remains separate.
 
 ## Contract
 
-A merge changes a cola's representation. Until both the replacement and the
+A merge changes a world's representation. Until both the replacement and the
 manifest selecting it are durable, its inputs remain our recovery source:
 
 ```text
@@ -119,7 +119,7 @@ For the file backend, we finish and verify the external outputs, persist their
 contents and discoverable names, then commit the SQLite representation
 transaction. We must never overwrite an existing sealed object when installing
 a name. If a verified content-identical object already exists, we acquire its
-ownership through the same catalog protocol before reuse. The weak cola
+ownership through the same catalog protocol before reuse. The weak world
 fingerprint does not establish that identity. SQLite cannot synchronize external
 files on our behalf; [catalog.md](catalog.md) specifies its own durability
 settings, supported release and transaction handling.
@@ -139,7 +139,7 @@ to transfer unchanged to APFS or to managed extents.
 
 ## Resumable merge checkpoints
 
-A merge recipe needs its own identity. The cola signature cannot identify its
+A merge recipe needs its own identity. The world signature cannot identify its
 physical inputs or encoding choices. Bind the recipe identity to:
 
 - Exact immutable input versions and their order/precedence, comparator and
@@ -166,7 +166,7 @@ physical inputs or encoding choices. Bind the recipe identity to:
 - Merge-selection state, value/tombstone resolution state and algebraic
   accumulator state, plus performed-work counters.
 - Byte-integrity digests and exact lengths covering every reused extent and the
-  checkpoint descriptor itself. The algebraic cola signature is not a byte
+  checkpoint descriptor itself. The algebraic world signature is not a byte
   checksum and cannot establish physical checkpoint identity.
 
 A small checkpoint descriptor lives in a versioned SQLite BLOB, with relational
@@ -230,7 +230,7 @@ padding or fresh physical units needed to preserve checkpoint immutability.
 ## Pins integration and implementation boundary
 
 Durable round replay is a separate obligation from merge resumption. A round's
-catalog state must bind its base cola/round identity, partition assignments,
+catalog state must bind its base world/round identity, partition assignments,
 accepted update identities and completion/deduplication information. A failed save may
 leave its acknowledgment uncertain even when the round reached storage. Recovery
 must reconcile that outcome before accepting a duplicate update or advancing
@@ -244,7 +244,7 @@ supplies the in-memory ownership boundary. We obtain output handles before const
 the replacement, persist the candidate root while keeping the old owner alive,
 and retire only after durable publication. Existing saves and readers retain
 their own owners. Index dependencies, checkpoint ranges and staged candidates
-add retention without another logical contribution to the cola's sum. During
+add retention without another logical contribution to the world's sum. During
 recovery, we reconstruct durable reachability before garbage collection; reader
 acquisition must serialize with deletion claims as specified in the catalog.
 

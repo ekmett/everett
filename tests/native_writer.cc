@@ -10,8 +10,8 @@
  * \endlicense
  */
 
-#include <diet/native_writer.h>
-#include <diet/query.h>
+#include <everett/native_writer.h>
+#include <everett/query.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -24,7 +24,7 @@
 #include <vector>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }
@@ -148,7 +148,7 @@ namespace {
   }
 
   void prefix_keys() {
-    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
+    using P = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
     std::vector<profile_record> input;
     for (std::string key : {"", "a", "aa", "ab", "b"})
       input.push_back({bit_string::from_bytes(key), bit_string::from_bytes("value")});
@@ -160,12 +160,12 @@ namespace {
 
 int main() {
   try {
-    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>();
-    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 7, exponential_golomb<0>, 16>>();
-    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 31, exponential_golomb<0>, 1>>();
-    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>>();
-    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<3>>>>, 3, golomb<3>, 7>>();
-    exercise<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<3>, 16>>();
+    exercise<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>>();
+    exercise<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<3>>>>, 7, exponential_golomb<0>, 16>>();
+    exercise<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 31, exponential_golomb<0>, 1>>();
+    exercise<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>>();
+    exercise<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<3>>>>, 3, golomb<3>, 7>>();
+    exercise<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<3>, 16>>();
     prefix_keys();
     std::cout << "native writer tests passed\n";
   } catch (std::exception const & error) {

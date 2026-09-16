@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/policy.h>
+#include <everett/policy.h>
 
 #include <array>
 #include <cstdint>
@@ -22,12 +22,12 @@
 #include <utility>
 
 struct registry_external_value {};
-namespace diet {
+namespace everett {
   template <> struct value_encoding<registry_external_value> { using type = bit_encoding<fixed_values<5>>; };
 }
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   struct a { using encoding = byte_encoding<fixed_values<2>>; };
   struct b { using encoding = byte_encoding<fixed_values<2>>; };
   struct c { using encoding = byte_encoding<fixed_values<3>>; };

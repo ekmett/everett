@@ -21,7 +21,7 @@ After the main stream and its offsets are complete, I copy the spool into the
 secondary section and append the remaining navigation metadata.
 
 The spool has an exclusive private name only until its descriptor opens; the
-writer unlinks it immediately. It is never an adoptable Diet object, has no
+writer unlinks it immediately. It is never an adoptable Everett object, has no
 seal receipt and gets no durability barrier. Destruction closes it after
 success, abandonment or failure. If unlinking itself fails, construction fails
 and the private non-object name remains for cleanup. Restart reconstructs the

@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Compares NEON rank15 reductions with an externally supplied Bitmap512 rank.
+ * \brief Compares NEON rank15 reductions with the bundled Bitmap512 rank.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -11,10 +11,10 @@
  */
 
 // The runner supplies a pinned rank15 header; the bitmap directory is bundled.
-#include <diet/rank15.h>
-#define diet diet_neon_qword
-#include DIET_NEON_QWORD_HEADER
-#undef diet
+#include <everett/rank15.h>
+#define everett everett_neon_qword
+#include EVERETT_NEON_QWORD_HEADER
+#undef everett
 #include "bitmap512.h"
 
 #include <algorithm>
@@ -53,7 +53,7 @@ namespace {
   }
 
   template <unsigned N> struct bitmap_adapter {
-    diet_bench::rank_view<N> view;
+    everett_bench::rank_view<N> view;
     std::uint64_t rank(std::uint64_t group) const { return view.rank(unsigned(group * 15)); }
     unsigned class_at(std::uint64_t group) const {
       auto first = unsigned(group * 15), word = first / 32, shift = first % 32;
@@ -118,18 +118,18 @@ namespace {
       if (at % 64) result += unsigned(std::popcount(words[at / 64] & ((std::uint64_t{1} << (at % 64)) - 1)));
       return mode ? 2 * result + population(words, at, 15) : result;
     };
-    auto bitmap = std::unique_ptr<diet_bench::rank_index<N>>(new diet_bench::rank_index<N>);
+    auto bitmap = std::unique_ptr<everett_bench::rank_index<N>>(new everett_bench::rank_index<N>);
     for (std::size_t i = 0; i != words.size(); ++i) {
       bitmap->raw[2 * i] = unsigned(words[i]); bitmap->raw[2 * i + 1] = unsigned(words[i] >> 32);
     }
-    diet_bench::build_rank(*bitmap);
+    everett_bench::build_rank(*bitmap);
     std::vector<std::uint8_t> classes(groups);
     for (std::uint64_t g = 0; g != groups; ++g) classes[g] = std::uint8_t(population(words, g * 15, 15));
-    auto packed = diet::rank15_index::build(classes, N);
+    auto packed = everett::rank15_index::build(classes, N);
     classes.clear(); classes.shrink_to_fit();
     packed.classes.shrink_to_fit(); packed.checkpoints.shrink_to_fit();
     auto byte_first = packed.view();
-    diet_neon_qword::rank15_view qword_first{packed.classes, packed.checkpoints, N, packed.total};
+    everett_neon_qword::rank15_view qword_first{packed.classes, packed.checkpoints, N, packed.total};
     bitmap_adapter<N> bitmap_view{{bitmap.get()}};
     auto data_bytes = packed.classes.size() * 8, metadata_bytes = packed.checkpoints.size() * 8;
     static_assert(sizeof(*bitmap) == sizeof(bitmap->raw) + sizeof(bitmap->directory) + sizeof(bitmap->total));

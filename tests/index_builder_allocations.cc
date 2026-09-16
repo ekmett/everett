@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/index_builder.h>
+#include <everett/index_builder.h>
 
 #include <array>
 #include <cstdlib>
@@ -42,7 +42,7 @@ void operator delete[](void * pointer, std::size_t) noexcept { std::free(pointer
 
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void require(bool value, char const * message) {
     if (!value) throw std::runtime_error(message);
   }
@@ -89,8 +89,8 @@ namespace {
 }
 int main() try {
   for (bool coded : {false, true}) {
-    run<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>(coded);
-    run<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>>(coded);
+    run<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>>(coded);
+    run<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>>(coded);
   }
   std::cout << "Index decoder allocation rollback checks passed\n";
   return 0;

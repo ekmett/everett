@@ -13,19 +13,19 @@ key seen until finalization or destruction. The
 variable value widths and verify exact output against batch encoding.
 
 ```cpp
-#include <diet/native_writer.h>
-#include <diet/query.h>
+#include <everett/native_writer.h>
+#include <everett/query.h>
 
-using P = diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
+using P = everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
 
-diet::query_root<P> make_table() {
-  diet::profile_native_writer<P> writer;
-  auto key = diet::bit_string::from_bytes("alpha");
-  auto value = diet::bit_string::from_bytes("first");
+everett::query_root<P> make_table() {
+  everett::profile_native_writer<P> writer;
+  auto key = everett::bit_string::from_bytes("alpha");
+  auto value = everett::bit_string::from_bytes("first");
   writer.append(key.view(), value.view());
-  auto pair = std::make_shared<diet::profile_blob<P> const>(
-    diet::profile_blob<P>::adopt_native(writer.finish()));
-  return diet::query_root<P>::build(pair);
+  auto pair = std::make_shared<everett::profile_blob<P> const>(
+    everett::profile_blob<P>::adopt_native(writer.finish()));
+  return everett::query_root<P>::build(pair);
 }
 ```
 
@@ -44,7 +44,7 @@ the writer normally emits a length for every value. If I already know all values
 have one width, I supply it at construction:
 
 ```cpp
-diet::profile_native_writer<P> writer(8); // Eight bytes for this byte policy.
+everett::profile_native_writer<P> writer(8); // Eight bytes for this byte policy.
 ```
 
 Every append must agree with that width. The sampled residual universe removes
@@ -104,7 +104,7 @@ feeds their sorted union directly to the native writer. `Native` defaults to
 The first input is older, the second newer.
 
 ```cpp
-diet::native_merge_builder<P> merge(older_array, newer_array);
+everett::native_merge_builder<P> merge(older_array, newer_array);
 while (!merge.done()) merge.step(128);
 auto array = merge.finish();
 ```
@@ -133,7 +133,7 @@ noncommutative instances. Mapped-input tests seal and reopen the result, pause
 and move the merger, and keep using input mappings after their names are unlinked.
 
 The merger treats values as encoded data. It does not interpret a tombstone,
-drop an identity arrow, validate arrow endpoints or calculate a cola's
+drop an identity arrow, validate arrow endpoints or calculate a world's
 fingerprint. In particular, retaining a deletion marker is the default: removing
 it needs the older-coverage proof described in [rebuilding](rebuild.md).
 

@@ -1,12 +1,12 @@
-# Diet design
+# Everett design
 
 Updated 2026-09-16.
 
 Start with immutable blobs and a way to merge them. Small updates can become
-small blobs, and retained collections can represent persistent colas. We can
-share completed merges between those colas, provided each reader keeps the
+small blobs, and retained collections can represent persistent worlds. We can
+share completed merges between those worlds, provided each reader keeps the
 exact dependencies its indexes describe. This document develops that design.
-Public headers are under `include/diet/`; the
+Public headers are under `include/everett/`; the
 [implementation ledger](implementation.md) distinguishes executable components
 from the remaining storage and scheduling work.
 
@@ -22,29 +22,29 @@ entry, string, and I/O costs remain separate throughout this design.
 
 First, some names for the intended aggregates:
 
-- A **fridge** owns backing storage and the immutable objects shared by its
-  colas, timelines and retained references.
-- A **cola** is a logical state, independent of its current physical layout.
-- A **timeline** is an ordered progression of colas.
-- A **tap** follows the latest cola through mutable updates and equivalent
-  background merges. Named taps make that progression durable.
+- A **multiverse** owns backing storage and the immutable objects shared by its
+  worlds, timelines and retained references.
+- A **world** is a logical state, independent of its current physical layout.
+- A **timeline** is an ordered progression of worlds.
+- A **session** follows the latest world through mutable updates and equivalent
+  background merges. Named sessions make that progression durable.
 - A **branch point** is a retained point from which a timeline can continue or
   fork; `branch_point` is the intended API spelling.
 
-`fridge<P>` opens and seals objects in an existing directory; `fridge<P>::create`
+`multiverse<P>` opens and seals objects in an existing directory; `multiverse<P>::create`
 also establishes missing directory names with explicit durability barriers.
-Its `connect` operation opens a [named typed tap](connection.md). It exposes
+Its `connect` operation opens a [named typed session](connection.md). It exposes
 `sort`, `blob`, `file`, `object_writer`, the mapped native/index/blob/query types,
-`cola`, `timeline` and `branch_point` associated types carrying the same policy.
+`world`, `timeline` and `branch_point` associated types carrying the same policy.
 `open_query` reopens a prepared exact chain from its persisted pair identity;
 [mapped blobs](mapped-blobs.md) describes the portable sections and ownership. The [sealing primitive](object-writer.md)
 uses reserved identities. The [SQLite component](sqlite-catalog.md) publishes
 immutable timeline generations, saves and forks with exact root pins. The
-`cola` and `timeline` aggregate types are still forward declarations; the
-semantic oracle is `reference_cola`. The [catalog design](catalog.md) extends
+`world` and `timeline` aggregate types are still forward declarations; the
+semantic oracle is `reference_world`. The [catalog design](catalog.md) extends
 that metadata owner to merge jobs, checkpoints and pin retirement.
 
-A cola is represented by a small collection of immutable, memory-mappable
+A world is represented by a small collection of immutable, memory-mappable
 blobs. Updates produce small new blobs; merges produce new larger blobs. A snapshot or
 save pins an exact collection and the dependencies needed to query it. A save
 adds durable retention to that logical snapshot; it does not define a separate
@@ -92,7 +92,7 @@ files, index versions, and completed compactions.
 
 | Symbol | Meaning |
 | --- | --- |
-| $N$ | Number of live bindings in the selected cola |
+| $N$ | Number of live bindings in the selected world |
 | $H$ | Historical updates; distinct from live size |
 | $L$ | Number of active levels/catalogs |
 | $K$ | Virtual sampling interval $2^r-1$, default 15; 3, 7, 15 and 31 supported |
@@ -167,7 +167,7 @@ chain-size and scheduler assumptions. Offset units are bytes or bits according
 to the shared policy.
 
 The policy API spells these structures `rank_groups<P::group_size>` and
-`elias_fano`. `fridge<P>::blob` uses that policy
+`elias_fano`. `multiverse<P>::blob` uses that policy
 throughout. Rank boundaries count virtual occurrences; offset checkpoints count
 physical records. They need not have the same interval.
 Elias–Fano stores only the chosen monotone positions. The profile layer chooses
@@ -446,7 +446,7 @@ For scheduling, start with
 I adopt its main/secondary/shadow arrangement and smallest-unsafe-level service
 as the baseline. Data merging and lookahead construction both participate in
 becoming safe and switching visibility. A main catalog routes to the next
-main and terminal secondary; only the main route continues. Diet's
+main and terminal secondary; only the main route continues. Everett's
 `cola_index` implements this topology with two borrowed FC streams and two
 rank directories over one three-way virtual order. The native FC and offsets
 remain unchanged. The [COLA guide](cola-indexes.md) describes construction,
@@ -493,7 +493,7 @@ We cannot assume that an input's compressed size pays for full expansion of
 every string. LCP-aware merging is relevant here;
 [Bingmann, Sanders, and Schimek, §II-B](https://panthema.net/2020/0518-distributed-string-sorting/2001.08516v1-Communication-Efficient-String-Sorting.pdf)
 describes carrying LCP information through multiway merging and communicating
-prefix-compressed strings. Diet's native merge carries predecessor comparisons
+prefix-compressed strings. Everett's native merge carries predecessor comparisons
 and borrows inherited prefix spans from its pinned inputs. The
 [sort runtime](sort-runtime.md) describes when a semantic collision still needs
 to materialize a key. Structural merge charges do not bound expanded byte work.
@@ -509,7 +509,7 @@ immutable representation identity. There is no custom manifest/checkpoint file
 format. The [catalog](catalog.md) and [file lifecycle](file-lifecycle.md) separate
 transactional metadata from the `.kv` and `.index` objects it retains.
 
-A snapshot pins the exact blob/index graph needed to read its cola. A durable
+A snapshot pins the exact blob/index graph needed to read its world. A durable
 save records that manifest and retains those pins across process lifetimes.
 Readers hold references protecting their mappings; replacing a manifest does
 not invalidate an in-flight read.
@@ -540,10 +540,10 @@ Cancellation has a corresponding release path.
 
 ### The pin-set owner
 
-The current cola has one immutable pin-set owner. Each entry records an exact
+The current world has one immutable pin-set owner. Each entry records an exact
 object identity, its lifetime pin, its local additive contribution, and optionally
 its own-native-record fingerprint. The owner caches the sum of the contributions;
-this sum is the cola's composite key. A snapshot shares the owner. Updating or
+this sum is the world's composite key. A snapshot shares the owner. Updating or
 compacting constructs a replacement owner without changing previous snapshots.
 
 The contribution is defined by the entry's role: a base contributes its table
@@ -620,7 +620,7 @@ $u\ge\lfloor b/4\rfloor$, early enough to finish before half the base could disa
 These constants are our adaptation, not the constants printed in the paper.
 Tiny generations use a bounded direct rebuild rather than fractional counters.
 
-1. **Freeze.** We pin a complete cola manifest at an admitted update cut and keep
+1. **Freeze.** We pin a complete world manifest at an admitted update cut and keep
    the serving generation current while this pinned source remains unchanged. Let
    $n_s$ be the source's live cardinality.
 2. **Build clean contents.** We merge the frozen native streams with full older
@@ -710,7 +710,7 @@ Three quantities now need to be distinguished:
 - A fingerprint of a file's own native records.
 - The algebraic delta of a changeset relative to validated old bindings.
 
-Borrowed entries never contribute cola contents. Overlapping own-record file
+Borrowed entries never contribute world contents. Overlapping own-record file
 fingerprints are not simply additive: shadowed bindings require cancellation.
 A tombstone's zero value does not by itself subtract an older contribution.
 
@@ -721,7 +721,7 @@ does not imply an identity arrow. Obtaining the target potential cheaply is an
 additional policy obligation. The [arrow design](arrows.md) gives
 the construction and distinguishes endpoint fingerprints from history.
 
-## 9. Partitioned cola rounds
+## 9. Partitioned world rounds
 
 For round $t$, all workers read the same immutable base $W_t$. A partitioning
 function assigns each writable key to exactly one owner for that round. This can

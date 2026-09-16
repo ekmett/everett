@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/crc32c.h>
+#include <everett/crc32c.h>
 
 #include <cstddef>
 #include <cstdint>
@@ -19,5 +19,5 @@
 // A second translation unit checks that the installed implementation remains
 // header-only without duplicate definitions or an undeclared link dependency.
 std::uint32_t crc32c_from_other_translation_unit(std::span<std::byte const> bytes) {
-  return diet::crc32c(bytes);
+  return everett::crc32c(bytes);
 }

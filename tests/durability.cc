@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Diet's storage durability behavior.
+ * \brief Tests Everett's storage durability behavior.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/durability.h>
+#include <everett/durability.h>
 
 #include <iostream>
 #include <limits>
@@ -18,7 +18,7 @@
 #include <string>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   constexpr auto durable = persistence_result::durable_verified;
   constexpr auto failed = persistence_result::failure;
   constexpr auto verified = recovery_evidence::durable_state_verified;

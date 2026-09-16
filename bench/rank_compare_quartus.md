@@ -78,8 +78,8 @@ not an isolated hardware memory-latency measurement.
 
 Every generated query, including each complete dependent chain, was checked
 against an independent raw-word population-prefix oracle before timing.
-Timed checksums agree across all variants. The public `diet.rank` and
-`diet.groups` tests from `aeaaa9d` passed both Release and ASan/UBSan builds
+Timed checksums agree across all variants. The public `everett.rank` and
+`everett.groups` tests from `aeaaa9d` passed both Release and ASan/UBSan builds
 on this host with AVX2 enabled. Those tests include every nybble position and
 protected-page tails. Oracle tests retained assertions with `-UNDEBUG` and
 also used `-Wpedantic`. The sanitizer build used
@@ -140,16 +140,16 @@ Apple comparison and therefore does not select these three snapshots.
 repo=$(git rev-parse --show-toplevel)
 build="$repo/build-rank-quartus-repro"
 python3 bench/snapshot.py 9f68e4d0fdecae73b7d28b748a0d062cc072fbfa "$build/baseline"
-python3 bench/snapshot.py aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06 "$build/qword" include/diet/rank15.h
-cp "$build/qword/include/diet/rank15.h" "$build/qword_rank15.h"
+python3 bench/snapshot.py aeaaa9d9896db9aec1a003a0a5ba7b0b6174bd06 "$build/qword" include/everett/rank15.h
+cp "$build/qword/include/everett/rank15.h" "$build/qword_rank15.h"
 cp "$build/qword_rank15.h" "$build/sad_rank15.h"
 patch "$build/sad_rank15.h" < "$repo/bench/rank15_sad_prototype.patch"
 python3 bench/snapshot.py ca93a619a45f1a7ab3a923e2f5793fa9211678d5 "$build/fixture" bench/rank_compare.cc
 cp "$build/fixture/bench/rank_compare.cc" "$build/rank_compare.cc"
 clang++ -std=c++20 -O3 -DNDEBUG -mavx2 -mpopcnt -mno-avx512f \
   -Wall -Wextra -Werror -I"$build/baseline/include" \
-  "-DDIET_RANK_CANDIDATE=\"$build/sad_rank15.h\"" \
-  "-DDIET_RANK_SIMD=\"$build/qword_rank15.h\"" \
+  "-DEVERETT_RANK_CANDIDATE=\"$build/sad_rank15.h\"" \
+  "-DEVERETT_RANK_SIMD=\"$build/qword_rank15.h\"" \
   "$build/rank_compare.cc" -o "$build/rank_compare"
 taskset -c 12 "$build/rank_compare" check 1 32768 core
 taskset -c 12 "$build/rank_compare" hot_packed32KiB 5 1048576 core \

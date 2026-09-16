@@ -66,7 +66,7 @@ Instruction and size evidence
 
 The benchmark include closure contains only two changed headers between B and C:
 the COLA append call and its borrowed-writer friend declaration. The revision also
-changes `fridge.h`, which this fixture does not include. `append_known` remains
+changes `multiverse.h`, which this fixture does not include. `append_known` remains
 out of line in both builds, and there is no new full-prefix copy.
 
 All four emitted comparator bodies contain the same 209 instructions after
@@ -138,7 +138,7 @@ the experimental Git branch:
 ```sh
 python3 bench/cola_layout.py --baseline 111a2d6 \
   --candidate-patch bench/results/cola_layout_candidate.patch \
-  --build-dir build-cola-layout --trials 5 --rounds 3
+  --build-dir build-world-layout --trials 5 --rounds 3
 ```
 
 Run under the host's exclusive CPU/build-directory lease. The recorded runner

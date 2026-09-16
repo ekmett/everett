@@ -24,8 +24,8 @@ example directory; a store reserves fresh IDs and durable dependency pins throug
 its catalog before opening the pipeline.
 
 ```cpp
-#include <diet/file_index_pipeline.h>
-#include <diet/native_file_writer.h>
+#include <everett/file_index_pipeline.h>
+#include <everett/native_file_writer.h>
 #include <array>
 #include <cstdio>
 #include <filesystem>
@@ -33,8 +33,8 @@ its catalog before opening the pipeline.
 #include <string>
 #include <vector>
 
-using namespace diet;
-using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<1>>>>>;
+using namespace everett;
+using P = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<1>>>>>;
 
 bit_string key(unsigned i) {
   char text[16];
@@ -108,7 +108,7 @@ int main(int argc, char ** argv) {
 The final empty-native stage makes this example's head fit in one sampling
 group. The low-level query returns every matching native value; here the
 chosen chain order gives `c`, `b`, then `a`. Resolving those matches according
-to semantic chronology or an arrow policy belongs to the cola owner.
+to semantic chronology or an arrow policy belongs to the world owner.
 
 Each file stage buffers at most 64 KiB of encoded payload, plus bounded control
 scratch, current key contexts and navigation under construction. Navigation

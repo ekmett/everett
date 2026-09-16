@@ -9,13 +9,13 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/redundant_runtime.h>
-#include <diet/typed_cola.h>
+#include <everett/redundant_runtime.h>
+#include <everett/typed_world.h>
 
 #include <cassert>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using P = string_policy;
   template <class Family, std::uint64_t Limit>
   using engine = typed_engine<P, wrapping_fingerprint_algebra, Limit, Family>;
@@ -66,7 +66,7 @@ namespace {
     assert(!active.pending() && old.runtime().query_root().head()->depth() == Limit);
     auto deeper = padded<Family>(old.runtime());
     assert(deeper.query_root().head()->depth() == Limit + 1);
-    auto imported = E::cola_type::restore(deeper, old.metadata(), old.metadata().schema_id);
+    auto imported = E::world_type::restore(deeper, old.metadata(), old.metadata().schema_id);
     assert(imported.get("a") == "one");
     over_limit([&] { (void)E::from_snapshot(imported); });
     if constexpr (requires { active.storage(); })
@@ -112,7 +112,7 @@ namespace {
     engine<binary_runtime_family<P>, 2> source;
     auto old = source.contribute(decltype(source)::put("a", "one"));
     using E = engine<expanding_family, 2>;
-    auto admitted = E::cola_type::restore(old.runtime(), old.metadata(), old.metadata().schema_id);
+    auto admitted = E::world_type::restore(old.runtime(), old.metadata(), old.metadata().schema_id);
     auto active = E::from_snapshot(admitted);
     assert(!active.advance(0));
     over_limit([&] { active.advance(1); });

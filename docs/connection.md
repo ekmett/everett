@@ -1,30 +1,30 @@
-Connecting to a named tap
+Connecting to a named session
 ========================
 
 Most applications can start with `connect`, then use the result as a mutable
 string table:
 
 ```cpp
-#include <diet/connection.h>
+#include <everett/connection.h>
 
 int main(int argc, char ** argv) {
   if (argc != 2) return 64;
-  auto pantry = diet::fridge<>::create(argv[1]);
-  auto db = pantry.connect("earth-616");
-  db.put("name", "Diet");
+  auto storage = everett::multiverse<>::create(argv[1]);
+  auto db = storage.connect("earth-616");
+  db.put("name", "Everett");
   auto name = db.get("name");
-  return name != "Diet";
+  return name != "Everett";
 }
 ```
 
-`connect` opens the latest version of that named tap, creating an empty one
+`connect` opens the latest version of that named session, creating an empty one
 when needed. Its default key and value type is `std::string`, including
 embedded zero bytes. A missing key returns an empty `std::optional`; a stored
 empty string remains present. The default uses the bit profile, 15:1 sampling,
 and order-zero exponential-Golomb backspaces. Sort code zero names the string
 table and code one remains reserved.
-The free function `diet::connect(directory, name)` provides the same operation
-without keeping a fridge object.
+The free function `everett::connect(directory, name)` provides the same operation
+without keeping a multiverse object.
 
 The ordinary `active_engine<P>` uses the redundant scheduler. Bit registries
 write sort-owned native records, retaining small private merge and index
@@ -37,20 +37,20 @@ so deletion reduces the current table's physical generation as well as its live
 count. Saved snapshots keep their own files.
 [The storage context](sort-runtime-context.md) describes its buffers and barriers.
 
-Enable the SQLite component when building Diet, then link its CMake target:
+Enable the SQLite component when building Everett, then link its CMake target:
 
 ```cmake
-target_link_libraries(my_application PRIVATE diet::sqlite)
+target_link_libraries(my_application PRIVATE everett::sqlite)
 ```
 
-`fridge<>::create` creates missing directories and syncs each new directory and
+`multiverse<>::create` creates missing directories and syncs each new directory and
 its parent. Existing ancestors must already be durable and trusted; the ordinary
-`fridge` constructor and free `connect` require an existing backing directory.
+`multiverse` constructor and free `connect` require an existing backing directory.
 I create `catalog.sqlite3` exclusively, and never format or replace an existing
 catalog. A competing creator can make the initial connection fail; an incomplete
 or incompatible catalog requires explicit attention. With
 `connection_options{.create_if_missing = false}`, both the catalog and the named
-tap must already exist.
+session must already exist.
 
 Reads, writes and snapshots
 ---------------------------
@@ -61,9 +61,9 @@ durable snapshot was current when the read began.
 
 ```cpp
 auto before = db.snapshot();
-auto after = db.put("name", "A reduced COLA");
-// before.get("name") still returns "Diet".
-// after.get("name") returns "A reduced COLA".
+auto after = db.put("name", "Persistent snapshots");
+// before.get("name") still returns "Everett".
+// after.get("name") returns "Persistent snapshots".
 db.erase("name");
 // db.get("name") is now absent; both snapshots remain readable.
 ```
@@ -92,14 +92,14 @@ branch.put("name", "Another branch");
 The two-argument forms select a particular snapshot. `save(name)` and
 `fork(name)` capture the connection's current snapshot. Saving and forking pin
 existing objects; neither operation rewrites their data or indexes. Saved names
-and newly forked tap names must be unused. `load` retrieves a save without
-changing the live tap. The current catalog retains historical generations and
+and newly forked session names must be unused. `load` retrieves a save without
+changing the live session. The current catalog retains historical generations and
 pins; automatic reclamation is still separate work.
 
 Each durable snapshot carries its exact catalog generation in `head()`. The
 root and its semantic checkpoint are published together. A save made while a
 background merge completes still refers to the captured generation, rather than
-silently following the live tap to its next representation.
+silently following the live session to its next representation.
 
 Asynchronous writes
 --------------------
@@ -113,7 +113,7 @@ the owning durable publication on success, or throws on rejection or failure:
 auto first = db.put_async("name", "one");
 auto second = db.put_async("name", "two");
 auto result = second.get();
-// result->cola.get("name") == "two"
+// result->world.get("name") == "two"
 first.get(); // Check this command's outcome too.
 ```
 
@@ -165,7 +165,7 @@ It is a conservative work allowance, not a count of disk operations or bytes.
 
 `connection_options::limits` is optional. An omitted value selects these
 engine-specific defaults once when connecting; `db.limits()` returns the resolved
-values. Supplying a `tap_limits` value preserves every explicit limit exactly,
+values. Supplying a `session_limits` value preserves every explicit limit exactly,
 including a zero work or byte limit. A fork retains its parent's resolved limits.
 The limits cover admitted queue input and its structural reservation, including
 the command currently executing. They do not
@@ -209,7 +209,7 @@ Each contribution validates its affected keys against their values in the
 base. Disjoint contributions can therefore arrive in either order and produce
 the same contents and signature. A changed value at an affected key rejects
 that contribution. Unrelated changes do not invalidate the entire snapshot.
-The [typed-cola guide](typed-cola.md) describes batches and general composable
+The [typed-world guide](typed-world.md) describes batches and general composable
 arrows.
 
 Custom sorts and synchronous engines
@@ -218,8 +218,8 @@ Custom sorts and synchronous engines
 Pass an explicit typed core to `connect` when using another registry:
 
 ```cpp
-using core = diet::active_engine<my_policy>;
-auto db = diet::connect<core>(directory, "records", {
+using core = everett::active_engine<my_policy>;
+auto db = everett::connect<core>(directory, "records", {
   .schema_id = "my-application/records/v1"
 });
 db.change<my_sort>(key, arrow);
@@ -228,14 +228,14 @@ db.change<my_sort>(key, arrow);
 The schema identity is checked on reopen. It describes the registry's ordering,
 codecs, hash functions, and semantics; changing it does not perform a migration.
 The built-in bit string registry uses
-`diet.optional-string/code0/sort-profile-v1` automatically.
+`everett.optional-string/code0/sort-profile-v1` automatically.
 Other registries require an explicit stable identity. The durable metadata
 codec currently supports the 64-bit fingerprint element.
 
 For a synchronous caller that owns its scheduling loop,
 `persistent_engine<Core>` supplies `contribute`, `snapshot`, `pending`,
 `admission_ready`, and `advance(budget)`. It implements the same engine contract
-as the generic [tap](tap.md). Contributions and completed layouts are persisted
+as the generic [session](session.md). Contributions and completed layouts are persisted
 before returning. The public result is mapped; when the runtime becomes
 settled, the engine releases its owning construction buffers and continues from
 those mappings. While a carry is pending it retains its private builders, so
@@ -245,9 +245,9 @@ Failure and competing writers
 ------------------------------
 
 One connection serializes its callers. Separate connections writing the same
-named tap compete through catalog compare-and-publish. A loser fails rather
+named session compete through catalog compare-and-publish. A loser fails rather
 than overwriting the winner. Reconnect to inspect the new durable state before
-deciding whether to prepare another contribution. Fork a tap when independent
+deciding whether to prepare another contribution. Fork a session when independent
 writable histories are intended.
 
 An input rejection that leaves the typed core healthy rejects only its ticket.

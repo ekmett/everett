@@ -10,9 +10,9 @@
  * \endlicense
  */
 
-#include <diet/index_builder.h>
-#include <diet/mapped_blob.h>
-#include <diet/profile_index.h>
+#include <everett/index_builder.h>
+#include <everett/mapped_blob.h>
+#include <everett/profile_index.h>
 
 #include <algorithm>
 #include <array>
@@ -37,7 +37,7 @@
 #endif
 
 namespace {
-  using namespace diet;
+  using namespace everett;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -56,7 +56,7 @@ namespace {
   }
 
   // The oracle reads original bits directly and sorts their 0/1 strings.
-  // It does not use Diet's key comparison, rank, FC or sampling routines.
+  // It does not use Everett's key comparison, rank, FC or sampling routines.
   std::string bits(bit_view value) {
     std::string result;
     for (std::uint64_t i = 0; i < value.size(); ++i) {
@@ -117,13 +117,13 @@ namespace {
     std::filesystem::path path;
     temporary_directory() {
 #if defined(__unix__) || defined(__APPLE__)
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-mapped-index-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-mapped-index-XXXXXX").string();
       auto result = ::mkdtemp(pattern.data());
       if (!result) throw std::system_error(errno, std::generic_category(), "create mapped index fixture");
       path = result;
 #else
       for (unsigned i = 0; i < 10000; ++i) {
-        auto candidate = std::filesystem::temp_directory_path() / ("diet-mapped-index-" + std::to_string(i));
+        auto candidate = std::filesystem::temp_directory_path() / ("everett-mapped-index-" + std::to_string(i));
         if (std::filesystem::create_directory(candidate)) { path = std::move(candidate); return; }
       }
       throw std::runtime_error("cannot reserve mapped index fixture directory");
@@ -366,7 +366,7 @@ namespace {
   }
 
   void lifetime() {
-    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
+    using P = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3>;
     storage<P> files;
     std::vector<profile_record> target_rows{{bit_string::from_bytes("a"), bit_string::from_bytes("old-a")},
                                           {bit_string::from_bytes("z"), bit_string::from_bytes("old-z")}};
@@ -418,7 +418,7 @@ namespace {
 
   void untouched_native_values() {
 #if defined(__unix__) || defined(__APPLE__)
-    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7, exponential_golomb<0>, 16>;
+    using P = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 7, exponential_golomb<0>, 16>;
     auto page_query = ::sysconf(_SC_PAGESIZE);
     require(page_query > 0, "page size");
     auto page = static_cast<std::size_t>(page_query);
@@ -461,7 +461,7 @@ namespace {
   }
 
   void empty_terminal() {
-    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 1>;
+    using P = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 3, golomb<3>, 1>;
     storage<P> files;
     auto empty = build_layer<P>(files, {}, nullptr, true);
     auto root = mapped_query_root<P>::adopt_prepared(empty.mapped);
@@ -481,14 +481,14 @@ namespace {
 }
 
 int main() try {
-  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
-  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>();
-  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<8>>>>, 15, exponential_golomb<0>, 16>>();
-  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 31, exponential_golomb<0>, 15>>();
-  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<3>, 16>>();
-  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<2>, 15>>();
-  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<13>>>>, 15, golomb<5>, 16>>();
-  matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31, exponential_golomb<0>, 15>>();
+  matrix<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+  matrix<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>();
+  matrix<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<8>>>>, 15, exponential_golomb<0>, 16>>();
+  matrix<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 31, exponential_golomb<0>, 15>>();
+  matrix<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 3, golomb<3>, 16>>();
+  matrix<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<2>, 15>>();
+  matrix<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<13>>>>, 15, golomb<5>, 16>>();
+  matrix<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 31, exponential_golomb<0>, 15>>();
   lifetime();
   untouched_native_values();
   empty_terminal();

@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/sort_profile.h>
+#include <everett/sort_profile.h>
 
 #include <array>
 #include <iostream>
@@ -20,7 +20,7 @@ namespace fixture {
   inline unsigned custom_calls = 0;
 }
 
-namespace diet {
+namespace everett {
   // Deliberately supplies only the original owning order protocol.
   template <> struct sort_profile_key<fixture::custom_key> {
     static bit_string order(std::uint64_t value) {
@@ -32,7 +32,7 @@ namespace diet {
 }
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void check(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }

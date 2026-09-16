@@ -1,10 +1,10 @@
-# Diet implementation status
+# Everett implementation status
 
-Updated 2026-09-16. Specification: [Diet design](design.md).
+Updated 2026-09-16. Specification: [Everett design](design.md).
 
 This ledger records what works, what the tests establish, and what remains to
-be built. The C++20 foundations live in `include/diet/`, in
-namespace `diet`. Immutable files, mmap queries and saved catalog roots work;
+be built. The C++20 foundations live in `include/everett/`, in
+namespace `everett`. Immutable files, mmap queries and saved catalog roots work;
 the encoded mutable runtime now executes real carries, including a three-slot
 redundant-level scheduler with explicit service obligations.
 
@@ -24,13 +24,13 @@ for integration. These are development responsibilities.
 | Checksums | `crc32c.h`, generated backends, pinned generator and package notices; `tests/crc32c.cc` | independent CRC oracle, bounded loads, reproducible generation, target guards and multi-translation-unit installed consumption |
 | Key primitives | `key_detail.h`, `profile.h`; `tests/profile.cc`; [key policies](keys.md) | bounded comparisons, bit movement, count framing and independent bit-level oracles |
 | Sort registry | `registry.h`, `policy.h`; `tests/registry.cc`, `tests/registry_compat.cc` | typed discriminator dispatch, width/unit inference, stable-code extension, file-local framing and catalog reopen under broader defaults |
-| Mutable tap | `tap.h`; `tests/tap.cc` | serialized immutable publication, bounded accepted input, readiness backpressure, cancellation, shutdown, exact logical identity and worker failure |
+| Mutable session | `session.h`; `tests/session.cc` | serialized immutable publication, bounded accepted input, readiness backpressure, cancellation, shutdown, exact logical identity and worker failure |
 | Named typed connection | `connection.h`; `tests/sqlite_catalog_connection.cc` | mutable and asynchronous commands, mapped snapshots, exact saves/forks, restart, stale publishers and healthy input rejection |
 | Encoded runtime | `cola_runtime.h`; `tests/cola_runtime.cc` | chronological runs, real native/index/carrier work, immutable publication, budget partition, mmap restoration and failed continuation isolation |
 | Redundant runtime | `redundant_runtime.h`; redundant and typed-redundant tests | three-slot ownership, overlapping main/secondary jobs, charged admission, exact frontier checkpoints and recovery gates |
-| Initial sorted batches | `redundant_runtime.h`, `sort_runtime.h`, `sort_runtime_context.h`, `typed_cola.h`, `replacement_rebuild.h`; initial-batch suites | geometric native slices, exact index targets, paid carries, logical preflight, adaptive encoding and preserved publication on failure |
+| Initial sorted batches | `redundant_runtime.h`, `sort_runtime.h`, `sort_runtime_context.h`, `typed_world.h`, `replacement_rebuild.h`; initial-batch suites | geometric native slices, exact index targets, paid carries, logical preflight, adaptive encoding and preserved publication on failure |
 | Runtime persistence | `runtime_store.h`, `runtime_checkpoint.h`, `redundant_checkpoint.h`; runtime and redundant catalog tests | exact graph sealing, hidden completed artifacts, atomic auxiliary pins, saved frontiers, mapped reopening and interrupted-stage restart |
-| Typed updates | `typed_cola.h`; `tests/typed_cola.cc` | replacement reads, chronological arrows, per-sort dispatch and hashes, validated deletes, disjoint contributions, mutable commands and snapshot metadata |
+| Typed updates | `typed_world.h`; `tests/typed_world.cc` | replacement reads, chronological arrows, per-sort dispatch and hashes, validated deletes, disjoint contributions, mutable commands and snapshot metadata |
 | Sort-owned record codec | `sort_codec.h`; `tests/sort_codec.cc` | heterogeneous FC/raw/integer grammars, optional/niche/no-payload values, typed stream anchors, control parsing and borrowed-role output |
 | Sort-owned physical profiles | `sort_profile.h`, `sort_profile_file.h`, `sort_profile_merge.h`; `tests/sort_profile.cc` | KV03 native framing, shared selector seeds, mapped cascading queries, prefix-preserving merges and protected-page entry |
 | Sort-owned runtime and persistence | `sort_runtime.h`, `sort_runtime_store.h`; sort-runtime and catalog tests | direct heterogeneous records, chronological composition, complete redundant frontiers and metadata-only mapped recovery |
@@ -40,11 +40,11 @@ for integration. These are development responsibilities.
 | Ready reservation batches | `runtime_graph_sealer.h`, `catalog_bindings.h`; `tests/sqlite_catalog_ready_reservations.cc` | one bounded group, nonblocking deduplicated producer claims, preserved pair fusion, per-unit acknowledgment and uncertain-reservation recovery |
 | Replacement rebuilding | `replacement_rebuild.h`; replacement and durable-rebuild tests | paid physical scans, FIFO replay, carried generation debt, active saves/forks and gated recovery after interruption |
 | Resolved scans | `typed_scan.h`; typed and mapped scan tests | ordered rows, newest replacements, chronological arrows, tombstone elision, bounded traversal and snapshot ownership |
-| Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `fridge.h`; profile/blob/fridge tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
+| Typed profiles and backing reader | `policy.h`, `profile.h`, `profile_blob.h`, `multiverse.h`; profile/blob/multiverse tests | byte/bit and value-layout matrix, ordinary FC, exact cut LCP, same-policy aliases and unchanged native allocation on reindex |
 | Complete encoded-chain queries | `query.h`; `tests/query.cc` | bounded root preparation, exact target traversal, all native matches, partial contexts, cursor budgets and ownership |
 | Native construction and merging | `native_writer.h`, `native_merge.h`; native writer/merge tests | streaming record acceptance, preserved FC/EF bytes, chronological composition, input pins and failure state |
 | Persistent catalog | `sqlite_catalog.h`; focused, adversarial, VFS and process-interruption tests; optional package consumer | reserved IDs, exact prepared graphs, close/reopen saves, binary operation replay, uncertain commits and conservative pins |
-| Cola semantics and ownership | `fingerprint.h`, `pins.h`, `cola.h`; `tests/cola.cc`, `tests/pins.cc` | disjoint batch permutations, snapshots, old-value validation, contributions, replay and reference export |
+| World semantics and ownership | `fingerprint.h`, `pins.h`, `world.h`; `tests/world.cc`, `tests/pins.cc` | disjoint batch permutations, snapshots, old-value validation, contributions, replay and reference export |
 | Design documentation | [usage](usage.md), [design](design.md), [arrows](arrows.md), [rebuilding](rebuild.md), [durability](durability.md), this ledger | working examples, consistent contracts, cited derivations and implementation limits |
 
 As components change, we update this ledger with the reviewed revision, actual
@@ -55,7 +55,7 @@ this package.
 
 ### Active runtime and named frontiers
 
-`fridge<>::create(path).connect(name)` opens a default bit-profile string table.
+`multiverse<>::create(path).connect(name)` opens a default bit-profile string table.
 The [connection](connection.md) serializes mutable commands, publishes durable
 mapped results and services merge work in the background. Its synchronous
 `persistent_engine` is also available to caller-owned scheduling loops. Tests
@@ -106,7 +106,7 @@ states the current retention and identity-allocation boundaries.
 An unbound owned native and its new index use one reservation and one joint
 seal/pair acknowledgment. Their file barriers finish before the acknowledgment's
 SQLite transaction. Already bound or streamed natives and hidden native-only
-outputs retain their separate acknowledgment paths. The final tap publication
+outputs retain their separate acknowledgment paths. The final session publication
 remains separate. Up to 16 initially ready units can share one reservation;
 each keeps its own seal acknowledgment. Contended claims fall back to the
 ordinary dependency walk. The [preparation guide](publication-preparation.md) describes
@@ -122,7 +122,7 @@ admission. The
 [construction](redundant-runtime.md#initial-sorted-batches) keeps complete hidden
 artifacts and charges executed work; it does not change the file formats.
 
-`tap<Engine>` provides serialized mutable publication and bounded accepted
+`session<Engine>` provides serialized mutable publication and bounded accepted
 inputs. Optional readiness blocks new claims behind prior engine debt. An
 engine can certify a preflight rejection left state unchanged; only that ticket
 fails. Uncertain or partial execution failures stop the worker. Focused tests
@@ -542,16 +542,16 @@ processors.
 
 Canonical sharded paths split the current experimental 128-bit opaque object
 ID into `ab/cd/<remaining-id>.<extension>`. Cryptographic content-ID calculation
-and verification are still pending; CRC32C and the weak cola fingerprint are
+and verification are still pending; CRC32C and the weak world fingerprint are
 not substitutes. The intended network path copies received native object bytes
 unchanged, then builds receiver-specific fractional indexes as detailed in
 [network admission](network-admission.md).
 
-`fridge<P>` owns an existing object-directory path. It opens objects,
+`multiverse<P>` owns an existing object-directory path. It opens objects,
 forwards `seal_object` to the same-policy writer, and opens prepared mmap query
 chains with `open_query`. It exposes same-policy aliases for `sort`, `blob`,
 `file`, `object_writer`, `mapped_native`, `mapped_index`, `mapped_blob` and
-`mapped_query_root`, plus forward-declared `cola`, `timeline` and `branch_point`
+`mapped_query_root`, plus forward-declared `world`, `timeline` and `branch_point`
 types. `sort<P>` validates one code's packing and unit
 alignment; it does not establish prefix freedom of an entire registry. Mapped
 files and slices outlive the reader object. There is no SQLite connection or
@@ -672,7 +672,7 @@ targets and mismatched sample counts, but does not authenticate manually pushed
 sample keys. The existing exact-sampler precondition and immutable-alias contract
 remain in force. The low-level cursor retrieves entries from owning encoded
 pairs or mapped pairs; typed handlers interpret those values. Querying does not
-publish durable colas. `adopt_prepared` checks an existing bounded chain without
+publish durable worlds. `adopt_prepared` checks an existing bounded chain without
 sampling it.
 
 The [whole-query comparison](../bench/query_compare.md) includes query
@@ -795,10 +795,10 @@ own root pin. Schema-1 catalogs keep the earlier save/reservation APIs; timeline
 methods reject them without an automatic migration. Catalog schema, object
 envelope and inner section versions are independent.
 
-`create_taps` selects schema 4. Named taps publish an opaque runtime checkpoint
+`create_sessions` selects schema 4. Named sessions publish an opaque runtime checkpoint
 and prepared root pin atomically. Exact CAS and replay cover both; ordinary
-timeline publication cannot bypass the checkpoint. Historical `fork_tap` and
-`save_tap` retain the exact checkpoint with the root. The tap-catalog suite covers
+timeline publication cannot bypass the checkpoint. Historical `fork_session` and
+`save_session` retain the exact checkpoint with the root. The session-catalog suite covers
 reopen, stale and competing publications, binary metadata, historical replay,
 save stability, schema protection and injected errors before/after COMMIT.
 It does not itself interpret runtime metadata or resume private file writes.
@@ -828,7 +828,7 @@ They cover real seal/save/close/reopen/query operations, concurrent connections,
 exact replay, binary names, before/after-COMMIT acknowledgment failures, policy
 and schema rejection, path aliases and retained input/output ownership. The
 adversarial suite also passed Release, and a separate link rejected the older
-system SQLite 3.51.0. Relocated `diet::sqlite` consumption and a core consumer
+system SQLite 3.51.0. Relocated `everett::sqlite` consumption and a core consumer
 with SQLite discovery disabled both passed. The [component guide](sqlite-catalog.md)
 states the distinction between these checks and physical power-loss recovery.
 A separate POSIX process-interruption suite passes 20 `SIGKILL` cuts: before
@@ -837,10 +837,10 @@ whose receipts have not been recorded. Fresh connections check the exact
 operation prefix, individual pins and targets, old saved queries and replay
 without duplicating ownership. No inherited SQLite connection is used.
 
-### Cola semantics and algebra
+### World semantics and algebra
 
-- `reference_cola` pins immutable sorted runs. Snapshots and forks share them;
-  eager reference compaction produces a new run while retained colas keep the
+- `reference_world` pins immutable sorted runs. Snapshots and forks share them;
+  eager reference compaction produces a new run while retained worlds keep the
   old runs.
 - `partition_round` holds one immutable base throughout the round, checks
   arbitrary key ownership functions and old values, and accepts disjoint
@@ -855,7 +855,7 @@ without duplicating ownership. No inherited SQLite connection is used.
 - `export_rc`/`import_rc` provide a **debug resolved-table dump**,
   conventionally a `.rc` file. This is not an intended access pattern; normal persisted access
   uses catalog object roots. The dump has
-  magic `DIET.RC` with a terminating zero (eight bytes), then little-endian
+  magic `EVRT.RC` with a terminating zero (eight bytes), then little-endian
   64-bit fields for format version 1, the value codec tag and record count.
   The fixed header is 32 bytes. Each live entry then contributes its key byte
   length, full binary-safe key and codec value in sorted order, without front
@@ -866,7 +866,7 @@ without duplicating ownership. No inherited SQLite connection is used.
 materializing the resolved table. Catalog saves retain exact encoded roots;
 reopening those roots does not import a debug dump.
 
-The cola layer supplies a semantic oracle for attaching encoded blobs. Its eager
+The world layer supplies a semantic oracle for attaching encoded blobs. Its eager
 ordered-map resolution is not the intended merge/query algorithm, and it has no
 logarithmic active-run-count guarantee. Batch generation may share an immutable
 base, while applying batches to one accumulator is serialized.
@@ -879,9 +879,9 @@ remains a policy-interface extension.
 
 ### Pin ownership
 
-`pin_set` is the actual `reference_cola` state owner. Entries hold exact object
+`pin_set` is the actual `reference_world` state owner. Entries hold exact object
 identities, immutable pins, additive contributions and optional own-record
-fingerprints. The cola signature comes from the owner's cached aggregate.
+fingerprints. The world signature comes from the owner's cached aggregate.
 Replacement validates expected identities and contribution preservation before
 publishing a new owner; previous owners retain their objects. Object identity
 is distinct from its weak fingerprint.
@@ -967,11 +967,11 @@ fingerprint sums.
 
 ### Aggregate API and key policies
 
-`fridge<P>::connect` opens a named typed tap backed by SQLite and immutable
+`multiverse<P>::connect` opens a named typed session backed by SQLite and immutable
 mapped files. Typed snapshots provide reads, conditional contributions, saves
-and forks. The raw `cola<P>`, `timeline<P>` and `branch_point<P>` aggregate names
+and forks. The raw `world<P>`, `timeline<P>` and `branch_point<P>` aggregate names
 are forward declarations; applications use the connection's concrete snapshot
-type. `reference_cola` provides an independent in-memory semantic oracle.
+type. `reference_world` provides an independent in-memory semantic oracle.
 
 [Sorts and key policies](keys.md) describes sort-qualified keys, key units,
 prefix-free coding and hash selection. The category may depend on the full key,
@@ -1008,7 +1008,7 @@ runtime exists.
 
 ### SQLite catalog and network admission
 
-SQLite is the selected home for logical colas, immutable representations,
+SQLite is the selected home for logical worlds, immutable representations,
 exact pins, contributions, index dependencies and small merge continuations.
 The [catalog design](catalog.md) specifies publication, operation identities,
 reader/GC synchronization and SQL diagnostics. The [implemented adapter](sqlite-catalog.md)
@@ -1068,12 +1068,12 @@ general arrows and byte-bounded rebuilding remain extensions.
 
 The [per-key category design](arrows.md) extends the semantics to composable
 diffs. It specifies composition, partition independence, exact endpoint deltas,
-query costs and dependency retention. `reference_cola` resolves replacements
+query costs and dependency retention. `reference_world` resolves replacements
 using optional values, and `profile_blob<P>` carries opaque value payloads.
 `typed_engine` executes per-sort arrows and composes them in chronological
 order during native merges. A noncommutative append sort exercises that order,
 including hash accounting and mapped snapshot restoration. Sort-specific stream
-grammars run directly in the KV03 family selected by ordinary bit-profile taps. General arrow
+grammars run directly in the KV03 family selected by ordinary bit-profile sessions. General arrow
 normalization bounds remain a separate concern.
 
 ## Build and verification
@@ -1081,7 +1081,7 @@ normalization bounds remain a separate concern.
 Configure, build and run the standalone component suites with CMake/CTest:
 
 ```sh
-cmake -S . -B build -DDIET_BUILD_TESTS=ON
+cmake -S . -B build -DEVERETT_BUILD_TESTS=ON
 cmake --build build --parallel 4
 ctest --test-dir build --output-on-failure
 ```
@@ -1089,13 +1089,13 @@ ctest --test-dir build --output-on-failure
 For ASan/UBSan on a supported toolchain, use a separate build directory:
 
 ```sh
-cmake -S . -B build-sanitize -DDIET_BUILD_TESTS=ON -DDIET_SANITIZERS=ON
+cmake -S . -B build-sanitize -DEVERETT_BUILD_TESTS=ON -DEVERETT_SANITIZERS=ON
 cmake --build build-sanitize --parallel 4
 ctest --test-dir build-sanitize --output-on-failure
 ```
 
 The default component suites cover codecs, native and borrowed writers, index
-construction, queries, cola semantics, ownership, durability and mapped files.
+construction, queries, world semantics, ownership, durability and mapped files.
 With SQLite enabled, additional suites cover the catalog, adversarial operations,
 forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
@@ -1181,9 +1181,9 @@ Verification through `09903de` on 2026-09-15: AppleClang 21, C++20, Release
 with strict warnings and ASan/UBSan passed all **67 component/package CTests**,
 including Doxygen and the installed named-connection example. The complete run
 found one legacy catalog fixture missing its original WAL setting; the corrected
-timeline suite passed separately. ThreadSanitizer also passed the tap and named
-connection suites. Linux GCC passed the earlier tap, typed update, runtime,
-sort-codec and fridge suites with ASan/UBSan.
+timeline suite passed separately. ThreadSanitizer also passed the session and named
+connection suites. Linux GCC passed the earlier session, typed update, runtime,
+sort-codec and multiverse suites with ASan/UBSan.
 
 Earlier combined verification through `4872d25` on 2026-09-15: AppleClang 21, C++20,
 Release with strict warnings and ASan/UBSan passed all **51 component/package
@@ -1219,15 +1219,15 @@ against the source bundle, and the pinned generator reproduced all eight
 backends. Windows execution coverage is limited to the recorded rank component
 tests. Network transport and durable merge resumption remain separate work.
 
-Object envelopes use the eight-byte `DIET.KV`/`DIET.IX` signatures with a
+Object envelopes use the eight-byte `EVRT.KV`/`EVRT.IX` signatures with a
 terminating zero; debug resolved-table dumps use the same eight-byte
-shape, `DIET.RC` plus a terminating zero, with a separate format version.
+shape, `EVRT.RC` plus a terminating zero, with a separate format version.
 Independent golden checks cover these bytes, the complete 32-byte empty
 reference header and the envelope CRC. Header validation and
 `import_rc` reject incompatible signatures even with otherwise valid
 fields and checksums.
 
-The optional `DIET_BUILD_DOCS` configuration generates Doxygen HTML/XML and
+The optional `EVERETT_BUILD_DOCS` configuration generates Doxygen HTML/XML and
 checks leading file metadata plus representative function/member ownership. A
 two-file fixture checks namespaces, same-name classes and overloaded functions;
 negative cases reject malformed or misplaced file metadata. The license aliases render

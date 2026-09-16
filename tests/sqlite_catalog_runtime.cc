@@ -9,14 +9,14 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/runtime_store.h>
+#include <everett/runtime_store.h>
 
 #include <iostream>
 #include <map>
 #include <string>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using P = storage_policy<tip<encoded_sort<bit_encoding<>>>, 3>;
   using runtime = cola_runtime<P>;
   using store = runtime_store<P>;
@@ -28,7 +28,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-runtime-store-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-runtime-store-XXXXXX").string();
       if (!::mkdtemp(name.data())) throw std::runtime_error("mkdtemp");
       root = name;
     }
@@ -62,7 +62,7 @@ namespace {
     auto storage = store::create(dir.root);
     runtime engine;
     std::array metadata{std::byte{0}, std::byte{255}, std::byte{17}};
-    auto current = storage.create_tap("earth-616", engine.snapshot(), metadata);
+    auto current = storage.create_session("earth-616", engine.snapshot(), metadata);
     engine = runtime::from_snapshot(current.snapshot);
     std::map<std::string, std::string> oracle, saved_oracle;
     std::optional<stored_runtime<P>> saved;
@@ -125,8 +125,8 @@ namespace {
     temporary dir;
     auto storage = store::create(dir.root);
     runtime a, b;
-    auto left = storage.create_tap("left", a.contribute(record("a", "left"), 0));
-    auto right = storage.create_tap("right", b.contribute(record("b", "right"), 0));
+    auto left = storage.create_session("left", a.contribute(record("a", "left"), 0));
+    auto right = storage.create_session("right", b.contribute(record("b", "right"), 0));
     auto old_native = left.snapshot.runs()[0].node->mapped()->identity().native;
     auto native = left.snapshot.runs()[0].native_owner();
     using node = cola_runtime_node<P>;
@@ -134,7 +134,7 @@ namespace {
     std::array intervals{cola_runtime_interval{0, 1}, cola_runtime_interval{1, 2}};
     auto snapshot = cola_runtime_snapshot<P>::restore(changed, intervals);
     auto before = files(dir.root);
-    auto combined = storage.create_tap("combined", snapshot);
+    auto combined = storage.create_session("combined", snapshot);
     require(files(dir.root) == before + 1, "reindex rewrote unchanged native or target");
     require(combined.snapshot.runs()[1].node->mapped()->identity().native == old_native,
       "reindex changed native identity");
@@ -159,7 +159,7 @@ namespace {
     temporary dir;
     auto normal = store::create(dir.root);
     runtime engine;
-    auto first = normal.create_tap("earth-616", engine.contribute(record("a", "value"), 0));
+    auto first = normal.create_session("earth-616", engine.contribute(record("a", "value"), 0));
     auto state = std::make_shared<hidden_after_commit>();
     state->source = dir.root / object_path(first.head.timeline.head.index, file_kind::fractional_index);
     state->hidden = state->source.string() + ".held";

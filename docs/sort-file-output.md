@@ -11,15 +11,15 @@ Merge into a file
 -----------------
 
 ```cpp
-#include <diet/sort_profile_file_merge.h>
-#include <diet/sort_profile_file.h>
+#include <everett/sort_profile_file_merge.h>
+#include <everett/sort_profile_file.h>
 
-using policy = diet::string_policy;
-using native = diet::mapped_sort_profile<policy>;
+using policy = everett::string_policy;
+using native = everett::mapped_sort_profile<policy>;
 
 // older and newer are shared_ptr<native const>. The caller has reserved the
 // object and attempt identities and established the backing directory.
-diet::sort_profile_file_merge<policy, native> merge(
+everett::sort_profile_file_merge<policy, native> merge(
   root, object_id, attempt_id, older, newer);
 while (!merge.done()) merge.step(64);
 auto receipt = merge.finish();
@@ -43,7 +43,7 @@ Write encoded records
 For an already sorted stream of complete logical keys and sort-encoded values:
 
 ```cpp
-diet::sort_profile_file_writer<policy> output(root, object_id, attempt_id);
+everett::sort_profile_file_writer<policy> output(root, object_id, attempt_id);
 for (auto const & record : records)
   output.append_encoded(record.key.view(), record.value.view());
 auto receipt = output.finish();

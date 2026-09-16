@@ -9,13 +9,13 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/sort_runtime_context.h>
+#include <everett/sort_runtime_context.h>
 
 #include <cassert>
 #include <iostream>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   using P = storage_policy<string_registry, 3>;
   using family = streaming_sort_runtime_family<P>;
@@ -27,7 +27,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-adaptive-index-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-adaptive-index-XXXXXX").string();
       if (!::mkdtemp(name.data())) throw std::runtime_error("mkdtemp");
       root = name;
     }
@@ -48,7 +48,7 @@ namespace {
     return family::native_type::from_owned(writer.finish());
   }
   void deferred() {
-    temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     auto disk = storage::open(dir.root); auto context = disk.context();
     auto input = native(); auto initial = objects(dir.root);
     auto job = context->make_index<Node>(input, {}, {});
@@ -72,7 +72,7 @@ namespace {
     assert(query.has_match());
   }
   void spill_and_lifetime() {
-    temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     auto disk = storage::open(dir.root); auto context = disk.context();
     auto a = native("a"), b = native(std::string(150000, 'b'));
     auto job = context->make_index<Node>(a, {}, b);
@@ -103,7 +103,7 @@ namespace {
     using F = streaming_sort_runtime_family<P, registry_selector<string_registry>, random_object_ids, catalog_ops>;
     using N = F::node_type;
     for (bool after : {false, true}) {
-      temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+      temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
       auto state = std::make_shared<fault>();
       auto disk = F::storage_type::open(dir.root, {}, {}, catalog_ops{state}, {}, {0, 0});
       auto context = disk.context();

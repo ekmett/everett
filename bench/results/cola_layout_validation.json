@@ -18,7 +18,7 @@
     "-Iinclude",
     "tests/profile.cc",
     "-o",
-    "build-cola-alignment-validation/profile"
+    "build-world-alignment-validation/profile"
   ],
   "environment": {
     "ASAN_OPTIONS": "detect_leaks=0",

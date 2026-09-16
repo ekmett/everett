@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/native_writer.h>
+#include <everett/native_writer.h>
 
 #include <array>
 #include <cstdlib>
@@ -41,7 +41,7 @@ void operator delete(void * pointer, std::size_t) noexcept { std::free(pointer);
 void operator delete[](void * pointer, std::size_t) noexcept { std::free(pointer); }
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }
@@ -194,8 +194,8 @@ namespace {
 
 int main() {
   try {
-    using bytes = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
-    using bits = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
+    using bytes = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
+    using bits = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>;
     prefix_reuse<bytes>(); prefix_reuse<bits>();
     allocation_rollback<bytes>(); allocation_rollback<bits>();
     encoded_cursor_allocations<bytes>(); encoded_cursor_allocations<bits>();

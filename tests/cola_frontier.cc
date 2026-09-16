@@ -9,7 +9,7 @@
  * \endlicense
  */
 
-#include <diet/cola_index.h>
+#include <everett/cola_index.h>
 
 #include <algorithm>
 #include <array>
@@ -23,7 +23,7 @@
 #include <vector>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using lanes = std::array<std::vector<std::string>, 3>;
   void check(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -231,14 +231,14 @@ namespace {
 }
 
 int main() try {
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<3>, 15>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7, exponential_golomb<0>, 15>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, exponential_golomb<1>, 16>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15, exponential_golomb<0>, 16>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, exponential_golomb<0>, 16>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 31, exponential_golomb<0>, 15>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 31, exponential_golomb<0>, 16>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 3, golomb<3>, 15>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 7, exponential_golomb<0>, 15>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 7, exponential_golomb<1>, 16>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 15, exponential_golomb<0>, 16>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 15, exponential_golomb<0>, 16>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 31, exponential_golomb<0>, 15>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 31, exponential_golomb<0>, 16>>();
   std::cout << "COLA sampled endpoint frontier tests passed\n";
 } catch (std::exception const & error) {
   std::cerr << error.what() << '\n';

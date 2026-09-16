@@ -73,7 +73,7 @@ def main():
         headers.mkdir(parents=True)
         normalization = None
         if revision == "working-tree":
-            shutil.copytree(repo / "include/diet", headers / "diet")
+            shutil.copytree(repo / "include/everett", headers / "everett")
             commit = subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
         else:
             commit = subprocess.check_output(["git", "-C", str(repo), "rev-parse", revision], text=True).strip()

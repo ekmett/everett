@@ -10,9 +10,9 @@
  * \endlicense
  */
 
-#include <diet/mapped_blob.h>
-#include <diet/native_merge.h>
-#include <diet/sections.h>
+#include <everett/mapped_blob.h>
+#include <everett/native_merge.h>
+#include <everett/sections.h>
 
 #include <algorithm>
 #include <array>
@@ -36,7 +36,7 @@
 #endif
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using table = std::map<std::string, std::string>;
 
   void require(bool condition, char const * message) {
@@ -93,13 +93,13 @@ namespace {
     std::filesystem::path path;
     temporary_directory() {
 #if defined(__unix__) || defined(__APPLE__)
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-native-merge-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-native-merge-XXXXXX").string();
       auto result = ::mkdtemp(pattern.data());
       if (!result) throw std::system_error(errno, std::generic_category(), "create mapped merge fixture");
       path = result;
 #else
       for (unsigned i = 0; i < 10000; ++i) {
-        auto candidate = std::filesystem::temp_directory_path() / ("diet-native-merge-" + std::to_string(i));
+        auto candidate = std::filesystem::temp_directory_path() / ("everett-native-merge-" + std::to_string(i));
         if (std::filesystem::create_directory(candidate)) { path = std::move(candidate); return; }
       }
       throw std::runtime_error("cannot reserve mapped merge fixture directory");
@@ -394,7 +394,7 @@ namespace {
     }
   }
   template <class Compose> void composition_failure_test(Compose compose) {
-    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<8>>>>, 3, exponential_golomb<0>, 16>;
+    using P = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<8>>>>, 3, exponential_golomb<0>, 16>;
     storage<P> files;
     table input{{"011", "00110101"}};
     auto a = files.map(input), b = files.map(input);
@@ -414,13 +414,13 @@ namespace {
 int main() {
   try {
 #if defined(__APPLE__) || defined(__linux__)
-    run_policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
-    run_policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, golomb<3>, 15>>();
-    run_policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<1>>>>, 15, exponential_golomb<0>, 16>>();
-    run_policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<8>>>>, 31, exponential_golomb<2>, 15>>();
-    run_policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>();
-    malformed_input_test<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>();
-    malformed_input_test<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>();
+    run_policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+    run_policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 7, golomb<3>, 15>>();
+    run_policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<1>>>>, 15, exponential_golomb<0>, 16>>();
+    run_policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<8>>>>, 31, exponential_golomb<2>, 15>>();
+    run_policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>();
+    malformed_input_test<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>();
+    malformed_input_test<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>();
     composition_failure_test(throws{});
     composition_failure_test(wrong_width{});
 #endif

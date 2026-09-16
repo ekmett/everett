@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Exercises durable mutable typed taps, snapshots, reopening and failed publications.
+ * \brief Exercises durable mutable typed sessions, snapshots, reopening and failed publications.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
+#include <everett/connection.h>
 
 #include <array>
 #include <cassert>
@@ -21,13 +21,13 @@
 #include <thread>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using core = typed_engine<>;
   using engine = persistent_engine<core>;
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-connection-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-connection-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -53,35 +53,35 @@ namespace {
   }
   void simple() {
     temporary directory;
-    auto pantry = fridge<>::create(directory.root / "nested" / "pantry");
-    static_assert(std::same_as<decltype(pantry)::policy_type, string_policy>);
-    auto current = connect<core>(pantry.root(), "earth-616");
+    auto storage = multiverse<>::create(directory.root / "nested" / "storage");
+    static_assert(std::same_as<decltype(storage)::policy_type, string_policy>);
+    auto current = connect<core>(storage.root(), "earth-616");
     assert(!current.get("name"));
-    auto first = current.put("name", "Diet");
-    assert(first.get("name") == "Diet" && first.live_count() == 1);
+    auto first = current.put("name", "Everett");
+    assert(first.get("name") == "Everett" && first.live_count() == 1);
     for (auto node = first.runtime().query_root().head(); node; node = node->main_target())
       assert(node->mapped() && node->native_owner()->mapped() && !node->native_owner()->owned());
     auto second_ticket = current.put_async("other", std::string("value\0bytes", 11));
     auto second = second_ticket.get();
-    assert(second->cola.get("other") == std::string("value\0bytes", 11));
-    assert(!second->cola.runtime().settled());
-    eventually([&] { return current.publication()->cola.runtime().settled(); });
+    assert(second->world.get("other") == std::string("value\0bytes", 11));
+    assert(!second->world.runtime().settled());
+    eventually([&] { return current.publication()->world.runtime().settled(); });
     auto compacted = current.publication();
     assert(compacted->logical == second->logical && compacted->generation == second->generation);
     assert(compacted->revision > second->revision);
-    assert(compacted->cola.signature() == second->cola.signature());
-    assert(compacted->cola.live_count() == second->cola.live_count());
-    assert(first.get("name") == "Diet" && !first.get("other"));
-    auto before_save = files(pantry.root());
+    assert(compacted->world.signature() == second->world.signature());
+    assert(compacted->world.live_count() == second->world.live_count());
+    assert(first.get("name") == "Everett" && !first.get("other"));
+    auto before_save = files(storage.root());
     current.save("first", first);
     auto saved = current.load("first");
-    assert(saved && saved->head() == first.head() && saved->get("name") == "Diet");
-    assert(files(pantry.root()) == before_save);
+    assert(saved && saved->head() == first.head() && saved->get("name") == "Everett");
+    assert(files(storage.root()) == before_save);
     assert(!current.load("absent"));
     auto branch = current.fork("earth-617", *saved);
     branch.put("name", "Branch");
-    assert(branch.get("name") == "Branch" && current.get("name") == "Diet");
-    assert(saved->get("name") == "Diet");
+    assert(branch.get("name") == "Branch" && current.get("name") == "Everett");
+    assert(saved->get("name") == "Everett");
     current.erase("name");
     assert(!current.get("name") && current.snapshot().live_count() == 1);
     auto rejected = current.erase_async("absent");
@@ -90,11 +90,11 @@ namespace {
     current.put("still", "healthy");
     assert(current.get("still") == "healthy");
     current.shutdown(); branch.shutdown();
-    auto opened = connect<core>(pantry.root(), "earth-616", {.create_if_missing = false});
+    auto opened = connect<core>(storage.root(), "earth-616", {.create_if_missing = false});
     assert(!opened.get("name") && opened.get("still") == "healthy");
     assert(opened.snapshot().live_count() == 2);
     auto old = opened.load("first");
-    assert(old && old->get("name") == "Diet" && !old->get("still"));
+    assert(old && old->get("name") == "Everett" && !old->get("still"));
   }
 
   void queued_commands() {
@@ -102,7 +102,7 @@ namespace {
     auto current = connect<core>(directory.root, "commands");
     std::vector<connection<core>::ticket> tickets;
     for (unsigned i = 0; i != 20; ++i) tickets.push_back(current.put_async("same", std::to_string(i)));
-    for (unsigned i = 0; i != tickets.size(); ++i) assert(tickets[i].get()->cola.get("same") == std::to_string(i));
+    for (unsigned i = 0; i != tickets.size(); ++i) assert(tickets[i].get()->world.get("same") == std::to_string(i));
     assert(current.get("same") == "19");
     auto base = current.snapshot();
     auto left = base.put("left", "L"), right = base.put("right", "R");
@@ -117,7 +117,7 @@ namespace {
       for (unsigned j = 0; j != 4; ++j) {
         auto value = std::to_string(i) + "-" + std::to_string(j);
         auto done = current.put_async("shared", value).get();
-        assert(done->cola.get("shared") == value);
+        assert(done->world.get("shared") == value);
       }
     });
     for (auto & task : writers) task.get();
@@ -202,7 +202,7 @@ namespace {
   struct restore_fault_core : core {
     using core::core;
     using metadata_type = decode_failure;
-    static restore_fault_core from_snapshot(cola_type value) {
+    static restore_fault_core from_snapshot(world_type value) {
       return restore_fault_core(core::from_snapshot(std::move(value)));
     }
   private:
@@ -242,14 +242,14 @@ namespace {
     struct reset_gate {
       ~reset_gate() { decode_failure::blocked.reset(); }
     } reset;
-    tap<faulty> live(std::move(current), {std::numeric_limits<std::uint64_t>::max(),
+    session<faulty> live(std::move(current), {std::numeric_limits<std::uint64_t>::max(),
       std::numeric_limits<std::uint64_t>::max(), 4, 16384});
     auto before = live.snapshot();
     auto active = live.submit(core::put("k", "committed"));
     assert(entered.wait_for(std::chrono::seconds(20)) == std::future_status::ready);
     auto queued = live.submit(core::put("queued", "never-applied"));
     assert(!active.ready() && !queued.ready() && live.pending_count() == 2);
-    assert(live.snapshot() == before && before->cola.get("k") == "old");
+    assert(live.snapshot() == before && before->world.get("k") == "old");
     // The durable head is already newer while no successful ticket exists.
     auto committed = engine::connect(directory.root, "async-committed", {.create_if_missing = false});
     auto observed = committed.snapshot();
@@ -273,7 +273,7 @@ namespace {
     }
     live.shutdown(); // Joins normally despite the failed worker and tickets.
     assert(live.failure() == failure && live.pending_count() == 0);
-    assert(live.outstanding() == tap_reservation{});
+    assert(live.outstanding() == session_reservation{});
     assert(live.snapshot() == before && first.get("k") == "old");
     auto reopened = engine::connect(directory.root, "async-committed", {.create_if_missing = false});
     auto durable = reopened.snapshot();
@@ -333,7 +333,7 @@ namespace {
   void creation_checks() {
     temporary directory;
     connection_options invalid;
-    invalid.limits = tap_limits{128'000'000, 64 * 1024 * 1024, 0, 4096};
+    invalid.limits = session_limits{128'000'000, 64 * 1024 * 1024, 0, 4096};
     rejects([&] { (void)connect(directory.root, "x", invalid); });
     rejects([&] { (void)connect(directory.root, ""); });
     rejects([&] { (void)connect(directory.root / "missing", "x"); });

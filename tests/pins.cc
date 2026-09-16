@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Diet's storage pins behavior.
+ * \brief Tests Everett's storage pins behavior.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -10,14 +10,14 @@
  * \endlicense
  */
 
-#include "diet/pins.h"
+#include "everett/pins.h"
 
 #include <array>
 #include <iostream>
 #include <stdexcept>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using owner = pin_set<int>;
 
   void require(bool condition, char const * message) {

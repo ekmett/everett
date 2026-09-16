@@ -9,9 +9,9 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/replacement_rebuild.h>
-#include <diet/sort_runtime_context.h>
-#include <diet/sort_runtime_store.h>
+#include <everett/replacement_rebuild.h>
+#include <everett/sort_runtime_context.h>
+#include <everett/sort_runtime_store.h>
 
 #include <cassert>
 #include <iostream>
@@ -19,12 +19,12 @@
 #include <unordered_set>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-tiny-rebuild-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-tiny-rebuild-XXXXXX").string();
       if (!::mkdtemp(name.data())) throw std::runtime_error("mkdtemp");
       root = name;
     }
@@ -35,7 +35,7 @@ namespace {
     while (engine.pending()) { engine.advance(1'000'000); assert(++steps < 1000); }
     assert(engine.admission_ready());
   }
-  template <class Cola> void verify(Cola const & state, std::map<std::string, std::string> const & expected) {
+  template <class World> void verify(World const & state, std::map<std::string, std::string> const & expected) {
     assert(state.live_count() == expected.size());
     std::uint64_t sum = 0;
     for (auto const & [key, value] : expected) {
@@ -94,10 +94,10 @@ namespace {
     drain(history);
     auto historical = history.snapshot();
     typename core::metadata_type metadata(historical.metadata(), 64, 16, true);
-    auto dirty = original.create_tap("small", historical.runtime(), metadata.encode());
+    auto dirty = original.create_session("small", historical.runtime(), metadata.encode());
     auto adapter = store::open(dir.root);
     auto found = adapter.find("small"); assert(found);
-    auto mapped = core::cola_type::restore(found->snapshot, metadata, metadata.schema_id);
+    auto mapped = core::world_type::restore(found->snapshot, metadata, metadata.schema_id);
     auto context = storage::open(dir.root);
     auto active = core::from_snapshot(mapped, context);
     assert(active.pending() && !active.admission_ready());
@@ -139,11 +139,11 @@ namespace {
     auto saved = adapter.publish(dirty.head, clean.runtime(), clean.metadata().encode());
     assert(files(dir.root, ".kv") == natives + data.size());
     assert(files(dir.root, ".index") == indexes + pairs.size());
-    auto restored = core::cola_type::restore(saved.snapshot, clean.metadata(), metadata.schema_id);
+    auto restored = core::world_type::restore(saved.snapshot, clean.metadata(), metadata.schema_id);
     active.rebase(restored);
     assert(active.storage().context() == context.context()); verify(active.snapshot(), expected);
     auto reopened = store::open(dir.root).find("small"); assert(reopened && reopened->head == saved.head);
-    verify(core::cola_type::restore(reopened->snapshot, clean.metadata(), metadata.schema_id), expected);
+    verify(core::world_type::restore(reopened->snapshot, clean.metadata(), metadata.schema_id), expected);
 
     if (!fail) {
       auto quote = core::reservation(core::put("key-0", "returned")); auto before = active.work();
@@ -206,7 +206,7 @@ namespace {
     using family = streaming_sort_runtime_family<>;
     using core = replacement_rebuild_engine<string_policy, wrapping_fingerprint_algebra, 256, family>;
     temporary dir;
-    { auto catalog = sqlite_catalog<string_policy>::create_taps(dir.root, random_object_ids{}()); }
+    { auto catalog = sqlite_catalog<string_policy>::create_sessions(dir.root, random_object_ids{}()); }
     auto storage = family::open_storage(dir.root);
     core seed; auto active = core::from_snapshot(seed.snapshot(), storage);
     active.contribute(core::put("only", "value"));

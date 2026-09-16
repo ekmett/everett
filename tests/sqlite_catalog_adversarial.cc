@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/sqlite_catalog.h>
+#include <everett/sqlite_catalog.h>
 
 #include <sqlite3.h>
 
@@ -38,7 +38,7 @@
 #endif
 
 namespace {
-  using namespace diet;
+  using namespace everett;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -53,13 +53,13 @@ namespace {
     std::filesystem::path path;
     temporary_directory() {
 #if defined(__unix__) || defined(__APPLE__)
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-sqlite-adversarial-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-sqlite-adversarial-XXXXXX").string();
       auto result = ::mkdtemp(pattern.data());
       if (!result) throw std::system_error(errno, std::generic_category(), "create catalog fixture");
       path = result;
 #else
       for (unsigned i = 0; i < 10000; ++i) {
-        auto candidate = std::filesystem::temp_directory_path() / ("diet-sqlite-adversarial-" + std::to_string(i));
+        auto candidate = std::filesystem::temp_directory_path() / ("everett-sqlite-adversarial-" + std::to_string(i));
         if (std::filesystem::create_directory(candidate)) { path = std::move(candidate); return; }
       }
       throw std::runtime_error("cannot reserve catalog fixture directory");
@@ -124,7 +124,7 @@ namespace {
     }
   };
 
-  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>;
+  using policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>;
   using catalog = sqlite_catalog<policy>;
 
   std::vector<std::byte> pair_bytes(blob_identity const & pair) {
@@ -355,17 +355,17 @@ namespace {
 
   void schema_policy_test() {
     fixture value;
-    rejects([&] { (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>::open(value.directory.path); });
-    (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7, exponential_golomb<0>, 16>>::open(value.directory.path);
-    (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<1>>>>, 7, exponential_golomb<0>, 16>>::open(value.directory.path);
-    rejects([&] { (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>::open(value.directory.path); });
-    rejects([&] { (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>::open(value.directory.path); });
+    rejects([&] { (void)sqlite_catalog<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>::open(value.directory.path); });
+    (void)sqlite_catalog<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 7, exponential_golomb<0>, 16>>::open(value.directory.path);
+    (void)sqlite_catalog<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<1>>>>, 7, exponential_golomb<0>, 16>>::open(value.directory.path);
+    rejects([&] { (void)sqlite_catalog<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 3, exponential_golomb<0>, 16>>::open(value.directory.path); });
+    rejects([&] { (void)sqlite_catalog<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 15>>::open(value.directory.path); });
     {
       temporary_directory bits;
-      using bit_policy = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>;
+      using bit_policy = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>;
       auto bit_catalog = sqlite_catalog<bit_policy>::create(bits.path, id(400));
-      rejects([&] { (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, golomb<3>, 16>>::open(bits.path); });
-      rejects([&] { (void)sqlite_catalog<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<1>, 16>>::open(bits.path); });
+      rejects([&] { (void)sqlite_catalog<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 7, golomb<3>, 16>>::open(bits.path); });
+      rejects([&] { (void)sqlite_catalog<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 7, exponential_golomb<1>, 16>>::open(bits.path); });
     }
     rejects([&] { (void)catalog::open(value.directory.path, {-1}); });
     rejects([&] { (void)catalog::create(value.directory.path, id(333)); });

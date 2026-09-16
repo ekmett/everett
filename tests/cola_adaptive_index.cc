@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/cola_adaptive_index.h>
-#include <diet/sort_profile_file.h>
+#include <everett/cola_adaptive_index.h>
+#include <everett/sort_profile_file.h>
 
 #include <cstdlib>
 #include <fstream>
@@ -34,14 +34,14 @@ void operator delete(void * p, std::size_t) noexcept { std::free(p); }
 void operator delete[](void * p, std::size_t) noexcept { std::free(p); }
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void check(bool value, char const * why) { if (!value) throw std::runtime_error(why); }
   template <class F> void rejects(F && fn) { try { fn(); } catch (std::exception const &) { return; } throw std::runtime_error("expected index rejection"); }
   object_id id(unsigned n) { char s[33]; std::snprintf(s, sizeof s, "%032x", n); return object_id(s); }
   object_attempt_id attempt(unsigned n) { return object_attempt_id(id(n).hex()); }
   struct temporary {
     std::filesystem::path root;
-    temporary() { auto s = (std::filesystem::temp_directory_path() / "diet-cola-file-XXXXXX").string();
+    temporary() { auto s = (std::filesystem::temp_directory_path() / "everett-world-file-XXXXXX").string();
       if (!::mkdtemp(s.data())) throw std::runtime_error("mkdtemp");
       root = s; }
     ~temporary() { std::error_code ignored; std::filesystem::remove_all(root, ignored); }

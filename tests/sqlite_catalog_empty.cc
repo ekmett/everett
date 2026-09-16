@@ -9,13 +9,13 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
+#include <everett/connection.h>
 
 #include <cassert>
 #include <memory>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using binary = typed_engine<>;
   using redundant = typed_engine<string_policy, wrapping_fingerprint_algebra, 256,
     redundant_runtime_family<string_policy>>;
@@ -29,7 +29,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-empty-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-empty-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -59,7 +59,7 @@ namespace {
     auto old = value.snapshot();
     auto charge = charged(value), grant = granted(value);
     auto input = empty<E>();
-    assert(E::reservation(input) == tap_reservation{});
+    assert(E::reservation(input) == session_reservation{});
     auto result = value.contribute(std::move(input));
     assert(result.runtime().same_layout(old.runtime()) && result.metadata() == old.metadata());
     assert(charged(value) == charge && granted(value) == grant && !value.failed());
@@ -102,7 +102,7 @@ namespace {
     auto semantic = source.contribute(input);
     redundant::runtime_type runtime;
     for (auto const & record : input.records()) assert(runtime.try_contribute(record, 0));
-    auto state = redundant::cola_type::restore(runtime.checkpoint(), semantic.metadata(), semantic.metadata().schema_id);
+    auto state = redundant::world_type::restore(runtime.checkpoint(), semantic.metadata(), semantic.metadata().schema_id);
     auto recovering = rebuilt::from_clean(state);
     assert(recovering.pending() && !recovering.admission_ready());
     auto before = recovering.snapshot();
@@ -165,12 +165,12 @@ namespace {
   struct changing_core : binary {
     using binary::binary;
     changing_core() = default;
-    static changing_core from_snapshot(cola_type state) { return changing_core(binary::from_snapshot(std::move(state))); }
-    cola_type contribute(contribution_type input) {
+    static changing_core from_snapshot(world_type state) { return changing_core(binary::from_snapshot(std::move(state))); }
+    world_type contribute(contribution_type input) {
       if (input.records().empty()) return binary::contribute(binary::put("custom-empty", "changed"));
       return binary::contribute(std::move(input));
     }
-    static tap_reservation reservation(contribution_type const & input) {
+    static session_reservation reservation(contribution_type const & input) {
       return input.records().empty() ? binary::reservation(binary::put("custom-empty", "changed")) : binary::reservation(input);
     }
   private:
@@ -200,12 +200,12 @@ namespace {
     assert(unchanged.head() == old.head() && unchanged.head() != latest.head() && !unchanged.get("new"));
     assert(!stale.failed() && operations(dir.root) == count);
 
-    connection<binary> live(dir.root, "tickets", {.limits = tap_limits{0, 0, 2, 1}});
+    connection<binary> live(dir.root, "tickets", {.limits = session_limits{0, 0, 2, 1}});
     auto before = live.publication();
     count = operations(dir.root);
     auto receipt = live.submit(empty<binary>());
     auto result = receipt.get();
-    assert(result->cola.head() == before->cola.head() && result->generation == before->generation + 1 &&
+    assert(result->world.head() == before->world.head() && result->generation == before->generation + 1 &&
       result->revision == before->revision + 1 && operations(dir.root) == count);
     live.shutdown();
     assert(!live.failure());

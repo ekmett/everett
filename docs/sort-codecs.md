@@ -7,7 +7,7 @@ bits and work without helping us. A string sort can instead retain a prefix
 of its previous key. Either sort can carry a fixed value, a variable value,
 an explicit tombstone, a sentinel niche, or no value payload.
 
-`diet/sort_codec.h` implements that streaming layer. Its native and borrowed
+`everett/sort_codec.h` implements that streaming layer. Its native and borrowed
 streams share a registry and key grammar. This is a separate record format
 from `profile_array`: the existing mapped profiles and their indexes continue
 to use their own framing. These codecs do not by themselves change a `.kv`
@@ -18,26 +18,26 @@ A small example
 ---------------
 
 ```cpp
-#include <diet/sort_codec.h>
+#include <everett/sort_codec.h>
 
 struct names {
-  using key_codec = diet::fc_string_key<>;
-  using value_codec = diet::tombstone_value<diet::string_value<>>;
-  using encoding = diet::bit_encoding<>;
+  using key_codec = everett::fc_string_key<>;
+  using value_codec = everett::tombstone_value<everett::string_value<>>;
+  using encoding = everett::bit_encoding<>;
 };
 struct counters {
-  using key_codec = diet::unsigned_key<32>;
-  using value_codec = diet::niche_value<diet::unsigned_value<16>, 65535u>;
-  using encoding = diet::bit_encoding<diet::fixed_values<16>>;
+  using key_codec = everett::unsigned_key<32>;
+  using value_codec = everett::niche_value<everett::unsigned_value<16>, 65535u>;
+  using encoding = everett::bit_encoding<everett::fixed_values<16>>;
 };
-using registry = diet::bin<diet::tip<names>, diet::tip<counters>>;
+using registry = everett::bin<everett::tip<names>, everett::tip<counters>>;
 
-diet::sort_record_writer<registry> write;
+everett::sort_record_writer<registry> write;
 write.append<names>("alpha", "one");
 write.append<names>("alpine", std::nullopt);
 write.append<counters>(42, 7);
 
-diet::sort_record_reader<registry> read(write.data().view());
+everett::sort_record_reader<registry> read(write.data().view());
 read.next([](auto, auto const &, auto const &, auto) {
   // Receives std::type_identity<S>, S's key and value, and record controls.
 });
@@ -130,8 +130,8 @@ Borrowed streams and comparison
 Use `stream_role::borrowed` to write only keys with the same registry:
 
 ```cpp
-diet::sort_record_writer<registry, diet::exponential_golomb<0>,
-  diet::stream_role::borrowed> index;
+everett::sort_record_writer<registry, everett::exponential_golomb<0>,
+  everett::stream_role::borrowed> index;
 index.append<names>("alpha");
 index.append<counters>(42);
 ```
@@ -194,7 +194,7 @@ prefixes, every packed-bit tail length, borrowed streams, direct integer
 fields, both tombstone forms, restart anchors, comparison transfer, and malformed
 input. The [sort-owned profile](sort-profiles.md) supplies sampled offsets and
 mapped native framing for these leaf grammars. `sort_runtime_family` connects
-them to the redundant scheduler and [typed semantics](typed-cola.md), while the
+them to the redundant scheduler and [typed semantics](typed-world.md), while the
 [storage context](sort-runtime-context.md) supplies durable merge output.
 The mixed-sort catalog tests combine string replacements, integer additions
 and chronological string arrows through repeated close/reopen cycles.

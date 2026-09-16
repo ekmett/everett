@@ -60,10 +60,10 @@ def main():
         path.write_bytes(data)
         hashes[name] = digest(data)
     baseline_snapshot = Snapshot(root, revisions["baseline"])
-    old = baseline_snapshot.read("include/diet/rank.h")
-    if b"#include <diet/" in old or old.count(b"namespace diet {") != 1:
+    old = baseline_snapshot.read("include/everett/rank.h")
+    if b"#include <everett/" in old or old.count(b"namespace everett {") != 1:
         raise RuntimeError("review baseline namespace/dependency adapter")
-    adapted = old.replace(b"namespace diet {", b"namespace baseline {")
+    adapted = old.replace(b"namespace everett {", b"namespace baseline {")
     (build / "baseline_rank.h").write_bytes(adapted)
     source = build / "rank_spacers.cc"
     source.write_bytes((root / "bench/rank_spacers.cc").read_bytes())

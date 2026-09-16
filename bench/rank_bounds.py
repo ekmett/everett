@@ -41,14 +41,14 @@ else:
     candidate_revision = candidate_snapshot.revision
     normalization['candidate'] = candidate_snapshot.metadata()
 for name in ['rank', 'rank15', 'rank_groups']:
-    data = baseline_snapshot.read(f'include/diet/{name}.h').decode()
-    data = data.replace('namespace diet {', 'namespace old {\n  using diet::word_view;')
+    data = baseline_snapshot.read(f'include/everett/{name}.h').decode()
+    data = data.replace('namespace everett {', 'namespace old {\n  using everett::word_view;')
     (build / f'old_{name}.h').write_text(data)
 flags = ['-std=c++20', '-O3', '-DNDEBUG', '-Wall', '-Wextra', '-Wpedantic', '-Werror']
 exe = build / 'rank_bounds'
 command = [args.cxx, *flags, '-I'+str(include), '-I'+str(build), str(root/'bench/rank_bounds.cc'), '-o', str(exe)]
 subprocess.run(command, check=True)
-paths = [root/'bench/rank_bounds.cc', *(include/'diet'/f'{name}.h' for name in ['rank', 'rank15', 'rank_groups', 'word_view'])]
+paths = [root/'bench/rank_bounds.cc', *(include/'everett'/f'{name}.h' for name in ['rank', 'rank15', 'rank_groups', 'word_view'])]
 metadata = {'baseline': base, 'current_revision': candidate_revision, 'selection': args.candidate, 'normalization': normalization,
             'working_tree_changes': args.candidate == 'working-tree' and subprocess.run(['git', 'diff', '--quiet'], cwd=root).returncode != 0,
             'hashes': {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths},

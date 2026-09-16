@@ -15,7 +15,7 @@ Final complete-query comparison
 * Final measured candidate: `7fe6ee841a496497057d31a7c1e291c9d1d8f02c`.
 * Reachable integration: `030a7a12bbfeaf395d7f1ae9f27eaf4729372b4c`.
 
-Every Diet header in the recursive `query.h` include closure is byte-identical
+Every Everett header in the recursive `query.h` include closure is byte-identical
 between the measured and reachable candidates. The [reproduction record](results/query_absolute_reproduction.json)
 lists those hashes; unrelated merge, file-writing and catalog code is outside
 the harness's include closure.

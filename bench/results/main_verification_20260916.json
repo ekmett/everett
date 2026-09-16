@@ -18,643 +18,643 @@
   "tests": [
     {
       "number": 1,
-      "name": "diet.registry",
+      "name": "everett.registry",
       "status": "Passed",
       "seconds": 0.08
     },
     {
       "number": 2,
-      "name": "diet.registry_compat",
+      "name": "everett.registry_compat",
       "status": "Passed",
       "seconds": 0.79
     },
     {
       "number": 3,
-      "name": "diet.crc32c",
+      "name": "everett.crc32c",
       "status": "Passed",
       "seconds": 1.01
     },
     {
       "number": 4,
-      "name": "diet.rank",
+      "name": "everett.rank",
       "status": "Passed",
       "seconds": 1.21
     },
     {
       "number": 5,
-      "name": "diet.groups",
+      "name": "everett.groups",
       "status": "Passed",
       "seconds": 0.69
     },
     {
       "number": 6,
-      "name": "diet.rank_groups_builder",
+      "name": "everett.rank_groups_builder",
       "status": "Passed",
       "seconds": 0.12
     },
     {
       "number": 7,
-      "name": "diet.elias_fano",
+      "name": "everett.elias_fano",
       "status": "Passed",
       "seconds": 0.17
     },
     {
       "number": 8,
-      "name": "diet.profile",
+      "name": "everett.profile",
       "status": "Passed",
       "seconds": 3.83
     },
     {
       "number": 9,
-      "name": "diet.borrowed_writer",
+      "name": "everett.borrowed_writer",
       "status": "Passed",
       "seconds": 0.54
     },
     {
       "number": 10,
-      "name": "diet.profile_blob",
+      "name": "everett.profile_blob",
       "status": "Passed",
       "seconds": 2.05
     },
     {
       "number": 11,
-      "name": "diet.comparison_fc",
+      "name": "everett.comparison_fc",
       "status": "Passed",
       "seconds": 71.03
     },
     {
       "number": 12,
-      "name": "diet.sampling",
+      "name": "everett.sampling",
       "status": "Passed",
       "seconds": 0.88
     },
     {
       "number": 13,
-      "name": "diet.index_builder",
+      "name": "everett.index_builder",
       "status": "Passed",
       "seconds": 2.43
     },
     {
       "number": 14,
-      "name": "diet.index_builder_allocations",
+      "name": "everett.index_builder_allocations",
       "status": "Passed",
       "seconds": 0.13
     },
     {
       "number": 15,
-      "name": "diet.index_pipeline",
+      "name": "everett.index_pipeline",
       "status": "Passed",
       "seconds": 0.22
     },
     {
       "number": 16,
-      "name": "diet.query",
+      "name": "everett.query",
       "status": "Passed",
       "seconds": 1.29
     },
     {
       "number": 17,
-      "name": "diet.cola_index",
+      "name": "everett.cola_index",
       "status": "Passed",
       "seconds": 108.24
     },
     {
       "number": 18,
-      "name": "diet.cola_frontier",
+      "name": "everett.cola_frontier",
       "status": "Passed",
       "seconds": 0.25
     },
     {
       "number": 19,
-      "name": "diet.cola_route_reuse",
+      "name": "everett.cola_route_reuse",
       "status": "Passed",
       "seconds": 0.16
     },
     {
       "number": 20,
-      "name": "diet.cola_schedule",
+      "name": "everett.cola_schedule",
       "status": "Passed",
       "seconds": 27.05
     },
     {
       "number": 21,
-      "name": "diet.native_writer",
+      "name": "everett.native_writer",
       "status": "Passed",
       "seconds": 0.35
     },
     {
       "number": 22,
-      "name": "diet.native_writer_allocations",
+      "name": "everett.native_writer_allocations",
       "status": "Passed",
       "seconds": 0.8
     },
     {
       "number": 23,
-      "name": "diet.native_file_writer",
+      "name": "everett.native_file_writer",
       "status": "Passed",
       "seconds": 0.35
     },
     {
       "number": 24,
-      "name": "diet.profile_file_output",
+      "name": "everett.profile_file_output",
       "status": "Passed",
       "seconds": 0.58
     },
     {
       "number": 25,
-      "name": "diet.native_merge",
+      "name": "everett.native_merge",
       "status": "Passed",
       "seconds": 1.12
     },
     {
       "number": 26,
-      "name": "diet.native_merge_mapped",
+      "name": "everett.native_merge_mapped",
       "status": "Passed",
       "seconds": 1.81
     },
     {
       "number": 27,
-      "name": "diet.cola",
+      "name": "everett.world",
       "status": "Passed",
       "seconds": 0.09
     },
     {
       "number": 28,
-      "name": "diet.pins",
+      "name": "everett.pins",
       "status": "Passed",
       "seconds": 0.08
     },
     {
       "number": 29,
-      "name": "diet.durability",
+      "name": "everett.durability",
       "status": "Passed",
       "seconds": 0.08
     },
     {
       "number": 30,
-      "name": "diet.mapped_file",
+      "name": "everett.mapped_file",
       "status": "Passed",
       "seconds": 0.13
     },
     {
       "number": 31,
-      "name": "diet.files",
+      "name": "everett.files",
       "status": "Passed",
       "seconds": 0.63
     },
     {
       "number": 32,
-      "name": "diet.object_writer",
+      "name": "everett.object_writer",
       "status": "Passed",
       "seconds": 0.17
     },
     {
       "number": 33,
-      "name": "diet.object_stream",
+      "name": "everett.object_stream",
       "status": "Passed",
       "seconds": 0.16
     },
     {
       "number": 34,
-      "name": "diet.mapped_blob",
+      "name": "everett.mapped_blob",
       "status": "Passed",
       "seconds": 1.59
     },
     {
       "number": 35,
-      "name": "diet.fridge",
+      "name": "everett.multiverse",
       "status": "Passed",
       "seconds": 0.47
     },
     {
       "number": 36,
-      "name": "diet.catalog_bindings",
+      "name": "everett.catalog_bindings",
       "status": "Passed",
       "seconds": 0.28
     },
     {
       "number": 37,
-      "name": "diet.output_budget",
+      "name": "everett.output_budget",
       "status": "Passed",
       "seconds": 0.07
     },
     {
       "number": 38,
-      "name": "diet.mapped_index_builder",
+      "name": "everett.mapped_index_builder",
       "status": "Passed",
       "seconds": 1.27
     },
     {
       "number": 39,
-      "name": "diet.file_index_builder",
+      "name": "everett.file_index_builder",
       "status": "Passed",
       "seconds": 1.24
     },
     {
       "number": 40,
-      "name": "diet.file_index_pipeline",
+      "name": "everett.file_index_pipeline",
       "status": "Passed",
       "seconds": 3.46
     },
     {
       "number": 41,
-      "name": "diet.mapped_cola",
+      "name": "everett.mapped_cola",
       "status": "Passed",
       "seconds": 3.67
     },
     {
       "number": 42,
-      "name": "diet.mapped_cola_builder",
+      "name": "everett.mapped_cola_builder",
       "status": "Passed",
       "seconds": 1.4
     },
     {
       "number": 43,
-      "name": "diet.cola_terminal",
+      "name": "everett.cola_terminal",
       "status": "Passed",
       "seconds": 0.49
     },
     {
       "number": 44,
-      "name": "diet.cola_file_index",
+      "name": "everett.cola_file_index",
       "status": "Passed",
       "seconds": 0.55
     },
     {
       "number": 45,
-      "name": "diet.cola_adaptive_index",
+      "name": "everett.cola_adaptive_index",
       "status": "Passed",
       "seconds": 0.59
     },
     {
       "number": 46,
-      "name": "diet.cola_local_merge",
+      "name": "everett.cola_local_merge",
       "status": "Passed",
       "seconds": 0.53
     },
     {
       "number": 47,
-      "name": "diet.cola_local_merge_failure",
+      "name": "everett.cola_local_merge_failure",
       "status": "Passed",
       "seconds": 0.18
     },
     {
       "number": 48,
-      "name": "diet.cola_runtime",
+      "name": "everett.cola_runtime",
       "status": "Passed",
       "seconds": 1.15
     },
     {
       "number": 49,
-      "name": "diet.redundant_runtime",
+      "name": "everett.redundant_runtime",
       "status": "Passed",
       "seconds": 9.43
     },
     {
       "number": 50,
-      "name": "diet.redundant_initial",
+      "name": "everett.redundant_initial",
       "status": "Passed",
       "seconds": 1.42
     },
     {
       "number": 51,
-      "name": "diet.runtime_registry",
+      "name": "everett.runtime_registry",
       "status": "Passed",
       "seconds": 0.11
     },
     {
       "number": 52,
-      "name": "diet.sort_codec",
+      "name": "everett.sort_codec",
       "status": "Passed",
       "seconds": 0.29
     },
     {
       "number": 53,
-      "name": "diet.sort_profile",
+      "name": "everett.sort_profile",
       "status": "Passed",
       "seconds": 0.49
     },
     {
       "number": 54,
-      "name": "diet.sort_profile_query",
+      "name": "everett.sort_profile_query",
       "status": "Passed",
       "seconds": 0.09
     },
     {
       "number": 55,
-      "name": "diet.sort_profile_file_writer",
+      "name": "everett.sort_profile_file_writer",
       "status": "Passed",
       "seconds": 0.51
     },
     {
       "number": 56,
-      "name": "diet.sort_runtime",
+      "name": "everett.sort_runtime",
       "status": "Passed",
       "seconds": 0.89
     },
     {
       "number": 57,
-      "name": "diet.typed_cola",
+      "name": "everett.typed_world",
       "status": "Passed",
       "seconds": 0.65
     },
     {
       "number": 58,
-      "name": "diet.typed_initial",
+      "name": "everett.typed_initial",
       "status": "Passed",
       "seconds": 0.95
     },
     {
       "number": 59,
-      "name": "diet.typed_depth",
+      "name": "everett.typed_depth",
       "status": "Passed",
       "seconds": 0.42
     },
     {
       "number": 60,
-      "name": "diet.typed_preflight",
+      "name": "everett.typed_preflight",
       "status": "Passed",
       "seconds": 0.6
     },
     {
       "number": 61,
-      "name": "diet.typed_query_value",
+      "name": "everett.typed_query_value",
       "status": "Passed",
       "seconds": 0.44
     },
     {
       "number": 62,
-      "name": "diet.typed_redundant",
+      "name": "everett.typed_redundant",
       "status": "Passed",
       "seconds": 0.95
     },
     {
       "number": 63,
-      "name": "diet.typed_scan",
+      "name": "everett.typed_scan",
       "status": "Passed",
       "seconds": 0.59
     },
     {
       "number": 64,
-      "name": "diet.replacement_rebuild",
+      "name": "everett.replacement_rebuild",
       "status": "Passed",
       "seconds": 2.91
     },
     {
       "number": 65,
-      "name": "diet.tap",
+      "name": "everett.session",
       "status": "Passed",
       "seconds": 0.1
     },
     {
       "number": 66,
-      "name": "diet.redundant_checkpoint",
+      "name": "everett.redundant_checkpoint",
       "status": "Passed",
       "seconds": 2.57
     },
     {
       "number": 67,
-      "name": "diet.sqlite_catalog",
+      "name": "everett.sqlite_catalog",
       "status": "Passed",
       "seconds": 1.03
     },
     {
       "number": 68,
-      "name": "diet.sqlite_catalog_adversarial",
+      "name": "everett.sqlite_catalog_adversarial",
       "status": "Passed",
       "seconds": 2.22
     },
     {
       "number": 69,
-      "name": "diet.sqlite_catalog_vfs",
+      "name": "everett.sqlite_catalog_vfs",
       "status": "Passed",
       "seconds": 12.93
     },
     {
       "number": 70,
-      "name": "diet.sqlite_catalog_restart",
+      "name": "everett.sqlite_catalog_restart",
       "status": "Passed",
       "seconds": 5.74
     },
     {
       "number": 71,
-      "name": "diet.sqlite_catalog_timeline",
+      "name": "everett.sqlite_catalog_timeline",
       "status": "Passed",
       "seconds": 3.5
     },
     {
       "number": 72,
-      "name": "diet.sqlite_catalog_streamed",
+      "name": "everett.sqlite_catalog_streamed",
       "status": "Passed",
       "seconds": 8.25
     },
     {
       "number": 73,
-      "name": "diet.sqlite_catalog_cola",
+      "name": "everett.sqlite_catalog_cola",
       "status": "Passed",
       "seconds": 2.09
     },
     {
       "number": 74,
-      "name": "diet.sqlite_catalog_taps",
+      "name": "everett.sqlite_catalog_sessions",
       "status": "Passed",
       "seconds": 1.15
     },
     {
       "number": 75,
-      "name": "diet.sqlite_catalog_runtime",
+      "name": "everett.sqlite_catalog_runtime",
       "status": "Passed",
       "seconds": 2.57
     },
     {
       "number": 76,
-      "name": "diet.sqlite_catalog_redundant",
+      "name": "everett.sqlite_catalog_redundant",
       "status": "Passed",
       "seconds": 8.49
     },
     {
       "number": 77,
-      "name": "diet.sqlite_catalog_connection",
+      "name": "everett.sqlite_catalog_connection",
       "status": "Passed",
       "seconds": 6.8
     },
     {
       "number": 78,
-      "name": "diet.sqlite_catalog_scan",
+      "name": "everett.sqlite_catalog_scan",
       "status": "Passed",
       "seconds": 1.74
     },
     {
       "number": 79,
-      "name": "diet.sqlite_catalog_bindings",
+      "name": "everett.sqlite_catalog_bindings",
       "status": "Passed",
       "seconds": 1.97
     },
     {
       "number": 80,
-      "name": "diet.sqlite_catalog_binding_failures",
+      "name": "everett.sqlite_catalog_binding_failures",
       "status": "Passed",
       "seconds": 2.39
     },
     {
       "number": 81,
-      "name": "diet.sqlite_catalog_graphs",
+      "name": "everett.sqlite_catalog_graphs",
       "status": "Passed",
       "seconds": 0.7
     },
     {
       "number": 82,
-      "name": "diet.sqlite_catalog_sort_runtime",
+      "name": "everett.sqlite_catalog_sort_runtime",
       "status": "Passed",
       "seconds": 5.94
     },
     {
       "number": 83,
-      "name": "diet.sqlite_catalog_snapshot",
+      "name": "everett.sqlite_catalog_snapshot",
       "status": "Passed",
       "seconds": 0.45
     },
     {
       "number": 84,
-      "name": "diet.sqlite_catalog_rebuild",
+      "name": "everett.sqlite_catalog_rebuild",
       "status": "Passed",
       "seconds": 5.06
     },
     {
       "number": 85,
-      "name": "diet.sqlite_catalog_rebuild_streaming",
+      "name": "everett.sqlite_catalog_rebuild_streaming",
       "status": "Passed",
       "seconds": 22.2
     },
     {
       "number": 86,
-      "name": "diet.sqlite_catalog_rebuild_default",
+      "name": "everett.sqlite_catalog_rebuild_default",
       "status": "Passed",
       "seconds": 3.75
     },
     {
       "number": 87,
-      "name": "diet.sqlite_catalog_tiny_rebuild",
+      "name": "everett.sqlite_catalog_tiny_rebuild",
       "status": "Passed",
       "seconds": 3.77
     },
     {
       "number": 88,
-      "name": "diet.sqlite_catalog_active",
+      "name": "everett.sqlite_catalog_active",
       "status": "Passed",
       "seconds": 6.65
     },
     {
       "number": 89,
-      "name": "diet.sqlite_catalog_seals",
+      "name": "everett.sqlite_catalog_seals",
       "status": "Passed",
       "seconds": 0.55
     },
     {
       "number": 90,
-      "name": "diet.sqlite_catalog_seal_pair",
+      "name": "everett.sqlite_catalog_seal_pair",
       "status": "Passed",
       "seconds": 0.91
     },
     {
       "number": 91,
-      "name": "diet.sqlite_catalog_native_pair",
+      "name": "everett.sqlite_catalog_native_pair",
       "status": "Passed",
       "seconds": 2.7
     },
     {
       "number": 92,
-      "name": "diet.sqlite_catalog_ready_reservations",
+      "name": "everett.sqlite_catalog_ready_reservations",
       "status": "Passed",
       "seconds": 3.51
     },
     {
       "number": 93,
-      "name": "diet.sqlite_catalog_initial",
+      "name": "everett.sqlite_catalog_initial",
       "status": "Passed",
       "seconds": 6.64
     },
     {
       "number": 94,
-      "name": "diet.sqlite_catalog_empty",
+      "name": "everett.sqlite_catalog_empty",
       "status": "Passed",
       "seconds": 1.55
     },
     {
       "number": 95,
-      "name": "diet.sqlite_catalog_pair",
+      "name": "everett.sqlite_catalog_pair",
       "status": "Passed",
       "seconds": 1.2
     },
     {
       "number": 96,
-      "name": "diet.sqlite_catalog_streaming_runtime",
+      "name": "everett.sqlite_catalog_streaming_runtime",
       "status": "Passed",
       "seconds": 6.35
     },
     {
       "number": 97,
-      "name": "diet.sqlite_catalog_streaming_restart",
+      "name": "everett.sqlite_catalog_streaming_restart",
       "status": "Passed",
       "seconds": 9.54
     },
     {
       "number": 98,
-      "name": "diet.sqlite_catalog_streaming_diagnostics",
+      "name": "everett.sqlite_catalog_streaming_diagnostics",
       "status": "Passed",
       "seconds": 2.22
     },
     {
       "number": 99,
-      "name": "diet.sqlite_catalog_adaptive_native",
+      "name": "everett.sqlite_catalog_adaptive_native",
       "status": "Passed",
       "seconds": 1.21
     },
     {
       "number": 100,
-      "name": "diet.sqlite_catalog_native_reuse",
+      "name": "everett.sqlite_catalog_native_reuse",
       "status": "Passed",
       "seconds": 6.69
     },
     {
       "number": 101,
-      "name": "diet.sort_runtime_context",
+      "name": "everett.sort_runtime_context",
       "status": "Passed",
       "seconds": 19.76
     },
     {
       "number": 102,
-      "name": "diet.sort_runtime_adaptive_index",
+      "name": "everett.sort_runtime_adaptive_index",
       "status": "Passed",
       "seconds": 0.91
     },
     {
       "number": 103,
-      "name": "diet.sort_runtime_initial",
+      "name": "everett.sort_runtime_initial",
       "status": "Passed",
       "seconds": 1.15
     },
     {
       "number": 104,
-      "name": "diet.package.sqlite",
+      "name": "everett.package.sqlite",
       "status": "Passed",
       "seconds": 14.92
     },
     {
       "number": 105,
-      "name": "diet.package.installed",
+      "name": "everett.package.installed",
       "status": "Passed",
       "seconds": 4.2
     },
     {
       "number": 106,
-      "name": "diet.package.embedded",
+      "name": "everett.package.embedded",
       "status": "Passed",
       "seconds": 3.86
     },
     {
       "number": 107,
-      "name": "diet.doxygen",
+      "name": "everett.doxygen",
       "status": "Passed",
       "seconds": 9.14
     }

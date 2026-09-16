@@ -1,7 +1,7 @@
 Detailed Usage
 ==============
 
-The [README](../README.md#quick-start) starts with the recommended named tap API.
+The [README](../README.md#quick-start) starts with the recommended named session API.
 The [connection guide](connection.md) covers mutable commands, asynchronous
 tickets, snapshots and forks. This guide goes underneath that API to file
 construction, explicit updates and merges, then explains representation and
@@ -24,14 +24,14 @@ Persistent Tables and Saves
 ---------------------------
 
 The persistent workflow has three parts: build immutable table files, publish a
-root in the catalog, and open that root through a fridge. Naming another save
+root in the catalog, and open that root through a multiverse. Naming another save
 of a registered root only retains it; it does not serialize the table again.
 The catalog keeps its small mutable records in SQLite, while queries read the
 key/value files through mmap.
 
 ### Create a table and reopen it
 
-Link this program with `diet::sqlite`. Run `example create /path/to/store` once,
+Link this program with `everett::sqlite`. Run `example create /path/to/store` once,
 then `example read /path/to/store` in another process. The backing directory
 must already exist; the application establishes its durability before creating
 the catalog. The create mode expects a fresh store. Its fixed identities are
@@ -39,41 +39,41 @@ for this example only: allocate fresh object, attempt and operation identities
 for new work in an application.
 
 ```cpp
-#include <diet/fridge.h>
-#include <diet/sqlite_catalog.h>
+#include <everett/multiverse.h>
+#include <everett/sqlite_catalog.h>
 #include <array>
 #include <string_view>
 
-using strings = diet::encoded_sort<diet::byte_encoding<>>;
-using P = diet::storage_policy<diet::tip<strings>>;
-using store_type = diet::fridge<P>;
-using catalog = diet::sqlite_catalog<P>;
+using strings = everett::encoded_sort<everett::byte_encoding<>>;
+using P = everett::storage_policy<everett::tip<strings>>;
+using store_type = everett::multiverse<P>;
+using catalog = everett::sqlite_catalog<P>;
 
 int main(int argc, char ** argv) {
   if (argc != 3) return 64;
   std::string_view mode = argv[1];
   if (mode != "create" && mode != "read") return 64;
   store_type store(argv[2]);
-  auto text = [](char const * s) { return diet::bit_string::from_bytes(s); };
+  auto text = [](char const * s) { return everett::bit_string::from_bytes(s); };
 
   if (mode == "create") {
     auto metadata = catalog::create(store.root(),
-      diet::object_id("00000000000000000000000000000001"));
-    diet::blob_identity ids{
-      diet::object_id("00000000000000000000000000000002"),
-      diet::object_id("00000000000000000000000000000003")};
-    diet::object_attempt_id attempt("00000000000000000000000000000004");
+      everett::object_id("00000000000000000000000000000001"));
+    everett::blob_identity ids{
+      everett::object_id("00000000000000000000000000000002"),
+      everett::object_id("00000000000000000000000000000003")};
+    everett::object_attempt_id attempt("00000000000000000000000000000004");
     std::array outputs{
-      diet::catalog_object_reservation{ids.native, diet::file_kind::native_blob},
-      diet::catalog_object_reservation{ids.index, diet::file_kind::fractional_index}};
+      everett::catalog_object_reservation{ids.native, everett::file_kind::native_blob},
+      everett::catalog_object_reservation{ids.index, everett::file_kind::fractional_index}};
     metadata.reserve("reserve-table", attempt, "table-builder", {}, outputs);
 
     std::array records{
-      diet::profile_record{text("alpha"), text("one")},
-      diet::profile_record{text("beta"), text("two")}};
+      everett::profile_record{text("alpha"), text("one")},
+      everett::profile_record{text("beta"), text("two")}};
     auto table = store_type::blob::build(records);
-    auto native = diet::encode_native_sections(table.native());
-    auto index = diet::encode_index_sections(table, ids.native);
+    auto native = everett::encode_native_sections(table.native());
+    auto index = everett::encode_index_sections(table, ids.native);
     metadata.record_sealed("seal-native",
       native.seal(store.root(), ids.native, attempt));
     metadata.record_sealed("seal-index",
@@ -123,14 +123,14 @@ Policies make representation choices visible in types. Arrays, blobs, indexes,
 and files that share a policy agree on the units used by their metadata.
 
 ```cpp
-#include <diet/profile.h>
+#include <everett/profile.h>
 
 int main() {
-  using strings = diet::encoded_sort<diet::byte_encoding<diet::fixed_values<8>>>;
-  using packed = diet::encoded_sort<diet::bit_encoding<diet::fixed_values<3>>>;
-  using bytes = diet::storage_policy<diet::tip<strings>, 15,
-    diet::exponential_golomb<0>, 16>;
-  using bits = diet::storage_policy<diet::tip<packed>, 7, diet::golomb<3>>;
+  using strings = everett::encoded_sort<everett::byte_encoding<everett::fixed_values<8>>>;
+  using packed = everett::encoded_sort<everett::bit_encoding<everett::fixed_values<3>>>;
+  using bytes = everett::storage_policy<everett::tip<strings>, 15,
+    everett::exponential_golomb<0>, 16>;
+  using bits = everett::storage_policy<everett::tip<packed>, 7, everett::golomb<3>>;
 
   static_assert(bytes::bits_per_unit == 8);
   static_assert(bytes::group_size == 15 && bytes::codec_block_size == 16);
@@ -139,7 +139,7 @@ int main() {
   static_assert(*bits::value_width == 3);
   static_assert(bits::backspace_parameter == 3);
 
-  auto key = diet::bit_string::from_bits("1011011");
+  auto key = everett::bit_string::from_bits("1011011");
   return key.view().size() == 7 ? 0 : 1;
 }
 ```
@@ -159,12 +159,12 @@ small example fits in one group, so its first key supplies the known boundary
 context for `search_window`.
 
 ```cpp
-#include <diet/profile_blob.h>
+#include <everett/profile_blob.h>
 #include <vector>
 
 int main() {
-  using namespace diet;
-  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15>;
+  using namespace everett;
+  using policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 15>;
   auto text = [](char const * s) { return bit_string::from_bytes(s); };
 
   std::vector<profile_record> records{
@@ -195,13 +195,13 @@ Sampling includes both streams. Here the two equal borrowed `delta` keys remain
 separate occurrences after the native `delta`.
 
 ```cpp
-#include <diet/sampling.h>
+#include <everett/sampling.h>
 #include <memory>
 #include <vector>
 
 int main() {
-  using namespace diet;
-  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
+  using namespace everett;
+  using policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3>;
   using blob = profile_blob<policy>;
   auto text = [](char const * s) { return bit_string::from_bytes(s); };
   std::vector<profile_record> records{
@@ -239,7 +239,7 @@ the pipeline and its original input handles before checking the result's retaine
 target.
 
 ```cpp
-#include <diet/index_pipeline.h>
+#include <everett/index_pipeline.h>
 #include <initializer_list>
 #include <memory>
 #include <string_view>
@@ -247,8 +247,8 @@ target.
 #include <vector>
 
 int main() {
-  using namespace diet;
-  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
+  using namespace everett;
+  using policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3>;
   using blob = profile_blob<policy>;
   using pair = std::shared_ptr<blob const>;
   auto make = [](std::initializer_list<std::pair<std::string_view, std::string_view>> rows) {
@@ -290,7 +290,7 @@ samples and retain the existing chain. Preparation scans the original head;
 we do that once and reuse the root for subsequent queries.
 
 ```cpp
-#include <diet/query.h>
+#include <everett/query.h>
 #include <initializer_list>
 #include <memory>
 #include <string_view>
@@ -298,8 +298,8 @@ we do that once and reuse the root for subsequent queries.
 #include <vector>
 
 int main() {
-  using namespace diet;
-  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
+  using namespace everett;
+  using policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3>;
   using blob = profile_blob<policy>;
   using pair = std::shared_ptr<blob const>;
   auto make = [](std::initializer_list<std::pair<std::string_view, std::string_view>> rows) {
@@ -340,19 +340,19 @@ match does not suppress routing to later matches. Query steps bound catalog
 visits, not reconstructed bytes or value-copy cost. The
 [query contract](query.md) describes preparation, trust and work bounds.
 
-### Fork a cola and apply disjoint updates
+### Fork a world and apply disjoint updates
 
-Use `reference_cola` to exercise the update semantics with byte-string keys and
+Use `reference_world` to exercise the update semantics with byte-string keys and
 unsigned 64-bit values. Each batch is prepared against the same base. Partition
 ownership determines which keys it may change; different workers may read that
 base while preparing their assigned writes.
 
 ```cpp
-#include <diet/cola.h>
+#include <everett/world.h>
 
 int main() {
-  using namespace diet;
-  auto base = reference_cola<>::from_records({{"alpha", 10}, {"beta", 20}});
+  using namespace everett;
+  auto base = reference_world<>::from_records({{"alpha", 10}, {"beta", 20}});
   auto saved = base.snapshot();
   auto partition = [](std::string_view key) -> std::uint64_t {
     return key == "alpha" ? 0 : 1;
@@ -401,32 +401,32 @@ The merge builder consumes two sorted native streams, older then newer. Its
 default equal-key operation takes the newer value:
 
 ```cpp
-#include <diet/native_merge.h>
-#include <diet/query.h>
+#include <everett/native_merge.h>
+#include <everett/query.h>
 #include <memory>
 #include <string_view>
 
 int main() {
-  using strings = diet::encoded_sort<diet::byte_encoding<>>;
-  using P = diet::storage_policy<diet::tip<strings>>;
-  using array = diet::profile_array<P>;
+  using strings = everett::encoded_sort<everett::byte_encoding<>>;
+  using P = everett::storage_policy<everett::tip<strings>>;
+  using array = everett::profile_array<P>;
   auto make = [](std::string_view text) {
-    diet::profile_native_writer<P> writer;
-    auto key = diet::bit_string::from_bytes("alpha");
-    auto value = diet::bit_string::from_bytes(text);
+    everett::profile_native_writer<P> writer;
+    auto key = everett::bit_string::from_bytes("alpha");
+    auto value = everett::bit_string::from_bytes(text);
     writer.append(key.view(), value.view());
     return std::make_shared<array const>(writer.finish());
   };
-  diet::native_merge_builder<P> merge(make("before"), make("after"));
+  everett::native_merge_builder<P> merge(make("before"), make("after"));
   while (!merge.done()) merge.step(16);
-  auto pair = std::make_shared<diet::profile_blob<P> const>(
-    diet::profile_blob<P>::adopt_native(merge.finish()));
-  auto root = diet::query_root<P>::build(pair);
-  auto key = diet::bit_string::from_bytes("alpha");
+  auto pair = std::make_shared<everett::profile_blob<P> const>(
+    everett::profile_blob<P>::adopt_native(merge.finish()));
+  auto root = everett::query_root<P>::build(pair);
+  auto key = everett::bit_string::from_bytes("alpha");
   auto query = root.cursor(key.view());
   query.step(1);
   if (!query.has_match()) return 1;
-  return query.take_match().value == diet::bit_string::from_bytes("after") ? 0 : 2;
+  return query.take_match().value == everett::bit_string::from_bytes("after") ? 0 : 2;
 }
 ```
 
@@ -459,13 +459,13 @@ Bounded slices retain the mapping after the original owner is released.
 magic, version, policy and header CRC32C, without reading the body. An explicit
 `file<P>::scan()` checks the whole body's CRC32C and bit padding when recovery
 or a scrub calls for it. Opening an object does not certify its payload.
-`fridge<P>` opens these objects beneath an existing backing directory and
+`multiverse<P>` opens these objects beneath an existing backing directory and
 exposes their associated policy-bound types.
 
 `encode_native_sections` and `encode_index_sections` package the existing encoded
 arrays into portable file sections. They borrow the arrays while writing: we do
 not front-code the keys again or rebuild Elias–Fano. A prepared query chain can
-then be reopened with `fridge<P>::open_query(saved_head_identity)`. Its
+then be reopened with `multiverse<P>::open_query(saved_head_identity)`. Its
 `mapped_query_root` retains the exact native/index mappings and uses the same
 bounded cursor operations as the in-memory root. Typed opening reads fixed
 metadata; `mapped_blob::scan()` explicitly verifies contents, navigation and
@@ -487,7 +487,7 @@ results from target to head. The [file-index example](file-indexes.md)
 constructs and queries a complete mapped chain without collecting its borrowed
 payloads in memory.
 
-`fridge<P>::seal_object` writes a body under caller-reserved object and
+`multiverse<P>::seal_object` writes a body under caller-reserved object and
 attempt identities. It accepts a contiguous span or borrowed chunks, including
 mmap-backed input. The writer computes CRC32C while streaming, seals a private
 file, installs its name without replacing an existing object, and flushes the
@@ -504,7 +504,7 @@ An unfinished stream retains a private attempt, and `finish` seals it using
 the same persistence protocol.
 
 For already trusted objects, pass `file_open_mode::trusted` to `open`,
-`from_slice`, or `fridge<P>::open_object`. This avoids reading even the
+`from_slice`, or `multiverse<P>::open_object`. This avoids reading even the
 header page. `body()` returns the physical bytes after the 96-byte envelope;
 requesting `header()` explicitly reads and validates the metadata, returning it
 by value. `scan()` still performs full validation. Trusted opening assumes the
@@ -514,7 +514,7 @@ the default.
 The optional `sqlite_catalog<P>` reserves objects before writing, records their
 seal receipts, registers exact query chains and retains named saves, timeline
 generations and reader pins. We can close it, reopen a save and query its mmap chain. Enable
-`DIET_ENABLE_SQLITE` and link `diet::sqlite`; the ordinary core target has
+`EVERETT_ENABLE_SQLITE` and link `everett::sqlite`; the ordinary core target has
 no SQLite dependency. The [working catalog guide](sqlite-catalog.md) gives a
 complete publication/reopen example and explains operation replay and failed
 commits. Timelines support conditional publication and forks from exact historical
@@ -529,15 +529,15 @@ recovery states after failed synchronization.
 Field Guide
 -----------
 
-### Blobs, colas, and ownership
+### Blobs, worlds, and ownership
 
 A **native blob** holds sorted key/value records. A **fractional index** holds
 selected keys borrowed from a particular target. Together they form a searchable
-pair. A **cola** is one logical state, retaining a collection of objects. A
-timeline describes successive colas; a branch point retains a place from which
-another timeline can grow. The **fridge** holds the backing store.
+pair. A **world** is one logical state, retaining a collection of objects. A
+timeline describes successive worlds; a branch point retains a place from which
+another timeline can grow. The **multiverse** holds the backing store.
 Uppercase **COLA** names the cache-oblivious lookahead-array organization behind
-the indexes. The names are short, and a cola belongs in a fridge.
+the indexes. Worlds share immutable objects in a multiverse; a session follows the current world.
 
 | Component | What it gives you |
 | --- | --- |
@@ -552,17 +552,17 @@ the indexes. The names are short, and a cola belongs in a fridge.
 | `query_root`, `query_root_builder`, `query_cursor` | Preparing a bounded search head and visiting matching native entries through an exact index chain. |
 | `cola_index`, `cola_index_builder`, `cola_query_root` | Two-route main/secondary catalogs, incremental construction and all matching native contributions. |
 | `cola_local_merge_job` | A native merge, its destination index and replacement routing, with explicit stage boundaries and retained inputs. |
-| `mapped_file`, `file`, `fridge` | Retained read-only mappings and policy-checked object access. |
+| `mapped_file`, `file`, `multiverse` | Retained read-only mappings and policy-checked object access. |
 | `encode_native_sections`, `encode_index_sections`, `mapped_blob`, `mapped_query_root` | Portable blob files and queries over exact pinned mmap chains. |
 | `encode_cola_sections`, `mapped_cola_blob`, `mapped_cola_query_root` | IX03 indexes over unchanged native files, with one recursive main route and one terminal secondary route. |
 | `mapped_cola_index_builder` | Constructing those two routes directly from pinned mappings, without rewriting native files. |
-| `object_writer`, `object_stream`, `fridge::seal_object` | Immutable object construction with explicit persistence barriers and retained failure identities. |
+| `object_writer`, `object_stream`, `multiverse::seal_object` | Immutable object construction with explicit persistence barriers and retained failure identities. |
 | `sqlite_catalog` | Durable reservations, exact file graphs, named saves, timeline generations and reader pins. |
-| `reference_cola`, `partition_round`, `pin_set` | Executable snapshot, update, fingerprint, and ownership semantics. |
+| `reference_world`, `partition_round`, `pin_set` | Executable snapshot, update, fingerprint, and ownership semantics. |
 
 Immutability makes sharing straightforward. Two readers can retain the same
-native allocation while using different indexes. A saved cola can retain old
-inputs after a newer cola has compacted them. Reclamation follows ownership:
+native allocation while using different indexes. A saved world can retain old
+inputs after a newer world has compacted them. Reclamation follows ownership:
 an object stays alive while something still needs it.
 
 Indexes make that last sentence precise. A borrowed key and its ordinal name
@@ -711,12 +711,12 @@ we could earn rebuilding credit by inventing tombstones for absent keys. The
 [strong-deletion protocol](rebuild.md) uses that accounting to replace
 accumulated history with a smaller live table.
 
-Now summarize the reference cola's resolved contents with
+Now summarize the reference world's resolved contents with
 `sum(h_key(key) * h_value(value))`, taking the hash of an absent value as zero.
 An update subtracts the old binding's contribution and adds the new one.
 Compaction leaves this sum alone, and disjoint changesets can contribute their
 deltas in either order.
-A file's native contents and its contribution to a cola are separate quantities;
+A file's native contents and its contribution to a world are separate quantities;
 replacement deltas retain the information needed to subtract older bindings.
 
 These fingerprints are useful for noticing disagreement. They are not
@@ -816,7 +816,7 @@ target selects eligible kernels; buffers too small to benefit from parallel
 folding use a scalar path. The checksum and file format stay the same.
 
 ```sh
-cmake -S . -B build -DDIET_BUILD_TESTS=ON
+cmake -S . -B build -DEVERETT_BUILD_TESTS=ON
 cmake --build build --parallel 4
 ctest --test-dir build --output-on-failure
 ```
@@ -828,7 +828,7 @@ UndefinedBehaviorSanitizer on supported compilers with:
 
 ```sh
 cmake -S . -B build-sanitize -DCMAKE_BUILD_TYPE=Debug \
-  -DDIET_BUILD_TESTS=ON -DDIET_SANITIZERS=ON
+  -DEVERETT_BUILD_TESTS=ON -DEVERETT_SANITIZERS=ON
 cmake --build build-sanitize --parallel 4
 ctest --test-dir build-sanitize --output-on-failure
 ```
@@ -836,27 +836,27 @@ ctest --test-dir build-sanitize --output-on-failure
 Install the package:
 
 ```sh
-cmake --install build --prefix /path/to/diet-install
+cmake --install build --prefix /path/to/everett-install
 ```
 
 Configure your consumer with that prefix in `CMAKE_PREFIX_PATH`, then link the
 interface target:
 
 ```cmake
-find_package(diet CONFIG REQUIRED)
-target_link_libraries(your_target PRIVATE diet::diet)
+find_package(everett CONFIG REQUIRED)
+target_link_libraries(your_target PRIVATE everett::everett)
 ```
 
-An embedded checkout supports `add_subdirectory(path/to/diet)` and the same
-target. Tests default off when embedded. `DIET_USE_CCACHE=ON` enables a
+An embedded checkout supports `add_subdirectory(path/to/everett)` and the same
+target. Tests default off when embedded. `EVERETT_USE_CCACHE=ON` enables a
 compiler cache for test builds when `ccache` is available.
 
 With Doxygen and Python 3 installed, generate and check the API documentation:
 
 ```sh
-cmake -S . -B build-docs -DDIET_BUILD_DOCS=ON
-cmake --build build-docs --target diet_docs
-ctest --test-dir build-docs -R '^diet.doxygen$' --output-on-failure
+cmake -S . -B build-docs -DEVERETT_BUILD_DOCS=ON
+cmake --build build-docs --target everett_docs
+ctest --test-dir build-docs -R '^everett.doxygen$' --output-on-failure
 ```
 
 The optional documentation check verifies file metadata, declaration ownership,
@@ -868,7 +868,7 @@ Further Reading
 
 The functional
 [`Data.Vector.Map`](https://hackage.haskell.org/package/structures-0.2/docs/Data-Vector-Map.html)
-and its deamortized variant in `structures` supply the starting point. Diet's
+and its deamortized variant in `structures` supply the starting point. Everett's
 levels use the redundant COLA scheme from
 [Cache-Oblivious Streaming B-trees](https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf).
 String locality and front-compression background come from

@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/replacement_rebuild.h>
-#include <diet/connection.h>
+#include <everett/replacement_rebuild.h>
+#include <everett/connection.h>
 #include <iostream>
 #include <csignal>
 #include <map>
@@ -18,7 +18,7 @@
 #include <unistd.h>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using core = replacement_rebuild_engine<>;
   using engine = persistent_engine<core>;
   using store = engine::store_type;
@@ -27,7 +27,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-rebuild-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-rebuild-XXXXXX").string();
       if (!::mkdtemp(name.data())) throw std::runtime_error("mkdtemp");
       root = name;
     }
@@ -51,7 +51,7 @@ namespace {
     check(caught, "expected rejection");
   }
 
-  template <class Cola> void verify(Cola const & state,
+  template <class World> void verify(World const & state,
       std::map<std::string, std::string> const & expected) {
     check(state.live_count() == expected.size(), "live count");
     std::uint64_t signature = 0;
@@ -93,7 +93,7 @@ namespace {
     check(!dirty.metadata().rebuilding && dirty.metadata().mutations, "dirty inactive fixture");
     {
       auto storage = store::create(dir.root);
-      storage.create_tap("latest", dirty.runtime(), dirty.metadata().encode());
+      storage.create_session("latest", dirty.runtime(), dirty.metadata().encode());
     }
     std::optional<engine> active(engine::connect(dir.root, "latest", {.create_if_missing = false}));
     verify(active->snapshot(), expected);
@@ -182,7 +182,7 @@ namespace {
     check(copied && copied->metadata() == marker, "save copied active state incorrectly");
     auto forked = observer.fork("connection-fork", *saved);
     auto ticket = forked.template put_async<strings>("branch", "new");
-    auto result = ticket.get()->cola;
+    auto result = ticket.get()->world;
     check(result.get("branch") == "new" && !result.metadata().rebuilding && !result.metadata().mutations &&
       result.metadata().clean_base == old_expected.size() + 1,
       "worker claimed admission before cleanup");
@@ -203,9 +203,9 @@ namespace {
     auto storage = store::create(dir.root);
     auto metadata = value.metadata();
     metadata.mutations = 7;
-    storage.create_tap("malformed", value.runtime(), metadata.encode());
+    storage.create_session("malformed", value.runtime(), metadata.encode());
     rejects([&] { (void)engine::connect(dir.root, "malformed", {.create_if_missing = false}); });
-    storage.create_tap("plain", value.runtime(), static_cast<core::typed_cola_type const &>(value).metadata().encode());
+    storage.create_session("plain", value.runtime(), static_cast<core::typed_world_type const &>(value).metadata().encode());
     rejects([&] { (void)engine::connect(dir.root, "plain", {.create_if_missing = false}); });
   }
 }

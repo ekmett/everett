@@ -4,12 +4,12 @@ Sort-owned records in the redundant runtime
 I can use the same redundant COLA scheduler with sort-owned native records:
 
 ```cpp
-#include <diet/sort_runtime.h>
-#include <diet/typed_scan.h>
+#include <everett/sort_runtime.h>
+#include <everett/typed_scan.h>
 
-using policy = diet::string_policy;
-using family = diet::sort_runtime_family<policy>;
-using engine = diet::typed_engine<policy, diet::wrapping_fingerprint_algebra,
+using policy = everett::string_policy;
+using family = everett::sort_runtime_family<policy>;
+using engine = everett::typed_engine<policy, everett::wrapping_fingerprint_algebra,
                                   256, family>;
 
 engine active;
@@ -18,12 +18,12 @@ auto after = active.contribute(engine::put("config/theme", "dark"));
 assert(!before.get("config/theme"));
 assert(after.get("config/theme") == "dark");
 
-for (auto rows = diet::scan(after); auto row = rows.next();) {
+for (auto rows = everett::scan(after); auto row = rows.next();) {
   // row->key and row->value own their contents.
 }
 ```
 
-`tap<engine>` provides the same serialized mutable commands and asynchronous
+`session<engine>` provides the same serialized mutable commands and asynchronous
 receipts as it does for other engine families. Snapshot contributions keep
 exact old-value validation; the engine's static command factories apply to the
 current state. Disjoint contributions from one base retain the same composite
@@ -33,8 +33,8 @@ Ordinary bit-profile connections select this grammar with streamed native and
 index output. The example above selects its owning in-memory family explicitly.
 `typed_engine<>` and the opaque binary and redundant families retain their
 own formats. The default string
-schema for this family is `diet.optional-string/code0/sort-profile-v1`, distinct
-from the opaque transport's `diet.optional-string/code0/v1`. A custom registry
+schema for this family is `everett.optional-string/code0/sort-profile-v1`, distinct
+from the opaque transport's `everett.optional-string/code0/v1`. A custom registry
 or selector needs an explicit application schema identity.
 
 What enters a native file
@@ -138,6 +138,6 @@ attributes on user selectors or codecs.
 The focused tests cover proper-prefix strings, embedded zero bytes, partial-bit
 keys, fixed three-bit values, a custom non-tree selector, mixed integer and
 string sorts, noncommutative arrows, scans, independent fingerprint oracles,
-disjoint updates, tap command ordering, stale input rejection, historical
+disjoint updates, session command ordering, stale input rejection, historical
 snapshots and mapped pending-work restoration. Existing opaque typed, scan,
 profile and redundant-runtime tests exercise the lower-level opaque families.

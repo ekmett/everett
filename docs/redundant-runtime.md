@@ -17,9 +17,9 @@ existing EF finalizers execute atomically after their allowance has been
 funded; a long key, value or callback also remains indivisible.
 
 ```cpp
-using registry = diet::tip<diet::encoded_sort<diet::bit_encoding<>>>;
-using policy = diet::storage_policy<registry>;
-diet::redundant_runtime<policy> active;
+using registry = everett::tip<everett::encoded_sort<everett::bit_encoding<>>>;
+using policy = everett::storage_policy<registry>;
+everett::redundant_runtime<policy> active;
 
 auto before = active.snapshot();
 auto after = active.contribute(encoded_record);
@@ -184,9 +184,9 @@ would lose hidden outputs and private plans.
 
 ```cpp
 auto checkpoint = active.checkpoint();
-auto restored = diet::redundant_snapshot<policy>::restore(
+auto restored = everett::redundant_snapshot<policy>::restore(
   checkpoint.frontier(), checkpoint.query_root().head());
-auto fork = diet::redundant_runtime<policy>::from_snapshot(restored);
+auto fork = everett::redundant_runtime<policy>::from_snapshot(restored);
 ```
 
 `restore` validates metadata, exact target relationships, slot roles, interval

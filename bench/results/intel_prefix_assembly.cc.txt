@@ -1,15 +1,15 @@
-#include <diet/rank.h>
+#include <everett/rank.h>
 extern "C" unsigned prefix_probe(std::uint64_t const * words, unsigned bits) {
 #if defined(__AVX512F__) && defined(__AVX512VPOPCNTDQ__)
-  return diet::rank_detail::prefix512_avx512_vpopcnt(words,bits);
+  return everett::rank_detail::prefix512_avx512_vpopcnt(words,bits);
 #elif defined(__AVX512F__) && defined(__AVX512BW__)
-  return diet::rank_detail::prefix512_avx512bw(words,bits);
+  return everett::rank_detail::prefix512_avx512bw(words,bits);
 #elif defined(__AVX2__)
-  return diet::rank_detail::prefix512_avx2(words,bits);
+  return everett::rank_detail::prefix512_avx2(words,bits);
 #else
-  return diet::rank_detail::prefix512_portable(words,bits);
+  return everett::rank_detail::prefix512_portable(words,bits);
 #endif
 }
-extern "C" std::uint64_t rank_probe(diet::rank_view const & view,std::uint64_t position) {
+extern "C" std::uint64_t rank_probe(everett::rank_view const & view,std::uint64_t position) {
   return view.rank(position);
 }

@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
+#include <everett/connection.h>
 
 #include <array>
 #include <cassert>
@@ -18,11 +18,11 @@
 #include <latch>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-owner-binding-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-owner-binding-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -55,7 +55,7 @@ namespace {
       publishers[i] = std::async(std::launch::async, [&, i] {
         auto adapter = store::open(original.root, {}, {.busy_timeout_ms = 5000});
         start.wait();
-        return adapter.create_tap("publisher-" + std::to_string(i), source.runtime(), semantic);
+        return adapter.create_session("publisher-" + std::to_string(i), source.runtime(), semantic);
       });
     start.count_down();
     auto first = publishers[0].get(), second = publishers[1].get();
@@ -65,10 +65,10 @@ namespace {
     auto count = files(original.root);
     {
       auto adapter = store::open(original.root);
-      auto third = adapter.create_tap("third", source.runtime(), semantic);
+      auto third = adapter.create_session("third", source.runtime(), semantic);
       assert(third.head.timeline.head == first.head.timeline.head && files(original.root) == count);
       assert(third.snapshot.query_root().head() == first.snapshot.query_root().head());
-      auto mapped = core::cola_type::restore(third.snapshot, source.metadata(), source.metadata().schema_id);
+      auto mapped = core::world_type::restore(third.snapshot, source.metadata(), source.metadata().schema_id);
       assert(mapped.get("key-18") == std::string(1024, 's'));
     }
 
@@ -82,7 +82,7 @@ namespace {
     }
     {
       auto adapter = store::open(clone.root);
-      auto copied = adapter.create_tap("clone", source.runtime(), semantic);
+      auto copied = adapter.create_session("clone", source.runtime(), semantic);
       assert(copied.head.timeline.head != first.head.timeline.head);
       assert(files(clone.root) > count && files(original.root) == count);
       auto reopened = store::open(clone.root).find("clone");
@@ -90,7 +90,7 @@ namespace {
     }
     {
       auto adapter = store::create(independent.root);
-      auto other = adapter.create_tap("independent", source.runtime(), semantic);
+      auto other = adapter.create_session("independent", source.runtime(), semantic);
       assert(other.head.timeline.head != first.head.timeline.head);
       auto again = store::open(original.root).find("publisher-0");
       assert(again && again->head == first.head && files(original.root) == count);

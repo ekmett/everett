@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
-#include <diet/replacement_rebuild.h>
+#include <everett/connection.h>
+#include <everett/replacement_rebuild.h>
 
 #include <array>
 #include <cassert>
@@ -39,16 +39,16 @@ void operator delete[](void * p, std::size_t) noexcept { std::free(p); }
 
 namespace {
   template <class Core> void snapshots() {
-    using namespace diet;
+    using namespace everett;
     using core = Core;
     using Family = typename core::runtime_family;
-    using cola = typename core::cola_type;
-    using saved_cola = stored_cola<cola>;
-    static_assert(std::is_nothrow_copy_constructible_v<cola>);
-    static_assert(std::is_nothrow_copy_assignable_v<cola>);
-    static_assert(std::is_nothrow_copy_constructible_v<saved_cola>);
+    using world = typename core::world_type;
+    using saved_world = stored_world<world>;
+    static_assert(std::is_nothrow_copy_constructible_v<world>);
+    static_assert(std::is_nothrow_copy_assignable_v<world>);
+    static_assert(std::is_nothrow_copy_constructible_v<saved_world>);
     std::weak_ptr<typename Family::node_type const> head;
-    std::optional<saved_cola> saved;
+    std::optional<saved_world> saved;
     {
       core table(std::string(4096, 's'));
       for (unsigned i = 0; i != 37; ++i)
@@ -56,12 +56,12 @@ namespace {
       auto source = table.snapshot();
       head = source.runtime().query_root().head();
       object_id id("0123456789abcdef0123456789abcdef");
-      catalog_tap_head catalog{{std::string(4096, 'n'), 1, {id, id}, std::string(4096, 'o')},
+      catalog_session_head catalog{{std::string(4096, 'n'), 1, {id, id}, std::string(4096, 'o')},
         std::vector<std::byte>(1024 * 1024, std::byte{42}), {{}, {}}};
       catalog.auxiliary.pairs.assign(128, {id, id});
       catalog.auxiliary.natives.assign(128, id);
       saved.emplace(source, std::move(catalog));
-      std::array<std::optional<saved_cola>, 1024> copies;
+      std::array<std::optional<saved_world>, 1024> copies;
       {
         without_allocation guard;
         auto another = table.snapshot();
@@ -85,9 +85,9 @@ namespace {
 }
 int main() {
   try {
-    snapshots<diet::typed_engine<>>();
-    snapshots<diet::typed_engine<diet::string_policy, diet::wrapping_fingerprint_algebra, 256,
-      diet::sort_runtime_family<diet::string_policy>>>();
-    snapshots<diet::replacement_rebuild_engine<>>();
+    snapshots<everett::typed_engine<>>();
+    snapshots<everett::typed_engine<everett::string_policy, everett::wrapping_fingerprint_algebra, 256,
+      everett::sort_runtime_family<everett::string_policy>>>();
+    snapshots<everett::replacement_rebuild_engine<>>();
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }
 }

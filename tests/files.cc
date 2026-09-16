@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Diet's files behavior.
+ * \brief Tests Everett's files behavior.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/file.h>
+#include <everett/file.h>
 
 #include <algorithm>
 #include <array>
@@ -26,7 +26,7 @@
 #endif
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }
@@ -41,7 +41,7 @@ namespace {
       std::random_device random;
       for (unsigned attempt = 0; attempt < 64; ++attempt) {
         auto candidate = std::filesystem::temp_directory_path() /
-                         ("diet-file-test-" + std::to_string(random()) + "-" + std::to_string(random()));
+                         ("everett-file-test-" + std::to_string(random()) + "-" + std::to_string(random()));
         if (std::filesystem::create_directory(candidate)) { path = std::move(candidate); return; }
       }
       throw std::runtime_error("cannot create file test directory");
@@ -70,7 +70,7 @@ namespace {
   }
 
   void rounded_file_extents() {
-    using P = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
+    using P = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>;
     constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
     file_header<P> header{file_kind::native_blob, maximum - 7, 0, std::nullopt};
     auto encoded = encode_file_header(header, 0);
@@ -96,14 +96,14 @@ namespace {
       if constexpr (P::unit == profile_unit::bit) body.back() &= std::byte{0x80};
       auto encoded = encode_file(header, body);
       constexpr std::array<std::byte, 8> native_magic{
-        std::byte{'D'}, std::byte{'I'}, std::byte{'E'}, std::byte{'T'},
+        std::byte{'E'}, std::byte{'V'}, std::byte{'R'}, std::byte{'T'},
         std::byte{'.'}, std::byte{'K'}, std::byte{'V'}, std::byte{0}};
       constexpr std::array<std::byte, 8> index_magic{
-        std::byte{'D'}, std::byte{'I'}, std::byte{'E'}, std::byte{'T'},
+        std::byte{'E'}, std::byte{'V'}, std::byte{'R'}, std::byte{'T'},
         std::byte{'.'}, std::byte{'I'}, std::byte{'X'}, std::byte{0}};
       auto const & expected_magic = kind == file_kind::native_blob ? native_magic : index_magic;
       require(std::ranges::equal(std::span<std::byte const>(encoded).first(8), expected_magic),
-              "Diet kind signature differs from golden bytes");
+              "Everett kind signature differs from golden bytes");
       auto incompatible = encoded;
       incompatible[0] ^= std::byte{0x01};
       incompatible[1] ^= std::byte{0x1f};
@@ -187,15 +187,15 @@ namespace {
   }
 
   void header_only_encoding() {
-    using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<3>>>>, 7, exponential_golomb<0>, 16>;
+    using policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<3>>>>, 7, exponential_golomb<0>, 16>;
     file_header<policy> header{file_kind::native_blob, 9, 2, 3};
     std::array<std::byte, 9> body{std::byte{0x00}, std::byte{0x11}, std::byte{0x22},
       std::byte{0x33}, std::byte{0x44}, std::byte{0x55}, std::byte{0x66}, std::byte{0x77}, std::byte{0x88}};
     // Fixed golden bytes from independent little-endian packing and bitwise CRC.
     constexpr std::string_view expected =
-      "444945542e4b5600010060000300000000010000100000000700000000000000"
+      "455652542e4b5600010060000300000000010000100000000700000000000000"
       "0300000000000000030000000000000009000000000000000200000000000000"
-      "54798ce3e3df1ecf600000000000000069000000000000000000000000000000";
+      "54798ce3f68aeb51600000000000000069000000000000000000000000000000";
     auto prefix = encode_file_header(header, crc32c(body));
     constexpr std::string_view digits = "0123456789abcdef";
     for (std::size_t i = 0; i != prefix.size(); ++i) {
@@ -211,7 +211,7 @@ namespace {
     object.insert(object.end(), body.begin(), body.end());
     rejects([&] { validate_file<policy>(object); });
 
-    using variable = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
+    using variable = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
     file_header<variable> large{file_kind::native_blob, std::uint64_t{1} << 40, 7, std::nullopt};
     auto small = encode_file_header(large, 0x91a713d0u);
     require(small.size() == 96 && decode_file_header<variable>(small) == large,
@@ -226,10 +226,10 @@ namespace {
   }
 
   template <std::uint64_t K> void policy_matrix(std::filesystem::path const & directory) {
-    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, K>>(directory);
-    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, K>>(directory);
-    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<5>>>>, K>>(directory);
-    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<5>>>>, K>>(directory);
+    roundtrip<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, K>>(directory);
+    roundtrip<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, K>>(directory);
+    roundtrip<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<5>>>>, K>>(directory);
+    roundtrip<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<5>>>>, K>>(directory);
   }
 
   template <class P> void test_trusted_validation(std::filesystem::path const & directory) {
@@ -309,7 +309,7 @@ namespace {
   }
 
   template <profile_unit Unit> void test_default_headers(std::array<std::uint32_t, 2> expected_crc) {
-    using policy = storage_policy<diet::tip<diet::encoded_sort<std::conditional_t<Unit == diet::profile_unit::byte, diet::byte_encoding<>, diet::bit_encoding<>>>>>;
+    using policy = storage_policy<everett::tip<everett::encoded_sort<std::conditional_t<Unit == everett::profile_unit::byte, everett::byte_encoding<>, everett::bit_encoding<>>>>>;
     std::size_t i = 0;
     for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
       file_header<policy> header{kind, 0, 0, std::nullopt};
@@ -325,8 +325,8 @@ namespace {
   }
 
   template <profile_unit Unit, std::uint64_t W> void test_codec_width(std::filesystem::path const & directory) {
-    using policy = storage_policy<diet::tip<diet::encoded_sort<std::conditional_t<Unit == diet::profile_unit::byte, diet::byte_encoding<>, diet::bit_encoding<>>>>, 15, exponential_golomb<0>, W>;
-    using other = storage_policy<diet::tip<diet::encoded_sort<std::conditional_t<Unit == diet::profile_unit::byte, diet::byte_encoding<>, diet::bit_encoding<>>>>, 15, exponential_golomb<0>, W == 16 ? 15 : 16>;
+    using policy = storage_policy<everett::tip<everett::encoded_sort<std::conditional_t<Unit == everett::profile_unit::byte, everett::byte_encoding<>, everett::bit_encoding<>>>>, 15, exponential_golomb<0>, W>;
+    using other = storage_policy<everett::tip<everett::encoded_sort<std::conditional_t<Unit == everett::profile_unit::byte, everett::byte_encoding<>, everett::bit_encoding<>>>>, 15, exponential_golomb<0>, W == 16 ? 15 : 16>;
     roundtrip<policy>(directory);
     for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
       file_header<policy> header{kind, 0, 0, std::nullopt};
@@ -350,10 +350,10 @@ namespace {
   }
 
   template <class Code> void test_backspace_policy(std::filesystem::path const & directory) {
-    using policy = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, Code>;
-    using defaults = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
+    using policy = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 15, Code>;
+    using defaults = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>;
     roundtrip<policy>(directory);
-    roundtrip<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<5>>>>, 7, Code>>(directory);
+    roundtrip<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<5>>>>, 7, Code>>(directory);
     for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
       auto path = directory / ("backspace" + std::string(file_extension(kind)));
       file_header<policy> header{kind, 0, 0, std::nullopt};
@@ -402,18 +402,18 @@ namespace {
 
   void test_descriptors(std::filesystem::path const & directory) {
     auto path = directory / "descriptor.kv";
-    using byte_fixed = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<5>>>>, 15>;
-    using bit_fixed = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<5>>>>, 15>;
+    using byte_fixed = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<5>>>>, 15>;
+    using bit_fixed = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<5>>>>, 15>;
     auto encoded = encode_file(file_header<byte_fixed>{file_kind::native_blob, 25, 3, 5},
                                std::vector<std::byte>(25));
     rejects([&] { validate_file<bit_fixed>(encoded); });
     rejects_open<bit_fixed>(path, encoded);
-    using wider = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<6>>>>>;
-    using variable = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
+    using wider = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<6>>>>>;
+    using variable = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
     require(validate_file<wider>(encoded).common_value_width == 5, "file owns its fixed width");
     require(validate_file<variable>(encoded).common_value_width == 5, "broader registry retains old width");
-    rejects_open<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<5>>>>, 7>>(path, encoded);
-    rejects([&] { validate_file<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<5>>>>, 7>>(encoded); });
+    rejects_open<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<5>>>>, 7>>(path, encoded);
+    rejects([&] { validate_file<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<5>>>>, 7>>(encoded); });
     for (auto patch : std::array<std::pair<std::size_t, std::uint64_t>, 11>{
            {{8, 2}, {10, 80}, {12, 7}, {16, 2}, {17, 2}, {18, 1},
             {24, 31}, {32, 6}, {40, 4}, {72, 97}, {88, 1}}}) {
@@ -438,7 +438,7 @@ namespace {
     rejects([] { encode_file(file_header<byte_fixed>{file_kind::fractional_index, 0, 0, 5}, {}); });
     rejects([] { encode_file(file_header<byte_fixed>{static_cast<file_kind>(2), 0, 0, 0}, {}); });
 
-    using bits = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
+    using bits = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>;
     auto bit_header = file_header<bits>{file_kind::native_blob, 3, 1, std::nullopt};
     auto padded = encode_file(bit_header, std::array<std::byte, 1>{std::byte{0xa0}});
     padded.back() |= std::byte{1};
@@ -459,7 +459,7 @@ namespace {
     require(empty.size() == 96 && validate_file<bits>(empty).extent == 0, "empty body file");
     write(path, empty);
     file<bits>::open(path).scan();
-    using zero_fixed = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>>;
+    using zero_fixed = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>>;
     auto zero = encode_file(file_header<zero_fixed>{file_kind::native_blob, 0, 3, 0}, {});
     require(validate_file<zero_fixed>(zero).common_value_width == 0, "zero fixed width lost");
     write(path, zero);
@@ -582,7 +582,7 @@ namespace {
     rejects([] { object_id::from_hex("ABCDEF0123456789abcdef0123456789"); });
     rejects([] { object_id::from_hex("abcdef0123456789abcdef012345678"); });
     rejects([] { object_id::from_hex("tenant/document/field"); });
-    rejects([] { parse_object_path("ab/cd/ef0123456789abcdef0123456789.cola"); });
+    rejects([] { parse_object_path("ab/cd/ef0123456789abcdef0123456789.world"); });
     rejects([] { parse_object_path("ab/cd/ef0123456789abcdef0123456789.merge"); });
     require(crc32c(std::as_bytes(std::span("123456789", std::size_t{9}))) == 0xe3069283u, "CRC32C check vector");
     require(crc32c({}) == 0, "empty CRC32C");
@@ -611,18 +611,18 @@ int main() {
     test_backspace_policy<golomb<256>>(directory.path);
     test_backspace_policy<golomb<std::numeric_limits<std::uint64_t>::max()>>(directory.path);
     test_descriptors(directory.path);
-    test_trusted_validation<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>(directory.path);
-    test_trusted_validation<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>>(directory.path);
-    test_trusted_validation<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<3>>>(directory.path);
+    test_trusted_validation<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>>(directory.path);
+    test_trusted_validation<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>>(directory.path);
+    test_trusted_validation<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 15, golomb<3>>>(directory.path);
 #if defined(__unix__) || defined(__APPLE__)
     for (auto kind : {file_kind::native_blob, file_kind::fractional_index}) {
-      test_inaccessible_body<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>(directory.path, kind);
-      test_inaccessible_body<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>>(directory.path, kind);
-      test_inaccessible_body<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, exponential_golomb<3>>>(directory.path, kind);
-      test_inaccessible_body<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<3>>>(directory.path, kind);
-      test_inaccessible_mapping<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>>(directory.path, kind);
-      test_inaccessible_mapping<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>>(directory.path, kind);
-      test_inaccessible_mapping<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<3>>>(directory.path, kind);
+      test_inaccessible_body<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>>(directory.path, kind);
+      test_inaccessible_body<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>>(directory.path, kind);
+      test_inaccessible_body<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 15, exponential_golomb<3>>>(directory.path, kind);
+      test_inaccessible_body<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 15, golomb<3>>>(directory.path, kind);
+      test_inaccessible_mapping<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>>(directory.path, kind);
+      test_inaccessible_mapping<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>>(directory.path, kind);
+      test_inaccessible_mapping<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 15, golomb<3>>>(directory.path, kind);
     }
 #endif
     test_paths();

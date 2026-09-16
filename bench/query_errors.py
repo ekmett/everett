@@ -59,9 +59,9 @@ def main():
         if path in closure:
             return
         closure.add(path)
-        for child in re.findall(rb"#include <(diet/[^>]+)>", original[path]):
+        for child in re.findall(rb"#include <(everett/[^>]+)>", original[path]):
             visit("include/" + child.decode())
-    visit("include/diet/query.h")
+    visit("include/everett/query.h")
     expression = re.compile(r'throw\s+(std::[a-z_]+)\(("(?:[^"\\]|\\.)*"|truncated|overflow)\);')
     transformed = {}
     sites = {}
@@ -76,7 +76,7 @@ def main():
         if not matches:
             continue
         sites[path] = [{"exception": m[1], "message": m[2]} for m in matches]
-        output = output.replace("#pragma once\n", "#pragma once\n\n#include <diet/error_detail.h>\n", 1)
+        output = output.replace("#pragma once\n", "#pragma once\n\n#include <everett/error_detail.h>\n", 1)
         transformed[path] = output.encode()
     preamble = '''/**
  * \\file
@@ -89,7 +89,7 @@ def main():
 #pragma once
 #include <cstdlib>
 #include <stdexcept>
-namespace diet::error_detail {
+namespace everett::error_detail {
   template <class E> [[noreturn]]
 #if defined(__GNUC__) || defined(__clang__)
   [[gnu::cold, gnu::noinline]]
@@ -123,7 +123,7 @@ namespace diet::error_detail {
         contents = dict(original)
         if variant != "baseline":
             contents.update(transformed)
-            contents["include/diet/error_detail.h"] = helpers[variant].encode()
+            contents["include/everett/error_detail.h"] = helpers[variant].encode()
         patch = []
         for path, data in contents.items():
             destination = headers / path

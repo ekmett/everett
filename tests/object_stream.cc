@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/object_stream.h>
+#include <everett/object_stream.h>
 
 #include <array>
 #include <cstdio>
@@ -29,9 +29,9 @@
 #endif
 
 namespace {
-  using namespace diet;
-  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
-  using bit_policy = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 7>;
+  using namespace everett;
+  using policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3>;
+  using bit_policy = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 7>;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -486,7 +486,7 @@ namespace {
   struct temporary_directory {
     std::filesystem::path path;
     temporary_directory() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-object-stream-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-object-stream-XXXXXX").string();
       auto name = ::mkdtemp(pattern.data());
       if (!name) throw std::system_error(errno, std::generic_category(), "mkdtemp");
       path = name;

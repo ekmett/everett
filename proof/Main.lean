@@ -2,9 +2,9 @@
 SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 -/
-import Diet
+import Everett
 
-open Diet Diet.examples
+open Everett Everett.examples
 
 def main : IO Unit := do
   IO.println s!"disjoint updates: {observation (mutation.apply_two initial increment enable)}"

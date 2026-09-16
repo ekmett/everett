@@ -10,9 +10,9 @@
  * \endlicense
  */
 
-#include <diet/cola_local_merge.h>
-#include <diet/cola_query.h>
-#include <diet/cola_sections.h>
+#include <everett/cola_local_merge.h>
+#include <everett/cola_query.h>
+#include <everett/cola_sections.h>
 
 #include <array>
 #include <cstdint>
@@ -27,7 +27,7 @@
 #include <vector>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using table = std::map<std::string, std::string>;
   void check(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -284,7 +284,7 @@ namespace {
     }
   }
   void poisoned() {
-    using P = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>;
+    using P = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3>;
     auto input = fixture<P>(1, 0, 1);
     auto a = native<P>(input), b = native<P>(input);
     std::weak_ptr<profile_array<P> const> weak_a = a, weak_b = b;
@@ -312,13 +312,13 @@ namespace {
 }
 
 int main() try {
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<3>, 16>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 3>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<5>>>>, 15>>();
-  scenario<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3>>(false, key_concatenate{}, true);
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 15>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 3, golomb<3>, 16>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 15>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 3>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<5>>>>, 15>>();
+  scenario<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3>>(false, key_concatenate{}, true);
   poisoned();
   std::cout << "COLA local merge tests passed\n";
 } catch (std::exception const & error) {

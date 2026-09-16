@@ -9,15 +9,15 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/redundant_runtime.h>
-#include <diet/typed_scan.h>
+#include <everett/redundant_runtime.h>
+#include <everett/typed_scan.h>
 
 #include <cassert>
 #include <map>
 
 namespace {
   template <class P> void exercise() {
-    using engine_type = diet::typed_engine<P, diet::wrapping_fingerprint_algebra, 256, diet::redundant_runtime_family<P>>;
+    using engine_type = everett::typed_engine<P, everett::wrapping_fingerprint_algebra, 256, everett::redundant_runtime_family<P>>;
     engine_type engine("typed-redundant/string/1");
     auto original = engine.snapshot();
     std::map<std::string, std::string> expected;
@@ -36,7 +36,7 @@ namespace {
       assert(snapshot.live_count() == expected.size() && snapshot.runtime().admissions() == i + 1);
       assert(snapshot.runtime().frontier().service_due == 0);
       if (i % 37 == 0) {
-        auto rows = diet::scan(snapshot);
+        auto rows = everett::scan(snapshot);
         auto oracle = expected.begin();
         while (auto row = rows.next()) {
           assert(oracle != expected.end() && row->key == oracle->first && row->value == oracle->second);
@@ -63,7 +63,7 @@ namespace {
   }
 }
 int main() {
-  exercise<diet::string_policy>();
-  using P = diet::storage_policy<diet::string_registry, 3, diet::golomb<3>, 5>;
+  exercise<everett::string_policy>();
+  using P = everett::storage_policy<everett::string_registry, 3, everett::golomb<3>, 5>;
   exercise<P>();
 }

@@ -10,11 +10,11 @@
  * \endlicense
  */
 
-#include <diet/mapped_blob.h>
-#include <diet/native_writer.h>
-#include <diet/sections.h>
-#if defined(DIET_REGISTRY_COMPAT_SQLITE)
-#include <diet/sqlite_catalog.h>
+#include <everett/mapped_blob.h>
+#include <everett/native_writer.h>
+#include <everett/sections.h>
+#if defined(EVERETT_REGISTRY_COMPAT_SQLITE)
+#include <everett/sqlite_catalog.h>
 #endif
 
 #include <array>
@@ -31,10 +31,10 @@
 #include <vector>
 
 namespace {
-  using namespace diet;
-  using fixed = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<8>>>>>;
-  using variable = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>>;
-  using zero = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>>;
+  using namespace everett;
+  using fixed = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<8>>>>>;
+  using variable = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
+  using zero = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>>;
 
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -50,7 +50,7 @@ namespace {
       auto seed = std::chrono::steady_clock::now().time_since_epoch().count();
       for (unsigned attempt = 0; attempt < 100; ++attempt) {
         auto path = std::filesystem::temp_directory_path() /
-          ("diet-registry-compat-" + std::to_string(seed) + "-" + std::to_string(attempt));
+          ("everett-registry-compat-" + std::to_string(seed) + "-" + std::to_string(attempt));
         if (std::filesystem::create_directory(path)) { root = std::move(path); return; }
       }
       throw std::runtime_error("cannot create compatibility fixture");
@@ -125,13 +125,13 @@ namespace {
     require(zero_bytes != absent_bytes && !validate_file<variable>(absent_bytes).common_value_width,
       "zero width and absent width were conflated");
 
-    using bit = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
-    using other_k = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7>;
-    using other_w = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15, exponential_golomb<0>, 16>;
+    using bit = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>;
+    using other_k = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 7>;
+    using other_w = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 15, exponential_golomb<0>, 16>;
     rejects([&] { (void)decode_file_header<bit>(encoded); });
     rejects([&] { (void)decode_file_header<other_k>(encoded); });
     rejects([&] { (void)decode_file_header<other_w>(encoded); });
-    using golomb_bits = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<8>>>>, 15, golomb<3>>;
+    using golomb_bits = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<8>>>>, 15, golomb<3>>;
     auto bit_header = encode_file_header(file_header<golomb_bits>{}, 0);
     rejects([&] { (void)decode_file_header<bit>(bit_header); });
   }
@@ -218,15 +218,15 @@ namespace {
     auto varied = rows(true);
     auto other = persist<variable>(directory.root, varied, 20);
     check_queries<fixed>(directory.root, other, varied);
-    using bit_fixed = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<64>>>>>;
-    using bit_variable = storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>>;
+    using bit_fixed = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<64>>>>>;
+    using bit_variable = storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>;
     auto bit_head = persist<bit_fixed>(directory.root, original, 40);
     check_queries<bit_variable>(directory.root, bit_head, original);
     auto bit_other = persist<bit_variable>(directory.root, varied, 60);
     check_queries<bit_fixed>(directory.root, bit_other, varied);
   }
 
-#if defined(DIET_REGISTRY_COMPAT_SQLITE) && (defined(__APPLE__) || defined(__linux__))
+#if defined(EVERETT_REGISTRY_COMPAT_SQLITE) && (defined(__APPLE__) || defined(__linux__))
   std::vector<std::byte> catalog_policy(std::filesystem::path const & root,
       std::optional<std::vector<std::byte>> replacement = {}) {
     sqlite3 * db = nullptr;
@@ -299,7 +299,7 @@ namespace {
 
 int main() try {
   envelopes(); profiles(); mapped();
-#if defined(DIET_REGISTRY_COMPAT_SQLITE) && (defined(__APPLE__) || defined(__linux__))
+#if defined(EVERETT_REGISTRY_COMPAT_SQLITE) && (defined(__APPLE__) || defined(__linux__))
   catalog();
 #endif
   std::cout << "Stored widths remain file-local across registry changes\n";

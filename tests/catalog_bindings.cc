@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/catalog_bindings.h>
+#include <everett/catalog_bindings.h>
 
 #include <atomic>
 #include <barrier>
@@ -20,7 +20,7 @@
 #include <thread>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using namespace std::chrono_literals;
 
   void check(bool value, char const * message) {
@@ -39,7 +39,7 @@ namespace {
       auto base = std::filesystem::temp_directory_path();
       auto nonce = std::chrono::steady_clock::now().time_since_epoch().count();
       for (unsigned i = 0; i != 100; ++i) {
-        auto candidate = base / ("diet-binding-" + std::to_string(nonce) + "-" + std::to_string(i));
+        auto candidate = base / ("everett-binding-" + std::to_string(nonce) + "-" + std::to_string(i));
         if (!std::filesystem::create_directory(candidate)) continue;
         root = std::move(candidate);
         std::filesystem::create_directory(root / "first");

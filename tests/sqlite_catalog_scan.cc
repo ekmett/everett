@@ -9,22 +9,22 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
-#include <diet/typed_scan.h>
+#include <everett/connection.h>
+#include <everett/typed_scan.h>
 
 #include <cassert>
 #include <map>
 
 int main() {
-  auto path = std::filesystem::temp_directory_path() / ("diet-scan-" + diet::random_object_ids{}().hex());
+  auto path = std::filesystem::temp_directory_path() / ("everett-scan-" + everett::random_object_ids{}().hex());
   struct cleanup {
     std::filesystem::path path;
     ~cleanup() { std::error_code error; std::filesystem::remove_all(path, error); }
   } guard{path};
-  auto fridge = diet::fridge<>::create(path);
+  auto multiverse = everett::multiverse<>::create(path);
   std::map<std::string, std::string> expected;
   {
-    auto db = fridge.connect("scan");
+    auto db = multiverse.connect("scan");
     auto batch = decltype(db)::core_type::batch();
     for (unsigned i = 0; i != 65; ++i) {
       auto key = "key/" + std::to_string(i), value = "value/" + std::to_string(i);
@@ -37,10 +37,10 @@ int main() {
     db.save("frozen");
   }
   auto rows = [&] {
-    auto db = fridge.connect("scan");
+    auto db = multiverse.connect("scan");
     auto saved = db.load("frozen");
     assert(saved && saved->live_count() == expected.size());
-    auto rows = diet::scan(*saved);
+    auto rows = everett::scan(*saved);
     rows.step(3);
     db.put("key/0", "new incarnation");
     return rows;

@@ -9,9 +9,9 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
-#include <diet/sort_runtime_context.h>
-#include <diet/typed_scan.h>
+#include <everett/connection.h>
+#include <everett/sort_runtime_context.h>
+#include <everett/typed_scan.h>
 
 #include <barrier>
 #include <fstream>
@@ -21,7 +21,7 @@
 #include <set>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using P = string_policy;
   using strings = unsorted<std::optional<std::string>>;
   using family = streaming_sort_runtime_family<P>;
@@ -29,7 +29,7 @@ namespace {
   using storage = family::storage_type;
   using runtime = family::runtime_type<replace_native_value>;
   using store = runtime_store<P, random_object_ids, sqlite_catalog_ops, family>;
-  using typed = typed_cola<P, wrapping_fingerprint_algebra, family>;
+  using typed = typed_world<P, wrapping_fingerprint_algebra, family>;
   using core = typed_engine<P, wrapping_fingerprint_algebra, 256, family>;
   std::string const schema = "native-reuse-fixture/1";
 
@@ -41,7 +41,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-native-reuse-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-native-reuse-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -240,7 +240,7 @@ namespace {
 
   using oracle = std::map<std::string, std::string>;
   typed restore(runtime::snapshot_type state, oracle const & expected) {
-    typed_cola_metadata<> metadata;
+    typed_world_metadata<> metadata;
     metadata.schema_id = schema; metadata.live_count = expected.size();
     for (auto const & [key, value] : expected)
       metadata.signature += sort_semantics<strings>::hash_key(key) * sort_semantics<strings>::hash_value(key, value);
@@ -250,7 +250,7 @@ namespace {
     auto reference = restore(state.runtime(), expected);
     check(state.signature() == reference.signature() && state.live_count() == expected.size(), "reuse changed semantic metadata");
     for (auto const & [key, value] : expected) check(state.get(key) == value, "reuse changed lookup");
-    auto scan = diet::scan(state); auto at = expected.begin();
+    auto scan = everett::scan(state); auto at = expected.begin();
     while (auto row = scan.next()) {
       check(at != expected.end() && row->key == at->first && row->value == at->second, "reuse changed scan"); ++at;
     }
@@ -265,7 +265,7 @@ namespace {
     auto b = core::put("key", expected.begin()->second);
     check(bool(active.try_contribute(a.records().front(), 0)), "first admission");
     auto old = restore(active.snapshot(), {{"key", std::string(96 * 1024, 'a')}});
-    auto first = saved.create_tap("first", active.checkpoint(), old.metadata().encode());
+    auto first = saved.create_session("first", active.checkpoint(), old.metadata().encode());
     check(bool(active.try_contribute(b.records().front(), 0)), "second admission");
     auto state = restore(active.checkpoint(), expected);
     auto shared = saved.publish(first.head, state.runtime(), state.metadata().encode());
@@ -321,7 +321,7 @@ namespace {
 
   void rebuilding_reuse_restart() {
     using rebuild = replacement_rebuild_engine<P, wrapping_fingerprint_algebra, 256, family>;
-    using rebuilt = rebuild::cola_type;
+    using rebuilt = rebuild::world_type;
     using durable = persistent_engine<rebuild>;
     auto settle = [](auto & active) {
       unsigned rounds = 0;
@@ -347,7 +347,7 @@ namespace {
     settle(active);
     auto old = active.snapshot();
     verify(old, original);
-    auto recorded = saved.create_tap("original", old.runtime(), old.metadata().encode());
+    auto recorded = saved.create_session("original", old.runtime(), old.metadata().encode());
     saved.save("before-deletes", recorded.head);
 
     auto expected = original;
@@ -390,7 +390,7 @@ namespace {
     rebuilt shared(typed::restore(frontier, semantic_state.metadata(), schema),
       frozen.metadata().clean_base, frozen.metadata().mutations + admitted, true);
     verify(shared, expected);
-    auto first = saved.create_tap("cleanup-first", shared.runtime(), shared.metadata().encode());
+    auto first = saved.create_session("cleanup-first", shared.runtime(), shared.metadata().encode());
     auto second = saved.fork("cleanup-second", first.head);
     auto finished = runtime::from_snapshot(first.snapshot, storage::open_for_schema(dir.root, schema));
     settle(finished);
@@ -406,7 +406,7 @@ namespace {
     auto reopened = store::open(dir.root).find("cleanup-second");
     check(reopened && reopened->head == second.head, "active fork lost exact checkpoint");
     auto borrowing = runtime::from_snapshot(reopened->snapshot, storage::open_for_schema(dir.root, schema));
-    std::optional<catalog_tap_head> hidden_head;
+    std::optional<catalog_session_head> hidden_head;
     std::uint64_t hidden_due = 0;
     while (borrowing.pending() && !hidden_head) {
       auto price = borrowing.next_service_cost(), credit = borrowing.credit();
@@ -505,7 +505,7 @@ namespace {
     for (auto kind : {"remember_native_merge", "acquire_native_merge"}) for (bool after : {false, true}) {
       prepared f;
       runtime empty;
-      auto baseline = f.saved.create_tap("stable", empty.snapshot());
+      auto baseline = f.saved.create_session("stable", empty.snapshot());
       if (std::string_view(kind) == "acquire_native_merge") merge(f.context(), f.older, f.newer);
       injection = std::make_shared<fault>(fault{kind, true, after, 0});
       auto ctx = fault_context::open(f.dir.root, {}, {}, {}, {}, {}, schema);

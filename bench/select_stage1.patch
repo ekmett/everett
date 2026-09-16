@@ -1,5 +1,5 @@
---- a/include/diet/select_groups.h
-+++ b/include/diet/select_groups.h
+--- a/include/everett/select_groups.h
++++ b/include/everett/select_groups.h
 @@ -23,0 +24,4 @@
 +#if defined(__BMI2__)
 +#include <immintrin.h>
@@ -38,11 +38,11 @@
 -          for (; remaining; --remaining) value &= value - 1;
 -          auto position = word * 64 + unsigned(std::countr_zero(value));
 +          auto position = word * 64 + select_groups_detail::select_word(value, remaining);
---- a/include/diet/select15.h
-+++ b/include/diet/select15.h
+--- a/include/everett/select15.h
++++ b/include/everett/select15.h
 @@ -10,0 +11,2 @@
 +
-+#include <diet/select_groups.h>
++#include <everett/select_groups.h>
 @@ -125,2 +127 @@
 -          for (; remaining; --remaining) value &= value - 1;
 -          auto position = word * 64 + unsigned(std::countr_zero(value));

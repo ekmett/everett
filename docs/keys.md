@@ -1,6 +1,6 @@
 # Sorts and stringlike keys
 
-Represent a logical key in Diet as a pair
+Represent a logical key in Everett as a pair
 
 $$
 \kappa=(s,x),
@@ -112,11 +112,11 @@ encodings; the registry determines whether the shared streams need bit or byte
 addressing:
 
 ```cpp
-struct names { using encoding = diet::byte_encoding<diet::fixed_values<8>>; };
-struct flags { using encoding = diet::bit_encoding<diet::fixed_values<3>>; };
-using bytes = diet::storage_policy<diet::tip<names>, 15,
-  diet::exponential_golomb<0>, 16>;
-using bits = diet::storage_policy<diet::bin<diet::tip<names>, diet::tip<flags>>>;
+struct names { using encoding = everett::byte_encoding<everett::fixed_values<8>>; };
+struct flags { using encoding = everett::bit_encoding<everett::fixed_values<3>>; };
+using bytes = everett::storage_policy<everett::tip<names>, 15,
+  everett::exponential_golomb<0>, 16>;
+using bits = everett::storage_policy<everett::bin<everett::tip<names>, everett::tip<flags>>>;
 ```
 
 `fixed_values<N>` counts the **leaf encoding's** units: eight bytes for `names`,
@@ -189,7 +189,7 @@ written, including a tag only when the codec needs one.
 No occurrence means the identity update. An explicit tombstone is an occurrence
 that can cancel an older binding; the read/merge handler must distinguish them.
 A typed active handle needs the complete registry to select that handler,
-compute hash deltas and perform merges over all sorts. The dumb cola does not
+compute hash deltas and perform merges over all sorts. The dumb world does not
 acquire those operations merely because one caller supplied `put<S>`.
 
 A sort need not have a value concept at all. A self-cancelling toggle can store
@@ -237,7 +237,7 @@ sampling interval `P::group_size`.
 The third policy parameter defaults to `exponential_golomb<0>`.
 `golomb<M>` requires $M>0$; `exponential_golomb<Order>` accepts orders 0 through
 63. Byte policies retain the default parameter and encode counts with varints.
-All associated types retain the same choice as the fridge.
+All associated types retain the same choice as the multiverse.
 
 For a backspace of $b$ bits, `golomb<M>` encodes the quotient $\lfloor b/M\rfloor$
 as that many zero bits followed by one, then encodes $b\bmod M$ in truncated
@@ -299,7 +299,7 @@ use the opaque profile transport in the active runtime.
 
 ### Sort selection is a protocol
 
-I keep sorts within one cola, but the store need not traverse a binary tree to
+I keep sorts within one world, but the store need not traverse a binary tree to
 select them. `bin` and `tip` describe a prefix-free family. A selector can compile
 that family to a nibble lookup table, a byte switch, or generated decoding code.
 The physical reader depends on the selection protocol, not that implementation.
@@ -339,7 +339,7 @@ and retained position; it must not invent missing key bytes from an unrelated
 query. The mixed-format implementation must make that context explicit.
 
 A blob can therefore be independently **walkable** while still needing the
-cola's routing context to reconstruct full keys. I do not want a full-key
+world's routing context to reconstruct full keys. I do not want a full-key
 restart anchor added merely to make sequential grammar dispatch convenient.
 The existing opaque-profile codec and the standalone typed record codec are
 documented separately; neither is evidence that this entire mixed mapped
@@ -485,7 +485,7 @@ $$
 \phi_{s,x}(\mathrm{absent})=0.
 $$
 
-The cola fingerprint is the finite sum of these potentials, and an update
+The world fingerprint is the finite sum of these potentials, and an update
 from $v$ to $v'$ contributes
 $\phi_{s,x}(v')-\phi_{s,x}(v)$. The [arrow design](arrows.md) states the
 more general potential law and composition requirements. Absence has zero
@@ -523,7 +523,7 @@ establish the quality of every hash construction over that field.
 
 ## 8. Pin interpretation with the data
 
-A cola must pin the sort registry and interpretation versions its blobs need.
+A world must pin the sort registry and interpretation versions its blobs need.
 The registry records the shared storage policy and determines sort codes,
 canonical encoding and comparison, hashing strategies, and how the category
 is selected from `(s,x)`.
@@ -600,10 +600,10 @@ the named target. The high-level pipeline retains the exact pair that produced
 its samples. Query preparation checks navigation shape once; content provenance
 remains an explicit trusted-construction or validation requirement.
 
-`fridge<P>` holds an existing object directory, opens checked `file<P>`
+`multiverse<P>` holds an existing object directory, opens checked `file<P>`
 envelopes under canonical object-ID paths, seals immutable objects and reopens
 prepared mmap query chains. Its component aliases retain the same policy.
-Its `cola`, `timeline` and `branch_point` aliases name forward-declared
+Its `world`, `timeline` and `branch_point` aliases name forward-declared
 aggregate types. The separate [SQLite catalog](sqlite-catalog.md) owns durable
 reservations, immutable saved roots, conditional timeline publication and reader pins.
 Named connections use typed snapshots and persist complete merge frontiers.
@@ -614,13 +614,13 @@ validate a whole prefix-free registry. Object access validates headers by
 default; `file_open_mode::trusted` defers that validation until an explicit
 metadata request or scan.
 
-`typed_cola` exposes typed reads and conditional contributions from a snapshot.
+`typed_world` exposes typed reads and conditional contributions from a snapshot.
 `typed_engine` exposes unconditional mutable commands, validates old values,
 dispatches merges through the complete registry, and maintains the live count
 and signature. `sort_semantics<S>::hash_key(key)` and `hash_value(key,state)`
 exclude the sort-code bits. General arrows fold in chronological order; a
 replacement sort can stop at the first matching occurrence. The
-[typed guide](typed-cola.md) gives the implemented contracts and costs.
+[typed guide](typed-world.md) gives the implemented contracts and costs.
 
 Codec acceptance must cover:
 
@@ -668,17 +668,17 @@ Dispatch encloses the work loop. Once selected, specialized code processes the
 sort's run without redispatching every record. The selected handler persists
 until a sort transition or work yields. Inlining small internal seams can help;
 it does not replace that structural removal of dispatch. Internal helper
-attributes such as `diet_inline`, `diet_pure` or `diet_const` must not impose
+attributes such as `everett_inline`, `everett_pure` or `everett_const` must not impose
 attributes on user selectors, codecs or callbacks, or force every large
 specialized loop into its callers.
 
 The current typed runtime persists and checks one stable semantic `schema_id`.
 The version-dispatch protocol is an extension for historical readers, explicit
 validation and resumption. Normal opening stays metadata-only. Full validation
-uses the old cola's context wherever decoding needs inherited key material.
+uses the old world's context wherever decoding needs inherited key material.
 
 I am happy to begin migration with an **offline whole-database worker**. It
-reads a pinned old cola with its old handlers and context, transforms keys and
+reads a pinned old world with its old handlers and context, transforms keys and
 values, writes fresh native files and fractional indexes, then durably publishes
 the new root. Old snapshots keep their original files and interpretation.
 Sophisticated online mixed-schema migration is not a prerequisite for this path.

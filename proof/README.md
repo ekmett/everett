@@ -1,16 +1,16 @@
-Diet: An Abstract Proof Core
+Everett: An Abstract Proof Core
 ==============================
 
-I use this small Lean model to check the laws behind Diet's composable updates
+I use this small Lean model to check the laws behind Everett's composable updates
 and persistent representations. We can execute its admission and ownership
 operations, and Lean checks the accompanying theorems. I keep this model separate
 from the C++ implementation: a proof about these definitions does not by itself
-verify the codecs, memory accesses or disk operations in `include/diet/`.
+verify the codecs, memory accesses or disk operations in `include/everett/`.
 
 The [design](../docs/design.md), [per-key categories](../docs/arrows.md) and
 [implementation ledger](../docs/implementation.md) give the surrounding context.
 The first theorem connecting composition to publication is
-`Diet.adopt_adjacent_merge`: replacing two adjacent changes by their composite
+`Everett.adopt_adjacent_merge`: replacing two adjacent changes by their composite
 preserves the adopted root's full arrow meaning. We establish that equality from
 the category laws, without treating equal fingerprints as equal states.
 
@@ -47,33 +47,33 @@ Field guide
 
 | Module | Definitions and checked properties |
 | --- | --- |
-| [Category](Diet/Category.lean) | An explicit category policy; source/target-indexed histories; composition of concatenated histories; adjacent contraction in an arbitrary chronological context; binary-tree reassociation with the same ordered leaves |
-| [Updates](Diet/Updates.lean) | A dependent family of state types and categories; componentwise cola arrows; the typed disjoint-coordinate square; exact-source-checked single-key admission; target correctness; commutation of two valid updates at distinct keys |
-| [Fingerprint](Diet/Fingerprint.lean) | Integer state potentials; endpoint-delta composition; history telescoping; adjacent-merge contribution preservation; the sum of per-key deltas over `Fin n` |
-| [Snapshots](Diet/Snapshots.lean) | Exact pair/target identities; immutable catalog extension; owner-rooted reachability; snapshot retention and read preservation; complete-target readiness; eligible reclamation; independent adoption with an explicit semantic premise |
-| [Allocation](Diet/Allocation.lean) | A monotone allocation watermark, fresh installation and non-reuse of issued IDs across allocation/reclamation sequences |
-| [Adoption](Diet/Adoption.lean) | Discharges the semantic adoption premise for chronological adjacent merges, using the actual history-composition theorem |
-| [Fractional](Diet/Fractional.lean) | Stable tagged merging; exact every-Kth samples; sampled predecessor windows; endpoint-rank projections; local/global predecessor equivalence; false-borrow recovery for unique native keys; a list-level index builder and exact-target retention |
-| [DualRoute](Diet/DualRoute.lean) | Three-origin rank windows share one entry budget; independent main/secondary predecessors and optional cut-LCP repairs; terminal-secondary traversal visits at most twice the main height |
-| [Prefix](Diet/Prefix.lean) | Finite-string lexicographic order, prefix interval convexity and the exact LCP minimum for three ordered strings |
-| [Framing](Diet/Framing.lean) | Retained prefixes and reconstructed key lengths stay within physical stream extents; admitted extent bounds imply bounded conversion to bits |
-| [Frontier](Diet/Frontier.lean) | Merge-head ordering from carried LCP lengths, suffix-only comparison at equal lengths, and exact new frontier lengths |
-| [Transfer](Diet/Transfer.lean) | Content-mismatch transfers, the literal-position invariant, composition and associative ordered summaries |
-| [NativeMerge](Diet/NativeMerge.lean) | Executable two-way merging of strictly ordered native runs; unique sorted output; optional pointwise lookup composition; chronological reassociation and disjoint-support commutation |
-| [Examples](Diet/Examples.lean) | Heterogeneous keys, valid and stale sources, noncommutative histories, changed index/target versions, and an old target that cannot be reclaimed while a snapshot retains it |
-| [FractionalExamples](Diet/FractionalExamples.lean) | K=3 and K=15, equal keys across several cuts, empty native projections, false-borrow recovery, empty targets, before-first queries, short tails and stored-index routing |
-| [Audit](Diet/Audit.lean) | Rejects unexpected axioms in every kernel-safe `Diet` declaration and its transitive dependencies |
+| [Category](Everett/Category.lean) | An explicit category policy; source/target-indexed histories; composition of concatenated histories; adjacent contraction in an arbitrary chronological context; binary-tree reassociation with the same ordered leaves |
+| [Updates](Everett/Updates.lean) | A dependent family of state types and categories; componentwise world arrows; the typed disjoint-coordinate square; exact-source-checked single-key admission; target correctness; commutation of two valid updates at distinct keys |
+| [Fingerprint](Everett/Fingerprint.lean) | Integer state potentials; endpoint-delta composition; history telescoping; adjacent-merge contribution preservation; the sum of per-key deltas over `Fin n` |
+| [Snapshots](Everett/Snapshots.lean) | Exact pair/target identities; immutable catalog extension; owner-rooted reachability; snapshot retention and read preservation; complete-target readiness; eligible reclamation; independent adoption with an explicit semantic premise |
+| [Allocation](Everett/Allocation.lean) | A monotone allocation watermark, fresh installation and non-reuse of issued IDs across allocation/reclamation sequences |
+| [Adoption](Everett/Adoption.lean) | Discharges the semantic adoption premise for chronological adjacent merges, using the actual history-composition theorem |
+| [Fractional](Everett/Fractional.lean) | Stable tagged merging; exact every-Kth samples; sampled predecessor windows; endpoint-rank projections; local/global predecessor equivalence; false-borrow recovery for unique native keys; a list-level index builder and exact-target retention |
+| [DualRoute](Everett/DualRoute.lean) | Three-origin rank windows share one entry budget; independent main/secondary predecessors and optional cut-LCP repairs; terminal-secondary traversal visits at most twice the main height |
+| [Prefix](Everett/Prefix.lean) | Finite-string lexicographic order, prefix interval convexity and the exact LCP minimum for three ordered strings |
+| [Framing](Everett/Framing.lean) | Retained prefixes and reconstructed key lengths stay within physical stream extents; admitted extent bounds imply bounded conversion to bits |
+| [Frontier](Everett/Frontier.lean) | Merge-head ordering from carried LCP lengths, suffix-only comparison at equal lengths, and exact new frontier lengths |
+| [Transfer](Everett/Transfer.lean) | Content-mismatch transfers, the literal-position invariant, composition and associative ordered summaries |
+| [NativeMerge](Everett/NativeMerge.lean) | Executable two-way merging of strictly ordered native runs; unique sorted output; optional pointwise lookup composition; chronological reassociation and disjoint-support commutation |
+| [Examples](Everett/Examples.lean) | Heterogeneous keys, valid and stale sources, noncommutative histories, changed index/target versions, and an old target that cannot be reclaimed while a snapshot retains it |
+| [FractionalExamples](Everett/FractionalExamples.lean) | K=3 and K=15, equal keys across several cuts, empty native projections, false-borrow recovery, empty targets, before-first queries, short tails and stored-index routing |
+| [Audit](Everett/Audit.lean) | Rejects unexpected axioms in every kernel-safe `Everett` declaration and its transitive dependencies |
 
 Examples
 --------
 
 The checked fixture assigns a natural-number state to one key and a Boolean
-state to another. We can prove equality of the resulting colas, not merely
+state to another. We can prove equality of the resulting worlds, not merely
 equality of their hashes:
 
 ```lean
-import Diet
-open Diet Diet.examples
+import Everett
+open Everett Everett.examples
 
 example : mutation.apply_two initial increment enable =
     mutation.apply_two initial enable increment :=
@@ -81,7 +81,7 @@ example : mutation.apply_two initial increment enable =
 ```
 
 Both changes are valid against `initial`. Their distinct keys make either
-intermediate cola a valid source for the other change. If we instead reverse
+intermediate world a valid source for the other change. If we instead reverse
 `increment` and `next`, which act on the same key, the second ordering fails its
 source check. `Examples.lean` checks both outcomes.
 
@@ -312,21 +312,21 @@ What the assumptions mean
 -------------------------
 
 I expose category laws as fields of `category`: identity and associativity are
-requirements on a policy, not axioms asserting Diet's desired result. The
+requirements on a policy, not axioms asserting Everett's desired result. The
 replacement and noncommutative word policies supply concrete proofs of those
 laws. Histories have typed endpoints, so a chain cannot contain an arrow whose
 source differs from the preceding arrow's target.
 
 `mutation.apply` is an executable **endpoint-state projection**. It checks the
 exact old state and installs the target of an admissible arrow. It does not
-retain the arrow or evaluate a compact diff. `cola_category`, `history`, and
+retain the arrow or evaluate a compact diff. `world_category`, `history`, and
 the adoption theorem describe full arrow semantics separately. I have not yet
 proved an executor refinement connecting those two layers, or arbitrary
 partition-batch replay and duplicate-delivery suppression.
 
-`cola_category` supports a category depending on the full key. This first model
-uses ordinary dependent function colas; it does not yet construct the restricted
-product of colas with finite support relative to a baseline. The fingerprint
+`world_category` supports a category depending on the full key. This first model
+uses ordinary dependent function worlds; it does not yet construct the restricted
+product of worlds with finite support relative to a baseline. The fingerprint
 sum explicitly enumerates `Fin n`, so each key in that finite universe occurs
 once. Potentials take values in exact integers:
 
@@ -357,7 +357,7 @@ assuming that an unverified external index satisfies them.
 Axiom audit and verification boundary
 ------------------------------------
 
-`Audit.lean` visits every kernel-safe declaration in the `Diet` namespace,
+`Audit.lean` visits every kernel-safe declaration in the `Everett` namespace,
 collects its transitive axiom dependencies, and fails the build if it finds
 anything outside Lean's standard `propext`, `Quot.sound` and `Classical.choice`
 foundations. The build reports the declaration count and the actual dependencies.
@@ -385,10 +385,10 @@ Contact Information
 -------------------
 
 Contributions and bug reports are welcome through the
-[Diet issue tracker](https://github.com/ekmett/diet/issues).
+[Everett issue tracker](https://github.com/ekmett/everett/issues).
 I can also be reached at <ekmett@gmail.com>.
 
-This proof layer uses the same [dual license](../LICENSE) as Diet:
+This proof layer uses the same [dual license](../LICENSE) as Everett:
 BSD-2-Clause **or** Apache-2.0, at the recipient's choice.
 
 -Edward Kmett

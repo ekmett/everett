@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Benchmarks Diet's packed rank15 summation and lookup.
+ * \brief Benchmarks Everett's packed rank15 summation and lookup.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/rank15.h>
+#include <everett/rank15.h>
 
 #include <algorithm>
 #include <array>
@@ -36,12 +36,12 @@ namespace {
     return unsigned((value * 0x0101010101010101ull) >> 56);
   }
 
-  [[gnu::noinline]] std::uint64_t public_rank(diet::rank15_view const & view,
+  [[gnu::noinline]] std::uint64_t public_rank(everett::rank15_view const & view,
                                            std::uint64_t group) {
     return view.rank(group);
   }
 
-  [[gnu::noinline]] std::uint64_t public_range(diet::rank15_view const & view,
+  [[gnu::noinline]] std::uint64_t public_range(everett::rank15_view const & view,
                                             std::uint64_t first, std::uint64_t last) {
     if (first == last) return 0;
     auto hi = view.rank(last - 1) + view.class_at(last - 1);
@@ -101,7 +101,7 @@ int main(int argc, char ** argv) {
     for (std::size_t groups : {std::size_t{1} << 16, std::size_t{1} << 22}) {
       std::vector<std::uint8_t> source(groups);
       for (auto & value : source) value = random() & 15;
-      auto index = diet::rank15_index::build(source, groups * 15);
+      auto index = everett::rank15_index::build(source, groups * 15);
       auto view = index.view();
       std::array<std::uint64_t, 65536> queries{};
       for (char const * mode : {"random", "tail15", "checkpoint"}) {

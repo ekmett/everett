@@ -89,7 +89,7 @@ def main():
               if args.sanitize else ["-O3", "-DNDEBUG"])
     variants = [("baseline_w15", "baseline", []), ("candidate_w15", "candidate", [])]
     if args.w16:
-        variants.append(("candidate_w16", "candidate", ["-DDIET_QUERY_COMPARE_W16=1"]))
+        variants.append(("candidate_w16", "candidate", ["-DEVERETT_QUERY_COMPARE_W16=1"]))
     commands = {}
     executables = {}
     for name, revision, definitions in variants:

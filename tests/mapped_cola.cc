@@ -7,9 +7,9 @@
  * \endlicense
  */
 
-#include <diet/mapped_cola.h>
-#include <diet/native_writer.h>
-#include <diet/sections.h>
+#include <everett/mapped_cola.h>
+#include <everett/native_writer.h>
+#include <everett/sections.h>
 
 #include <algorithm>
 #include <array>
@@ -34,7 +34,7 @@
 #endif
 
 namespace {
-  using namespace diet;
+  using namespace everett;
 
   template <class T> concept temporary_chunks = requires(T && value) { std::move(value).chunks(); };
   template <class T> concept temporary_view = requires(T && value) { std::move(value).view(); };
@@ -49,7 +49,7 @@ namespace {
   }
 
   // Read original key bits directly. Expected ordering, LCPs, matches and
-  // merged origins do not depend on Diet's optimized comparison or codecs.
+  // merged origins do not depend on Everett's optimized comparison or codecs.
   bool original_bit(bit_view value, std::uint64_t i) {
     require(i < value.size(), "oracle bit outside input");
     auto at = value.offset() + i;
@@ -141,13 +141,13 @@ namespace {
     std::filesystem::path path;
     temporary_directory() {
 #if defined(__unix__) || defined(__APPLE__)
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-mapped-blob-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-mapped-blob-XXXXXX").string();
       auto result = ::mkdtemp(pattern.data());
       if (!result) throw std::system_error(errno, std::generic_category(), "create mapped blob fixture");
       path = result;
 #else
       for (unsigned i = 0; i < 10000; ++i) {
-        auto candidate = std::filesystem::temp_directory_path() / ("diet-mapped-blob-" + std::to_string(i));
+        auto candidate = std::filesystem::temp_directory_path() / ("everett-mapped-blob-" + std::to_string(i));
         if (std::filesystem::create_directory(candidate)) { path = std::move(candidate); return; }
       }
       throw std::runtime_error("cannot reserve mapped blob fixture directory");
@@ -633,17 +633,17 @@ namespace {
 
 int main() {
   try {
-    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<13>>>>, 3, golomb<3>, 16>>();
-    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 7, exponential_golomb<2>, 15>>();
-    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<fixed_values<7>>>>, 15, exponential_golomb<0>, 16>>();
-    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 15, golomb<17>, 15>>();
-    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 31, exponential_golomb<0>, 15>>();
-    matrix<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<0>>>>, 31, exponential_golomb<1>, 16>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<13>>>>, 3, golomb<3>, 16>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<0>>>>, 7, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 7, exponential_golomb<2>, 15>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<7>>>>, 15, exponential_golomb<0>, 16>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 15, golomb<17>, 15>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 31, exponential_golomb<0>, 15>>();
+    matrix<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<0>>>>, 31, exponential_golomb<1>, 16>>();
 #if defined(__unix__) || defined(__APPLE__)
-    metadata_only<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 15>>();
-    metadata_only<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<fixed_values<13>>>>, 7, golomb<3>, 16>>();
+    metadata_only<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 15>>();
+    metadata_only<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<fixed_values<13>>>>, 7, golomb<3>, 16>>();
 #endif
     std::cout << "mapped COLA tests passed\n";
   } catch (std::exception const & error) {

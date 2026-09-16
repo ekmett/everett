@@ -9,14 +9,14 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/sqlite_catalog.h>
-#include <diet/sort_runtime.h>
+#include <everett/sqlite_catalog.h>
+#include <everett/sort_runtime.h>
 
 #include <cassert>
 #include <iostream>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using P = storage_policy<string_registry, 3>;
   using core = typed_engine<P, wrapping_fingerprint_algebra, 256, sort_runtime_family<P>>;
   object_id id(unsigned n) {
@@ -25,7 +25,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-pair-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-pair-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -58,7 +58,7 @@ namespace {
     using node = redundant_node<P, Storage>;
     using index = typename node::built_type;
     temporary dir;
-    auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     unsigned serial = 100;
     auto seal = [&](auto const & encoded, file_kind kind) {
       auto object = id(serial++);

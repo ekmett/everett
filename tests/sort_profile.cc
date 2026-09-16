@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/sort_profile_file.h>
-#include <diet/sort_profile_merge.h>
+#include <everett/sort_profile_file.h>
+#include <everett/sort_profile_merge.h>
 
 #include <fstream>
 #include <iostream>
@@ -21,7 +21,7 @@
 #endif
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void check(bool value, char const * message) { if (!value) throw std::runtime_error(message); }
   template <class F> void rejects(F && f) {
     try { f(); } catch (std::exception const &) { return; }
@@ -329,7 +329,7 @@ namespace {
   }
 }
 int main() try {
-  root = std::filesystem::temp_directory_path() / ("diet-sort-profile-" + std::to_string(
+  root = std::filesystem::temp_directory_path() / ("everett-sort-profile-" + std::to_string(
     std::chrono::steady_clock::now().time_since_epoch().count()));
   std::filesystem::create_directory(root);
   framing(); partial_bit_keys(); policy_and_corruption(); shared_selector_seed(); cascade_and_merge(); no_inherited_key_reads(); metadata_only(); std::filesystem::remove_all(root);

@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/cola_runtime.h>
+#include <everett/cola_runtime.h>
 #include <iostream>
 #include <cstdio>
 #include <filesystem>
@@ -21,7 +21,7 @@
 #include <string>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void check(bool value, char const * message) { if (!value) throw std::runtime_error(message); }
   template <class E = std::logic_error, class F> void rejects(F && f) {
     bool caught = false; try { f(); } catch (E const &) { caught = true; }
@@ -194,7 +194,7 @@ namespace {
     unsigned serial = 1;
     object_attempt_id attempt{std::string(32, 'e')};
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-runtime-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-runtime-XXXXXX").string();
       auto made = ::mkdtemp(name.data()); if (!made) throw std::runtime_error("mkdtemp"); root = made;
     }
     ~temporary() { std::error_code ignored; std::filesystem::remove_all(root, ignored); }
@@ -211,7 +211,7 @@ namespace {
       std::optional<blob_identity> target_id;
       if (target) target_id = target->identity();
       encode_cola_sections(*(*i)->built(), native_id, target_id).seal(files.root, index_id, files.attempt);
-      auto mapped_native = std::make_shared<diet::mapped_native<P> const>(diet::mapped_native<P>::open(
+      auto mapped_native = std::make_shared<everett::mapped_native<P> const>(everett::mapped_native<P>::open(
         files.root / object_path(native_id, file_kind::native_blob)));
       auto index = std::make_shared<mapped_cola_index<P> const>(mapped_cola_index<P>::open(
         files.root / object_path(index_id, file_kind::fractional_index)));
@@ -276,13 +276,13 @@ namespace {
 
 }
 int main() {
-  using bits = diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, diet::golomb<3>, 5>;
-  using bytes = diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 7, diet::exponential_golomb<0>, 4>;
+  using bits = everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 3, everett::golomb<3>, 5>;
+  using bytes = everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 7, everett::exponential_golomb<0>, 4>;
   scenario<bits>(); scenario<bytes>(); composition<bits>(); composition<bytes>(); failures<bits>(); failures<bytes>(); batch<bits>(); batch<bytes>();
-  using fixed = diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<diet::fixed_values<3>>>>, 15, diet::exponential_golomb<0>, 2>;
+  using fixed = everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<everett::fixed_values<3>>>>, 15, everett::exponential_golomb<0>, 2>;
   scenario<fixed>();
 #if defined(__APPLE__) || defined(__linux__)
   mapped_restore<bits>(); mapped_restore<bytes>();
 #endif
-  std::cout << "cola runtime tests passed\n";
+  std::cout << "world runtime tests passed\n";
 }

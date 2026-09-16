@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/mapped_cola.h>
+#include <everett/mapped_cola.h>
 
 #include <algorithm>
 #include <array>
@@ -44,7 +44,7 @@ void operator delete[](void * pointer, std::size_t) noexcept { std::free(pointer
 #include <sys/mman.h>
 #include <unistd.h>
 namespace {
-  using namespace diet;
+  using namespace everett;
   void require(bool condition, char const * message) { if (!condition) throw std::runtime_error(message); }
   template <class F> void rejects(F && action) {
     bool rejected = false;
@@ -54,7 +54,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-cola-terminal-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-world-terminal-XXXXXX").string();
       auto result = ::mkdtemp(name.data());
       if (!result) throw std::runtime_error("mkdtemp");
       root = result;
@@ -162,8 +162,8 @@ namespace {
 int main() {
 #if defined(__APPLE__) || defined(__linux__)
   try {
-    run<diet::storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, diet::exponential_golomb<0>, 16>>();
-    run<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<diet::fixed_values<0>>>>, 15, diet::exponential_golomb<0>, 16>>();
+    run<everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, everett::exponential_golomb<0>, 16>>();
+    run<everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<everett::fixed_values<0>>>>, 15, everett::exponential_golomb<0>, 16>>();
     std::cout << "Payload-free COLA terminal checks passed\n";
   } catch (std::exception const & error) { fail_allocation = false; std::cerr << error.what() << '\n'; return 1; }
 #endif

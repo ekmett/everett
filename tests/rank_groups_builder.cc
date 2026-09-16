@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/rank_groups.h>
+#include <everett/rank_groups.h>
 
 #include <array>
 #include <cstdlib>
@@ -41,7 +41,7 @@ void operator delete(void * p, std::size_t) noexcept { std::free(p); }
 void operator delete[](void * p, std::size_t) noexcept { std::free(p); }
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void require(bool value, char const * message) {
     if (!value) throw std::runtime_error(message);
   }

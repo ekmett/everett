@@ -3,7 +3,7 @@
 
 #include "policy_compat.h"
 
-#include <diet/cola_sections.h>
+#include <everett/cola_sections.h>
 
 #include <chrono>
 #include <cstdint>
@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-using namespace diet;
+using namespace everett;
 
 template <class P> void run(unsigned prefix, unsigned rounds, std::filesystem::path const & dump) {
   using node = cola_index<P>;
@@ -75,9 +75,9 @@ int main(int argc, char ** argv) {
   std::filesystem::path dump = argc > 2 ? argv[2] : "";
   if (!dump.empty()) std::filesystem::create_directories(dump);
   for (unsigned prefix : {0u, 4096u}) {
-    run<diet_bench::policy<profile_unit::byte, variable_values, 3>>(prefix, rounds, dump);
-    run<diet_bench::policy<profile_unit::byte, variable_values, 15>>(prefix, rounds, dump);
-    run<diet_bench::policy<profile_unit::bit, variable_values, 3, golomb<3>>>(prefix, rounds, dump);
-    run<diet_bench::policy<profile_unit::bit, variable_values, 15>>(prefix, rounds, dump);
+    run<everett_bench::policy<profile_unit::byte, variable_values, 3>>(prefix, rounds, dump);
+    run<everett_bench::policy<profile_unit::byte, variable_values, 15>>(prefix, rounds, dump);
+    run<everett_bench::policy<profile_unit::bit, variable_values, 3, golomb<3>>>(prefix, rounds, dump);
+    run<everett_bench::policy<profile_unit::bit, variable_values, 15>>(prefix, rounds, dump);
   }
 }

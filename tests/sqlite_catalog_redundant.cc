@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/redundant_checkpoint.h>
-#include <diet/connection.h>
+#include <everett/redundant_checkpoint.h>
+#include <everett/connection.h>
 
 #include <cassert>
 #include <fstream>
@@ -18,7 +18,7 @@
 #include <map>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using P = storage_policy<tip<encoded_sort<bit_encoding<>>>, 3>;
   using family = redundant_runtime_family<P>;
   using runtime = redundant_runtime<P>;
@@ -26,7 +26,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-redundant-store-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-redundant-store-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -60,7 +60,7 @@ namespace {
   }
   void restart_every_stage() {
     temporary dir; auto storage = store::create(dir.root); runtime active;
-    auto published = storage.create_tap("stages", active.snapshot());
+    auto published = storage.create_session("stages", active.snapshot());
     active.try_contribute(row("a", "first")); active.try_contribute(row("b", "second"));
     unsigned seen = 0, steps = 0;
     while (active.pending()) {
@@ -92,10 +92,10 @@ namespace {
           // must still refuse a hidden artifact omitted from durable pins.
           auto catalog = sqlite_catalog<P>::open(dir.root);
           auto name = "missing-pin-" + std::to_string(now);
-          auto forged = catalog.fork_tap(name + "-fork", name, saved->head);
+          auto forged = catalog.fork_session(name + "-fork", name, saved->head);
           auto pins = forged.auxiliary;
           if (now == 2) pins.natives.clear(); else pins.pairs.clear();
-          (void)catalog.publish_tap(name + "-publish", forged, forged.timeline.head, forged.checkpoint, pins);
+          (void)catalog.publish_session(name + "-publish", forged, forged.timeline.head, forged.checkpoint, pins);
           auto invalid = store::open(dir.root);
           // Prime this adapter with the larger valid closure first. A later
           // restricted decode must not borrow the omitted pins from its cache.
@@ -121,7 +121,7 @@ namespace {
   }
   void lifecycle() {
     temporary dir; auto storage = store::create(dir.root); runtime active;
-    auto current = storage.create_tap("live", active.snapshot());
+    auto current = storage.create_session("live", active.snapshot());
     std::map<std::string, std::string> expected, history;
     std::optional<stored_runtime<P, family>> saved;
     for (unsigned n = 0; n != 48; ++n) {
@@ -145,7 +145,7 @@ namespace {
   }
   void metadata_only_reopen() {
     temporary dir; auto storage = store::create(dir.root); runtime active;
-    auto current = storage.create_tap("metadata", active.contribute(row("key", "payload")));
+    auto current = storage.create_session("metadata", active.contribute(row("key", "payload")));
     auto object = current.snapshot.frontier().root.main;
     auto native = object->native->mapped(); assert(native && native->view().bytes().size());
     auto id = object->pair->mapped()->identity().native;

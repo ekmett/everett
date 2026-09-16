@@ -9,12 +9,12 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/sort_runtime_context.h>
+#include <everett/sort_runtime_context.h>
 
 #include <iostream>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   using P = string_policy;
   using storage = sort_file_runtime_storage<P>;
@@ -30,7 +30,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-sorted-native-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-sorted-native-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -84,7 +84,7 @@ namespace {
   }
 
   void strings_and_adaptation() {
-    temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id());
+    temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id());
     auto disk = storage::open_for_schema(dir.root, "initial-strings/1");
     disk.check_schema("initial-strings/1");
     std::vector<profile_record> records;
@@ -171,7 +171,7 @@ namespace {
     auto expected = reference.finish();
     auto owned = mixed_storage::sorted_native(records);
     verify(owned, expected, records);
-    temporary dir; auto catalog = sqlite_catalog<mixed_policy>::create_taps(dir.root, id());
+    temporary dir; auto catalog = sqlite_catalog<mixed_policy>::create_sessions(dir.root, id());
     auto disk = mixed_file::open(dir.root, {}, {}, {}, {}, {0, 0});
     auto streamed = disk.sorted_native(records);
     verify(streamed, expected, records);
@@ -197,7 +197,7 @@ namespace {
       if (mode == 5) { sort_bit_writer out(records[0].value); out.write_bits(0, 1); }
       if (mode == 6) records[0].key.bytes.back() |= std::byte{1}; // Noncanonical tail padding.
       rejects([&] { (void)owned_storage::sorted_native(records); });
-      temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id());
+      temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id());
       auto disk = storage::open(dir.root);
       rejects([&] { (void)disk.sorted_native(records); });
       check(disk.context()->failed() && !disk.context()->sealed_outputs() && !files(dir.root),
@@ -232,7 +232,7 @@ namespace {
     std::array records{string_record("a", "one"), string_record("b", "two")};
     auto old = owned_storage::sorted_native(records);
     for (unsigned mode = 0; mode != 6; ++mode) {
-      temporary dir; auto catalog = sqlite_catalog<P>::create_taps(dir.root, id());
+      temporary dir; auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id());
       auto state = std::make_shared<faults>();
       if (mode < 2) state->file = int(mode + 1);
       else { state->commit = (mode - 2) / 2 + 1; state->after = mode & 1; }

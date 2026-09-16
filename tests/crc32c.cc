@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Tests Diet's CRC32C behavior.
+ * \brief Tests Everett's CRC32C behavior.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/crc32c.h>
+#include <everett/crc32c.h>
 
 #if defined(CRC_AINLINE) || defined(CRC_ALIGN) || defined(CRC_EXPORT) || defined(clmul_lo) || defined(clmul_hi)
 #error "generated CRC macros leaked into the consumer"
@@ -50,7 +50,7 @@ namespace {
     auto expected = oracle(input, initial);
     auto data = reinterpret_cast<char const *>(input.data());
     auto size = input.size();
-    using namespace diet::crc32c_detail;
+    using namespace everett::crc32c_detail;
     require(portable::crc32_impl(initial, data, size) == expected, "portable CRC mismatch");
 #if defined(__aarch64__) && defined(__ARM_FEATURE_CRC32) && (defined(__GNUC__) || defined(__clang__))
     require(arm_scalar::crc32_impl(initial, data, size) == expected, "Arm scalar CRC mismatch");
@@ -72,22 +72,22 @@ namespace {
 #endif
 #endif
 #endif
-    require(diet::crc32c(input, initial) == expected, "seeded public CRC mismatch");
-    if (initial == 0) require(diet::crc32c(input) == expected, "default public CRC mismatch");
+    require(everett::crc32c(input, initial) == expected, "seeded public CRC mismatch");
+    if (initial == 0) require(everett::crc32c(input) == expected, "default public CRC mismatch");
   }
 
   void known_vectors() {
-    require(diet::crc32c({}) == 0, "empty CRC mismatch");
+    require(everett::crc32c({}) == 0, "empty CRC mismatch");
     auto text = std::string_view("123456789");
-    require(diet::crc32c(std::as_bytes(std::span(text))) == 0xe3069283u, "standard CRC vector mismatch");
+    require(everett::crc32c(std::as_bytes(std::span(text))) == 0xe3069283u, "standard CRC vector mismatch");
     std::array<std::byte, 32> input{};
-    require(diet::crc32c(input) == 0x8a9136aau, "zero CRC vector mismatch");
+    require(everett::crc32c(input) == 0x8a9136aau, "zero CRC vector mismatch");
     input.fill(std::byte{0xff});
-    require(diet::crc32c(input) == 0x62a8ab43u, "ones CRC vector mismatch");
+    require(everett::crc32c(input) == 0x62a8ab43u, "ones CRC vector mismatch");
     for (unsigned i = 0; i < input.size(); ++i) input[i] = std::byte(i);
-    require(diet::crc32c(input) == 0x46dd794eu, "increasing CRC vector mismatch");
+    require(everett::crc32c(input) == 0x46dd794eu, "increasing CRC vector mismatch");
     std::reverse(input.begin(), input.end());
-    require(diet::crc32c(input) == 0x113fdb5cu, "decreasing CRC vector mismatch");
+    require(everett::crc32c(input) == 0x113fdb5cu, "decreasing CRC vector mismatch");
   }
 
   // Independent linear-map oracle: square the one-byte state transition as a
@@ -126,9 +126,9 @@ namespace {
       auto whole = input.first(size);
       auto expected = oracle(whole);
       for (std::size_t split = 0; split <= size; split += size > 513 ? 31 : 1)
-        require(diet::crc32c_combine(oracle(whole.first(split)), oracle(whole.subspan(split)), size - split) == expected,
+        require(everett::crc32c_combine(oracle(whole.first(split)), oracle(whole.subspan(split)), size - split) == expected,
                 "combined CRC differs from independent concatenation");
-      require(diet::crc32c_combine(expected, 0, 0) == expected, "empty suffix CRC combine");
+      require(everett::crc32c_combine(expected, 0, 0) == expected, "empty suffix CRC combine");
     }
     // Prefix replacement is what permits finalizing a section directory
     // without reading the already-streamed FC and navigation payload again.
@@ -136,7 +136,7 @@ namespace {
       auto replacement = storage;
       for (std::size_t i = 0; i != prefix; ++i) replacement[i] ^= std::byte{0xa7};
       auto difference = oracle(input.first(prefix)) ^ oracle(bytes(replacement).first(prefix));
-      auto adjusted = oracle(input) ^ diet::crc32c_combine(difference, 0, input.size() - prefix);
+      auto adjusted = oracle(input) ^ everett::crc32c_combine(difference, 0, input.size() - prefix);
       require(adjusted == oracle(replacement), "CRC prefix adjustment rereads suffix incorrectly");
     }
     for (unsigned bit = 0; bit != 64; ++bit) {
@@ -144,7 +144,7 @@ namespace {
       for (auto length : {count - 1, count, count | (count - 1)}) {
         auto first = static_cast<std::uint32_t>(random());
         auto second = static_cast<std::uint32_t>(random());
-        require(diet::crc32c_combine(first, second, length) == (shift_oracle(first, length) ^ second),
+        require(everett::crc32c_combine(first, second, length) == (shift_oracle(first, length) ^ second),
                 "combined CRC lost high length bits");
       }
     }
@@ -169,10 +169,10 @@ namespace {
           check(bytes(input).subspan(offset, std::size_t(std::ptrdiff_t(center) + delta)));
     // The generated incremental convention must agree with concatenation.
     for (std::size_t split = 0; split < 2048; split += 17) {
-      auto first = diet::crc32c(bytes(input).first(split));
+      auto first = everett::crc32c(bytes(input).first(split));
       check(bytes(input).subspan(split, 2048 - split), first);
-      auto second = diet::crc32c(bytes(input).subspan(split, 2048 - split), first);
-      require(second == diet::crc32c(bytes(input).first(2048)), "incremental CRC mismatch");
+      auto second = everett::crc32c(bytes(input).subspan(split, 2048 - split), first);
+      require(second == everett::crc32c(bytes(input).first(2048)), "incremental CRC mismatch");
     }
   }
 
@@ -186,16 +186,16 @@ namespace {
       auto input = bytes(storage).subspan(offset, 196608);
       for (auto seed : seeds) {
         auto expected = oracle(input, seed);
-        require(diet::crc32c(input, seed) == expected, "large seeded public CRC mismatch");
+        require(everett::crc32c(input, seed) == expected, "large seeded public CRC mismatch");
         std::size_t at = 0;
         auto incremental = seed;
         for (auto size : chunks) {
           size = std::min(size, input.size() - at);
-          incremental = diet::crc32c(input.subspan(at, size), incremental);
+          incremental = everett::crc32c(input.subspan(at, size), incremental);
           at += size;
-          require(diet::crc32c({}, incremental) == incremental, "empty chunk changed CRC state");
+          require(everett::crc32c({}, incremental) == incremental, "empty chunk changed CRC state");
         }
-        incremental = diet::crc32c(input.subspan(at), incremental);
+        incremental = everett::crc32c(input.subspan(at), incremental);
         require(incremental == expected, "mixed-backend streaming CRC mismatch");
       }
     }
@@ -204,10 +204,10 @@ namespace {
     auto small = bytes(storage).subspan(3, 513);
     for (auto seed : seeds) {
       auto expected = oracle(small, seed);
-      require(diet::crc32c({}, seed) == seed, "empty seeded CRC mismatch");
+      require(everett::crc32c({}, seed) == seed, "empty seeded CRC mismatch");
       for (std::size_t split = 0; split <= small.size(); ++split) {
-        auto first = diet::crc32c(small.first(split), seed);
-        auto second = diet::crc32c(small.subspan(split), first);
+        auto first = everett::crc32c(small.first(split), seed);
+        auto second = everett::crc32c(small.subspan(split), first);
         require(second == expected, "all-split seeded CRC mismatch");
       }
     }

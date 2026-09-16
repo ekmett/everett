@@ -1,7 +1,7 @@
 /**
  * \file
  * \author Edward Kmett <ekmett@gmail.com>
- * \brief Exercises the ordinary streamed tap, custom arrows and byte-registry fallback.
+ * \brief Exercises the ordinary streamed session, custom arrows and byte-registry fallback.
  *
  * \license
  * SPDX-FileType: SOURCE
@@ -9,17 +9,17 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
-#include <diet/typed_scan.h>
+#include <everett/connection.h>
+#include <everett/typed_scan.h>
 
 #include <cassert>
 #include <iostream>
 #include <map>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
-  static_assert(std::same_as<fridge<>::active_engine, active_engine<>>);
+  static_assert(std::same_as<multiverse<>::active_engine, active_engine<>>);
   static_assert(std::same_as<connection<>::core_type, active_engine<>>);
   static_assert(std::same_as<persistent_engine<>::core_type, active_engine<>>);
   static_assert(std::same_as<active_engine<>::runtime_family, streaming_sort_runtime_family<>>);
@@ -27,7 +27,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-active-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-active-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -38,7 +38,7 @@ namespace {
     try { action(); } catch (std::exception const &) { caught = true; }
     assert(caught);
   }
-  template <class Cola> void check(Cola const & saved, std::map<std::string, std::string> const & expected) {
+  template <class World> void check(World const & saved, std::map<std::string, std::string> const & expected) {
     assert(saved.live_count() == expected.size());
     std::uint64_t signature = 0;
     for (auto const & [key, value] : expected) {
@@ -47,23 +47,23 @@ namespace {
     }
     assert(saved.signature() == signature);
     std::map<std::string, std::string> scanned;
-    typed_scan<strings, Cola> cursor(saved);
+    typed_scan<strings, World> cursor(saved);
     while (auto row = cursor.next()) assert(scanned.emplace(row->key, *row->value).second);
     assert(scanned == expected);
   }
   void ordinary() {
     temporary dir;
-    auto pantry = fridge<>::create(dir.root / "fridge");
+    auto storage = multiverse<>::create(dir.root / "multiverse");
     std::map<std::string, std::string> expected;
     {
-      auto db = pantry.connect("earth-616");
+      auto db = storage.connect("earth-616");
       std::vector<connection<>::ticket> tickets;
       for (unsigned i = 0; i != 20; ++i) {
         auto key = "prefix/" + std::to_string(i), value = "value/" + std::to_string(i);
         expected.emplace(key, value); tickets.push_back(db.put_async(key, value));
       }
       for (unsigned i = 0; i != tickets.size(); ++i)
-        assert(tickets[i].get()->cola.get("prefix/" + std::to_string(i)) == "value/" + std::to_string(i));
+        assert(tickets[i].get()->world.get("prefix/" + std::to_string(i)) == "value/" + std::to_string(i));
       auto old = db.snapshot(); auto original = expected;
       check(old, expected); db.save("original", old);
       for (unsigned i = 0; i != 4; ++i) {
@@ -81,7 +81,7 @@ namespace {
       assert(fork.get("prefix/0") == "branch" && old.get("prefix/0") == "value/0" && !db.get("prefix/0"));
       auto restored = db.load("original"); assert(restored); check(*restored, original);
     }
-    auto live = persistent_engine<>::connect(pantry.root(), "earth-616", {.create_if_missing = false});
+    auto live = persistent_engine<>::connect(storage.root(), "earth-616", {.create_if_missing = false});
     check(live.snapshot(), expected);
     while (live.pending()) (void)live.advance(1 << 20);
     auto mapped = live.snapshot(); check(mapped, expected);
@@ -94,7 +94,7 @@ namespace {
     // Both wrapped static factories return the public engine type and preserve
     // the concrete storage handle across a settled rebase.
     using core = active_engine<>;
-    auto attached = core::from_snapshot(mapped, core::runtime_family::open_storage(pantry.root()));
+    auto attached = core::from_snapshot(mapped, core::runtime_family::open_storage(storage.root()));
     static_assert(std::same_as<decltype(attached), core>);
     auto context = attached.storage().context();
     attached.rebase(mapped); assert(attached.storage().context() == context);
@@ -118,25 +118,25 @@ namespace {
     static_assert(active_engine<byte_policy>::charged_service);
     temporary bytes;
     {
-      auto db = fridge<byte_policy>(bytes.root).connect("bytes");
+      auto db = multiverse<byte_policy>(bytes.root).connect("bytes");
       for (unsigned i = 0; i != 8; ++i) db.put("key", std::to_string(i));
       assert(db.get("key") == "7");
     }
-    auto reopened = fridge<byte_policy>(bytes.root).connect("bytes", {.create_if_missing = false});
+    auto reopened = multiverse<byte_policy>(bytes.root).connect("bytes", {.create_if_missing = false});
     assert(reopened.get("key") == "7");
     using policy = storage_policy<bin<tip<append_sort>, tip<strings>>, 3>;
     connection_options options{.schema_id = "tests.active.mixed/v1"};
     temporary mixed;
     std::string expected;
     {
-      auto db = fridge<policy>(mixed.root).connect("mixed", options);
+      auto db = multiverse<policy>(mixed.root).connect("mixed", options);
       for (unsigned i = 0; i != 14; ++i) {
         auto value = std::to_string(i) + "/"; expected += value;
         db.change<append_sort>("key", value); db.put<strings>("key", value);
       }
       assert(db.get<append_sort>("key") == expected && db.get<strings>("key") == "13/");
     }
-    auto db = fridge<policy>(mixed.root).connect("mixed", options);
+    auto db = multiverse<policy>(mixed.root).connect("mixed", options);
     assert(db.get<append_sort>("key") == expected && db.get<strings>("key") == "13/");
   }
 }

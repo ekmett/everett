@@ -9,21 +9,21 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
+#include <everett/connection.h>
 
 #include <cassert>
 #include <iostream>
 #include <map>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   using core = active_engine<>;
   static_assert(std::same_as<core::metadata_type, replacement_metadata<>>);
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-rebuild-default-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-rebuild-default-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -34,14 +34,14 @@ namespace {
     try { action(); } catch (std::exception const &) { caught = true; }
     assert(caught);
   }
-  template <class Cola> void check(Cola const & value, std::map<std::string, std::string> const & expected) {
+  template <class World> void check(World const & value, std::map<std::string, std::string> const & expected) {
     std::uint64_t signature = 0;
     for (auto const & [key, data] : expected) {
       assert(value.template get<strings>(key) == data);
       signature += sort_semantics<strings>::hash_key(key) * sort_semantics<strings>::hash_value(key, data);
     }
     assert(value.live_count() == expected.size() && value.signature() == signature);
-    typed_scan<strings, Cola> rows(value);
+    typed_scan<strings, World> rows(value);
     auto item = expected.begin();
     while (auto row = rows.next()) {
       assert(item != expected.end() && row->key == item->first && row->value == item->second); ++item;
@@ -56,10 +56,10 @@ namespace {
   }
   void limits_and_cleanup() {
     temporary dir;
-    auto pantry = fridge<>::create(dir.root);
+    auto storage = multiverse<>::create(dir.root);
     assert(core::reservation_work(1) == 40'361'922);
     assert(core::reservation(batch(64)).work == core::reservation_work(64));
-    auto live = pantry.connect("ordinary");
+    auto live = storage.connect("ordinary");
     auto limits = live.limits();
     assert(limits.work == core::reservation_work(1024) && limits.bytes == 64 * 1024 * 1024 &&
       limits.contributions == 64 && limits.maintenance_budget == 4096);
@@ -76,9 +76,9 @@ namespace {
     assert(!empty.runtime().admissions() && !empty.metadata().clean_base && !empty.metadata().mutations);
     auto loaded = live.load("full"); assert(loaded); check(*loaded, expected);
 
-    tap_limits explicit_limits{core::reservation_work(3), 4096, 2, 17};
+    session_limits explicit_limits{core::reservation_work(3), 4096, 2, 17};
     connection_options options{.limits = explicit_limits};
-    auto limited = pantry.connect("limited", options);
+    auto limited = storage.connect("limited", options);
     auto actual = limited.limits();
     assert(actual.work == explicit_limits.work && actual.bytes == explicit_limits.bytes &&
       actual.contributions == explicit_limits.contributions && actual.maintenance_budget == 17);
@@ -88,7 +88,7 @@ namespace {
     limited.apply(batch(3));
     auto fork = limited.fork("limited-fork");
     assert(fork.limits().work == explicit_limits.work && fork.limits().maintenance_budget == 17);
-    auto zero = pantry.connect("zero", {.limits = tap_limits{0, 0, 1, 1}});
+    auto zero = storage.connect("zero", {.limits = session_limits{0, 0, 1, 1}});
     rejects([&] { zero.put("key", "value"); });
     assert(!zero.failure() && !zero.limits().work && !zero.limits().bytes);
   }
@@ -108,14 +108,14 @@ namespace {
   using extended_policy = storage_policy<bin<tip<strings>, tip<append_sort>>>;
   using extended_core = active_engine<extended_policy>;
   using extended_store = runtime_store<extended_policy, random_object_ids, sqlite_catalog_ops, extended_core::runtime_family>;
-  static_assert(std::same_as<extended_core::metadata_type, typed_cola_metadata<>>);
+  static_assert(std::same_as<extended_core::metadata_type, typed_world_metadata<>>);
   void registry_extension() {
     temporary dir;
-    auto pantry = fridge<>::create(dir.root);
+    auto storage = multiverse<>::create(dir.root);
     std::map<std::string, std::string> expected;
     for (unsigned i = 0; i != 64; ++i) expected[key(i)] = "value";
     auto old = [&] {
-      auto engine = persistent_engine<>::connect(pantry.root(), "evolving");
+      auto engine = persistent_engine<>::connect(storage.root(), "evolving");
       engine.contribute(batch(64));
       for (unsigned i = 0; i != 16; ++i) engine.contribute(core::put(key(0), "changed"));
       expected[key(0)] = "changed";
@@ -125,12 +125,12 @@ namespace {
     }();
     auto schema = old.metadata().schema_id;
     connection_options options{.schema_id = schema, .create_if_missing = false};
-    auto store = extended_store::open(pantry.root());
+    auto store = extended_store::open(storage.root());
     store.save("before-extension", old.head());
     auto loaded = store.find("evolving"); assert(loaded);
     auto bad = old.metadata(); ++bad.mutations;
-    (void)store.create_tap("bad-accounting", loaded->snapshot, bad.encode());
-    rejects([&] { (void)persistent_engine<extended_core>::connect(pantry.root(), "bad-accounting", options); });
+    (void)store.create_session("bad-accounting", loaded->snapshot, bad.encode());
+    rejects([&] { (void)persistent_engine<extended_core>::connect(storage.root(), "bad-accounting", options); });
     auto projected = extended_core::restore_checkpoint(loaded->snapshot, loaded->semantic, schema);
     check(projected, expected);
     assert(projected.runtime().admissions() == old.runtime().admissions());
@@ -142,13 +142,13 @@ namespace {
     auto typed = projected.metadata();
     // A typed fingerprint can spell the other format's magic; its exact
     // expected-schema length still identifies the ordinary typed envelope.
-    constexpr std::array<unsigned char, 8> magic{'D','I','E','T','.','R','B',0};
+    constexpr std::array<unsigned char, 8> magic{'E', 'V', 'R', 'T','.','R','B',0};
     typed.signature = 0;
     for (unsigned i = 0; i != 8; ++i) typed.signature |= std::uint64_t(magic[i]) << (i << 3);
     auto collision = extended_core::restore_checkpoint(loaded->snapshot, typed.encode(), schema);
     assert(collision.signature() == typed.signature);
     {
-      connection<extended_core> live(pantry.root(), "evolving", options);
+      connection<extended_core> live(storage.root(), "evolving", options);
       check(live.snapshot(), expected);
       assert(live.limits().work == extended_core::reservation_work(1024));
       live.change<append_sort>("log", "A"); live.change<append_sort>("log", "B");
@@ -161,11 +161,11 @@ namespace {
     }
     auto now = store.find("evolving"); assert(now && now->semantic.size() == 16 + schema.size());
     auto saved = store.find_save("before-extension"); assert(saved && saved->semantic.size() == 56 + schema.size());
-    auto reopened = persistent_engine<extended_core>::connect(pantry.root(), "evolving", options);
+    auto reopened = persistent_engine<extended_core>::connect(storage.root(), "evolving", options);
     assert(reopened.snapshot().get<append_sort>("log") == "AB" && reopened.snapshot().get<strings>(key(0)) == "changed");
     // Projecting an old cleanup obligation is one-way. An ordinary typed
     // checkpoint does not supply a clean-base/mutation history to invent.
-    rejects([&] { (void)persistent_engine<>::connect(pantry.root(), "evolving", {.create_if_missing = false}); });
+    rejects([&] { (void)persistent_engine<>::connect(storage.root(), "evolving", {.create_if_missing = false}); });
   }
 }
 int main() {

@@ -9,9 +9,9 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
-#include <diet/sort_runtime_context.h>
-#include <diet/typed_scan.h>
+#include <everett/connection.h>
+#include <everett/sort_runtime_context.h>
+#include <everett/typed_scan.h>
 
 #include <cassert>
 #include <fstream>
@@ -19,7 +19,7 @@
 #include <set>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   using P = storage_policy<string_registry, 3>;
   using family = streaming_sort_runtime_family<P>;
@@ -30,7 +30,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-stream-store-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-stream-store-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -66,10 +66,10 @@ namespace {
         sealed.insert(token->receipt.object.hex());
       }
     assert(!sealed.empty() && context.context()->sealed_outputs());
-    rejects([&] { (void)other.create_tap("alien", snapshot); });
+    rejects([&] { (void)other.create_session("alien", snapshot); });
     assert(other.failed());
-    auto alien = sqlite_catalog<P>::open(wrong.root); assert(!alien.find_tap("alien"));
-    auto saved = same.create_tap("same", snapshot);
+    auto alien = sqlite_catalog<P>::open(wrong.root); assert(!alien.find_session("alien"));
+    auto saved = same.create_session("same", snapshot);
     std::set<std::string> mapped;
     for (auto const & pair : saved.head.auxiliary.pairs) mapped.insert(pair.native.hex());
     for (auto const & native : saved.head.auxiliary.natives) mapped.insert(native.hex());
@@ -88,7 +88,7 @@ namespace {
     assert(context.context()->retained_output_bytes());
     for (auto const & object : runtime_storage_codec<family>::objects(snapshot.frontier()))
       assert(object->native->owned() && !object->native->mapped());
-    auto saved = adapter.create_tap("adaptive", snapshot);
+    auto saved = adapter.create_session("adaptive", snapshot);
     assert(files(dir.root) && saved.snapshot.admissions() == 4);
     for (auto const & object : runtime_storage_codec<family>::objects(saved.snapshot.frontier())) {
       assert(object->native->mapped() && !object->native->owned());
@@ -114,7 +114,7 @@ namespace {
   void hidden_native(bool eager) {
     temporary dir; auto adapter = store::create(dir.root);
     auto context = storage::open(dir.root, {}, {}, {}, {}, eager ? runtime_output_options{0, 0} : runtime_output_options{});
-    runtime active(context); auto saved = adapter.create_tap("hidden", active.snapshot());
+    runtime active(context); auto saved = adapter.create_session("hidden", active.snapshot());
     for (auto key : {"a", "b"}) {
       auto input = core::put(key, "value"); assert(active.try_contribute(input.records()[0]));
     }
@@ -153,7 +153,7 @@ namespace {
   }
   void header_failure() {
     temporary dir; auto adapter = store::create(dir.root); runtime empty;
-    auto before = adapter.create_tap("stable", empty.snapshot());
+    auto before = adapter.create_session("stable", empty.snapshot());
     // Corrupt the acknowledged envelope before publication checks it.
     auto context = storage::open(dir.root, {}, {}, {}, {}, {0, 0}); runtime active(context); populate(active);
     auto snapshot = active.snapshot(); std::filesystem::path path;
@@ -214,7 +214,7 @@ namespace {
         live.apply(std::move(batch).finish()); expected += delta;
       }
       assert(live.get<append>("sequence") == expected);
-      auto scan = diet::scan<append>(live.snapshot()); auto row = scan.next();
+      auto scan = everett::scan<append>(live.snapshot()); auto row = scan.next();
       assert(row && row->key == "sequence" && row->value == expected && !scan.next());
       signature = live.snapshot().signature();
     }

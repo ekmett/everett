@@ -9,8 +9,8 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/connection.h>
-#include <diet/typed_scan.h>
+#include <everett/connection.h>
+#include <everett/typed_scan.h>
 
 #include <cassert>
 #include <cstring>
@@ -18,7 +18,7 @@
 #include <map>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using P = string_policy;
   using strings = unsorted<std::optional<std::string>>;
   using core = active_engine<>;
@@ -28,7 +28,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-initial-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-initial-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -55,14 +55,14 @@ namespace {
     for (auto i = rows.rbegin(); i != rows.rend(); ++i) result.put(i->first, i->second);
     return std::move(result).finish();
   }
-  template <class Cola> void verify(Cola const & value, oracle const & expected) {
+  template <class World> void verify(World const & value, oracle const & expected) {
     std::uint64_t signature = 0;
     for (auto const & [key, data] : expected) {
       assert(value.template get<strings>(key) == data);
       signature += sort_semantics<strings>::hash_key(key) * sort_semantics<strings>::hash_value(key, data);
     }
     assert(value.live_count() == expected.size() && value.signature() == signature);
-    typed_scan<strings, Cola> rows(value);
+    typed_scan<strings, World> rows(value);
     auto next = expected.begin();
     while (auto row = rows.next()) {
       assert(next != expected.end() && row->key == next->first && row->value == next->second);
@@ -108,7 +108,7 @@ namespace {
       verify(restored, contents(count)); verify(full, contents(count)); verify(empty, {});
       for (auto const & file : std::filesystem::recursive_directory_iterator(dir.root))
         if (file.path().extension() == ".kv" || file.path().extension() == ".index")
-          diet::file<P>::open(file.path()).scan();
+          everett::file<P>::open(file.path()).scan();
     }
   }
 
@@ -121,8 +121,8 @@ namespace {
     for (auto const & [key, value] : expected) changes.put(key, value);
     auto first = db.submit(std::move(changes).finish());
     auto second = db.put_async("following", "next");
-    auto initial = first.get()->cola;
-    auto later = second.get()->cola;
+    auto initial = first.get()->world;
+    auto later = second.get()->world;
     verify(empty, {}); verify(initial, expected);
     expected["following"] = "next"; verify(later, expected);
     db.shutdown();
@@ -145,7 +145,7 @@ namespace {
         if (sqlite3_prepare_v2(db, "SELECT id,kind FROM operations ORDER BY rowid DESC LIMIT 1",
             -1, &row, nullptr) != SQLITE_OK || sqlite3_step(row) != SQLITE_ROW) std::abort();
         auto kind = reinterpret_cast<char const *>(sqlite3_column_text(row, 1));
-        selected = kind && std::strcmp(kind, state->publish ? "publish_tap" : "seal") == 0;
+        selected = kind && std::strcmp(kind, state->publish ? "publish_session" : "seal") == 0;
         if (selected) {
           auto id = sqlite3_column_blob(row, 0);
           if (!id || sqlite3_column_bytes(row, 0) != int(state->operation.size())) std::abort();
@@ -170,7 +170,7 @@ namespace {
       auto adapter = faulty_store::create(dir.root);
       faulty_core seed;
       auto empty = seed.snapshot();
-      auto before = adapter.create_tap("initial", empty.runtime(), empty.metadata().encode());
+      auto before = adapter.create_session("initial", empty.runtime(), empty.metadata().encode());
       auto current = faulty_core::from_snapshot(empty,
         family::open_storage(dir.root, empty.metadata().schema_id));
       auto expected = contents(9, true);
@@ -192,7 +192,7 @@ namespace {
       auto catalog = sqlite_catalog<P>::open(dir.root);
       auto recorded = catalog.lookup_operation(operation);
       assert(bool(recorded) == after);
-      if (recorded) assert(recorded->kind == (publish ? "publish_tap" : "seal"));
+      if (recorded) assert(recorded->kind == (publish ? "publish_session" : "seal"));
       auto healthy = engine::connect(dir.root, "initial", {.create_if_missing = false});
       auto recovered = healthy.snapshot();
       bool committed = publish && after;

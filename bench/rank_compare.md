@@ -24,7 +24,7 @@ measurement below. `check` validates the two hot datasets without timing them.
 
 ## What the variants measure
 
-- `bitmap_rank`: the original Diet full-bit-vector `rank_view::rank`, with
+- `bitmap_rank`: the original Everett full-bit-vector `rank_view::rank`, with
   its 2048/512 directory and scalar loop over the preceding 64-bit words.
 - `poppy512_neon_cpu`: a CPU translation using the 2048/512 layout from
   [my Poppy shader](https://github.com/ekmett/vr/blob/master/shaders/poppy.glsl).

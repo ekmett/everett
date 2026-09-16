@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/sqlite_catalog.h>
+#include <everett/sqlite_catalog.h>
 
 #include <array>
 #include <cstdio>
@@ -22,7 +22,7 @@
 #if defined(__APPLE__) || defined(__linux__)
 #include <unistd.h>
 namespace {
-  using namespace diet;
+  using namespace everett;
   void require(bool value, char const * message) { if (!value) throw std::runtime_error(message); }
   template <class F> void rejects(F && action) {
     bool rejected = false;
@@ -36,7 +36,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-catalog-cola-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-catalog-world-XXXXXX").string();
       auto result = ::mkdtemp(name.data());
       if (!result) throw std::runtime_error("mkdtemp");
       root = result;
@@ -197,7 +197,7 @@ namespace {
     require(sql.scalar("SELECT count(*) FROM pairs p JOIN objects o ON o.id=p.secondary_native WHERE o.kind<>0 OR o.bytes IS NULL") == 0, "secondary not sealed native");
     auto old = linear(db, 1000);
     using namespace std::string_literals;
-    auto name = "cola\0';DROP TABLE pairs;--\xff"s;
+    auto name = "world\0';DROP TABLE pairs;--\xff"s;
     db.save("save\0cola"s, name, source.head);
     auto initial = db.create_timeline("timeline\0create"s, name, old);
     auto published = db.publish_timeline("publish\0cola"s, initial, source.head);
@@ -223,7 +223,7 @@ namespace {
     rejects([&] { mapped_cola_blob<P>::bind(mapped.head()->identity(), mapped.head()->native_object(),
       mapped.head()->index_object(), mapped.head()->main_target(), {}, id(9999)); });
   }
-  using policy = storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>;
+  using policy = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 16>;
   void layout_mismatch() {
     temporary directory;
     auto db = sqlite_catalog<policy>::create_cola(directory.root, id(1));
@@ -242,8 +242,8 @@ namespace {
       row.integer(5, layout); row.done();
     };
     insert(tail->identity(), tail->virtual_size(), 2);
-    rejects([&] { db.register_chain("wrong-layout-cola", mapped); });
-    require(!db.lookup_operation("wrong-layout-cola") && sql.scalar("SELECT count(*) FROM pairs") == 1,
+    rejects([&] { db.register_chain("wrong-layout-world", mapped); });
+    require(!db.lookup_operation("wrong-layout-world") && sql.scalar("SELECT count(*) FROM pairs") == 1,
       "COLA layout mismatch committed partial metadata");
     auto ids = linear(db, 1000, false);
     insert(ids, 2, 3);
@@ -304,7 +304,7 @@ int main() {
 #if defined(__APPLE__) || defined(__linux__)
   try {
     lifecycle<policy>();
-    lifecycle<diet::storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<diet::fixed_values<0>>>>, 7, diet::exponential_golomb<0>, 15>>();
+    lifecycle<everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<everett::fixed_values<0>>>>, 7, everett::exponential_golomb<0>, 15>>();
     commit_faults(); old_versions(); layout_mismatch();
     std::cout << "SQLite COLA catalog checks passed\n";
   } catch (std::exception const & error) { std::cerr << error.what() << '\n'; return 1; }

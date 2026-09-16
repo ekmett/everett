@@ -9,14 +9,14 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/sqlite_catalog.h>
+#include <everett/sqlite_catalog.h>
 
 #include <cassert>
 #include <fstream>
 #include <iostream>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using P = storage_policy<tip<encoded_sort<bit_encoding<>>>>;
   object_id id(unsigned n) {
     char text[33]; std::snprintf(text, sizeof text, "%032x", n); return object_id(text);
@@ -24,7 +24,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto pattern = (std::filesystem::temp_directory_path() / "diet-seals-XXXXXX").string();
+      auto pattern = (std::filesystem::temp_directory_path() / "everett-seals-XXXXXX").string();
       if (!::mkdtemp(pattern.data())) throw std::runtime_error("mkdtemp");
       root = pattern;
     }
@@ -53,7 +53,7 @@ namespace {
   }
   void exact_receipts() {
     temporary dir, foreign;
-    auto catalog = sqlite_catalog<P>::create_taps(dir.root, id(1));
+    auto catalog = sqlite_catalog<P>::create_sessions(dir.root, id(1));
     assert(catalog.identity() == id(1));
     auto receipt = produce(catalog, 10);
     rejects([&] { catalog.verify_sealed(receipt, file_kind::native_blob); }); // File exists, catalog has no completed seal.
@@ -80,7 +80,7 @@ namespace {
     }
     rejects([&] { catalog.verify_sealed(receipt, file_kind::fractional_index); });
     assert(!catalog.poisoned());
-    auto other = sqlite_catalog<P>::create_taps(foreign.root, id(2));
+    auto other = sqlite_catalog<P>::create_sessions(foreign.root, id(2));
     assert(other.identity() != catalog.identity());
     rejects([&] { other.verify_sealed(receipt, file_kind::native_blob); });
     auto reopened = sqlite_catalog<P>::open(dir.root);
@@ -109,7 +109,7 @@ namespace {
   void uncertain_seal() {
     for (int mode : {1, 2}) {
       temporary dir; auto state = std::make_shared<int>(0);
-      auto catalog = sqlite_catalog<P, failing_ops>::create_taps(dir.root, id(1), {}, {state});
+      auto catalog = sqlite_catalog<P, failing_ops>::create_sessions(dir.root, id(1), {}, {state});
       auto receipt = produce(catalog, 10); *state = mode;
       try { catalog.record_sealed("sealed", receipt); assert(false); }
       catch (catalog_error const & error) { assert(error.outcome_unknown && error.operation == "sealed"); }

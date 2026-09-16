@@ -10,7 +10,7 @@
  * \endlicense
  */
 
-#include <diet/cola_local_merge.h>
+#include <everett/cola_local_merge.h>
 
 #include <array>
 #include <cstddef>
@@ -50,7 +50,7 @@ void operator delete(void * pointer, std::size_t) noexcept { std::free(pointer);
 void operator delete[](void * pointer, std::size_t) noexcept { std::free(pointer); }
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   void check(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
   }
@@ -214,8 +214,8 @@ namespace {
 }
 
 int main() try {
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
-  policy<storage_policy<diet::tip<diet::encoded_sort<diet::bit_encoding<>>>, 3, golomb<3>, 15>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>, 3, exponential_golomb<0>, 16>>();
+  policy<storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>, 3, golomb<3>, 15>>();
   std::cout << "COLA local finalization and growth allocation failures passed\n";
 } catch (std::exception const & error) {
   watch = false;

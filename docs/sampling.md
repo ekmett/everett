@@ -26,10 +26,10 @@ COLA levels. Its lookahead layout samples every eighth entry and also allocates
 duplicate-pointer cells. Its deamortized construction distinguishes visible and
 shadow arrays; completing a data merge alone does not finish the associated
 lookahead work. This gives us a precedent for scheduling and multi-catalog
-search. Diet uses a different count-class layout.
+search. Everett uses a different count-class layout.
 [Original paper, §3](https://people.cs.georgetown.edu/~jfineman/papers/sbtree.pdf#page=8).
 
-**We derive the recurrence and constants below for Diet's separate native
+**We derive the recurrence and constants below for Everett's separate native
 and borrowed streams.** The paper's slot allocation and deamortization proof
 need separate adaptation to this representation.
 
@@ -268,7 +268,7 @@ $$
 This weaker global entry-count bound holds for K > 1 without a growth
 assumption. The stronger per-level bound is what controls small catalogs and
 their reserved capacities. We have not counted encoded string bytes, unfinished
-outputs or retained historical colas in either expression.
+outputs or retained historical worlds in either expression.
 
 ## 4. Space and scan work
 
@@ -319,7 +319,7 @@ the same ordered comparison repair applies without reading its full length.
 
 Within one P, `profile_blob<P>::reindex` preserves the exact native allocation
 and native offset index while rebuilding ordinary borrowed FC, rank classes,
-cut LCPs and false-borrow flags. Retained colas can continue using the previous
+cut LCPs and false-borrow flags. Retained worlds can continue using the previous
 index. New routing retains the exact target identities and follows the
 pin/publication protocol supplied by the surrounding store.
 

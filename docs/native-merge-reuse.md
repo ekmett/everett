@@ -19,7 +19,7 @@ A hint names the older native file, the newer native file, and a domain containi
 
 - The exact application schema bytes.
 - The physical policy descriptor.
-- The library's `diet.KV03.right-biased-native-merge/1` operation identity.
+- The library's `everett.KV03.right-biased-native-merge/1` operation identity.
 
 Input order matters. Table signatures, record counts and equal-looking payloads
 are not cache keys. Independently constructed equal files can miss. Catalog

@@ -9,15 +9,15 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
-#include <diet/replacement_rebuild.h>
-#include <diet/connection.h>
-#include <diet/sort_runtime_context.h>
+#include <everett/replacement_rebuild.h>
+#include <everett/connection.h>
+#include <everett/sort_runtime_context.h>
 
 #include <iostream>
 #include <map>
 
 namespace {
-  using namespace diet;
+  using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   using P = storage_policy<string_registry, 3>;
 
@@ -73,7 +73,7 @@ namespace {
   struct temporary {
     std::filesystem::path root;
     temporary() {
-      auto name = (std::filesystem::temp_directory_path() / "diet-rebuild-stream-XXXXXX").string();
+      auto name = (std::filesystem::temp_directory_path() / "everett-rebuild-stream-XXXXXX").string();
       if (!::mkdtemp(name.data())) throw std::runtime_error("mkdtemp");
       root = name;
     }
@@ -99,7 +99,7 @@ namespace {
     }
     check(active.admission_ready(), "settled admission gate");
   }
-  template <class Cola> void verify(Cola const & state,
+  template <class World> void verify(World const & state,
       std::map<std::string, std::string> const & expected, bool all_mapped = false) {
     check(state.live_count() == expected.size(), "live count");
     std::uint64_t signature = 0;
@@ -108,7 +108,7 @@ namespace {
       signature += sort_semantics<strings>::hash_key(key) * sort_semantics<strings>::hash_value(key, value);
     }
     check(signature == state.signature(), "independent signature");
-    auto rows = diet::scan(state);
+    auto rows = everett::scan(state);
     auto entry = expected.begin();
     while (auto row = rows.next()) {
       check(entry != expected.end() && row->key == entry->first && row->value == entry->second,
@@ -196,7 +196,7 @@ namespace {
       failed_snapshot.metadata() == acknowledged.metadata(), "candidate failure escaped poison/publication boundary");
     // Persist only the acknowledged foreground. Losing the candidate is an
     // explicit restart, without serialized private cursors or replay queues.
-    auto recorded = catalog.create_tap("latest", saved.runtime(), saved.metadata().encode());
+    auto recorded = catalog.create_session("latest", saved.runtime(), saved.metadata().encode());
     catalog.save("active-save", recorded.head);
     catalog.fork("active-fork", recorded.head);
     restored = core{};
