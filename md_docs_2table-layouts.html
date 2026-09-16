@@ -91,6 +91,7 @@ $(function() {
 <td class="markdownTableBodyNone"><code>.ff</code>   </td><td class="markdownTableBodyNone">Fixed-stride key array   </td><td class="markdownTableBodyNone">Fixed-stride value array   </td><td class="markdownTableBodyNone">Arithmetic addresses   </td></tr>
 </table>
 <p>For <code>.fv</code>, key ordinal \(i\) has an arithmetic address. A monotone sequence of \(N+1\) value boundaries selects the half-open payload interval for that ordinal, including the real end-of-file boundary. Repeated offsets can represent empty payloads; the sort must still distinguish empty values from absence. The Elias–Fano universe includes the value payload extent, not the fixed key array. This directory samples every value, so its select latency and storage tradeoff differ from the current every- \(W\) record directory.</p>
+<p>The <a class="el" href="fixed-key-complete-merges-on-metal.html">fixed-key Metal experiment</a> constructs complete native outputs for candidate <code>.fv</code> and <code>.ff</code> layouts. Its fixture envelope is experimental; these formats are not yet persistent runtime choices.</p>
 <p>For <code>.ff</code>, both addresses are arithmetic and there is no native Elias–Fano directory. Each fixed-stride region needs one physical slot width. How mixed sorts share those regions belongs to the wire-format design; per-sort widths alone do not establish one common stride.</p>
 <h1><a class="anchor" id="fractional-indexes"></a>
 Fractional indexes</h1>
@@ -100,7 +101,7 @@ Fractional indexes</h1>
 Logical keys and shared machinery</h1>
 <p>Fixed keys can be structured IDs, preserving useful entity/component or region order, or hashes of stable logical identities. Content addressing is a separate choice: a stable logical key can refer to a changing content hash. The weak world signature is not a substitute for an identity or collision policy.</p>
 <p>Sort dispatch, logical ordering, composition, signatures, pins, snapshots, sessions, durability and merge scheduling stay shared. Physical access and merge kernels specialize for the table representation. Fixed-width keys permit direct parallel input cuts; variable output payload sizes still require sizing, prefix sums and copying. Tombstone elision still requires complete older-history coverage, regardless of key encoding.</p>
-<p>The current Elias–Fano implementation is tuned for sampled offsets. Before choosing its <code>.fv</code> layout, I want to measure finer select directories and paired adjacent-boundary access for per-value navigation. There is no measured speedup for these proposed formats yet. </p>
+<p>The current Elias–Fano implementation is tuned for sampled offsets. Before choosing its <code>.fv</code> layout, I want to measure finer select directories and paired adjacent-boundary access for per-value navigation. Sequential merge traversal also needs its own baseline: repeatedly selecting independent offsets can cost more than walking the encoded sequence once. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 <!-- start footer part -->
