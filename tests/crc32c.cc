@@ -11,6 +11,7 @@
  */
 
 #include <everett/crc32c.h>
+#include <everett/detail/crc32c_impl.h>
 
 #if defined(CRC_AINLINE) || defined(CRC_ALIGN) || defined(CRC_EXPORT) || defined(clmul_lo) || defined(clmul_hi)
 #error "generated CRC macros leaked into the consumer"
