@@ -77,44 +77,45 @@ namespace everett {
       return prefix_portable<Bits>(word_view(std::span(words, ((count * Bits + 63) >> 6))), count);
     }
 
-#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    template <unsigned Bits, unsigned Vector, unsigned Plane = 0>
-    inline uint8x16_t weighted_bits(uint8x16_t value) noexcept {
+    template <unsigned Bits, simd::architecture Arch, unsigned Vector, unsigned Plane = 0>
+    simd_inline auto weighted_bits(simd::vec<std::uint8_t, 16, Arch> value) noexcept {
+      using B = simd::vec<std::uint8_t, 16, Arch>;
+      using W = simd::vec<std::uint64_t, 2, Arch>;
       if constexpr (Bits == 2) {
-        auto pairs = vaddq_u8(vandq_u8(value, vdupq_n_u8(0x33)),
-                              vandq_u8(vshrq_n_u8(value, 2), vdupq_n_u8(0x33)));
-        return vaddq_u8(vandq_u8(pairs, vdupq_n_u8(15)), vshrq_n_u8(pairs, 4));
+        auto pairs = (value & B(0x33)) + (value.template right<2>() & B(0x33));
+        return (pairs & B(15)) + pairs.template right<4>();
+      } else {
+        auto mask = W(plane_mask<Bits, 2 * Vector, Plane>(), plane_mask<Bits, 2 * Vector + 1, Plane>());
+        auto population = popcount(value & reinterpret_bits<std::uint8_t>(mask)).template left<Plane>();
+        if constexpr (Plane + 1 == Bits) return population;
+        else return population + weighted_bits<Bits, Arch, Vector, Plane + 1>(value);
       }
-      uint64x2_t mask{plane_mask<Bits, 2 * Vector, Plane>(),
-                     plane_mask<Bits, 2 * Vector + 1, Plane>()};
-      auto population = vshlq_n_u8(vcntq_u8(vandq_u8(value, vreinterpretq_u8_u64(mask))), Plane);
-      if constexpr (Plane + 1 == Bits) return population;
-      else return vaddq_u8(population, weighted_bits<Bits, Vector, Plane + 1>(value));
     }
 
-    template <unsigned Bits, unsigned Vector = 0>
-    inline uint16x8_t prefix_vectors(std::byte const * bytes, unsigned bits) noexcept {
-      uint64x2_t positions{2 * Vector, 2 * Vector + 1};
-      auto boundary = vdupq_n_u64(bits >> 6);
-      auto tail = vdupq_n_u64((std::uint64_t{1} << (bits & 63)) - 1);
-      auto mask = vorrq_u64(vcltq_u64(positions, boundary),
-                            vandq_u64(vceqq_u64(positions, boundary), tail));
-      auto selected = vandq_u64(vreinterpretq_u64_u8(vld1q_u8(
-        reinterpret_cast<std::uint8_t const *>(bytes + 16 * Vector))), mask);
-      // Widen before adding vectors: five-bit classes can otherwise overflow
-      // an eight-bit lane. The complete checkpoint sums to at most 128*31.
-      auto counts = vpaddlq_u8(weighted_bits<Bits, Vector>(vreinterpretq_u8_u64(selected)));
+    template <unsigned Bits, simd::architecture Arch, unsigned Vector = 0>
+    simd_inline auto prefix_vectors(std::byte const * bytes, unsigned bits) noexcept {
+      using B = simd::vec<std::uint8_t, 16, Arch>;
+      using W = simd::vec<std::uint64_t, 2, Arch>;
+      auto positions = W(std::uint64_t(2 * Vector), std::uint64_t(2 * Vector + 1));
+      auto boundary = W(bits >> 6);
+      auto mask = select(positions < boundary, W(~std::uint64_t{0}),
+        select(positions == boundary, W((std::uint64_t{1} << (bits & 63)) - 1), W(0)));
+      auto value = B::loadu(reinterpret_cast<std::uint8_t const *>(bytes) + 16 * Vector) &
+        reinterpret_bits<std::uint8_t>(mask);
+      // Five-bit classes can overflow byte lanes when registers are added.
+      // Widen adjacent bytes first, then reduce only the final register.
+      auto counts = pairwise_add_widened(weighted_bits<Bits, Arch, Vector>(value));
       if constexpr (Vector + 1 == Bits) return counts;
-      else return vaddq_u16(counts, prefix_vectors<Bits, Vector + 1>(bytes, bits));
+      else return counts + prefix_vectors<Bits, Arch, Vector + 1>(bytes, bits);
     }
 
-    // A complete checkpoint has exactly 2*Bits words. Each selected bit
-    // contributes its class-place weight, even when a class straddles words.
-    template <unsigned Bits> inline unsigned prefix_neon(
-        std::uint64_t const * words, unsigned count) noexcept {
-      return vaddvq_u16(prefix_vectors<Bits>(reinterpret_cast<std::byte const *>(words), count * Bits));
+    template <unsigned Bits, simd::architecture Arch = simd::scalar>
+    simd_inline unsigned prefix(std::uint64_t const * words, unsigned count) noexcept {
+      if constexpr (std::same_as<Arch, simd::neon> && std::endian::native == std::endian::little)
+        return unsigned(reduce_add_widened(prefix_vectors<Bits, Arch>(
+          reinterpret_cast<std::byte const *>(words), count * Bits)));
+      else return prefix_portable<Bits>(words, count);
     }
-#endif
   }
 
   // Population classes for virtual groups of K=2^n-1 entries. A class occupies
@@ -149,13 +150,14 @@ namespace everett {
 
     std::uint64_t size() const noexcept { return virtual_count_; }
     // Derived from the final real group, without an endpoint entry.
+    template <simd::architecture Arch = simd::scalar>
     std::uint64_t count() const {
       if (!group_count()) return 0;
       auto last = group_count() - 1;
       auto population = class_at(last);
       if (population > virtual_count_ - last * K)
         error_detail::raise<std::invalid_argument>("invalid rank groups final population");
-      return add_prefix(rank(last), population, virtual_count_);
+      return add_prefix(rank<Arch>(last), population, virtual_count_);
     }
     std::uint64_t group_count() const noexcept {
       return virtual_count_ / K + (virtual_count_ % K != 0);
@@ -167,6 +169,7 @@ namespace everett {
       return read_class(group);
     }
     // Exclusive prefix at K*group for an existing group only.
+    template <simd::architecture Arch = simd::scalar>
     std::uint64_t rank(std::uint64_t group) const {
       if (group >= group_count()) error_detail::raise<std::out_of_range>("rank groups boundary");
       auto result = checkpoints_[group >> 7];
@@ -175,14 +178,12 @@ namespace everett {
         auto count = unsigned(group & 127);
         if (!count) return add_prefix(result, 0, limit);
         auto word = (group >> 7) * (2 * class_bits);
-#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-        // Two-bit broadword sums have lower dependent query latency. Wider
-        // classes favor NEON for the rank-plus-class projection operation.
-        if constexpr (K != 3)
+        // The measured two-bit SWAR kernel has lower dependent latency.
+        // Wider classes retain the NEON weighted-population reduction.
+        if constexpr (K != 3 && std::same_as<Arch, simd::neon> && std::endian::native == std::endian::little)
           if (classes_.size() - word >= 2 * class_bits)
-            return add_prefix(result, vaddvq_u16(rank_groups_detail::prefix_vectors<class_bits>(
+            return add_prefix(result, reduce_add_widened(rank_groups_detail::prefix_vectors<class_bits, Arch>(
               classes_.bytes().data() + word * 8, count * class_bits)), limit);
-#endif
         return add_prefix(result, rank_groups_detail::prefix_portable<class_bits>(classes_.subspan(word), count), limit);
       }
       for (auto i = group & ~std::uint64_t{127}; i < group; ++i) result = add_prefix(result, read_class(i), limit);
@@ -226,10 +227,12 @@ namespace everett {
     word_view checkpoint_words() const noexcept { return view_.checkpoint_words(); }
 
     std::uint64_t size() const noexcept { return view_.size(); }
-    std::uint64_t count() const { return view_.count(); }
+    template <simd::architecture Arch = simd::scalar>
+    std::uint64_t count() const { return view_.template count<Arch>(); }
     std::uint64_t group_count() const noexcept { return view_.group_count(); }
     std::uint64_t class_at(std::uint64_t group) const { return view_.class_at(group); }
-    std::uint64_t rank(std::uint64_t group) const { return view_.rank(group); }
+    template <simd::architecture Arch = simd::scalar>
+    std::uint64_t rank(std::uint64_t group) const { return view_.template rank<Arch>(group); }
 
   private:
     rank15_view view_;

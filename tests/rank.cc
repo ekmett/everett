@@ -32,6 +32,11 @@
 #include <unistd.h>
 #endif
 
+#ifndef EVERETT_TEST_ARCH
+#define EVERETT_TEST_ARCH simd::scalar
+#endif
+using test_arch = EVERETT_TEST_ARCH;
+
 namespace {
   void require(bool condition, char const * message) {
     if (!condition) throw std::runtime_error(message);
@@ -46,7 +51,7 @@ namespace {
   void test_popcount512() {
     std::array<std::uint64_t, 8> words{};
     for (unsigned count = 0; count <= 512; ++count) {
-      require(everett::rank_detail::popcount512(words.data()) == count, "512-bit population");
+      require(everett::rank_detail::popcount512<test_arch>(words.data()) == count, "512-bit population");
       require(everett::rank_detail::popcount512_portable(words.data()) == count, "portable 512-bit population");
       if (count != 512) words[count / 64] |= std::uint64_t{1} << (count % 64);
     }
@@ -58,7 +63,7 @@ namespace {
       unsigned expected = 0;
       for (unsigned bit = 0; bit < 512; ++bit)
         expected += unsigned((shifted[offset + bit / 64] >> (bit % 64)) & 1);
-      require(everett::rank_detail::popcount512(shifted.data() + offset) == expected,
+      require(everett::rank_detail::popcount512<test_arch>(shifted.data() + offset) == expected,
               "unaligned 512-bit population");
       require(everett::rank_detail::popcount512_portable(shifted.data() + offset) == expected,
               "unaligned portable 512-bit population");
@@ -75,22 +80,8 @@ namespace {
         for (unsigned bit = 0; bit <= 512; ++bit) {
           require(everett::rank_detail::prefix512_portable(words.data() + offset, bit) == expected,
                   "portable 512-bit prefix oracle");
-#if defined(__aarch64__) && defined(__ARM_NEON)
-          require(everett::rank_detail::prefix512_neon(words.data() + offset, bit) == expected,
-                  "NEON 512-bit prefix oracle");
-#endif
-#if defined(__AVX2__)
-          require(everett::rank_detail::prefix512_avx2(words.data() + offset, bit) == expected,
-                  "AVX2 512-bit prefix oracle");
-#endif
-#if defined(__AVX512F__) && defined(__AVX512VPOPCNTDQ__)
-          require(everett::rank_detail::prefix512_avx512_vpopcnt(words.data() + offset, bit) == expected,
-                  "AVX512 VPOPCNTDQ 512-bit prefix oracle");
-#endif
-#if defined(__AVX512F__) && defined(__AVX512BW__)
-          require(everett::rank_detail::prefix512_avx512bw(words.data() + offset, bit) == expected,
-                  "AVX512BW 512-bit prefix oracle");
-#endif
+          require(everett::rank_detail::prefix512<test_arch>(words.data() + offset, bit) == expected,
+                  "architecture 512-bit prefix oracle");
           if (bit != 512) expected += unsigned((words[offset + bit / 64] >> (bit % 64)) & 1);
         }
       }
@@ -106,10 +97,10 @@ namespace {
       oracle[i + 1] = oracle[i] + populations[i];
     }
     everett::rank_groups_view<K> view(words, checkpoints, virtual_count);
-    require(view.count() == oracle.back(), "group derived count oracle");
-    rejects([&] { (void)view.rank(populations.size()); });
+    require(view.template count<test_arch>() == oracle.back(), "group derived count oracle");
+    rejects([&] { (void)view.template rank<test_arch>(populations.size()); });
     for (std::size_t i = 0; i < populations.size(); ++i) {
-      require(view.rank(i) == oracle[i], "group prefix oracle");
+      require(view.template rank<test_arch>(i) == oracle[i], "group prefix oracle");
       if (i < populations.size()) {
         require(view.class_at(i) == populations[i], "group class oracle");
         if constexpr (K == 3 || K == 7 || K == 31) {
@@ -118,11 +109,9 @@ namespace {
           auto expected = unsigned(oracle[i] - oracle[(i / 128) * 128]);
           require(everett::rank_groups_detail::prefix_portable<bits>(words.data() + begin, unsigned(i % 128)) == expected,
                   "portable grouped prefix oracle");
-#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
           if (words.size() - begin >= 2 * bits)
-            require(everett::rank_groups_detail::prefix_neon<bits>(words.data() + begin, unsigned(i % 128)) == expected,
-                    "NEON grouped prefix oracle");
-#endif
+            require(everett::rank_groups_detail::prefix<bits, test_arch>(words.data() + begin, unsigned(i % 128)) == expected,
+                    "architecture grouped prefix oracle");
         }
       }
     }
@@ -174,8 +163,8 @@ namespace {
       std::vector<std::uint64_t> oracle(bits + 1);
       for (std::uint64_t bit = 0; bit < bits; ++bit)
         oracle[bit + 1] = oracle[bit] + ((source[bit / 64] >> (bit % 64)) & 1);
-      auto index = everett::rank_index::build(source, bits);
-      require(index.view().count() == oracle.back(), "partial block total");
+      auto index = everett::rank_index::build<test_arch>(source, bits);
+      require(index.view().template count<test_arch>() == oracle.back(), "partial block total");
       require(index.supers == std::vector<std::uint64_t>{0}, "partial block epoch directory");
       for (std::uint64_t block = 0; block < index.blocks.size(); ++block) {
         require(index.blocks[block].before == oracle[block * 2048], "partial block prefix");
@@ -188,7 +177,7 @@ namespace {
                   "partial block run population");
         }
       }
-      require(index.view().count() == oracle.back(), "partial block endpoint");
+      require(index.view().template count<test_arch>() == oracle.back(), "partial block endpoint");
       if (bits % 64) require(index.words.back() >> (bits % 64) == 0, "partial word masking");
     }
   }
@@ -246,30 +235,30 @@ namespace {
         }
         // Garbage padding must not contribute to the last block or total.
         if (bits % 64) source.back() |= ~std::uint64_t{0} << (bits % 64);
-        auto index = everett::rank_index::build(source, bits);
+        auto index = everett::rank_index::build<test_arch>(source, bits);
         auto view = index.view();
-        require(view.count() == oracle.back(), "rank total");
+        require(view.template count<test_arch>() == oracle.back(), "rank total");
         for (std::uint64_t i = 0; i < bits; ++i)
-          require(view.rank(i) == oracle[i], "rank prefix mismatch");
-        rejects([&] { view.rank(bits); });
+          require(view.template rank<test_arch>(i) == oracle[i], "rank prefix mismatch");
+        rejects([&] { view.template rank<test_arch>(bits); });
         if (bits >= 2048 && pattern == 1)
           require(index.blocks[0].runs == (512u | (512u << 11) | (512u << 22)),
                   "packed runs must hold independent populations of 512");
       }
     }
-    rejects([] { everett::rank_index::build({}, 1); });
-    rejects([] { everett::rank_index::build({}, std::numeric_limits<std::uint64_t>::max()); });
+    rejects([] { everett::rank_index::build<test_arch>({}, 1); });
+    rejects([] { everett::rank_index::build<test_arch>({}, std::numeric_limits<std::uint64_t>::max()); });
     everett::rank_index empty;
-    require(empty.view().count() == 0, "default rank");
-    rejects([&] { (void)empty.view().rank(0); });
+    require(empty.view().template count<test_arch>() == 0, "default rank");
+    rejects([&] { (void)empty.view().template rank<test_arch>(0); });
   }
 
   void test_rank15_malformed_tail() {
     std::array<std::uint64_t, 1> classes{15}, checkpoints{0};
     everett::rank15_view partial(classes, checkpoints, 1);
-    require(partial.rank(0) == 0, "rank15 partial first boundary");
-    rejects([&] { (void)partial.count(); });
-    rejects([&] { (void)partial.rank(1); });
+    require(partial.template rank<test_arch>(0) == 0, "rank15 partial first boundary");
+    rejects([&] { (void)partial.template count<test_arch>(); });
+    rejects([&] { (void)partial.template rank<test_arch>(1); });
   }
 
   void check_rank15_word(std::uint64_t value) {
@@ -282,7 +271,7 @@ namespace {
     // Earlier queries mask every tail.
     everett::rank15_view view(words, checkpoints, 17 * 15);
     for (unsigned i = 0; i <= 16; ++i)
-      require(view.rank(i) == oracle[i], "rank15 packed-word sum");
+      require(view.template rank<test_arch>(i) == oracle[i], "rank15 packed-word sum");
   }
 
   void test_rank15_words() {
@@ -311,7 +300,7 @@ namespace {
       std::array<std::uint64_t, 2> checkpoints{0, oracle[128]};
       everett::rank15_view view(words, checkpoints, 129 * 15);
       for (unsigned i = 0; i < 129; ++i)
-        require(view.rank(i) == oracle[i], "rank15 checkpoint accumulation");
+        require(view.template rank<test_arch>(i) == oracle[i], "rank15 checkpoint accumulation");
     }
     // Every short final checkpoint must remain within the allocated words.
     // The first checkpoint of the larger inputs exercises the SIMD path.
@@ -325,7 +314,7 @@ namespace {
       auto index = everett::rank15_index::build(classes, groups * 15);
       auto view = index.view();
       for (unsigned i = 0; i < groups; ++i)
-        require(view.rank(i) == oracle[i], "rank15 short checkpoint");
+        require(view.template rank<test_arch>(i) == oracle[i], "rank15 short checkpoint");
     }
     // Borrowed classes need only uint64_t alignment, even for vector loads.
     alignas(64) std::array<std::uint64_t, 16> shifted{};
@@ -337,7 +326,7 @@ namespace {
       std::array<std::uint64_t, 1> checkpoints{0};
       everett::rank15_view view(std::span(shifted).subspan(offset, 8), checkpoints, 128 * 15);
       for (unsigned i = 0; i < 128; ++i)
-        require(view.rank(i) == oracle[i], "rank15 unaligned checkpoint");
+        require(view.template rank<test_arch>(i) == oracle[i], "rank15 unaligned checkpoint");
     }
   }
 
@@ -352,10 +341,10 @@ namespace {
       oracle[i + 1] = oracle[i] + populations[i];
     }
     everett::rank15_view view(words, checkpoints, populations.size() * 15);
-    require(view.count() == oracle.back(), "rank15 derived count oracle");
-    rejects([&] { (void)view.rank(populations.size()); });
+    require(view.template count<test_arch>() == oracle.back(), "rank15 derived count oracle");
+    rejects([&] { (void)view.template rank<test_arch>(populations.size()); });
     for (std::size_t i = 0; i < populations.size(); ++i)
-      require(view.rank(i) == oracle[i], "rank15 targeted prefix oracle");
+      require(view.template rank<test_arch>(i) == oracle[i], "rank15 targeted prefix oracle");
     for (std::size_t i = 0; i < populations.size(); ++i)
       require(view.class_at(i) == populations[i], "rank15 targeted class oracle");
   }
@@ -420,7 +409,7 @@ namespace {
     guarded_rank15_page memory;
     for (unsigned bits = 0; bits <= 1088; ++bits) {
       std::vector<std::uint64_t> source((bits + 63) / 64, ~std::uint64_t{0});
-      auto index = everett::rank_index::build(source, bits);
+      auto index = everett::rank_index::build<test_arch>(source, bits);
       // Keep all-one padding in the borrowed final word.
       auto bytes = source.size() * 8;
       auto destination = memory.end() - bytes;
@@ -429,16 +418,16 @@ namespace {
       memory.protect(PROT_READ);
       std::span words{reinterpret_cast<std::uint64_t const *>(destination), source.size()};
       everett::rank_view view(words, index.blocks, index.supers, bits);
-      require(view.count() == bits, "guarded bitmap derived count");
-      rejects([&] { (void)view.rank(bits); });
+      require(view.template count<test_arch>() == bits, "guarded bitmap derived count");
+      rejects([&] { (void)view.template rank<test_arch>(bits); });
       for (unsigned bit = 0; bit < bits; ++bit)
-        require(view.rank(bit) == bit, "guarded bitmap prefix");
+        require(view.template rank<test_arch>(bit) == bit, "guarded bitmap prefix");
     }
     // A run boundary needs only the directory, even when the payload page is
     // not resident/readable. This catches accidental speculative full-run loads.
     std::array<std::uint64_t, 32> source;
     source.fill(~std::uint64_t{0});
-    auto index = everett::rank_index::build(source, 2048);
+    auto index = everett::rank_index::build<test_arch>(source, 2048);
     auto destination = memory.end() - sizeof(source);
     memory.protect(PROT_READ | PROT_WRITE);
     std::memcpy(destination, source.data(), sizeof(source));
@@ -446,8 +435,8 @@ namespace {
     everett::rank_view view({reinterpret_cast<std::uint64_t const *>(destination), source.size()},
                            index.blocks, index.supers, 2048);
     for (unsigned bit = 0; bit < 2048; bit += 512)
-      require(view.rank(bit) == bit, "directory-only guarded boundary");
-    rejects([&] { (void)view.rank(2048); });
+      require(view.template rank<test_arch>(bit) == bit, "directory-only guarded boundary");
+    rejects([&] { (void)view.template rank<test_arch>(2048); });
   }
 
   void test_rank15_guarded_tails() {
@@ -493,12 +482,12 @@ namespace {
         for (std::uint64_t i = 0; i < groups; ++i) oracle[i + 1] = oracle[i] + classes[i];
         auto index = everett::rank15_index::build(classes, bits);
         auto view = index.view();
-        require(view.group_count() == groups && view.count() == oracle.back(), "rank15 shape");
+        require(view.group_count() == groups && view.template count<test_arch>() == oracle.back(), "rank15 shape");
         for (std::uint64_t i = 0; i < groups; ++i)
-          require(view.rank(i) == oracle[i], "rank15 prefix mismatch");
+          require(view.template rank<test_arch>(i) == oracle[i], "rank15 prefix mismatch");
         for (std::uint64_t i = 0; i < groups; ++i)
           require(view.class_at(i) == classes[i], "rank15 packed class");
-        rejects([&] { view.rank(groups); });
+        rejects([&] { view.template rank<test_arch>(groups); });
         rejects([&] { view.class_at(groups); });
       }
     }
@@ -506,8 +495,8 @@ namespace {
     rejects([] { everett::rank15_index::build(std::array<std::uint8_t, 1>{16}, 15); });
     rejects([] { everett::rank15_index::build(std::array<std::uint8_t, 1>{2}, 1); });
     everett::rank15_index empty;
-    require(empty.view().count() == 0, "default rank15");
-    rejects([&] { (void)empty.view().rank(0); });
+    require(empty.view().template count<test_arch>() == 0, "default rank15");
+    rejects([&] { (void)empty.view().template rank<test_arch>(0); });
   }
 
   everett::elias_fano check_select(std::vector<std::uint64_t> const & source) {
