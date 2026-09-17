@@ -9,13 +9,6 @@
  */
 
 namespace everett::crc32c_detail::arm_scalar {
-#if defined(_MSC_VER)
-#define EVERETT_GENERATED_CRC_AINLINE __forceinline
-#define EVERETT_GENERATED_CRC_ALIGN(n) __declspec(align(n))
-#else
-#define EVERETT_GENERATED_CRC_AINLINE inline __attribute__((always_inline))
-#define EVERETT_GENERATED_CRC_ALIGN(n) __attribute__((aligned(n)))
-#endif
 #define EVERETT_GENERATED_CRC_EXPORT inline
 
 EVERETT_GENERATED_CRC_EXPORT uint32_t crc32_impl(uint32_t crc0, const char* buf, size_t len) {
@@ -32,7 +25,5 @@ EVERETT_GENERATED_CRC_EXPORT uint32_t crc32_impl(uint32_t crc0, const char* buf,
   return ~crc0;
 }
 
-#undef EVERETT_GENERATED_CRC_AINLINE
-#undef EVERETT_GENERATED_CRC_ALIGN
 #undef EVERETT_GENERATED_CRC_EXPORT
 }

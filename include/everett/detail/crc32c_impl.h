@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <cstring>
 #include <span>
+#include <simd/attributes.h>
 
 #if defined(__aarch64__) && defined(__ARM_FEATURE_CRC32) && (defined(__GNUC__) || defined(__clang__))
 #include <arm_acle.h>
@@ -84,4 +85,3 @@ namespace everett::crc32c_detail {
 #endif
 #endif
 #endif
-

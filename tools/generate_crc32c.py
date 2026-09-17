@@ -33,12 +33,17 @@ VARIANTS = {
 
 
 def adapt(source, name, isa, algorithm):
-    """Only C++ linkage, alias-safe loads, literals and macro scope are changed."""
+    """Adapt linkage, byte loads, literals and attributes without changing kernels."""
     source = re.sub(r"^/\*.*?\*/\n", "", source, flags=re.MULTILINE)
     source = re.sub(r"^#include <[^>]+>\n", "", source, flags=re.MULTILINE)
     source = source.replace("#define CRC_EXPORT extern", "#define CRC_EXPORT inline")
-    source = source.replace("CRC_AINLINE static __forceinline", "CRC_AINLINE __forceinline")
-    source = source.replace("CRC_AINLINE static __inline", "CRC_AINLINE inline")
+    source, attributes = re.subn(
+        r"#if defined\(_MSC_VER\)\n#define CRC_AINLINE .*?\n#endif\n",
+        "", source, flags=re.DOTALL)
+    if attributes != 1:
+        raise RuntimeError("unhandled generated attribute declarations")
+    source = re.sub(r"\bCRC_AINLINE\b", "simd_inline", source)
+    source = re.sub(r"\bCRC_ALIGN\b", "simd_align", source)
     source = source.replace("static const uint32_t g_crc_table", "inline constexpr uint32_t g_crc_table")
     source = source.replace("static uint32_t xnmodp", "inline uint32_t xnmodp")
     source = source.replace("(uint64x2_t){", "uint64x2_t{")

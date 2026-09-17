@@ -9,28 +9,21 @@
  */
 
 namespace everett::crc32c_detail::arm_eor3 {
-#if defined(_MSC_VER)
-#define EVERETT_GENERATED_CRC_AINLINE __forceinline
-#define EVERETT_GENERATED_CRC_ALIGN(n) __declspec(align(n))
-#else
-#define EVERETT_GENERATED_CRC_AINLINE inline __attribute__((always_inline))
-#define EVERETT_GENERATED_CRC_ALIGN(n) __attribute__((aligned(n)))
-#endif
 #define EVERETT_GENERATED_CRC_EXPORT inline
 
-EVERETT_GENERATED_CRC_AINLINE uint64x2_t clmul_lo(uint64x2_t a, uint64x2_t b) {
+simd_inline uint64x2_t clmul_lo(uint64x2_t a, uint64x2_t b) {
   uint64x2_t r;
   __asm("pmull %0.1q, %1.1d, %2.1d\n" : "=w"(r) : "w"(a), "w"(b));
   return r;
 }
 
-EVERETT_GENERATED_CRC_AINLINE uint64x2_t clmul_hi(uint64x2_t a, uint64x2_t b) {
+simd_inline uint64x2_t clmul_hi(uint64x2_t a, uint64x2_t b) {
   uint64x2_t r;
   __asm("pmull2 %0.1q, %1.2d, %2.2d\n" : "=w"(r) : "w"(a), "w"(b));
   return r;
 }
 
-EVERETT_GENERATED_CRC_AINLINE uint64x2_t clmul_scalar(uint32_t a, uint32_t b) {
+simd_inline uint64x2_t clmul_scalar(uint32_t a, uint32_t b) {
   uint64x2_t r;
   __asm("pmull %0.1q, %1.1d, %2.1d\n" : "=w"(r) : "w"(vmovq_n_u64(a)), "w"(vmovq_n_u64(b)));
   return r;
@@ -55,7 +48,7 @@ inline uint32_t xnmodp(uint64_t n) /* x^n mod P, in log(n) time */ {
   return acc;
 }
 
-EVERETT_GENERATED_CRC_AINLINE uint64x2_t crc_shift(uint32_t crc, size_t nbytes) {
+simd_inline uint64x2_t crc_shift(uint32_t crc, size_t nbytes) {
   return clmul_scalar(crc, xnmodp(nbytes * 8 - 33));
 }
 
@@ -90,7 +83,7 @@ EVERETT_GENERATED_CRC_EXPORT uint32_t crc32_impl(uint32_t crc0, const char* buf,
     uint64x2_t x7 = vld1q_u64((const uint64_t*)(buf2 + 112)), y7;
     uint64x2_t x8 = vld1q_u64((const uint64_t*)(buf2 + 128)), y8;
     uint64x2_t k;
-    { static const uint64_t EVERETT_GENERATED_CRC_ALIGN(16) k_[] = {0x7e908048, 0xc96cfdc0}; k = vld1q_u64(k_); }
+    { static const uint64_t simd_align(16) k_[] = {0x7e908048, 0xc96cfdc0}; k = vld1q_u64(k_); }
     buf2 += 144;
     len -= 192;
     /* Main loop. */
@@ -124,7 +117,7 @@ EVERETT_GENERATED_CRC_EXPORT uint32_t crc32_impl(uint32_t crc0, const char* buf,
       len -= 192;
     }
     /* Reduce x0 ... x8 to just x0. */
-    { static const uint64_t EVERETT_GENERATED_CRC_ALIGN(16) k_[] = {0xf20c0dfe, 0x493c7d27}; k = vld1q_u64(k_); }
+    { static const uint64_t simd_align(16) k_[] = {0xf20c0dfe, 0x493c7d27}; k = vld1q_u64(k_); }
     y0 = clmul_lo(x0, k), x0 = clmul_hi(x0, k);
     x0 = veor3q_u64(x0, y0, x1);
     x1 = x2, x2 = x3, x3 = x4, x4 = x5, x5 = x6, x6 = x7, x7 = x8;
@@ -136,12 +129,12 @@ EVERETT_GENERATED_CRC_EXPORT uint32_t crc32_impl(uint32_t crc0, const char* buf,
     x2 = veor3q_u64(x2, y2, x3);
     x4 = veor3q_u64(x4, y4, x5);
     x6 = veor3q_u64(x6, y6, x7);
-    { static const uint64_t EVERETT_GENERATED_CRC_ALIGN(16) k_[] = {0x3da6d0cb, 0xba4fc28e}; k = vld1q_u64(k_); }
+    { static const uint64_t simd_align(16) k_[] = {0x3da6d0cb, 0xba4fc28e}; k = vld1q_u64(k_); }
     y0 = clmul_lo(x0, k), x0 = clmul_hi(x0, k);
     y4 = clmul_lo(x4, k), x4 = clmul_hi(x4, k);
     x0 = veor3q_u64(x0, y0, x2);
     x4 = veor3q_u64(x4, y4, x6);
-    { static const uint64_t EVERETT_GENERATED_CRC_ALIGN(16) k_[] = {0x740eef02, 0x9e4addf8}; k = vld1q_u64(k_); }
+    { static const uint64_t simd_align(16) k_[] = {0x740eef02, 0x9e4addf8}; k = vld1q_u64(k_); }
     y0 = clmul_lo(x0, k), x0 = clmul_hi(x0, k);
     x0 = veor3q_u64(x0, y0, x4);
     /* Final scalar chunk. */
@@ -193,7 +186,5 @@ EVERETT_GENERATED_CRC_EXPORT uint32_t crc32_impl(uint32_t crc0, const char* buf,
   return ~crc0;
 }
 
-#undef EVERETT_GENERATED_CRC_AINLINE
-#undef EVERETT_GENERATED_CRC_ALIGN
 #undef EVERETT_GENERATED_CRC_EXPORT
 }

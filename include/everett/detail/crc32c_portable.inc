@@ -9,13 +9,6 @@
  */
 
 namespace everett::crc32c_detail::portable {
-#if defined(_MSC_VER)
-#define EVERETT_GENERATED_CRC_AINLINE __forceinline
-#define EVERETT_GENERATED_CRC_ALIGN(n) __declspec(align(n))
-#else
-#define EVERETT_GENERATED_CRC_AINLINE inline __attribute__((always_inline))
-#define EVERETT_GENERATED_CRC_ALIGN(n) __attribute__((aligned(n)))
-#endif
 #define EVERETT_GENERATED_CRC_EXPORT inline
 
 inline constexpr uint32_t g_crc_table[4][256] = {{
@@ -193,11 +186,11 @@ inline constexpr uint32_t g_crc_table[4][256] = {{
   0x4a21617b, 0x9764cbc3, 0xf54642fa, 0x2803e842
 }};
 
-EVERETT_GENERATED_CRC_AINLINE uint32_t crc_u8(uint32_t crc, uint8_t val) {
+simd_inline uint32_t crc_u8(uint32_t crc, uint8_t val) {
   return (crc >> 8) ^ g_crc_table[0][(crc & 0xFF) ^ val];
 }
 
-EVERETT_GENERATED_CRC_AINLINE uint32_t crc_u32(uint32_t crc, uint32_t val) {
+simd_inline uint32_t crc_u32(uint32_t crc, uint32_t val) {
   crc ^= val;
   return g_crc_table[0][crc >>  24] ^ g_crc_table[1][(crc >> 16) & 0xFF] ^
          g_crc_table[3][crc & 0xFF] ^ g_crc_table[2][(crc >>  8) & 0xFF];
@@ -217,7 +210,5 @@ EVERETT_GENERATED_CRC_EXPORT uint32_t crc32_impl(uint32_t crc0, const char* buf,
   return ~crc0;
 }
 
-#undef EVERETT_GENERATED_CRC_AINLINE
-#undef EVERETT_GENERATED_CRC_ALIGN
 #undef EVERETT_GENERATED_CRC_EXPORT
 }

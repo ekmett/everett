@@ -9,19 +9,12 @@
  */
 
 namespace everett::crc32c_detail::x86_vpclmul {
-#if defined(_MSC_VER)
-#define EVERETT_GENERATED_CRC_AINLINE __forceinline
-#define EVERETT_GENERATED_CRC_ALIGN(n) __declspec(align(n))
-#else
-#define EVERETT_GENERATED_CRC_AINLINE inline __attribute__((always_inline))
-#define EVERETT_GENERATED_CRC_ALIGN(n) __attribute__((aligned(n)))
-#endif
 #define EVERETT_GENERATED_CRC_EXPORT inline
 
 #define EVERETT_GENERATED_clmul_lo(a, b) (_mm512_clmulepi64_epi128((a), (b), 0))
 #define EVERETT_GENERATED_clmul_hi(a, b) (_mm512_clmulepi64_epi128((a), (b), 17))
 
-EVERETT_GENERATED_CRC_AINLINE __m128i clmul_scalar(uint32_t a, uint32_t b) {
+simd_inline __m128i clmul_scalar(uint32_t a, uint32_t b) {
   return _mm_clmulepi64_si128(_mm_cvtsi32_si128(a), _mm_cvtsi32_si128(b), 0);
 }
 
@@ -44,7 +37,7 @@ inline uint32_t xnmodp(uint64_t n) /* x^n mod P, in log(n) time */ {
   return acc;
 }
 
-EVERETT_GENERATED_CRC_AINLINE __m128i crc_shift(uint32_t crc, size_t nbytes) {
+simd_inline __m128i crc_shift(uint32_t crc, size_t nbytes) {
   return clmul_scalar(crc, xnmodp(nbytes * 8 - 33));
 }
 
@@ -167,8 +160,6 @@ EVERETT_GENERATED_CRC_EXPORT uint32_t crc32_impl(uint32_t crc0, const char* buf,
   return ~crc0;
 }
 
-#undef EVERETT_GENERATED_CRC_AINLINE
-#undef EVERETT_GENERATED_CRC_ALIGN
 #undef EVERETT_GENERATED_CRC_EXPORT
 #undef EVERETT_GENERATED_clmul_hi
 #undef EVERETT_GENERATED_clmul_lo
