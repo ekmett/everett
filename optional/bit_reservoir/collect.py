@@ -7,11 +7,16 @@ import csv
 import hashlib
 import json
 import pathlib
+from pathlib import Path
 import platform
 import shutil
 import statistics
 import subprocess
 import sys
+
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from experiment import build_metadata
 
 
 def digest(path):
@@ -44,7 +49,7 @@ def main():
             for path in [source / "include/everett/sort_codec.h", source / "tests/sort_bit_reservoir.cc",
                          *sorted((source / "optional/bit_reservoir").glob("*"))] if path.is_file()
         },
-        "compiler": subprocess.check_output(["clang++", "--version"], text=True),
+        "builds": {name: build_metadata(getattr(args, name).parent) for name in ("baseline", "candidate")},
         "schedule": [],
     }
     results, expected_results, expected_files, checks = [], {}, {}, []

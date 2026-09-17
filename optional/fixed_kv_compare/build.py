@@ -9,6 +9,11 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import sys
+
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from experiment import build_metadata
 
 
 def digest(path):
@@ -22,6 +27,7 @@ def main():
     parser.add_argument('--fixed-metallib', type=Path, required=True)
     parser.add_argument('--archive', type=Path)
     parser.add_argument('--simd-archive', type=Path)
+    parser.add_argument('--native-archive', type=Path)
     args = parser.parse_args()
     here = Path(__file__).resolve().parent
     root = here.parent.parent
@@ -39,7 +45,8 @@ def main():
             sources.update((root / 'optional' / folder).glob(suffix))
     record = {'sources': {str(p.relative_to(root)): digest(p) for p in sorted(sources)},
         'artifacts': {name: digest(out / name) for name in ('kv', 'fixed', 'kv.metallib', 'fixed.metallib')}}
-    record['dependency_archives'] = {name: digest(path) for name in ('archive', 'simd_archive')
+    record['build'] = build_metadata(out)
+    record['dependency_archives'] = {name: digest(path) for name in ('archive', 'simd_archive', 'native_archive')
         if (path := getattr(args, name)) is not None}
     (out / 'manifest.json').write_text(json.dumps(record, indent=2, sort_keys=True) + '\n')
 

@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
+#include "../host_backend.h"
 #include <everett/sort_profile_file.h>
 #include <everett/typed_world.h>
 #include <algorithm>
@@ -79,10 +80,10 @@ namespace {
     using key_codec = unsigned_key<64>;
     using value_codec = std::conditional_t<Fixed, unsigned_value<64>, string_value<>>;
   };
-  template <bool Byte, bool Fixed, unsigned Width> using raw_policy = storage_policy<tip<encoded_sort<
+  template <bool Byte, bool Fixed, unsigned Width> using raw_policy = everett_experiment::policy<tip<encoded_sort<
     std::conditional_t<Byte, byte_encoding<std::conditional_t<Fixed, fixed_values<Width>, variable_values>>,
       bit_encoding<std::conditional_t<Fixed, fixed_values<Width * 8>, variable_values>>>>>>;
-  template <bool Byte, class S> using typed_policy = storage_policy<
+  template <bool Byte, class S> using typed_policy = everett_experiment::policy<
     std::conditional_t<Byte, sort_list<S>, bin<tip<S>, sort_undefined>>>;
 
   template <class P, bool Typed, class S, bool KnownWidth = false> struct byte_or_raw_codec {

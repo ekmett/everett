@@ -47,7 +47,7 @@ inline void rank15_reused(std::span<std::uint8_t const> source, std::uint32_t bi
 }
 
 // This bounded experiment has at most 2^28 bits, so only the first rank
-// epoch is needed. It uses the production NEON/popcount512 helper and the
+// epoch is needed. It uses the production selected-profile popcount512 helper and the
 // production tail algorithm, without rank_index::build's owning input copy.
 inline void rank2048_reused(std::span<std::uint64_t const> source, std::uint32_t bits,
                             std::span<everett::rank_block> output) {
@@ -57,7 +57,7 @@ inline void rank2048_reused(std::span<std::uint64_t const> source, std::uint32_t
     auto first = block * 32;
     if (std::uint64_t(block + 1) * 2048 <= bits) {
       for (unsigned i = 0; i < 4; ++i)
-        counts[i] = everett::rank_detail::popcount512(source.data() + first + i * 8);
+        counts[i] = everett::rank_detail::popcount512<everett_experiment::architecture>(source.data() + first + i * 8);
     } else {
       for (auto word = first; word < source.size(); ++word)
         counts[(word - first) >> 3] += unsigned(std::popcount(source[word]));
@@ -85,7 +85,7 @@ inline void rank_shared_case(gpu &context, std::filesystem::path const &director
     auto limit = i + 1 == classes.size() && bits % 15 ? bits % 15 : 15;
     classes[i] = std::uint8_t(random() % (limit + 1));
   }
-  auto expected = everett::rank_index::build(words, bits);
+  auto expected = everett::rank_index::build<everett_experiment::architecture>(words, bits);
   auto expected15 = everett::rank15_index::build(classes, bits);
   for (unsigned mode = 0; mode < 2; ++mode) {
     auto &source = mode ? class_input : bitmap;
@@ -113,7 +113,7 @@ inline void rank_shared_case(gpu &context, std::filesystem::path const &director
                       built.checkpoints == expected15.checkpoints,
                   "rank15 owning shared-input oracle");
         } else {
-          auto built = everett::rank_index::build(words, bits);
+          auto built = everett::rank_index::build<everett_experiment::architecture>(words, bits);
           own_ms = elapsed(begin);
           require(std::memcmp(built.blocks.data(), expected.blocks.data(),
                               built.blocks.size() * 8) == 0,

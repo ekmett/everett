@@ -145,7 +145,7 @@ namespace {
     }
     std::vector<u64> sparse(4097);
     for (u64 i = 2047; i < sparse.size(); ++i) sparse[i] = u64{1} << 40;
-    require(!everett::elias_fano::build(sparse).sparse.empty(), "fixture missed sparse directory");
+    require(!everett::elias_fano::build<everett_experiment::architecture>(sparse).sparse.empty(), "fixture missed sparse directory");
     cases.push_back(sparse);
     for (auto const &values : cases) candidates([&]<class R>(char const *name) {
       if constexpr (std::same_as<R, direct<std::uint32_t>>) if (!values.empty() && values.back() > UINT32_MAX) return;

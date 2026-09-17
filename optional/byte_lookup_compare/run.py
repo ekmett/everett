@@ -10,7 +10,12 @@ from pathlib import Path
 import platform
 import random
 import subprocess
+import sys
 import time
+
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from experiment import build_metadata
 
 parser = argparse.ArgumentParser()
 parser.add_argument('build', type=Path)
@@ -35,7 +40,7 @@ if metadata_path.exists():
         raise RuntimeError('Output belongs to different source/executable/settings; use a new directory')
 else:
     metadata = dict(identity=identity, execution_order=[], host=platform.platform(),
-        compiler=subprocess.check_output(['c++', '--version'], text=True).splitlines()[0],
+        build=build_metadata(args.build),
         header_revision=json.loads((args.headers / 'headers.json').read_text())['source_revision'],
         source_revision=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip())
 metadata_path.write_text(json.dumps(metadata, indent=2) + '\n')

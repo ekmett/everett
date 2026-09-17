@@ -9,9 +9,15 @@ import csv
 import hashlib
 import json
 import pathlib
+from pathlib import Path
 import shutil
 import struct
 import subprocess
+import sys
+
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from experiment import build_metadata
 
 
 def digest(path):
@@ -97,7 +103,7 @@ def main():
     source_paths = list((root / 'include').rglob('*.h')) + list(pathlib.Path(__file__).resolve().parent.glob('*.cc'))
     closure = {str(p.relative_to(root)): digest(p) for p in sorted(source_paths)}
     metadata = dict(source_revision=revision, binary_sha256=digest(binary), sizes=args.sizes, modes=modes,
-                    timing=False, counts=dict(files=len(files), fixture_identities=len(fixtures), rows=len(rows)),
+                    build=build_metadata(binary.parent), timing=False, counts=dict(files=len(files), fixture_identities=len(fixtures), rows=len(rows)),
                     header_closure=closure)
     (output / 'metadata.json').write_text(json.dumps(metadata, indent=2, sort_keys=True) + '\n')
 

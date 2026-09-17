@@ -5,6 +5,7 @@
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  */
+#include "../host_backend.h"
 #include <everett/sort_profile_file.h>
 #include <everett/typed_world.h>
 #include <algorithm>
@@ -28,8 +29,8 @@ namespace {
   using u64 = std::uint64_t;
   using clock_type = std::chrono::steady_clock;
   using strings = unsorted<std::optional<std::string>>;
-  using bit_policy = storage_policy<bin<tip<strings>, sort_undefined>, 15, exponential_golomb<0>, 15>;
-  using byte_policy = storage_policy<strings, 15, exponential_golomb<0>, 15>;
+  using bit_policy = everett_experiment::policy<bin<tip<strings>, sort_undefined>, 15, exponential_golomb<0>, 15>;
+  using byte_policy = everett_experiment::policy<strings, 15, exponential_golomb<0>, 15>;
   static_assert(bit_policy::unit == profile_unit::bit && byte_policy::unit == profile_unit::byte);
   void require(bool condition, char const * message) { if (!condition) throw std::runtime_error(message); }
   u64 thread_cpu_ns() {

@@ -8,6 +8,7 @@
  */
 #pragma once
 
+#include "../host_backend.h"
 #include <everett/elias_fano.h>
 
 // Include after gpu. Synthetic monotone offsets exercise EF boundaries even
@@ -29,7 +30,7 @@ inline void check(gpu &context, std::string const &name,
     offsets[i] = static_cast<std::uint32_t>(residuals[i / 15] + std::uint64_t(i) * common);
   for (std::uint32_t i = 0; i != records; ++i)
     lengths[i] = (i + 1 == records ? bits : offsets[i + 1]) - offsets[i];
-  auto cpu = everett::elias_fano::build(residuals);
+  auto cpu = everett::elias_fano::build<everett_experiment::architecture>(residuals);
   auto input = context.buffer(offsets.size() * 4, offsets.data());
   auto sizes = context.buffer(lengths.size() * 4, lengths.data());
   auto selected = context.buffer(references.size() * 4, references.data());

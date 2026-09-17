@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  */
 #pragma once
+#include "../host_backend.h"
 #include "../fixed_kv_compare/cases.h"
 #include <everett/cola_index.h>
 #include <everett/sort_profile.h>
@@ -15,8 +16,8 @@
 namespace select_fixture {
   using u64 = std::uint64_t;
   using strings = everett::unsorted<std::optional<std::string>>;
-  using typed_bits = everett::storage_policy<everett::bin<everett::tip<strings>, everett::sort_undefined>>;
-  template <bool Byte, bool Fixed> using raw_policy = everett::storage_policy<everett::tip<everett::encoded_sort<
+  using typed_bits = everett_experiment::policy<everett::bin<everett::tip<strings>, everett::sort_undefined>>;
+  template <bool Byte, bool Fixed> using raw_policy = everett_experiment::policy<everett::tip<everett::encoded_sort<
     std::conditional_t<Byte, everett::byte_encoding<std::conditional_t<Fixed, everett::fixed_values<16>, everett::variable_values>>,
     everett::bit_encoding<std::conditional_t<Fixed, everett::fixed_values<128>, everett::variable_values>>>>>>;
   inline void require(bool value, char const *message) { if (!value) throw std::runtime_error(message); }
@@ -42,7 +43,7 @@ namespace select_fixture {
     auto view = native.view(); auto offsets = view.group_offsets();
     std::vector<u64> values; values.reserve(offsets.size());
     for (u64 i = 0; i < offsets.size(); ++i) values.push_back(offsets.select(i));
-    auto rebuilt = everett::elias_fano::build(values);
+    auto rebuilt = everett::elias_fano::build<everett_experiment::architecture>(values);
     require(rebuilt.low_width == offsets.low_width() && rebuilt.universe == offsets.universe(), "extracted EF metadata");
     require(rebuilt.low.size() == offsets.low_words().size() && rebuilt.high.size() == offsets.high_words().size(), "extracted EF shape");
     for (u64 i = 0; i < rebuilt.low.size(); ++i) require(rebuilt.low[i] == offsets.low_words()[i], "extracted low mismatch");
@@ -107,7 +108,7 @@ namespace select_fixture {
       raw<raw_policy<true, true>, false>(root, name + ".raw-byte", fixture);
       raw<raw_policy<false, true>, false>(root, name + ".raw-bit", fixture);
     }
-    raw<everett::storage_policy<>, true>(root, name + ".typed-byte", fixture);
+    raw<everett_experiment::policy<>, true>(root, name + ".typed-byte", fixture);
     typed_bit(root, name + ".typed-bit", fixture);
   }
   inline std::vector<u64> replay(std::span<u64 const> source, u64 count) {

@@ -8,12 +8,13 @@
  */
 #pragma once
 
+#include "../host_backend.h"
 #include <everett/sort_profile.h>
 
 // Included after the optional host's gpu helper. This tests a navigation pass
 // whose input is an existing augmented origin stream, not a GPU index merger.
 namespace gpu_index_rank_test {
-using p = everett::string_policy;
+using p = everett_experiment::string_policy;
 using array = everett::sort_profile_array<p>;
 using index = everett::cola_index<p, array>;
 using ranks = std::array<everett::rank_groups<15>, 2>;

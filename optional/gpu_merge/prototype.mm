@@ -11,6 +11,7 @@
  */
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
+#include "../host_backend.h"
 #include <algorithm>
 #include <chrono>
 #include <cstring>
@@ -218,12 +219,12 @@ void rank_case(gpu &context, std::uint32_t bits, unsigned trials) {
     word = random();
   if (bits % 64)
     source.back() &= (std::uint64_t{1} << (bits % 64)) - 1;
-  auto cpu = everett::rank_index::build(source, bits);
+  auto cpu = everett::rank_index::build<everett_experiment::architecture>(source, bits);
   auto c = classes(source, bits);
   auto cpu15 = everett::rank15_index::build(c, bits);
   for (unsigned trial = 0; trial < trials; trial++) {
     auto begin = clock_type::now();
-    auto cr = everett::rank_index::build(source, bits);
+    auto cr = everett::rank_index::build<everett_experiment::architecture>(source, bits);
     double cpu_ms = elapsed(begin);
     begin = clock_type::now();
     auto cc = classes(source, bits);
@@ -261,7 +262,7 @@ void rank_case(gpu &context, std::uint32_t bits, unsigned trials) {
     }
   }
 }
-using policy = everett::string_policy;
+using policy = everett_experiment::string_policy;
 using sort_type = everett::unsorted<std::optional<std::string>>;
 using native = everett::mapped_sort_profile<policy>;
 #include "prepared_input.h"
@@ -706,7 +707,7 @@ merge_result gpu_merge(gpu &context, native const &a, native const &b,
     for (std::uint32_t i = 0; i < survivors; i += 15)
       boundaries.push_back(starts[i] - std::uint64_t(i) * common.value_or(0));
     boundaries.push_back(result.bits - std::uint64_t(survivors) * common.value_or(0));
-    ef = everett::elias_fano::build(boundaries);
+    ef = everett::elias_fano::build<everett_experiment::architecture>(boundaries);
     everett::sort_profile_file_detail::append_words(parts[1], ef.low);
     everett::sort_profile_file_detail::append_words(parts[2], ef.high);
     parts[3].resize(ef.samples.size() * 16);
@@ -789,7 +790,7 @@ merge_result gpu_merge(gpu &context, native const &a, native const &b,
   header.common_value_width = common;
   header.extent = end * 8;
   auto encoded =
-      everett::encode_file_header(header, everett::crc32c(std::span<std::byte const>(base + 96, end)));
+      everett::encode_file_header(header, everett::crc32c<everett_experiment::architecture>(std::span<std::byte const>(base + 96, end)));
   std::memcpy(base, encoded.data(), 96);
   require(ftruncate(output.fd, off_t(result.bytes)) == 0, "final output extent");
   result.assembly += elapsed(phase);

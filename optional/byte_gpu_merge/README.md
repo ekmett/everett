@@ -3,7 +3,7 @@ Byte-profile GPU merge
 
 This optional experiment merges real byte-profile `KV02` files on Metal. I keep
 its supported grammar narrow: the tagless built-in optional-string sort under
-`storage_policy<>`, replacement composition, and 15-record codec blocks and
+`backend_policy<Architecture>`, replacement composition, and 15-record codec blocks and
 sampling. `gpu_registry<Policy, Compose>` enables only that exact combination.
 The existing bit-profile shader contract is unchanged.
 
@@ -58,6 +58,13 @@ from this source checkout; Python handles shader artifacts and manifests.
 
 
 On macOS with Metal, DXC, SPIRV-Tools and SPIRV-Cross available:
+
+`EVERETT_EXPERIMENT_ARCH=AUTO` selects NEON on an ARM host with the native
+Everett archive, and scalar elsewhere. Select `AVX2` or `AVX512` explicitly
+only on a matching x86 build host; configuration checks its required features.
+`SCALAR` is always available. The experiment's policies carry that architecture
+explicitly, and new collections record it in their build metadata. Existing
+retained measurements describe their original sources and compiler settings.
 
 ```sh
 cmake -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd -S optional/byte_gpu_merge -B build-byte-gpu

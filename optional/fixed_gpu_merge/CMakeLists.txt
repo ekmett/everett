@@ -11,6 +11,10 @@ endif()
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/everett-experiment.cmake")
 everett_experiment_objcxx()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+set(everett_manifest_native_args)
+if(NOT everett_experiment_arch STREQUAL "SCALAR")
+  list(APPEND everett_manifest_native_args --native-archive "$<TARGET_FILE:everett::${everett_experiment_name}>")
+endif()
 find_program(EVERETT_DXC NAMES dxc REQUIRED)
 find_program(EVERETT_SPIRV_VAL NAMES spirv-val REQUIRED)
 find_program(EVERETT_SPIRV_CROSS NAMES spirv-cross REQUIRED)
@@ -28,7 +32,7 @@ add_dependencies(prototype fixed_gpu_merge_shaders)
 add_custom_command(TARGET prototype POST_BUILD
   COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/build.py"
     --build "${CMAKE_CURRENT_BINARY_DIR}" --manifest-only
-    --archive "$<TARGET_FILE:everett::everett>" --simd-archive "$<TARGET_FILE:simd::simd>"
+    --archive "$<TARGET_FILE:everett::everett>" --simd-archive "$<TARGET_FILE:simd::simd>" ${everett_manifest_native_args}
   BYPRODUCTS "${CMAKE_CURRENT_BINARY_DIR}/source-hashes.json" VERBATIM)
 add_custom_target(fixed_gpu_merge ALL DEPENDS prototype)
 enable_testing()

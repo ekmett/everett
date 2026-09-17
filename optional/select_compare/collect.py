@@ -14,7 +14,12 @@ from pathlib import Path
 import platform
 import struct
 import subprocess
+import sys
 import time
+
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from experiment import build_metadata
 
 
 def command(args, cwd=None):
@@ -56,9 +61,8 @@ metadata = {
     "external_revision": command(["git", "rev-parse", "HEAD"], sux).strip(),
     "external_clean": not command(["git", "status", "--porcelain"], sux).strip(),
     "external_sha256": external_hashes, "platform": platform.platform(), "machine": platform.machine(),
-    "compiler": command(["clang++", "--version"]), "processes": 3, "trials": 3,
+    "build": build_metadata(binary.parent), "processes": 3, "trials": 3,
     "queries_actual": 65536, "queries_supplemental": 262144,
-    "build_flags": "Release C++20, CMake defaults (-O3 -DNDEBUG), no architecture override",
     "scope": "offset access on exact library-built directories plus explicitly derived synthetic sequences",
 }
 for key in ("hw.model", "hw.memsize", "machdep.cpu.brand_string"):

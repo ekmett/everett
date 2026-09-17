@@ -8,6 +8,7 @@
  */
 #pragma once
 
+#include "../host_backend.h"
 #include <everett/sort_profile_merge.h>
 
 #include <cstdint>
@@ -60,7 +61,7 @@ template <class Policy, class Selector, class Compose> struct gpu_registry {
 };
 
 template <>
-struct gpu_registry<everett::string_policy, everett::registry_selector<everett::string_registry>,
+struct gpu_registry<everett_experiment::string_policy, everett::registry_selector<everett::string_registry>,
                     everett::replace_native_value>
     : gpu_sort<everett::unsorted<std::optional<std::string>>, everett::replace_native_value> {
   static constexpr std::string_view selector_id = "everett.string-registry-code0/v1";

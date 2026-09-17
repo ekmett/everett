@@ -3,6 +3,7 @@
 
 # Standalone experiments use the same compiled library and toolchain as clients.
 include_guard(GLOBAL)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Experiment build configuration" FORCE)
 endif()
@@ -17,6 +18,45 @@ if(NOT TARGET everett::everett)
     add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/.." "${CMAKE_BINARY_DIR}/everett" EXCLUDE_FROM_ALL)
   endif()
 endif()
+
+# An experiment selects an explicit native CPU profile. The library itself
+# retains its architecture-independent scalar default. Cross builds must make
+# this choice explicitly; an x86 executable is admitted before ISA flags apply.
+set(EVERETT_EXPERIMENT_ARCH "AUTO" CACHE STRING "Experiment CPU profile: AUTO, SCALAR, NEON, AVX2, AVX512")
+set_property(CACHE EVERETT_EXPERIMENT_ARCH PROPERTY STRINGS AUTO SCALAR NEON AVX2 AVX512)
+string(TOUPPER "${EVERETT_EXPERIMENT_ARCH}" everett_experiment_arch)
+if(everett_experiment_arch STREQUAL "AUTO")
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$" AND TARGET everett::neon)
+    set(everett_experiment_arch NEON)
+  else()
+    set(everett_experiment_arch SCALAR)
+  endif()
+endif()
+if(NOT everett_experiment_arch MATCHES "^(SCALAR|NEON|AVX2|AVX512)$")
+  message(FATAL_ERROR "Unknown experiment architecture: ${EVERETT_EXPERIMENT_ARCH}")
+endif()
+if(everett_experiment_arch MATCHES "^AVX")
+  if(CMAKE_CROSSCOMPILING)
+    message(FATAL_ERROR "Native x86 experiments require host ISA admission; use SCALAR for a cross build")
+  endif()
+  include(CheckCXXSourceRuns)
+  set(everett_isa_check "__builtin_cpu_supports(\"avx2\") && __builtin_cpu_supports(\"fma\") && __builtin_cpu_supports(\"bmi2\")")
+  if(everett_experiment_arch STREQUAL "AVX512")
+    string(APPEND everett_isa_check " && __builtin_cpu_supports(\"avx512f\") && __builtin_cpu_supports(\"avx512dq\") && __builtin_cpu_supports(\"avx512bw\") && __builtin_cpu_supports(\"avx512vl\")")
+  endif()
+  check_cxx_source_runs("int main() { __builtin_cpu_init(); return !(${everett_isa_check}); }"
+    EVERETT_EXPERIMENT_ADMITS_${everett_experiment_arch})
+  if(NOT EVERETT_EXPERIMENT_ADMITS_${everett_experiment_arch})
+    message(FATAL_ERROR "The build host does not admit ${everett_experiment_arch}")
+  endif()
+endif()
+string(TOLOWER "${everett_experiment_arch}" everett_experiment_name)
+if(NOT everett_experiment_arch STREQUAL "SCALAR" AND NOT TARGET everett::${everett_experiment_name})
+  message(FATAL_ERROR "The Everett package does not provide ${everett_experiment_arch}")
+endif()
+message(STATUS "Everett experiment CPU profile: ${everett_experiment_arch}")
+file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/everett-experiment.json" CONTENT
+  "{\n  \"architecture\": \"${everett_experiment_name}\",\n  \"compiler_id\": \"${CMAKE_CXX_COMPILER_ID}\",\n  \"compiler_version\": \"${CMAKE_CXX_COMPILER_VERSION}\",\n  \"cxx_standard\": 26,\n  \"configuration\": \"$<CONFIG>\"\n}\n")
 
 # Objective-C++ is a textual bridge to native framework APIs. Use the C++
 # compiler and standard-library flags already chosen by the toolchain.
@@ -36,6 +76,11 @@ endmacro()
 
 function(everett_experiment_target target)
   target_link_libraries(${target} PRIVATE everett::everett)
+  target_compile_definitions(${target} PRIVATE EVERETT_EXPERIMENT_${everett_experiment_arch}=1)
+  if(NOT everett_experiment_arch STREQUAL "SCALAR")
+    target_link_libraries(${target} PRIVATE everett::${everett_experiment_name})
+    simd_target_profile(${target} ${everett_experiment_arch})
+  endif()
   target_compile_features(${target} PRIVATE cxx_std_26)
   set_target_properties(${target} PROPERTIES CXX_EXTENSIONS OFF
     OBJCXX_STANDARD 26 OBJCXX_STANDARD_REQUIRED ON OBJCXX_EXTENSIONS OFF)

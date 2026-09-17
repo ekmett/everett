@@ -11,6 +11,10 @@ endif()
 include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/everett-experiment.cmake")
 everett_experiment_objcxx()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+set(everett_manifest_native_args)
+if(NOT everett_experiment_arch STREQUAL "SCALAR")
+  list(APPEND everett_manifest_native_args --native-archive "$<TARGET_FILE:everett::${everett_experiment_name}>")
+endif()
 set(EVERETT_KV_METALLIB "" CACHE FILEPATH "Compiled optional/gpu_merge kernels")
 set(EVERETT_FIXED_METALLIB "" CACHE FILEPATH "Compiled optional/fixed_gpu_merge kernels")
 foreach(path IN ITEMS EVERETT_KV_METALLIB EVERETT_FIXED_METALLIB)
@@ -27,7 +31,7 @@ endforeach()
 add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/manifest.json"
   COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/build.py" --build "${CMAKE_BINARY_DIR}"
     --kv-metallib "${EVERETT_KV_METALLIB}" --fixed-metallib "${EVERETT_FIXED_METALLIB}"
-    --archive "$<TARGET_FILE:everett::everett>" --simd-archive "$<TARGET_FILE:simd::simd>"
+    --archive "$<TARGET_FILE:everett::everett>" --simd-archive "$<TARGET_FILE:simd::simd>" ${everett_manifest_native_args}
   DEPENDS kv fixed build.py cases.h ../gpu_merge/prototype.mm ../fixed_gpu_merge/prototype.mm
     "${EVERETT_KV_METALLIB}" "${EVERETT_FIXED_METALLIB}" ${sources}
   BYPRODUCTS "${CMAKE_BINARY_DIR}/kv.metallib" "${CMAKE_BINARY_DIR}/fixed.metallib" VERBATIM)

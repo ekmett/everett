@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
+#include "../host_backend.h"
 #include "../fixed_kv_compare/cases.h"
 #include <everett/native_merge.h>
 #include <everett/sections.h>
@@ -26,9 +27,9 @@ namespace {
   using clock_type = std::chrono::steady_clock;
   using record = fixed_fixture::record;
   using strings = everett::unsorted<std::optional<std::string>>;
-  using typed_bit_policy = everett::storage_policy<everett::bin<everett::tip<strings>, everett::sort_undefined>>;
-  using typed_byte_policy = everett::storage_policy<>;
-  template <bool Byte, bool Fixed> using raw_policy = everett::storage_policy<everett::tip<everett::encoded_sort<
+  using typed_bit_policy = everett_experiment::policy<everett::bin<everett::tip<strings>, everett::sort_undefined>>;
+  using typed_byte_policy = everett_experiment::policy<>;
+  template <bool Byte, bool Fixed> using raw_policy = everett_experiment::policy<everett::tip<everett::encoded_sort<
     std::conditional_t<Byte, everett::byte_encoding<std::conditional_t<Fixed, everett::fixed_values<16>, everett::variable_values>>,
       everett::bit_encoding<std::conditional_t<Fixed, everett::fixed_values<128>, everett::variable_values>>>>>>;
 
@@ -73,7 +74,7 @@ namespace {
       offset += chunk.size();
     }
     require(offset == total, "incomplete output sections");
-    auto crc = everett::crc32c(std::span<std::byte const>(mapped.data + everett::file_detail::header_bytes,
+    auto crc = everett::crc32c<everett_experiment::architecture>(std::span<std::byte const>(mapped.data + everett::file_detail::header_bytes,
       std::size_t(total) - everett::file_detail::header_bytes));
     auto header = everett::encode_file_header(metadata, crc);
     std::memcpy(mapped.data, header.data(), header.size());

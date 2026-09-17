@@ -14,9 +14,14 @@ import platform
 import shutil
 import shlex
 import subprocess
+import sys
 import time
 
 MODES = ('raw-bit', 'raw-byte', 'typed-bit', 'typed-byte')
+
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from experiment import build_metadata
 
 
 def digest(path):
@@ -77,13 +82,14 @@ def main():
             target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(encoded)
         if binaries[label].stat().st_mtime < (root / 'optional/cpu_profile_compare/prototype.cc').stat().st_mtime:
             raise RuntimeError(label + ' binary predates final host source')
-        flags = (getattr(args, label + '_build') / 'CMakeFiles/cpu-profile.dir/flags.make').read_text()
-        include_line = next(line.split('=', 1)[1] for line in flags.splitlines() if line.startswith('CXX_INCLUDES ='))
-        includes = [Path(token[2:]).resolve() for token in shlex.split(include_line) if token.startswith('-I')]
+        commands = json.loads((getattr(args, label + '_build') / 'compile_commands.json').read_text())
+        entry, = [entry for entry in commands if Path(entry['file']).resolve() == (root / 'optional/cpu_profile_compare/prototype.cc').resolve()]
+        tokens = entry.get('arguments') or shlex.split(entry['command'])
+        includes = [Path(token[2:]).resolve() for token in tokens if token.startswith('-I')]
         if header_roots[label].resolve() not in includes:
             raise RuntimeError(label + ' build used a different include root')
         manifest['builds'][label] = {'header_revision': revision, 'headers': hashes,
-            'binary_sha256': digest(binaries[label]), 'compiler_flags': 'C++20 O3 DNDEBUG Wall Wextra Wpedantic Werror'}
+            'binary_sha256': digest(binaries[label]), 'build': build_metadata(getattr(args, label + '_build'))}
         shutil.copyfile(binaries[label], output / ('cpu-profile-' + label))
     for name in sources:
         target = output / 'source/harness' / name
@@ -107,8 +113,7 @@ def main():
         'schedule': schedule, 'processes': len(schedule), 'trials_per_process': 3, 'warmups_per_process': 1,
         'timeout_seconds': args.timeout, 'started_unix': time.time(),
         'host': {'cpu': command('sysctl', '-n', 'machdep.cpu.brand_string'), 'os': command('sw_vers', '-productVersion'),
-            'os_build': command('sw_vers', '-buildVersion'), 'platform': platform.platform(),
-            'compiler': command('xcrun', 'clang++', '--version')},
+            'os_build': command('sw_vers', '-buildVersion'), 'platform': platform.platform()},
         'reference_checks_sha256': digest(args.reference_checks),
         'scope': 'Mapped inputs; native merge, output EF, fresh output mmap and section copy, body/header CRC32C, clipping, cleanup; no durable sync.'}
     save(output / 'metadata.json', metadata)

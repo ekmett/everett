@@ -8,6 +8,7 @@
  */
 #pragma once
 
+#include "../host_backend.h"
 #include <everett/elias_fano.h>
 
 #include <array>
@@ -32,7 +33,7 @@ inline void ef_input_test(gpu & context) {
   fixtures.push_back(std::move(sparse));
   bool saw_sparse = false, saw_width0 = false, saw_width1 = false, saw_width30 = false;
   for (auto const & expected : fixtures) {
-    auto ef = everett::elias_fano::build(expected);
+    auto ef = everett::elias_fano::build<everett_experiment::architecture>(expected);
     saw_sparse |= !ef.sparse.empty();
     saw_width0 |= ef.low_width == 0; saw_width1 |= ef.low_width == 1; saw_width30 |= ef.low_width == 30;
     // Start at a deliberately unaligned byte address, as portable file bodies
@@ -72,7 +73,7 @@ inline void ef_input_test(gpu & context) {
       if (valid) {
         auto result = static_cast<std::uint32_t const *>(output.contents);
         for (std::size_t i = 0; i != expected.size(); ++i)
-          require(result[i] == expected[i] && result[i] == ef.view().select(i), "GPU EF select mismatch");
+          require(result[i] == expected[i] && result[i] == ef.view().select<everett_experiment::architecture>(i), "GPU EF select mismatch");
       }
     };
     run(true);

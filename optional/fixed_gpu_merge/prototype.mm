@@ -9,6 +9,7 @@
  */
 #import <Foundation/Foundation.h>
 #import <Metal/Metal.h>
+#include "../host_backend.h"
 #include <everett/elias_fano.h>
 #include "fixtures.h"
 #include <algorithm>
@@ -173,7 +174,7 @@ struct input_view {
         u64s(source[10], source[15]), source[3] + 1, source[6], source[11]);
   }
   key const &key_at(u32 i) const { return reinterpret_cast<key const *>(words + words[4])[i]; }
-  u32 offset(u32 i) const { return words[2] ? u32(ef.select(i)) : i * 16; }
+  u32 offset(u32 i) const { return words[2] ? u32(ef.select<everett_experiment::architecture>(i)) : i * 16; }
   std::byte const *payload() const { return reinterpret_cast<std::byte const *>(words) + words[5]; }
 };
 
@@ -233,7 +234,7 @@ void write_ef(std::byte *out, layout const &l, everett::elias_fano const &ef) {
 std::vector<std::byte> encode(std::vector<record> const &records, bool variable, u32 identity) {
   std::vector<u64> offsets{0};
   for (auto const &r : records) offsets.push_back(offsets.back() + r.value.size());
-  auto ef = variable ? everett::elias_fano::build(offsets) : everett::elias_fano{};
+  auto ef = variable ? everett::elias_fano::build<everett_experiment::architecture>(offsets) : everett::elias_fano{};
   layout l(variable, narrow(records.size()), narrow(offsets.back()), narrow(ef.sparse.size()), identity);
   std::vector<std::byte> out(l.h[16]);
   std::memcpy(out.data(), l.h.data(), sizeof(l.h));
@@ -274,7 +275,7 @@ u32 cpu_merge(input_view const &a, input_view const &b, u32 const *due, std::byt
   require(oi == n && written == bytes && ci == nc, "CPU schedule count/extent mismatch");
   if (a.words[2]) {
     offsets.push_back(written);
-    auto ef = everett::elias_fano::build(offsets);
+    auto ef = everett::elias_fano::build<everett_experiment::architecture>(offsets);
     l = layout(true, n, bytes, narrow(ef.sparse.size()));
     std::memset(out + l.h[5] + bytes, 0, l.h[7] * 4 - l.h[5] - bytes);
     write_ef(out, l, ef);

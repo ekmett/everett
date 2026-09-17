@@ -13,6 +13,10 @@ import subprocess
 import sys
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from experiment import build_metadata
+
+
 def run(*args):
     subprocess.run([str(x) for x in args], check=True)
 
@@ -23,6 +27,7 @@ def main():
     parser.add_argument('--manifest-only', action='store_true')
     parser.add_argument('--archive', type=Path)
     parser.add_argument('--simd-archive', type=Path)
+    parser.add_argument('--native-archive', type=Path)
     for name in ('dxc', 'spirv-val', 'spirv-cross'):
         parser.add_argument('--' + name, default=os.environ.get('EVERETT_' + name.upper().replace('-', '_'), name))
     args = parser.parse_args()
@@ -57,10 +62,12 @@ def main():
     sources += [root / 'CMakeLists.txt', root / 'cmake/everett-experiment.cmake']
     hashes = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     hashes['kernels.metallib'] = hashlib.sha256((out / 'kernels.metallib').read_bytes()).hexdigest()
-    for name in ('archive', 'simd_archive'):
+    for name in ('archive', 'simd_archive', 'native_archive'):
         path = getattr(args, name)
         if path:
             hashes[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    hashes['everett-experiment.json'] = hashlib.sha256((out / 'everett-experiment.json').read_bytes()).hexdigest()
+    (out / 'build-metadata.json').write_text(json.dumps(build_metadata(out), indent=2) + '\n')
     hashes['prototype'] = hashlib.sha256((out / 'prototype').read_bytes()).hexdigest()
     (out / 'source-hashes.json').write_text(json.dumps(hashes, indent=2, sort_keys=True) + '\n')
 

@@ -79,6 +79,13 @@ libraries. Shader sources must match the retained artifact provenance. The
 wrappers include the existing host implementations verbatim and compile only new
 program entry points; they do not rebuild or modify the shaders.
 
+`EVERETT_EXPERIMENT_ARCH=AUTO` selects NEON on an ARM host with the native
+Everett archive, and scalar elsewhere. Select `AVX2` or `AVX512` explicitly
+only on a matching x86 build host; configuration checks its required features.
+`SCALAR` is always available. The experiment's policies carry that architecture
+explicitly, and new collections record it in their build metadata. Existing
+retained measurements describe their original sources and compiler settings.
+
 ```sh
 cmake -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd -S optional/fixed_kv_compare -B build-fixed-kv \
   -DEVERETT_KV_METALLIB=/path/to/kv/kernels.metallib \

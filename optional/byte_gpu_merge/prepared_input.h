@@ -7,12 +7,13 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  */
 #pragma once
+#include "../host_backend.h"
 #include <everett/sections.h>
 #include "../gpu_merge/gpu_sort.h"
 #include "../gpu_merge/prepared_input.h"
 
 namespace everett_byte_gpu {
-  using policy = everett::storage_policy<>;
+  using policy = everett_experiment::policy<>;
   using native = everett::mapped_native<policy>;
   using descriptor = everett_gpu::compressed_descriptor;
 

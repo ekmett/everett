@@ -15,6 +15,10 @@ import subprocess
 import sys
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from experiment import build_metadata
+
+
 def digest(path):
     h = hashlib.sha256()
     with path.open("rb") as source:
@@ -45,7 +49,7 @@ def main():
         "warmup_trial": -1, "qos": "USER_INITIATED requested and verified on benchmark thread",
         "binary_sha256": digest(build / "prototype"),
         "metallib_sha256": digest(build / "kernels.metallib"),
-        "compiler": subprocess.check_output(["xcrun", "clang++", "--version"], text=True).splitlines()[0],
+        "build": build_metadata(build),
     }
     files = subprocess.check_output(["git", "ls-files", "include/everett", "optional/byte_gpu_merge", "optional/gpu_merge"], cwd=root, text=True).splitlines()
     closure = {name: digest(root / name) for name in files if Path(name).suffix in {".h", ".inc", ".hlsl", ".mm", ".py", ".txt"}}

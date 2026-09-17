@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  */
 #pragma once
+#include "../host_backend.h"
 #include <everett/elias_fano.h>
 #include <memory>
 #include <string>
@@ -43,11 +44,11 @@ namespace select_compare {
     u64 count = 0, universe = 0;
     unsigned width = 0;
     explicit payload(std::span<u64 const> values) : count(values.size()), universe(values.empty() ? 0 : values.back()) {
-      require(everett::elias_fano_detail::monotone(values), "unordered offsets");
+      require(everett::elias_fano_detail::monotone<everett_experiment::architecture>(values), "unordered offsets");
       auto quotient = count ? universe / count : 0;
       width = quotient ? unsigned(std::bit_width(quotient) - 1) : 0;
       low.assign(words(count * width), 0); high.assign(words(high_bits()), 0);
-      everett::elias_fano_detail::pack_low(values, low, width);
+      everett::elias_fano_detail::pack_low<everett_experiment::architecture>(values, low, width);
       everett::elias_fano_detail::write_high(values, high, width);
     }
     u64 high_bits() const { return (universe >> width) + count; }
@@ -60,8 +61,8 @@ namespace select_compare {
   struct current {
     everett::elias_fano data;
     everett::elias_fano_view view;
-    explicit current(std::span<u64 const> values) : data(everett::elias_fano::build(values)), view(data.view()) {}
-    u64 select(u64 ordinal) const { return view.select(ordinal); }
+    explicit current(std::span<u64 const> values) : data(everett::elias_fano::build<everett_experiment::architecture>(values)), view(data.view()) {}
+    u64 select(u64 ordinal) const { return view.select<everett_experiment::architecture>(ordinal); }
     space sizes() const { return {(data.low.size() + data.high.size()) * 8,
       data.samples.size() * 16 + data.sparse.size() * 8,
       (data.low.capacity() + data.high.capacity() + data.sparse.capacity()) * 8 + data.samples.capacity() * 16,
@@ -105,7 +106,7 @@ namespace select_compare {
     explicit packed(std::span<u64 const> source) : width(source.empty() ? 0 : unsigned(std::bit_width(source.back()))) {
       data.assign(words(source.size() * width), 0);
       if (width == 64) std::copy(source.begin(), source.end(), data.begin());
-      else everett::elias_fano_detail::pack_low(source, data, width);
+      else everett::elias_fano_detail::pack_low<everett_experiment::architecture>(source, data, width);
     }
     u64 select(u64 ordinal) const {
       if (!width) return 0;

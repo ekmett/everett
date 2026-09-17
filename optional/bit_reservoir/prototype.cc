@@ -7,6 +7,7 @@
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  * \endlicense
  */
+#include "../host_backend.h"
 #include <everett/sort_profile_file.h>
 #include <everett/sort_profile_merge.h>
 
@@ -21,7 +22,7 @@ namespace {
   using namespace everett;
   using strings = unsorted<std::optional<std::string>>;
   using registry = bin<tip<strings>, sort_undefined>;
-  using policy = storage_policy<registry>;
+  using policy = everett_experiment::policy<registry>;
   using array = sort_profile_array<policy>;
   using native = mapped_sort_profile<policy>;
   using row = std::pair<std::string, std::optional<std::string>>;

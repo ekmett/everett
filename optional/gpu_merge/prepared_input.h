@@ -8,6 +8,7 @@
  */
 #pragma once
 
+#include "../host_backend.h"
 #include <everett/sort_profile_file.h>
 
 #include <array>
@@ -34,7 +35,7 @@ namespace everett_gpu {
     std::array<std::span<std::byte const>, 4> ef_sections;
     std::uint32_t count = 0, extent = 0, terminal_key_bits = 0, block_count = 0;
     std::uint32_t universe = 0, low_width = 0, fixed_value_bits = 0, high_bits = 0;
-    explicit compressed_blocks(everett::sort_profile_view<everett::string_policy> view) {
+    explicit compressed_blocks(everett::sort_profile_view<everett_experiment::string_policy> view) {
       if (view.size() >= (1u << 24) || view.data().size() >= (1u << 31) || view.data().offset())
         throw std::length_error("GPU compressed input extent");
       auto terminal = view.metadata().terminal_key_units;
@@ -96,7 +97,7 @@ namespace everett_gpu {
   // path. It does not reconstruct keys; independent CPU cursors can verify the
   // key bytes selected by the returned retention/literal descriptors.
   inline std::vector<compressed_descriptor> compressed_oracle(
-      everett::sort_profile_view<everett::string_policy> view, std::uint32_t source) {
+      everett::sort_profile_view<everett_experiment::string_policy> view, std::uint32_t source) {
     compressed_blocks checked(view);
     std::vector<compressed_descriptor> result;
     result.reserve(checked.count);

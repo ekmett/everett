@@ -130,7 +130,7 @@ namespace everett_gpu_cutover {
         << ',' << cpu_merge_ms << ',' << cpu_all_ms << ',' << result.total << ',' << result.gpu_ms
         << ',' << result.decode << ',' << result.prepare << ',' << result.order << ',' << result.size
         << ',' << result.emit << ',' << result.assembly << ',' << result.count << ',' << result.bits
-        << ',' << result.bytes << ',' << everett::crc32c(encoded) << '\n';
+        << ',' << result.bytes << ',' << everett::crc32c<everett_experiment::architecture>(encoded) << '\n';
     }
     std::cout.precision(prior_precision);
   }

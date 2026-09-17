@@ -119,6 +119,13 @@ The standalone build follows the existing HLSL → validated SPIR-V → MSL →
 Metal path. Install DXC, SPIRV-Tools and SPIRV-Cross and make their executables
 available, or pass their paths as CMake cache variables:
 
+`EVERETT_EXPERIMENT_ARCH=AUTO` selects NEON on an ARM host with the native
+Everett archive, and scalar elsewhere. Select `AVX2` or `AVX512` explicitly
+only on a matching x86 build host; configuration checks its required features.
+`SCALAR` is always available. The experiment's policies carry that architecture
+explicitly, and new collections record it in their build metadata. Existing
+retained measurements describe their original sources and compiler settings.
+
 ```sh
 cmake -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd -S optional/fixed_gpu_merge -B build-fixed-gpu \
   -DEVERETT_DXC=/path/to/dxc \
