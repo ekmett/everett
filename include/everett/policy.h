@@ -13,6 +13,7 @@
 #pragma once
 
 #include <everett/registry.h>
+#include <everett/backend.h>
 
 #include <bit>
 #include <cstdint>
@@ -49,8 +50,10 @@ namespace everett {
   // encoding widths are converted to those units, including byte leaves
   // below bit discriminators. Associated worlds and streams retain this policy.
   template <class Registry = unsorted<std::optional<std::string>>, std::uint64_t GroupSize = 15,
-            class BackspaceCode = exponential_golomb<0>, std::uint64_t CodecBlockSize = GroupSize>
+            class BackspaceCode = exponential_golomb<0>, std::uint64_t CodecBlockSize = GroupSize,
+            simd::architecture Arch = simd::scalar>
   struct storage_policy {
+    using architecture = Arch;
     using registry_type = Registry;
     using registry = registry_traits<Registry>;
     static constexpr profile_unit unit = registry::unit;
@@ -71,6 +74,13 @@ namespace everett {
     static constexpr bool fixed_width = registry::fixed_width;
     static constexpr std::optional<std::uint64_t> value_width = registry::value_width;
   };
+
+  // The execution target is independent of the registry and serialized policy.
+  // Applications select a native profile at their admitted dispatch boundary.
+  template <simd::architecture Arch, class Registry = unsorted<std::optional<std::string>>,
+            std::uint64_t GroupSize = 15, class BackspaceCode = exponential_golomb<0>,
+            std::uint64_t CodecBlockSize = GroupSize>
+  using backend_policy = storage_policy<Registry, GroupSize, BackspaceCode, CodecBlockSize, Arch>;
 
   // Explicit bit-addressed string tables leave one subtree for future sorts.
   // Ordinary string tables use the byte-addressed storage_policy<> default.
