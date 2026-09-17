@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 # \file
 # \author Edward Kmett <ekmett@gmail.com>
-# \brief Checks scalar and NEON modules and relocated package consumers.
+# \brief Checks scalar, NEON and AVX2 modules and relocated package consumers.
 
 name: C++26 modules
 
@@ -28,6 +28,8 @@ jobs:
     env:
       CMAKE_BUILD_PARALLEL_LEVEL: 2
       CTEST_PARALLEL_LEVEL: 1
+      ASAN_OPTIONS: halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1
     steps:
       - name: Check out Everett
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -38,7 +40,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ekmett/simd
-          ref: 006517a0144871e53fd75b8b93dd4c59eede7485
+          ref: 0dc71b0f40450fcf8e39c28f219408235bb0f62c
           path: _deps/simd
           persist-credentials: false
 
@@ -126,6 +128,112 @@ jobs:
         run: >-
           ctest --test-dir build --output-on-failure --no-tests=error
           -R '^everett\.(rank|elias_fano|fixed_search|key_detail|crc32c)(\.neon)?$'
+
+      - name: Check installed, embedded and SQLite consumers
+        run: >-
+          ctest --test-dir build --output-on-failure --no-tests=error
+          -R '^everett\.package\.(installed|embedded|sqlite)$'
+
+  linux-avx2:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: 2
+      CTEST_PARALLEL_LEVEL: 1
+      ASAN_OPTIONS: halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1
+    steps:
+      - name: Check out Everett
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check out SIMD
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ekmett/simd
+          ref: 0dc71b0f40450fcf8e39c28f219408235bb0f62c
+          path: _deps/simd
+          persist-credentials: false
+
+      # Reuse the Linux tool setup exercised by this exact SIMD revision.
+      # LLVM's 23 apt channel and the CMake 4.4 range can receive patch updates;
+      # the actions print the installed versions in each run's evidence.
+      - name: Install LLVM 23
+        uses: ./_deps/simd/.github/actions/setup/ubuntu/compiler
+
+      - name: Install CMake 4.4 and Ninja
+        uses: ./_deps/simd/.github/actions/setup/ubuntu/build-tools
+
+      - name: Prepare the toolchain and check AVX2 admission
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = x86_64
+          for feature in avx2 fma bmi2; do
+            if ! grep -qw "$feature" /proc/cpuinfo; then
+              echo "The AVX2 module requires $feature on its execution host." >&2
+              exit 1
+            fi
+          done
+          tools="$RUNNER_TEMP/everett-tools"
+          mkdir -p "$tools"
+          cat > "$tools/toolchain.cmake" <<EOF
+          set(CMAKE_C_COMPILER "$(command -v clang)" CACHE FILEPATH "")
+          set(CMAKE_CXX_COMPILER "$(command -v clang++)" CACHE FILEPATH "")
+          set(CMAKE_MAKE_PROGRAM "$(command -v ninja)" CACHE FILEPATH "")
+          set(CMAKE_LINKER_TYPE "LLD" CACHE STRING "")
+          EOF
+          echo "EVERETT_CI_TOOLS=$tools" >> "$GITHUB_ENV"
+          clang++ --version
+          clang-scan-deps --version
+          cmake --version
+          ninja --version
+
+      - name: Build SQLite and SIMD
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$EVERETT_CI_TOOLS"
+          curl -fL --retry 3 https://www.sqlite.org/2026/sqlite-amalgamation-3510300.zip -o "$tools/sqlite.zip"
+          printf '%s  %s\n' acb1e6f5d832484bf6d32b681e858c38add8b2acdfd42ac5df24b8afb46552b4 "$tools/sqlite.zip" | sha256sum -c -
+          unzip -q "$tools/sqlite.zip" -d "$tools"
+          mkdir -p "$tools/sqlite/lib" "$tools/sqlite/include"
+          clang -O2 -DNDEBUG -DSQLITE_THREADSAFE=1 \
+            -c "$tools/sqlite-amalgamation-3510300/sqlite3.c" -o "$tools/sqlite3.o"
+          llvm-ar rcs "$tools/sqlite/lib/libsqlite3.a" "$tools/sqlite3.o"
+          cp "$tools/sqlite-amalgamation-3510300/sqlite3.h" "$tools/sqlite/include/"
+          cmake -S _deps/simd -B build-simd -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$tools/toolchain.cmake" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$tools/simd" \
+            -DSIMD_PROFILES=AVX2 -DSIMD_ENABLE_EXCEPTIONS=ON -DSIMD_BUILD_TESTS=OFF
+          cmake --build build-simd --parallel 2
+          cmake --install build-simd
+
+      - name: Configure and build the module checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$EVERETT_CI_TOOLS"
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$tools/toolchain.cmake" \
+            -DCMAKE_PREFIX_PATH="$tools/simd" -DCMAKE_BUILD_TYPE=Release \
+            -DEVERETT_PROFILES=AVX2 -DEVERETT_BUILD_TESTS=ON \
+            -DEVERETT_ENABLE_SQLITE=ON -DEVERETT_SANITIZERS=ON \
+            -DSQLite3_INCLUDE_DIR="$tools/sqlite/include" \
+            -DSQLite3_LIBRARY="$tools/sqlite/lib/libsqlite3.a"
+          cmake --build build --parallel 2 --target \
+            everett everett_avx2 everett_sqlite \
+            everett_test_rank everett_test_rank_avx2 \
+            everett_test_elias_fano everett_test_elias_fano_avx2 \
+            everett_test_fixed_search everett_test_fixed_search_avx2 \
+            everett_test_key_detail everett_test_key_detail_avx2 \
+            everett_test_crc32c everett_test_crc32c_avx2
+
+      - name: Run scalar and AVX2 correctness checks
+        run: >-
+          ctest --test-dir build --output-on-failure --no-tests=error
+          -R '^everett\.(rank|elias_fano|fixed_search|key_detail|crc32c)(\.avx2)?$'
 
       - name: Check installed, embedded and SQLite consumers
         run: >-
