@@ -21,9 +21,20 @@
 #include <string_view>
 #include <vector>
 
-// Compile with -O3 -DNDEBUG -std=c++20 -Iinclude. To compare complete lookups
-// across revisions, compile this same source against each revision's headers.
+// Current sources require C++26 and the SIMD implementation inputs. Select
+// the execution target explicitly, e.g. -DEVERETT_BENCH_ARCH=simd::neon with
+// the corresponding compiler profile. Without it, current rank() is scalar;
+// older pinned headers keep their historical default. To compare revisions,
+// use the same compiler/options and state both selected execution targets.
 namespace {
+  std::uint64_t selected_rank(everett::rank15_view const & view, std::uint64_t group) {
+#ifdef EVERETT_BENCH_ARCH
+    return view.template rank<EVERETT_BENCH_ARCH>(group);
+#else
+    return view.rank(group);
+#endif
+  }
+
   [[gnu::noinline]] unsigned sum_widen(std::uint64_t value) {
     value = (value & 0x0f0f0f0f0f0f0f0full) + ((value >> 4) & 0x0f0f0f0f0f0f0f0full);
     value = (value & 0x00ff00ff00ff00ffull) + ((value >> 8) & 0x00ff00ff00ff00ffull);
@@ -38,14 +49,14 @@ namespace {
 
   [[gnu::noinline]] std::uint64_t public_rank(everett::rank15_view const & view,
                                            std::uint64_t group) {
-    return view.rank(group);
+    return selected_rank(view, group);
   }
 
   [[gnu::noinline]] std::uint64_t public_range(everett::rank15_view const & view,
                                             std::uint64_t first, std::uint64_t last) {
     if (first == last) return 0;
-    auto hi = view.rank(last - 1) + view.class_at(last - 1);
-    return hi - view.rank(first);
+    auto hi = selected_rank(view, last - 1) + view.class_at(last - 1);
+    return hi - selected_rank(view, first);
   }
 
   constexpr std::size_t repetitions = 1 << 20;
