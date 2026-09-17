@@ -3,11 +3,13 @@
 # \brief Builds and checks matched fixed-key and front-coded Metal measurements.
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
-cmake_minimum_required(VERSION 3.24)
-project(everett_fixed_kv_compare LANGUAGES NONE)
+cmake_minimum_required(VERSION 4.4)
+project(everett_fixed_kv_compare LANGUAGES CXX)
 if(NOT APPLE)
   message(FATAL_ERROR "The matched-format experiment requires Metal")
 endif()
+include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/everett-experiment.cmake")
+everett_experiment_objcxx()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 set(EVERETT_KV_METALLIB "" CACHE FILEPATH "Compiled optional/gpu_merge kernels")
 set(EVERETT_FIXED_METALLIB "" CACHE FILEPATH "Compiled optional/fixed_gpu_merge kernels")
@@ -18,12 +20,18 @@ foreach(path IN ITEMS EVERETT_KV_METALLIB EVERETT_FIXED_METALLIB)
 endforeach()
 file(GLOB_RECURSE sources CONFIGURE_DEPENDS "../../include/everett/*.h" "../../include/everett/*.inc"
   "../gpu_merge/*.h" "../fixed_gpu_merge/*.h")
-add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/kv" "${CMAKE_BINARY_DIR}/fixed"
+foreach(mode kv fixed)
+  add_executable(${mode} ${mode}.mm)
+  everett_experiment_metal(${mode})
+endforeach()
+add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/manifest.json"
   COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/build.py" --build "${CMAKE_BINARY_DIR}"
     --kv-metallib "${EVERETT_KV_METALLIB}" --fixed-metallib "${EVERETT_FIXED_METALLIB}"
-  DEPENDS build.py cases.h kv.mm fixed.mm ../gpu_merge/prototype.mm ../fixed_gpu_merge/prototype.mm
-    "${EVERETT_KV_METALLIB}" "${EVERETT_FIXED_METALLIB}" ${sources} VERBATIM)
-add_custom_target(matched_formats ALL DEPENDS "${CMAKE_BINARY_DIR}/kv" "${CMAKE_BINARY_DIR}/fixed")
+    --archive "$<TARGET_FILE:everett::everett>" --simd-archive "$<TARGET_FILE:simd::simd>"
+  DEPENDS kv fixed build.py cases.h ../gpu_merge/prototype.mm ../fixed_gpu_merge/prototype.mm
+    "${EVERETT_KV_METALLIB}" "${EVERETT_FIXED_METALLIB}" ${sources}
+  BYPRODUCTS "${CMAKE_BINARY_DIR}/kv.metallib" "${CMAKE_BINARY_DIR}/fixed.metallib" VERBATIM)
+add_custom_target(matched_formats ALL DEPENDS "${CMAKE_BINARY_DIR}/manifest.json")
 enable_testing()
 foreach(mode IN ITEMS fixed kv)
   foreach(index IN ITEMS 0 3 6 9)

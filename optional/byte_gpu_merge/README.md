@@ -52,10 +52,15 @@ work; this driver does not enable those shader modes.
 Build and check
 ---------------
 
+Use the [C++26 module toolchain](../../docs/modules.md), Ninja and an installed
+`simd` package with exceptions enabled. CMake builds the host and links Everett
+from this source checkout; Python handles shader artifacts and manifests.
+
+
 On macOS with Metal, DXC, SPIRV-Tools and SPIRV-Cross available:
 
 ```sh
-cmake -S optional/byte_gpu_merge -B build-byte-gpu
+cmake -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd -S optional/byte_gpu_merge -B build-byte-gpu
 cmake --build build-byte-gpu --parallel 1
 ctest --test-dir build-byte-gpu --output-on-failure
 ```
@@ -66,7 +71,10 @@ checks the Vulkan shader artifacts; it does not execute a Vulkan host driver.
 For the ASan/UBSan host build:
 
 ```sh
-python3 optional/byte_gpu_merge/build.py --build build-byte-gpu-sanitize --sanitize
+cmake -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd \
+  -S optional/byte_gpu_merge -B build-byte-gpu-sanitize \
+  -DEVERETT_GPU_SANITIZERS=ON -DCMAKE_BUILD_TYPE=Release
+cmake --build build-byte-gpu-sanitize --parallel 1
 build-byte-gpu-sanitize/prototype build-byte-gpu-sanitize/kernels.metallib \
   build-byte-gpu-sanitize/checks check
 ```

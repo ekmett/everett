@@ -1,33 +1,32 @@
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 4.4)
 project(everett_gpu_merge_experiment LANGUAGES CXX)
 if(NOT APPLE)
   message(FATAL_ERROR "This optional host prototype currently requires macOS Metal")
 endif()
+include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/everett-experiment.cmake")
+everett_experiment_objcxx()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 find_program(EVERETT_DXC dxc REQUIRED)
 find_program(EVERETT_SPIRV_VAL spirv-val REQUIRED)
 find_program(EVERETT_SPIRV_CROSS spirv-cross REQUIRED)
-file(GLOB_RECURSE EVERETT_GPU_CPU_HEADERS CONFIGURE_DEPENDS
-  "${CMAKE_CURRENT_SOURCE_DIR}/../../include/everett/*.h")
+file(GLOB EVERETT_GPU_SHADERS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.hlsl")
 add_custom_command(
-  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/prototype" "${CMAKE_CURRENT_BINARY_DIR}/kernels.metallib"
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/kernels.metallib"
   COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/build.py"
     --build "${CMAKE_CURRENT_BINARY_DIR}"
     --dxc "${EVERETT_DXC}" --spirv-val "${EVERETT_SPIRV_VAL}" --spirv-cross "${EVERETT_SPIRV_CROSS}"
-  DEPENDS build.py shader_compile.py prototype.mm adversarial.h kernels.hlsl prepared_input.h
-    parse_input.hlsl prefix_owner.hlsl prefix_tree_test.h prefix_cache.hlsl emit_word.hlsl
-    ef_input_test.h ef_output.hlsl ef_output_test.h output_plan.hlsl output_plan_test.h emit_word_test.h rank_shared.h cutover_cases.h gpu_sort.h
-    index_rank.hlsl index_rank_test.h collision_rank.hlsl collision_rank_test.h rank512.hlsl
-    tombstone_merge.hlsl tombstone_test.h
-    ${EVERETT_GPU_CPU_HEADERS}
+  DEPENDS build.py shader_compile.py ${EVERETT_GPU_SHADERS}
   VERBATIM)
-add_custom_target(gpu_merge ALL DEPENDS
-  "${CMAKE_CURRENT_BINARY_DIR}/prototype" "${CMAKE_CURRENT_BINARY_DIR}/kernels.metallib")
+add_custom_target(gpu_merge_shaders DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/kernels.metallib")
+add_executable(prototype prototype.mm)
+everett_experiment_metal(prototype)
+add_dependencies(prototype gpu_merge_shaders)
+add_custom_target(gpu_merge ALL DEPENDS prototype)
 enable_testing()
 add_executable(gpu_cutover_test cutover_test.cc)
-target_compile_features(gpu_cutover_test PRIVATE cxx_std_20)
+everett_experiment_target(gpu_cutover_test)
 target_compile_options(gpu_cutover_test PRIVATE -Wall -Wextra -Wpedantic -Werror)
 set_target_properties(gpu_cutover_test PROPERTIES CXX_EXTENSIONS OFF)
 add_test(NAME gpu_cutover_selector COMMAND gpu_cutover_test)

@@ -5,12 +5,13 @@
 #
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
-"""Standalone opt-in build; the installed header-only library is unchanged."""
+"""Build shader artifacts; CMake builds and links the host executable."""
 
 import argparse
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 
 def run(*command):
@@ -64,7 +65,7 @@ def main():
         jobs.append((entry, name, True, True, False, True))
     for entry, name, compressed, cached, rank2048, tombstones in jobs:
         stem = output / name
-        run("python3", compiler, "--source", root / "optional/gpu_merge/kernels.hlsl",
+        run(sys.executable, compiler, "--source", root / "optional/gpu_merge/kernels.hlsl",
             "--entry", entry, "--profile", "cs_6_0", "--spv", f"{stem}.spv",
             "--msl", f"{stem}.metal", "--msl-entry", name, "--output-entry", name, "--dxc", args.dxc,
             "--spirv-val", args.spirv_val, "--spirv-cross", args.spirv_cross,
@@ -77,10 +78,6 @@ def main():
             "-c", f"{stem}.metal", "-o", f"{stem}.air")
     run("xcrun", "-sdk", "macosx", "metallib",
         *(f"{output / name}.air" for _, name, _, _, _, _ in jobs), "-o", output / "kernels.metallib")
-    run("xcrun", "clang++", "-std=c++20", "-O3", "-DNDEBUG", "-Wall", "-Wextra",
-        "-Wpedantic", "-Werror", "-fobjc-arc", f"-I{root / 'include'}",
-        root / "optional/gpu_merge/prototype.mm", "-framework", "Foundation",
-        "-framework", "Metal", "-o", output / "prototype")
 
 
 if __name__ == "__main__":

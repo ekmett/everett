@@ -69,13 +69,18 @@ fast path and Merge Path 32 ordering.
 Reproduction
 ------------
 
+Use the [C++26 module toolchain](../../docs/modules.md), Ninja and an installed
+`simd` package with exceptions enabled. CMake builds the host and links Everett
+from this source checkout; Python handles shader artifacts and manifests.
+
+
 First build the two existing optional packages and supply their compiled Metal
 libraries. Shader sources must match the retained artifact provenance. The
 wrappers include the existing host implementations verbatim and compile only new
 program entry points; they do not rebuild or modify the shaders.
 
 ```sh
-cmake -S optional/fixed_kv_compare -B build-fixed-kv \
+cmake -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd -S optional/fixed_kv_compare -B build-fixed-kv \
   -DEVERETT_KV_METALLIB=/path/to/kv/kernels.metallib \
   -DEVERETT_FIXED_METALLIB=/path/to/fixed/kernels.metallib
 cmake --build build-fixed-kv --parallel 1

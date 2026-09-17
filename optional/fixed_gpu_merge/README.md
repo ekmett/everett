@@ -110,12 +110,17 @@ storage bandwidth and durable publication need their own end-to-end tests.
 Building and checking
 ---------------------
 
+Use the [C++26 module toolchain](../../docs/modules.md), Ninja and an installed
+`simd` package with exceptions enabled. CMake builds the host and links Everett
+from this source checkout; Python handles shader artifacts and manifests.
+
+
 The standalone build follows the existing HLSL → validated SPIR-V → MSL →
 Metal path. Install DXC, SPIRV-Tools and SPIRV-Cross and make their executables
 available, or pass their paths as CMake cache variables:
 
 ```sh
-cmake -S optional/fixed_gpu_merge -B build-fixed-gpu \
+cmake -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd -S optional/fixed_gpu_merge -B build-fixed-gpu \
   -DEVERETT_DXC=/path/to/dxc \
   -DEVERETT_SPIRV_VAL=/path/to/spirv-val \
   -DEVERETT_SPIRV_CROSS=/path/to/spirv-cross
