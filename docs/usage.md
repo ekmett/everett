@@ -876,8 +876,14 @@ cmake -S . -B build-sanitize -G Ninja -DCMAKE_CXX_COMPILER=clang++ \
   -DCMAKE_PREFIX_PATH=/path/to/simd -DCMAKE_BUILD_TYPE=Debug \
   -DEVERETT_BUILD_TESTS=ON -DEVERETT_SANITIZERS=ON
 cmake --build build-sanitize --parallel 4
-ctest --test-dir build-sanitize --output-on-failure
+UBSAN_OPTIONS=halt_on_error=1 ASAN_OPTIONS=halt_on_error=1 \
+  ctest --test-dir build-sanitize --output-on-failure
 ```
+
+`EVERETT_SANITIZERS` instruments test translation units. Instrument the compiled
+Everett and SIMD libraries in their own builds as well when checking code inside
+those archives. Enable `EVERETT_ENABLE_SQLITE=ON` to include the durable catalog,
+connection and SQLite package tests; the core-only configuration omits them.
 
 Install the package:
 
@@ -885,8 +891,8 @@ Install the package:
 cmake --install build --prefix /path/to/everett-install
 ```
 
-Configure your consumer with that prefix in `CMAKE_PREFIX_PATH`, then link the
-compiled target:
+Configure your consumer with both `/path/to/everett-install` and `/path/to/simd`
+in `CMAKE_PREFIX_PATH`, using the same toolchain, then link the compiled target:
 
 ```cmake
 cmake_minimum_required(VERSION 4.4)
@@ -897,6 +903,9 @@ target_link_libraries(your_target PRIVATE everett::everett)
 An embedded checkout supports `add_subdirectory(path/to/everett)` and the same
 target. Tests default off when embedded. `EVERETT_USE_CCACHE=ON` enables a
 compiler cache for test builds when `ccache` is available.
+The baseline target and `storage_policy<>` use scalar execution. For a native
+policy, import and link its [profile module](modules.md#explicit-execution-profiles)
+and apply `simd_target_profile` to the consuming target.
 
 With Doxygen and Python 3 installed, generate and check the API documentation:
 

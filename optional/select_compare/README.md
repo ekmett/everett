@@ -144,10 +144,16 @@ boundary reproducer among the correctness fixtures.
 Reproduce
 ---------
 
+For a new run from the current source, use the
+[module toolchain and SIMD dependency](../../docs/modules.md#build-and-consume).
+The separately fetched Sux source remains pinned:
+
 ```sh
 git clone https://github.com/vigna/sux /tmp/select-sux
 git -C /tmp/select-sux checkout 568903f1b7957ef03620ebad65d6ef68e031fef9
-cmake -S optional/select_compare -B build-select -DCMAKE_BUILD_TYPE=Release \
+cmake -S optional/select_compare -B build-select -G Ninja \
+  -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_PREFIX_PATH=/path/to/simd \
+  -DCMAKE_BUILD_TYPE=Release \
   -DEVERETT_SUX_ROOT=/tmp/select-sux
 cmake --build build-select -j1
 ctest --test-dir build-select --output-on-failure
@@ -155,6 +161,10 @@ python3 optional/select_compare/collect.py --binary build-select/select_compare 
   --sux /tmp/select-sux --output /tmp/select-results
 python3 optional/select_compare/analyze.py /tmp/select-results
 ```
+
+Apply the same SDK or toolchain settings used to build SIMD. Retained timings
+keep their recorded source/toolchain identities; reproducing those observations
+uses the corresponding source revision and build files.
 
 For sanitizer correctness checks, configure a separate build with
 `-DSELECT_SANITIZERS=ON`. The collector requires a committed, clean source tree,

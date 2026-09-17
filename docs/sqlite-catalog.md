@@ -15,8 +15,9 @@ separate work.
 
 ## Build and use
 
-The normal `everett::everett` target remains independent of SQLite. I enable the
-adapter explicitly:
+The normal `everett::everett` target remains independent of SQLite. With the
+[module toolchain and SIMD dependency](modules.md#build-and-consume) configured,
+I enable the adapter explicitly:
 
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ \
@@ -39,6 +40,11 @@ requests the separate component:
 find_package(everett CONFIG REQUIRED COMPONENTS sqlite)
 target_link_libraries(my_program PRIVATE everett::sqlite)
 ```
+
+Keep both Everett's and SIMD's installation prefixes in `CMAKE_PREFIX_PATH`.
+This example uses scalar execution. To use a native policy, also request and
+link that profile's component and apply `simd_target_profile` as shown in the
+[module guide](modules.md#explicit-execution-profiles).
 
 A consumer that only requests `everett` neither finds nor links SQLite, even
 when both components were installed. Import `everett.sqlite` for the adapter;

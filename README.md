@@ -184,14 +184,15 @@ For an installed package and the NEON example above:
 ```cmake
 cmake_minimum_required(VERSION 4.4)
 project(example LANGUAGES CXX)
-find_package(everett CONFIG REQUIRED COMPONENTS sqlite)
+find_package(everett CONFIG REQUIRED COMPONENTS sqlite neon)
 add_executable(example example.cc)
 target_link_libraries(example PRIVATE everett::neon everett::sqlite)
 simd_target_profile(example NEON)
 ```
 
-On x86, select `everett::avx2` and `AVX2` for a target that runs on a compatible
-CPU. The baseline `import everett;` and `everett::everett` target provide a
+Put both the Everett and SIMD installation prefixes in `CMAKE_PREFIX_PATH`.
+On x86, request the `avx2` component, link `everett::avx2`, and select `AVX2`
+for a target with AVX2, FMA and BMI2 support. The baseline `import everett;` and `everett::everett` target provide a
 scalar policy; importing a native module does not change that default.
 
 Everett supplies compiled libraries and module sources. CMake rebuilds module

@@ -9,13 +9,22 @@ typed paths from controls using the same generic record grammar.
 Reproduce
 ---------
 
+For a new run from the current source, use the
+[module toolchain and SIMD dependency](../../docs/modules.md#build-and-consume):
+
 ```sh
-cmake -S optional/profile_space_compare -B build-space -DCMAKE_BUILD_TYPE=Release
+cmake -S optional/profile_space_compare -B build-space -G Ninja \
+  -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_PREFIX_PATH=/path/to/simd \
+  -DCMAKE_BUILD_TYPE=Release
 cmake --build build-space -j1
 ctest --test-dir build-space --output-on-failure
 python3 optional/profile_space_compare/collect.py build-space/profile-space /tmp/profile-space-results
 python3 optional/profile_space_compare/analyze.py /tmp/profile-space-results
 ```
+
+Apply the same SDK or toolchain settings used to build SIMD. To reproduce the
+retained observations, use the source revision and toolchain recorded in the
+report, including that revision's build files.
 
 `EVERETT_SPACE_SANITIZE=ON` enables ASan/UBSan for the five small CTest cases.
 Each case exercises all ten datasets. The collector runs 1,024, 8,192, 32,768

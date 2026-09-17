@@ -72,11 +72,24 @@ An installed consumer uses the same toolchain:
 ```cmake
 cmake_minimum_required(VERSION 4.4)
 project(example LANGUAGES CXX)
-find_package(everett CONFIG REQUIRED COMPONENTS sqlite)
+find_package(everett CONFIG REQUIRED COMPONENTS sqlite neon)
 add_executable(example example.cc)
 target_link_libraries(example PRIVATE everett::neon everett::sqlite)
 simd_target_profile(example NEON)
 ```
+
+Both installed packages must be discoverable when configuring that consumer:
+
+```sh
+cmake -S /path/to/example -B build-example -G Ninja \
+  -DCMAKE_CXX_COMPILER=clang++ \
+  -DCMAKE_PREFIX_PATH="/path/to/everett;/path/to/simd"
+cmake --build build-example --parallel 4
+```
+
+Apply the same SDK options or toolchain file used for the libraries. Requesting
+`neon` in `find_package` checks that the installed Everett package contains that
+profile. Use the `avx2` or `avx512` component for the corresponding x86 example.
 
 ```cpp
 #include <optional>
@@ -133,12 +146,40 @@ stay outside consumer module interfaces.
 ISA flags apply only to the selected target. A baseline dispatcher can link a
 native archive without importing its module or gaining its ISA flags. On x86,
 admit both CPU features and OS vector-state support before calling native code.
+`AVX2` requires AVX2, FMA and BMI2. `AVX512` additionally requires AVX-512 F,
+DQ, BW and VL. `NEON` targets AArch64. Linking a profile is not a runtime
+feature check, and the profile tag does not add compiler flags by itself.
 Separate baseline and native translation units preserve that boundary; disable
 cross-boundary IPO on the dispatcher when that boundary matters.
 
 Everett imports granular `simd` modules. It does not import the dependency's
 combined omnibus: a package containing AVX2 and AVX-512 would otherwise require
 AVX-512 even for a consumer using only scalar or AVX2 operations.
+
+## Optional experiments
+
+Standalone CMake experiments use the same compiler, Ninja generator and installed
+SIMD dependency as the library. For example, a new space-only run from the current
+source uses:
+
+```sh
+cmake -S optional/profile_space_compare -B build-space -G Ninja \
+  -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_PREFIX_PATH=/path/to/simd \
+  -DCMAKE_BUILD_TYPE=Release
+cmake --build build-space --parallel 1
+ctest --test-dir build-space --output-on-failure
+```
+
+The experiment normally builds the compiled Everett core from this checkout.
+`EVERETT_EXPERIMENT_INSTALLED=ON` selects an installed package instead; make both
+package prefixes discoverable in that case. Objective-C++ Metal hosts use the
+same compiler and standard-library flags as C++.
+
+Retained measurements identify their original source and toolchain. Use those
+revisions, including their build files, when reproducing a historical run.
+Building an old header tree with the current compiled package is not the same
+measurement configuration. A run against the current source needs its own
+source hashes, correctness checks and observations.
 
 ## Definition ownership and checks
 

@@ -6,7 +6,8 @@ Start with immutable blobs and a way to merge them. Small updates can become
 small blobs, and retained collections can represent persistent worlds. We can
 share completed merges between those worlds, provided each reader keeps the
 exact dependencies its indexes describe. This document develops that design.
-Public headers are under `include/everett/`; the
+Applications import the [C++26 modules](modules.md); their implementation headers
+are under `include/everett/`. The
 [implementation ledger](implementation.md) distinguishes executable components
 from the remaining storage and scheduling work.
 
