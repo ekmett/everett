@@ -105,7 +105,7 @@ namespace everett {
       }
       void finish_metadata(std::uint64_t bits) {
         metadata.extent = bits >> P::unit_shift;
-        starts.push_back(metadata.extent); offsets = elias_fano::build(starts);
+        starts.push_back(metadata.extent); offsets = elias_fano::build<typename P::architecture>(starts);
         starts.clear(); starts.shrink_to_fit();
       }
       template <class Sink> void finish(Sink & sink) {

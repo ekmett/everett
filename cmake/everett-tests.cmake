@@ -130,7 +130,7 @@ foreach(everett_mode IN ITEMS installed embedded)
   add_test(NAME everett.package.${everett_mode}
     COMMAND "${CMAKE_COMMAND}" "-Deverett_smoke_mode=${everett_mode}"
       "-Deverett_smoke_config=$<CONFIG>" -P "${PROJECT_BINARY_DIR}/everett-package-smoke.cmake")
-  # Each smoke test can compile four jobs; avoid doubling that on parallel CTest.
+  # Each smoke test rebuilds consumer BMIs; serialize these nested builds.
   set_tests_properties(everett.package.${everett_mode} PROPERTIES
     RESOURCE_LOCK everett_package_build TIMEOUT 180)
 endforeach()
