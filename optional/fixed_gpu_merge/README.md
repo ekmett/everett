@@ -1,8 +1,8 @@
 Fixed-key complete merges on Metal
 ==================================
 
-I use this isolated experiment to measure the proposed [fixed-key table
-layouts](../../docs/table-layouts.md). It produces a complete native output:
+I use this isolated experiment to measure the proposed
+[fixed-key table layouts](../../docs/table-layouts.md). It produces a complete native output:
 keys, live values, a small experimental envelope, and the complete Elias–Fano
 directory for variable values. The output is checked byte for byte against a
 CPU merge using the library's `elias_fano::build`.

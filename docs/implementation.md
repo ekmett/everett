@@ -123,7 +123,7 @@ entry, string and iterator-copy costs separately.
 unsigned little-endian word order. Explicit scalar binary and SIMD pivot
 variants share the same lower/upper-bound contract. Protected mappings test
 short tails, arbitrary alignments, empty spans and valid page crossings.
-AVX2 and AVX-512 tails use fault-suppressing masked loads; NEON and SSE2 read
+AVX2 and AVX-512 tails use fault-suppressing masked loads; NEON and scalar paths read
 only valid tail bytes. These primitives are available independently; complete
 `.ff`/`.fv` fractional-index readers remain future work.
 The [bounded search measurements](../bench/fixed_search.md) select NEON and
@@ -575,28 +575,29 @@ total; `count()` derives it from the final real element, and an empty structure
 returns zero. The bitmap and packed owners/views each save eight bytes.
 Ordinary mapped opening reads no rank payload to obtain a redundant total.
 
-On little-endian AArch64, rank15 loads a complete checkpoint in four NEON
+With the NEON architecture, rank15 loads a complete checkpoint in four
 vectors, masks classes beyond the requested boundary and widens the final
 byte reduction. AVX2 uses two loads and AVX-512F/BW one. The x86 paths use
 `VPSADBW` before reducing lanes. Each byte pair sums to at most 30; a complete
 checkpoint sums to 1920. Short checkpoints use only readable scalar words.
-Groups of three use scalar packed sums; seven and thirty-one use bounded NEON
-bit-plane reductions on AArch64 and portable word reductions elsewhere.
+Groups of three use packed sums; seven and thirty-one use bounded NEON
+bit-plane reductions with that architecture and portable word reductions elsewhere.
 Other group sizes use the generic class loop, bounded by 127 classes.
-Instruction selection follows the compiler target, with no runtime dispatch
-or exported ISA flags.
+The caller selects an explicit architecture; the default is scalar. Native
+operations require the corresponding admitted compiler target, without hidden
+runtime dispatch or changes to the serialized representation.
 
 The separate full-bitvector `rank_view` has 64-bit epoch counts every $2^{32}$
 bits, 32-bit counts every 2048 bits and three ten-bit populations for the first
 three 512-bit runs. Populations are individual, with zero spacers at bits 10 and 21. The
 three counts fit in 32 bits at shifts 0, 11 and 22; a masked multiply sums them
-without widening at query time. The selected run uses bounded NEON popcount
-on AArch64 or portable word operations. A query at a 512-bit boundary uses the
+without widening at query time. The selected run uses the architecture's bounded
+vector popcount or portable word operations. A query at a 512-bit boundary uses the
 directory without reading the bitmap. Construction handles complete 2048-bit
 blocks with four 512-bit popcounts and a separate bounded tail. This backend
-supplies rank alone and stores no select support. Intel targets have bounded
-AVX2 nibble-lookup/SAD, AVX-512BW lookup/SAD and AVX-512VPOPCNTDQ paths, chosen
-by compiler features. Short allocations retain the bounded scalar tail.
+supplies rank alone and stores no select support. The shared SIMD library lowers
+AVX2 and AVX-512 populations and reductions to the instructions available in
+their profiles. Short allocations retain the bounded scalar tail.
 
 `elias_fano` encodes a monotone sequence independently of how its caller sampled
 that sequence. `elias_fano_view::select(i)` returns the value at an existing
@@ -606,8 +607,8 @@ width `W`, independently of virtual stride `K`, and restores fixed-width payload
 strides in its own byte/bit units. Low-level select arithmetic uses plain unsigned
 addition and multiplication; metadata admission establishes representable extents.
 Dense select scans at most 4096 high bits; sparse groups store exception positions.
-Within a selected word, broadword byte-prefix arithmetic locates the bit; BMI2
-targets use `PDEP`.
+Within a selected word, broadword byte-prefix arithmetic locates the bit; explicit
+x86 profiles use the shared bit-deposit operation, accelerated by admitted BMI2.
 
 `elias_fano_view::cursor()` supports consecutive decoding without restarting a
 select from the group's first one each time. It caches the unused high-word
@@ -618,8 +619,8 @@ only after parsing the next record succeeds. Independent integer oracles cover
 every low width, copied cursors, sparse groups and guarded unaligned sections.
 
 The shared Elias–Fano writer packs low fields in width-specialized tiles of
-`64/gcd(width,64)` values and assigns each high word once. AArch64 uses NEON
-narrowing for complete width-eight and width-sixteen tiles, and bounded
+`64/gcd(width,64)` values and assigns each high word once. Native profiles use shared
+vector narrowing for complete width-eight and width-sixteen tiles, and bounded
 adjacent comparisons to validate monotone input. Other widths use constant
 shifts. Stored low/high arrays, select samples and sparse exceptions agree
 with independent scalar construction.
@@ -669,7 +670,7 @@ implementation decisions, not cross-platform performance guarantees.
 ### Typed byte and bit profiles
 
 Key comparison and longest-common-prefix discovery share one scan. The byte
-scanner uses bounded 16-byte NEON or SSE2 loads, followed by word and byte tails;
+scanner uses the selected architecture's vector width, followed by word and byte tails;
 unrelated bit keys retain a short first-bit mismatch path. Bit copying handles
 aligned bodies with `memmove` and shifted bodies in 64-bit chunks, preserving
 masked edges, overlapping input and aliased appends. Fixed-width fields and
@@ -820,8 +821,8 @@ with portable, ARM and x86 implementations checked in alongside the headers.
 The [parallel-folding explanation](https://www.corsix.org/content/fast-crc32c-4k)
 describes how independent CRC and carry-less-multiply work can share execution
 resources. I use generated kernels for this arithmetic. The C++ adaptation gives
-them inline linkage, bounded `memcpy` scalar loads, little-endian normalization
-and scoped helper macros. Length-based loops avoid forming pointers before the
+them inline linkage inside the compiled implementation, bounded `memcpy` scalar
+loads, little-endian normalization and shared SIMD attributes. Length-based loops avoid forming pointers before the
 input. Header and body checks retain the same CRC32C result and file format.
 
 Selection follows the compiler target, with a portable fallback when no
