@@ -11,33 +11,31 @@
  */
 #pragma once
 
+#include <everett/backend.h>
+
 #include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#if defined(__aarch64__) && defined(__ARM_NEON)
-#include <arm_neon.h>
-#elif defined(__SSE2__)
-#include <emmintrin.h>
-#endif
 
 namespace everett::key_detail {
   // All loads remain within count bytes; neither alignment nor padding is assumed.
-  inline std::size_t common_bytes(void const * lhs, void const * rhs, std::size_t count) noexcept {
+  template <simd::architecture Arch = simd::scalar>
+  simd_inline std::size_t common_bytes(void const * lhs, void const * rhs, std::size_t count) noexcept {
     auto a = static_cast<unsigned char const *>(lhs);
     auto b = static_cast<unsigned char const *>(rhs);
     std::size_t at = 0;
-#if defined(__aarch64__) && defined(__ARM_NEON)
-    for (; count - at >= 16; at += 16)
-      if (vmaxvq_u8(veorq_u8(vld1q_u8(a + at), vld1q_u8(b + at)))) break;
-#elif defined(__SSE2__)
-    for (; count - at >= 16; at += 16) {
-      auto x = _mm_loadu_si128(reinterpret_cast<__m128i const *>(a + at));
-      auto y = _mm_loadu_si128(reinterpret_cast<__m128i const *>(b + at));
-      auto different = unsigned(_mm_movemask_epi8(_mm_cmpeq_epi8(x, y))) ^ 65535u;
-      if (different) return at + std::countr_zero(different);
+    if constexpr (!std::is_same_v<Arch, simd::scalar>) {
+      constexpr auto lanes = backend_detail::register_bytes<Arch>;
+      using V = simd::vec<std::uint8_t, lanes, Arch>;
+      for (; count - at >= lanes; at += lanes) {
+        auto different = V::load(a + at) != V::load(b + at);
+        if constexpr (std::is_same_v<Arch, simd::neon>) {
+          // A cheap horizontal test retains the scalar mismatch locator.
+          if (any(different)) break;
+        } else if (auto bits = different.to_bitset()) return at + std::countr_zero(bits);
+      }
     }
-#endif
     for (; count - at >= 8; at += 8) {
       std::uint64_t x, y;
       std::memcpy(&x, a + at, 8); std::memcpy(&y, b + at, 8);

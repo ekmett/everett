@@ -41,7 +41,10 @@ namespace {
   }
 
   template <std::size_t Words> using key = std::array<std::uint32_t, Words>;
-  template <std::size_t Words> using view = everett::fixed_key_view<Words>;
+#ifndef EVERETT_TEST_ARCH
+#define EVERETT_TEST_ARCH simd::scalar
+#endif
+  template <std::size_t Words> using view = everett::fixed_key_view<Words, EVERETT_TEST_ARCH>;
 
   template <std::size_t Words> bool less(key<Words> const & a, key<Words> const & b) {
     return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
