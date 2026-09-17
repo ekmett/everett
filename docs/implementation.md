@@ -1443,10 +1443,11 @@ normalization bounds remain a separate concern.
 
 ## Build and verification
 
-Configure, build and run the standalone component suites with CMake/CTest:
+Use the [module toolchain](modules.md) and an installed SIMD package with
+exceptions enabled. Configure, build and run the component suites with CMake/CTest:
 
 ```sh
-cmake -S . -B build -DEVERETT_BUILD_TESTS=ON
+cmake -S . -B build -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd -DEVERETT_BUILD_TESTS=ON
 cmake --build build --parallel 4
 ctest --test-dir build --output-on-failure
 ```
@@ -1454,7 +1455,8 @@ ctest --test-dir build --output-on-failure
 For ASan/UBSan on a supported toolchain, use a separate build directory:
 
 ```sh
-cmake -S . -B build-sanitize -DEVERETT_BUILD_TESTS=ON -DEVERETT_SANITIZERS=ON
+cmake -S . -B build-sanitize -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd \
+  -DEVERETT_BUILD_TESTS=ON -DEVERETT_SANITIZERS=ON
 cmake --build build-sanitize --parallel 4
 ctest --test-dir build-sanitize --output-on-failure
 ```
