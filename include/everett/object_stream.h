@@ -56,7 +56,7 @@ namespace everett {
     // Before finish this describes the zero-filled prefix and appended bytes;
     // afterward it describes the final prefix and body. Failure makes no claim
     // about which writes reached the underlying file.
-    std::uint32_t body_crc32c<typename P::architecture>() const noexcept { return crc_; }
+    std::uint32_t body_crc32c() const noexcept { return crc_; }
     bool failed() const noexcept { return failed_; }
     bool finished() const noexcept { return finished_; }
     object_write_paths const & paths() const & noexcept { return run_.paths; }
