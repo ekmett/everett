@@ -24,7 +24,10 @@ the README and design Markdown in Doxygen, and verify that equations render.
 
 ## Coding style
 
-- C++20, with no modules or header units.
+- Use C++26 named modules and the language/toolchain conventions of
+  `ekmett/simd`. Keep system headers and intrinsic-backed textual implementation
+  inputs in the global module fragment when needed. Header-only distribution
+  is not a goal.
 - Follow the lowercase, struct-first style of https://github.com/ekmett/bad
   (reference revision 978b8056ffafc992fd1b7300ccf7bd1219cd3a20), without importing
   its ISA assumptions or macro-dispatch machinery.
@@ -32,8 +35,13 @@ the README and design Markdown in Doxygen, and verify that equations render.
   variables and files. Short uppercase template parameters are welcome.
 - Use struct with explicit private/protected sections, two-space indentation,
   .h headers with `#pragma once`, .cc implementations, and T const & spelling.
-- Include public headers through everett/foo.h. Keep helpers with their sole
-  consumer and extract them only for actual sharing.
+- Public consumers import Everett modules. Textual implementation inputs use
+  `everett/foo.h` paths; module interfaces use `.ccm`. Keep helpers with their
+  sole consumer and extract them only for actual sharing.
+- Use `simd::vec<T,N,Arch>` and explicit architecture types for SIMD kernels.
+  Use `<simd/attributes.h>` for cross-platform attributes. Extend the shared
+  SIMD library with small reusable operations when needed, coordinating with
+  its other consumers and taking its main branch as authoritative.
 - Prefer templates, CRTP and associated type families for policy specialization.
   Avoid virtual dispatch, PImpl and type-erased backend payloads.
 - Use standard attributes and facilities where practical. Individual named
