@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <pthread.h>
 #include <pthread/qos.h>
 #include <random>
 #include <set>

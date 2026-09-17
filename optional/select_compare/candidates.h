@@ -84,7 +84,7 @@ namespace select_compare {
         auto bits = data.high[word] & (~u64{} << (sample.first & 63));
         for (;;) {
           auto count = unsigned(std::popcount(bits));
-          if (residual < count) { position = (word << 6) + everett::elias_fano_detail::select_word(bits, residual); break; }
+          if (residual < count) { position = (word << 6) + everett::elias_fano_detail::select_word<everett_experiment::architecture>(bits, residual); break; }
           residual -= count; bits = data.high[++word];
         }
       }
@@ -167,7 +167,7 @@ namespace select_compare {
       auto residual = lane & 31;
       for (;;) {
         auto count = unsigned(std::popcount(bits));
-        if (residual < count) return (word << 6) + everett::elias_fano_detail::select_word(bits, residual);
+        if (residual < count) return (word << 6) + everett::elias_fano_detail::select_word<everett_experiment::architecture>(bits, residual);
         residual -= count; bits = data->high[++word];
       }
     }
