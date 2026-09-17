@@ -12,6 +12,7 @@
 
 #include <everett/sort_codec.h>
 
+#include <exception>
 #include <array>
 #include <iostream>
 #include <limits>

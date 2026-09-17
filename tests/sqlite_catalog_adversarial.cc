@@ -12,6 +12,7 @@
 
 #include <everett/sqlite_catalog.h>
 
+#include <exception>
 #include <sqlite3.h>
 
 #include <array>

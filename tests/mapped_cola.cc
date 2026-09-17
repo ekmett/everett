@@ -8,6 +8,7 @@
  */
 
 #include <everett/mapped_cola.h>
+#include <exception>
 #include <everett/native_writer.h>
 #include <everett/sections.h>
 

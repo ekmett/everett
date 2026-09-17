@@ -10,6 +10,7 @@
  * \endlicense
  */
 #include <everett/cola_runtime.h>
+#include <exception>
 #include <iostream>
 #include <cstdio>
 #include <filesystem>

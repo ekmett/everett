@@ -11,6 +11,7 @@
  */
 
 #include <everett/mapped_blob.h>
+#include <exception>
 #include <everett/native_writer.h>
 #include <everett/sections.h>
 

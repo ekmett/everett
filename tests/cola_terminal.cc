@@ -11,6 +11,7 @@
  */
 #include <everett/mapped_cola.h>
 
+#include <exception>
 #include <algorithm>
 #include <array>
 #include <cstddef>

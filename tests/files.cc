@@ -12,6 +12,7 @@
 
 #include <everett/file.h>
 
+#include <exception>
 #include <algorithm>
 #include <array>
 #include <fstream>
