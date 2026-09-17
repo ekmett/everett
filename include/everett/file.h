@@ -182,7 +182,7 @@ namespace everett {
       throw std::invalid_argument("truncated or trailing Everett object bytes");
     auto body = bytes.subspan(file_detail::header_bytes);
     file_detail::validate_body(header, body);
-    if (file_detail::get(bytes, 64, 4) != crc32c(body))
+    if (file_detail::get(bytes, 64, 4) != crc32c<typename P::architecture>(body))
       throw std::invalid_argument("Everett body CRC32C mismatch");
     return header;
   }
@@ -224,7 +224,7 @@ namespace everett {
     file_detail::validate_body(header, body);
     auto total = file_detail::total_bytes<P>(header.extent);
     if (total > std::numeric_limits<std::size_t>::max()) throw std::length_error("Everett file is too large");
-    auto prefix = encode_file_header(header, crc32c(body));
+    auto prefix = encode_file_header(header, crc32c<typename P::architecture>(body));
     std::vector<std::byte> result(static_cast<std::size_t>(total));
     for (std::size_t i = 0; i < prefix.size(); ++i) result[i] = prefix[i];
     for (std::size_t i = 0; i < body.size(); ++i) result[file_detail::header_bytes + i] = body[i];

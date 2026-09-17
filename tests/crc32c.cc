@@ -30,6 +30,10 @@
 #include <unistd.h>
 #endif
 
+#ifndef EVERETT_TEST_ARCH
+#define EVERETT_TEST_ARCH simd::scalar
+#endif
+
 namespace {
   using bytes = std::span<std::byte const>;
   void require(bool condition, char const * message) {
@@ -73,22 +77,22 @@ namespace {
 #endif
 #endif
 #endif
-    require(everett::crc32c(input, initial) == expected, "seeded public CRC mismatch");
-    if (initial == 0) require(everett::crc32c(input) == expected, "default public CRC mismatch");
+    require(everett::crc32c<EVERETT_TEST_ARCH>(input, initial) == expected, "seeded public CRC mismatch");
+    if (initial == 0) require(everett::crc32c<EVERETT_TEST_ARCH>(input) == expected, "default public CRC mismatch");
   }
 
   void known_vectors() {
-    require(everett::crc32c({}) == 0, "empty CRC mismatch");
+    require(everett::crc32c<EVERETT_TEST_ARCH>({}) == 0, "empty CRC mismatch");
     auto text = std::string_view("123456789");
-    require(everett::crc32c(std::as_bytes(std::span(text))) == 0xe3069283u, "standard CRC vector mismatch");
+    require(everett::crc32c<EVERETT_TEST_ARCH>(std::as_bytes(std::span(text))) == 0xe3069283u, "standard CRC vector mismatch");
     std::array<std::byte, 32> input{};
-    require(everett::crc32c(input) == 0x8a9136aau, "zero CRC vector mismatch");
+    require(everett::crc32c<EVERETT_TEST_ARCH>(input) == 0x8a9136aau, "zero CRC vector mismatch");
     input.fill(std::byte{0xff});
-    require(everett::crc32c(input) == 0x62a8ab43u, "ones CRC vector mismatch");
+    require(everett::crc32c<EVERETT_TEST_ARCH>(input) == 0x62a8ab43u, "ones CRC vector mismatch");
     for (unsigned i = 0; i < input.size(); ++i) input[i] = std::byte(i);
-    require(everett::crc32c(input) == 0x46dd794eu, "increasing CRC vector mismatch");
+    require(everett::crc32c<EVERETT_TEST_ARCH>(input) == 0x46dd794eu, "increasing CRC vector mismatch");
     std::reverse(input.begin(), input.end());
-    require(everett::crc32c(input) == 0x113fdb5cu, "decreasing CRC vector mismatch");
+    require(everett::crc32c<EVERETT_TEST_ARCH>(input) == 0x113fdb5cu, "decreasing CRC vector mismatch");
   }
 
   // Independent linear-map oracle: square the one-byte state transition as a
@@ -170,10 +174,10 @@ namespace {
           check(bytes(input).subspan(offset, std::size_t(std::ptrdiff_t(center) + delta)));
     // The generated incremental convention must agree with concatenation.
     for (std::size_t split = 0; split < 2048; split += 17) {
-      auto first = everett::crc32c(bytes(input).first(split));
+      auto first = everett::crc32c<EVERETT_TEST_ARCH>(bytes(input).first(split));
       check(bytes(input).subspan(split, 2048 - split), first);
-      auto second = everett::crc32c(bytes(input).subspan(split, 2048 - split), first);
-      require(second == everett::crc32c(bytes(input).first(2048)), "incremental CRC mismatch");
+      auto second = everett::crc32c<EVERETT_TEST_ARCH>(bytes(input).subspan(split, 2048 - split), first);
+      require(second == everett::crc32c<EVERETT_TEST_ARCH>(bytes(input).first(2048)), "incremental CRC mismatch");
     }
   }
 
@@ -187,16 +191,16 @@ namespace {
       auto input = bytes(storage).subspan(offset, 196608);
       for (auto seed : seeds) {
         auto expected = oracle(input, seed);
-        require(everett::crc32c(input, seed) == expected, "large seeded public CRC mismatch");
+        require(everett::crc32c<EVERETT_TEST_ARCH>(input, seed) == expected, "large seeded public CRC mismatch");
         std::size_t at = 0;
         auto incremental = seed;
         for (auto size : chunks) {
           size = std::min(size, input.size() - at);
-          incremental = everett::crc32c(input.subspan(at, size), incremental);
+          incremental = everett::crc32c<EVERETT_TEST_ARCH>(input.subspan(at, size), incremental);
           at += size;
-          require(everett::crc32c({}, incremental) == incremental, "empty chunk changed CRC state");
+          require(everett::crc32c<EVERETT_TEST_ARCH>({}, incremental) == incremental, "empty chunk changed CRC state");
         }
-        incremental = everett::crc32c(input.subspan(at), incremental);
+        incremental = everett::crc32c<EVERETT_TEST_ARCH>(input.subspan(at), incremental);
         require(incremental == expected, "mixed-backend streaming CRC mismatch");
       }
     }
@@ -205,10 +209,10 @@ namespace {
     auto small = bytes(storage).subspan(3, 513);
     for (auto seed : seeds) {
       auto expected = oracle(small, seed);
-      require(everett::crc32c({}, seed) == seed, "empty seeded CRC mismatch");
+      require(everett::crc32c<EVERETT_TEST_ARCH>({}, seed) == seed, "empty seeded CRC mismatch");
       for (std::size_t split = 0; split <= small.size(); ++split) {
-        auto first = everett::crc32c(small.first(split), seed);
-        auto second = everett::crc32c(small.subspan(split), first);
+        auto first = everett::crc32c<EVERETT_TEST_ARCH>(small.first(split), seed);
+        auto second = everett::crc32c<EVERETT_TEST_ARCH>(small.subspan(split), first);
         require(second == expected, "all-split seeded CRC mismatch");
       }
     }

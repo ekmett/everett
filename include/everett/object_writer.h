@@ -200,7 +200,7 @@ namespace everett {
           while (!chunk.empty()) {
             auto part = chunk.first(std::min(chunk.size(), std::size_t{1} << 20));
             run.write_all(part);
-            crc = crc32c(part, crc);
+            crc = crc32c<typename P::architecture>(part, crc);
             chunk = chunk.subspan(part.size());
           }
         }

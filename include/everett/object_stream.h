@@ -56,7 +56,7 @@ namespace everett {
     // Before finish this describes the zero-filled prefix and appended bytes;
     // afterward it describes the final prefix and body. Failure makes no claim
     // about which writes reached the underlying file.
-    std::uint32_t body_crc32c() const noexcept { return crc_; }
+    std::uint32_t body_crc32c<typename P::architecture>() const noexcept { return crc_; }
     bool failed() const noexcept { return failed_; }
     bool finished() const noexcept { return finished_; }
     object_write_paths const & paths() const & noexcept { return run_.paths; }
@@ -75,7 +75,7 @@ namespace everett {
         while (!bytes.empty()) {
           auto part = bytes.first(std::min(bytes.size(), std::size_t{1} << 20));
           run_.write_all(part);
-          crc_ = crc32c(part, crc_);
+          crc_ = crc32c<typename P::architecture>(part, crc_);
           body_bytes_ += part.size();
           last_ = part.back();
           bytes = bytes.subspan(part.size());
@@ -102,7 +102,7 @@ namespace everett {
         if ((header.extent & 7) &&
             (std::to_integer<unsigned>(last) & ((1u << (8 - (header.extent & 7))) - 1)))
           throw std::invalid_argument("noncanonical bit-profile tail padding");
-      auto crc = crc_ ^ crc32c_combine(prefix_crc_ ^ crc32c(prefix), 0, body_bytes_ - prefix_bytes_);
+      auto crc = crc_ ^ crc32c_combine(prefix_crc_ ^ crc32c<typename P::architecture>(prefix), 0, body_bytes_ - prefix_bytes_);
       auto encoded = encode_file_header(header, crc);
       object_seal_receipt receipt{id_, attempt_, run_.paths.final,
         body_bytes_ + file_detail::header_bytes, crc, ops_.barrier()};

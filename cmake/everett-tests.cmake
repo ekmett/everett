@@ -76,7 +76,7 @@ endforeach()
 # File formats and public wire types stay independent of the execution profile.
 foreach(profile IN LISTS EVERETT_PROFILES)
   string(TOLOWER "${profile}" name)
-  set(profile_tests rank fixed_search elias_fano)
+  set(profile_tests rank fixed_search elias_fano crc32c)
   if(APPLE OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
     list(APPEND profile_tests key_detail)
   endif()
