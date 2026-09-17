@@ -68,6 +68,6 @@ everett_run("@CMAKE_COMMAND@" -S "@PROJECT_SOURCE_DIR@/tests/package" -B "${root
   "-DCMAKE_MAKE_PROGRAM=@CMAKE_MAKE_PROGRAM@"
     "-DCMAKE_TOOLCHAIN_FILE=@CMAKE_TOOLCHAIN_FILE@" "-Dsimd_DIR=@simd_DIR@" "-DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@"
   ${mode_args})
-everett_run("@CMAKE_COMMAND@" --build "${root}/consumer" ${config_args} --parallel 2)
+everett_run("@CMAKE_COMMAND@" --build "${root}/consumer" ${config_args} --parallel 1)
 everett_run("@CMAKE_CTEST_COMMAND@" --test-dir "${root}/consumer"
   -C "${everett_smoke_config}" --output-on-failure)

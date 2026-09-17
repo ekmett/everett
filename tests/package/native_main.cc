@@ -21,7 +21,8 @@ int main() {
       !__builtin_cpu_supports("avx512bw") || !__builtin_cpu_supports("avx512vl")) return 77;
 #endif
 #endif
-  std::array<std::uint8_t, 2> classes{7, 1};
-  auto ranks = everett::rank15_index::build(classes, 16);
+  std::array<std::uint8_t, 256> classes{};
+  for (unsigned i = 0; i < classes.size(); ++i) classes[i] = (i + 7) & 15;
+  auto ranks = everett::rank15_index::build(classes, classes.size() * 15);
   return native_identity(ranks.view());
 }

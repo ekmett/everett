@@ -11,6 +11,7 @@
 
 cmake_minimum_required(VERSION 4.4)
 project(everett_consumer LANGUAGES CXX)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(EVERETT_PACKAGE_MODE STREQUAL "installed")
   find_package(everett 0.1 CONFIG REQUIRED)
