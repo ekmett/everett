@@ -1,0 +1,133 @@
+# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+# SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+# \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Checks scalar and NEON modules and relocated package consumers.
+
+name: C++26 modules
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: modules-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos-neon:
+    # This hosted label is ARM64. Keep the compiler, resource headers, SDK
+    # libc++ headers and runtime consistent across producers and consumers.
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: 2
+      CTEST_PARALLEL_LEVEL: 1
+    steps:
+      - name: Check out Everett
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check out SIMD
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ekmett/simd
+          ref: 006517a0144871e53fd75b8b93dd4c59eede7485
+          path: _deps/simd
+          persist-credentials: false
+
+      - name: Install the pinned compiler and CMake
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = arm64
+          tools="$RUNNER_TEMP/everett-tools"
+          mkdir -p "$tools"
+          cd "$tools"
+          llvm=LLVM-23.1.1-macOS-ARM64
+          cmake=cmake-4.4.3-macos-universal
+          curl -fL --retry 3 "https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.1/$llvm.tar.zst" -o llvm.tar.zst
+          printf '%s  %s\n' 2c4a0fdd1ec6a32d4fd57ff32aa714ec8b3c71bf02a24ec38608a4f23f8aca89 llvm.tar.zst | shasum -a 256 -c -
+          # The full release includes several GB of unrelated tools. Retain
+          # the driver/scanner/archive tools and all Clang resource headers.
+          tar -xf llvm.tar.zst \
+            "$llvm/bin/clang" "$llvm/bin/clang++" "$llvm/bin/clang-23" \
+            "$llvm/bin/clang-scan-deps" "$llvm/bin/llvm-ar" \
+            "$llvm/bin/llvm-ranlib" "$llvm/bin/llvm-nm" "$llvm/lib/clang"
+          rm llvm.tar.zst
+          curl -fL --retry 3 "https://github.com/Kitware/CMake/releases/download/v4.4.3/$cmake.tar.gz" -o cmake.tar.gz
+          printf '%s  %s\n' 0c5d65251c14cc884bfa16bdbed3c263ce5bffe2e21c0d0d00962cb0610464fa cmake.tar.gz | shasum -a 256 -c -
+          tar -xzf cmake.tar.gz
+          rm cmake.tar.gz
+          echo "$tools/$cmake/CMake.app/Contents/bin" >> "$GITHUB_PATH"
+          echo "$tools/$llvm/bin" >> "$GITHUB_PATH"
+          sdk="$(xcrun --sdk macosx --show-sdk-path)"
+          cat > "$tools/toolchain.cmake" <<EOF
+          set(CMAKE_C_COMPILER "$tools/$llvm/bin/clang" CACHE FILEPATH "")
+          set(CMAKE_CXX_COMPILER "$tools/$llvm/bin/clang++" CACHE FILEPATH "")
+          set(CMAKE_MAKE_PROGRAM "$(command -v ninja)" CACHE FILEPATH "")
+          set(CMAKE_OSX_SYSROOT "$sdk" CACHE PATH "")
+          set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "")
+          set(CMAKE_CXX_FLAGS_INIT "-nostdinc++ -isystem $sdk/usr/include/c++/v1")
+          EOF
+          echo "EVERETT_CI_TOOLS=$tools" >> "$GITHUB_ENV"
+          "$tools/$llvm/bin/clang++" --version
+          "$tools/$cmake/CMake.app/Contents/bin/cmake" --version
+          ninja --version
+
+      - name: Build SQLite and SIMD
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$EVERETT_CI_TOOLS"
+          curl -fL --retry 3 https://www.sqlite.org/2026/sqlite-amalgamation-3510300.zip -o "$tools/sqlite.zip"
+          printf '%s  %s\n' acb1e6f5d832484bf6d32b681e858c38add8b2acdfd42ac5df24b8afb46552b4 "$tools/sqlite.zip" | shasum -a 256 -c -
+          unzip -q "$tools/sqlite.zip" -d "$tools"
+          mkdir -p "$tools/sqlite/lib" "$tools/sqlite/include"
+          clang -O2 -DNDEBUG -DSQLITE_THREADSAFE=1 \
+            -isysroot "$(xcrun --sdk macosx --show-sdk-path)" \
+            -c "$tools/sqlite-amalgamation-3510300/sqlite3.c" -o "$tools/sqlite3.o"
+          llvm-ar rcs "$tools/sqlite/lib/libsqlite3.a" "$tools/sqlite3.o"
+          cp "$tools/sqlite-amalgamation-3510300/sqlite3.h" "$tools/sqlite/include/"
+          cmake -S _deps/simd -B build-simd -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$tools/toolchain.cmake" \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="$tools/simd" \
+            -DSIMD_PROFILES=NEON -DSIMD_ENABLE_EXCEPTIONS=ON -DSIMD_BUILD_TESTS=OFF
+          cmake --build build-simd --parallel 2
+          cmake --install build-simd
+
+      - name: Configure and build the module checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$EVERETT_CI_TOOLS"
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$tools/toolchain.cmake" \
+            -DCMAKE_PREFIX_PATH="$tools/simd" -DCMAKE_BUILD_TYPE=Release \
+            -DEVERETT_PROFILES=NEON -DEVERETT_BUILD_TESTS=ON \
+            -DEVERETT_ENABLE_SQLITE=ON -DEVERETT_SANITIZERS=ON \
+            -DSQLite3_INCLUDE_DIR="$tools/sqlite/include" \
+            -DSQLite3_LIBRARY="$tools/sqlite/lib/libsqlite3.a"
+          cmake --build build --parallel 2 --target \
+            everett everett_neon everett_sqlite \
+            everett_test_rank everett_test_rank_neon \
+            everett_test_elias_fano everett_test_elias_fano_neon \
+            everett_test_fixed_search everett_test_fixed_search_neon \
+            everett_test_key_detail everett_test_key_detail_neon \
+            everett_test_crc32c everett_test_crc32c_neon
+
+      - name: Run scalar and NEON correctness checks
+        run: >-
+          ctest --test-dir build --output-on-failure --no-tests=error
+          -R '^everett\.(rank|elias_fano|fixed_search|key_detail|crc32c)(\.neon)?$'
+
+      - name: Check installed, embedded and SQLite consumers
+        run: >-
+          ctest --test-dir build --output-on-failure --no-tests=error
+          -R '^everett\.package\.(installed|embedded|sqlite)$'
