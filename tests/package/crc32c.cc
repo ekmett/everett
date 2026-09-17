@@ -10,14 +10,14 @@
  * \endlicense
  */
 
-#include <everett/crc32c.h>
 
 #include <cstddef>
 #include <cstdint>
 #include <span>
 
-// A second translation unit checks that the installed implementation remains
-// header-only without duplicate definitions or an undeclared link dependency.
+import everett;
+
+// A second importer checks the installed archive and common entity identity.
 std::uint32_t crc32c_from_other_translation_unit(std::span<std::byte const> bytes) {
   return everett::crc32c(bytes);
 }

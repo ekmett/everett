@@ -10,37 +10,14 @@
  * \endlicense
  */
 
-#include <everett/crc32c.h>
-#include <everett/durability.h>
-#include <everett/fingerprint.h>
-#include <everett/file.h>
-#include <everett/fixed_search.h>
-#include <everett/index_pipeline.h>
-#include <everett/mapped_file.h>
-#include <everett/mapped_blob.h>
-#include <everett/multiverse.h>
-#include <everett/native_merge.h>
-#include <everett/native_writer.h>
-#include <everett/object_path.h>
-#include <everett/object_writer.h>
-#include <everett/pins.h>
-#include <everett/policy.h>
-#include <everett/profile.h>
-#include <everett/profile_blob.h>
-#include <everett/query.h>
-#include <everett/rank.h>
-#include <everett/rank_groups.h>
-#include <everett/rank15.h>
-#include <everett/elias_fano.h>
-#include <everett/sections.h>
-#include <everett/word_view.h>
-#include <everett/world.h>
 
 #include <array>
 #include <cstdint>
 #include <memory>
 #include <span>
 #include <type_traits>
+
+import everett;
 
 using policy = everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<everett::fixed_values<3>>>>, 7>;
 using store = everett::multiverse<policy>;

@@ -1,0 +1,9 @@
+// SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+// SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+module;
+#define SIMD_PROFILE 0
+#include <everett/detail/module_inputs.h>
+
+export module everett;
+export import simd.scalar;
+#include "everett/detail/module_exports.h"

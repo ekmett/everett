@@ -8,7 +8,7 @@
 # \author Edward Kmett <ekmett@gmail.com>
 # \brief Checks the optional SQLite component and dependency-free core after installation.
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 4.4)
 function(everett_run)
   execute_process(COMMAND ${ARGV} RESULT_VARIABLE result OUTPUT_VARIABLE output ERROR_VARIABLE error)
   if(NOT result EQUAL 0)
@@ -25,7 +25,7 @@ endif()
 everett_run("@CMAKE_COMMAND@" --install "@PROJECT_BINARY_DIR@" --prefix "${root}/original" ${config_args})
 file(RENAME "${root}/original" "${root}/relocated")
 file(WRITE "${root}/source/CMakeLists.txt" [=[
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 4.4)
 project(everett_sqlite_consumer LANGUAGES CXX)
 if(CORE_ONLY)
   set(CMAKE_DISABLE_FIND_PACKAGE_SQLite3 TRUE)
@@ -44,11 +44,15 @@ enable_testing()
 add_test(NAME consumer COMMAND consumer)
 ]=])
 file(WRITE "${root}/source/core.cc" [=[
-#include <everett/policy.h>
+import everett;
 int main() { return everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>::group_size != 15; }
 ]=])
 file(WRITE "${root}/source/sqlite.cc" [=[
-#include <everett/connection.h>
+#include <concepts>
+#include <optional>
+#include <string>
+#include <utility>
+import everett.sqlite;
 int main() {
 #if defined(__APPLE__) || defined(__linux__)
   auto storage = everett::multiverse<>::create("example-data");
@@ -101,8 +105,9 @@ foreach(mode IN ITEMS component core)
   everett_run("@CMAKE_COMMAND@" -S "${root}/source" -B "${root}/${mode}"
     ${generator_args} "-DCMAKE_CXX_COMPILER=@CMAKE_CXX_COMPILER@" "-DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@"
     "-DCMAKE_MAKE_PROGRAM=@CMAKE_MAKE_PROGRAM@"
+    "-DCMAKE_TOOLCHAIN_FILE=@CMAKE_TOOLCHAIN_FILE@" "-Dsimd_DIR=@simd_DIR@"
     "-DCMAKE_PREFIX_PATH=${root}/relocated"
     -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF -DCMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY=OFF ${mode_args})
-  everett_run("@CMAKE_COMMAND@" --build "${root}/${mode}" ${config_args} --parallel 4)
+  everett_run("@CMAKE_COMMAND@" --build "${root}/${mode}" ${config_args} --parallel 2)
   everett_run("@CMAKE_CTEST_COMMAND@" --test-dir "${root}/${mode}" -C "${everett_smoke_config}" --output-on-failure)
 endforeach()

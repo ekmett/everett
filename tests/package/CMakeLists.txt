@@ -9,7 +9,7 @@
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 # \endlicense
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 4.4)
 project(everett_consumer LANGUAGES CXX)
 
 if(EVERETT_PACKAGE_MODE STREQUAL "installed")
@@ -46,3 +46,19 @@ target_link_libraries(everett_consumer PRIVATE everett::everett)
 set_target_properties(everett_consumer PROPERTIES CXX_EXTENSIONS OFF)
 enable_testing()
 add_test(NAME everett.consumer COMMAND everett_consumer)
+
+foreach(profile NEON AVX2 AVX512)
+  string(TOLOWER "${profile}" name)
+  if(TARGET everett::${name})
+    add_library(native_${name} OBJECT native.cc)
+    target_link_libraries(native_${name} PRIVATE everett::${name})
+    simd_target_profile(native_${name} ${profile})
+    target_compile_definitions(native_${name} PRIVATE EVERETT_PACKAGE_${profile}=1)
+    add_executable(native_consumer_${name} native_main.cc $<TARGET_OBJECTS:native_${name}>)
+    target_compile_definitions(native_consumer_${name} PRIVATE EVERETT_PACKAGE_${profile}=1)
+    target_link_libraries(native_consumer_${name} PRIVATE everett::${name})
+    set_property(TARGET native_consumer_${name} PROPERTY INTERPROCEDURAL_OPTIMIZATION FALSE)
+    add_test(NAME everett.consumer.${name} COMMAND native_consumer_${name})
+    set_tests_properties(everett.consumer.${name} PROPERTIES SKIP_RETURN_CODE 77)
+  endif()
+endforeach()

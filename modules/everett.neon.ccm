@@ -1,0 +1,17 @@
+// SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+// SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+module;
+#include <cstdint>
+#include <optional>
+#include <string>
+
+export module everett.neon;
+export import everett;
+export import simd.neon;
+
+export namespace everett {
+  template <class Registry = unsorted<std::optional<std::string>>,
+            std::uint64_t GroupSize = 15, class BackspaceCode = exponential_golomb<0>,
+            std::uint64_t CodecBlockSize = GroupSize>
+  using neon_policy = backend_policy<simd::neon, Registry, GroupSize, BackspaceCode, CodecBlockSize>;
+}
