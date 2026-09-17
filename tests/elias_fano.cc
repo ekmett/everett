@@ -23,6 +23,11 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #endif
+#ifndef EVERETT_TEST_ARCH
+#define EVERETT_TEST_ARCH simd::scalar
+#endif
+using test_arch = EVERETT_TEST_ARCH;
+
 namespace {
   using namespace everett;
   void require(bool condition, char const * text) { if (!condition) throw std::runtime_error(text); }
@@ -78,9 +83,9 @@ namespace {
   }
   void query_oracle(elias_fano_view view, std::span<std::uint64_t const> values) {
     require(view.size() == values.size(), "EF encoded entry count");
-    auto cursor = view.cursor();
+    auto cursor = view.template cursor<test_arch>();
     for (std::size_t i = 0; i < values.size(); ++i) {
-      require(view.select(i) == values[i], "EF select differs from original integer");
+      require(view.template select<test_arch>(i) == values[i], "EF select differs from original integer");
       require(!cursor.done() && cursor.ordinal() == i && cursor.next() == values[i],
               "EF forward cursor differs from original integer");
       // Copies retain their own scan position, including directory boundaries.
@@ -90,18 +95,18 @@ namespace {
     for (std::uint64_t first : std::array<std::uint64_t, 10>{0, 1, 31, 32, 127, 255, 256, 257,
          values.empty() ? 0ULL : std::uint64_t(values.size() - 1), std::uint64_t(values.size())}) {
       if (first > values.size()) continue;
-      auto positioned = view.cursor(first);
+      auto positioned = view.template cursor<test_arch>(first);
       for (auto i = first; i < std::min<std::uint64_t>(first + 258, values.size()); ++i)
         require(positioned.next() == values[i], "EF positioned cursor differs from integer oracle");
     }
-    rejects([&] { (void)view.cursor(values.size() + 1); });
+    rejects([&] { (void)view.template cursor<test_arch>(values.size() + 1); });
     require(cursor.done() && cursor.ordinal() == values.size(), "EF cursor end");
     rejects([&] { (void)cursor.next(); });
-    rejects([&] { (void)view.select(values.size()); });
-    rejects([&] { (void)view.select(std::numeric_limits<std::uint64_t>::max()); });
+    rejects([&] { (void)view.template select<test_arch>(values.size()); });
+    rejects([&] { (void)view.template select<test_arch>(std::numeric_limits<std::uint64_t>::max()); });
   }
   void check(std::vector<std::uint64_t> const & values) {
-    auto actual = elias_fano::build(values);
+    auto actual = elias_fano::build<test_arch>(values);
     auto width = 0u;
     if (!values.empty()) {
       auto quotient = values.back() / values.size();
@@ -146,11 +151,23 @@ namespace {
       values.back() = n << width;
       check(values);
     }
+    // Exercise every short native narrowing tile/tail for both optimized low
+    // widths, plus directory boundaries. The independent bit-at-a-time oracle
+    // checks complete wire sections, not just decoded values.
+    for (unsigned width : {8u, 16u})
+      for (unsigned n : {1u,2u,3u,4u,5u,6u,7u,8u,9u,10u,11u,12u,13u,14u,15u,16u,17u,
+                        31u,32u,33u,63u,64u,65u,255u,256u,257u,258u,259u,260u,261u,262u,263u,264u,265u}) {
+        std::vector<std::uint64_t> values(n);
+        auto mask = (std::uint64_t{1} << width) - 1;
+        for (unsigned i = 0; i < n; ++i) values[i] = (std::uint64_t(i) << width) | (random() & mask);
+        values.back() = std::uint64_t(n) << width;
+        check(values);
+      }
     constexpr auto maximum = std::numeric_limits<std::uint64_t>::max();
     check({maximum}); check({0, maximum}); check({maximum - 1, maximum});
     std::vector<std::uint64_t> sparse(10001, 20000);
     std::fill(sparse.begin(), sparse.begin() + 17, 0);
-    auto built = elias_fano::build(sparse);
+    auto built = elias_fano::build<test_arch>(sparse);
     require(!built.sparse.empty(), "EF sparse fixture did not select exceptions");
     check(sparse);
   }
@@ -176,15 +193,15 @@ namespace {
     guarded_section & operator=(guarded_section const &) = delete;
   };
   void guarded(std::vector<std::uint64_t> const & values) {
-    auto index = elias_fano::build(values);
+    auto index = elias_fano::build<test_arch>(values);
     guarded_section low(bytes(index.low)), high(bytes(index.high)), samples(sample_bytes(index.samples)), sparse(bytes(index.sparse));
     // Every directory and payload page is inaccessible during shape opening.
     elias_fano_view view(word_view::little_endian(low.data), word_view::little_endian(high.data),
       sample_view::little_endian(samples.data), word_view::little_endian(sparse.data), values.size(), index.universe, index.low_width);
     require(view.size() == values.size(), "protected EF shape query");
-    auto cursor = view.cursor();
+    auto cursor = view.template cursor<test_arch>();
     require(cursor.done() == values.empty(), "protected EF cursor construction");
-    rejects([&] { (void)view.select(values.size()); });
+    rejects([&] { (void)view.template select<test_arch>(values.size()); });
     low.protect(PROT_READ); high.protect(PROT_READ); samples.protect(PROT_READ); sparse.protect(PROT_READ);
     query_oracle(view, values);
   }
@@ -205,7 +222,7 @@ namespace {
     elias_fano empty;
     query_oracle(empty.view(), {});
     query_oracle(elias_fano_view{}, {});
-    rejects([] { elias_fano::build(std::array<std::uint64_t, 2>{2, 1}); });
+    rejects([] { elias_fano::build<test_arch>(std::array<std::uint64_t, 2>{2, 1}); });
     rejects([] { elias_fano_view({}, {}, {}, {}, 0, 1, 0); });
     rejects([] { elias_fano_view({}, {}, {}, {}, 0, 0, 1); });
     rejects([] { elias_fano_view({}, {}, {}, {}, 0, 0, 64); });
@@ -215,32 +232,32 @@ namespace {
     std::array<std::uint64_t, 1> word{0};
     rejects([&] { elias_fano_view(word, {}, {}, {}, 0, 0, 0); });
     rejects([&] { elias_fano_view({}, {}, {}, word, 0, 0, 0); });
-    auto missing = elias_fano::build(std::array<std::uint64_t, 2>{0, 1});
+    auto missing = elias_fano::build<test_arch>(std::array<std::uint64_t, 2>{0, 1});
     missing.high[0] = 0;
-    rejects([&] { (void)missing.view().select(0); });
-    rejects([&] { (void)missing.view().cursor().next(); });
-    auto bad_sample = elias_fano::build(std::array<std::uint64_t, 1>{0});
+    rejects([&] { (void)missing.view().template select<test_arch>(0); });
+    rejects([&] { (void)missing.view().template cursor<test_arch>().next(); });
+    auto bad_sample = elias_fano::build<test_arch>(std::array<std::uint64_t, 1>{0});
     bad_sample.samples[0].first = ~std::uint64_t{0};
-    rejects([&] { (void)bad_sample.view().select(0); });
-    rejects([&] { (void)bad_sample.view().cursor().next(); });
+    rejects([&] { (void)bad_sample.view().template select<test_arch>(0); });
+    rejects([&] { (void)bad_sample.view().template cursor<test_arch>().next(); });
 
     // A dense group cannot claim a one outside its permitted span. Sparse
     // positions must name actual high bits, and low fields stay in universe.
     std::vector<std::uint64_t> values(10001, 20000);
     std::fill(values.begin(), values.begin() + 17, 0);
-    auto sparse = elias_fano::build(values);
+    auto sparse = elias_fano::build<test_arch>(values);
     require(sparse.samples[0].sparse != ~std::uint64_t{0}, "sparse cursor fixture");
     sparse.sparse[0] = ~std::uint64_t{0};
-    rejects([&] { (void)sparse.view().cursor().next(); });
-    auto dense = elias_fano::build(values);
+    rejects([&] { (void)sparse.view().template cursor<test_arch>().next(); });
+    auto dense = elias_fano::build<test_arch>(values);
     dense.samples[0].sparse = ~std::uint64_t{0};
     rejects([&] {
-      auto cursor = dense.view().cursor();
+      auto cursor = dense.view().template cursor<test_arch>();
       for (unsigned i = 0; i != 18; ++i) (void)cursor.next();
     });
-    auto low = elias_fano::build(std::array<std::uint64_t, 1>{4});
+    auto low = elias_fano::build<test_arch>(std::array<std::uint64_t, 1>{4});
     low.low[0] = 3;
-    rejects([&] { (void)low.view().cursor().next(); });
+    rejects([&] { (void)low.view().template cursor<test_arch>().next(); });
   }
 }
 int main() {
