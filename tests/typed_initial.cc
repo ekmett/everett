@@ -22,7 +22,7 @@ namespace {
 
   template <class P> struct observed_storage : sort_runtime_storage<P> {
     using base_type = sort_runtime_storage<P>;
-    inline static unsigned initializations = 0, initial_rows = 0, singletons = 0;
+    [[maybe_unused]] inline static unsigned initializations = 0, initial_rows = 0, singletons = 0;
     inline static unsigned fail_singleton = 0;
     inline static bool fail = false;
     static auto sorted_native(std::span<profile_record const> records) {
@@ -301,7 +301,7 @@ namespace {
   template <class Compose> struct growing_tail_runtime : cola_runtime<string_policy, Compose> {
     using base_type = cola_runtime<string_policy, Compose>;
     using snapshot_type = typename base_type::snapshot_type;
-    inline static std::size_t initialized = 0;
+    [[maybe_unused]] inline static std::size_t initialized = 0;
     bool try_initialize_sorted(std::span<profile_record const> records, std::uint64_t, std::uint64_t) {
       initialized = records.size();
       base_type::contribute(records, 0);
