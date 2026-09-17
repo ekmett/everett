@@ -8,7 +8,8 @@ history that is no longer needed by its current state. It uses the
 contributions. Existing snapshots keep their own dependencies.
 
 ```cpp
-#include <everett/replacement_rebuild.h>
+
+import everett;
 
 everett::replacement_rebuild_engine<> table;
 auto first = table.contribute(decltype(table)::put("name", "Edward"));
@@ -31,7 +32,10 @@ ordinary named connection selects it when the registry contains only the
 optional-string sort:
 
 ```cpp
-#include <everett/connection.h>
+#include <optional>
+#include <string>
+
+import everett.sqlite;
 
 auto table = everett::connect(existing_directory, "earth-616");
 table.put("name", "Edward");

@@ -54,13 +54,14 @@ using it as a published head.
 This complete program runs both destination plans and checks the old snapshot:
 
 ```cpp
-#include <everett/cola_local_merge.h>
-#include <everett/cola_query.h>
+#include <utility>
 
 #include <array>
 #include <cassert>
 #include <memory>
 #include <vector>
+
+import everett;
 
 int main() {
   using namespace everett;

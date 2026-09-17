@@ -13,8 +13,8 @@ simple deterministic identity allocator. An application supplies its own
 allocator and retains its operation identities for retry.
 
 ```cpp
-#include <everett/native_file_merge.h>
-#include <everett/sqlite_catalog.h>
+#include <span>
+#include <filesystem>
 
 #include <algorithm>
 #include <array>
@@ -26,6 +26,8 @@ allocator and retains its operation identities for retry.
 #include <string_view>
 #include <utility>
 #include <vector>
+
+import everett.sqlite;
 
 using namespace everett;
 using P = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;

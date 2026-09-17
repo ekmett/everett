@@ -14,8 +14,9 @@ The example allocates deterministic identities because it creates a fresh
 catalog; an application supplies its own fresh identity allocator.
 
 ```cpp
-#include <everett/native_file_merge.h>
-#include <everett/sqlite_catalog.h>
+#include <memory>
+#include <span>
+#include <filesystem>
 #include <array>
 #include <cstdio>
 #include <initializer_list>
@@ -23,6 +24,8 @@ catalog; an application supplies its own fresh identity allocator.
 #include <string>
 #include <string_view>
 #include <utility>
+
+import everett.sqlite;
 
 using namespace everett;
 using P = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;

@@ -17,7 +17,9 @@ Using a session
 Given an engine satisfying the contract below:
 
 ```cpp
-#include <everett/session.h>
+#include <utility>
+
+import everett;
 
 void update(auto engine, auto contribution) {
   using engine_type = decltype(engine);

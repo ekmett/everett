@@ -16,7 +16,9 @@ code one for a later sort. It keeps 15:1 sampling and uses order-zero
 exponential-Golomb backspaces.
 
 ```cpp
-#include <everett/typed_world.h>
+#include <string>
+
+import everett;
 
 int main() {
   everett::typed_engine<> engine;
@@ -198,8 +200,8 @@ The fourth engine parameter selects a runtime family. To use the redundant
 schedule:
 
 ```cpp
-#include <everett/redundant_runtime.h>
-#include <everett/typed_world.h>
+import everett;
+
 using engine = everett::typed_engine<everett::string_policy,
   everett::wrapping_fingerprint_algebra, 256,
   everett::redundant_runtime_family<everett::string_policy>>;

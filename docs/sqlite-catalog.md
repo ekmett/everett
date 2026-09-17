@@ -19,7 +19,9 @@ The normal `everett::everett` target remains independent of SQLite. I enable the
 adapter explicitly:
 
 ```sh
-cmake -S . -B build -DEVERETT_ENABLE_SQLITE=ON -DEVERETT_BUILD_TESTS=ON
+cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ \
+  -DCMAKE_PREFIX_PATH=/path/to/simd \
+  -DEVERETT_ENABLE_SQLITE=ON -DEVERETT_BUILD_TESTS=ON
 cmake --build build --parallel 4
 ctest --test-dir build --output-on-failure
 ```
@@ -39,8 +41,8 @@ target_link_libraries(my_program PRIVATE everett::sqlite)
 ```
 
 A consumer that only requests `everett` neither finds nor links SQLite, even
-when both components were installed. The adapter is header-only but calls the
-linked SQLite C library. It requires a thread-safe build and a serialized
+when both components were installed. Import `everett.sqlite` for the adapter;
+its compiled target links the SQLite C library. It requires a thread-safe build and a serialized
 connection; a process-wide single-thread configuration is rejected. All WAL
 participants use one host and a local filesystem honoring the selected barriers.
 The current durable catalog-creation path uses POSIX exclusive creation and a directory barrier;
@@ -53,8 +55,10 @@ persist every pair in its prepared chain, including the empty-native routing
 prefix. The mapped reader adopts that already prepared graph.
 
 ```cpp
-#include <everett/sqlite_catalog.h>
+#include <filesystem>
 #include <array>
+
+import everett.sqlite;
 
 using P = everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
 using catalog = everett::sqlite_catalog<P>;

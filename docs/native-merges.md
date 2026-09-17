@@ -13,8 +13,9 @@ key seen until finalization or destruction. The
 variable value widths and verify exact output against batch encoding.
 
 ```cpp
-#include <everett/native_writer.h>
-#include <everett/query.h>
+#include <memory>
+
+import everett;
 
 using P = everett::storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<>>>>;
 

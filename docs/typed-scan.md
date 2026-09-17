@@ -6,7 +6,9 @@ Scanning a table
 `db.range(lo, hi)` for its current snapshot:
 
 ```cpp
-#include <everett/typed_scan.h>
+#include <string>
+
+import everett;
 
 auto rows = db.range(std::string("users/"), std::string("users0"));
 while (auto row = rows.next()) {
@@ -34,7 +36,7 @@ oldest first. Their `present` predicate determines whether to emit a row.
 C++ ranges
 ----------
 
-The result models a C++20 forward range. Iterator copies advance independently,
+The result models a forward range. Iterator copies advance independently,
 keep their captured snapshot alive, and support ordinary range algorithms:
 
 ```cpp
@@ -48,7 +50,7 @@ Include `<ranges>` for the view adapters. Iterators retain their snapshot
 independently, so this is also a borrowed range: algorithms such as
 `std::ranges::find(db.range(), key, projection)` return a usable iterator even
 after the temporary range is destroyed. Dereferencing returns an **owning row
-by value**, so it copies the key and resolved value. This is a C++20 forward
+by value**, so it copies the key and resolved value. This is a forward
 iterator, whose reference type may be a value; its legacy iterator category is
 input. It makes no promise of a stable address for a row inside the cursor.
 Use `next()` or `take_row()` to move rows out when those copies matter.

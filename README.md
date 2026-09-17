@@ -1,7 +1,7 @@
 Everett: Persistent Storage
 ==========================
 
-Everett is a C++20 library for compact string-keyed tables, cheap snapshots and
+Everett is a C++26 library for compact string-keyed tables, cheap snapshots and
 independent branches. Connect to a named table, read and write strings, and keep
 an earlier state whenever you need one.
 
@@ -10,7 +10,7 @@ backing storage, and a mutable **session** follows the current world as writes
 and background merges produce new versions. Older snapshots keep their data.
 
 ```cpp
-auto storage = everett::multiverse<>::create("data");
+auto storage = everett::multiverse<everett::neon_policy<>>::create("data");
 auto db = storage.connect("earth-616");
 db.put("name", "Everett");
 auto saved = db.snapshot();
@@ -18,7 +18,9 @@ db.put("name", "Persistent snapshots");
 // saved.get("name") still returns "Everett".
 ```
 
-Include `<everett/connection.h>` and link `everett::sqlite`. The default stores
+Import `everett.neon` and `everett.sqlite`, and link their CMake targets. The
+example selects ARM NEON; x86 applications can select `everett.avx2` and
+`avx2_policy<>`. Both use the same byte-oriented files. The ordinary policy stores
 byte strings with **15:1 index sampling** and byte-counted front coding, which
 stores only the changed suffix of each sorted key. Keys and values are
 `std::string`; embedded zero bytes work. There are no codec parameters to choose
@@ -43,10 +45,13 @@ Quick Start
 Here is a complete program:
 
 ```cpp
-#include <everett/connection.h>
+#include <optional>
+#include <string>
+import everett.neon;
+import everett.sqlite;
 
 int main() {
-  auto storage = everett::multiverse<>::create("data");
+  auto storage = everett::multiverse<everett::neon_policy<>>::create("data");
   auto db = storage.connect("earth-616");
   db.put("name", "Everett");
   auto name = db.get("name");
@@ -107,7 +112,7 @@ for (auto row : db.range("a", "b")) {
 db.erase_range("a", "b");
 ```
 
-The range keeps its snapshot alive and provides C++20 forward iterators. It
+The range keeps its snapshot alive and provides forward iterators. It
 also works with range adaptors such as `std::views::take`. Range deletion
 publishes one batch of tombstones for the observed rows; earlier snapshots
 retain them. The [range guide](docs/typed-scan.md) covers bounds, streaming,
@@ -169,26 +174,33 @@ can compose changes instead of replacing values; see the
 Building
 --------
 
-Use CMake 3.20 or later and a C++20 compiler. For the named table API:
+Use upstream Clang 23, CMake 4.4 and Ninja. Build and install
+[simd](https://github.com/ekmett/simd) with `SIMD_ENABLE_EXCEPTIONS=ON`, then
+use its installation in `CMAKE_PREFIX_PATH` when building Everett. SQLite
+3.51.3 or later is required for named tables.
+
+For an installed package and the NEON example above:
 
 ```cmake
-set(EVERETT_ENABLE_SQLITE ON CACHE BOOL "Build the persistent catalog")
-add_subdirectory(path/to/everett)
-target_link_libraries(your_target PRIVATE everett::sqlite)
-```
-
-The catalog requires SQLite 3.51.3 or later. An installed package supports:
-
-```cmake
+cmake_minimum_required(VERSION 4.4)
+project(example LANGUAGES CXX)
 find_package(everett CONFIG REQUIRED COMPONENTS sqlite)
-target_link_libraries(your_target PRIVATE everett::sqlite)
+add_executable(example example.cc)
+target_link_libraries(example PRIVATE everett::neon everett::sqlite)
+simd_target_profile(example NEON)
 ```
 
-Everett is header-only. The lower-level codecs, indexes and in-memory engines use
-`everett::everett` and do not require SQLite. The supported persistent file writer
-uses POSIX operations on macOS and Linux. See
+On x86, select `everett::avx2` and `AVX2` for a target that runs on a compatible
+CPU. The baseline `import everett;` and `everett::everett` target provide a
+scalar policy; importing a native module does not change that default.
+
+Everett supplies compiled libraries and module sources. CMake rebuilds module
+interfaces with the consumer's compiler settings. The lower-level codecs,
+indexes and in-memory engines do not require SQLite. The persistent file writer
+uses POSIX operations on macOS and Linux. See the [module guide](docs/modules.md)
+for toolchain and native-profile details, and
 [building and testing](docs/usage.md#building-and-testing) for installation,
-sanitizers and Doxygen commands.
+sanitizers and documentation commands.
 
 Why a COLA?
 -----------

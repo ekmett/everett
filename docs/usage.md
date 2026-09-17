@@ -7,14 +7,19 @@ tickets, snapshots and forks. This guide goes underneath that API to file
 construction, explicit updates and merges, then explains representation and
 tuning choices. We keep the same policy from input records to mapped queries.
 
-For an ordinary byte-aligned string table, use `everett::multiverse<>`, whose
-policy is `everett::storage_policy<>`. The [byte table guide](byte-transport.md)
+For an ordinary byte-aligned string table on ARM, import `everett.neon` and
+`everett.sqlite` and use `everett::multiverse<everett::neon_policy<>>`. On x86,
+select the corresponding AVX2 module and policy. The baseline
+`everett::multiverse<>` uses the same encoding with scalar execution. The [byte table guide](byte-transport.md)
 covers its raw string framing, schema and measured tradeoffs.
 
 For a bit table, select the policy explicitly:
 
 ```cpp
-#include <everett/connection.h>
+#include <optional>
+#include <string>
+
+import everett.sqlite;
 
 using bit_store = everett::multiverse<everett::string_policy>;
 auto storage = bit_store::create("bit-data");
@@ -61,10 +66,10 @@ for this example only: allocate fresh object, attempt and operation identities
 for new work in an application.
 
 ```cpp
-#include <everett/multiverse.h>
-#include <everett/sqlite_catalog.h>
 #include <array>
 #include <string_view>
+
+import everett.sqlite;
 
 using strings = everett::encoded_sort<everett::byte_encoding<>>;
 using P = everett::storage_policy<everett::tip<strings>>;
@@ -145,7 +150,8 @@ Policies make representation choices visible in types. Arrays, blobs, indexes,
 and files that share a policy agree on the units used by their metadata.
 
 ```cpp
-#include <everett/profile.h>
+
+import everett;
 
 int main() {
   using strings = everett::encoded_sort<everett::byte_encoding<everett::fixed_values<8>>>;
@@ -181,8 +187,9 @@ small example fits in one group, so its first key supplies the known boundary
 context for `search_window`.
 
 ```cpp
-#include <everett/profile_blob.h>
 #include <vector>
+
+import everett;
 
 int main() {
   using namespace everett;
@@ -217,9 +224,11 @@ Sampling includes both streams. Here the two equal borrowed `delta` keys remain
 separate occurrences after the native `delta`.
 
 ```cpp
-#include <everett/sampling.h>
+#include <cstdint>
 #include <memory>
 #include <vector>
+
+import everett;
 
 int main() {
   using namespace everett;
@@ -261,12 +270,14 @@ the pipeline and its original input handles before checking the result's retaine
 target.
 
 ```cpp
-#include <everett/index_pipeline.h>
+#include <cstddef>
 #include <initializer_list>
 #include <memory>
 #include <string_view>
 #include <utility>
 #include <vector>
+
+import everett;
 
 int main() {
   using namespace everett;
@@ -312,12 +323,13 @@ samples and retain the existing chain. Preparation scans the original head;
 we do that once and reuse the root for subsequent queries.
 
 ```cpp
-#include <everett/query.h>
 #include <initializer_list>
 #include <memory>
 #include <string_view>
 #include <utility>
 #include <vector>
+
+import everett;
 
 int main() {
   using namespace everett;
@@ -370,7 +382,10 @@ ownership determines which keys it may change; different workers may read that
 base while preparing their assigned writes.
 
 ```cpp
-#include <everett/world.h>
+#include <string_view>
+#include <cstdint>
+
+import everett;
 
 int main() {
   using namespace everett;
@@ -423,10 +438,10 @@ The merge builder consumes two sorted native streams, older then newer. Its
 default equal-key operation takes the newer value:
 
 ```cpp
-#include <everett/native_merge.h>
-#include <everett/query.h>
 #include <memory>
 #include <string_view>
+
+import everett;
 
 int main() {
   using strings = everett::encoded_sort<everett::byte_encoding<>>;
@@ -832,16 +847,21 @@ against independent native-array oracles.
 Building and Testing
 --------------------
 
-Use CMake 3.20 or later and a C++20 compiler. The mapping backend uses the
+Use upstream Clang 23, CMake 4.4 and Ninja. Install `simd` with
+`SIMD_ENABLE_EXCEPTIONS=ON` using the same compiler, standard library and runtime.
+Set `CMAKE_PREFIX_PATH` to that installation when configuring Everett. The
+[module guide](modules.md) gives the dependency build, explicit execution
+profiles and macOS SDK setup. The mapping backend uses the
 platform's native read-only mapping API. I use one pinned
 [fast-crc32 generator](https://github.com/corsix/fast-crc32) for portable, ARM
-and x86 CRC32C kernels. Generated code ships with the headers, so a consumer
-build needs no download, generator, or additional linked library. The compiler
+and x86 CRC32C kernels. Generated kernels are compiled into Everett, so a consumer
+build needs no generator or separate CRC library. The compiler
 target selects eligible kernels; buffers too small to benefit from parallel
 folding use a scalar path. The checksum and file format stay the same.
 
 ```sh
-cmake -S . -B build -DEVERETT_BUILD_TESTS=ON
+cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ \
+  -DCMAKE_PREFIX_PATH=/path/to/simd -DEVERETT_BUILD_TESTS=ON
 cmake --build build --parallel 4
 ctest --test-dir build --output-on-failure
 ```
@@ -852,7 +872,8 @@ simulated publication and recovery failures. Run AddressSanitizer and
 UndefinedBehaviorSanitizer on supported compilers with:
 
 ```sh
-cmake -S . -B build-sanitize -DCMAKE_BUILD_TYPE=Debug \
+cmake -S . -B build-sanitize -G Ninja -DCMAKE_CXX_COMPILER=clang++ \
+  -DCMAKE_PREFIX_PATH=/path/to/simd -DCMAKE_BUILD_TYPE=Debug \
   -DEVERETT_BUILD_TESTS=ON -DEVERETT_SANITIZERS=ON
 cmake --build build-sanitize --parallel 4
 ctest --test-dir build-sanitize --output-on-failure
@@ -865,9 +886,10 @@ cmake --install build --prefix /path/to/everett-install
 ```
 
 Configure your consumer with that prefix in `CMAKE_PREFIX_PATH`, then link the
-interface target:
+compiled target:
 
 ```cmake
+cmake_minimum_required(VERSION 4.4)
 find_package(everett CONFIG REQUIRED)
 target_link_libraries(your_target PRIVATE everett::everett)
 ```
@@ -879,7 +901,8 @@ compiler cache for test builds when `ccache` is available.
 With Doxygen and Python 3 installed, generate and check the API documentation:
 
 ```sh
-cmake -S . -B build-docs -DEVERETT_BUILD_DOCS=ON
+cmake -S . -B build-docs -G Ninja -DCMAKE_CXX_COMPILER=clang++ \
+  -DCMAKE_PREFIX_PATH=/path/to/simd -DEVERETT_BUILD_DOCS=ON
 cmake --build build-docs --target everett_docs
 ctest --test-dir build-docs -R '^everett.doxygen$' --output-on-failure
 ```

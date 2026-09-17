@@ -20,8 +20,43 @@ and `everett.sqlite` to use that profile with durable named tables.
 ## Build and consume
 
 The qualified module toolchain follows `simd`: upstream Clang 23, CMake 4.4
-and Ninja. On Windows use `clang-cl`. Build the dependency with
-`SIMD_ENABLE_EXCEPTIONS=ON`; Everett uses exceptions for failed operations.
+and Ninja. The local module and installed-consumer checks use Clang 23.1.1,
+CMake 4.4.3 and Ninja 1.13.2. The compiler must implement structured-binding
+packs and explicit-object named properties; merely accepting `-std=c++26` is
+insufficient. On Windows the SIMD compiler configuration uses `clang-cl`;
+Everett's durable file operations currently require POSIX.
+
+Build [simd](https://github.com/ekmett/simd) with exceptions enabled, because
+Everett reports failed operations through exceptions. For ARM NEON:
+
+```sh
+cmake -S /path/to/simd-source -B build-simd -G Ninja \
+  -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=/path/to/simd \
+  -DSIMD_PROFILES=NEON -DSIMD_ENABLE_EXCEPTIONS=ON \
+  -DSIMD_BUILD_TESTS=OFF
+cmake --build build-simd --parallel 4
+cmake --install build-simd
+```
+
+On x86 choose `SIMD_PROFILES=AVX2`, or `AVX2;AVX512` when supplying both native
+modules. Everett builds the profiles available from that package; set
+`EVERETT_PROFILES` to a subset when needed. The baseline module remains available.
+
+On macOS I pair upstream Clang with Apple's SDK C++ headers and system runtime.
+Use the following options consistently when configuring SIMD, Everett and its
+consumers:
+
+```sh
+everett_sdk="$(xcrun --sdk macosx --show-sdk-path)"
+# Add these to each cmake configure command:
+# -DCMAKE_OSX_SYSROOT="$everett_sdk"
+# -DCMAKE_CXX_FLAGS="-nostdinc++ -isystem $everett_sdk/usr/include/c++/v1"
+```
+
+This prevents upstream libc++ headers from requiring symbols absent from the
+system runtime. Use a separate build directory for a different compiler or SDK.
+Then configure Everett:
 
 ```sh
 cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ \
@@ -39,16 +74,18 @@ cmake_minimum_required(VERSION 4.4)
 project(example LANGUAGES CXX)
 find_package(everett CONFIG REQUIRED COMPONENTS sqlite)
 add_executable(example example.cc)
-target_link_libraries(example PRIVATE everett::sqlite)
+target_link_libraries(example PRIVATE everett::neon everett::sqlite)
+simd_target_profile(example NEON)
 ```
 
 ```cpp
 #include <optional>
 #include <string>
+import everett.neon;
 import everett.sqlite;
 
 int main() {
-  auto storage = everett::multiverse<>::create("data");
+  auto storage = everett::multiverse<everett::neon_policy<>>::create("data");
   auto db = storage.connect("earth-616");
   db.put("name", "Everett");
   return db.get("name") != "Everett";

@@ -11,8 +11,8 @@ Merge into a file
 -----------------
 
 ```cpp
-#include <everett/sort_profile_file_merge.h>
-#include <everett/sort_profile_file.h>
+
+import everett;
 
 using policy = everett::string_policy;
 using native = everett::mapped_sort_profile<policy>;

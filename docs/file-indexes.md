@@ -24,14 +24,15 @@ example directory; a store reserves fresh IDs and durable dependency pins throug
 its catalog before opening the pipeline.
 
 ```cpp
-#include <everett/file_index_pipeline.h>
-#include <everett/native_file_writer.h>
+#include <utility>
 #include <array>
 #include <cstdio>
 #include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
+
+import everett;
 
 using namespace everett;
 using P = storage_policy<everett::tip<everett::encoded_sort<everett::byte_encoding<fixed_values<1>>>>>;

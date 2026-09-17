@@ -99,11 +99,12 @@ readable until its owner chooses to publish the completed replacement.
 This complete program finds both contributions to one key:
 
 ```cpp
-#include <everett/cola_query.h>
 
 #include <array>
 #include <cassert>
 #include <memory>
+
+import everett;
 
 int main() {
   using namespace everett;

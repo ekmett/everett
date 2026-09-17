@@ -6,7 +6,10 @@ copying are a useful starting point, and bit packing does not consistently
 produce smaller complete files on the measured workloads. The ordinary API is:
 
 ```cpp
-#include <everett/connection.h>
+#include <optional>
+#include <string>
+
+import everett.sqlite;
 
 auto storage = everett::multiverse<>::create("byte-data");
 auto db = storage.connect("main");

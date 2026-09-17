@@ -65,7 +65,8 @@ Python 3.9 or newer. It is not an installed-package dependency. Graphviz is not
 required by this configuration.
 
 ```sh
-cmake -S . -B build-docs -DEVERETT_BUILD_DOCS=ON
+cmake -S . -B build-docs -G Ninja -DCMAKE_CXX_COMPILER=clang++ \
+  -DCMAKE_PREFIX_PATH=/path/to/simd -DEVERETT_BUILD_DOCS=ON
 cmake --build build-docs --target everett_docs --parallel 4
 ctest --test-dir build-docs -R '^everett[.]doxygen$' --output-on-failure
 ```

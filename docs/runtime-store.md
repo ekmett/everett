@@ -10,7 +10,9 @@ The directory must already exist and have durable ancestors. `create` creates
 a version-4 catalog; `open` checks an existing one. Link with `everett::sqlite`.
 
 ```cpp
-#include <everett/runtime_store.h>
+#include <filesystem>
+
+import everett;
 
 using P = everett::storage_policy<everett::tip<everett::encoded_sort<everett::bit_encoding<>>>>;
 
@@ -131,8 +133,8 @@ template parameter selects the runtime family; the second selects physical ID
 allocation and the third supplies the SQLite fault-injection seam:
 
 ```cpp
-#include <everett/redundant_checkpoint.h>
-#include <everett/runtime_store.h>
+
+import everett;
 
 using family = everett::redundant_runtime_family<P>;
 using storage = everett::runtime_store<P, everett::random_object_ids,
@@ -169,8 +171,10 @@ keys need not acquire the framing of a front-coded string. The fractional
 indexes retain their IX03 representation.
 
 ```cpp
-#include <everett/connection.h>
+#include <filesystem>
 #include <cassert>
+
+import everett.sqlite;
 
 using family = everett::sort_runtime_family<>;
 using engine = everett::typed_engine<everett::string_policy,
@@ -221,8 +225,10 @@ This is the connection backend selected by an explicit bit policy. The typed cor
 concrete storage context through equivalent snapshot replacements:
 
 ```cpp
-#include <everett/connection.h>
-#include <everett/sort_runtime_context.h>
+#include <optional>
+#include <string>
+
+import everett.sqlite;
 
 using family = everett::streaming_sort_runtime_family<>;
 using engine = everett::typed_engine<everett::string_policy,

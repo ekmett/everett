@@ -4,8 +4,8 @@ Sort-owned records in the redundant runtime
 I can use the same redundant COLA scheduler with sort-owned native records:
 
 ```cpp
-#include <everett/sort_runtime.h>
-#include <everett/typed_scan.h>
+
+import everett;
 
 using policy = everett::string_policy;
 using family = everett::sort_runtime_family<policy>;

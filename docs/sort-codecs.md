@@ -18,7 +18,10 @@ A small example
 ---------------
 
 ```cpp
-#include <everett/sort_codec.h>
+#include <type_traits>
+#include <optional>
+
+import everett;
 
 struct names {
   using key_codec = everett::fc_string_key<>;

@@ -14,8 +14,10 @@ its context until its writer and scratch resources have been destroyed, even
 if the last external storage handle is released.
 
 ```cpp
-#include <everett/sort_runtime_context.h>
-#include <everett/connection.h>
+#include <optional>
+#include <string>
+
+import everett.sqlite;
 
 using policy = everett::string_policy;
 using family = everett::streaming_sort_runtime_family<policy>;

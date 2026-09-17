@@ -5,11 +5,15 @@ Most applications can start with `connect`, then use the result as a mutable
 string table:
 
 ```cpp
-#include <everett/connection.h>
+#include <optional>
+#include <string>
+
+import everett.neon;
+import everett.sqlite;
 
 int main(int argc, char ** argv) {
   if (argc != 2) return 64;
-  auto storage = everett::multiverse<>::create(argv[1]);
+  auto storage = everett::multiverse<everett::neon_policy<>>::create(argv[1]);
   auto db = storage.connect("earth-616");
   db.put("name", "Everett");
   auto name = db.get("name");
@@ -25,7 +29,9 @@ and byte-counted front coding. Its single string sort needs no sort code.
 The free function `everett::connect(directory, name)` provides the same operation
 without keeping a multiverse object.
 
-`multiverse<>` uses `storage_policy<>`: the [byte string profile](byte-transport.md)
+This example explicitly selects NEON execution. On x86, use `everett.avx2`
+and `avx2_policy<>` for a compatible target. The baseline `multiverse<>` uses
+scalar execution with `storage_policy<>`: the [byte string profile](byte-transport.md)
 with raw string payloads and byte tombstone tags. For an explicit bit table,
 use `multiverse<string_policy>`. That registry assigns code zero to strings,
 reserves code one, and uses order-zero exponential-Golomb backspaces. Both
@@ -46,7 +52,8 @@ count. Saved snapshots keep their own files.
 Enable the SQLite component when building Everett, then link its CMake target:
 
 ```cmake
-target_link_libraries(my_application PRIVATE everett::sqlite)
+target_link_libraries(my_application PRIVATE everett::neon everett::sqlite)
+simd_target_profile(my_application NEON)
 ```
 
 `multiverse<>::create` creates missing directories and syncs each new directory and
