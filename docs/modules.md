@@ -125,6 +125,11 @@ Rank and Elias–Fano representations retain common types; their hot operations
 accept an architecture template argument. The policy passes its architecture
 to the operations used during table construction and lookup.
 
+CRC kernels are compiled into the matching archive. `crc32c<Arch>` selects that
+entry point; `crc32c(bytes)` remains the baseline function. Native file writers
+and recovery scans select through their policy. Generated third-party kernels
+stay outside consumer module interfaces.
+
 ISA flags apply only to the selected target. A baseline dispatcher can link a
 native archive without importing its module or gaining its ISA flags. On x86,
 admit both CPU features and OS vector-state support before calling native code.

@@ -1,10 +1,11 @@
 # Everett implementation status
 
-Updated 2026-09-16. Specification: [Everett design](design.md).
+Updated 2026-09-17. Specification: [Everett design](design.md).
 
 This ledger records what works, what the tests establish, and what remains to
-be built. The C++20 foundations live in `include/everett/`, in
-namespace `everett`. Immutable files, mmap queries and saved catalog roots work;
+be built. The C++26 public API uses named modules in namespace `everett`.
+Textual implementation inputs live in `include/everett/`; compiled objects and
+module sources are installed together. Immutable files, mmap queries and saved catalog roots work;
 the encoded mutable runtime now executes real carries, including a three-slot
 redundant-level scheduler with explicit service obligations.
 
@@ -56,12 +57,45 @@ As components change, we update this ledger with the reviewed revision, actual
 checks and remaining limits. Host-specific resource coordination stays outside
 this package.
 
+## C++26 module and SIMD integration
+
+Public consumers import `everett`, a native module such as `everett.neon`, and
+optionally `everett.sqlite`. CMake installs the compiled archives and module
+sources, then regenerates compiler-specific interfaces for the consumer. The
+[modules guide](modules.md) describes the toolchain and separate ISA admission.
+
+`backend_policy<Arch>` selects the execution architecture. The default
+`storage_policy<>` stays scalar regardless of surrounding compiler flags.
+Policy-bearing construction, comparisons, rank, offset selection and streamed
+checksums carry the explicit architecture. Serialized rank, offset, native and
+index formats remain architecture-independent. `fixed_key_view<Words, Arch>`
+selects its local-search implementation independently.
+
+I use `ekmett/simd` for Everett's vector operations and shared attributes.
+Its integer operations now include bit reinterpretation, lane populations,
+widened reductions, adjacent pair sums, truncating concatenation and guarded
+partial loads. The pinned generated CRC kernels remain a private compiled
+third-party implementation. They are the only native intrinsics in Everett's
+production source.
+
+Focused scalar and NEON checks exercise rank, bounded fixed-key and prefix
+search, Elias–Fano construction, selection and cursor restart under ASan/UBSan.
+The SIMD dependency separately tests its new operations through both headers
+and imports. AVX2 and AVX-512 compile checks do not establish x86 runtime
+performance. On the qualified compiler, NEON rank15 preserves the prior
+instruction sequence, while prefix512 retains four vector population counts
+and a reduction without vector spills. Host timing was too variable to support
+a comparative latency claim.
+
+The full combined module/package qualification is recorded with the release
+checks below; component checks alone are not a claim about every consumer.
+
 ## Implemented foundations
 
 ### Ranges and sweeping deletion
 
 `range(snapshot, lo, hi)` and `connection::range` expose half-open live-row
-ranges with optional endpoints. Their C++20 forward iterators own a resumable
+ranges with optional endpoints. Their forward iterators own a resumable
 merge walk over pinned native runs. Copies advance independently by copying
 cursor state when needed. Dereferencing returns an owning row; `next()` and
 `take_row()` retain the move-based streaming interface. Range adaptors work
@@ -795,8 +829,10 @@ accelerated target is enabled. On ARM, inputs below 128 bytes use scalar CRC;
 PMULL handles larger inputs when available, and SHA3/EOR3 fusion takes over at
 64 KiB. Those thresholds were measured on an M2 Max. On x86, the eligible
 SSE4.2, PCLMUL and AVX512 variants follow the target's feature macros. I do not
-add runtime feature detection or export ISA flags to consumers. Source and
-installed builds remain header-only and offline. The
+add runtime feature detection or export ISA flags to consumers. Native policies link separately compiled CRC kernels with the corresponding
+execution profile. The baseline entry point remains available without native
+feature admission. Consumers do not parse generated CRC kernels; builds use
+the vendored sources without fetching the generator. The
 [upstream record](../third_party/fast-crc32/UPSTREAM.md) describes regeneration
 and the separate MIT-or-zlib license terms.
 

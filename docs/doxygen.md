@@ -8,6 +8,8 @@ brief. This follows the
 [REUSE recommendation to place licensing information near the top](https://reuse.software/spec-3.3/#comment-headers).
 The `\file` command attaches that comment to its containing file; it does not
 attach the metadata to the first namespace, structure or function.
+The checker expands the shared SIMD attribute macros to their documentation
+spelling, so alignment and inline modifiers cannot become false declarations.
 Doxygen's
 [structural-command documentation](https://www.doxygen.nl/manual/docblocks.html#structuralcommands)
 describes this explicit association. The generated XML is also checked to verify

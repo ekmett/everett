@@ -62,7 +62,7 @@ int main() {
 `create` establishes missing directories and flushes their new names. `connect`
 opens the latest state of the named session, creating an empty table if needed.
 Run the program again and it reopens the same table. An existing multiverse can
-also be opened with `everett::multiverse storage("data")`.
+also be opened with `everett::multiverse<everett::neon_policy<>> storage("data")`.
 
 `get` returns `std::optional<std::string>`. A missing key and a stored empty
 string are distinct. `put` replaces a value; `erase` removes an existing key.

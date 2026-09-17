@@ -66,6 +66,10 @@ def run_doxygen(executable, source, inputs, output, aliases, html=False, markdow
         "MARKDOWN_SUPPORT = YES",
         "MARKDOWN_ID_STYLE = GITHUB",
         "RECURSIVE = YES",
+        "ENABLE_PREPROCESSING = YES",
+        "MACRO_EXPANSION = YES",
+        "EXPAND_ONLY_PREDEF = YES",
+        'PREDEFINED = "simd_align(x)=" "simd_inline=inline" "simd_cold=" "simd_noinline="',
         "EXTRACT_ALL = YES",
         "EXTRACT_PRIVATE = YES",
         "GENERATE_XML = YES",
@@ -232,6 +236,9 @@ def check_actual_members(items, source):
         ("struct", "everett::index_detail::pipeline_driver", "step", "index_pipeline_detail.h", None, "no"),
         ("struct", "everett::sample_cursor", "advance", "sampling.h", None, "no"),
         ("struct", "everett::elias_fano_view", "select", "elias_fano.h", None, "no"),
+        ("namespace", "everett", "compare_common_bits", "profile.h", None, "no"),
+        ("namespace", "everett::key_detail", "common_bytes", "key_detail.h", None, "no"),
+        ("struct", "everett::fixed_key_view", "lower_bound", "fixed_search.h", None, "no"),
         ("struct", "everett::profile_view", "block_offset", "profile.h", None, "no"),
         ("struct", "everett::profile_cursor", "advance_comparison", "profile.h", None, "no"),
         ("struct", "everett::profile_blob", "adopt_native", "profile_blob.h", None, "yes"),
@@ -244,22 +251,29 @@ def check_actual_members(items, source):
         members = [member for member in compound.findall("./sectiondef/memberdef")
                    if member.attrib["kind"] == "function" and member.findtext("name") == name
                    and (qualifier is None or member.get("refqual") == qualifier)]
-        require(len(members) == 1, f"Wrong overload count for {owner}::{name}/{qualifier}")
-        member = members[0]
-        require(member.findtext("qualifiedname") == owner + "::" + name,
-                f"Wrong qualified owner for {owner}::{name}")
-        require(member.get("static") == static, f"Wrong static association: {owner}::{name}")
-        location = member.find("location")
-        require(location is not None, f"Missing source location for {owner}::{name}")
-        require(location.get("file", "").endswith("include/everett/" + filename),
-                f"Wrong source file for {owner}::{name}")
-        lines = (source / "include/everett" / filename).read_text(encoding="utf-8").splitlines()
-        line = int(location.attrib["line"])
-        require(0 < line <= len(lines) and re.search(r"\b" + name + r"\s*\(", lines[line - 1]),
-                f"Wrong source line for {owner}::{name}: {line}")
-        if qualifier == "rvalue":
-            require("=delete" in member.findtext("argsstring", "").replace(" ", ""),
-                    "Deleted rvalue overload was merged with lvalue overload")
+        crc_overloads = owner == "everett" and name == "crc32c"
+        require(len(members) == (2 if crc_overloads else 1),
+                f"Wrong overload count for {owner}::{name}/{qualifier}")
+        if crc_overloads:
+            templated = [member for member in members if member.find("templateparamlist") is not None]
+            require(len(templated) == 1 and
+                    templated[0].findtext("./templateparamlist/param/declname") == "Arch",
+                    "CRC architecture overload lost its template association")
+        for member in members:
+            require(member.findtext("qualifiedname") == owner + "::" + name,
+                    f"Wrong qualified owner for {owner}::{name}")
+            require(member.get("static") == static, f"Wrong static association: {owner}::{name}")
+            location = member.find("location")
+            require(location is not None, f"Missing source location for {owner}::{name}")
+            require(location.get("file", "").endswith("include/everett/" + filename),
+                    f"Wrong source file for {owner}::{name}")
+            lines = (source / "include/everett" / filename).read_text(encoding="utf-8").splitlines()
+            line = int(location.attrib["line"])
+            require(0 < line <= len(lines) and re.search(r"\b" + name + r"\s*\(", lines[line - 1]),
+                    f"Wrong source line for {owner}::{name}: {line}")
+            if qualifier == "rvalue":
+                require("=delete" in member.findtext("argsstring", "").replace(" ", ""),
+                        "Deleted rvalue overload was merged with lvalue overload")
     for owner, parameters in (("everett::multiverse", ["P"]), ("everett::profile_view", ["P", "Role"]),
                               ("everett::query_root", ["P", "Blob"]), ("everett::query_root_builder", ["P"]),
                               ("everett::query_cursor", ["P", "Blob"]), ("everett::mapped_blob", ["P"]),
@@ -284,7 +298,7 @@ def check_actual_members(items, source):
                 name = declaration.group(1) if declaration else None
             names.append(name)
         require(names == parameters, f"Wrong template association: {owner}: {names}")
-    return len(cases)
+    return len(cases) + 1  # The baseline and architecture CRC overloads.
 
 
 def make_fixtures(directory):
