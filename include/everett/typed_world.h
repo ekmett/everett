@@ -372,10 +372,10 @@ namespace everett {
     }
     typed_contribution<P, A, Family> finish() && {
       std::sort(records_.begin(), records_.end(), [](auto const & a, auto const & b) {
-        return compare_bits(a.key.view(), b.key.view()) < 0;
+        return compare_bits<typename P::architecture>(a.key.view(), b.key.view()) < 0;
       });
       for (std::size_t i = 1; i < records_.size(); ++i)
-        if (compare_bits(records_[i - 1].key.view(), records_[i].key.view()) == 0)
+        if (compare_bits<typename P::architecture>(records_[i - 1].key.view(), records_[i].key.view()) == 0)
           throw std::invalid_argument("duplicate key in typed batch");
       return {std::move(base_), std::move(records_)};
     }

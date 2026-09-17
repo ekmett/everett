@@ -112,6 +112,7 @@ namespace everett {
   };
 
   namespace sort_profile_detail {
+    template <simd::architecture Arch = simd::scalar>
     inline bit_comparison compare_spans(std::span<bit_view const> a, std::span<bit_view const> b,
                                        std::uint64_t first_a = 0, std::uint64_t first_b = 0) {
       std::size_t i = 0, j = 0;
@@ -120,7 +121,7 @@ namespace everett {
       std::uint64_t common = 0;
       while (i != a.size() && j != b.size()) {
         auto width = std::min(a[i].size() - first_a, b[j].size() - first_b);
-        auto cmp = compare_common_bits(a[i].subview(first_a, width), b[j].subview(first_b, width));
+        auto cmp = compare_common_bits<Arch>(a[i].subview(first_a, width), b[j].subview(first_b, width));
         common += cmp.common_bits;
         if (cmp.order) return {common, cmp.order};
         first_a += width; first_b += width;
@@ -209,7 +210,7 @@ namespace everett {
     std::uint64_t block_offset(std::uint64_t block) const {
       if (block > block_count()) throw std::out_of_range("sort profile block");
       auto ordinal = block == block_count() ? size() : block * P::codec_block_size;
-      return offsets_.select(block) + ordinal * metadata_.common_value_width.value_or(0);
+      return offsets_.template select<typename P::architecture>(block) + ordinal * metadata_.common_value_width.value_or(0);
     }
     profile_metadata const & metadata() const noexcept { return metadata_; }
     bit_view data() const noexcept { return data_; }
@@ -257,7 +258,7 @@ namespace everett {
           auto first = dictionary_offsets_[i], last = dictionary_offsets_[i + 1];
           if (first > last || last > dictionary_.size()) throw std::invalid_argument("sort profile dictionary range");
           auto candidate = dictionary_.subview(first, last - first);
-          if (!compare_bits(candidate, path.view())) { result.path = candidate; found = true; break; }
+          if (!compare_bits<typename P::architecture>(candidate, path.view())) { result.path = candidate; found = true; break; }
         }
         if (!found) throw std::invalid_argument("sort transition absent from dictionary");
       }
@@ -380,7 +381,7 @@ namespace everett {
       frame_ = view_.next(frame_);
       if (frame_.retained > key_.bit_size) throw std::invalid_argument("sort cursor missing inherited prefix");
       std::array<bit_view, 1> before{key_.view()};
-      auto comparison = sort_profile_detail::compare_spans(before, frame_.literal, frame_.retained);
+      auto comparison = sort_profile_detail::compare_spans<typename P::architecture>(before, frame_.literal, frame_.retained);
       comparison.common_bits += frame_.retained;
       profile_detail::resize(key_, frame_.retained);
       for (auto part : frame_.literal) profile_detail::append(key_, part);
@@ -428,7 +429,7 @@ namespace everett {
     friend struct sort_profile_detail::encoder<P, Selector>;
     bit_string data_, dictionary_, seeds_;
     std::vector<std::uint64_t> dictionary_offsets_{0};
-    elias_fano offsets_ = elias_fano::build(std::array<std::uint64_t, 1>{0});
+    elias_fano offsets_ = elias_fano::build<typename P::architecture>(std::array<std::uint64_t, 1>{0});
     profile_metadata metadata_ = [] { auto m = profile_detail::initial_metadata<P, stream_role::native>(); m.version = 3; return m; }();
     sort_profile_array(bit_string data, bit_string dictionary, bit_string seeds,
         std::vector<std::uint64_t> dictionary_offsets, elias_fano offsets, profile_metadata metadata)
@@ -471,7 +472,7 @@ namespace everett {
           ids_.push_back(leaf); profile_detail::append(dictionary, path);
           dictionary_offsets.push_back(dictionary.bit_size);
         }
-        auto same = size() && compare_bits(previous_path_.view(), path) == 0;
+        auto same = size() && compare_bits<typename P::architecture>(previous_path_.view(), path) == 0;
         auto retained = same && codec::front_coded ? common : path.size();
         if (retained < path.size() || retained > total) throw std::invalid_argument("sort retained prefix outside key");
         if (retained_limit_bits)
@@ -480,7 +481,7 @@ namespace everett {
           raw_offsets_.push_back(out.position()); block_seeds_.push_back(id);
           out.template write_count<exponential_golomb<0>>(retained);
         } else {
-          auto joint = same ? retained : compare_common_bits(previous_path_.view(), path).common_bits;
+          auto joint = same ? retained : compare_common_bits<typename P::architecture>(previous_path_.view(), path).common_bits;
           if (joint > previous_continuation_) throw std::invalid_argument("sort backspace exceeds continuation");
           out.template write_count<typename P::backspace_encoding>(previous_continuation_ - joint);
           if (!same) out.append(path.subview(joint, path.size() - joint));
@@ -507,7 +508,7 @@ namespace everett {
           auto ordinal = i + 1 == raw_offsets_.size() ? size() : i * P::codec_block_size;
           raw_offsets_[i] -= ordinal * common;
         }
-        offsets = elias_fano::build(raw_offsets_);
+        offsets = elias_fano::build<typename P::architecture>(raw_offsets_);
         auto width = ids_.size() < 2 ? 0u : std::bit_width(ids_.size() - 1);
         sort_bit_writer out(seeds);
         for (auto id : block_seeds_) out.write_bits(id, unsigned(width));
@@ -542,7 +543,7 @@ namespace everett {
       sort_codec<S>::value_codec::write(value_out, value);
       auto bits = sort_profile_key<typename sort_codec<S>::key_codec>::order(key);
       auto logical = sort_profile_detail::concatenate(path.view(), bits.view());
-      auto comparison = compare_common_bits(previous_.view(), logical.view());
+      auto comparison = compare_common_bits<typename P::architecture>(previous_.view(), logical.view());
       if (size() && comparison.order >= 0) throw std::invalid_argument("sort profile requires unique sorted keys");
       std::array<bit_view, 1> spans{logical.view()};
       try {

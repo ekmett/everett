@@ -139,7 +139,7 @@ namespace everett {
       if (right_.done()) return {0, -1};
       if (left_common_ != right_common_)
         return {std::min(left_common_, right_common_), left_common_ > right_common_ ? -1 : 1};
-      auto cmp = sort_profile_detail::compare_spans(left_.spans(), right_.spans(), left_common_, right_common_);
+      auto cmp = sort_profile_detail::compare_spans<typename P::architecture>(left_.spans(), right_.spans(), left_common_, right_common_);
       cmp.common_bits += left_common_; return cmp;
     }
   };

@@ -18,8 +18,8 @@ namespace everett {
   namespace transaction_detail {
     template <class S> inline constexpr bool state_is_arrow =
       std::same_as<S, unsorted<std::optional<std::string>>>;
-    struct key_less {
-      bool operator()(bit_string const & a, bit_string const & b) const { return compare_bits(a.view(), b.view()) < 0; }
+    template <simd::architecture Arch> struct key_less {
+      bool operator()(bit_string const & a, bit_string const & b) const { return compare_bits<Arch>(a.view(), b.view()) < 0; }
     };
   }
 
@@ -39,7 +39,7 @@ namespace everett {
       bit_string arrow;
       std::optional<bit_string> original;
     };
-    using nursery_type = nursery_map<bit_string, nursery_value, transaction_detail::key_less>;
+    using nursery_type = nursery_map<bit_string, nursery_value, transaction_detail::key_less<typename policy_type::architecture>>;
     using scope_type = private_construction<policy_type>;
     using store_type = typename connection_type::store_type;
 

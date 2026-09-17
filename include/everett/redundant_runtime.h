@@ -426,7 +426,7 @@ namespace everett {
       if (height + 1 > depth_limit || execution::initialization_price(count) > allowance) return false;
       for (std::size_t i = 0; i != records.size(); ++i) {
         validate(records[i]);
-        if (i && compare_bits(records[i - 1].key.view(), records[i].key.view()) >= 0)
+        if (i && compare_bits<typename P::architecture>(records[i - 1].key.view(), records[i].key.view()) >= 0)
           error_detail::raise<std::invalid_argument>("initial records must be strictly sorted");
       }
       auto prior = e.published;

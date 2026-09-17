@@ -113,7 +113,7 @@ namespace everett {
       bool is_borrowed() const {
         if (done()) throw std::out_of_range("Everett merged cursor at end");
         return !borrowed.done() && (native.done() ||
-          compare_bits(borrowed.peek().key.prefix, native.peek().key.prefix) < 0);
+          compare_bits<typename P::architecture>(borrowed.peek().key.prefix, native.peek().key.prefix) < 0);
       }
       bit_view key() const { return is_borrowed() ? borrowed.peek().key.prefix : native.peek().key.prefix; }
       void advance() { if (is_borrowed()) borrowed.advance(); else native.advance(); }
@@ -130,13 +130,13 @@ namespace everett {
         auto key = cursor.key();
         auto group = ordinal / P::group_size;
         if (ordinal % P::group_size == 0) {
-          auto lcp = borrowed_count ? compare_common_bits(previous_borrowed.view(), key).common_bits : 0;
+          auto lcp = borrowed_count ? compare_common_bits<typename P::architecture>(previous_borrowed.view(), key).common_bits : 0;
           if (cuts[group] != lcp) throw std::invalid_argument("Everett cut LCP disagrees with keys");
-          if (ranks.rank(group) != borrowed_count) throw std::invalid_argument("Everett rank disagrees with interleaving");
+          if (ranks.template rank<typename P::architecture>(group) != borrowed_count) throw std::invalid_argument("Everett rank disagrees with interleaving");
           population = 0;
         }
         if (cursor.is_borrowed()) {
-          bool expected = had_native && compare_bits(previous_native.view(), key) == 0;
+          bool expected = had_native && compare_bits<typename P::architecture>(previous_native.view(), key) == 0;
           if (false_borrow(borrowed_count) != expected)
             throw std::invalid_argument("Everett false-borrow flag disagrees with keys");
           previous_borrowed = bit_string::copy(key);
@@ -165,7 +165,7 @@ namespace everett {
       std::uint64_t ordinal = 0;
       while (!target.done()) {
         if (ordinal % P::group_size == 0) {
-          if (samples.done() || compare_bits(samples.peek().key.prefix, target.key()) != 0)
+          if (samples.done() || compare_bits<typename P::architecture>(samples.peek().key.prefix, target.key()) != 0)
             throw std::invalid_argument("Everett borrowed key is not the exact target sample");
           samples.advance();
         }

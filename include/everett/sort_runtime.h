@@ -98,7 +98,7 @@ namespace everett {
       bool first = true;
       for (auto const & record : records) {
         auto key = record.key.view();
-        auto comparison = compare_common_bits(previous, key);
+        auto comparison = compare_common_bits<typename P::architecture>(previous, key);
         if (!first && comparison.order >= 0)
           throw std::invalid_argument("sort native requires unique sorted keys");
         sort_bit_reader input(key);

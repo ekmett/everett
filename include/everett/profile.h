@@ -210,10 +210,8 @@ namespace everett {
     std::uint64_t common_bits = 0;
     int order = 0;
   };
-#if defined(__APPLE__) && defined(__aarch64__) && defined(__clang__)
-  // Reduce the out-of-line NEON loop's sensitivity to caller code layout.
-  [[gnu::aligned(64)]]
-#endif
+  template <simd::architecture Arch = simd::scalar>
+  simd_align(64)
   inline bit_comparison compare_common_bits(bit_view a, bit_view b) {
     auto count = std::min(a.size(), b.size());
     // Most unrelated keys can differ immediately; do not load a whole word
@@ -225,7 +223,7 @@ namespace everett {
     }
     std::uint64_t at = 0;
     if (count >= 8 && (a.offset() & 7) == 0 && (b.offset() & 7) == 0) {
-      at = key_detail::common_bytes(a.storage().data() + (a.offset() >> 3),
+      at = key_detail::common_bytes<Arch>(a.storage().data() + (a.offset() >> 3),
                                    b.storage().data() + (b.offset() >> 3), static_cast<std::size_t>(count >> 3)) << 3;
       if (count - at >= 8) {
         auto x = profile_detail::load_bits(a, at, 8), y = profile_detail::load_bits(b, at, 8);
@@ -241,11 +239,12 @@ namespace everett {
     }
     return {count, a.size() < b.size() ? -1 : a.size() > b.size() ? 1 : 0};
   }
-  inline int compare_bits(bit_view a, bit_view b) { return compare_common_bits(a, b).order; }
+  template <simd::architecture Arch = simd::scalar>
+  inline int compare_bits(bit_view a, bit_view b) { return compare_common_bits<Arch>(a, b).order; }
   template <class P> std::uint64_t common_prefix_units(bit_view a, bit_view b) {
     if ((a.size() & (P::bits_per_unit - 1)) || (b.size() & (P::bits_per_unit - 1)))
       error_detail::raise<std::invalid_argument>("key length does not match profile unit");
-    return compare_common_bits(a, b).common_bits >> P::unit_shift;
+    return compare_common_bits<typename P::architecture>(a, b).common_bits >> P::unit_shift;
   }
 
   template <class P> struct profile_anchor {
@@ -263,7 +262,7 @@ namespace everett {
     auto query_units = (query.size() >> P::unit_shift);
     auto needed = profile_detail::multiply(std::min(key.full_units, query_units), P::bits_per_unit);
     if (key.prefix.size() < needed) error_detail::raise<std::invalid_argument>("query prefix is incomplete");
-    auto order = compare_bits(key.prefix.prefix(needed), query.prefix(needed));
+    auto order = compare_bits<typename P::architecture>(key.prefix.prefix(needed), query.prefix(needed));
     if (order) return order;
     return key.full_units < query_units ? -1 : key.full_units > query_units ? 1 : 0;
   }
@@ -370,7 +369,7 @@ namespace everett {
         for (auto part : literal) {
           auto available = query().size() - at;
           auto other = query().subview(at, available);
-          auto result = compare_common_bits(part, other.prefix(std::min(part.size(), available)));
+          auto result = compare_common_bits<typename P::architecture>(part, other.prefix(std::min(part.size(), available)));
           compared += result.common_bits + (result.common_bits < std::min(part.size(), available));
           at += result.common_bits;
           if (result.order) { order_ = result.order; break; }
@@ -386,7 +385,7 @@ namespace everett {
     profile_query_context with_key(bit_view key) const {
       if (key.size() & (P::bits_per_unit - 1)) error_detail::raise<std::invalid_argument>("boundary key unit mismatch");
       auto result = *this;
-      auto comparison = compare_common_bits(key, query());
+      auto comparison = compare_common_bits<typename P::architecture>(key, query());
       result.common_bits_ = comparison.common_bits;
       result.full_units_ = (key.size() >> P::unit_shift);
       result.length_known_ = true;
@@ -424,7 +423,7 @@ namespace everett {
       std::uint64_t compared = 0;
       if (common_bits_ >= retained_bits) {
         auto suffix_query = query().subview(retained_bits, query().size() - retained_bits);
-        auto comparison = compare_common_bits(record.suffix, suffix_query);
+        auto comparison = compare_common_bits<typename P::architecture>(record.suffix, suffix_query);
         common_bits_ = profile_detail::add(retained_bits, comparison.common_bits);
         order_ = comparison.order;
         compared = comparison.common_bits +
@@ -743,7 +742,7 @@ namespace everett {
       auto blocks = block_count();
       if (block > blocks) error_detail::raise<std::out_of_range>("profile block ordinal");
       auto ordinal = block == blocks ? metadata_.record_count : block * P::codec_block_size;
-      return offsets_.select(block) + ordinal * metadata_.common_value_width.value_or(0);
+      return offsets_.template select<typename P::architecture>(block) + ordinal * metadata_.common_value_width.value_or(0);
     }
 
     std::uint64_t size() const noexcept { return metadata_.record_count; }
@@ -1075,7 +1074,8 @@ namespace everett {
     // retained prefix, so query supplies the first frame's missing bits.
     profile_cursor(profile_view<P, Role> view, std::uint64_t ordinal, bit_view query)
       : view_(view), offsets_(view.group_offsets(),
-          ordinal < view.size() ? ordinal / P::codec_block_size : view.group_offsets().size()), ordinal_(ordinal) {
+          ordinal < view.size() ? ordinal / P::codec_block_size : view.group_offsets().size(),
+          std::type_identity<typename P::architecture>{}), ordinal_(ordinal) {
       if (ordinal > view.size()) error_detail::raise<std::out_of_range>("profile cursor ordinal");
       if (!done()) {
         record_ = view_.encoded_at(ordinal);
@@ -1141,7 +1141,7 @@ namespace everett {
             auto common = unsigned(std::countl_zero(before ^ after)) - (64 - P::bits_per_unit);
             *comparison = {retained_bits + common, before < after ? -1 : 1};
           } else {
-            auto suffix = compare_common_bits(
+            auto suffix = compare_common_bits<typename P::architecture>(
               previous.subview(retained_bits, previous.size() - retained_bits), next.suffix);
             *comparison = {retained_bits + suffix.common_bits, suffix.order};
           }
@@ -1205,7 +1205,7 @@ namespace everett {
       for (std::size_t i = 0; i != records.size(); ++i) {
         auto key = records[i].key.view();
         auto value = records[i].value.view();
-        auto comparison = compare_common_bits(previous, key);
+        auto comparison = compare_common_bits<typename P::architecture>(previous, key);
         if (i && comparison.order > 0) error_detail::raise<std::invalid_argument>("profile keys must be sorted");
         auto position = (data.bit_size >> P::unit_shift);
         if (i % P::codec_block_size == 0)
@@ -1232,7 +1232,7 @@ namespace everett {
       result.metadata_.terminal_key_units = previous_units;
       result.metadata_.extent = (data.bit_size >> P::unit_shift);
       offsets.push_back(result.metadata_.extent - profile_detail::multiply(records.size(), common.value_or(0)));
-      result.offsets_ = elias_fano::build(offsets);
+      result.offsets_ = elias_fano::build<typename P::architecture>(offsets);
       result.bytes_ = std::move(data.bytes);
       return result;
     }
@@ -1255,7 +1255,7 @@ namespace everett {
     friend struct profile_detail::borrowed_sections<P>;
     std::vector<std::byte> bytes_;
     // The profile's EOF marker is explicit; the generic codec defaults empty.
-    elias_fano offsets_ = elias_fano::build(std::array<std::uint64_t, 1>{0});
+    elias_fano offsets_ = elias_fano::build<typename P::architecture>(std::array<std::uint64_t, 1>{0});
     profile_metadata metadata_ = profile_detail::initial_metadata<P, Role>();
     profile_array(std::vector<std::byte> bytes, elias_fano offsets, profile_metadata metadata)
       : bytes_(std::move(bytes)), offsets_(std::move(offsets)), metadata_(metadata) {}
@@ -1288,7 +1288,7 @@ namespace everett {
       if (finished_) error_detail::raise<std::logic_error>("borrowed profile writer is finished");
       if (key.size() & (P::bits_per_unit - 1)) error_detail::raise<std::invalid_argument>("key length does not match profile unit");
       auto previous = previous_.view();
-      auto comparison = compare_common_bits(previous, key);
+      auto comparison = compare_common_bits<typename P::architecture>(previous, key);
       if (count_ && comparison.order > 0) error_detail::raise<std::invalid_argument>("profile keys must be sorted");
       append_known(key, comparison.common_bits, prefix_ceiling);
     }
@@ -1301,7 +1301,7 @@ namespace everett {
       auto extent = (data_.bit_size >> P::unit_shift);
       offsets_.push_back(extent);
       try {
-        result.offsets_ = elias_fano::build(offsets_);
+        result.offsets_ = elias_fano::build<typename P::architecture>(offsets_);
       } catch (...) {
         offsets_.pop_back();
         throw;

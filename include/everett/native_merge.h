@@ -110,7 +110,7 @@ namespace everett {
           auto offset = fragment.source_bit_offset + ((position - begin) << P::unit_shift);
           auto count = std::min((fragment.end_units - position) << P::unit_shift,
                                 suffix.size() - compared);
-          auto result = compare_common_bits(data_.subview(offset, count), suffix.subview(compared, count));
+          auto result = compare_common_bits<typename P::architecture>(data_.subview(offset, count), suffix.subview(compared, count));
           if (result.order) {
             result.common_bits += (retained << P::unit_shift) + compared;
             return result;
@@ -326,7 +326,7 @@ namespace everett {
         return {std::min(older_prefix_, newer_prefix_) << P::unit_shift,
                 older_prefix_ > newer_prefix_ ? -1 : 1};
       auto start = older_prefix_ << P::unit_shift;
-      auto result = compare_common_bits(suffix(older_cursor_.peek(), older_prefix_),
+      auto result = compare_common_bits<typename P::architecture>(suffix(older_cursor_.peek(), older_prefix_),
                                        suffix(newer_cursor_.peek(), newer_prefix_));
       result.common_bits += start;
       return result;

@@ -86,7 +86,7 @@ namespace everett {
       sampling_detail::check_ordinal<P>(count_, target_ordinal);
       if (key.size() & (P::bits_per_unit - 1)) error_detail::raise<std::invalid_argument>("sample key unit mismatch");
       auto previous = key_.view();
-      auto comparison = compare_common_bits(previous, key);
+      auto comparison = compare_common_bits<typename P::architecture>(previous, key);
       if (comparison.order > 0) error_detail::raise<std::invalid_argument>("sample keys must be sorted");
       return encode_known(key, target_ordinal, comparison.common_bits);
     }
@@ -133,7 +133,7 @@ namespace everett {
       sampling_detail::check_ordinal<P>(count_, ordinal);
       if (key.size() & (P::bits_per_unit - 1))
         error_detail::raise<std::invalid_argument>("sample key unit mismatch");
-      auto comparison = compare_common_bits(key_.view(), key);
+      auto comparison = compare_common_bits<typename P::architecture>(key_.view(), key);
       if (comparison.order > 0)
         error_detail::raise<std::invalid_argument>("sample keys must be sorted");
       auto retained = comparison.common_bits & ~std::uint64_t{7};
@@ -151,7 +151,7 @@ namespace everett {
       auto retained = profile_detail::multiply(previous_units - sample.backspace, P::bits_per_unit);
       // Both keys share the retained prefix. Comparing only the two remaining
       // suffixes validates order without another full-key reconstruction.
-      auto comparison = compare_common_bits(previous.subview(retained, previous.size() - retained), suffix);
+      auto comparison = compare_common_bits<typename P::architecture>(previous.subview(retained, previous.size() - retained), suffix);
       if (comparison.order > 0)
         error_detail::raise<std::invalid_argument>("sample keys must be sorted");
       comparison.common_bits += retained;
@@ -244,7 +244,7 @@ namespace everett {
       else if (borrowed_.done()) next_borrowed_ = false;
       else {
         ++work_.key_comparisons;
-        next_borrowed_ = compare_bits(borrowed_.peek().key.prefix, native_.peek().key.prefix) < 0;
+        next_borrowed_ = compare_bits<typename P::architecture>(borrowed_.peek().key.prefix, native_.peek().key.prefix) < 0;
       }
     }
 

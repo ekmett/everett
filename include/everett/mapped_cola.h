@@ -129,7 +129,7 @@ namespace everett {
           unsigned result = 3; bit_view best;
           if (!native.done()) { result = 0; best = native.peek().key.prefix; }
           for (unsigned i = 0; i != 2; ++i)
-            if (!borrowed[i].done() && (result == 3 || compare_bits(borrowed[i].peek().key.prefix, best) < 0)) {
+            if (!borrowed[i].done() && (result == 3 || compare_bits<typename P::architecture>(borrowed[i].peek().key.prefix, best) < 0)) {
               result = i + 1; best = borrowed[i].peek().key.prefix;
             }
           if (result == 3) throw std::out_of_range("COLA recovery cursor at end");
@@ -149,15 +149,15 @@ namespace everett {
         auto group = ordinal / P::group_size;
         if (ordinal % P::group_size == 0) {
           for (unsigned route = 0; route != 2; ++route) {
-            auto lcp = borrowed_count[route] ? compare_common_bits(previous_borrowed[route].view(), key).common_bits : 0;
-            if (view.cut_lcps(route)[group] != lcp || view.interleave(route).rank(group) != borrowed_count[route])
+            auto lcp = borrowed_count[route] ? compare_common_bits<typename P::architecture>(previous_borrowed[route].view(), key).common_bits : 0;
+            if (view.cut_lcps(route)[group] != lcp || view.interleave(route).template rank<typename P::architecture>(group) != borrowed_count[route])
               error_detail::raise<std::invalid_argument>("COLA cut or rank disagrees with keys");
           }
           population = {};
         }
         if (origin) {
           auto route = origin - 1;
-          bool expected = had_native && compare_bits(previous_native.view(), key) == 0;
+          bool expected = had_native && compare_bits<typename P::architecture>(previous_native.view(), key) == 0;
           if (view.false_borrow(route, borrowed_count[route]) != expected)
             error_detail::raise<std::invalid_argument>("COLA false-borrow flag disagrees with keys");
           previous_borrowed[route] = bit_string::copy(key);
@@ -177,7 +177,7 @@ namespace everett {
       if (auto main = source.main_target()) {
         cola_sample_cursor<P, Blob> target(main);
         while (!target.done()) {
-          if (samples.done() || compare_bits(samples.peek().key.prefix, target.peek().key) != 0)
+          if (samples.done() || compare_bits<typename P::architecture>(samples.peek().key.prefix, target.peek().key) != 0)
             error_detail::raise<std::invalid_argument>("COLA main sample differs from target");
           samples.advance(); target.advance();
         }
@@ -189,7 +189,7 @@ namespace everett {
         std::uint64_t ordinal = 0;
         while (!target.done()) {
           if (ordinal % P::group_size == 0) {
-            if (side_samples.done() || compare_bits(side_samples.peek().key.prefix, target.peek().key.prefix) != 0)
+            if (side_samples.done() || compare_bits<typename P::architecture>(side_samples.peek().key.prefix, target.peek().key.prefix) != 0)
               error_detail::raise<std::invalid_argument>("COLA secondary sample differs from target");
             side_samples.advance();
           }

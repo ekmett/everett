@@ -13,6 +13,7 @@
 
 #include <simd/attributes.h>
 #include <simd/vec.h>
+#include <simd/integer.h>
 
 #include <cstddef>
 #include <type_traits>

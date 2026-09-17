@@ -222,7 +222,7 @@ namespace everett {
           if (after < before)
             throw std::invalid_argument("Everett profile keys are not sorted");
           if (after == before) {
-            auto order = compare_bits(previous.view().subview(retained_bits + P::bits_per_unit,
+            auto order = compare_bits<typename P::architecture>(previous.view().subview(retained_bits + P::bits_per_unit,
               previous.view().size() - retained_bits - P::bits_per_unit),
               data.subview(start_bits + P::bits_per_unit, suffix_bits - P::bits_per_unit));
             if (order > 0) throw std::invalid_argument("Everett profile keys are not sorted");
@@ -241,7 +241,7 @@ namespace everett {
       auto stride = profile_detail::multiply(metadata.record_count, metadata.common_value_width.value_or(0));
       if (stride > at) throw std::invalid_argument("Everett fixed payload exceeds extent");
       residuals.push_back(at - stride);
-      auto expected = elias_fano::build(residuals);
+      auto expected = elias_fano::build<typename P::architecture>(residuals);
       if (expected.universe != offsets.universe() || expected.low_width != offsets.low_width())
         throw std::invalid_argument("noncanonical Everett Elias-Fano parameters");
       equal_words(offsets.low_words(), expected.low, "Everett Elias-Fano low words mismatch");

@@ -283,7 +283,7 @@ namespace everett {
         auto key = records[i].key.view(), value = records[i].value.view();
         if ((key.size() & (P::bits_per_unit - 1)) || (value.size() & (P::bits_per_unit - 1)) ||
             (P::value_width && (value.size() >> P::unit_shift) != *P::value_width) ||
-            (i && compare_bits(previous, key) > 0))
+            (i && compare_bits<typename P::architecture>(previous, key) > 0))
           error_detail::raise<std::invalid_argument>("invalid encoded runtime contribution");
         previous = key;
       }

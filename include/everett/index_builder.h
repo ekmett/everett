@@ -310,8 +310,8 @@ namespace everett {
       auto incoming = incoming_decoder_.key();
       // Revisit at most seven already equal bits to keep byte-aligned loads.
       auto start = native_common_ & ~std::uint64_t{7};
-      if (!start) return compare_common_bits(native, incoming);
-      auto comparison = compare_common_bits(native.subview(start, native.size() - start),
+      if (!start) return compare_common_bits<typename P::architecture>(native, incoming);
+      auto comparison = compare_common_bits<typename P::architecture>(native.subview(start, native.size() - start),
         incoming.subview(start, incoming.size() - start));
       comparison.common_bits += start;
       return comparison;

@@ -52,7 +52,7 @@ namespace everett {
       auto common = output_.common_value_width();
       if (common && (value.size() >> P::unit_shift) != *common)
         error_detail::raise<std::invalid_argument>("native file value disagrees with common width");
-      auto comparison = compare_common_bits(previous_.view(), key);
+      auto comparison = compare_common_bits<typename P::architecture>(previous_.view(), key);
       if (size() && comparison.order >= 0)
         error_detail::raise<std::invalid_argument>("native file keys must be strictly increasing");
       auto retained = std::min(comparison.common_bits, retained_limit_bits.value_or(comparison.common_bits)) >> P::unit_shift;

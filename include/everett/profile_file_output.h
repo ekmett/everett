@@ -140,7 +140,7 @@ namespace everett {
         auto extent = fc_bits_ >> P::unit_shift;
         offsets_.push_back(extent - multiply(count_, common_.value_or(0)));
         elias_fano offsets;
-        try { offsets = elias_fano::build(offsets_); }
+        try { offsets = elias_fano::build<typename P::architecture>(offsets_); }
         catch (...) { offsets_.pop_back(); throw; }
         offsets_.pop_back();
         std::array<std::byte, directory_bytes> directory{};

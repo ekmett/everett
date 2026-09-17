@@ -50,7 +50,7 @@ namespace everett {
     // Every live head follows the same preceding occurrence. Larger LCPs
     // sort first; equal LCPs need only a suffix comparison. Stable origin order
     // preserves native, main-borrow, secondary-borrow ties.
-    template <class Live, class Head> frontier_selection choose_frontier(
+    template <simd::architecture Arch = simd::scalar, class Live, class Head> frontier_selection choose_frontier(
         std::array<std::uint64_t, 3> const & prefixes, Live live, Head head) {
       frontier_selection result;
       bit_view key;
@@ -64,7 +64,7 @@ namespace everett {
         bit_comparison comparison;
         if (first != second) comparison = {std::min(first, second), first > second ? -1 : 1};
         else {
-          comparison = compare_common_bits(candidate.subview(first, candidate.size() - first),
+          comparison = compare_common_bits<Arch>(candidate.subview(first, candidate.size() - first),
             key.subview(first, key.size() - first));
           comparison.common_bits += first;
         }
@@ -155,7 +155,7 @@ namespace everett {
       auto width = std::min<std::uint64_t>(group_size, count_ - first);
       std::array<std::uint64_t, 2> prefix{}, population{};
       for (unsigned route = 0; route < 2; ++route) {
-        prefix[route] = ranks_[route].rank(group);
+        prefix[route] = ranks_[route].template rank<typename P::architecture>(group);
         population[route] = ranks_[route].class_at(group);
         if (prefix[route] > first || prefix[route] > borrowed_[route].size() ||
             population[route] > width || population[route] > borrowed_[route].size() - prefix[route])
@@ -479,7 +479,7 @@ namespace everett {
         borrowed_{borrowed_cursor(source.view.borrowed(0)), borrowed_cursor(source.view.borrowed(1))},
         count_(source.view.virtual_size()) {}
     cola_detail::frontier_selection choose() const {
-      return cola_detail::choose_frontier(prefixes_,
+      return cola_detail::choose_frontier<typename P::architecture>(prefixes_,
         [&](unsigned origin) { return !origin ? !native_.done() : !borrowed_[origin - 1].done(); },
         [&](unsigned origin) { return !origin ? native_.peek().key.prefix : borrowed_[origin - 1].peek().key.prefix; });
     }
@@ -534,7 +534,7 @@ namespace everett {
         // depends only on their count: do not open a payload cursor at all.
         if (!native_cursor_) return step_terminal(budget);
         while (consumed < budget && !done()) {
-          auto selected = cola_detail::choose_frontier(prefixes_,
+          auto selected = cola_detail::choose_frontier<typename P::architecture>(prefixes_,
             [&](unsigned origin) { return live(origin); },
             [&](unsigned origin) { return head(origin); });
           auto origin = selected.origin;

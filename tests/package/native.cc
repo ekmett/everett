@@ -28,7 +28,7 @@ static_assert(policy::value_width == everett::storage_policy<>::value_width);
 int native_identity(everett::rank15_view const & ranks) {
   if (ranks.rank<arch>(1) != 7) return 1;
   std::array<std::uint64_t, 4> offsets{0, 7, 300, 12000};
-  auto ef = everett::elias_fano::build(offsets);
+  auto ef = everett::elias_fano::build<arch>(offsets);
   for (std::uint64_t i = 0; i < offsets.size(); ++i)
     if (ef.view().select<arch>(i) != offsets[i]) return 2;
   std::array<everett::profile_record, 2> records{{

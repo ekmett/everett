@@ -30,6 +30,7 @@ namespace everett::typed_detail {
   // Runs are oldest first. Equal keys leave the heap in that same order.
   // Each cursor retains its current decoded key and parsed physical frame.
   template <class World> struct native_sweep {
+    using policy_type = typename World::policy_type;
     using native_type = typename World::runtime_family::native_type;
     struct observation { bit_view value; std::uint64_t retained_bits; };
     native_sweep() = default;
@@ -112,9 +113,9 @@ namespace everett::typed_detail {
     }
     // Queries must be increasing. Values borrow pinned immutable natives.
     std::optional<observation> replacement(bit_view key) {
-      while (!done() && compare_bits(peek().key.prefix, key) < 0) consume();
+      while (!done() && compare_bits<typename policy_type::architecture>(peek().key.prefix, key) < 0) consume();
       std::optional<observation> result;
-      while (!done() && compare_bits(peek().key.prefix, key) == 0) {
+      while (!done() && compare_bits<typename policy_type::architecture>(peek().key.prefix, key) == 0) {
         result = observation{peek().value, retained_bits()};
         consume();
       }
@@ -132,7 +133,7 @@ namespace everett::typed_detail {
     std::uint64_t consumed_ = 0;
     auto later() const {
       return [this](std::size_t a, std::size_t b) {
-        auto order = compare_bits(sources_[a].cursor.peek().key.prefix, sources_[b].cursor.peek().key.prefix);
+        auto order = compare_bits<typename policy_type::architecture>(sources_[a].cursor.peek().key.prefix, sources_[b].cursor.peek().key.prefix);
         return order ? order > 0 : a > b;
       };
     }

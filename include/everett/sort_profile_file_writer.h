@@ -198,7 +198,7 @@ namespace everett {
     void append_encoded(bit_view key, bit_view value, std::optional<std::uint64_t> retained_limit_bits = {}) {
       require_active();
       if (frame_only_) throw std::logic_error("encoded append after trusted frame stream");
-      auto comparison = compare_common_bits(previous_.view(), key);
+      auto comparison = compare_common_bits<typename P::architecture>(previous_.view(), key);
       if (size() && comparison.order >= 0) throw std::invalid_argument("sort file keys must be strictly ordered");
       try {
         sort_bit_reader input(key);

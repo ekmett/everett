@@ -44,9 +44,9 @@ namespace everett {
         lower_(lo ? std::optional{key_transport::template encode<S>(*lo)} : std::nullopt),
         upper_(hi ? std::optional{key_transport::template encode<S>(*hi)} : std::nullopt) {
       if (work) *work = {};
-      if (lower_ && upper_ && compare_bits(lower_->view(), upper_->view()) > 0)
+      if (lower_ && upper_ && compare_bits<typename policy_type::architecture>(lower_->view(), upper_->view()) > 0)
         throw std::invalid_argument("reversed typed range");
-      if (lower_ && upper_ && compare_bits(lower_->view(), upper_->view()) == 0) { finished_ = true; return; }
+      if (lower_ && upper_ && compare_bits<typename policy_type::architecture>(lower_->view(), upper_->view()) == 0) { finished_ = true; return; }
       sweep_ = typed_detail::native_sweep<World>(snapshot_, lower_ ? lower_->view() : prefix_.view(), work);
       finished_ = sweep_.done();
     }
@@ -117,13 +117,13 @@ namespace everett {
         while (used != budget && !finished_ && !row_) {
           if (sweep_.done()) { finish_group(); finished_ = true; break; }
           auto current = sweep_.peek();
-          if (group_ && compare_bits(group_key_.view(), current.key.prefix) != 0) {
+          if (group_ && compare_bits<typename policy_type::architecture>(group_key_.view(), current.key.prefix) != 0) {
             finish_group();
             if (row_) break;
           }
           if (!group_) {
-            if (upper_ && compare_bits(current.key.prefix, upper_->view()) >= 0) { finished_ = true; break; }
-            if (lower_ && compare_bits(current.key.prefix, lower_->view()) < 0) { sweep_.consume(); ++used; continue; }
+            if (upper_ && compare_bits<typename policy_type::architecture>(current.key.prefix, upper_->view()) >= 0) { finished_ = true; break; }
+            if (lower_ && compare_bits<typename policy_type::architecture>(current.key.prefix, lower_->view()) < 0) { sweep_.consume(); ++used; continue; }
             auto order = compare_prefix(current.key.prefix);
             if (order > 0) { finished_ = true; break; }
             if (order < 0) { sweep_.consume(); ++used; continue; }
@@ -140,7 +140,7 @@ namespace everett {
           else group_->value = semantics::apply(group_->key, std::move(group_->value),
             typed_detail::value<policy_type, S>(current.value));
           sweep_.consume(); ++used;
-          if (sweep_.done() || compare_bits(group_key_.view(), sweep_.peek().key.prefix) != 0)
+          if (sweep_.done() || compare_bits<typename policy_type::architecture>(group_key_.view(), sweep_.peek().key.prefix) != 0)
             finish_group();
           if (sweep_.done()) finished_ = true;
         }
@@ -180,7 +180,7 @@ namespace everett {
 
     int compare_prefix(bit_view key) const {
       auto count = std::min(key.size(), prefix_.bit_size);
-      auto order = compare_bits(key.subview(0, count), prefix_.view().subview(0, count));
+      auto order = compare_bits<typename policy_type::architecture>(key.subview(0, count), prefix_.view().subview(0, count));
       return order ? order : key.size() < prefix_.bit_size ? -1 : 0;
     }
     void finish_group() {

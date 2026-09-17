@@ -125,7 +125,7 @@ namespace everett {
         auto stride = multiply(count_, common_.value_or(0));
         offsets_.push_back(extent - stride);
         try {
-          result.offsets_ = elias_fano::build(offsets_);
+          result.offsets_ = elias_fano::build<typename P::architecture>(offsets_);
         } catch (...) {
           offsets_.pop_back();
           throw;
@@ -185,7 +185,7 @@ namespace everett {
       auto common = output_.common_value_width();
       if (common && (value.size() >> P::unit_shift) != *common)
         error_detail::raise<std::invalid_argument>("native writer value disagrees with common width");
-      auto comparison = compare_common_bits(previous_.view(), key);
+      auto comparison = compare_common_bits<typename P::architecture>(previous_.view(), key);
       if (output_.size() && comparison.order >= 0)
         error_detail::raise<std::invalid_argument>("native writer keys must be strictly increasing");
       auto retained = std::min(comparison.common_bits, retained_limit_bits.value_or(comparison.common_bits)) >> P::unit_shift;

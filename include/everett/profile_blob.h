@@ -110,7 +110,7 @@ namespace everett {
       auto first = group * group_size;
       auto last = first + std::min<std::uint64_t>(group_size, virtual_count_ - first);
       auto const & ranks = interleave_;
-      auto a = ranks.rank(group);
+      auto a = ranks.template rank<typename P::architecture>(group);
       auto population = ranks.class_at(group);
       if (a > first || a > borrowed_.size() || population > last - first ||
           population > borrowed_.size() - a)
@@ -195,7 +195,7 @@ namespace everett {
         std::span<bit_string const> borrowed = {}) {
       check_count(native.size(), borrowed.size());
       for (std::size_t i = 1; i < native.size(); ++i) {
-        if (compare_bits(native[i - 1].key.view(), native[i].key.view()) >= 0) {
+        if (compare_bits<typename P::architecture>(native[i - 1].key.view(), native[i].key.view()) >= 0) {
           error_detail::raise<std::invalid_argument>("profile blob native keys must be strictly sorted");
         }
       }
@@ -292,15 +292,15 @@ namespace everett {
       result.false_borrows_.resize((borrowed.size() + 7) >> 3);
       std::size_t native_at = 0;
       for (std::size_t i = 0; i != borrowed.size(); ++i) {
-        if (i && compare_bits(borrowed[i - 1].view(), borrowed[i].view()) > 0) {
+        if (i && compare_bits<typename P::architecture>(borrowed[i - 1].view(), borrowed[i].view()) > 0) {
           error_detail::raise<std::invalid_argument>("profile blob borrowed keys must be sorted");
         }
         while (native_at != native.size() &&
-               compare_bits(native[native_at].key.view(), borrowed[i].view()) < 0) {
+               compare_bits<typename P::architecture>(native[native_at].key.view(), borrowed[i].view()) < 0) {
           ++native_at;
         }
         if (native_at != native.size() &&
-            compare_bits(native[native_at].key.view(), borrowed[i].view()) == 0) {
+            compare_bits<typename P::architecture>(native[native_at].key.view(), borrowed[i].view()) == 0) {
           result.false_borrows_[i >> 3] |= static_cast<std::byte>(1u << (i & 7));
         }
         borrowed_records.push_back({borrowed[i], {}});
@@ -312,10 +312,10 @@ namespace everett {
       for (std::uint64_t i = 0; i != count; ++i) {
         // Native precedes every borrowed occurrence of an equal key.
         auto take_borrowed = s != borrowed.size() &&
-          (a == native.size() || compare_bits(borrowed[s].view(), native[a].key.view()) < 0);
+          (a == native.size() || compare_bits<typename P::architecture>(borrowed[s].view(), native[a].key.view()) < 0);
         if (i % group_size == 0) {
           auto const & boundary = take_borrowed ? borrowed[s] : native[a].key;
-          result.cut_lcps_.push_back(s ? compare_common_bits(borrowed[s - 1].view(), boundary.view()).common_bits : 0);
+          result.cut_lcps_.push_back(s ? compare_common_bits<typename P::architecture>(borrowed[s - 1].view(), boundary.view()).common_bits : 0);
         }
         if (take_borrowed) {
           ++classes[static_cast<std::size_t>(i / group_size)];

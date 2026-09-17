@@ -16,6 +16,9 @@
 #include <array>
 #include <everett/word_view.h>
 #include <everett/error_detail.h>
+#include <everett/backend.h>
+#include <simd/integer.h>
+#include <simd/packing.h>
 
 #include <bit>
 #include <cstddef>
@@ -27,13 +30,6 @@
 #include <utility>
 #include <vector>
 
-#if defined(__BMI2__) && (defined(__x86_64__) || defined(_M_X64))
-#include <immintrin.h>
-#endif
-#if defined(__aarch64__) && defined(__ARM_NEON)
-#include <arm_neon.h>
-#endif
-
 namespace everett {
   namespace elias_fano_detail {
     constexpr std::uint64_t add(std::uint64_t a, std::uint64_t b) noexcept { return a + b; }
@@ -42,15 +38,15 @@ namespace everett {
       return (bits + 63) >> 6;
     }
 
+    template <simd::architecture Arch = simd::scalar>
     inline bool monotone(std::span<std::uint64_t const> source) noexcept {
       if (source.size() < 2) return true;
       std::size_t i = 1;
-#if defined(__aarch64__) && defined(__ARM_NEON)
-      for (; source.size() - i >= 2; i += 2)
-        if (vmaxvq_u32(vreinterpretq_u32_u64(vcltq_u64(vld1q_u64(source.data() + i),
-                                                      vld1q_u64(source.data() + i - 1)))))
-          return false;
-#endif
+      if constexpr (!std::is_same_v<Arch, simd::scalar>) {
+        using V = simd::vec<std::uint64_t, backend_detail::register_bytes<Arch> / 8, Arch>;
+        for (; source.size() - i >= V::lanes; i += V::lanes)
+          if (any(V::load(source.data() + i) < V::load(source.data() + i - 1))) return false;
+      }
       for (; i < source.size(); ++i) if (source[i] < source[i - 1]) return false;
       return true;
     }
@@ -58,10 +54,11 @@ namespace everett {
     // Zero-based selection in a nonzero word, with ordinal < popcount(value).
     // Byte-prefix populations fit in seven bits, so the marked subtraction
     // finds the first byte whose cumulative population exceeds ordinal.
+    template <simd::architecture Arch = simd::scalar>
     inline unsigned select_word(std::uint64_t value, unsigned ordinal) noexcept {
-#if defined(__BMI2__) && (defined(__x86_64__) || defined(_M_X64))
-      return unsigned(std::countr_zero(_pdep_u64(std::uint64_t{1} << ordinal, value)));
-#else
+      if constexpr (std::is_same_v<Arch, simd::avx2> || std::is_same_v<Arch, simd::avx512>)
+        return unsigned(std::countr_zero(deposit_bits(Arch{}, std::uint64_t{1} << ordinal, value)));
+      else {
       auto pairs = value - ((value >> 1) & 0x5555555555555555ull);
       auto nibbles = (pairs & 0x3333333333333333ull) + ((pairs >> 2) & 0x3333333333333333ull);
       auto bytes = (nibbles + (nibbles >> 4)) & 0x0f0f0f0f0f0f0f0full;
@@ -80,7 +77,7 @@ namespace everett {
       shift += step * 2;
       ordinal -= step * lower;
       return shift + ordinal + unsigned(((value >> shift) & 1) == 0);
-#endif
+      }
     }
 
     template <unsigned W, std::size_t O, std::size_t I>
@@ -109,7 +106,7 @@ namespace everett {
     // Each tile assigns its output words once, rather than repeatedly loading
     // and updating them for each input field. All shifts are compile-time
     // constants below 64; the final incomplete tile uses bounded scalar work.
-    template <unsigned W>
+    template <unsigned W, simd::architecture Arch = simd::scalar>
     inline void pack_low_fixed(std::span<std::uint64_t const> source,
                                std::span<std::uint64_t> out) noexcept {
       static_assert(W <= 63);
@@ -120,22 +117,24 @@ namespace everett {
         std::size_t at = 0;
         for (; source.size() - at >= inputs; at += inputs) {
           auto destination = out.data() + (at / inputs) * outputs;
-#if defined(__aarch64__) && defined(__ARM_NEON) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-          // These complete tiles consume exactly four/eight input words and
-          // emit one word. Narrowing preserves each field's low bits.
-          if constexpr (W == 16) {
-            auto a = vmovn_u64(vld1q_u64(source.data() + at));
-            auto b = vmovn_u64(vld1q_u64(source.data() + at + 2));
-            *destination = vget_lane_u64(vreinterpret_u64_u16(vmovn_u32(vcombine_u32(a, b))), 0);
-          } else if constexpr (W == 8) {
-            auto a = vmovn_u64(vld1q_u64(source.data() + at));
-            auto b = vmovn_u64(vld1q_u64(source.data() + at + 2));
-            auto c = vmovn_u64(vld1q_u64(source.data() + at + 4));
-            auto d = vmovn_u64(vld1q_u64(source.data() + at + 6));
-            *destination = vget_lane_u64(vreinterpret_u64_u8(vmovn_u16(vcombine_u16(
-              vmovn_u32(vcombine_u32(a, b)), vmovn_u32(vcombine_u32(c, d))))), 0);
+          // Narrowing truncates low fields and concatenates in source order.
+          // Only the first eight packed bytes are written, with no tail read.
+          if constexpr (!std::is_same_v<Arch, simd::scalar> &&
+              std::endian::native == std::endian::little && (W == 8 || W == 16)) {
+            using V = simd::vec<std::uint64_t, 2, Arch>;
+            auto a = narrow_concat<std::uint32_t>(V::load(source.data() + at),
+              V::load(source.data() + at + 2));
+            if constexpr (W == 16) {
+              auto packed = narrow_concat<std::uint16_t>(a, decltype(a){});
+              reinterpret_bits<std::uint64_t>(packed).store_partial(destination, 1);
+            } else {
+              auto b = narrow_concat<std::uint32_t>(V::load(source.data() + at + 4),
+                V::load(source.data() + at + 6));
+              auto half = narrow_concat<std::uint16_t>(a, b);
+              auto packed = narrow_concat<std::uint8_t>(half, decltype(half){});
+              reinterpret_bits<std::uint64_t>(packed).store_partial(destination, 1);
+            }
           } else
-#endif
             low_tile<W>(source.data() + at, destination, std::make_index_sequence<outputs>{});
         }
         auto tail = out.subspan((at / inputs) * outputs);
@@ -151,15 +150,16 @@ namespace everett {
       }
     }
 
-    template <std::size_t... W>
+    template <simd::architecture Arch, std::size_t... W>
     constexpr auto low_packers(std::index_sequence<W...>) noexcept {
       using packer = void (*)(std::span<std::uint64_t const>, std::span<std::uint64_t>) noexcept;
-      return std::array<packer, sizeof...(W)>{&pack_low_fixed<W>...};
+      return std::array<packer, sizeof...(W)>{&pack_low_fixed<W, Arch>...};
     }
 
     // This dispatch occurs once per complete low section, not per value. The
     // destination may contain old data: both complete and tail words are set,
     // including zero tail padding. Source and destination must not overlap.
+    template <simd::architecture Arch = simd::scalar>
     inline void pack_low(std::span<std::uint64_t const> source,
                          std::span<std::uint64_t> out, unsigned width) {
       if (width > 63) error_detail::raise<std::invalid_argument>("elias_fano low width");
@@ -167,7 +167,7 @@ namespace everett {
         error_detail::raise<std::overflow_error>("elias_fano low section extent");
       if (out.size() != words(source.size() * width))
         error_detail::raise<std::invalid_argument>("elias_fano low output size");
-      static constexpr auto packers = low_packers(std::make_index_sequence<64>{});
+      static constexpr auto packers = low_packers<Arch>(std::make_index_sequence<64>{});
       packers[width](source, out);
     }
 
@@ -255,12 +255,14 @@ namespace everett {
     unsigned low_width() const noexcept { return low_width_; }
     std::uint64_t size() const noexcept { return entry_count_; }
 
+    template <simd::architecture Arch = simd::scalar>
     std::uint64_t select(std::uint64_t ordinal) const {
       if (ordinal >= entry_count_) [[unlikely]]
         error_detail::raise<std::out_of_range>("Elias-Fano ordinal");
-      return decode(ordinal, select_high(ordinal));
+      return decode(ordinal, select_high<Arch>(ordinal));
     }
 
+    template <simd::architecture Arch = simd::scalar>
     elias_fano_cursor cursor(std::uint64_t ordinal = 0) const;
 
   private:
@@ -283,6 +285,7 @@ namespace everett {
       return value;
     }
 
+    template <simd::architecture Arch>
     std::uint64_t select_high(std::uint64_t ordinal) const {
       auto sample = samples_[ordinal >> 8];
       unsigned remaining = unsigned(ordinal & 255);
@@ -301,7 +304,7 @@ namespace everett {
         if (scanned) value = high_[word];
         auto population = unsigned(std::popcount(value));
         if (remaining < population) {
-          auto position = word * 64 + elias_fano_detail::select_word(value, remaining);
+          auto position = word * 64 + elias_fano_detail::select_word<Arch>(value, remaining);
           if (position >= high_bits_ || position - sample.first >= 4096)
             error_detail::raise<std::invalid_argument>("elias_fano dense span");
           return position;
@@ -327,14 +330,16 @@ namespace everett {
   // starting at zero or a directory boundary reads no payload pages.
   // The source sections must outlive this cursor and any copies of it.
   struct elias_fano_cursor {
-    explicit elias_fano_cursor(elias_fano_view source, std::uint64_t ordinal = 0)
+    template <simd::architecture Arch = simd::scalar>
+    explicit elias_fano_cursor(elias_fano_view source, std::uint64_t ordinal = 0,
+        std::type_identity<Arch> = {})
       : source_(source), ordinal_(ordinal) {
       if (ordinal > source.size()) error_detail::raise<std::out_of_range>("Elias-Fano cursor ordinal");
       if (done() || !(ordinal & 255)) return;
       auto sample = source_.samples_[ordinal >> 8];
       sample_ = {sample.first, sample.sparse};
       if (sample_.sparse == std::numeric_limits<std::uint64_t>::max()) {
-        auto position = source_.select_high(ordinal);
+        auto position = source_.select_high<Arch>(ordinal);
         word_ = position >> 6;
         remaining_ = source_.high_[word_] & (~std::uint64_t{0} << (position & 63));
       }
@@ -384,12 +389,16 @@ namespace everett {
     std::uint64_t ordinal_ = 0, word_ = 0, remaining_ = 0;
   };
 
-  inline elias_fano_cursor elias_fano_view::cursor(std::uint64_t ordinal) const { return elias_fano_cursor(*this, ordinal); }
+  template <simd::architecture Arch>
+  inline elias_fano_cursor elias_fano_view::cursor(std::uint64_t ordinal) const {
+    return elias_fano_cursor(*this, ordinal, std::type_identity<Arch>{});
+  }
 
   struct elias_fano {
+    template <simd::architecture Arch = simd::scalar>
     static elias_fano build(std::span<std::uint64_t const> residuals) {
       if (residuals.empty()) return {};
-      if (!elias_fano_detail::monotone(residuals))
+      if (!elias_fano_detail::monotone<Arch>(residuals))
         error_detail::raise<std::invalid_argument>("elias_fano nonmonotone offsets");
       elias_fano result;
       result.entry_count = residuals.size();
@@ -405,7 +414,7 @@ namespace everett {
       result.low.assign(elias_fano_detail::words(low_bits), 0);
       result.high.assign(elias_fano_detail::words(high_bits), 0);
       result.samples.clear();
-      elias_fano_detail::pack_low(residuals, result.low, result.low_width);
+      elias_fano_detail::pack_low<Arch>(residuals, result.low, result.low_width);
       elias_fano_detail::write_high(residuals, result.high, result.low_width);
       for (std::uint64_t begin = 0; begin < residuals.size(); begin += 256) {
         auto end = residuals.size() - begin < 256 ? residuals.size() : begin + 256;
