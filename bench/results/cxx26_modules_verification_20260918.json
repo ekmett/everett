@@ -1,0 +1,1096 @@
+{
+  "schema_version": 1,
+  "date": "2026-09-18",
+  "standard": "C++26",
+  "implementation_revision": "90bbbdcf73b2c8d53bdd91ebf3249a5c09365bb3",
+  "simd_revision": "0dc71b0f40450fcf8e39c28f219408235bb0f62c",
+  "toolchain": {
+    "compiler": "upstream Clang 23.1.1",
+    "cmake": "4.4.3",
+    "ninja": "1.13.2",
+    "host": "macOS ARM64",
+    "standard_library": "Apple SDK libc++ headers and system runtime",
+    "sqlite": "3.53.4"
+  },
+  "scope": "Module imports, scalar and native kernels, relocatable packages and optional host adapters. Test durations describe verification, not throughput.",
+  "packages": {
+    "source_checkpoint": "bc6efd2db347763fdf7a94321c524a7eb2d3c2d7",
+    "instrumentation": "Release O3; address sanitizer inherited from SIMD; no undefined-behavior instrumentation in these package consumers.",
+    "outer": {
+      "report_sha256": "f6e01a1c79b88aabda8b9e1f3e10c04353d2484bc0dd92cdf88a8c4672070223",
+      "tests": [
+        {
+          "name": "everett.package.sqlite",
+          "passed": true,
+          "seconds": 62.4
+        },
+        {
+          "name": "everett.package.installed",
+          "passed": true,
+          "seconds": 16.38
+        },
+        {
+          "name": "everett.package.embedded",
+          "passed": true,
+          "seconds": 17.16
+        }
+      ]
+    },
+    "nested": {
+      "package-smoke/embedded/consumer": {
+        "report_sha256": "0f72fef0713e7a15b645c4808ee868c5ab075a98194c77972f64d8d871795d62",
+        "tests": [
+          {
+            "name": "everett.consumer",
+            "passed": true,
+            "seconds": 0.07
+          },
+          {
+            "name": "everett.consumer.neon",
+            "passed": true,
+            "seconds": 0.08
+          }
+        ]
+      },
+      "package-smoke/installed/consumer": {
+        "report_sha256": "97dc112981e14570d34ce983e0ecd96355405aeb3c4370d8b587a34e0ed7bde1",
+        "tests": [
+          {
+            "name": "everett.consumer",
+            "passed": true,
+            "seconds": 0.07
+          },
+          {
+            "name": "everett.consumer.neon",
+            "passed": true,
+            "seconds": 0.08
+          }
+        ]
+      },
+      "sqlite-package-smoke/component": {
+        "report_sha256": "c54486fff054d90c5d10f6def2d3bf3feb62782c779cd391a97bce72ee571b3a",
+        "tests": [
+          {
+            "name": "consumer",
+            "passed": true,
+            "seconds": 0.58
+          },
+          {
+            "name": "consumer_neon",
+            "passed": true,
+            "seconds": 5.52
+          }
+        ]
+      },
+      "sqlite-package-smoke/core": {
+        "report_sha256": "233dc7bc8ec8f16010f3053cde5ad3550ad121d96175a1fd613fbde781a2abb1",
+        "tests": [
+          {
+            "name": "consumer",
+            "passed": true,
+            "seconds": 0.11
+          }
+        ]
+      }
+    },
+    "coverage": [
+      "baseline import",
+      "NEON import",
+      "relocated installation",
+      "embedded library",
+      "SQLite component",
+      "SQLite-disabled core",
+      "64 durable writes with carries",
+      "snapshot/save/fork",
+      "range deletion",
+      "131-byte common prefixes",
+      "EF low widths 8 and 16",
+      "scalar/native file byte equality"
+    ]
+  },
+  "optional": {
+    "source_checkpoint": "6e7dd1e",
+    "metal": {
+      "architecture": "neon",
+      "optimization": "O2",
+      "host_sanitizers": [
+        "address",
+        "undefined"
+      ],
+      "fatal_diagnostics": true,
+      "result": {
+        "report_sha256": "791f58d71b361b78d4701817d54cb6f574cdcab225a09a63036bf85bb7acc3b6",
+        "tests": [
+          {
+            "name": "byte_gpu_merge_complete",
+            "passed": true,
+            "seconds": 0.65
+          }
+        ]
+      },
+      "complete_files": 40,
+      "input_rejections": 4,
+      "ef_output_checks": 10,
+      "scope": "Instrumented Objective-C++ host, compiled archives, shader build and Metal correctness; no crossover or timing conclusion."
+    },
+    "cpu_space": {
+      "architecture": "neon",
+      "optimization": "O1",
+      "host_sanitizers": [
+        "address",
+        "undefined"
+      ],
+      "fatal_diagnostics": true,
+      "result": {
+        "report_sha256": "9affcd7c6bd0fa8778c963d26f849dd7e64986b1f1201bfc2fb89bebe525dd03",
+        "tests": [
+          {
+            "name": "space_raw-byte",
+            "passed": true,
+            "seconds": 0.25
+          },
+          {
+            "name": "space_raw-bit",
+            "passed": true,
+            "seconds": 0.24
+          },
+          {
+            "name": "space_typed-byte",
+            "passed": true,
+            "seconds": 0.22
+          },
+          {
+            "name": "space_typed-bit",
+            "passed": true,
+            "seconds": 0.26
+          },
+          {
+            "name": "space_typed-byte-known",
+            "passed": true,
+            "seconds": 0.19
+          }
+        ]
+      },
+      "records_per_case": 1024,
+      "modes": [
+        "raw_byte",
+        "raw_bit",
+        "typed_byte",
+        "typed_bit",
+        "typed_byte_known_width"
+      ]
+    }
+  },
+  "shared_simd": {
+    "strict_host": {
+      "exceptions": false,
+      "optimization": "Release",
+      "sanitizers": [
+        "address",
+        "undefined"
+      ],
+      "fatal_diagnostics": true,
+      "report_sha256": "5ff69530a5011f81a54566cb7f6f19a0d20e3f2ac37abed3bd2f24cd7229c51e",
+      "cases": [
+        {
+          "name": "simd.integer_ops.header",
+          "passed": true,
+          "seconds": 0.113083
+        },
+        {
+          "name": "simd.integer_ops.import",
+          "passed": true,
+          "seconds": 0.106497
+        },
+        {
+          "name": "simd.packing.header",
+          "passed": true,
+          "seconds": 0.126375
+        },
+        {
+          "name": "simd.packing.import",
+          "passed": true,
+          "seconds": 0.120656
+        },
+        {
+          "name": "simd.bounded_load.header",
+          "passed": true,
+          "seconds": 0.122843
+        },
+        {
+          "name": "simd.bounded_load.import",
+          "passed": true,
+          "seconds": 0.130776
+        }
+      ]
+    },
+    "ci": {
+      "run_url": "https://github.com/ekmett/simd/actions/runs/35268411907",
+      "linux_avx2": {
+        "passed": 41,
+        "skipped": 0,
+        "compiler": "Ubuntu Clang 23.1.2"
+      },
+      "macos_neon": {
+        "passed": 36,
+        "skipped": 0,
+        "compiler": "Homebrew Clang 23.1.0"
+      }
+    }
+  },
+  "qualification_notes": [
+    "The initial no-exception SIMD CI fixture used throw; it now uses abort diagnostics and exercises actual module imports.",
+    "A typed-pointer memcpy boundary triggered alignment diagnostics under Clang23/SDK sanitizers. Explicit void-pointer byte-copy boundaries pass fatal ASan/UBSan checks without suppressions.",
+    "An initial full-suite compile exposed missing explicit exception declarations in test fixtures; the direct users now include <exception>.",
+    "AVX-512 compilation does not establish AVX-512 runtime correctness or performance.",
+    "NEON rank15 and prefix512 assembly retains the prior vector instruction structure; noisy host timings do not support a comparative speed claim.",
+    "Clang23 diagnosed specialization-dependent unused fixture counters with assertions enabled. The affected declarations now explicitly allow unused specializations; warning checks remain enabled."
+  ],
+  "representation": "Execution architecture is not encoded in files; scalar/native fixtures compare identical serialized bytes.",
+  "compiled_crc": {
+    "source_revision": "d5e5298a5f48b1f4d51d66c327d80e222c018821",
+    "compiler": "clang version 23.1.1 (https://github.com/llvm/llvm-project 6dfe1677ab8dffbc6ec13d53a1e0215d75147689)",
+    "optimization": "O2",
+    "sanitizers": [
+      "address",
+      "undefined"
+    ],
+    "fatal_diagnostics": true,
+    "report_sha256": "b535e9f9aeec283d174fc3da8b92e5413d7fb3bdfd7f1d06649918680671328b",
+    "checks": [
+      {
+        "binary_sha256": "37e856c3a301371d0a518819a6f82eb27d9cb2a1be6a29ef6f6199c760fbaf3c",
+        "environment": {
+          "ASAN_OPTIONS": "halt_on_error=1",
+          "UBSAN_OPTIONS": "halt_on_error=1"
+        },
+        "exit_code": 0,
+        "name": "scalar",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_sha256": "6dea6f25a888f0922416a8d6ad547149a9ddff545344c1150b0432e2593a03f7"
+      },
+      {
+        "binary_sha256": "9355a4df0e26d07de8812523bda471152d5e39b56986804d7f4e8f5ca328cb34",
+        "environment": {
+          "ASAN_OPTIONS": "halt_on_error=1",
+          "UBSAN_OPTIONS": "halt_on_error=1"
+        },
+        "exit_code": 0,
+        "name": "neon",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stdout_sha256": "6dea6f25a888f0922416a8d6ad547149a9ddff545344c1150b0432e2593a03f7"
+      }
+    ],
+    "source_sha256": {
+      "include/everett/active_engine.h": "1d0d02e479b02f79c4be40d37747200927de0fe3c9a295a7b2beeba3a88dd227",
+      "include/everett/backend.h": "c5e1b744f557e74c9c88bc1c3dc981871fcb84bbaaf12cfbd92ddb395017da8e",
+      "include/everett/catalog_bindings.h": "234b5c5c6b867286dc0d2595320de9adf151c453c9e3f47266e2ef9e14dc59f9",
+      "include/everett/cola_adaptive_index.h": "b0b6430ed39a37d53acb9397c3636196e87c8f697f1c3475fafa762604821105",
+      "include/everett/cola_file_index.h": "d6bb61ea0231ab81a2679c5d006d66bd7077ea431536c29be344a53356ac2ae1",
+      "include/everett/cola_index.h": "476ce554705a107640676c69c17e0c050f9b4d93646793d35ed861703e1ede0e",
+      "include/everett/cola_local_merge.h": "988499ac480202bb61f1cc237075c13a5be6240cb3c61c44c5adbcce9089406c",
+      "include/everett/cola_query.h": "b016fb64d11a8184726356e5eac2a0127281aac052385fed29e423c8dd293bc1",
+      "include/everett/cola_runtime.h": "85ee096bddbf2a24d6d5d2f76f23074fe443ea036885dff7511dfa2b5b87ab77",
+      "include/everett/cola_sections.h": "caec2a81fe419d79750caa782f4d9cef58fa9181080e5dec2190f413a3ef19eb",
+      "include/everett/connection.h": "997dd39f1f054ffa75ac540ffbed0a797ed8c3f2e54a5f575890ef758d0f9105",
+      "include/everett/crc32c.h": "f5cb64eaa09036a3528362058ba0a76a1eabf29eaa6a094a9630e95a54a95554",
+      "include/everett/detail/crc32c_arm_eor3.inc": "8933b3bc623021380d2b305644d08accbb505be59c6b2502c654030665e41276",
+      "include/everett/detail/crc32c_arm_pmull.inc": "41bc8bda62b66417c98e555f0861bb9392b755bb982fb5abe172f8ed3d67d098",
+      "include/everett/detail/crc32c_arm_scalar.inc": "439cb084e9b0a0e5e825eab1def30d0784bf698059514a0b9dc0d904586a51b0",
+      "include/everett/detail/crc32c_dispatch.inc": "959984f45a4126303f64e6a7927142b224acf29ce62fcdfdbecf8ec2b5d1eedd",
+      "include/everett/detail/crc32c_impl.h": "e5939b54882e8dc2e4ea143bcdd83538e94b47ac7e69a87ce598e176fd9c2017",
+      "include/everett/detail/crc32c_portable.inc": "0ad90ed9a96dfd55a2093e8308eccc56f009d354c2baaf7181fb89fe0ffc7ce9",
+      "include/everett/detail/crc32c_x86_avx512.inc": "f38eed0a20595b2789809a5d49b89ecb0244bf651c107adf38590c9be179dee0",
+      "include/everett/detail/crc32c_x86_pclmul.inc": "2aaff7af89bdf8abf4fa23a39683d1b1e747b11515a0acdee8b3c430d49d94c9",
+      "include/everett/detail/crc32c_x86_scalar.inc": "5eaee8f2c22282fe6ad6b82b839cab2deae57f2931c8a44c93c1b72e1cb6897d",
+      "include/everett/detail/crc32c_x86_vpclmul.inc": "c4620a476f5d1d05f4748aeaadd184dc0a75e70dd8d5020f51d0a6adab3a64ba",
+      "include/everett/detail/module_exports.h": "102198146d017b810d963f477fd9d87e41574d14012fba0ec11afdd924fecd3c",
+      "include/everett/detail/module_inputs.h": "ea77e0ed67dac7b931ebdb7f2bd5826e379387d7abbc45d64d1253f6b8b084cd",
+      "include/everett/detail/sqlite_exports.h": "02ce4c0e3c04b773d7c49c198f991070ee71494128f5393117a3e965fc2aa727",
+      "include/everett/durability.h": "27bd2b0d87d7f9a4965557dc3615e43bb0932ea960056c06d41d3f90467aa2ff",
+      "include/everett/elias_fano.h": "eaeca472fd06042c63ae02c6a6d25d3dcd2228f6be06a3be90c2e68df03bb5eb",
+      "include/everett/error_detail.h": "a5b9c91a49ffc9d96cc2f0281816721b4591e478105c2439c401b2776830635f",
+      "include/everett/file.h": "5a1aa91a4cfbc9a700a2d577cf01a7d156e6b94a923ad6a88c1dd443dfdb09cb",
+      "include/everett/file_index_builder.h": "4d598e50fe3f94256b1d47ad2d69a2ecb43fa1a57ac053be33f314e111a86ddd",
+      "include/everett/file_index_pipeline.h": "e084bc1814c3445f76f1c7bd88d929126609be9b911891cf3a3f2a2503538442",
+      "include/everett/fingerprint.h": "7e1a2834c15b8728ca0d658dd00fe0ac2699c89bb19d2f4429e0a6ee08e5e4ff",
+      "include/everett/fixed_search.h": "344a0f9fba9bab1de310d7e21de8a75031981087bd883dd07e0898314aab42c7",
+      "include/everett/index_builder.h": "7cd60d71a3820aca64caf1c9eba664ec141d24391b292b814c650118203d9962",
+      "include/everett/index_pipeline.h": "c0cd5039ee9d11d1585f66f8cfa05b13fab9ffe506e22a22f795d6021d7f4301",
+      "include/everett/index_pipeline_detail.h": "9ea6abbcf2c0975332ed548d9f91e241331b8f6e30ee031b7d676fd98aa95234",
+      "include/everett/key_detail.h": "dfae0405665cf424e4300179812a437898e36cbeace761c94bba02b84dd60339",
+      "include/everett/mapped_blob.h": "76ebc73a2e4baf488b867281f35d64e64dbf5247e1d0b5474c9ec31e64831710",
+      "include/everett/mapped_cola.h": "1de107da82fe108302aeb8f250b6e75ad5b90cfcbcf0d8167a6c792d885fce64",
+      "include/everett/mapped_file.h": "78c6498be158da583af68ba7c732dfb233ece320a7589622503e5683c739891c",
+      "include/everett/multiverse.h": "184e77167f932d9690830ffd02ed3e80fc20e764f95d603dd253692af7f82c08",
+      "include/everett/native_file_merge.h": "7d1d6baeee8fcf9369ddf6f9d9615feec9f9248a5528b67b80daf94b7c5f6341",
+      "include/everett/native_file_writer.h": "d32fefcef64f7eb11a4117b1b05f22ce7eb58edf8f414ca58ebb0b9fc68439a6",
+      "include/everett/native_merge.h": "f2515bc1c0c00ed761534797d1750c65588f3058367cac5cd4536076dd781df8",
+      "include/everett/native_sweep.h": "79bf7c53d0e3e4be82c1d3c43db8a422c6f8d1c0b0f743280561a69839d3bd65",
+      "include/everett/native_writer.h": "386ea68a97323d624a36f63db2b1492670c704f2809bf0ca99a052e1b816d4c4",
+      "include/everett/nursery_map.h": "ec48343d5e51ea72e1f5abbac73b70b77cc85847b0992093efcc8c9fe59cadf1",
+      "include/everett/object_path.h": "51c3aa26608b2b54c06d2a14ce68017ab630c1a297ffc3295538dfaa82124481",
+      "include/everett/object_stream.h": "9bfa40e6ed48c6bb69c8aba19685fde11eb5e0038ac361188f6fff2e54db6af9",
+      "include/everett/object_writer.h": "9495ab2e3bcb20a43f46d832863dde7913a2b21082376d503e23a7515caa947d",
+      "include/everett/output_budget.h": "afe52604045d3c6d2779cb6afe9abd1c6565c5a243f71736aac81b18e8173b41",
+      "include/everett/pins.h": "b806378c2f3592fcf537895dc93557dc0e8ca05c4ec810bee431d5f3d1f230d8",
+      "include/everett/policy.h": "e3deafed5fec3f335f69bbfcc3e00364dae06b9defe4a5b90152757850bfb997",
+      "include/everett/private_construction.h": "a5ba966fdf4722c352741dd48f420aa8c029202c87f2264798c5f975c67f50cb",
+      "include/everett/profile.h": "fde688458df1e039565ec8414738cd862de8cf2502da9f3b74d428c4ee6a4ae2",
+      "include/everett/profile_blob.h": "0e5814f4a1d772b4b712838d7b6583283b2e528c4e9367c8bf0d9389396f0bd9",
+      "include/everett/profile_file_output.h": "8486408d574c08af4ba435bfad3a4876ad6b277d27eb7673bdc1b2d057cbcd44",
+      "include/everett/profile_index.h": "0191d583f1628abb657d51216e70424dc11076f47398f64375010c7eadfdf647",
+      "include/everett/query.h": "9377a0cf46696bb00c6bced872d55ff598359f6a10b0f1c08ff7017708db5cad",
+      "include/everett/rank.h": "42d39fc76081bc99592b919246f4507d2f37e48ef646faae773752ae847deffe",
+      "include/everett/rank15.h": "ac21981203b8058e64931371894c7cdebd7a2389099c4822b2d7d8ec5dd46bde",
+      "include/everett/rank_groups.h": "755acbcc121eff93606d37e68d22596141e1587e8aabb63ff082ee3dbf4401e3",
+      "include/everett/redundant_checkpoint.h": "315100880762d375b58444846faac45f368a46e0fca8482b43fd7ec561d29f3c",
+      "include/everett/redundant_runtime.h": "4d9a472be18ea6f61685fb6478b83d0432e25035110dbd47c24c52fbf118c5b3",
+      "include/everett/registry.h": "12cf7ae15db0e945b71a24cf34b26ad1ad89b84c0eaea49bffcf4f63f141936d",
+      "include/everett/replacement_rebuild.h": "acebc7aad50df1608c5c8711dcc5c9e86171379545e827fd90b35783c8cda3d7",
+      "include/everett/runtime_checkpoint.h": "e0659ddf1ba0768c133e72db66b04b4cac376c552d53887db60590fe2544b7ff",
+      "include/everett/runtime_graph_sealer.h": "92d832af10a59a3cb35610de1010e753f4a1019ae7587070bf97fb937d007332",
+      "include/everett/runtime_registry.h": "35381b3a7168d04fa421800c0b138a2dd79ead39209b98cf1d91a6252b92762a",
+      "include/everett/runtime_seal.h": "b2192ebe1fb601f73554447e3ca2d4f7562f5b826a7e53db25fb9afad71a5ecd",
+      "include/everett/runtime_store.h": "cd78938e1ccc75c85469e3dc94fc88adb572459eccc11f4602fe6a2e682c174b",
+      "include/everett/sampling.h": "4580634b2ef6ac21837833c1e58435218ae93074b705b3dc118150c462512dc8",
+      "include/everett/sections.h": "b2a355e7205fcc8683d132f0a488f53492a86fe31af1547d7b3953ce12afd101",
+      "include/everett/session.h": "4435cac809188691f0ff428003787043beabb2309fcf0c7275e4ca0114f496a7",
+      "include/everett/sort_codec.h": "67a3d14a460fe303cd9381eb10649b049a84df78bec6cf6d4b83cd649bf5f38f",
+      "include/everett/sort_profile.h": "ed0da73ade9faed77d64338982412f6860172c22c0347bfd186ad97ad6700f71",
+      "include/everett/sort_profile_adaptive.h": "c5143fd4c0c71e0a73c969fc5f9db84a3c4f874e3e827683e700aaa690defb31",
+      "include/everett/sort_profile_file.h": "aa4073da9a65cb6d641016a5a33b9921fa053259d140de36319f02b170517eab",
+      "include/everett/sort_profile_file_merge.h": "e215b71990697f656283c310977d9db576ff27c9573032b2ff621bbfed4e7a8a",
+      "include/everett/sort_profile_file_writer.h": "d999289d6944d20d2e4af5e034bd5191bf508cacb54b9242b7eccec2e3e943f4",
+      "include/everett/sort_profile_merge.h": "dc6f975a3651d0dc70c8df85dbed83dc169e43b5e10a95cb6f6cfc5ed5dfd11c",
+      "include/everett/sort_runtime.h": "5a1cc875f690bf2e52f638bf4b5f151034ad84c367402f926bbf6b9887936eec",
+      "include/everett/sort_runtime_context.h": "23bd4c6fa06414d26453d9e508a4cf9335fbc6436e79ba29e642a7d983ffba11",
+      "include/everett/sort_runtime_store.h": "410d0156dcc592999dc3d49ae0d421d3342f6111a28261f2284b797ac1b06270",
+      "include/everett/sqlite_catalog.h": "4eab1f169850bc54ee58ddb8b8328f28c3f12c2200031d0f66dfb998850d3b19",
+      "include/everett/transaction.h": "3f9138379aec14100371e7bfd5f9de8e15188bd5d395e5b8a2dfeaf8c7d3d572",
+      "include/everett/typed_scan.h": "3af61000fffc17ae52de526da6e493c631d928bcecb012d649da83a96b82c75a",
+      "include/everett/typed_world.h": "03ba83eccc283adb1cf264912817d0a9a8b9def4319ca7c5822957877711182c",
+      "include/everett/word_view.h": "387e1be7796a43f2caa9091878c4a5fdde13f73e9d8594573e0ee659e03b527a",
+      "include/everett/world.h": "24d3636338f3772865b16460dd0745c81055ffb6327349ec126dcb0dc9049a25",
+      "src/crc32c.cc": "29c19847015596e0467b9e26b25e1125119c52ae182bf70579ec2d2527bd112f",
+      "src/crc32c_native.cc": "3857abff22986955536370069801f111a44097f7298d01ab1c3e9aff53682374",
+      "tests/crc32c.cc": "2217902cff9cd2341ba1a980ff3afb657e86de5b1113207c3b595807895a53d9",
+      "tests/package/crc32c.cc": "49cf12e513709b775e068712110dada8f83e6b3e8600bb78d57beb1ee200a91b"
+    },
+    "scope": "Both compiled CRC translation units instrumented; existing scalar and native oracle executables linked separately."
+  },
+  "started": "2026-09-17",
+  "initial_everett_ci": {
+    "source_revision": "a80ecd04aaa6f13065d73332dcacee987c857d91",
+    "run_url": "https://github.com/ekmett/everett/actions/runs/35268849547",
+    "macos_neon": {
+      "compiler": "Clang23.1.1",
+      "kernels_passed": 10,
+      "packages_passed": 3,
+      "skipped": 0
+    },
+    "linux_avx2": {
+      "compiler": "Ubuntu Clang23.1.2",
+      "kernels_passed": 10,
+      "packages_passed": 2,
+      "packages_failed": 1,
+      "failure": "The embedded native consumer selected the baseline-context synthetic SIMD BMI instead of its native provider across add_subdirectory.",
+      "correction_revision": "90bbbdcf73b2c8d53bdd91ebf3249a5c09365bb3",
+      "correction": "Expose the native SIMD target through INTERFACE_LINK_LIBRARIES_DIRECT so the consumer module map selects the provider used to build the native Everett module.",
+      "local_reproduction": "The failing x86_64 consumer object compiles after this change; a fresh embedded NEON package passes both consumer tests. This cross-compile is not an x86 runtime result."
+    }
+  },
+  "core": {
+    "scope": "core and configured NEON backend suites; package checks excluded",
+    "everett_commit": "8260b2c019f799e2ff5dab6178992af828061a8c",
+    "simd_commit": "0dc71b0f40450fcf8e39c28f219408235bb0f62c",
+    "compiler": "Clang 23.1.1",
+    "cmake": "4.4.3",
+    "sqlite": "3.53.4",
+    "configuration": "Release; -O2 -g; UBSAN_OPTIONS=halt_on_error=1",
+    "test_translation_unit_sanitizers": [
+      "address",
+      "undefined"
+    ],
+    "compiled_archive_sanitizers": [
+      "address"
+    ],
+    "junit_sha256": "d60e9677e659c225b63f597aa08a2085f7bc7dcbe02709f7cffe51d39ec9cf63",
+    "configuration_sha256": {
+      "CMakeLists.txt": "01dfb26b45646b5aceb1969982f90c9b2314ee7815531bdd7439deeb15a5410d",
+      "cmake/everett-tests.cmake": "62c6b806b1fe933c06458261dc603da79b7e776e7d01f67474cd9d2a8caa2f8c"
+    },
+    "module_sha256": {
+      "modules/everett.avx2.ccm": "2a3f3927d8ba78aec2c0ca154f969ddebecfa6c7de131e3f790858d642eb5139",
+      "modules/everett.avx512.ccm": "92d2142e541f5197adb9c9ea2dcefe8d109e11645899bd6f6f951adc2b223b65",
+      "modules/everett.ccm": "d5fde05008654af01463d66e7abfc880f15ae5f124d72edf275e4923ce73f902",
+      "modules/everett.neon.ccm": "eea9da6d0b251901b49be3fe37065d1fb7b9e1ec1ff24236df0969bd1d422815",
+      "modules/everett.sqlite.ccm": "7f8967f340d71dee39167f9b65b7c34ea0d516be8a8547f5684dec6ffd4413aa"
+    },
+    "tests": [
+      {
+        "name": "everett.registry",
+        "status": "passed",
+        "seconds": 0.113652
+      },
+      {
+        "name": "everett.registry_compat",
+        "status": "passed",
+        "seconds": 0.319585
+      },
+      {
+        "name": "everett.crc32c",
+        "status": "passed",
+        "seconds": 0.992553
+      },
+      {
+        "name": "everett.rank",
+        "status": "passed",
+        "seconds": 1.09725
+      },
+      {
+        "name": "everett.groups",
+        "status": "passed",
+        "seconds": 0.596346
+      },
+      {
+        "name": "everett.rank_groups_builder",
+        "status": "passed",
+        "seconds": 0.114069
+      },
+      {
+        "name": "everett.elias_fano",
+        "status": "passed",
+        "seconds": 0.234223
+      },
+      {
+        "name": "everett.profile",
+        "status": "passed",
+        "seconds": 3.19019
+      },
+      {
+        "name": "everett.borrowed_writer",
+        "status": "passed",
+        "seconds": 0.463455
+      },
+      {
+        "name": "everett.profile_blob",
+        "status": "passed",
+        "seconds": 1.38036
+      },
+      {
+        "name": "everett.comparison_fc",
+        "status": "passed",
+        "seconds": 11.9292
+      },
+      {
+        "name": "everett.sampling",
+        "status": "passed",
+        "seconds": 0.728164
+      },
+      {
+        "name": "everett.index_builder",
+        "status": "passed",
+        "seconds": 1.87926
+      },
+      {
+        "name": "everett.index_builder_allocations",
+        "status": "passed",
+        "seconds": 0.32038
+      },
+      {
+        "name": "everett.index_pipeline",
+        "status": "passed",
+        "seconds": 0.200312
+      },
+      {
+        "name": "everett.query",
+        "status": "passed",
+        "seconds": 0.990408
+      },
+      {
+        "name": "everett.cola_index",
+        "status": "passed",
+        "seconds": 16.1694
+      },
+      {
+        "name": "everett.cola_frontier",
+        "status": "passed",
+        "seconds": 0.20245
+      },
+      {
+        "name": "everett.cola_route_reuse",
+        "status": "passed",
+        "seconds": 0.140365
+      },
+      {
+        "name": "everett.cola_schedule",
+        "status": "passed",
+        "seconds": 23.6378
+      },
+      {
+        "name": "everett.native_writer",
+        "status": "passed",
+        "seconds": 0.290406
+      },
+      {
+        "name": "everett.native_writer_allocations",
+        "status": "passed",
+        "seconds": 0.653799
+      },
+      {
+        "name": "everett.native_file_writer",
+        "status": "passed",
+        "seconds": 0.338054
+      },
+      {
+        "name": "everett.profile_file_output",
+        "status": "passed",
+        "seconds": 0.241669
+      },
+      {
+        "name": "everett.native_merge",
+        "status": "passed",
+        "seconds": 0.94849
+      },
+      {
+        "name": "everett.native_merge_mapped",
+        "status": "passed",
+        "seconds": 1.67073
+      },
+      {
+        "name": "everett.world",
+        "status": "passed",
+        "seconds": 0.087072
+      },
+      {
+        "name": "everett.pins",
+        "status": "passed",
+        "seconds": 0.0705688
+      },
+      {
+        "name": "everett.durability",
+        "status": "passed",
+        "seconds": 0.0721941
+      },
+      {
+        "name": "everett.mapped_file",
+        "status": "passed",
+        "seconds": 0.129174
+      },
+      {
+        "name": "everett.files",
+        "status": "passed",
+        "seconds": 0.614859
+      },
+      {
+        "name": "everett.object_writer",
+        "status": "passed",
+        "seconds": 0.158987
+      },
+      {
+        "name": "everett.object_stream",
+        "status": "passed",
+        "seconds": 0.147757
+      },
+      {
+        "name": "everett.mapped_blob",
+        "status": "passed",
+        "seconds": 1.92423
+      },
+      {
+        "name": "everett.multiverse",
+        "status": "passed",
+        "seconds": 0.170946
+      },
+      {
+        "name": "everett.catalog_bindings",
+        "status": "passed",
+        "seconds": 0.0828709
+      },
+      {
+        "name": "everett.output_budget",
+        "status": "passed",
+        "seconds": 0.0700178
+      },
+      {
+        "name": "everett.mapped_index_builder",
+        "status": "passed",
+        "seconds": 1.42287
+      },
+      {
+        "name": "everett.file_index_builder",
+        "status": "passed",
+        "seconds": 1.42024
+      },
+      {
+        "name": "everett.file_index_pipeline",
+        "status": "passed",
+        "seconds": 1.54622
+      },
+      {
+        "name": "everett.mapped_cola",
+        "status": "passed",
+        "seconds": 2.57722
+      },
+      {
+        "name": "everett.mapped_cola_builder",
+        "status": "passed",
+        "seconds": 1.56686
+      },
+      {
+        "name": "everett.cola_terminal",
+        "status": "passed",
+        "seconds": 0.405557
+      },
+      {
+        "name": "everett.cola_file_index",
+        "status": "passed",
+        "seconds": 0.497683
+      },
+      {
+        "name": "everett.cola_adaptive_index",
+        "status": "passed",
+        "seconds": 0.543129
+      },
+      {
+        "name": "everett.tombstone_codec",
+        "status": "passed",
+        "seconds": 0.1498
+      },
+      {
+        "name": "everett.sort_bit_reservoir",
+        "status": "passed",
+        "seconds": 40.8189
+      },
+      {
+        "name": "everett.key_detail",
+        "status": "passed",
+        "seconds": 0.134278
+      },
+      {
+        "name": "everett.cola_local_merge",
+        "status": "passed",
+        "seconds": 0.225146
+      },
+      {
+        "name": "everett.cola_local_merge_failure",
+        "status": "passed",
+        "seconds": 0.177592
+      },
+      {
+        "name": "everett.cola_runtime",
+        "status": "passed",
+        "seconds": 0.903627
+      },
+      {
+        "name": "everett.redundant_runtime",
+        "status": "passed",
+        "seconds": 8.95262
+      },
+      {
+        "name": "everett.redundant_initial",
+        "status": "passed",
+        "seconds": 2.02382
+      },
+      {
+        "name": "everett.runtime_registry",
+        "status": "passed",
+        "seconds": 0.178713
+      },
+      {
+        "name": "everett.sort_codec",
+        "status": "passed",
+        "seconds": 0.506209
+      },
+      {
+        "name": "everett.sort_profile",
+        "status": "passed",
+        "seconds": 0.416304
+      },
+      {
+        "name": "everett.sort_profile_query",
+        "status": "passed",
+        "seconds": 0.145336
+      },
+      {
+        "name": "everett.sort_profile_file_writer",
+        "status": "passed",
+        "seconds": 0.470772
+      },
+      {
+        "name": "everett.sort_runtime",
+        "status": "passed",
+        "seconds": 0.697661
+      },
+      {
+        "name": "everett.typed_world",
+        "status": "passed",
+        "seconds": 0.422302
+      },
+      {
+        "name": "everett.typed_initial",
+        "status": "passed",
+        "seconds": 0.840587
+      },
+      {
+        "name": "everett.typed_depth",
+        "status": "passed",
+        "seconds": 0.210178
+      },
+      {
+        "name": "everett.typed_preflight",
+        "status": "passed",
+        "seconds": 0.255011
+      },
+      {
+        "name": "everett.typed_query_value",
+        "status": "passed",
+        "seconds": 0.188437
+      },
+      {
+        "name": "everett.typed_redundant",
+        "status": "passed",
+        "seconds": 0.809265
+      },
+      {
+        "name": "everett.typed_scan",
+        "status": "passed",
+        "seconds": 0.405061
+      },
+      {
+        "name": "everett.tombstone_admission",
+        "status": "passed",
+        "seconds": 0.180825
+      },
+      {
+        "name": "everett.replacement_rebuild",
+        "status": "passed",
+        "seconds": 2.68919
+      },
+      {
+        "name": "everett.session",
+        "status": "passed",
+        "seconds": 0.117142
+      },
+      {
+        "name": "everett.nursery_map",
+        "status": "passed",
+        "seconds": 0.16422
+      },
+      {
+        "name": "everett.byte_transport",
+        "status": "passed",
+        "seconds": 0.339745
+      },
+      {
+        "name": "everett.native_merge_allocations",
+        "status": "passed",
+        "seconds": 0.286755
+      },
+      {
+        "name": "everett.fixed_search",
+        "status": "passed",
+        "seconds": 5.00007
+      },
+      {
+        "name": "everett.typed_range",
+        "status": "passed",
+        "seconds": 0.779961
+      },
+      {
+        "name": "everett.redundant_checkpoint",
+        "status": "passed",
+        "seconds": 2.22988
+      },
+      {
+        "name": "everett.sqlite_catalog",
+        "status": "passed",
+        "seconds": 0.836484
+      },
+      {
+        "name": "everett.sqlite_catalog_adversarial",
+        "status": "passed",
+        "seconds": 2.21199
+      },
+      {
+        "name": "everett.sqlite_catalog_vfs",
+        "status": "passed",
+        "seconds": 16.8682
+      },
+      {
+        "name": "everett.sqlite_catalog_restart",
+        "status": "passed",
+        "seconds": 8.99089
+      },
+      {
+        "name": "everett.sqlite_catalog_timeline",
+        "status": "passed",
+        "seconds": 5.58684
+      },
+      {
+        "name": "everett.sqlite_catalog_streamed",
+        "status": "passed",
+        "seconds": 12.33
+      },
+      {
+        "name": "everett.sqlite_catalog_private",
+        "status": "passed",
+        "seconds": 1.15416
+      },
+      {
+        "name": "everett.sqlite_catalog_transaction",
+        "status": "passed",
+        "seconds": 4.37962
+      },
+      {
+        "name": "everett.sqlite_catalog_byte_transport",
+        "status": "passed",
+        "seconds": 25.9182
+      },
+      {
+        "name": "everett.sqlite_catalog_range",
+        "status": "passed",
+        "seconds": 10.7557
+      },
+      {
+        "name": "everett.sqlite_catalog_cola",
+        "status": "passed",
+        "seconds": 4.39222
+      },
+      {
+        "name": "everett.sqlite_catalog_sessions",
+        "status": "passed",
+        "seconds": 1.7406
+      },
+      {
+        "name": "everett.sqlite_catalog_runtime",
+        "status": "passed",
+        "seconds": 3.98694
+      },
+      {
+        "name": "everett.sqlite_catalog_redundant",
+        "status": "passed",
+        "seconds": 13.8348
+      },
+      {
+        "name": "everett.sqlite_catalog_connection",
+        "status": "passed",
+        "seconds": 9.40281
+      },
+      {
+        "name": "everett.sqlite_catalog_scan",
+        "status": "passed",
+        "seconds": 1.79281
+      },
+      {
+        "name": "everett.sqlite_catalog_bindings",
+        "status": "passed",
+        "seconds": 2.65893
+      },
+      {
+        "name": "everett.sqlite_catalog_binding_failures",
+        "status": "passed",
+        "seconds": 3.05458
+      },
+      {
+        "name": "everett.sqlite_catalog_graphs",
+        "status": "passed",
+        "seconds": 0.711027
+      },
+      {
+        "name": "everett.sqlite_catalog_sort_runtime",
+        "status": "passed",
+        "seconds": 10.1379
+      },
+      {
+        "name": "everett.sqlite_catalog_snapshot",
+        "status": "passed",
+        "seconds": 0.206543
+      },
+      {
+        "name": "everett.sqlite_catalog_rebuild",
+        "status": "passed",
+        "seconds": 11.5517
+      },
+      {
+        "name": "everett.sqlite_catalog_rebuild_streaming",
+        "status": "passed",
+        "seconds": 42.0699
+      },
+      {
+        "name": "everett.sqlite_catalog_rebuild_default",
+        "status": "passed",
+        "seconds": 6.96761
+      },
+      {
+        "name": "everett.sqlite_catalog_tiny_rebuild",
+        "status": "passed",
+        "seconds": 6.55997
+      },
+      {
+        "name": "everett.sqlite_catalog_active",
+        "status": "passed",
+        "seconds": 14.9837
+      },
+      {
+        "name": "everett.sqlite_catalog_seals",
+        "status": "passed",
+        "seconds": 0.57252
+      },
+      {
+        "name": "everett.sqlite_catalog_seal_pair",
+        "status": "passed",
+        "seconds": 1.27812
+      },
+      {
+        "name": "everett.sqlite_catalog_native_pair",
+        "status": "passed",
+        "seconds": 5.08312
+      },
+      {
+        "name": "everett.sqlite_catalog_ready_reservations",
+        "status": "passed",
+        "seconds": 4.71201
+      },
+      {
+        "name": "everett.sqlite_catalog_initial",
+        "status": "passed",
+        "seconds": 11.4849
+      },
+      {
+        "name": "everett.sqlite_catalog_empty",
+        "status": "passed",
+        "seconds": 1.73272
+      },
+      {
+        "name": "everett.sqlite_catalog_pair",
+        "status": "passed",
+        "seconds": 1.29325
+      },
+      {
+        "name": "everett.sqlite_catalog_streaming_runtime",
+        "status": "passed",
+        "seconds": 10.7711
+      },
+      {
+        "name": "everett.sqlite_catalog_streaming_restart",
+        "status": "passed",
+        "seconds": 15.7102
+      },
+      {
+        "name": "everett.sqlite_catalog_streaming_diagnostics",
+        "status": "passed",
+        "seconds": 2.50977
+      },
+      {
+        "name": "everett.sqlite_catalog_adaptive_native",
+        "status": "passed",
+        "seconds": 1.26834
+      },
+      {
+        "name": "everett.sqlite_catalog_native_reuse",
+        "status": "passed",
+        "seconds": 7.12635
+      },
+      {
+        "name": "everett.sort_runtime_context",
+        "status": "passed",
+        "seconds": 20.8156
+      },
+      {
+        "name": "everett.sort_runtime_adaptive_index",
+        "status": "passed",
+        "seconds": 1.15537
+      },
+      {
+        "name": "everett.sort_runtime_initial",
+        "status": "passed",
+        "seconds": 1.98926
+      },
+      {
+        "name": "everett.rank.neon",
+        "status": "passed",
+        "seconds": 1.06777
+      },
+      {
+        "name": "everett.fixed_search.neon",
+        "status": "passed",
+        "seconds": 4.06462
+      },
+      {
+        "name": "everett.elias_fano.neon",
+        "status": "passed",
+        "seconds": 0.27225
+      },
+      {
+        "name": "everett.crc32c.neon",
+        "status": "passed",
+        "seconds": 1.05937
+      },
+      {
+        "name": "everett.key_detail.neon",
+        "status": "passed",
+        "seconds": 0.141289
+      }
+    ],
+    "counts": {
+      "passed": 121,
+      "failed": 0,
+      "skipped": 0
+    },
+    "report_sha256": "a9464d4c2b86e2049d4fc2c62ecb53e1417c6b5fac033e04fb0277de09862189"
+  },
+  "tested_sources": {
+    "everett_commit": "8260b2c019f799e2ff5dab6178992af828061a8c",
+    "sha256": {
+      "CMakeLists.txt": "01dfb26b45646b5aceb1969982f90c9b2314ee7815531bdd7439deeb15a5410d",
+      "cmake/everett-tests.cmake": "62c6b806b1fe933c06458261dc603da79b7e776e7d01f67474cd9d2a8caa2f8c",
+      "include/everett/backend.h": "c5e1b744f557e74c9c88bc1c3dc981871fcb84bbaaf12cfbd92ddb395017da8e",
+      "include/everett/rank.h": "42d39fc76081bc99592b919246f4507d2f37e48ef646faae773752ae847deffe",
+      "include/everett/rank15.h": "ac21981203b8058e64931371894c7cdebd7a2389099c4822b2d7d8ec5dd46bde",
+      "include/everett/rank_groups.h": "755acbcc121eff93606d37e68d22596141e1587e8aabb63ff082ee3dbf4401e3",
+      "include/everett/elias_fano.h": "eaeca472fd06042c63ae02c6a6d25d3dcd2228f6be06a3be90c2e68df03bb5eb",
+      "src/crc32c.cc": "29c19847015596e0467b9e26b25e1125119c52ae182bf70579ec2d2527bd112f",
+      "src/crc32c_native.cc": "3857abff22986955536370069801f111a44097f7298d01ab1c3e9aff53682374"
+    }
+  },
+  "doxygen": {
+    "headers": 77,
+    "function_and_overload_associations": 45,
+    "fixture_symbols": 12,
+    "negative_fixtures": 6,
+    "markdown_pages": 122,
+    "formulas": 905,
+    "repaired_links": 294,
+    "bundled_sources": 423,
+    "status": "passed",
+    "version": "1.9.8"
+  },
+  "revision_scope": "Each qualification below records its own tested revision. The final implementation additionally contains file-comment cleanup and the independently tested embedded native-provider CMake fix.",
+  "native_provider_correction": {
+    "source_revision": "17a0a9c3a471ddfb58572353300b0fa832578f6e",
+    "integrated_revision": "90bbbdcf73b2c8d53bdd91ebf3249a5c09365bb3",
+    "embedded_neon": {
+      "report_sha256": "e49bf6a5b24b0e16fc65129e630b8396aa425aca3680f3b3acd95928ae11a18c",
+      "tests": [
+        {
+          "name": "everett.consumer",
+          "passed": true,
+          "seconds": 0.1
+        },
+        {
+          "name": "everett.consumer.neon",
+          "passed": true,
+          "seconds": 0.06
+        }
+      ]
+    },
+    "cross_avx2": "The original failing native consumer object compiles after the correction. No cross-architecture executable was run.",
+    "hosted_ci": {
+      "source_revision": "90bbbdcf73b2c8d53bdd91ebf3249a5c09365bb3",
+      "status": "unverified",
+      "reason": "The authenticated Actions browser connection became unavailable before the final run could be inspected. Local embedded NEON runtime and reproduced AVX2 consumer compilation passed."
+    }
+  }
+}

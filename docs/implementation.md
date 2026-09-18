@@ -1,6 +1,6 @@
 # Everett implementation status
 
-Updated 2026-09-17. Specification: [Everett design](design.md).
+Updated 2026-09-18. Specification: [Everett design](design.md).
 
 This ledger records what works, what the tests establish, and what remains to
 be built. The C++26 public API uses named modules in namespace `everett`.
@@ -81,8 +81,9 @@ production source.
 Focused scalar and NEON checks exercise rank, bounded fixed-key and prefix
 search, Elias–Fano construction, selection and cursor restart under ASan/UBSan.
 The SIMD dependency separately tests its new operations through both headers
-and imports. AVX2 and AVX-512 compile checks do not establish x86 runtime
-performance. On the qualified compiler, NEON rank15 preserves the prior
+and imports. Linux AVX2 CI also runs the scalar and native kernel suites.
+AVX-512 has compile coverage only. These checks establish correctness, not
+comparative throughput. On the qualified compiler, NEON rank15 preserves the prior
 instruction sequence, while prefix512 retains four vector population counts
 and a reduction without vector spills. Host timing was too variable to support
 a comparative latency claim.
@@ -1468,6 +1469,34 @@ With SQLite enabled, additional suites cover the catalog, adversarial operations
 forwarded VFS failures, process interruption, timeline publication, streamed
 merge publication and COLA graph registration. Three package consumers check relocated core and
 SQLite installations and embedded use. Doxygen is an optional additional check.
+
+The C++26 module integration passes all **121 core and NEON checks** on upstream
+Clang 23.1.1 at O2, with fatal ASan/UBSan diagnostics in the test translation
+units. Three independent package checks pass, including seven nested installed,
+embedded and SQLite consumers. The package build inherits ASan from SIMD;
+it does not add UBSan. Separate scalar and NEON CRC checks instrument the
+compiled kernel bodies with both sanitizers and pass the existing boundary,
+guard-page and incremental oracles.
+
+The optional byte Metal host passes **40 complete-file comparisons**, four
+input rejections and ten Elias–Fano output checks. Five byte/bit space-driver
+modes also pass their correctness checks. Those hosts use C++26 and explicit
+NEON policies with fatal ASan/UBSan diagnostics. The shared SIMD operations pass
+six strict header/import checks locally and the full dependency CI suites:
+**41 Linux AVX2 checks** and **36 macOS NEON checks**. The
+[module verification record](../bench/results/cxx26_modules_verification_20260918.json)
+keeps component revisions, instrumentation, initial failures and corrections
+separate. These are correctness runs; no new comparative performance claim
+follows from their durations. Doxygen verifies declaration ownership, Markdown
+links and mathematical notation after integration.
+
+Hosted Everett checks pass ten scalar/native kernel suites on both macOS NEON
+and Linux AVX2. The first run passes all three macOS package checks; Linux
+passes two, with its embedded native consumer selecting the wrong generated
+SIMD module provider. The corrected dependency edge passes a fresh two-consumer
+NEON package and compiles the reproduced failing AVX2 consumer. The final hosted
+rerun remains unverified because its authenticated Actions view became
+unavailable. The record preserves that distinction.
 
 The byte-default and conservative front-coding integration qualifies all **119
 checks** under strict O2 ASan/UBSan on AppleClang 21. The complete run passed

@@ -44,16 +44,21 @@ modules. Everett builds the profiles available from that package; set
 `EVERETT_PROFILES` to a subset when needed. The baseline module remains available.
 
 On macOS I pair upstream Clang with Apple's SDK C++ headers and system runtime.
-Use the following options consistently when configuring SIMD, Everett and its
-consumers:
+Put the SDK settings in a reusable toolchain file:
 
 ```sh
 everett_sdk="$(xcrun --sdk macosx --show-sdk-path)"
-# Add these to each cmake configure command:
-# -DCMAKE_OSX_SYSROOT="$everett_sdk"
-# -DCMAKE_CXX_FLAGS="-nostdinc++ -isystem $everett_sdk/usr/include/c++/v1"
+cat > clang23-macos.cmake <<EOF
+set(CMAKE_OSX_SYSROOT "$everett_sdk" CACHE PATH "")
+set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "")
+set(CMAKE_CXX_FLAGS_INIT "-nostdinc++ -isystem $everett_sdk/usr/include/c++/v1")
+EOF
 ```
 
+Add `-DCMAKE_TOOLCHAIN_FILE=/absolute/path/to/clang23-macos.cmake` to every
+configure command for SIMD, Everett and consumers, including the SIMD command
+above. Ensure `clang++` names the upstream compiler. The nested package tests
+forward this toolchain file, so their standard-library settings also agree.
 This prevents upstream libc++ headers from requiring symbols absent from the
 system runtime. Use a separate build directory for a different compiler or SDK.
 Then configure Everett:
@@ -87,7 +92,7 @@ cmake -S /path/to/example -B build-example -G Ninja \
 cmake --build build-example --parallel 4
 ```
 
-Apply the same SDK options or toolchain file used for the libraries. Requesting
+Apply the same toolchain file used for the libraries. Requesting
 `neon` in `find_package` checks that the installed Everett package contains that
 profile. Use the `avx2` or `avx512` component for the corresponding x86 example.
 
