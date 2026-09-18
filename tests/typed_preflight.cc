@@ -22,7 +22,7 @@ namespace {
   template <class P, class Base> struct observed_family : Base {
     struct key_transport : typed_detail::transport_t<P, Base> {
       using transport = typed_detail::transport_t<P, Base>;
-      inline static unsigned encodes = 0;
+      [[maybe_unused]] inline static unsigned encodes = 0;
       template <class S> static bit_string encode(typed_detail::key_t<S> const & key) {
         ++encodes;
         return transport::template encode<S>(key);

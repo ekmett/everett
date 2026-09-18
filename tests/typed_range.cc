@@ -264,7 +264,7 @@ namespace {
   // must not invoke this fallback at all.
   template <class P> struct counted_family : binary_runtime_family<P> {
     using original = binary_runtime_family<P>;
-    inline static unsigned queries = 0, sweeps = 0;
+    [[maybe_unused]] inline static unsigned queries = 0, sweeps = 0;
     struct snapshot_type {
       typename original::snapshot_type source;
       struct query_type {
