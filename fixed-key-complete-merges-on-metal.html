@@ -79,7 +79,7 @@ $(function() {
   <div class="headertitle"><div class="title">Fixed-key complete merges on Metal</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>I use this isolated experiment to measure the proposed <a class="el" href="md_docs_2table-layouts.html">fixed-key table</a>layouts". It produces a complete native output: keys, live values, a small experimental envelope, and the complete Elias–Fano directory for variable values. The output is checked byte for byte against a CPU merge using the library's <code>elias_fano::build</code>.</p>
+<div class="textblock"><p>I use this isolated experiment to measure the proposed <a class="el" href="md_docs_2table-layouts.html">fixed-key table layouts</a>. It produces a complete native output: keys, live values, a small experimental envelope, and the complete Elias–Fano directory for variable values. The output is checked byte for byte against a CPU merge using the library's <code>elias_fano::build</code>.</p>
 <p>These fixture formats are separate from Everett's persistent object format. The experiment does not change the library, select a production crossover, or reuse the string-merge calibration.</p>
 <h1><a class="anchor" id="inputs-and-meaning"></a>
 Inputs and meaning</h1>
@@ -112,8 +112,10 @@ Timing boundaries</h1>
 <p>There is <b>no <code>msync</code>, <code>fsync</code>, checksum, content-address computation or catalog commit</b> in these times. The files are scratch outputs. Mapping page faults, storage bandwidth and durable publication need their own end-to-end tests.</p>
 <h1><a class="anchor" id="building-and-checking"></a>
 Building and checking</h1>
+<p>Use the <a class="el" href="md_docs_2modules.html">C++26 module toolchain</a>, Ninja and an installed <code>simd</code> package with exceptions enabled. CMake builds the host and links Everett from this source checkout; Python handles shader artifacts and manifests.</p>
 <p>The standalone build follows the existing HLSL → validated SPIR-V → MSL → Metal path. Install DXC, SPIRV-Tools and SPIRV-Cross and make their executables available, or pass their paths as CMake cache variables:</p>
-<div class="fragment"><div class="line">cmake -S optional/fixed_gpu_merge -B build-fixed-gpu \</div>
+<p><code>EVERETT_EXPERIMENT_ARCH=AUTO</code> selects NEON on an ARM host with the native Everett archive, and scalar elsewhere. Select <code>AVX2</code> or <code>AVX512</code> explicitly only on a matching x86 build host; configuration checks its required features. <code>SCALAR</code> is always available. The experiment's policies carry that architecture explicitly, and new collections record it in their build metadata. Existing retained measurements describe their original sources and compiler settings.</p>
+<div class="fragment"><div class="line">cmake -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd -S optional/fixed_gpu_merge -B build-fixed-gpu \</div>
 <div class="line">  -DEVERETT_DXC=/path/to/dxc \</div>
 <div class="line">  -DEVERETT_SPIRV_VAL=/path/to/spirv-val \</div>
 <div class="line">  -DEVERETT_SPIRV_CROSS=/path/to/spirv-cross</div>

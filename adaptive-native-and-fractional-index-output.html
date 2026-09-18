@@ -81,8 +81,10 @@ $(function() {
 <div class="contents">
 <div class="textblock"><p>I give the redundant scheduler an execution-owned storage context that keeps small completed merges and fractional indexes in memory, and streams larger outputs into <code>.kv</code> and <code>.index</code> files. A short-lived intermediate result can therefore disappear without ever acquiring a file. Publication seals the completed objects still needed by the exact frontier.</p>
 <p>The context owns its SQLite connection, concrete file operations and shared retained-output allowance. It survives moves and rebases of the active engine; immutable snapshots retain their inputs directly. Each unfinished job also pins its context until its writer and scratch resources have been destroyed, even if the last external storage handle is released.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="sort__runtime__context_8h.html">everett/sort_runtime_context.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="connection_8h.html">everett/connection.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett.sqlite;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using </span>policy = <a class="code hl_typedef" href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a>;</div>
 <div class="line"><span class="keyword">using </span>family = <a class="code hl_struct" href="structeverett_1_1sort__runtime__family.html">everett::streaming_sort_runtime_family&lt;policy&gt;</a>;</div>
@@ -94,9 +96,7 @@ $(function() {
 <div class="line"><span class="keyword">auto</span> before = live.snapshot();</div>
 <div class="line">live.put(<span class="stringliteral">&quot;config/theme&quot;</span>, <span class="stringliteral">&quot;light&quot;</span>);</div>
 <div class="line">assert(before.get(<span class="stringliteral">&quot;config/theme&quot;</span>) == <span class="stringliteral">&quot;dark&quot;</span>);</div>
-<div class="ttc" id="aconnection_8h_html"><div class="ttname"><a href="connection_8h.html">connection.h</a></div><div class="ttdoc">Opens durable named typed sessions with mutable commands and immutable saved worlds.</div></div>
-<div class="ttc" id="anamespaceeverett_html_a0024fbb12310b9faed7bb7c71adb37f2"><div class="ttname"><a href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a></div><div class="ttdeci">storage_policy&lt; string_registry &gt; string_policy</div><div class="ttdef"><b>Definition</b> policy.h:78</div></div>
-<div class="ttc" id="asort__runtime__context_8h_html"><div class="ttname"><a href="sort__runtime__context_8h.html">sort_runtime_context.h</a></div><div class="ttdoc">Owns catalog reservations and streamed native and index outputs for one runtime worker.</div></div>
+<div class="ttc" id="anamespaceeverett_html_a0024fbb12310b9faed7bb7c71adb37f2"><div class="ttname"><a href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a></div><div class="ttdeci">storage_policy&lt; string_registry &gt; string_policy</div><div class="ttdef"><b>Definition</b> policy.h:88</div></div>
 <div class="ttc" id="astructeverett_1_1sort__runtime__family_html"><div class="ttname"><a href="structeverett_1_1sort__runtime__family.html">everett::sort_runtime_family</a></div><div class="ttdef"><b>Definition</b> sort_runtime.h:152</div></div>
 <div class="ttc" id="astructeverett_1_1typed__engine_html"><div class="ttname"><a href="structeverett_1_1typed__engine.html">everett::typed_engine</a></div><div class="ttdef"><b>Definition</b> typed_world.h:406</div></div>
 <div class="ttc" id="astructeverett_1_1wrapping__fingerprint__algebra_html"><div class="ttname"><a href="structeverett_1_1wrapping__fingerprint__algebra.html">everett::wrapping_fingerprint_algebra</a></div><div class="ttdef"><b>Definition</b> fingerprint.h:22</div></div>

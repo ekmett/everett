@@ -81,8 +81,9 @@ $(function() {
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="streaming-a-table-into-a-persistent-timeline"></a> We can write sorted records directly to a private <code>.kv</code> attempt, merge mapped inputs into another attempt, and publish the completed result through SQLite. The payload need not accumulate in an in-memory array. The writer keeps a 64 KiB payload buffer, bounded control scratch and one residual offset per physical block; finishing builds the Elias–Fano directory from those offsets. The checked record writer also retains its previous key. The default merge retains its two input keys as references into the pinned source files.</p>
 <p>This complete program takes an existing empty object directory as its only argument. The caller establishes that directory and its ancestors durably. The example allocates deterministic identities because it creates a fresh catalog; an application supplies its own fresh identity allocator.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="native__file__merge_8h.html">everett/native_file_merge.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="sqlite__catalog_8h.html">everett/sqlite_catalog.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;span&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;filesystem&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;array&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cstdio&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;initializer_list&gt;</span></div>
@@ -90,6 +91,8 @@ $(function() {
 <div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;string_view&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;utility&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett.sqlite;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a>;</div>
 <div class="line"><span class="keyword">using </span>P = <a class="code hl_struct" href="structeverett_1_1storage__policy.html">storage_policy&lt;everett::tip&lt;everett::encoded_sort&lt;everett::byte_encoding&lt;&gt;</a>&gt;&gt;&gt;;</div>
@@ -188,8 +191,6 @@ $(function() {
 <div class="ttc" id="anamespaceeverett_html_a32e7c25e258570adfdbc424e5b59fa80a8f888fedf6bd5ff7c93c6d76bb8dc21c"><div class="ttname"><a href="namespaceeverett.html#a32e7c25e258570adfdbc424e5b59fa80a8f888fedf6bd5ff7c93c6d76bb8dc21c">everett::publication_stage::published</a></div><div class="ttdeci">@ published</div></div>
 <div class="ttc" id="anamespaceeverett_html_a3920d15c114d218c1f53e866788fb071"><div class="ttname"><a href="namespaceeverett.html#a3920d15c114d218c1f53e866788fb071">everett::encode_index_sections</a></div><div class="ttdeci">encoded_sections&lt; P &gt; encode_index_sections(profile_blob&lt; P &gt; const &amp;pair, object_id const &amp;native_id, std::optional&lt; blob_identity &gt; exact_target=std::nullopt)</div><div class="ttdef"><b>Definition</b> sections.h:413</div></div>
 <div class="ttc" id="anamespaceeverett_html_ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796"><div class="ttname"><a href="namespaceeverett.html#ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796">everett::cola_origin::native</a></div><div class="ttdeci">@ native</div></div>
-<div class="ttc" id="anative__file__merge_8h_html"><div class="ttname"><a href="native__file__merge_8h.html">native_file_merge.h</a></div><div class="ttdoc">Merges pinned native inputs into a streamed immutable object.</div></div>
-<div class="ttc" id="asqlite__catalog_8h_html"><div class="ttname"><a href="sqlite__catalog_8h.html">sqlite_catalog.h</a></div><div class="ttdoc">Stores retained roots, timeline generations and exact file graphs in optional SQLite metadata.</div></div>
 <div class="ttc" id="astructeverett_1_1bit__string_html_adee15aee9f486dda0ab3cf09cdec9331"><div class="ttname"><a href="structeverett_1_1bit__string.html#adee15aee9f486dda0ab3cf09cdec9331">everett::bit_string::view</a></div><div class="ttdeci">bit_view view() const &amp;</div><div class="ttdef"><b>Definition</b> profile.h:178</div></div>
 <div class="ttc" id="astructeverett_1_1blob__identity_html"><div class="ttname"><a href="structeverett_1_1blob__identity.html">everett::blob_identity</a></div><div class="ttdef"><b>Definition</b> sections.h:34</div></div>
 <div class="ttc" id="astructeverett_1_1catalog__object__reservation_html"><div class="ttname"><a href="structeverett_1_1catalog__object__reservation.html">everett::catalog_object_reservation</a></div><div class="ttdef"><b>Definition</b> sqlite_catalog.h:45</div></div>
@@ -205,7 +206,7 @@ $(function() {
 <div class="ttc" id="astructeverett_1_1query__root_html"><div class="ttname"><a href="structeverett_1_1query__root.html">everett::query_root</a></div><div class="ttdef"><b>Definition</b> query.h:51</div></div>
 <div class="ttc" id="astructeverett_1_1query__root_html_a70cf60e63031f26830e481bcf593cf98"><div class="ttname"><a href="structeverett_1_1query__root.html#a70cf60e63031f26830e481bcf593cf98">everett::query_root::cursor</a></div><div class="ttdeci">query_cursor&lt; P, Blob &gt; cursor(bit_view query) const</div><div class="ttdef"><b>Definition</b> query.h:235</div></div>
 <div class="ttc" id="astructeverett_1_1sqlite__catalog_html"><div class="ttname"><a href="structeverett_1_1sqlite__catalog.html">everett::sqlite_catalog</a></div><div class="ttdef"><b>Definition</b> sqlite_catalog.h:351</div></div>
-<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:53</div></div>
+<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:55</div></div>
 </div><!-- fragment --><p>Link with <code>everett::sqlite</code> as described in the <a class="el" href="md_docs_2sqlite-catalog.html">catalog guide</a>. The example uses trusted admission because the checked writers establish the sorted-key encoding and the terminal indexes contain no borrowed samples. Received or uncertain objects can require explicit scans instead.</p>
 <p>The tables here have at most \(K\) records, so a terminal pair is already a prepared query root. A larger head needs an empty-native routing prefix built from its augmented samples before publication. The <a class="el" href="md_docs_2file-indexes.html">file-index pipeline</a> builds those links without rewriting the existing native files or accumulating their borrowed payloads in memory.</p>
 <p><code>step</code> limits distinct keys, not bytes or elapsed time. Large literals, values, composition callbacks and final metadata construction have their own costs. The underlying output streams complete bytes and CRC state as construction proceeds, then backpatch the private directory at finalization without a body readback. Both public file wrappers are nonmovable; their input mappings stay pinned while a merge pauses or fails.</p>

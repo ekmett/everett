@@ -84,7 +84,9 @@ $(function() {
 <h1><a class="anchor" id="using-a-session"></a>
 Using a session</h1>
 <p>Given an engine satisfying the contract below:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="session_8h.html">everett/session.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;utility&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">void</span> update(<span class="keyword">auto</span> engine, <span class="keyword">auto</span> contribution) {</div>
 <div class="line">  <span class="keyword">using </span>engine_type = <span class="keyword">decltype</span>(engine);</div>
@@ -103,7 +105,6 @@ Using a session</h1>
 <div class="line">  live.shutdown();</div>
 <div class="line">  <span class="comment">// Both before and after retain their own pins after the session is gone.</span></div>
 <div class="line">}</div>
-<div class="ttc" id="asession_8h_html"><div class="ttname"><a href="session_8h.html">session.h</a></div><div class="ttdoc">Serializes charged contributions and equivalent layout work behind immutable snapshots.</div></div>
 <div class="ttc" id="astructeverett_1_1session_html"><div class="ttname"><a href="structeverett_1_1session.html">everett::session</a></div><div class="ttdef"><b>Definition</b> session.h:71</div></div>
 <div class="ttc" id="astructeverett_1_1session_html_a3c048c2f184bf0ef60bb4bc36dac4f7a"><div class="ttname"><a href="structeverett_1_1session.html#a3c048c2f184bf0ef60bb4bc36dac4f7a">everett::session::snapshot</a></div><div class="ttdeci">snapshot_type snapshot() const noexcept</div><div class="ttdef"><b>Definition</b> session.h:118</div></div>
 </div><!-- fragment --><p><code>apply(contribution)</code> is the synchronous convenience: it submits to the same worker and waits for that contribution's publication. It returns the same owning publication as <code>ticket::get()</code>. Other threads may submit concurrently; all engine operations run in queue order. Calls that overlap may be ordered either way. A later contribution can already be visible by the time an earlier call returns, but its receipt still identifies the earlier publication.</p>

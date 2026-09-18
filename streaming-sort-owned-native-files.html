@@ -82,8 +82,7 @@ $(function() {
 <div class="textblock"><p><code>sort_profile_file_writer</code> and <code>sort_profile_file_merge</code> write KV03 native files without keeping a complete output payload in memory. They use the same joint sort/key framing state as <code>sort_profile_writer</code> and seal through <code>object_stream</code>. The resulting bytes match the ordinary in-memory encoder, including the header, checksum, sparse offsets, shared selector dictionary and block seeds.</p>
 <h1><a class="anchor" id="merge-into-a-file"></a>
 Merge into a file</h1>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="sort__profile__file__merge_8h.html">everett/sort_profile_file_merge.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="sort__profile__file_8h.html">everett/sort_profile_file.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using </span>policy = <a class="code hl_typedef" href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a>;</div>
 <div class="line"><span class="keyword">using </span>native = <a class="code hl_struct" href="structeverett_1_1mapped__sort__profile.html">everett::mapped_sort_profile&lt;policy&gt;</a>;</div>
@@ -95,9 +94,7 @@ Merge into a file</h1>
 <div class="line"><span class="keywordflow">while</span> (!merge.done()) merge.step(64);</div>
 <div class="line"><span class="keyword">auto</span> receipt = merge.finish();</div>
 <div class="line"><span class="keyword">auto</span> mapped = native::open(receipt.path);</div>
-<div class="ttc" id="anamespaceeverett_html_a0024fbb12310b9faed7bb7c71adb37f2"><div class="ttname"><a href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a></div><div class="ttdeci">storage_policy&lt; string_registry &gt; string_policy</div><div class="ttdef"><b>Definition</b> policy.h:78</div></div>
-<div class="ttc" id="asort__profile__file_8h_html"><div class="ttname"><a href="sort__profile__file_8h.html">sort_profile_file.h</a></div><div class="ttdoc">Maps sort-owned KV03 records and binds their ordinary fractional indexes.</div></div>
-<div class="ttc" id="asort__profile__file__merge_8h_html"><div class="ttname"><a href="sort__profile__file__merge_8h.html">sort_profile_file_merge.h</a></div><div class="ttdoc">Merges sort-owned native records directly into a streamed immutable file.</div></div>
+<div class="ttc" id="anamespaceeverett_html_a0024fbb12310b9faed7bb7c71adb37f2"><div class="ttname"><a href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a></div><div class="ttdeci">storage_policy&lt; string_registry &gt; string_policy</div><div class="ttdef"><b>Definition</b> policy.h:88</div></div>
 <div class="ttc" id="astructeverett_1_1mapped__sort__profile_html"><div class="ttname"><a href="structeverett_1_1mapped__sort__profile.html">everett::mapped_sort_profile</a></div><div class="ttdef"><b>Definition</b> sort_profile_file.h:116</div></div>
 <div class="ttc" id="astructeverett_1_1sort__profile__file__merge_html"><div class="ttname"><a href="structeverett_1_1sort__profile__file__merge.html">everett::sort_profile_file_merge</a></div><div class="ttdef"><b>Definition</b> sort_profile_file_merge.h:30</div></div>
 </div><!-- fragment --><p>Each step counts output keys. Key bytes, value bytes, callback work and I/O are additional costs. The merger pins its inputs across pauses and failures. Only <code>finish</code> installs and seals the completed immutable file; a paused or abandoned attempt is not a resumable durable checkpoint.</p>

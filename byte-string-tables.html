@@ -80,7 +80,10 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>I use the byte profile for ordinary string tables. Byte-aligned parsing and copying are a useful starting point, and bit packing does not consistently produce smaller complete files on the measured workloads. The ordinary API is:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="connection_8h.html">everett/connection.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett.sqlite;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">auto</span> storage = <a class="code hl_function" href="structeverett_1_1multiverse.html#a890188769ba568d8ed7d189e4e256146">everett::multiverse&lt;&gt;::create</a>(<span class="stringliteral">&quot;byte-data&quot;</span>);</div>
 <div class="line"><span class="keyword">auto</span> db = storage.connect(<span class="stringliteral">&quot;main&quot;</span>);</div>
@@ -88,7 +91,6 @@ $(function() {
 <div class="line"><span class="keyword">auto</span> before = db.snapshot();</div>
 <div class="line">db.put(<span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;Byte strings&quot;</span>);</div>
 <div class="line"><span class="comment">// before.get(&quot;name&quot;) still returns &quot;Everett&quot;.</span></div>
-<div class="ttc" id="aconnection_8h_html"><div class="ttname"><a href="connection_8h.html">connection.h</a></div><div class="ttdoc">Opens durable named typed sessions with mutable commands and immutable saved worlds.</div></div>
 <div class="ttc" id="astructeverett_1_1multiverse_html_a890188769ba568d8ed7d189e4e256146"><div class="ttname"><a href="structeverett_1_1multiverse.html#a890188769ba568d8ed7d189e4e256146">everett::multiverse::create</a></div><div class="ttdeci">static multiverse create(std::filesystem::path root)</div><div class="ttdef"><b>Definition</b> multiverse.h:128</div></div>
 </div><!-- fragment --><p>The default <code>storage_policy&lt;&gt;</code> has one tagless <code>unsorted&lt;std::optional&lt;std::string&gt;&gt;</code> sort, 15:1 sampling and byte-counted front coding. It uses the same charged redundant merge scheduler, persistent worlds, named sessions and transactions as other typed tables. Its native files use the byte-aligned <code>KV02</code> profile.</p>
 <p><code>multiverse&lt;string_policy&gt;</code> selects an explicit bit table with the same public operations. I keep that path available for bit-oriented key grammars and measured compression gains; I do not assume that smaller controls alone justify its parsing cost. The time and space results below compare the complete native merge and file costs that they actually measure.</p>

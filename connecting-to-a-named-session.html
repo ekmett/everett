@@ -80,23 +80,27 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>Most applications can start with <code>connect</code>, then use the result as a mutable string table:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="connection_8h.html">everett/connection.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett.neon;</div>
+<div class="line"><span class="keyword">import</span> everett.sqlite;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main(<span class="keywordtype">int</span> argc, <span class="keywordtype">char</span> ** argv) {</div>
 <div class="line">  <span class="keywordflow">if</span> (argc != 2) <span class="keywordflow">return</span> 64;</div>
-<div class="line">  <span class="keyword">auto</span> storage = <a class="code hl_function" href="structeverett_1_1multiverse.html#a890188769ba568d8ed7d189e4e256146">everett::multiverse&lt;&gt;::create</a>(argv[1]);</div>
+<div class="line">  <span class="keyword">auto</span> storage = <a class="code hl_struct" href="structeverett_1_1multiverse.html">everett::multiverse&lt;everett::neon_policy&lt;&gt;</a>&gt;::create(argv[1]);</div>
 <div class="line">  <span class="keyword">auto</span> db = storage.connect(<span class="stringliteral">&quot;earth-616&quot;</span>);</div>
 <div class="line">  db.put(<span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;Everett&quot;</span>);</div>
 <div class="line">  <span class="keyword">auto</span> name = db.get(<span class="stringliteral">&quot;name&quot;</span>);</div>
 <div class="line">  <span class="keywordflow">return</span> name != <span class="stringliteral">&quot;Everett&quot;</span>;</div>
 <div class="line">}</div>
-<div class="ttc" id="aconnection_8h_html"><div class="ttname"><a href="connection_8h.html">connection.h</a></div><div class="ttdoc">Opens durable named typed sessions with mutable commands and immutable saved worlds.</div></div>
-<div class="ttc" id="astructeverett_1_1multiverse_html_a890188769ba568d8ed7d189e4e256146"><div class="ttname"><a href="structeverett_1_1multiverse.html#a890188769ba568d8ed7d189e4e256146">everett::multiverse::create</a></div><div class="ttdeci">static multiverse create(std::filesystem::path root)</div><div class="ttdef"><b>Definition</b> multiverse.h:128</div></div>
+<div class="ttc" id="astructeverett_1_1multiverse_html"><div class="ttname"><a href="structeverett_1_1multiverse.html">everett::multiverse</a></div><div class="ttdef"><b>Definition</b> multiverse.h:72</div></div>
 </div><!-- fragment --><p><code>connect</code> opens the latest version of that named session, creating an empty one when needed. Its default key and value type is <code>std::string</code>, including embedded zero bytes. A missing key returns an empty <code>std::optional</code>; a stored empty string remains present. The default uses the byte profile, 15:1 sampling, and byte-counted front coding. Its single string sort needs no sort code. The free function <code>everett::connect(directory, name)</code> provides the same operation without keeping a multiverse object.</p>
-<p><code>multiverse&lt;&gt;</code> uses <code>storage_policy&lt;&gt;</code>: the <a class="el" href="byte-string-tables.html">byte string profile</a> with raw string payloads and byte tombstone tags. For an explicit bit table, use <code>multiverse&lt;string_policy&gt;</code>. That registry assigns code zero to strings, reserves code one, and uses order-zero exponential-Golomb backspaces. Both profiles provide the same connection API. The policy and schema must match when reopening a named table.</p>
+<p>This example explicitly selects NEON execution. On x86, use <code>everett.avx2</code> and <code>avx2_policy&lt;&gt;</code> for a compatible target. The baseline <code>multiverse&lt;&gt;</code> uses scalar execution with <code>storage_policy&lt;&gt;</code>: the <a class="el" href="byte-string-tables.html">byte string profile</a> with raw string payloads and byte tombstone tags. For an explicit bit table, use <code>multiverse&lt;string_policy&gt;</code>. That registry assigns code zero to strings, reserves code one, and uses order-zero exponential-Golomb backspaces. Both profiles provide the same connection API. The policy and schema must match when reopening a named table.</p>
 <p>The ordinary <code>active_engine&lt;P&gt;</code> uses the redundant scheduler. Bit registries write sort-owned native records, retaining small private merge and index outputs under a shared allowance and streaming larger ones to files. Publication seals every retained output needed by the durable snapshot. Byte registries use the same scheduler with byte-aligned opaque records. Each admitted item pays structural merge and index work. A registry containing only the optional-string sort also <a class="el" href="rebuilding-replacement-tables.html">rebuilds obsolete history</a>, so deletion reduces the current table's physical generation as well as its live count. Saved snapshots keep their own files. <a class="el" href="adaptive-native-and-fractional-index-output.html">The storage context</a> describes its buffers and barriers.</p>
 <p>Enable the SQLite component when building Everett, then link its CMake target:</p>
-<div class="fragment"><div class="line">target_link_libraries(my_application PRIVATE everett::sqlite)</div>
+<div class="fragment"><div class="line">target_link_libraries(my_application PRIVATE everett::neon everett::sqlite)</div>
+<div class="line">simd_target_profile(my_application NEON)</div>
 </div><!-- fragment --><p><code>multiverse&lt;&gt;::create</code> creates missing directories and syncs each new directory and its parent. Existing ancestors must already be durable and trusted; the ordinary <code>multiverse</code> constructor and free <code>connect</code> require an existing backing directory. I create <code>catalog.sqlite3</code> exclusively, and never format or replace an existing catalog. A competing creator can make the initial connection fail; an incomplete or incompatible catalog requires explicit attention. With <code>connection_options{.create_if_missing = false}</code>, both the catalog and the named session must already exist.</p>
 <h1><a class="anchor" id="reads-writes-and-snapshots"></a>
 Reads, writes and snapshots</h1>

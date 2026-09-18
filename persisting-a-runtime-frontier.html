@@ -81,7 +81,9 @@ $(function() {
 <div class="contents">
 <div class="textblock"><p><code>runtime_store&lt;P&gt;</code> connects the encoded runtime to the SQLite catalog. I persist the exact searchable graph and its admission intervals together, so reopening can restore a named session without decoding all its keys. The native files and fractional indexes remain immutable.</p>
 <p>The directory must already exist and have durable ancestors. <code>create</code> creates a version-4 catalog; <code>open</code> checks an existing one. Link with <code>everett::sqlite</code>.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="runtime__store_8h.html">everett/runtime_store.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;filesystem&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using </span>P = <a class="code hl_struct" href="structeverett_1_1storage__policy.html">everett::storage_policy&lt;everett::tip&lt;everett::encoded_sort&lt;everett::bit_encoding&lt;&gt;</a>&gt;&gt;&gt;;</div>
 <div class="line"> </div>
@@ -96,14 +98,13 @@ $(function() {
 <div class="line">  current = storage.publish(current.head, next);</div>
 <div class="line">  storage.save(<span class="stringliteral">&quot;initial&quot;</span>, current.head);</div>
 <div class="line">}</div>
-<div class="ttc" id="aruntime__store_8h_html"><div class="ttname"><a href="runtime__store_8h.html">runtime_store.h</a></div><div class="ttdoc">Seals runtime frontiers and restores named sessions through immutable mappings.</div></div>
 <div class="ttc" id="astructeverett_1_1bit__string_html_a38a3d294ca4e7b058d8d7bad4cd6ede1"><div class="ttname"><a href="structeverett_1_1bit__string.html#a38a3d294ca4e7b058d8d7bad4cd6ede1">everett::bit_string::from_bytes</a></div><div class="ttdeci">static bit_string from_bytes(std::span&lt; std::byte const &gt; source)</div><div class="ttdef"><b>Definition</b> profile.h:188</div></div>
 <div class="ttc" id="astructeverett_1_1cola__runtime_html"><div class="ttname"><a href="structeverett_1_1cola__runtime.html">everett::cola_runtime</a></div><div class="ttdef"><b>Definition</b> cola_runtime.h:221</div></div>
 <div class="ttc" id="astructeverett_1_1cola__runtime_html_a5b03eaf5fd833d27d17158b3ae419a4c"><div class="ttname"><a href="structeverett_1_1cola__runtime.html#a5b03eaf5fd833d27d17158b3ae419a4c">everett::cola_runtime::contribute</a></div><div class="ttdeci">snapshot_type contribute(profile_record const &amp;record, std::uint64_t service_budget=64)</div><div class="ttdef"><b>Definition</b> cola_runtime.h:272</div></div>
 <div class="ttc" id="astructeverett_1_1cola__runtime_html_ae59b19dbbb77b6924b4d8fee852d2497"><div class="ttname"><a href="structeverett_1_1cola__runtime.html#ae59b19dbbb77b6924b4d8fee852d2497">everett::cola_runtime::snapshot</a></div><div class="ttdeci">snapshot_type snapshot() const</div><div class="ttdef"><b>Definition</b> cola_runtime.h:238</div></div>
-<div class="ttc" id="astructeverett_1_1profile__record_html"><div class="ttname"><a href="structeverett_1_1profile__record.html">everett::profile_record</a></div><div class="ttdef"><b>Definition</b> profile.h:295</div></div>
+<div class="ttc" id="astructeverett_1_1profile__record_html"><div class="ttname"><a href="structeverett_1_1profile__record.html">everett::profile_record</a></div><div class="ttdef"><b>Definition</b> profile.h:294</div></div>
 <div class="ttc" id="astructeverett_1_1runtime__store_html_a9b8abc0c0d1b8086c61ee0d0e41729ee"><div class="ttname"><a href="structeverett_1_1runtime__store.html#a9b8abc0c0d1b8086c61ee0d0e41729ee">everett::runtime_store::create</a></div><div class="ttdeci">static runtime_store create(std::filesystem::path const &amp;root, Ids ids={}, catalog_options options={}, Ops ops={})</div><div class="ttdef"><b>Definition</b> runtime_store.h:74</div></div>
-<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:53</div></div>
+<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:55</div></div>
 </div><!-- fragment --><p><code>find(name)</code> returns the exact catalog generation, a mapped runtime snapshot, and opaque semantic metadata. A typed layer uses that metadata for its live count, signature and schema identity. <code>find_save(name)</code> returns an immutable historical selection; <code>fork(name, source)</code> starts a new named progression from one. Neither operation copies native records.</p>
 <p>Publication walks the completed graph in dependency order. New owned nodes receive reserved identities, sealed files and registered receipts; nodes already sealed by the execution context reuse their acknowledged bindings. Only objects reachable from the complete checkpoint need publication, so discarded owned intermediates do not acquire files. The adapter then commits the root and checkpoint atomically. Unchanged native owners reuse their existing <code>.kv</code> identity when an index changes. A wholly unchanged graph needs only a new catalog generation. Each shared owner carries its acknowledged file identity and mapped representation. The first sealing walks its immediate dependencies; an already bound suffix stops that walk. These records disappear with their owners, so there is no weak-owner table to sweep.</p>
 <p><code>prepare(snapshot)</code> performs that graph sealing without publishing a named generation. <a class="el" href="transactions-and-private-nurseries.html">Transactions</a> use a scoped catalog connection so private attempts retain their complete dependencies until commit or final lease release. Sealing private files does not make their state visible through a named session.</p>
@@ -119,13 +120,11 @@ $(function() {
 <h1><a class="anchor" id="complete-redundant-frontiers"></a>
 Complete redundant frontiers</h1>
 <p>The storage adapter also accepts the three-slot redundant scheduler. Its fourth template parameter selects the runtime family; the second selects physical ID allocation and the third supplies the SQLite fault-injection seam:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="redundant__checkpoint_8h.html">everett/redundant_checkpoint.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="runtime__store_8h.html">everett/runtime_store.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using </span>family = <a class="code hl_struct" href="structeverett_1_1redundant__runtime__family.html">everett::redundant_runtime_family&lt;P&gt;</a>;</div>
 <div class="line"><span class="keyword">using </span>storage = <a class="code hl_struct" href="structeverett_1_1runtime__store.html">everett::runtime_store</a>&lt;P, <a class="code hl_struct" href="structeverett_1_1random__object__ids.html">everett::random_object_ids</a>,</div>
 <div class="line">  <a class="code hl_struct" href="structeverett_1_1sqlite__catalog__ops.html">everett::sqlite_catalog_ops</a>, family&gt;;</div>
-<div class="ttc" id="aredundant__checkpoint_8h_html"><div class="ttname"><a href="redundant__checkpoint_8h.html">redundant_checkpoint.h</a></div><div class="ttdoc">Encodes the full redundant frontier, including hidden completed artifacts and restart recipes.</div></div>
 <div class="ttc" id="astructeverett_1_1random__object__ids_html"><div class="ttname"><a href="structeverett_1_1random__object__ids.html">everett::random_object_ids</a></div><div class="ttdef"><b>Definition</b> runtime_store.h:31</div></div>
 <div class="ttc" id="astructeverett_1_1redundant__runtime__family_html"><div class="ttname"><a href="structeverett_1_1redundant__runtime__family.html">everett::redundant_runtime_family</a></div><div class="ttdef"><b>Definition</b> redundant_runtime.h:918</div></div>
 <div class="ttc" id="astructeverett_1_1runtime__store_html"><div class="ttname"><a href="structeverett_1_1runtime__store.html">everett::runtime_store</a></div><div class="ttdef"><b>Definition</b> runtime_store.h:58</div></div>
@@ -136,8 +135,10 @@ Complete redundant frontiers</h1>
 <h1><a class="anchor" id="sort-owned-native-files"></a>
 Sort-owned native files</h1>
 <p><code>sort_runtime_store</code> uses the same catalog and checkpoint machinery for KV03 native files. Each registered sort supplies the key and value grammar; integer keys need not acquire the framing of a front-coded string. The fractional indexes retain their IX03 representation.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="connection_8h.html">everett/connection.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;filesystem&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cassert&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett.sqlite;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using </span>family = <a class="code hl_struct" href="structeverett_1_1sort__runtime__family.html">everett::sort_runtime_family&lt;&gt;</a>;</div>
 <div class="line"><span class="keyword">using </span>engine = <a class="code hl_struct" href="structeverett_1_1typed__engine.html">everett::typed_engine</a>&lt;<a class="code hl_typedef" href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a>,</div>
@@ -151,8 +152,7 @@ Sort-owned native files</h1>
 <div class="line">  live.put(<span class="stringliteral">&quot;alpha&quot;</span>, <span class="stringliteral">&quot;two&quot;</span>);</div>
 <div class="line">  assert(before.get(<span class="stringliteral">&quot;alpha&quot;</span>) == <span class="stringliteral">&quot;one&quot;</span>);</div>
 <div class="line">}</div>
-<div class="ttc" id="aconnection_8h_html"><div class="ttname"><a href="connection_8h.html">connection.h</a></div><div class="ttdoc">Opens durable named typed sessions with mutable commands and immutable saved worlds.</div></div>
-<div class="ttc" id="anamespaceeverett_html_a0024fbb12310b9faed7bb7c71adb37f2"><div class="ttname"><a href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a></div><div class="ttdeci">storage_policy&lt; string_registry &gt; string_policy</div><div class="ttdef"><b>Definition</b> policy.h:78</div></div>
+<div class="ttc" id="anamespaceeverett_html_a0024fbb12310b9faed7bb7c71adb37f2"><div class="ttname"><a href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a></div><div class="ttdeci">storage_policy&lt; string_registry &gt; string_policy</div><div class="ttdef"><b>Definition</b> policy.h:88</div></div>
 <div class="ttc" id="astructeverett_1_1sort__runtime__family_html"><div class="ttname"><a href="structeverett_1_1sort__runtime__family.html">everett::sort_runtime_family</a></div><div class="ttdef"><b>Definition</b> sort_runtime.h:152</div></div>
 <div class="ttc" id="astructeverett_1_1typed__engine_html"><div class="ttname"><a href="structeverett_1_1typed__engine.html">everett::typed_engine</a></div><div class="ttdef"><b>Definition</b> typed_world.h:406</div></div>
 <div class="ttc" id="astructeverett_1_1wrapping__fingerprint__algebra_html"><div class="ttname"><a href="structeverett_1_1wrapping__fingerprint__algebra.html">everett::wrapping_fingerprint_algebra</a></div><div class="ttdef"><b>Definition</b> fingerprint.h:22</div></div>
@@ -163,8 +163,10 @@ Sort-owned native files</h1>
 Adaptive native and index output</h1>
 <p>The ordinary named string connection can also <a class="el" href="reusing-completed-native-merges.html">reuse completed native merges</a> from another fork. Exact ordered input identities, application schema, physical policy and the known replacement kernel select the result. The requesting fork retains its old dependencies while constructing its own indexes. Reuse covers naturally streamed completions; it never forces small adaptive outputs to acquire files.</p>
 <p><code>streaming_sort_runtime_family</code> keeps small native merges and fractional indexes owned until publication, and streams larger outputs into KV03 and IX03 files. This is the connection backend selected by an explicit bit policy. The typed core carries one concrete storage context through equivalent snapshot replacements:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="connection_8h.html">everett/connection.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="sort__runtime__context_8h.html">everett/sort_runtime_context.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett.sqlite;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using </span>family = <a class="code hl_struct" href="structeverett_1_1sort__runtime__family.html">everett::streaming_sort_runtime_family&lt;&gt;</a>;</div>
 <div class="line"><span class="keyword">using </span>engine = <a class="code hl_struct" href="structeverett_1_1typed__engine.html">everett::typed_engine</a>&lt;<a class="code hl_typedef" href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a>,</div>
@@ -172,7 +174,6 @@ Adaptive native and index output</h1>
 <div class="line"> </div>
 <div class="line"><span class="keyword">auto</span> live = everett::connect&lt;engine&gt;(existing_directory, <span class="stringliteral">&quot;earth-616&quot;</span>);</div>
 <div class="line">live.put(<span class="stringliteral">&quot;alpha&quot;</span>, <span class="stringliteral">&quot;one&quot;</span>);</div>
-<div class="ttc" id="asort__runtime__context_8h_html"><div class="ttname"><a href="sort__runtime__context_8h.html">sort_runtime_context.h</a></div><div class="ttdoc">Owns catalog reservations and streamed native and index outputs for one runtime worker.</div></div>
 </div><!-- fragment --><p>The native encoder starts in its existing 64 KiB buffer; an index uses its two 64 KiB borrowed-stream buffers. A first spill reserves an identity and attempt before creating the destination, writes the encoded prefix and continues the same encoder. The index resolves exact dependency bindings at that point, so a small private index needs neither file identities nor a secondary spool. Large metadata or an unavailable retention allowance also selects streaming, including at finalization.</p>
 <p>The context shares an 8 MiB retained-output allowance between natives and indexes, with a 128 KiB ceiling per completed object. Charges follow immutable owners and cover the object, lease and actual section-vector capacities. Construction buffers, source owners, encoder metadata, composition workspace and allocator overhead lie outside that allowance. Setting either output limit to zero forces eager streaming; see <a class="el" href="adaptive-native-and-fractional-index-output.html">the context options</a>.</p>
 <p>A completed owned output remains part of the scheduler's ordinary charged work. Publication seals it only if the full frontier still retains it. A hidden completed merge is retained too, even before an index points to it. Discarded owned intermediate outputs release their allowance without performing file or catalog work. The adapter returns a mapped durable snapshot after the graph and checkpoint are committed.</p>

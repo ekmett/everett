@@ -96,9 +96,12 @@ Functions</h2></td></tr>
 <tr class="memitem:af963574f6e55814de37c857ea28bd2dd" id="r_af963574f6e55814de37c857ea28bd2dd"><td class="memTemplParams" colspan="2">template&lt;std::size_t Words, bool Upper&gt; </td></tr>
 <tr class="memitem:af963574f6e55814de37c857ea28bd2dd"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1fixed__search__detail.html#af963574f6e55814de37c857ea28bd2dd">precedes</a> (std::byte const *source, std::array&lt; std::uint32_t, Words &gt; const &amp;query) noexcept</td></tr>
 <tr class="separator:af963574f6e55814de37c857ea28bd2dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa24a47c964832e9263a39eba4460c280" id="r_aa24a47c964832e9263a39eba4460c280"><td class="memTemplParams" colspan="2">template&lt;std::size_t Words, bool Upper&gt; </td></tr>
-<tr class="memitem:aa24a47c964832e9263a39eba4460c280"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="fixed__search_8h.html#a5d39768b0a5191abc97c85d39fb296fb">EVERETT_FIXED_SEARCH_INLINE</a> unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1fixed__search__detail.html#aa24a47c964832e9263a39eba4460c280">population</a> (std::byte const *source, unsigned count, std::array&lt; std::uint32_t, Words &gt; const &amp;query) noexcept</td></tr>
-<tr class="separator:aa24a47c964832e9263a39eba4460c280"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9222f23f3d7de6786d4316f3dfbe03eb" id="r_a9222f23f3d7de6786d4316f3dfbe03eb"><td class="memTemplParams" colspan="2">template&lt;bool Upper, simd::architecture Arch&gt; </td></tr>
+<tr class="memitem:a9222f23f3d7de6786d4316f3dfbe03eb"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1fixed__search__detail.html#a9222f23f3d7de6786d4316f3dfbe03eb">precedes_four</a> (std::byte const *source, simd::vec&lt; std::uint32_t, 4, Arch &gt; query) noexcept</td></tr>
+<tr class="separator:a9222f23f3d7de6786d4316f3dfbe03eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a302d1047e1562cb315dc68e984736aa2" id="r_a302d1047e1562cb315dc68e984736aa2"><td class="memTemplParams" colspan="2">template&lt;std::size_t Words, bool Upper, simd::architecture Arch&gt; </td></tr>
+<tr class="memitem:a302d1047e1562cb315dc68e984736aa2"><td class="memTemplItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1fixed__search__detail.html#a302d1047e1562cb315dc68e984736aa2">population</a> (std::byte const *source, unsigned count, std::array&lt; std::uint32_t, Words &gt; const &amp;query) noexcept</td></tr>
+<tr class="separator:a302d1047e1562cb315dc68e984736aa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a574a1d81dedc2892544d273a01736a81" name="a574a1d81dedc2892544d273a01736a81"></a>
@@ -127,19 +130,19 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="aa24a47c964832e9263a39eba4460c280" name="aa24a47c964832e9263a39eba4460c280"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa24a47c964832e9263a39eba4460c280">&#9670;&#160;</a></span>population()</h2>
+<a id="a302d1047e1562cb315dc68e984736aa2" name="a302d1047e1562cb315dc68e984736aa2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a302d1047e1562cb315dc68e984736aa2">&#9670;&#160;</a></span>population()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;std::size_t Words, bool Upper&gt; </div>
+template&lt;std::size_t Words, bool Upper, simd::architecture Arch&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="fixed__search_8h.html#a5d39768b0a5191abc97c85d39fb296fb">EVERETT_FIXED_SEARCH_INLINE</a> unsigned everett::fixed_search_detail::population </td>
+          <td class="memname">unsigned everett::fixed_search_detail::population </td>
           <td>(</td>
           <td class="paramtype">std::byte const *&#160;</td>
           <td class="paramname"><em>source</em>, </td>
@@ -164,7 +167,7 @@ template&lt;std::size_t Words, bool Upper&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -192,6 +195,44 @@ template&lt;std::size_t Words, bool Upper&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">std::array&lt; std::uint32_t, Words &gt; const &amp;&#160;</td>
+          <td class="paramname"><em>query</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a9222f23f3d7de6786d4316f3dfbe03eb" name="a9222f23f3d7de6786d4316f3dfbe03eb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9222f23f3d7de6786d4316f3dfbe03eb">&#9670;&#160;</a></span>precedes_four()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;bool Upper, simd::architecture Arch&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool everett::fixed_search_detail::precedes_four </td>
+          <td>(</td>
+          <td class="paramtype">std::byte const *&#160;</td>
+          <td class="paramname"><em>source</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">simd::vec&lt; std::uint32_t, 4, Arch &gt;&#160;</td>
           <td class="paramname"><em>query</em>&#160;</td>
         </tr>
         <tr>

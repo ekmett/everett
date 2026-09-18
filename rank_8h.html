@@ -90,7 +90,10 @@ $(function() {
 
 <p>Declares Everett's rank support.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;bit&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="el" href="backend_8h_source.html">everett/backend.h</a>&gt;</code><br />
+<code>#include &lt;simd/integer.h&gt;</code><br />
+<code>#include &lt;array&gt;</code><br />
+<code>#include &lt;bit&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;limits&gt;</code><br />
 <code>#include &lt;span&gt;</code><br />
@@ -121,10 +124,23 @@ Namespaces</h2></td></tr>
 Functions</h2></td></tr>
 <tr class="memitem:a139152c51f90e27adfb4be086c39d437" id="r_a139152c51f90e27adfb4be086c39d437"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__detail.html#a139152c51f90e27adfb4be086c39d437">everett::rank_detail::prefix512_portable</a> (std::uint64_t const *words, unsigned bits) noexcept</td></tr>
 <tr class="separator:a139152c51f90e27adfb4be086c39d437"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a6407b26209bd08bfb40bf92a076de0" id="r_a6a6407b26209bd08bfb40bf92a076de0"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch, unsigned Vector&gt; </td></tr>
+<tr class="memitem:a6a6407b26209bd08bfb40bf92a076de0"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__detail.html#a6a6407b26209bd08bfb40bf92a076de0">everett::rank_detail::prefix_vector</a> (std::uint64_t const *words, unsigned bits) noexcept</td></tr>
+<tr class="separator:a6a6407b26209bd08bfb40bf92a076de0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c9355e9764cd7950bf6990f88915c49" id="r_a2c9355e9764cd7950bf6990f88915c49"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch, unsigned Vector = 0&gt; </td></tr>
+<tr class="memitem:a2c9355e9764cd7950bf6990f88915c49"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__detail.html#a2c9355e9764cd7950bf6990f88915c49">everett::rank_detail::prefix_vectors</a> (std::uint64_t const *words, unsigned bits) noexcept</td></tr>
+<tr class="separator:a2c9355e9764cd7950bf6990f88915c49"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7867ebf28eaf782e22f3fceefe6e7424" id="r_a7867ebf28eaf782e22f3fceefe6e7424"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a7867ebf28eaf782e22f3fceefe6e7424"><td class="memTemplItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__detail.html#a7867ebf28eaf782e22f3fceefe6e7424">everett::rank_detail::prefix512</a> (std::uint64_t const *words, unsigned bits) noexcept</td></tr>
+<tr class="separator:a7867ebf28eaf782e22f3fceefe6e7424"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2692eb034c23e256d8c3bb37c6a52ce8" id="r_a2692eb034c23e256d8c3bb37c6a52ce8"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__detail.html#a2692eb034c23e256d8c3bb37c6a52ce8">everett::rank_detail::popcount512_portable</a> (std::uint64_t const *words) noexcept</td></tr>
 <tr class="separator:a2692eb034c23e256d8c3bb37c6a52ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a74b42c425ac443ba0ff8a023a6c2ef93" id="r_a74b42c425ac443ba0ff8a023a6c2ef93"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__detail.html#a74b42c425ac443ba0ff8a023a6c2ef93">everett::rank_detail::popcount512</a> (std::uint64_t const *words) noexcept</td></tr>
-<tr class="separator:a74b42c425ac443ba0ff8a023a6c2ef93"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a962f1dc1eb5e53c2af29404564a6054b" id="r_a962f1dc1eb5e53c2af29404564a6054b"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch, unsigned Vector = 0&gt; </td></tr>
+<tr class="memitem:a962f1dc1eb5e53c2af29404564a6054b"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__detail.html#a962f1dc1eb5e53c2af29404564a6054b">everett::rank_detail::population_vectors</a> (std::uint8_t const *bytes) noexcept</td></tr>
+<tr class="separator:a962f1dc1eb5e53c2af29404564a6054b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a75f7de864b41eac792300739db8fcd3a" id="r_a75f7de864b41eac792300739db8fcd3a"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a75f7de864b41eac792300739db8fcd3a"><td class="memTemplItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__detail.html#a75f7de864b41eac792300739db8fcd3a">everett::rank_detail::popcount512</a> (std::uint64_t const *words) noexcept</td></tr>
+<tr class="separator:a75f7de864b41eac792300739db8fcd3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c3532d5b073825919e8248a338cf89e" id="r_a4c3532d5b073825919e8248a338cf89e"><td class="memItemLeft" align="right" valign="top">constexpr unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__detail.html#a4c3532d5b073825919e8248a338cf89e">everett::rank_detail::run_prefix</a> (std::uint32_t packed, unsigned run) noexcept</td></tr>
 <tr class="separator:a4c3532d5b073825919e8248a338cf89e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>

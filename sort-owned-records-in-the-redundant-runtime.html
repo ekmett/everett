@@ -80,8 +80,7 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>I can use the same redundant COLA scheduler with sort-owned native records:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="sort__runtime_8h.html">everett/sort_runtime.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="typed__scan_8h.html">everett/typed_scan.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using </span>policy = <a class="code hl_typedef" href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a>;</div>
 <div class="line"><span class="keyword">using </span>family = <a class="code hl_struct" href="structeverett_1_1sort__runtime__family.html">everett::sort_runtime_family&lt;policy&gt;</a>;</div>
@@ -97,13 +96,11 @@ $(function() {
 <div class="line"><span class="keywordflow">for</span> (<span class="keyword">auto</span> rows = <a class="code hl_enumvalue" href="namespaceeverett.html#a99834ef96e497098ad861535607a98f2a53aefec08170b2ebed981a0a86d0dbe0">everett::scan</a>(after); <span class="keyword">auto</span> row = rows.next();) {</div>
 <div class="line">  <span class="comment">// row-&gt;key and row-&gt;value own their contents.</span></div>
 <div class="line">}</div>
-<div class="ttc" id="anamespaceeverett_html_a0024fbb12310b9faed7bb7c71adb37f2"><div class="ttname"><a href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a></div><div class="ttdeci">storage_policy&lt; string_registry &gt; string_policy</div><div class="ttdef"><b>Definition</b> policy.h:78</div></div>
+<div class="ttc" id="anamespaceeverett_html_a0024fbb12310b9faed7bb7c71adb37f2"><div class="ttname"><a href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a></div><div class="ttdeci">storage_policy&lt; string_registry &gt; string_policy</div><div class="ttdef"><b>Definition</b> policy.h:88</div></div>
 <div class="ttc" id="anamespaceeverett_html_a99834ef96e497098ad861535607a98f2a53aefec08170b2ebed981a0a86d0dbe0"><div class="ttname"><a href="namespaceeverett.html#a99834ef96e497098ad861535607a98f2a53aefec08170b2ebed981a0a86d0dbe0">everett::catalog_admission::scan</a></div><div class="ttdeci">@ scan</div></div>
-<div class="ttc" id="asort__runtime_8h_html"><div class="ttname"><a href="sort__runtime_8h.html">sort_runtime.h</a></div><div class="ttdoc">Runs typed updates through sort-owned native files and the shared redundant scheduler.</div></div>
 <div class="ttc" id="astructeverett_1_1sort__runtime__family_html"><div class="ttname"><a href="structeverett_1_1sort__runtime__family.html">everett::sort_runtime_family</a></div><div class="ttdef"><b>Definition</b> sort_runtime.h:152</div></div>
 <div class="ttc" id="astructeverett_1_1typed__engine_html"><div class="ttname"><a href="structeverett_1_1typed__engine.html">everett::typed_engine</a></div><div class="ttdef"><b>Definition</b> typed_world.h:406</div></div>
 <div class="ttc" id="astructeverett_1_1wrapping__fingerprint__algebra_html"><div class="ttname"><a href="structeverett_1_1wrapping__fingerprint__algebra.html">everett::wrapping_fingerprint_algebra</a></div><div class="ttdef"><b>Definition</b> fingerprint.h:22</div></div>
-<div class="ttc" id="atyped__scan_8h_html"><div class="ttname"><a href="typed__scan_8h.html">typed_scan.h</a></div><div class="ttdoc">Scans one sort in an immutable typed world with chronological resolution.</div></div>
 </div><!-- fragment --><p><code>session&lt;engine&gt;</code> provides the same serialized mutable commands and asynchronous receipts as it does for other engine families. Snapshot contributions keep exact old-value validation; the engine's static command factories apply to the current state. Disjoint contributions from one base retain the same composite signature in either order.</p>
 <p>Explicit bit-profile connections select this grammar with streamed native and index output. The example above selects its owning in-memory family explicitly. <code>typed_engine&lt;&gt;</code> and the opaque binary and redundant families retain their own formats. The default string schema for this family is <code>everett.optional-string/code0/sort-profile-v1</code>, distinct from the opaque transport's <code>everett.optional-string/code0/v1</code>. A custom registry or selector needs an explicit application schema identity.</p>
 <h1><a class="anchor" id="what-enters-a-native-file"></a>

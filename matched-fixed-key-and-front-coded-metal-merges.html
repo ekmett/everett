@@ -98,8 +98,10 @@ Measurement boundary</h1>
 <p>The KV configuration is the previously calibrated optimized default: mapped compressed inputs, GPU frame parsing and prefix-owner reconstruction, eight-byte prefix cache, word emitter, and GPU output EF. The tree remains levelwise and the output plan separate. The measured tiled-tree and fused-plan experiments remain opt-in after mixed complete-path results. This comparison does not claim to find the fastest possible KV implementation. Fixed uses its existing no-cancellation fast path and Merge Path 32 ordering.</p>
 <h1><a class="anchor" id="reproduction-13"></a>
 Reproduction</h1>
+<p>Use the <a class="el" href="md_docs_2modules.html">C++26 module toolchain</a>, Ninja and an installed <code>simd</code> package with exceptions enabled. CMake builds the host and links Everett from this source checkout; Python handles shader artifacts and manifests.</p>
 <p>First build the two existing optional packages and supply their compiled Metal libraries. Shader sources must match the retained artifact provenance. The wrappers include the existing host implementations verbatim and compile only new program entry points; they do not rebuild or modify the shaders.</p>
-<div class="fragment"><div class="line">cmake -S optional/fixed_kv_compare -B build-fixed-kv \</div>
+<p><code>EVERETT_EXPERIMENT_ARCH=AUTO</code> selects NEON on an ARM host with the native Everett archive, and scalar elsewhere. Select <code>AVX2</code> or <code>AVX512</code> explicitly only on a matching x86 build host; configuration checks its required features. <code>SCALAR</code> is always available. The experiment's policies carry that architecture explicitly, and new collections record it in their build metadata. Existing retained measurements describe their original sources and compiler settings.</p>
+<div class="fragment"><div class="line">cmake -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd -S optional/fixed_kv_compare -B build-fixed-kv \</div>
 <div class="line">  -DEVERETT_KV_METALLIB=/path/to/kv/kernels.metallib \</div>
 <div class="line">  -DEVERETT_FIXED_METALLIB=/path/to/fixed/kernels.metallib</div>
 <div class="line">cmake --build build-fixed-kv --parallel 1</div>

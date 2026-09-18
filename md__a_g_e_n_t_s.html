@@ -83,11 +83,12 @@ $(function() {
 <h1><a class="anchor" id="coding-style"></a>
 Coding style</h1>
 <ul>
-<li>C++20, with no modules or header units.</li>
+<li>Use C++26 named modules and the language/toolchain conventions of <code>ekmett/simd</code>. Keep system headers and intrinsic-backed textual implementation inputs in the global module fragment when needed. Header-only distribution is not a goal.</li>
 <li>Follow the lowercase, struct-first style of <a href="https://github.com/ekmett/bad">https://github.com/ekmett/bad</a> (reference revision 978b8056ffafc992fd1b7300ccf7bd1219cd3a20), without importing its ISA assumptions or macro-dispatch machinery.</li>
 <li>Use lowercase/snake_case names for concrete types, functions, namespaces, variables and files. Short uppercase template parameters are welcome.</li>
 <li>Use struct with explicit private/protected sections, two-space indentation, .h headers with <code>#pragma once</code>, .cc implementations, and T const &amp; spelling.</li>
-<li>Include public headers through everett/foo.h. Keep helpers with their sole consumer and extract them only for actual sharing.</li>
+<li>Public consumers import Everett modules. Textual implementation inputs use <code>everett/foo.h</code> paths; module interfaces use <code>.ccm</code>. Keep helpers with their sole consumer and extract them only for actual sharing.</li>
+<li>Use <code>simd::vec&lt;T,N,Arch&gt;</code> and explicit architecture types for SIMD kernels. Use <code>&lt;simd/attributes.h&gt;</code> for cross-platform attributes. Extend the shared SIMD library with small reusable operations when needed, coordinating with its other consumers and taking its main branch as authoritative.</li>
 <li>Prefer templates, CRTP and associated type families for policy specialization. Avoid virtual dispatch, PImpl and type-erased backend payloads.</li>
 <li>Use standard attributes and facilities where practical. Individual named modifier macros are permitted; do not add variadic modifier-dispatch macros.</li>
 <li>Retain author notices. Place SPDX-FileCopyrightText and SPDX-License-Identifier in a license comment before code (after a shebang, if present). The identifier is BSD-2-Clause OR Apache-2.0, at the recipient's choice; both complete texts are in LICENSES/ and the choice is stated in LICENSE. Do not change license terms without an explicit instruction.</li>

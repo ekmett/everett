@@ -83,7 +83,10 @@ $(function() {
 <p><code><a class="el" href="sort__codec_8h.html" title="Encodes typed bit records with inherited sort prefixes and sort-owned grammars.">everett/sort_codec.h</a></code> implements that streaming layer. Its native and borrowed streams share a registry and key grammar. This is a separate record format from <code>profile_array</code>: the existing mapped profiles and their indexes continue to use their own framing. These codecs do not by themselves change a <code>.kv</code> file's format or make mixed record grammars queryable through those profiles. The <a class="el" href="md_docs_2keys.html">sort contract</a> describes their shared logical identity and order.</p>
 <h1><a class="anchor" id="a-small-example"></a>
 A small example</h1>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="sort__codec_8h.html">everett/sort_codec.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;type_traits&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">struct </span>names {</div>
 <div class="line">  <span class="keyword">using </span>key_codec = <a class="code hl_struct" href="structeverett_1_1fc__string__key.html">everett::fc_string_key&lt;&gt;</a>;</div>
@@ -106,7 +109,6 @@ A small example</h1>
 <div class="line">read.next([](<span class="keyword">auto</span>, <span class="keyword">auto</span> <span class="keyword">const</span> &amp;, <span class="keyword">auto</span> <span class="keyword">const</span> &amp;, <span class="keyword">auto</span>) {</div>
 <div class="line">  <span class="comment">// Receives std::type_identity&lt;S&gt;, S&#39;s key and value, and record controls.</span></div>
 <div class="line">});</div>
-<div class="ttc" id="asort__codec_8h_html"><div class="ttname"><a href="sort__codec_8h.html">sort_codec.h</a></div><div class="ttdoc">Encodes typed bit records with inherited sort prefixes and sort-owned grammars.</div></div>
 <div class="ttc" id="astructeverett_1_1bin_html"><div class="ttname"><a href="structeverett_1_1bin.html">everett::bin</a></div><div class="ttdef"><b>Definition</b> registry.h:78</div></div>
 <div class="ttc" id="astructeverett_1_1bit__encoding_html"><div class="ttname"><a href="structeverett_1_1bit__encoding.html">everett::bit_encoding</a></div><div class="ttdef"><b>Definition</b> registry.h:55</div></div>
 <div class="ttc" id="astructeverett_1_1bit__string_html_adee15aee9f486dda0ab3cf09cdec9331"><div class="ttname"><a href="structeverett_1_1bit__string.html#adee15aee9f486dda0ab3cf09cdec9331">everett::bit_string::view</a></div><div class="ttdeci">bit_view view() const &amp;</div><div class="ttdef"><b>Definition</b> profile.h:178</div></div>

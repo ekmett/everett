@@ -6,6 +6,7 @@
  * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
  * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
  */
+#include "../host_backend.h"
 #pragma once
 
 // Included after prototype.mm's gpu helper. Synthetic offset sequences test
@@ -23,7 +24,7 @@ inline void check(gpu & context, std::string const & name,
   std::vector<std::uint32_t> offsets(records);
   for (std::uint32_t i = 0; i != records; ++i)
     offsets[i] = static_cast<std::uint32_t>(residuals[i / 15] + std::uint64_t(i) * common);
-  auto cpu = everett::elias_fano::build(residuals);
+  auto cpu = everett::elias_fano::build<everett_experiment::architecture>(residuals);
   auto input = context.buffer(offsets.size() * 4, offsets.data());
   auto groups = (entries + 255) / 256;
   auto counts = context.buffer(groups * 4);

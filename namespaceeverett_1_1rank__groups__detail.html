@@ -97,6 +97,15 @@ Functions</h2></td></tr>
 <tr class="memitem:adfe4b1751fc56c049565aeba70e6269f" id="r_adfe4b1751fc56c049565aeba70e6269f"><td class="memTemplParams" colspan="2">template&lt;unsigned Bits&gt; </td></tr>
 <tr class="memitem:adfe4b1751fc56c049565aeba70e6269f"><td class="memTemplItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__groups__detail.html#adfe4b1751fc56c049565aeba70e6269f">prefix_portable</a> (std::uint64_t const *words, unsigned count) noexcept</td></tr>
 <tr class="separator:adfe4b1751fc56c049565aeba70e6269f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a842dc66d3fc02b661db11186e745c83e" id="r_a842dc66d3fc02b661db11186e745c83e"><td class="memTemplParams" colspan="2">template&lt;unsigned Bits, simd::architecture Arch, unsigned Vector, unsigned Plane = 0&gt; </td></tr>
+<tr class="memitem:a842dc66d3fc02b661db11186e745c83e"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__groups__detail.html#a842dc66d3fc02b661db11186e745c83e">weighted_bits</a> (simd::vec&lt; std::uint8_t, 16, Arch &gt; value) noexcept</td></tr>
+<tr class="separator:a842dc66d3fc02b661db11186e745c83e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f5f4ec2e9d55a46c21056db43d98680" id="r_a8f5f4ec2e9d55a46c21056db43d98680"><td class="memTemplParams" colspan="2">template&lt;unsigned Bits, simd::architecture Arch, unsigned Vector = 0&gt; </td></tr>
+<tr class="memitem:a8f5f4ec2e9d55a46c21056db43d98680"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__groups__detail.html#a8f5f4ec2e9d55a46c21056db43d98680">prefix_vectors</a> (std::byte const *bytes, unsigned bits) noexcept</td></tr>
+<tr class="separator:a8f5f4ec2e9d55a46c21056db43d98680"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c69ecb192875d7b330f195f630936c8" id="r_a1c69ecb192875d7b330f195f630936c8"><td class="memTemplParams" colspan="2">template&lt;unsigned Bits, simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a1c69ecb192875d7b330f195f630936c8"><td class="memTemplItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1rank__groups__detail.html#a1c69ecb192875d7b330f195f630936c8">prefix</a> (std::uint64_t const *words, unsigned count) noexcept</td></tr>
+<tr class="separator:a1c69ecb192875d7b330f195f630936c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a14f37f76f8c2276bf94efb6bcf0094ba" name="a14f37f76f8c2276bf94efb6bcf0094ba"></a>
@@ -120,6 +129,44 @@ template&lt;unsigned Bits, unsigned Word, unsigned Plane&gt; </div>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a1c69ecb192875d7b330f195f630936c8" name="a1c69ecb192875d7b330f195f630936c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1c69ecb192875d7b330f195f630936c8">&#9670;&#160;</a></span>prefix()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;unsigned Bits, simd::architecture Arch = simd::scalar&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned everett::rank_groups_detail::prefix </td>
+          <td>(</td>
+          <td class="paramtype">std::uint64_t const *&#160;</td>
+          <td class="paramname"><em>words</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -191,6 +238,72 @@ template&lt;unsigned Bits&gt; </div>
           <td></td>
           <td>)</td>
           <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8f5f4ec2e9d55a46c21056db43d98680" name="a8f5f4ec2e9d55a46c21056db43d98680"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f5f4ec2e9d55a46c21056db43d98680">&#9670;&#160;</a></span>prefix_vectors()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;unsigned Bits, simd::architecture Arch, unsigned Vector = 0&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto everett::rank_groups_detail::prefix_vectors </td>
+          <td>(</td>
+          <td class="paramtype">std::byte const *&#160;</td>
+          <td class="paramname"><em>bytes</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned&#160;</td>
+          <td class="paramname"><em>bits</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a842dc66d3fc02b661db11186e745c83e" name="a842dc66d3fc02b661db11186e745c83e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a842dc66d3fc02b661db11186e745c83e">&#9670;&#160;</a></span>weighted_bits()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;unsigned Bits, simd::architecture Arch, unsigned Vector, unsigned Plane = 0&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto everett::rank_groups_detail::weighted_bits </td>
+          <td>(</td>
+          <td class="paramtype">simd::vec&lt; std::uint8_t, 16, Arch &gt;&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
         </tr>
       </table>
   </td>

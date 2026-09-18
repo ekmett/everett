@@ -79,7 +79,7 @@ $(function() {
   <div class="headertitle"><div class="title">Byte-profile GPU merge</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>This optional experiment merges real byte-profile <code>KV02</code> files on Metal. I keep its supported grammar narrow: the tagless built-in optional-string sort under <code>storage_policy&lt;&gt;</code>, replacement composition, and 15-record codec blocks and sampling. <code>gpu_registry&lt;Policy, Compose&gt;</code> enables only that exact combination. The existing bit-profile shader contract is unchanged.</p>
+<div class="textblock"><p>This optional experiment merges real byte-profile <code>KV02</code> files on Metal. I keep its supported grammar narrow: the tagless built-in optional-string sort under <code>backend_policy&lt;Architecture&gt;</code>, replacement composition, and 15-record codec blocks and sampling. <code>gpu_registry&lt;Policy, Compose&gt;</code> enables only that exact combination. The existing bit-profile shader contract is unchanged.</p>
 <p>Both inputs are immutable, strictly sorted, unique-key files. The older input comes first. Equal keys retain the newer encoded value; a tombstone remains a record. The output is an ordinary native <code>.kv</code> file with the normal 96-byte header, 128-byte directory, five sections, canonical Elias–Fano arrays, padding and CRC32C. It is checked byte for byte against the CPU batch writer, then opened and scanned through the ordinary mapped reader.</p>
 <p><a class="el" href="byte-profile-metal-merge-measurements.html">Initial measurements</a> retain complete-file times, process spread and correctness evidence.</p>
 <h1><a class="anchor" id="pipeline"></a>
@@ -95,12 +95,17 @@ Pipeline</h1>
 <p>The parser checks framing, tags, offset bounds and retained lengths. It is not an admission proof for arbitrary untrusted files: comparisons trust the accepted inputs' sorted order and uniqueness. Fixtures receive a full CPU scan before measurement. Ordinary replacement preserves every distinct key, which lets output suffixes borrow directly from their chosen source literals. Strong-delete cleanup and the typed conservative tombstone-depth contract require additional work; this driver does not enable those shader modes.</p>
 <h1><a class="anchor" id="build-and-check"></a>
 Build and check</h1>
+<p>Use the <a class="el" href="md_docs_2modules.html">C++26 module toolchain</a>, Ninja and an installed <code>simd</code> package with exceptions enabled. CMake builds the host and links Everett from this source checkout; Python handles shader artifacts and manifests.</p>
 <p>On macOS with Metal, DXC, SPIRV-Tools and SPIRV-Cross available:</p>
-<div class="fragment"><div class="line">cmake -S optional/byte_gpu_merge -B build-byte-gpu</div>
+<p><code>EVERETT_EXPERIMENT_ARCH=AUTO</code> selects NEON on an ARM host with the native Everett archive, and scalar elsewhere. Select <code>AVX2</code> or <code>AVX512</code> explicitly only on a matching x86 build host; configuration checks its required features. <code>SCALAR</code> is always available. The experiment's policies carry that architecture explicitly, and new collections record it in their build metadata. Existing retained measurements describe their original sources and compiler settings.</p>
+<div class="fragment"><div class="line">cmake -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd -S optional/byte_gpu_merge -B build-byte-gpu</div>
 <div class="line">cmake --build build-byte-gpu --parallel 1</div>
 <div class="line">ctest --test-dir build-byte-gpu --output-on-failure</div>
 </div><!-- fragment --><p><code>build.py</code> uses the shared HLSL compiler helper to produce and validate Vulkan 1.3 SPIR-V for every entry, translate it to MSL, and link a Metal library. This checks the Vulkan shader artifacts; it does not execute a Vulkan host driver. For the ASan/UBSan host build:</p>
-<div class="fragment"><div class="line">python3 optional/byte_gpu_merge/build.py --build build-byte-gpu-sanitize --sanitize</div>
+<div class="fragment"><div class="line">cmake -G Ninja -DCMAKE_PREFIX_PATH=/path/to/simd \</div>
+<div class="line">  -S optional/byte_gpu_merge -B build-byte-gpu-sanitize \</div>
+<div class="line">  -DEVERETT_GPU_SANITIZERS=ON -DCMAKE_BUILD_TYPE=Release</div>
+<div class="line">cmake --build build-byte-gpu-sanitize --parallel 1</div>
 <div class="line">build-byte-gpu-sanitize/prototype build-byte-gpu-sanitize/kernels.metallib \</div>
 <div class="line">  build-byte-gpu-sanitize/checks check</div>
 </div><!-- fragment --><p>The suite covers empty inputs and keys, proper prefixes and binary strings, long shared prefixes and conservative FC across block cuts, fixed and variable input framing, newer replacements and tombstones, stored empty values, asymmetric inputs, random records, and variable inputs whose output becomes fixed width. Rejection cases corrupt canonical counts, tags, payload lengths and EF samples while retaining a coherent container checksum. Separate GPU EF tests cover sparse exceptions, repeated offsets and packed-word boundaries.</p>

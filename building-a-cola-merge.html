@@ -108,13 +108,14 @@ Drive the stages</h1>
 <p><code>stage_done()</code> indicates that a stage has consumed its input. <code>step</code> never crosses a stage boundary implicitly. Construction and <code>finish_stage</code> can parse initial keys, allocate output and finalize Elias–Fano/rank metadata. Their work is separate from the record budget. Key bytes and composition cost also need their own service accounting.</p>
 <p>After <code>done()</code> becomes true, <code>finish()</code> transfers the completed result. Its <code>main</code> and <code>secondary</code> fields name the destination level, <code>merged_native</code> is the new data, and <code>carrier</code> is the source level's empty-native routing artifact. A local carrier need not fit a single root window; prepare a query root before using it as a published head.</p>
 <p>This complete program runs both destination plans and checks the old snapshot:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cola__local__merge_8h.html">everett/cola_local_merge.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cola__query_8h.html">everett/cola_query.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;utility&gt;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#include &lt;array&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cassert&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;memory&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main() {</div>
 <div class="line">  <span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a>;</div>
@@ -158,8 +159,6 @@ Drive the stages</h1>
 <div class="line">    assert(values(saved, <span class="stringliteral">&quot;item&quot;</span>).size() == 2);</div>
 <div class="line">  }</div>
 <div class="line">}</div>
-<div class="ttc" id="acola__local__merge_8h_html"><div class="ttname"><a href="cola__local__merge_8h.html">cola_local_merge.h</a></div><div class="ttdoc">Stages one owning native merge and its exact COLA destination/carrier indexes.</div></div>
-<div class="ttc" id="acola__query_8h_html"><div class="ttname"><a href="cola__query_8h.html">cola_query.h</a></div><div class="ttdoc">Enumerates native matches along a COLA main chain and its terminal secondaries.</div></div>
 <div class="ttc" id="anamespaceeverett_1_1typed__detail_html_aa0bc3228fc77cba75eead4cb1526d630"><div class="ttname"><a href="namespaceeverett_1_1typed__detail.html#aa0bc3228fc77cba75eead4cb1526d630">everett::typed_detail::key</a></div><div class="ttdeci">bit_string key(key_t&lt; S &gt; const &amp;value)</div><div class="ttdef"><b>Definition</b> typed_world.h:89</div></div>
 <div class="ttc" id="anamespaceeverett_html"><div class="ttname"><a href="namespaceeverett.html">everett</a></div><div class="ttdef"><b>Definition</b> active_engine.h:18</div></div>
 <div class="ttc" id="anamespaceeverett_html_a1dca02653d1a6589ff1dffda4078fb96a1f7ba58706f9d405023da32864d059c8"><div class="ttname"><a href="namespaceeverett.html#a1dca02653d1a6589ff1dffda4078fb96a1f7ba58706f9d405023da32864d059c8">everett::cola_target::secondary</a></div><div class="ttdeci">@ secondary</div></div>
@@ -169,8 +168,8 @@ Drive the stages</h1>
 <div class="ttc" id="astructeverett_1_1cola__local__merge__job_html"><div class="ttname"><a href="structeverett_1_1cola__local__merge__job.html">everett::cola_local_merge_job</a></div><div class="ttdef"><b>Definition</b> cola_local_merge.h:81</div></div>
 <div class="ttc" id="astructeverett_1_1cola__query__root_html"><div class="ttname"><a href="structeverett_1_1cola__query__root.html">everett::cola_query_root</a></div><div class="ttdef"><b>Definition</b> cola_query.h:40</div></div>
 <div class="ttc" id="astructeverett_1_1profile__array_html"><div class="ttname"><a href="structeverett_1_1profile__array.html">everett::profile_array</a></div><div class="ttdef"><b>Definition</b> profile.h:1168</div></div>
-<div class="ttc" id="astructeverett_1_1profile__record_html"><div class="ttname"><a href="structeverett_1_1profile__record.html">everett::profile_record</a></div><div class="ttdef"><b>Definition</b> profile.h:295</div></div>
-<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:53</div></div>
+<div class="ttc" id="astructeverett_1_1profile__record_html"><div class="ttname"><a href="structeverett_1_1profile__record.html">everett::profile_record</a></div><div class="ttdef"><b>Definition</b> profile.h:294</div></div>
+<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:55</div></div>
 </div><!-- fragment --><p>Moving a job transfers stable builder objects, including composition state. Execution or finalization failure poisons the job and retains its source and plan owners. Rejected preconditions, such as finishing an incomplete stage, leave a valid job usable. No partial result can be obtained through <code>finish</code>.</p>
 <p>This component owns its encoded output in memory. The <a class="el" href="saving-and-merging-mapped-cola-roots.html">mapped persistence example</a> separately demonstrates native file merging, mapped index construction, sealing and catalog publication. A durable local job still needs the <a class="el" href="md_docs_2merge-resumption.html">continuation contract</a> between those operations. </p>
 </div></div><!-- contents -->

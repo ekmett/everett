@@ -12,6 +12,10 @@
 
 #pragma once
 
+#include <everett/backend.h>
+#include <simd/integer.h>
+
+#include <array>
 #include <bit>
 #include <cstdint>
 #include <limits>
@@ -19,12 +23,6 @@
 #include <stdexcept>
 #include <vector>
 
-#if defined(__aarch64__) && defined(__ARM_NEON)
-#include <arm_neon.h>
-#endif
-#if defined(__AVX2__) || (defined(__AVX512F__) && (defined(__AVX512VPOPCNTDQ__) || defined(__AVX512BW__)))
-#include <immintrin.h>
-#endif
 
 namespace everett {
   // Three ten-bit populations at bits 0, 11 and 22. The zero spacers
@@ -48,106 +46,57 @@ namespace everett {
       return result;
     }
 
-#if defined(__aarch64__) && defined(__ARM_NEON)
-    template <unsigned Vector> inline uint8x16_t prefix512_vector(
-        std::uint64_t const * words, unsigned bits) noexcept {
-      uint64x2_t positions{2 * Vector, 2 * Vector + 1};
-      auto boundary = vdupq_n_u64(bits >> 6);
-      auto tail = vdupq_n_u64((std::uint64_t{1} << (bits & 63)) - 1);
-      auto mask = vorrq_u64(vcltq_u64(positions, boundary),
-                            vandq_u64(vceqq_u64(positions, boundary), tail));
-      return vcntq_u8(vreinterpretq_u8_u64(vandq_u64(vld1q_u64(words + 2 * Vector), mask)));
+    // Native kernels keep every intermediate in registers. Each byte contains
+    // at most 32 population bits across the complete 512-bit input.
+    template <simd::architecture Arch, unsigned Vector>
+    simd_inline auto prefix_vector(std::uint64_t const * words, unsigned bits) noexcept {
+      constexpr auto bytes = backend_detail::register_bytes<Arch>;
+      using W = simd::vec<std::uint64_t, bytes / 8, Arch>;
+      constexpr auto positions = [=] {
+        std::array<std::uint64_t, bytes / 8> result{};
+        for (unsigned i = 0; i < result.size(); ++i) result[i] = Vector * result.size() + i;
+        return result;
+      }();
+      auto boundary = W(bits >> 6);
+      auto mask = select(W(positions) < boundary, W(~std::uint64_t{0}),
+        select(W(positions) == boundary, W((std::uint64_t{1} << (bits & 63)) - 1), W(0)));
+      return popcount(reinterpret_bits<std::uint8_t>(W::loadu(words + Vector * (bytes / 8)) & mask));
+    }
+
+    template <simd::architecture Arch, unsigned Vector = 0>
+    simd_inline auto prefix_vectors(std::uint64_t const * words, unsigned bits) noexcept {
+      auto counts = prefix_vector<Arch, Vector>(words, bits);
+      if constexpr ((Vector + 1) * backend_detail::register_bytes<Arch> == 64) return counts;
+      else return counts + prefix_vectors<Arch, Vector + 1>(words, bits);
     }
 
     // Exactly eight readable words, with arbitrary uint64_t alignment.
-    inline unsigned prefix512_neon(std::uint64_t const * words, unsigned bits) noexcept {
-      auto a = prefix512_vector<0>(words, bits);
-      auto b = prefix512_vector<1>(words, bits);
-      auto c = prefix512_vector<2>(words, bits);
-      auto d = prefix512_vector<3>(words, bits);
-      return vaddlvq_u8(vaddq_u8(vaddq_u8(a, b), vaddq_u8(c, d)));
-    }
-#endif
-
-#if defined(__AVX2__)
-    template <unsigned Vector> inline __m256i prefix512_masked_avx2(
-        std::uint64_t const * words, unsigned bits) noexcept {
-      auto positions = _mm256_setr_epi64x(4 * Vector, 4 * Vector + 1, 4 * Vector + 2, 4 * Vector + 3);
-      auto boundary = _mm256_set1_epi64x(bits >> 6);
-      auto tail = _mm256_set1_epi64x(static_cast<long long>((std::uint64_t{1} << (bits & 63)) - 1));
-      auto mask = _mm256_or_si256(_mm256_cmpgt_epi64(boundary, positions),
-        _mm256_and_si256(_mm256_cmpeq_epi64(positions, boundary), tail));
-      return _mm256_and_si256(_mm256_loadu_si256(reinterpret_cast<__m256i const *>(words + 4 * Vector)), mask);
+    template <simd::architecture Arch = simd::scalar>
+    simd_inline unsigned prefix512(std::uint64_t const * words, unsigned bits) noexcept {
+      if constexpr (std::same_as<Arch, simd::scalar>) return prefix512_portable(words, bits);
+      else return unsigned(reduce_add_widened(prefix_vectors<Arch>(words, bits)));
     }
 
-    // Exactly eight readable words, with no vector alignment requirement.
-    inline unsigned prefix512_avx2(std::uint64_t const * words, unsigned bits) noexcept {
-      auto lookup = _mm256_setr_epi8(0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,
-                                    0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4);
-      auto nibble = _mm256_set1_epi8(15);
-      auto population = [&](auto data) {
-        auto lo = _mm256_shuffle_epi8(lookup, _mm256_and_si256(data, nibble));
-        auto hi = _mm256_shuffle_epi8(lookup, _mm256_and_si256(_mm256_srli_epi16(data, 4), nibble));
-        return _mm256_add_epi8(lo, hi);
-      };
-      // Each byte sum is at most sixteen, so both vectors can share one SAD.
-      auto counts = _mm256_add_epi8(population(prefix512_masked_avx2<0>(words, bits)),
-                                    population(prefix512_masked_avx2<1>(words, bits)));
-      auto sums = _mm256_sad_epu8(counts, _mm256_setzero_si256());
-      auto pair = _mm_add_epi64(_mm256_castsi256_si128(sums), _mm256_extracti128_si256(sums, 1));
-      return unsigned(_mm_cvtsi128_si32(_mm_add_epi64(pair, _mm_srli_si128(pair, 8))));
-    }
-#endif
-
-#if defined(__AVX512F__) && (defined(__AVX512VPOPCNTDQ__) || defined(__AVX512BW__))
-    inline __m512i prefix512_masked_avx512(std::uint64_t const * words, unsigned bits) noexcept {
-      auto lane = bits >> 6;
-      auto full = __mmask8((1u << lane) - 1);
-      auto boundary = __mmask8(1u << lane); // lane=8 gives no boundary lane.
-      auto data = _mm512_maskz_loadu_epi64(full | boundary, words);
-      auto tail = _mm512_set1_epi64(static_cast<long long>((std::uint64_t{1} << (bits & 63)) - 1));
-      return _mm512_mask_and_epi64(data, boundary, data, tail);
-    }
-#endif
-
-#if defined(__AVX512F__) && defined(__AVX512VPOPCNTDQ__)
-    inline unsigned prefix512_avx512_vpopcnt(std::uint64_t const * words, unsigned bits) noexcept {
-      return unsigned(_mm512_reduce_add_epi64(_mm512_popcnt_epi64(prefix512_masked_avx512(words, bits))));
-    }
-#endif
-
-#if defined(__AVX512F__) && defined(__AVX512BW__)
-    inline unsigned prefix512_avx512bw(std::uint64_t const * words, unsigned bits) noexcept {
-      auto data = prefix512_masked_avx512(words, bits);
-      auto lookup = _mm512_broadcast_i32x4(_mm_setr_epi8(0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4));
-      auto nibble = _mm512_set1_epi8(15);
-      auto lo = _mm512_shuffle_epi8(lookup, _mm512_and_si512(data, nibble));
-      auto hi = _mm512_shuffle_epi8(lookup, _mm512_and_si512(_mm512_srli_epi16(data, 4), nibble));
-      auto counts = _mm512_add_epi8(lo, hi);
-      return unsigned(_mm512_reduce_add_epi64(_mm512_sad_epu8(counts, _mm512_setzero_si512())));
-    }
-#endif
-
-    // Exactly eight readable words; no alignment beyond uint64_t is required.
     inline unsigned popcount512_portable(std::uint64_t const * words) noexcept {
       unsigned total = 0;
       for (unsigned i = 0; i < 8; ++i) total += unsigned(std::popcount(words[i]));
       return total;
     }
 
-    inline unsigned popcount512(std::uint64_t const * words) noexcept {
-#if defined(__aarch64__) && defined(__ARM_NEON)
-      auto bytes = reinterpret_cast<std::uint8_t const *>(words);
-      auto a = vcntq_u8(vld1q_u8(bytes));
-      auto b = vcntq_u8(vld1q_u8(bytes + 16));
-      auto c = vcntq_u8(vld1q_u8(bytes + 32));
-      auto d = vcntq_u8(vld1q_u8(bytes + 48));
-      // Each byte lane sums to at most 32; the final horizontal sum needs
-      // sixteen bits because a completely full 512-bit run contains 512 ones.
-      return vaddlvq_u8(vaddq_u8(vaddq_u8(a, b), vaddq_u8(c, d)));
-#else
-      return popcount512_portable(words);
-#endif
+    template <simd::architecture Arch, unsigned Vector = 0>
+    simd_inline auto population_vectors(std::uint8_t const * bytes) noexcept {
+      constexpr auto width = backend_detail::register_bytes<Arch>;
+      using V = simd::vec<std::uint8_t, width, Arch>;
+      auto counts = popcount(V::loadu(bytes + Vector * width));
+      if constexpr ((Vector + 1) * width == 64) return counts;
+      else return counts + population_vectors<Arch, Vector + 1>(bytes);
+    }
+
+    template <simd::architecture Arch = simd::scalar>
+    simd_inline unsigned popcount512(std::uint64_t const * words) noexcept {
+      if constexpr (std::same_as<Arch, simd::scalar>) return popcount512_portable(words);
+      else return unsigned(reduce_add_widened(population_vectors<Arch>(
+        reinterpret_cast<std::uint8_t const *>(words))));
     }
 
     // Caller supplies 0 <= run <= 3 and independent counts in [0,512].
@@ -195,13 +144,15 @@ namespace everett {
 
     std::uint64_t size() const noexcept { return bit_count_; }
     // The final bit belongs to an existing word, including a partial tail.
+    template <simd::architecture Arch = simd::scalar>
     std::uint64_t count() const {
       if (!bit_count_) return 0;
       auto last = bit_count_ - 1;
-      return rank(last) + ((words_[last >> 6] >> (last & 63)) & 1);
+      return rank<Arch>(last) + ((words_[last >> 6] >> (last & 63)) & 1);
     }
 
     // Exclusive rank at an existing bit. Use count() for the total population.
+    template <simd::architecture Arch = simd::scalar>
     std::uint64_t rank(std::uint64_t position) const {
       if (position >= bit_count_) throw std::out_of_range("rank position");
       auto block = blocks_[position >> 11];
@@ -211,19 +162,9 @@ namespace everett {
       auto word = (position >> 9) << 3;
       auto bits = unsigned(position & 511);
       if (!bits) return result;
-#if defined(__AVX512F__) && defined(__AVX512VPOPCNTDQ__)
-      if (words_.size() - word >= 8)
-        return result + rank_detail::prefix512_avx512_vpopcnt(words_.data() + word, bits);
-#elif defined(__AVX512F__) && defined(__AVX512BW__)
-      if (words_.size() - word >= 8)
-        return result + rank_detail::prefix512_avx512bw(words_.data() + word, bits);
-#elif defined(__AVX2__)
-      if (words_.size() - word >= 8)
-        return result + rank_detail::prefix512_avx2(words_.data() + word, bits);
-#elif defined(__aarch64__) && defined(__ARM_NEON)
-      if (words_.size() - word >= 8)
-        return result + rank_detail::prefix512_neon(words_.data() + word, bits);
-#endif
+      if constexpr (!std::same_as<Arch, simd::scalar>)
+        if (words_.size() - word >= 8)
+          return result + rank_detail::prefix512<Arch>(words_.data() + word, bits);
       return result + rank_detail::prefix512_portable(words_.data() + word, bits);
     }
 
@@ -235,6 +176,7 @@ namespace everett {
   };
 
   struct rank_index {
+    template <simd::architecture Arch = simd::scalar>
     static rank_index build(std::span<std::uint64_t const> source, std::uint64_t bits) {
       if (bits > std::numeric_limits<std::uint64_t>::max() - 0xffffffffu ||
           source.size() != ((bits + 63) >> 6))
@@ -256,10 +198,10 @@ namespace everett {
       for (std::uint64_t block = 0; block < full_blocks; ++block) {
         auto & entry = begin_block(block);
         auto words = result.words.data() + block * 32;
-        auto a = rank_detail::popcount512(words);
-        auto b = rank_detail::popcount512(words + 8);
-        auto c = rank_detail::popcount512(words + 16);
-        auto d = rank_detail::popcount512(words + 24);
+        auto a = rank_detail::popcount512<Arch>(words);
+        auto b = rank_detail::popcount512<Arch>(words + 8);
+        auto c = rank_detail::popcount512<Arch>(words + 16);
+        auto d = rank_detail::popcount512<Arch>(words + 24);
         entry.runs = a | (b << 11) | (c << 22);
         total += a + b + c + d;
       }

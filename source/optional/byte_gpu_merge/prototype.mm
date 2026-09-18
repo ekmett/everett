@@ -13,6 +13,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <pthread.h>
 #include <pthread/qos.h>
 #include <random>
 #include <set>
@@ -223,7 +224,7 @@ static merge_result merge_impl(gpu & context, native const & a, native const & b
   everett::file_header<policy> header;
   header.record_count = survivors; header.common_value_width = result.common; header.extent = end;
   auto encoded = everett::encode_file_header(header,
-    everett::crc32c(std::span<std::byte const>(base + 96, end)));
+    everett::crc32c<everett_experiment::architecture>(std::span<std::byte const>(base + 96, end)));
   std::memcpy(base, encoded.data(), encoded.size());
   require(ftruncate(output.fd, off_t(result.bytes)) == 0, "output clip failed");
   result.assembly += elapsed(phase);
@@ -354,7 +355,7 @@ static cpu_result cpu_merge(std::shared_ptr<native const> const & a,
       cursor += chunk.size();
     }
     auto header = everett::encode_file_header(sections.header(),
-      everett::crc32c(std::span<std::byte const>(data + 96, body_bytes)));
+      everett::crc32c<everett_experiment::architecture>(std::span<std::byte const>(data + 96, body_bytes)));
     std::memcpy(data, header.data(), header.size());
     require(ftruncate(output.fd, off_t(result.bytes)) == 0, "CPU output clip");
   }
@@ -483,7 +484,7 @@ static void malformed_cases(gpu & context, std::filesystem::path const & root) {
     // not a deliberately stale CRC caught by a full CPU recovery scan.
     auto header = everett::file<policy>::open(root / "valid-malformed-base.kv").header();
     auto encoded = everett::encode_file_header(header,
-      everett::crc32c(std::span<std::byte const>(bytes).subspan(96)));
+      everett::crc32c<everett_experiment::architecture>(std::span<std::byte const>(bytes).subspan(96)));
     std::copy(encoded.begin(), encoded.end(), bytes.begin());
     auto path = root / ("malformed-" + std::to_string(mode) + ".kv");
     write_bytes(path, bytes);

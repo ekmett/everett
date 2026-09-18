@@ -94,6 +94,9 @@ $(function() {
 <code>#include &lt;array&gt;</code><br />
 <code>#include &lt;<a class="el" href="word__view_8h_source.html">everett/word_view.h</a>&gt;</code><br />
 <code>#include &lt;<a class="el" href="error__detail_8h_source.html">everett/error_detail.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="backend_8h_source.html">everett/backend.h</a>&gt;</code><br />
+<code>#include &lt;simd/integer.h&gt;</code><br />
+<code>#include &lt;simd/packing.h&gt;</code><br />
 <code>#include &lt;bit&gt;</code><br />
 <code>#include &lt;cstddef&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
@@ -132,10 +135,12 @@ Functions</h2></td></tr>
 <tr class="separator:ad51055b9c30db9fc4da3543739cbc968"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a470b669acea5d76692a39c248d9c03" id="r_a8a470b669acea5d76692a39c248d9c03"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a8a470b669acea5d76692a39c248d9c03">everett::elias_fano_detail::words</a> (std::uint64_t bits) noexcept</td></tr>
 <tr class="separator:a8a470b669acea5d76692a39c248d9c03"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a331b44e9550dbddcf74dcec31d69c1f4" id="r_a331b44e9550dbddcf74dcec31d69c1f4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a331b44e9550dbddcf74dcec31d69c1f4">everett::elias_fano_detail::monotone</a> (std::span&lt; std::uint64_t const &gt; source) noexcept</td></tr>
-<tr class="separator:a331b44e9550dbddcf74dcec31d69c1f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a22ded018805d4847697c7d36063494ab" id="r_a22ded018805d4847697c7d36063494ab"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a22ded018805d4847697c7d36063494ab">everett::elias_fano_detail::select_word</a> (std::uint64_t value, unsigned ordinal) noexcept</td></tr>
-<tr class="separator:a22ded018805d4847697c7d36063494ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b33cbc6406a7297aac9fe232f4f7db4" id="r_a0b33cbc6406a7297aac9fe232f4f7db4"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a0b33cbc6406a7297aac9fe232f4f7db4"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a0b33cbc6406a7297aac9fe232f4f7db4">everett::elias_fano_detail::monotone</a> (std::span&lt; std::uint64_t const &gt; source) noexcept</td></tr>
+<tr class="separator:a0b33cbc6406a7297aac9fe232f4f7db4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07c6365208bcaecad4a76841ae86a03b" id="r_a07c6365208bcaecad4a76841ae86a03b"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a07c6365208bcaecad4a76841ae86a03b"><td class="memTemplItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a07c6365208bcaecad4a76841ae86a03b">everett::elias_fano_detail::select_word</a> (std::uint64_t value, unsigned ordinal) noexcept</td></tr>
+<tr class="separator:a07c6365208bcaecad4a76841ae86a03b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ccb681fa8f46746fa7b806c428571f0" id="r_a4ccb681fa8f46746fa7b806c428571f0"><td class="memTemplParams" colspan="2">template&lt;unsigned W, std::size_t O, std::size_t I&gt; </td></tr>
 <tr class="memitem:a4ccb681fa8f46746fa7b806c428571f0"><td class="memTemplItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a4ccb681fa8f46746fa7b806c428571f0">everett::elias_fano_detail::low_component</a> (std::uint64_t const *source) noexcept</td></tr>
 <tr class="separator:a4ccb681fa8f46746fa7b806c428571f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -145,14 +150,15 @@ Functions</h2></td></tr>
 <tr class="memitem:a49d826f26edd49acd9ae1c91f5415be7" id="r_a49d826f26edd49acd9ae1c91f5415be7"><td class="memTemplParams" colspan="2">template&lt;unsigned W, std::size_t... O&gt; </td></tr>
 <tr class="memitem:a49d826f26edd49acd9ae1c91f5415be7"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a49d826f26edd49acd9ae1c91f5415be7">everett::elias_fano_detail::low_tile</a> (std::uint64_t const *source, std::uint64_t *out, std::index_sequence&lt; O... &gt;) noexcept</td></tr>
 <tr class="separator:a49d826f26edd49acd9ae1c91f5415be7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abea90b06596376b54987e7ccd14fafe7" id="r_abea90b06596376b54987e7ccd14fafe7"><td class="memTemplParams" colspan="2">template&lt;unsigned W&gt; </td></tr>
-<tr class="memitem:abea90b06596376b54987e7ccd14fafe7"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#abea90b06596376b54987e7ccd14fafe7">everett::elias_fano_detail::pack_low_fixed</a> (std::span&lt; std::uint64_t const &gt; source, std::span&lt; std::uint64_t &gt; out) noexcept</td></tr>
-<tr class="separator:abea90b06596376b54987e7ccd14fafe7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acdac77f14b932d45daa34849b0644561" id="r_acdac77f14b932d45daa34849b0644561"><td class="memTemplParams" colspan="2">template&lt;std::size_t... W&gt; </td></tr>
-<tr class="memitem:acdac77f14b932d45daa34849b0644561"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#acdac77f14b932d45daa34849b0644561">everett::elias_fano_detail::low_packers</a> (std::index_sequence&lt; W... &gt;) noexcept</td></tr>
-<tr class="separator:acdac77f14b932d45daa34849b0644561"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7cf3e8575345561d30129481265fc2c1" id="r_a7cf3e8575345561d30129481265fc2c1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a7cf3e8575345561d30129481265fc2c1">everett::elias_fano_detail::pack_low</a> (std::span&lt; std::uint64_t const &gt; source, std::span&lt; std::uint64_t &gt; out, unsigned width)</td></tr>
-<tr class="separator:a7cf3e8575345561d30129481265fc2c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a652df6fe5c8d14ffeed50eb6d22ad454" id="r_a652df6fe5c8d14ffeed50eb6d22ad454"><td class="memTemplParams" colspan="2">template&lt;unsigned W, simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a652df6fe5c8d14ffeed50eb6d22ad454"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a652df6fe5c8d14ffeed50eb6d22ad454">everett::elias_fano_detail::pack_low_fixed</a> (std::span&lt; std::uint64_t const &gt; source, std::span&lt; std::uint64_t &gt; out) noexcept</td></tr>
+<tr class="separator:a652df6fe5c8d14ffeed50eb6d22ad454"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76782aba9b18bd3e1b58b46fa1c93e7f" id="r_a76782aba9b18bd3e1b58b46fa1c93e7f"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch, std::size_t... W&gt; </td></tr>
+<tr class="memitem:a76782aba9b18bd3e1b58b46fa1c93e7f"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a76782aba9b18bd3e1b58b46fa1c93e7f">everett::elias_fano_detail::low_packers</a> (std::index_sequence&lt; W... &gt;) noexcept</td></tr>
+<tr class="separator:a76782aba9b18bd3e1b58b46fa1c93e7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ddfff61b5f66a57882dc76ddceb9bcb" id="r_a6ddfff61b5f66a57882dc76ddceb9bcb"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a6ddfff61b5f66a57882dc76ddceb9bcb"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a6ddfff61b5f66a57882dc76ddceb9bcb">everett::elias_fano_detail::pack_low</a> (std::span&lt; std::uint64_t const &gt; source, std::span&lt; std::uint64_t &gt; out, unsigned width)</td></tr>
+<tr class="separator:a6ddfff61b5f66a57882dc76ddceb9bcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2181c74d2efd13e87c999552d80986f" id="r_af2181c74d2efd13e87c999552d80986f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#af2181c74d2efd13e87c999552d80986f">everett::elias_fano_detail::write_high</a> (std::span&lt; std::uint64_t const &gt; source, std::span&lt; std::uint64_t &gt; out, unsigned width) noexcept</td></tr>
 <tr class="separator:af2181c74d2efd13e87c999552d80986f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>

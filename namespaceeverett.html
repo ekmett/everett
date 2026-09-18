@@ -91,6 +91,8 @@ $(function() {
 Namespaces</h2></td></tr>
 <tr class="memitem:namespaceeverett_1_1active__detail" id="r_namespaceeverett_1_1active__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1active__detail.html">active_detail</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:namespaceeverett_1_1backend__detail" id="r_namespaceeverett_1_1backend__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1backend__detail.html">backend_detail</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespaceeverett_1_1catalog__detail" id="r_namespaceeverett_1_1catalog__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1catalog__detail.html">catalog_detail</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespaceeverett_1_1cola__detail" id="r_namespaceeverett_1_1cola__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1cola__detail.html">cola_detail</a></td></tr>
@@ -713,6 +715,9 @@ Typedefs</h2></td></tr>
 <tr class="memitem:a4102abdfc9fbdd85f687d668605c4ab2" id="r_a4102abdfc9fbdd85f687d668605c4ab2"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
 <tr class="memitem:a4102abdfc9fbdd85f687d668605c4ab2"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a4102abdfc9fbdd85f687d668605c4ab2">mapped_cola_query_root</a> = <a class="el" href="structeverett_1_1cola__query__root.html">cola_query_root</a>&lt; P, <a class="el" href="structeverett_1_1mapped__cola__blob.html">mapped_cola_blob</a>&lt; P &gt; &gt;</td></tr>
 <tr class="separator:a4102abdfc9fbdd85f687d668605c4ab2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47bfcba07d7e0af13ae0dca18c46b034" id="r_a47bfcba07d7e0af13ae0dca18c46b034"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch, class Registry  = unsorted&lt;std::optional&lt;std::string&gt;&gt;, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </td></tr>
+<tr class="memitem:a47bfcba07d7e0af13ae0dca18c46b034"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a47bfcba07d7e0af13ae0dca18c46b034">backend_policy</a> = <a class="el" href="structeverett_1_1storage__policy.html">storage_policy</a>&lt; Registry, GroupSize, BackspaceCode, CodecBlockSize, Arch &gt;</td></tr>
+<tr class="separator:a47bfcba07d7e0af13ae0dca18c46b034"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2741097bf1c2e73b5749a9039d367e7e" id="r_a2741097bf1c2e73b5749a9039d367e7e"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a2741097bf1c2e73b5749a9039d367e7e">string_registry</a> = <a class="el" href="structeverett_1_1bin.html">bin</a>&lt; <a class="el" href="structeverett_1_1tip.html">tip</a>&lt; <a class="el" href="structeverett_1_1unsorted.html">unsorted</a>&lt; std::optional&lt; std::string &gt; &gt; &gt;, <a class="el" href="structeverett_1_1sort__undefined.html">sort_undefined</a> &gt;</td></tr>
 <tr class="separator:a2741097bf1c2e73b5749a9039d367e7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0024fbb12310b9faed7bb7c71adb37f2" id="r_a0024fbb12310b9faed7bb7c71adb37f2"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">string_policy</a> = <a class="el" href="structeverett_1_1storage__policy.html">storage_policy</a>&lt; <a class="el" href="namespaceeverett.html#a2741097bf1c2e73b5749a9039d367e7e">string_registry</a> &gt;</td></tr>
@@ -864,10 +869,13 @@ Functions</h2></td></tr>
 <tr class="memitem:a33748d98dbca1c530ebc281791da3e8d" id="r_a33748d98dbca1c530ebc281791da3e8d"><td class="memTemplParams" colspan="2">template&lt;class Core  = active_engine&lt;&gt;&gt; </td></tr>
 <tr class="memitem:a33748d98dbca1c530ebc281791da3e8d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1connection.html">connection</a>&lt; Core &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a33748d98dbca1c530ebc281791da3e8d">connect</a> (std::filesystem::path const &amp;root, std::string_view name, <a class="el" href="structeverett_1_1connection__options.html">connection_options</a> options={})</td></tr>
 <tr class="separator:a33748d98dbca1c530ebc281791da3e8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d1daae945389c42c996574afcfc139f" id="r_a7d1daae945389c42c996574afcfc139f"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a7d1daae945389c42c996574afcfc139f">crc32c_combine</a> (std::uint32_t first, std::uint32_t second, std::uint64_t second_bytes) noexcept</td></tr>
-<tr class="separator:a7d1daae945389c42c996574afcfc139f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1e83ad80494eac7bb571ae6902ec44f4" id="r_a1e83ad80494eac7bb571ae6902ec44f4"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a1e83ad80494eac7bb571ae6902ec44f4">crc32c</a> (std::span&lt; std::byte const &gt; bytes, std::uint32_t previous_crc=0) noexcept</td></tr>
 <tr class="separator:a1e83ad80494eac7bb571ae6902ec44f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf28b41a4b56fdd1d4501b2421642b1f" id="r_acf28b41a4b56fdd1d4501b2421642b1f"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch&gt; </td></tr>
+<tr class="memitem:acf28b41a4b56fdd1d4501b2421642b1f"><td class="memTemplItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#acf28b41a4b56fdd1d4501b2421642b1f">crc32c</a> (std::span&lt; std::byte const &gt; bytes, std::uint32_t previous_crc=0) noexcept</td></tr>
+<tr class="separator:acf28b41a4b56fdd1d4501b2421642b1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d1daae945389c42c996574afcfc139f" id="r_a7d1daae945389c42c996574afcfc139f"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a7d1daae945389c42c996574afcfc139f">crc32c_combine</a> (std::uint32_t first, std::uint32_t second, std::uint64_t second_bytes) noexcept</td></tr>
+<tr class="separator:a7d1daae945389c42c996574afcfc139f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a82cc72b3468c484d4c2375c04697c93d" id="r_a82cc72b3468c484d4c2375c04697c93d"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
 <tr class="memitem:a82cc72b3468c484d4c2375c04697c93d"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1file__header.html">file_header</a>&lt; P &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a82cc72b3468c484d4c2375c04697c93d">decode_file_header</a> (std::span&lt; std::byte const &gt; bytes)</td></tr>
 <tr class="separator:a82cc72b3468c484d4c2375c04697c93d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -897,10 +905,12 @@ Functions</h2></td></tr>
 <tr class="separator:a05b6062626a9c1a7917e3531dfded9dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6b099929a27e2db87273650308beb525" id="r_a6b099929a27e2db87273650308beb525"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1object__write__paths.html">object_write_paths</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a6b099929a27e2db87273650308beb525">object_output_paths</a> (std::filesystem::path const &amp;root, <a class="el" href="structeverett_1_1object__id.html">object_id</a> const &amp;id, <a class="el" href="structeverett_1_1object__attempt__id.html">object_attempt_id</a> const &amp;attempt, <a class="el" href="namespaceeverett.html#afb3ec78839f4e10d47ce9b6bb33ed0f4">file_kind</a> kind)</td></tr>
 <tr class="separator:a6b099929a27e2db87273650308beb525"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4484ca2174d29abe61a7678186b9bbf1" id="r_a4484ca2174d29abe61a7678186b9bbf1"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1bit__comparison.html">bit_comparison</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a4484ca2174d29abe61a7678186b9bbf1">compare_common_bits</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> a, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> b)</td></tr>
-<tr class="separator:a4484ca2174d29abe61a7678186b9bbf1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae9423adb98de151ba892a37dbb897214" id="r_ae9423adb98de151ba892a37dbb897214"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#ae9423adb98de151ba892a37dbb897214">compare_bits</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> a, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> b)</td></tr>
-<tr class="separator:ae9423adb98de151ba892a37dbb897214"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97e8d3f6a6d82000f81d0388a4716c4a" id="r_a97e8d3f6a6d82000f81d0388a4716c4a"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a97e8d3f6a6d82000f81d0388a4716c4a"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structeverett_1_1bit__comparison.html">bit_comparison</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a97e8d3f6a6d82000f81d0388a4716c4a">compare_common_bits</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> a, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> b)</td></tr>
+<tr class="separator:a97e8d3f6a6d82000f81d0388a4716c4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca13e525dcc2165f8403b1840d242891" id="r_aca13e525dcc2165f8403b1840d242891"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:aca13e525dcc2165f8403b1840d242891"><td class="memTemplItemLeft" align="right" valign="top">int&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#aca13e525dcc2165f8403b1840d242891">compare_bits</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> a, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> b)</td></tr>
+<tr class="separator:aca13e525dcc2165f8403b1840d242891"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a982b3d3e7579ba1f4546351487c84eb2" id="r_a982b3d3e7579ba1f4546351487c84eb2"><td class="memTemplParams" colspan="2">template&lt;class P &gt; </td></tr>
 <tr class="memitem:a982b3d3e7579ba1f4546351487c84eb2"><td class="memTemplItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a982b3d3e7579ba1f4546351487c84eb2">common_prefix_units</a> (<a class="el" href="structeverett_1_1bit__view.html">bit_view</a> a, <a class="el" href="structeverett_1_1bit__view.html">bit_view</a> b)</td></tr>
 <tr class="separator:a982b3d3e7579ba1f4546351487c84eb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -958,6 +968,22 @@ Variables</h2></td></tr>
 <tr class="separator:a05cedaccf141d3d77a5d8074de86f063"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Typedef Documentation</h2>
+<a id="a47bfcba07d7e0af13ae0dca18c46b034" name="a47bfcba07d7e0af13ae0dca18c46b034"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a47bfcba07d7e0af13ae0dca18c46b034">&#9670;&#160;</a></span>backend_policy</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;simd::architecture Arch, class Registry  = unsorted&lt;std::optional&lt;std::string&gt;&gt;, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="namespaceeverett.html#a47bfcba07d7e0af13ae0dca18c46b034">everett::backend_policy</a> = typedef <a class="el" href="structeverett_1_1storage__policy.html">storage_policy</a>&lt;Registry, GroupSize, BackspaceCode, CodecBlockSize, Arch&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="acbc89ce3dfcbc1da3357c097cc94f9cc" name="acbc89ce3dfcbc1da3357c097cc94f9cc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acbc89ce3dfcbc1da3357c097cc94f9cc">&#9670;&#160;</a></span>mapped_cola_artifact</h2>
 
@@ -1758,11 +1784,13 @@ template&lt;class P &gt; </div>
 
 </div>
 </div>
-<a id="ae9423adb98de151ba892a37dbb897214" name="ae9423adb98de151ba892a37dbb897214"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae9423adb98de151ba892a37dbb897214">&#9670;&#160;</a></span>compare_bits()</h2>
+<a id="aca13e525dcc2165f8403b1840d242891" name="aca13e525dcc2165f8403b1840d242891"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca13e525dcc2165f8403b1840d242891">&#9670;&#160;</a></span>compare_bits()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;simd::architecture Arch = simd::scalar&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1794,11 +1822,13 @@ template&lt;class P &gt; </div>
 
 </div>
 </div>
-<a id="a4484ca2174d29abe61a7678186b9bbf1" name="a4484ca2174d29abe61a7678186b9bbf1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4484ca2174d29abe61a7678186b9bbf1">&#9670;&#160;</a></span>compare_common_bits()</h2>
+<a id="a97e8d3f6a6d82000f81d0388a4716c4a" name="a97e8d3f6a6d82000f81d0388a4716c4a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a97e8d3f6a6d82000f81d0388a4716c4a">&#9670;&#160;</a></span>compare_common_bits()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;simd::architecture Arch = simd::scalar&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1897,7 +1927,7 @@ template&lt;class Core  = active_engine&lt;&gt;&gt; </div>
 </div>
 </div>
 <a id="a1e83ad80494eac7bb571ae6902ec44f4" name="a1e83ad80494eac7bb571ae6902ec44f4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1e83ad80494eac7bb571ae6902ec44f4">&#9670;&#160;</a></span>crc32c()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a1e83ad80494eac7bb571ae6902ec44f4">&#9670;&#160;</a></span>crc32c() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1925,7 +1955,45 @@ template&lt;class Core  = active_engine&lt;&gt;&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="acf28b41a4b56fdd1d4501b2421642b1f" name="acf28b41a4b56fdd1d4501b2421642b1f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acf28b41a4b56fdd1d4501b2421642b1f">&#9670;&#160;</a></span>crc32c() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;simd::architecture Arch&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::uint32_t everett::crc32c </td>
+          <td>(</td>
+          <td class="paramtype">std::span&lt; std::byte const &gt;&#160;</td>
+          <td class="paramname"><em>bytes</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint32_t&#160;</td>
+          <td class="paramname"><em>previous_crc</em> = <code>0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -1967,7 +2035,7 @@ template&lt;class Core  = active_engine&lt;&gt;&gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">

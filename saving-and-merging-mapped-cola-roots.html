@@ -81,8 +81,8 @@ $(function() {
 <div class="contents">
 <div class="textblock"><p>We can write native files, build two-route indexes directly over their mappings, save the resulting roots and publish a later native merge. The native inputs stay immutable throughout. A secondary route uses the native file of its target; it needs no separate secondary index.</p>
 <p>This complete program takes an existing empty directory as its argument. As in the <a class="el" href="md_docs_2streamed-timeline.html">streamed timeline example</a>, the caller establishes that directory and its ancestors durably. Fresh catalogs let the example use a simple deterministic identity allocator. An application supplies its own allocator and retains its operation identities for retry.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="native__file__merge_8h.html">everett/native_file_merge.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="sqlite__catalog_8h.html">everett/sqlite_catalog.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;span&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;filesystem&gt;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#include &lt;algorithm&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;array&gt;</span></div>
@@ -94,6 +94,8 @@ $(function() {
 <div class="line"><span class="preprocessor">#include &lt;string_view&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;utility&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett.sqlite;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a>;</div>
 <div class="line"><span class="keyword">using </span>P = <a class="code hl_struct" href="structeverett_1_1storage__policy.html">storage_policy&lt;everett::tip&lt;everett::encoded_sort&lt;everett::byte_encoding&lt;&gt;</a>&gt;&gt;&gt;;</div>
@@ -215,8 +217,6 @@ $(function() {
 <div class="ttc" id="anamespaceeverett_html_a47aa22dc5cd07f677c4d7b09d4a886eaaa2e4822a98337283e39f7b60acf85ec9"><div class="ttname"><a href="namespaceeverett.html#a47aa22dc5cd07f677c4d7b09d4a886eaaa2e4822a98337283e39f7b60acf85ec9">everett::redundant_slot_state::empty</a></div><div class="ttdeci">@ empty</div></div>
 <div class="ttc" id="anamespaceeverett_html_a4a0d0926edf8bb8cc06e1fded5a35be0"><div class="ttname"><a href="namespaceeverett.html#a4a0d0926edf8bb8cc06e1fded5a35be0">everett::encode_cola_sections</a></div><div class="ttdeci">encoded_cola_sections&lt; P &gt; encode_cola_sections(cola_index&lt; P, Native, Main &gt; const &amp;source, object_id const &amp;native_id, std::optional&lt; blob_identity &gt; main_id={}, std::optional&lt; object_id &gt; secondary_id={})</div><div class="ttdef"><b>Definition</b> cola_sections.h:256</div></div>
 <div class="ttc" id="anamespaceeverett_html_ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796"><div class="ttname"><a href="namespaceeverett.html#ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796">everett::cola_origin::native</a></div><div class="ttdeci">@ native</div></div>
-<div class="ttc" id="anative__file__merge_8h_html"><div class="ttname"><a href="native__file__merge_8h.html">native_file_merge.h</a></div><div class="ttdoc">Merges pinned native inputs into a streamed immutable object.</div></div>
-<div class="ttc" id="asqlite__catalog_8h_html"><div class="ttname"><a href="sqlite__catalog_8h.html">sqlite_catalog.h</a></div><div class="ttdoc">Stores retained roots, timeline generations and exact file graphs in optional SQLite metadata.</div></div>
 <div class="ttc" id="astructeverett_1_1bit__string_html_adee15aee9f486dda0ab3cf09cdec9331"><div class="ttname"><a href="structeverett_1_1bit__string.html#adee15aee9f486dda0ab3cf09cdec9331">everett::bit_string::view</a></div><div class="ttdeci">bit_view view() const &amp;</div><div class="ttdef"><b>Definition</b> profile.h:178</div></div>
 <div class="ttc" id="astructeverett_1_1blob__identity_html"><div class="ttname"><a href="structeverett_1_1blob__identity.html">everett::blob_identity</a></div><div class="ttdef"><b>Definition</b> sections.h:34</div></div>
 <div class="ttc" id="astructeverett_1_1catalog__object__reservation_html"><div class="ttname"><a href="structeverett_1_1catalog__object__reservation.html">everett::catalog_object_reservation</a></div><div class="ttdef"><b>Definition</b> sqlite_catalog.h:45</div></div>
@@ -233,7 +233,7 @@ $(function() {
 <div class="ttc" id="astructeverett_1_1object__id_html"><div class="ttname"><a href="structeverett_1_1object__id.html">everett::object_id</a></div><div class="ttdef"><b>Definition</b> object_path.h:38</div></div>
 <div class="ttc" id="astructeverett_1_1object__seal__receipt_html"><div class="ttname"><a href="structeverett_1_1object__seal__receipt.html">everett::object_seal_receipt</a></div><div class="ttdef"><b>Definition</b> object_writer.h:88</div></div>
 <div class="ttc" id="astructeverett_1_1sqlite__catalog_html"><div class="ttname"><a href="structeverett_1_1sqlite__catalog.html">everett::sqlite_catalog</a></div><div class="ttdef"><b>Definition</b> sqlite_catalog.h:351</div></div>
-<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:53</div></div>
+<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:55</div></div>
 </div><!-- fragment --><p>Link with <code>everett::sqlite</code>. The example's native writer streams its payload; the COLA builder reads mapped native inputs and retains the two encoded borrowed outputs and compact directories in memory until sealing. It never rewrites the input <code>.kv</code> files. The small tables fit one root group. Larger roots need a prepared routing prefix before publication.</p>
 <p>The combined save retains two chronological contributions for <code>alpha</code>; query encounter order does not choose their meaning. Here the merge receives older then newer input and uses replacement composition, so the merged root contains <code>after</code>. Both saved representations remain readable after the timeline moves.</p>
 <p>The program drives each step explicitly. It demonstrates durable completed objects and root publication; the <a class="el" href="cola-scheduling-with-immutable-pairs.html">scheduler model</a> supplies the separate main/secondary/shadow work and visibility rules. Restoring an interrupted private merge is covered by the <a class="el" href="md_docs_2merge-resumption.html">continuation design</a>. </p>

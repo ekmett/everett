@@ -82,12 +82,16 @@ $(function() {
 <div class="textblock"><p>I compare complete <code>.kv</code> and <code>.index</code> files for the same logical records. This is a space experiment: it contains no performance timings and does not change production formats. <a class="el" href="complete-bytebit-space-results.html">The retained report</a> separates the current typed paths from controls using the same generic record grammar.</p>
 <h1><a class="anchor" id="reproduce-3"></a>
 Reproduce</h1>
-<div class="fragment"><div class="line">cmake -S optional/profile_space_compare -B build-space -DCMAKE_BUILD_TYPE=Release</div>
+<p>For a new run from the current source, use the <a href="md_docs_2modules.html#build-and-consume">module toolchain and SIMD dependency</a>:</p>
+<div class="fragment"><div class="line">cmake -S optional/profile_space_compare -B build-space -G Ninja \</div>
+<div class="line">  -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_PREFIX_PATH=/path/to/simd \</div>
+<div class="line">  -DCMAKE_BUILD_TYPE=Release</div>
 <div class="line">cmake --build build-space -j1</div>
 <div class="line">ctest --test-dir build-space --output-on-failure</div>
 <div class="line">python3 optional/profile_space_compare/collect.py build-space/profile-space /tmp/profile-space-results</div>
 <div class="line">python3 optional/profile_space_compare/analyze.py /tmp/profile-space-results</div>
-</div><!-- fragment --><p><code>EVERETT_SPACE_SANITIZE=ON</code> enables ASan/UBSan for the five small CTest cases. Each case exercises all ten datasets. The collector runs 1,024, 8,192, 32,768 and 131,072 logical records in five modes, retains exact file sizes and hashes, and removes the disposable files after validating them. <code>--keep-files</code> keeps those files for inspection. <code>--sizes</code> selects other positive multiples of four.</p>
+</div><!-- fragment --><p>Apply the same SDK or toolchain settings used to build SIMD. To reproduce the retained observations, use the source revision and toolchain recorded in the report, including that revision's build files.</p>
+<p><code>EVERETT_SPACE_SANITIZE=ON</code> enables ASan/UBSan for the five small CTest cases. Each case exercises all ten datasets. The collector runs 1,024, 8,192, 32,768 and 131,072 logical records in five modes, retains exact file sizes and hashes, and removes the disposable files after validating them. <code>--keep-files</code> keeps those files for inspection. <code>--sizes</code> selects other positive multiples of four.</p>
 <h1><a class="anchor" id="inputs-and-encodings"></a>
 Inputs and Encodings</h1>
 <p>Each size has ordered and permuted 64-bit integers, structured strings ending in decimal identifiers, the same strings with a constant <code>/state</code> suffix, and 16-byte high-entropy binary strings. Fixed values are eight bytes for integers and sixteen bytes for strings. Variable values have deterministic lengths between zero and 512 bytes. Binary keys include embedded NUL bytes. There are no tombstones, overwritten rows, compression dictionaries or entropy codecs.</p>

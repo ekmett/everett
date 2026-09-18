@@ -80,25 +80,26 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><code>range(snapshot, lo, hi)</code> walks the live rows in the half-open interval <code>[lo, hi)</code>. <code>scan(snapshot)</code> walks every live row. The connection exposes <code>db.range(lo, hi)</code> for its current snapshot:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="typed__scan_8h.html">everett/typed_scan.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">auto</span> rows = db.range(std::string(<span class="stringliteral">&quot;users/&quot;</span>), std::string(<span class="stringliteral">&quot;users0&quot;</span>));</div>
 <div class="line"><span class="keywordflow">while</span> (<span class="keyword">auto</span> row = rows.next()) {</div>
 <div class="line">  <span class="comment">// row-&gt;key is an owned string.</span></div>
 <div class="line">  <span class="comment">// row-&gt;value is the same state type returned by get, present here.</span></div>
 <div class="line">}</div>
-<div class="ttc" id="atyped__scan_8h_html"><div class="ttname"><a href="typed__scan_8h.html">typed_scan.h</a></div><div class="ttdoc">Scans one sort in an immutable typed world with chronological resolution.</div></div>
 </div><!-- fragment --><p>The scan captures its snapshot. Writes, background merges and closing the connection leave that selection intact. Returned rows own their keys and resolved values. A default string row has an optional string value; tombstones are omitted, so that optional is engaged. Stored empty strings remain rows.</p>
 <p>Both bounds are optional. An omitted lower bound starts at the first key of the sort; an omitted upper bound continues to its last key. Equal bounds yield an empty range, and reversed bounds throw. Bounds use the sort's encoded ordering, including binary strings and proper prefixes.</p>
 <p>For a registry with several sorts, use <code>range&lt;MySort&gt;(snapshot, lo, hi)</code> or <code>scan&lt;MySort&gt;(snapshot)</code>. Equal keys from different native runs are resolved in chronological order. Replacement sorts decode only the newest value; general arrow sorts apply their updates oldest first. Their <code>present</code> predicate determines whether to emit a row.</p>
 <h1><a class="anchor" id="c-ranges"></a>
 C++ ranges</h1>
-<p>The result models a C++20 forward range. Iterator copies advance independently, keep their captured snapshot alive, and support ordinary range algorithms:</p>
+<p>The result models a forward range. Iterator copies advance independently, keep their captured snapshot alive, and support ordinary range algorithms:</p>
 <div class="fragment"><div class="line"><span class="keywordflow">for</span> (<span class="keyword">auto</span> row : db.range(std::string(<span class="stringliteral">&quot;a&quot;</span>), std::string(<span class="stringliteral">&quot;b&quot;</span>))) {</div>
 <div class="line">  <span class="comment">// Work with this owned row.</span></div>
 <div class="line">}</div>
 <div class="line"><span class="keyword">auto</span> first_three = db.range() | std::views::take(3);</div>
-</div><!-- fragment --><p>Include <code>&lt;ranges&gt;</code> for the view adapters. Iterators retain their snapshot independently, so this is also a borrowed range: algorithms such as <code>std::ranges::find(db.range(), key, projection)</code> return a usable iterator even after the temporary range is destroyed. Dereferencing returns an <b>owning row by value</b>, so it copies the key and resolved value. This is a C++20 forward iterator, whose reference type may be a value; its legacy iterator category is input. It makes no promise of a stable address for a row inside the cursor. Use <code>next()</code> or <code>take_row()</code> to move rows out when those copies matter.</p>
+</div><!-- fragment --><p>Include <code>&lt;ranges&gt;</code> for the view adapters. Iterators retain their snapshot independently, so this is also a borrowed range: algorithms such as <code>std::ranges::find(db.range(), key, projection)</code> return a usable iterator even after the temporary range is destroyed. Dereferencing returns an <b>owning row by value</b>, so it copies the key and resolved value. This is a forward iterator, whose reference type may be a value; its legacy iterator category is input. It makes no promise of a stable address for a row inside the cursor. Use <code>next()</code> or <code>take_row()</code> to move rows out when those copies matter.</p>
 <p>Iterator copies initially share their walk. Advancing a shared copy clones the per-run cursors and their reconstructed keys; it does not restart the scan or retain every previously returned row. Advancing an unshared iterator reuses its buffers. <code>begin()</code> starts an independent walk from the result's current cursor position; it leaves the budgeted cursor unchanged.</p>
 <h1><a class="anchor" id="deleting-a-range"></a>
 Deleting a range</h1>

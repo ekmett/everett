@@ -8,6 +8,7 @@
  */
 
 #include <everett/cola_index.h>
+#include <exception>
 #include <everett/cola_query.h>
 #include <everett/native_sweep.h>
 

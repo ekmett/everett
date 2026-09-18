@@ -81,76 +81,47 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#func-members">Functions</a> &#124;
-<a href="#var-members">Variables</a>  </div>
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">everett::crc32c_detail Namespace Reference</div></div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a5a40c55fef0379128fbb4f14db53e707" id="r_a5a40c55fef0379128fbb4f14db53e707"><td class="memItemLeft" align="right" valign="top">constexpr std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#a5a40c55fef0379128fbb4f14db53e707">multiply_polynomial</a> (std::uint32_t a, std::uint32_t b) noexcept</td></tr>
-<tr class="separator:a5a40c55fef0379128fbb4f14db53e707"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8749966915803c2ca84506bb49110097" id="r_a8749966915803c2ca84506bb49110097"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#a8749966915803c2ca84506bb49110097">shift</a> (std::uint32_t crc, std::uint64_t bytes) noexcept</td></tr>
-<tr class="separator:a8749966915803c2ca84506bb49110097"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4a46ceaf46514195b2a4f5ea5f01c062" id="r_a4a46ceaf46514195b2a4f5ea5f01c062"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:a4a46ceaf46514195b2a4f5ea5f01c062"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#a4a46ceaf46514195b2a4f5ea5f01c062">load_little</a> (void const *bytes) noexcept</td></tr>
-<tr class="separator:a4a46ceaf46514195b2a4f5ea5f01c062"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
-Variables</h2></td></tr>
-<tr class="memitem:a4c906508ae3819e8d326ac271ff9ca70" id="r_a4c906508ae3819e8d326ac271ff9ca70"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#a4c906508ae3819e8d326ac271ff9ca70">byte_powers</a></td></tr>
-<tr class="separator:a4c906508ae3819e8d326ac271ff9ca70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe69d044e6c6ffba59ddb9f6f3cf7c13" id="r_abe69d044e6c6ffba59ddb9f6f3cf7c13"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#abe69d044e6c6ffba59ddb9f6f3cf7c13">run</a> (simd::neon, std::span&lt; std::byte const &gt;, std::uint32_t) noexcept</td></tr>
+<tr class="separator:abe69d044e6c6ffba59ddb9f6f3cf7c13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a065dea27682b41b21acc19192b8eb99a" id="r_a065dea27682b41b21acc19192b8eb99a"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#a065dea27682b41b21acc19192b8eb99a">run</a> (simd::avx2, std::span&lt; std::byte const &gt;, std::uint32_t) noexcept</td></tr>
+<tr class="separator:a065dea27682b41b21acc19192b8eb99a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfd96f7a004b610a2e3fe0199ec34cf8" id="r_adfd96f7a004b610a2e3fe0199ec34cf8"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#adfd96f7a004b610a2e3fe0199ec34cf8">run</a> (simd::avx512, std::span&lt; std::byte const &gt;, std::uint32_t) noexcept</td></tr>
+<tr class="separator:adfd96f7a004b610a2e3fe0199ec34cf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="a4a46ceaf46514195b2a4f5ea5f01c062" name="a4a46ceaf46514195b2a4f5ea5f01c062"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4a46ceaf46514195b2a4f5ea5f01c062">&#9670;&#160;</a></span>load_little()</h2>
+<a id="a065dea27682b41b21acc19192b8eb99a" name="a065dea27682b41b21acc19192b8eb99a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a065dea27682b41b21acc19192b8eb99a">&#9670;&#160;</a></span>run() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
-<div class="memtemplate">
-template&lt;class T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">T everett::crc32c_detail::load_little </td>
+          <td class="memname">std::uint32_t everett::crc32c_detail::run </td>
           <td>(</td>
-          <td class="paramtype">void const *&#160;</td>
-          <td class="paramname"><em>bytes</em></td><td>)</td>
-          <td></td>
+          <td class="paramtype">simd::avx2&#160;</td>
+          <td class="paramname">, </td>
         </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<a id="a5a40c55fef0379128fbb4f14db53e707" name="a5a40c55fef0379128fbb4f14db53e707"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5a40c55fef0379128fbb4f14db53e707">&#9670;&#160;</a></span>multiply_polynomial()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
         <tr>
-          <td class="memname">constexpr std::uint32_t everett::crc32c_detail::multiply_polynomial </td>
-          <td>(</td>
-          <td class="paramtype">std::uint32_t&#160;</td>
-          <td class="paramname"><em>a</em>, </td>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::span&lt; std::byte const &gt;&#160;</td>
+          <td class="paramname">, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">std::uint32_t&#160;</td>
-          <td class="paramname"><em>b</em>&#160;</td>
+          <td class="paramname">&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -160,15 +131,15 @@ template&lt;class T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">constexpr</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<a id="a8749966915803c2ca84506bb49110097" name="a8749966915803c2ca84506bb49110097"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8749966915803c2ca84506bb49110097">&#9670;&#160;</a></span>shift()</h2>
+<a id="adfd96f7a004b610a2e3fe0199ec34cf8" name="adfd96f7a004b610a2e3fe0199ec34cf8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adfd96f7a004b610a2e3fe0199ec34cf8">&#9670;&#160;</a></span>run() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -177,16 +148,22 @@ template&lt;class T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::uint32_t everett::crc32c_detail::shift </td>
+          <td class="memname">std::uint32_t everett::crc32c_detail::run </td>
           <td>(</td>
-          <td class="paramtype">std::uint32_t&#160;</td>
-          <td class="paramname"><em>crc</em>, </td>
+          <td class="paramtype">simd::avx512&#160;</td>
+          <td class="paramname">, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::uint64_t&#160;</td>
-          <td class="paramname"><em>bytes</em>&#160;</td>
+          <td class="paramtype">std::span&lt; std::byte const &gt;&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint32_t&#160;</td>
+          <td class="paramname">&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -196,16 +173,15 @@ template&lt;class T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
 </div>
 </div>
-<h2 class="groupheader">Variable Documentation</h2>
-<a id="a4c906508ae3819e8d326ac271ff9ca70" name="a4c906508ae3819e8d326ac271ff9ca70"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4c906508ae3819e8d326ac271ff9ca70">&#9670;&#160;</a></span>byte_powers</h2>
+<a id="abe69d044e6c6ffba59ddb9f6f3cf7c13" name="abe69d044e6c6ffba59ddb9f6f3cf7c13"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abe69d044e6c6ffba59ddb9f6f3cf7c13">&#9670;&#160;</a></span>run() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -214,24 +190,36 @@ template&lt;class T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">constexpr auto everett::crc32c_detail::byte_powers</td>
+          <td class="memname">std::uint32_t everett::crc32c_detail::run </td>
+          <td>(</td>
+          <td class="paramtype">simd::neon&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::span&lt; std::byte const &gt;&#160;</td>
+          <td class="paramname">, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::uint32_t&#160;</td>
+          <td class="paramname">&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">constexpr</span></span>  </td>
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line">= [] {</div>
-<div class="line">    std::array&lt;std::uint32_t, 64&gt; result{};</div>
-<div class="line">    result[0] = 1u &lt;&lt; 23; </div>
-<div class="line">    <span class="keywordflow">for</span> (<span class="keywordtype">unsigned</span> i = 1; i != result.size(); ++i)</div>
-<div class="line">      result[i] = <a class="code hl_function" href="namespaceeverett_1_1crc32c__detail.html#a5a40c55fef0379128fbb4f14db53e707">multiply_polynomial</a>(result[i - 1], result[i - 1]);</div>
-<div class="line">    <span class="keywordflow">return</span> result;</div>
-<div class="line">  }()</div>
-<div class="ttc" id="anamespaceeverett_1_1crc32c__detail_html_a5a40c55fef0379128fbb4f14db53e707"><div class="ttname"><a href="namespaceeverett_1_1crc32c__detail.html#a5a40c55fef0379128fbb4f14db53e707">everett::crc32c_detail::multiply_polynomial</a></div><div class="ttdeci">constexpr std::uint32_t multiply_polynomial(std::uint32_t a, std::uint32_t b) noexcept</div><div class="ttdef"><b>Definition</b> crc32c.h:37</div></div>
-</div><!-- fragment -->
+
 </div>
 </div>
 </div><!-- contents -->

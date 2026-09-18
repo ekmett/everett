@@ -89,7 +89,8 @@ $(function() {
 
 <p>Provides bounded byte comparison shared by the key codecs.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;bit&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="el" href="backend_8h_source.html">everett/backend.h</a>&gt;</code><br />
+<code>#include &lt;bit&gt;</code><br />
 <code>#include &lt;cstddef&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;cstring&gt;</code><br />
@@ -105,8 +106,9 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a2dd2c1a4412316c43e0569df34302aa3" id="r_a2dd2c1a4412316c43e0569df34302aa3"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1key__detail.html#a2dd2c1a4412316c43e0569df34302aa3">everett::key_detail::common_bytes</a> (void const *lhs, void const *rhs, std::size_t count) noexcept</td></tr>
-<tr class="separator:a2dd2c1a4412316c43e0569df34302aa3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a74854175cc16bfe707fea93b96d3f5c4" id="r_a74854175cc16bfe707fea93b96d3f5c4"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a74854175cc16bfe707fea93b96d3f5c4"><td class="memTemplItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1key__detail.html#a74854175cc16bfe707fea93b96d3f5c4">everett::key_detail::common_bytes</a> (void const *lhs, void const *rhs, std::size_t count) noexcept</td></tr>
+<tr class="separator:a74854175cc16bfe707fea93b96d3f5c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fc42e287d781f601ad32df357acd82c" id="r_a4fc42e287d781f601ad32df357acd82c"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1key__detail.html#a4fc42e287d781f601ad32df357acd82c">everett::key_detail::reverse_bytes</a> (std::uint64_t x) noexcept</td></tr>
 <tr class="separator:a4fc42e287d781f601ad32df357acd82c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24561a1e95f59026f45e282e8fe701ab" id="r_a24561a1e95f59026f45e282e8fe701ab"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1key__detail.html#a24561a1e95f59026f45e282e8fe701ab">everett::key_detail::load_big</a> (void const *source) noexcept</td></tr>

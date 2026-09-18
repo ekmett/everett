@@ -80,15 +80,17 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p>The <a href="index.html#quick-start">README</a> starts with the recommended named session API. The <a class="el" href="connecting-to-a-named-session.html">connection guide</a> covers mutable commands, asynchronous tickets, snapshots and forks. This guide goes underneath that API to file construction, explicit updates and merges, then explains representation and tuning choices. We keep the same policy from input records to mapped queries.</p>
-<p>For an ordinary byte-aligned string table, use <code><a class="el" href="structeverett_1_1multiverse.html">everett::multiverse</a>&lt;&gt;</code>, whose policy is <code><a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy</a>&lt;&gt;</code>. The <a class="el" href="byte-string-tables.html">byte table guide</a> covers its raw string framing, schema and measured tradeoffs.</p>
+<p>For an ordinary byte-aligned string table on ARM, import <code>everett.neon</code> and <code>everett.sqlite</code> and use <code><a class="el" href="structeverett_1_1multiverse.html">everett::multiverse</a>&lt;everett::neon_policy&lt;&gt;&gt;</code>. On x86, select the corresponding AVX2 module and policy. The baseline <code><a class="el" href="structeverett_1_1multiverse.html">everett::multiverse</a>&lt;&gt;</code> uses the same encoding with scalar execution. The <a class="el" href="byte-string-tables.html">byte table guide</a> covers its raw string framing, schema and measured tradeoffs.</p>
 <p>For a bit table, select the policy explicitly:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="connection_8h.html">everett/connection.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett.sqlite;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using </span>bit_store = <a class="code hl_struct" href="structeverett_1_1multiverse.html">everett::multiverse&lt;everett::string_policy&gt;</a>;</div>
 <div class="line"><span class="keyword">auto</span> storage = bit_store::create(<span class="stringliteral">&quot;bit-data&quot;</span>);</div>
 <div class="line"><span class="keyword">auto</span> db = storage.connect(<span class="stringliteral">&quot;main&quot;</span>);</div>
 <div class="line">db.put(<span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;Everett&quot;</span>);</div>
-<div class="ttc" id="aconnection_8h_html"><div class="ttname"><a href="connection_8h.html">connection.h</a></div><div class="ttdoc">Opens durable named typed sessions with mutable commands and immutable saved worlds.</div></div>
 <div class="ttc" id="astructeverett_1_1multiverse_html"><div class="ttname"><a href="structeverett_1_1multiverse.html">everett::multiverse</a></div><div class="ttdef"><b>Definition</b> multiverse.h:72</div></div>
 </div><!-- fragment --><p>This uses the bit registry and order-zero exponential-Golomb backspaces, with the same connection, snapshot and transaction operations. Choose its matching policy when reopening the store; a policy choice does not convert existing files. I use bytes as the starting point and measure the whole workload before choosing bit packing for space. Sorts with bit-oriented keys can declare that grammar directly.</p>
 <p>For low-level encoded blobs, use a sort exposing <code>using encoding = byte_encoding&lt;&gt;</code> for byte strings, or <code>bit_encoding&lt;&gt;</code> for packed bits, then use <code>storage_policy&lt;tip&lt;YourSort&gt;&gt;</code>. The registry derives the storage units from its sorts. Both encodings default to variable values, 15:1 sampling and physical blocks of 15 records; bit backspaces use order-zero exponential-Golomb.</p>
@@ -106,10 +108,10 @@ Persistent Tables and Saves</h1>
 <h2><a class="anchor" id="create-a-table-and-reopen-it"></a>
 Create a table and reopen it</h2>
 <p>Link this program with <code>everett::sqlite</code>. Run <code>example create /path/to/store</code> once, then <code>example read /path/to/store</code> in another process. The backing directory must already exist; the application establishes its durability before creating the catalog. The create mode expects a fresh store. Its fixed identities are for this example only: allocate fresh object, attempt and operation identities for new work in an application.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="multiverse_8h.html">everett/multiverse.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="sqlite__catalog_8h.html">everett/sqlite_catalog.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;array&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;array&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;string_view&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett.sqlite;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using </span>strings = <a class="code hl_struct" href="structeverett_1_1encoded__sort.html">everett::encoded_sort&lt;everett::byte_encoding&lt;&gt;</a>&gt;;</div>
 <div class="line"><span class="keyword">using </span>P = <a class="code hl_struct" href="structeverett_1_1storage__policy.html">everett::storage_policy&lt;everett::tip&lt;strings&gt;</a>&gt;;</div>
@@ -162,14 +164,12 @@ Create a table and reopen it</h2>
 <div class="line">  }</div>
 <div class="line">  <span class="keywordflow">return</span> 2;</div>
 <div class="line">}</div>
-<div class="ttc" id="amultiverse_8h_html"><div class="ttname"><a href="multiverse_8h.html">multiverse.h</a></div><div class="ttdoc">Declares Everett's multiverse support.</div></div>
 <div class="ttc" id="anamespaceeverett_1_1typed__detail_html_aa0bc3228fc77cba75eead4cb1526d630"><div class="ttname"><a href="namespaceeverett_1_1typed__detail.html#aa0bc3228fc77cba75eead4cb1526d630">everett::typed_detail::key</a></div><div class="ttdeci">bit_string key(key_t&lt; S &gt; const &amp;value)</div><div class="ttdef"><b>Definition</b> typed_world.h:89</div></div>
 <div class="ttc" id="anamespaceeverett_html_a3920d15c114d218c1f53e866788fb071"><div class="ttname"><a href="namespaceeverett.html#a3920d15c114d218c1f53e866788fb071">everett::encode_index_sections</a></div><div class="ttdeci">encoded_sections&lt; P &gt; encode_index_sections(profile_blob&lt; P &gt; const &amp;pair, object_id const &amp;native_id, std::optional&lt; blob_identity &gt; exact_target=std::nullopt)</div><div class="ttdef"><b>Definition</b> sections.h:413</div></div>
 <div class="ttc" id="anamespaceeverett_html_adfe0c6ebeeb8195c172f087b572ff464"><div class="ttname"><a href="namespaceeverett.html#adfe0c6ebeeb8195c172f087b572ff464">everett::encode_native_sections</a></div><div class="ttdeci">encoded_sections&lt; P &gt; encode_native_sections(profile_array&lt; P, stream_role::native &gt; const &amp;native)</div><div class="ttdef"><b>Definition</b> sections.h:405</div></div>
 <div class="ttc" id="anamespaceeverett_html_ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796"><div class="ttname"><a href="namespaceeverett.html#ae2eda95776ceb35f9e15467187334242a8e5f3adee38c8fccc13c1f3be0143796">everett::cola_origin::native</a></div><div class="ttdeci">@ native</div></div>
 <div class="ttc" id="anamespaceeverett_html_afb3ec78839f4e10d47ce9b6bb33ed0f4a0a6889dd08bdde656324c9c0a73c0f29"><div class="ttname"><a href="namespaceeverett.html#afb3ec78839f4e10d47ce9b6bb33ed0f4a0a6889dd08bdde656324c9c0a73c0f29">everett::file_kind::native_blob</a></div><div class="ttdeci">@ native_blob</div></div>
 <div class="ttc" id="anamespaceeverett_html_afb3ec78839f4e10d47ce9b6bb33ed0f4aea2f4326772e74d1c8fdf0214dc9375b"><div class="ttname"><a href="namespaceeverett.html#afb3ec78839f4e10d47ce9b6bb33ed0f4aea2f4326772e74d1c8fdf0214dc9375b">everett::file_kind::fractional_index</a></div><div class="ttdeci">@ fractional_index</div></div>
-<div class="ttc" id="asqlite__catalog_8h_html"><div class="ttname"><a href="sqlite__catalog_8h.html">sqlite_catalog.h</a></div><div class="ttdoc">Stores retained roots, timeline generations and exact file graphs in optional SQLite metadata.</div></div>
 <div class="ttc" id="astructeverett_1_1bit__string_html_a38a3d294ca4e7b058d8d7bad4cd6ede1"><div class="ttname"><a href="structeverett_1_1bit__string.html#a38a3d294ca4e7b058d8d7bad4cd6ede1">everett::bit_string::from_bytes</a></div><div class="ttdeci">static bit_string from_bytes(std::span&lt; std::byte const &gt; source)</div><div class="ttdef"><b>Definition</b> profile.h:188</div></div>
 <div class="ttc" id="astructeverett_1_1bit__string_html_adee15aee9f486dda0ab3cf09cdec9331"><div class="ttname"><a href="structeverett_1_1bit__string.html#adee15aee9f486dda0ab3cf09cdec9331">everett::bit_string::view</a></div><div class="ttdeci">bit_view view() const &amp;</div><div class="ttdef"><b>Definition</b> profile.h:178</div></div>
 <div class="ttc" id="astructeverett_1_1blob__identity_html"><div class="ttname"><a href="structeverett_1_1blob__identity.html">everett::blob_identity</a></div><div class="ttdef"><b>Definition</b> sections.h:34</div></div>
@@ -177,9 +177,9 @@ Create a table and reopen it</h2>
 <div class="ttc" id="astructeverett_1_1encoded__sort_html"><div class="ttname"><a href="structeverett_1_1encoded__sort.html">everett::encoded_sort</a></div><div class="ttdef"><b>Definition</b> registry.h:59</div></div>
 <div class="ttc" id="astructeverett_1_1object__attempt__id_html"><div class="ttname"><a href="structeverett_1_1object__attempt__id.html">everett::object_attempt_id</a></div><div class="ttdef"><b>Definition</b> object_writer.h:39</div></div>
 <div class="ttc" id="astructeverett_1_1object__id_html"><div class="ttname"><a href="structeverett_1_1object__id.html">everett::object_id</a></div><div class="ttdef"><b>Definition</b> object_path.h:38</div></div>
-<div class="ttc" id="astructeverett_1_1profile__record_html"><div class="ttname"><a href="structeverett_1_1profile__record.html">everett::profile_record</a></div><div class="ttdef"><b>Definition</b> profile.h:295</div></div>
+<div class="ttc" id="astructeverett_1_1profile__record_html"><div class="ttname"><a href="structeverett_1_1profile__record.html">everett::profile_record</a></div><div class="ttdef"><b>Definition</b> profile.h:294</div></div>
 <div class="ttc" id="astructeverett_1_1sqlite__catalog_html"><div class="ttname"><a href="structeverett_1_1sqlite__catalog.html">everett::sqlite_catalog</a></div><div class="ttdef"><b>Definition</b> sqlite_catalog.h:351</div></div>
-<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:53</div></div>
+<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:55</div></div>
 </div><!-- fragment --><p>The reader acquires its pin before opening the files. Registration uses the normal metadata checks, trusting the contents produced by our encoders; pass <code>catalog_admission::scan</code> when admission should verify the complete contents. The two-entry table fits the default fifteen-entry search head. A larger table needs a prepared chain, including its routing prefix, before publication.</p>
 <p>The <a href="md_docs_2sqlite-catalog.html#a-complete-publication-path">catalog guide</a> gives the reservation, sealing and registration calls. For more than fifteen entries, prepare a root with <code>query_root&lt;P&gt;::build</code> and persist every pair in its chain; see the <a class="el" href="mapped-blobs-and-exact-query-roots.html">mapped example</a>. For incremental output, follow the <a class="el" href="md_docs_2streamed-timeline.html">streamed timeline example</a>. The <a class="el" href="saving-and-merging-mapped-cola-roots.html">COLA store example</a> adds two-route indexes and publishes a merge while the old saved states remain readable.</p>
 <h1><a class="anchor" id="examples"></a>
@@ -188,7 +188,7 @@ Examples</h1>
 <h2><a class="anchor" id="choose-byte-or-bit-units"></a>
 Choose byte or bit units</h2>
 <p>Policies make representation choices visible in types. Arrays, blobs, indexes, and files that share a policy agree on the units used by their metadata.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="profile_8h.html">everett/profile.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main() {</div>
 <div class="line">  <span class="keyword">using </span>strings = <a class="code hl_struct" href="structeverett_1_1encoded__sort.html">everett::encoded_sort&lt;everett::byte_encoding&lt;everett::fixed_values&lt;8&gt;</a>&gt;&gt;;</div>
@@ -207,17 +207,17 @@ Choose byte or bit units</h2>
 <div class="line">  <span class="keyword">auto</span> key = <a class="code hl_function" href="structeverett_1_1bit__string.html#a654af16489b521ab496fd215b850e347">everett::bit_string::from_bits</a>(<span class="stringliteral">&quot;1011011&quot;</span>);</div>
 <div class="line">  <span class="keywordflow">return</span> key.<a class="code hl_function" href="structeverett_1_1bit__string.html#adee15aee9f486dda0ab3cf09cdec9331">view</a>().<a class="code hl_function" href="structeverett_1_1bit__view.html#a2e742a53a07964eac24b81bba74fe904">size</a>() == 7 ? 0 : 1;</div>
 <div class="line">}</div>
-<div class="ttc" id="aprofile_8h_html"><div class="ttname"><a href="profile_8h.html">profile.h</a></div><div class="ttdoc">Declares Everett's profile support.</div></div>
 <div class="ttc" id="astructeverett_1_1bit__string_html_a654af16489b521ab496fd215b850e347"><div class="ttname"><a href="structeverett_1_1bit__string.html#a654af16489b521ab496fd215b850e347">everett::bit_string::from_bits</a></div><div class="ttdeci">static bit_string from_bits(std::string_view source)</div><div class="ttdef"><b>Definition</b> profile.h:194</div></div>
 <div class="ttc" id="astructeverett_1_1bit__view_html_a2e742a53a07964eac24b81bba74fe904"><div class="ttname"><a href="structeverett_1_1bit__view.html#a2e742a53a07964eac24b81bba74fe904">everett::bit_view::size</a></div><div class="ttdeci">std::uint64_t size() const noexcept</div><div class="ttdef"><b>Definition</b> profile.h:64</div></div>
-<div class="ttc" id="astructeverett_1_1exponential__golomb_html"><div class="ttname"><a href="structeverett_1_1exponential__golomb.html">everett::exponential_golomb</a></div><div class="ttdef"><b>Definition</b> policy.h:27</div></div>
-<div class="ttc" id="astructeverett_1_1golomb_html"><div class="ttname"><a href="structeverett_1_1golomb.html">everett::golomb</a></div><div class="ttdef"><b>Definition</b> policy.h:30</div></div>
+<div class="ttc" id="astructeverett_1_1exponential__golomb_html"><div class="ttname"><a href="structeverett_1_1exponential__golomb.html">everett::exponential_golomb</a></div><div class="ttdef"><b>Definition</b> policy.h:28</div></div>
+<div class="ttc" id="astructeverett_1_1golomb_html"><div class="ttname"><a href="structeverett_1_1golomb.html">everett::golomb</a></div><div class="ttdef"><b>Definition</b> policy.h:31</div></div>
 </div><!-- fragment --><p><code>variable_values</code> selects independently framed values in a leaf encoding. For several sorts, use <code>bin&lt;L,R&gt;</code> or <code>sort_list&lt;S...&gt;</code> and reserve holes with <code>sort_undefined</code>; <a href="md_docs_2keys.html#extending-a-registry-1">sort registries</a> explains dispatch and extension. Existing files retain their own value widths when a new sort broadens the registry. <code>bit_string</code> owns a packed string; <code>bit_view</code> borrows one and can describe a range beginning inside a byte. Keep the owner alive while using its view.</p>
 <h2><a class="anchor" id="build-and-query-a-blob"></a>
 Build and query a blob</h2>
 <p>Provide strictly increasing native keys and nondecreasing borrowed keys. This small example fits in one group, so its first key supplies the known boundary context for <code>search_window</code>.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="profile__blob_8h.html">everett/profile_blob.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main() {</div>
 <div class="line">  <span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a>;</div>
@@ -236,22 +236,23 @@ Build and query a blob</h2>
 <div class="line">  <span class="keyword">auto</span> boundary = <a class="code hl_struct" href="structeverett_1_1profile__query__context.html">profile_query_context&lt;policy&gt;</a>(query.view()).<a class="code hl_function" href="structeverett_1_1profile__query__context.html#af0709bde7565dfc3b123d7b913ea6b2e">with_key</a>(records.front().key.view());</div>
 <div class="line">  <span class="keyword">auto</span> found = blob.search_window(0, boundary);</div>
 <div class="line">  <span class="keywordflow">if</span> (!found.native || !blob.false_borrow(0)) <span class="keywordflow">return</span> 1;</div>
-<div class="line">  <span class="keywordflow">return</span> <a class="code hl_function" href="namespaceeverett.html#ae9423adb98de151ba892a37dbb897214">compare_bits</a>(found.native-&gt;value.view(), records[1].value.view()) == 0 ? 0 : 1;</div>
+<div class="line">  <span class="keywordflow">return</span> <a class="code hl_function" href="namespaceeverett.html#aca13e525dcc2165f8403b1840d242891">compare_bits</a>(found.native-&gt;value.view(), records[1].value.view()) == 0 ? 0 : 1;</div>
 <div class="line">}</div>
 <div class="ttc" id="anamespaceeverett_html"><div class="ttname"><a href="namespaceeverett.html">everett</a></div><div class="ttdef"><b>Definition</b> active_engine.h:18</div></div>
 <div class="ttc" id="anamespaceeverett_html_a374f546e980dc1c516a6bca9073270d3a352d46f45140be8dd8a7af1dc223736b"><div class="ttname"><a href="namespaceeverett.html#a374f546e980dc1c516a6bca9073270d3a352d46f45140be8dd8a7af1dc223736b">everett::stream_role::borrowed</a></div><div class="ttdeci">@ borrowed</div></div>
-<div class="ttc" id="anamespaceeverett_html_ae9423adb98de151ba892a37dbb897214"><div class="ttname"><a href="namespaceeverett.html#ae9423adb98de151ba892a37dbb897214">everett::compare_bits</a></div><div class="ttdeci">int compare_bits(bit_view a, bit_view b)</div><div class="ttdef"><b>Definition</b> profile.h:244</div></div>
-<div class="ttc" id="aprofile__blob_8h_html"><div class="ttname"><a href="profile__blob_8h.html">profile_blob.h</a></div><div class="ttdoc">Declares Everett's profile blob support.</div></div>
+<div class="ttc" id="anamespaceeverett_html_aca13e525dcc2165f8403b1840d242891"><div class="ttname"><a href="namespaceeverett.html#aca13e525dcc2165f8403b1840d242891">everett::compare_bits</a></div><div class="ttdeci">int compare_bits(bit_view a, bit_view b)</div><div class="ttdef"><b>Definition</b> profile.h:243</div></div>
 <div class="ttc" id="astructeverett_1_1profile__blob_html"><div class="ttname"><a href="structeverett_1_1profile__blob.html">everett::profile_blob</a></div><div class="ttdef"><b>Definition</b> profile_blob.h:187</div></div>
-<div class="ttc" id="astructeverett_1_1profile__query__context_html"><div class="ttname"><a href="structeverett_1_1profile__query__context.html">everett::profile_query_context</a></div><div class="ttdef"><b>Definition</b> profile.h:329</div></div>
-<div class="ttc" id="astructeverett_1_1profile__query__context_html_af0709bde7565dfc3b123d7b913ea6b2e"><div class="ttname"><a href="structeverett_1_1profile__query__context.html#af0709bde7565dfc3b123d7b913ea6b2e">everett::profile_query_context::with_key</a></div><div class="ttdeci">profile_query_context with_key(bit_view key) const</div><div class="ttdef"><b>Definition</b> profile.h:386</div></div>
+<div class="ttc" id="astructeverett_1_1profile__query__context_html"><div class="ttname"><a href="structeverett_1_1profile__query__context.html">everett::profile_query_context</a></div><div class="ttdef"><b>Definition</b> profile.h:328</div></div>
+<div class="ttc" id="astructeverett_1_1profile__query__context_html_af0709bde7565dfc3b123d7b913ea6b2e"><div class="ttname"><a href="structeverett_1_1profile__query__context.html#af0709bde7565dfc3b123d7b913ea6b2e">everett::profile_query_context::with_key</a></div><div class="ttdeci">profile_query_context with_key(bit_view key) const</div><div class="ttdef"><b>Definition</b> profile.h:385</div></div>
 </div><!-- fragment --><p><code>search_window</code> is the local navigation operation: its caller supplies a group and the known boundary context. Its projected native and borrowed intervals share one <code>K</code>-entry budget. For sequential access, use <code>blob.native().view().cursor()</code>; a cursor's <code>peek()</code> exposes its reconstructed key and an original-payload value view.</p>
 <h2><a class="anchor" id="sample-an-exact-encoded-pair"></a>
 Sample an exact encoded pair</h2>
 <p>Sampling includes both streams. Here the two equal borrowed <code>delta</code> keys remain separate occurrences after the native <code>delta</code>.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="sampling_8h.html">everett/sampling.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;cstdint&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;memory&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main() {</div>
 <div class="line">  <span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a>;</div>
@@ -279,18 +280,19 @@ Sample an exact encoded pair</h2>
 <div class="line">  <span class="keywordflow">return</span> count == 2 &amp;&amp; <a class="code hl_variable" href="namespaceeverett_1_1section__detail.html#a37df539ace42bf684b22dfe52db1e1b0">samples</a>.counters().decoded_entries == 6 ? 0 : 1;</div>
 <div class="line">}</div>
 <div class="ttc" id="anamespaceeverett_1_1section__detail_html_a37df539ace42bf684b22dfe52db1e1b0"><div class="ttname"><a href="namespaceeverett_1_1section__detail.html#a37df539ace42bf684b22dfe52db1e1b0">everett::section_detail::samples</a></div><div class="ttdeci">constexpr std::size_t samples</div><div class="ttdef"><b>Definition</b> sections.h:47</div></div>
-<div class="ttc" id="asampling_8h_html"><div class="ttname"><a href="sampling_8h.html">sampling.h</a></div><div class="ttdoc">Declares Everett's sequential sampling of pinned encoded blob pairs.</div></div>
 <div class="ttc" id="astructeverett_1_1sample__cursor_html"><div class="ttname"><a href="structeverett_1_1sample__cursor.html">everett::sample_cursor</a></div><div class="ttdef"><b>Definition</b> sampling.h:186</div></div>
 </div><!-- fragment --><p>Repeated peeks leave the cursor where it is. A sampled key view lasts until advance, move, or destruction; copy the key when retaining it beyond that point. The sampler's <code>target()</code> retains the exact pair independently of the caller's original handle.</p>
 <h2><a class="anchor" id="build-a-chain-while-retaining-native-allocations"></a>
 Build a chain while retaining native allocations</h2>
 <p>The pipeline starts at an existing target and works outward through the supplied native stages. The final stage becomes the new head. This example also destroys the pipeline and its original input handles before checking the result's retained target.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="index__pipeline_8h.html">everett/index_pipeline.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;cstddef&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;initializer_list&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;memory&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;string_view&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;utility&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main() {</div>
 <div class="line">  <span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a>;</div>
@@ -320,7 +322,6 @@ Build a chain while retaining native allocations</h2>
 <div class="line">  <span class="keywordflow">return</span> !retained_target.expired() &amp;&amp; head-&gt;native().bytes().data() == native_bytes</div>
 <div class="line">    &amp;&amp; head-&gt;borrowed().size() != 0 ? 0 : 1;</div>
 <div class="line">}</div>
-<div class="ttc" id="aindex__pipeline_8h_html"><div class="ttname"><a href="index__pipeline_8h.html">index_pipeline.h</a></div><div class="ttdoc">Builds fractional-index chains through bounded streaming queues.</div></div>
 <div class="ttc" id="anamespaceeverett_1_1catalog__detail_html_a677e5a9ac59b74abe0390c704f906f30"><div class="ttname"><a href="namespaceeverett_1_1catalog__detail.html#a677e5a9ac59b74abe0390c704f906f30">everett::catalog_detail::pair</a></div><div class="ttdeci">void pair(bytes &amp;out, blob_identity const &amp;value)</div><div class="ttdef"><b>Definition</b> sqlite_catalog.h:121</div></div>
 <div class="ttc" id="astructeverett_1_1index__detail_1_1pipeline__driver_html_a3086c6ca8afebe0b40799ace63e09166"><div class="ttname"><a href="structeverett_1_1index__detail_1_1pipeline__driver.html#a3086c6ca8afebe0b40799ace63e09166">everett::index_detail::pipeline_driver::step</a></div><div class="ttdeci">std::uint64_t step(std::uint64_t quanta)</div><div class="ttdef"><b>Definition</b> index_pipeline_detail.h:64</div></div>
 <div class="ttc" id="astructeverett_1_1index__pipeline_html"><div class="ttname"><a href="structeverett_1_1index__pipeline.html">everett::index_pipeline</a></div><div class="ttdef"><b>Definition</b> index_pipeline.h:32</div></div>
@@ -328,12 +329,13 @@ Build a chain while retaining native allocations</h2>
 <h2><a class="anchor" id="query-the-whole-chain"></a>
 Query the whole chain</h2>
 <p>A query starts from a prepared root. If the head already fits in one group, preparation retains it as-is. Otherwise, I add empty-native routing catalogs above it until the new head fits. Those catalogs contain successively sparser samples and retain the existing chain. Preparation scans the original head; we do that once and reuse the root for subsequent queries.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="query_8h.html">everett/query.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;initializer_list&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;initializer_list&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;memory&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;string_view&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;utility&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main() {</div>
 <div class="line">  <span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a>;</div>
@@ -364,14 +366,16 @@ Query the whole chain</h2>
 <div class="line">  <span class="keywordflow">return</span> values.size() == 2 &amp;&amp; values[0] == bit_string::from_bytes(<span class="stringliteral">&quot;upper&quot;</span>) &amp;&amp;</div>
 <div class="line">    values[1] == bit_string::from_bytes(<span class="stringliteral">&quot;lower&quot;</span>) ? 0 : 1;</div>
 <div class="line">}</div>
-<div class="ttc" id="aquery_8h_html"><div class="ttname"><a href="query_8h.html">query.h</a></div><div class="ttdoc">Prepares immutable catalog chains and enumerates every matching native segment.</div></div>
 <div class="ttc" id="astructeverett_1_1query__root__builder_html"><div class="ttname"><a href="structeverett_1_1query__root__builder.html">everett::query_root_builder</a></div><div class="ttdef"><b>Definition</b> query.h:103</div></div>
 </div><!-- fragment --><p><code>query_root&lt;policy&gt;::build(head)</code> is the eager preparation convenience. A cursor owns its query key and pins the unvisited chain, so it can outlive the original handles. <code>step(budget)</code> visits at most that many catalogs and stops when a match is ready. <code>take_match()</code> returns an owned value, native ordinal and exact source pair; a pending match pauses further traversal until it is taken.</p>
 <p>Matches arrive from head toward target. That order describes the index chain; the caller supplies any replacement or arrow-composition semantics. A native match does not suppress routing to later matches. Query steps bound catalog visits, not reconstructed bytes or value-copy cost. The <a class="el" href="md_docs_2query.html">query contract</a> describes preparation, trust and work bounds.</p>
 <h2><a class="anchor" id="fork-a-world-and-apply-disjoint-updates"></a>
 Fork a world and apply disjoint updates</h2>
 <p>Use <code>reference_world</code> to exercise the update semantics with byte-string keys and unsigned 64-bit values. Each batch is prepared against the same base. Partition ownership determines which keys it may change; different workers may read that base while preparing their assigned writes.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="world_8h.html">everett/world.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;string_view&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;cstdint&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main() {</div>
 <div class="line">  <span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a>;</div>
@@ -402,17 +406,16 @@ Fork a world and apply disjoint updates</h2>
 <div class="ttc" id="astructeverett_1_1reference__world_html"><div class="ttname"><a href="structeverett_1_1reference__world.html">everett::reference_world</a></div><div class="ttdef"><b>Definition</b> world.h:110</div></div>
 <div class="ttc" id="astructeverett_1_1reference__world_html_a6cb6ea5442129d3da84e101ed8ee4449"><div class="ttname"><a href="structeverett_1_1reference__world.html#a6cb6ea5442129d3da84e101ed8ee4449">everett::reference_world::get</a></div><div class="ttdeci">std::optional&lt; V &gt; get(std::string_view key) const</div><div class="ttdef"><b>Definition</b> world.h:143</div></div>
 <div class="ttc" id="astructeverett_1_1reference__world_html_af6f88d725d79b6f67058ed597aeab09f"><div class="ttname"><a href="structeverett_1_1reference__world.html#af6f88d725d79b6f67058ed597aeab09f">everett::reference_world::snapshot</a></div><div class="ttdeci">reference_world snapshot() const</div><div class="ttdef"><b>Definition</b> world.h:160</div></div>
-<div class="ttc" id="aworld_8h_html"><div class="ttname"><a href="world_8h.html">world.h</a></div><div class="ttdoc">Declares Everett's world support.</div></div>
 </div><!-- fragment --><p>Admission checks old values, partition ownership, overlap, and the advertised fingerprint contribution. Identical batch replay is recognized. Calls to a receiver's <code>apply()</code> are serialized; preparing disjoint batches can happen independently. <code>snapshot()</code> shares the existing immutable state; compaction preserves both the resolved entries and their fingerprint.</p>
 <p>The reference model also has a <code>.rc</code> debug dump for inspecting or round-tripping all live entries. This is a debugging feature, not an intended access pattern; ordinary saves retain object roots through the catalog. See <a href="md_docs_2file-lifecycle.html#debug-dumps">debug dumps</a>.</p>
 <h1><a class="anchor" id="incremental-native-merges"></a>
 Incremental Native Merges</h1>
 <p><code>profile_native_writer&lt;P&gt;</code> accepts records one at a time. We choose a common value width before writing, or let each value carry its own length. Finishing produces an ordinary front-coded array with its sparse offset directory. <code>profile_blob&lt;P&gt;::adopt_native</code> turns it into a terminal pair without decoding or rewriting the native data.</p>
 <p>The merge builder consumes two sorted native streams, older then newer. Its default equal-key operation takes the newer value:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="native__merge_8h.html">everett/native_merge.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="query_8h.html">everett/query.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;memory&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;string_view&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main() {</div>
 <div class="line">  <span class="keyword">using </span>strings = <a class="code hl_struct" href="structeverett_1_1encoded__sort.html">everett::encoded_sort&lt;everett::byte_encoding&lt;&gt;</a>&gt;;</div>
@@ -436,7 +439,6 @@ Incremental Native Merges</h1>
 <div class="line">  <span class="keywordflow">if</span> (!query.has_match()) <span class="keywordflow">return</span> 1;</div>
 <div class="line">  <span class="keywordflow">return</span> query.take_match().value == <a class="code hl_function" href="structeverett_1_1bit__string.html#a38a3d294ca4e7b058d8d7bad4cd6ede1">everett::bit_string::from_bytes</a>(<span class="stringliteral">&quot;after&quot;</span>) ? 0 : 2;</div>
 <div class="line">}</div>
-<div class="ttc" id="anative__merge_8h_html"><div class="ttname"><a href="native__merge_8h.html">native_merge.h</a></div><div class="ttdoc">Merges ordered native streams incrementally with policy-specific value composition.</div></div>
 <div class="ttc" id="astructeverett_1_1native__merge__builder_html"><div class="ttname"><a href="structeverett_1_1native__merge__builder.html">everett::native_merge_builder</a></div><div class="ttdef"><b>Definition</b> native_merge.h:174</div></div>
 <div class="ttc" id="astructeverett_1_1profile__array_html"><div class="ttname"><a href="structeverett_1_1profile__array.html">everett::profile_array</a></div><div class="ttdef"><b>Definition</b> profile.h:1168</div></div>
 <div class="ttc" id="astructeverett_1_1profile__blob_html_adc96cb5042e86d97183b6dcdbbbfe27d"><div class="ttname"><a href="structeverett_1_1profile__blob.html#adc96cb5042e86d97183b6dcdbbbfe27d">everett::profile_blob::adopt_native</a></div><div class="ttdeci">static profile_blob adopt_native(native_array native)</div><div class="ttdef"><b>Definition</b> profile_blob.h:212</div></div>
@@ -566,23 +568,29 @@ Proofs</h1>
 <p>The string-comparison modules also check the ordered-triple LCP identity and associative mismatch transfers used by the <a class="el" href="md_docs_2comparison-fc.html">ordinary-FC design</a>. An exact LCP at each cut can repair the preceding borrowed comparison state without repeating its prefix. Connecting those theorems to encoded metadata and the complete cursor is the next proof obligation. The complete query tests separately check the encoded implementation against independent native-array oracles.</p>
 <h1><a class="anchor" id="building-and-testing"></a>
 Building and Testing</h1>
-<p>Use CMake 3.20 or later and a C++20 compiler. The mapping backend uses the platform's native read-only mapping API. I use one pinned <a href="https://github.com/corsix/fast-crc32">fast-crc32 generator</a> for portable, ARM and x86 CRC32C kernels. Generated code ships with the headers, so a consumer build needs no download, generator, or additional linked library. The compiler target selects eligible kernels; buffers too small to benefit from parallel folding use a scalar path. The checksum and file format stay the same.</p>
-<div class="fragment"><div class="line">cmake -S . -B build -DEVERETT_BUILD_TESTS=ON</div>
+<p>Use upstream Clang 23, CMake 4.4 and Ninja. Install <code>simd</code> with <code>SIMD_ENABLE_EXCEPTIONS=ON</code> using the same compiler, standard library and runtime. Set <code>CMAKE_PREFIX_PATH</code> to that installation when configuring Everett. The <a class="el" href="md_docs_2modules.html">module guide</a> gives the dependency build, explicit execution profiles and macOS SDK setup. The mapping backend uses the platform's native read-only mapping API. I use one pinned <a href="https://github.com/corsix/fast-crc32">fast-crc32 generator</a> for portable, ARM and x86 CRC32C kernels. Generated kernels are compiled into Everett, so a consumer build needs no generator or separate CRC library. The compiler target selects eligible kernels; buffers too small to benefit from parallel folding use a scalar path. The checksum and file format stay the same.</p>
+<div class="fragment"><div class="line">cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ \</div>
+<div class="line">  -DCMAKE_PREFIX_PATH=/path/to/simd -DEVERETT_BUILD_TESTS=ON</div>
 <div class="line">cmake --build build --parallel 4</div>
 <div class="line">ctest --test-dir build --output-on-failure</div>
 </div><!-- fragment --><p>The tests check decoded results against independent oracles, group boundaries, byte/bit policy combinations, exact ownership, partition permutations, and simulated publication and recovery failures. Run AddressSanitizer and UndefinedBehaviorSanitizer on supported compilers with:</p>
-<div class="fragment"><div class="line">cmake -S . -B build-sanitize -DCMAKE_BUILD_TYPE=Debug \</div>
+<div class="fragment"><div class="line">cmake -S . -B build-sanitize -G Ninja -DCMAKE_CXX_COMPILER=clang++ \</div>
+<div class="line">  -DCMAKE_PREFIX_PATH=/path/to/simd -DCMAKE_BUILD_TYPE=Debug \</div>
 <div class="line">  -DEVERETT_BUILD_TESTS=ON -DEVERETT_SANITIZERS=ON</div>
 <div class="line">cmake --build build-sanitize --parallel 4</div>
-<div class="line">ctest --test-dir build-sanitize --output-on-failure</div>
-</div><!-- fragment --><p>Install the package:</p>
+<div class="line">UBSAN_OPTIONS=halt_on_error=1 ASAN_OPTIONS=halt_on_error=1 \</div>
+<div class="line">  ctest --test-dir build-sanitize --output-on-failure</div>
+</div><!-- fragment --><p><code>EVERETT_SANITIZERS</code> instruments test translation units. Instrument the compiled Everett and SIMD libraries in their own builds as well when checking code inside those archives. Enable <code>EVERETT_ENABLE_SQLITE=ON</code> to include the durable catalog, connection and SQLite package tests; the core-only configuration omits them.</p>
+<p>Install the package:</p>
 <div class="fragment"><div class="line">cmake --install build --prefix /path/to/everett-install</div>
-</div><!-- fragment --><p>Configure your consumer with that prefix in <code>CMAKE_PREFIX_PATH</code>, then link the interface target:</p>
-<div class="fragment"><div class="line">find_package(everett CONFIG REQUIRED)</div>
+</div><!-- fragment --><p>Configure your consumer with both <code>/path/to/everett-install</code> and <code>/path/to/simd</code> in <code>CMAKE_PREFIX_PATH</code>, using the same toolchain, then link the compiled target:</p>
+<div class="fragment"><div class="line">cmake_minimum_required(VERSION 4.4)</div>
+<div class="line">find_package(everett CONFIG REQUIRED)</div>
 <div class="line">target_link_libraries(your_target PRIVATE everett::everett)</div>
-</div><!-- fragment --><p>An embedded checkout supports <code>add_subdirectory(path/to/everett)</code> and the same target. Tests default off when embedded. <code>EVERETT_USE_CCACHE=ON</code> enables a compiler cache for test builds when <code>ccache</code> is available.</p>
+</div><!-- fragment --><p>An embedded checkout supports <code>add_subdirectory(path/to/everett)</code> and the same target. Tests default off when embedded. <code>EVERETT_USE_CCACHE=ON</code> enables a compiler cache for test builds when <code>ccache</code> is available. The baseline target and <code>storage_policy&lt;&gt;</code> use scalar execution. For a native policy, import and link its <a href="md_docs_2modules.html#explicit-execution-profiles">profile module</a> and apply <code>simd_target_profile</code> to the consuming target.</p>
 <p>With Doxygen and Python 3 installed, generate and check the API documentation:</p>
-<div class="fragment"><div class="line">cmake -S . -B build-docs -DEVERETT_BUILD_DOCS=ON</div>
+<div class="fragment"><div class="line">cmake -S . -B build-docs -G Ninja -DCMAKE_CXX_COMPILER=clang++ \</div>
+<div class="line">  -DCMAKE_PREFIX_PATH=/path/to/simd -DEVERETT_BUILD_DOCS=ON</div>
 <div class="line">cmake --build build-docs --target everett_docs</div>
 <div class="line">ctest --test-dir build-docs -R &#39;^everett.doxygen$&#39; --output-on-failure</div>
 </div><!-- fragment --><p>The optional documentation check verifies file metadata, declaration ownership, overloads, and source locations. See <a class="el" href="md_docs_2doxygen.html">Doxygen conventions</a> and <a href="md__a_g_e_n_t_s.html#coding-style">contributor instructions</a> for the corresponding source conventions.</p>

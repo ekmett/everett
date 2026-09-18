@@ -80,33 +80,35 @@ $(function() {
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="md__r_e_a_d_m_e"></a></p>
-<p>Everett is a C++20 library for compact string-keyed tables, cheap snapshots and independent branches. Connect to a named table, read and write strings, and keep an earlier state whenever you need one.</p>
+<p>Everett is a C++26 library for compact string-keyed tables, cheap snapshots and independent branches. Connect to a named table, read and write strings, and keep an earlier state whenever you need one.</p>
 <p>A <b>world</b> is an immutable logical table state. A <b>multiverse</b> owns its backing storage, and a mutable <b>session</b> follows the current world as writes and background merges produce new versions. Older snapshots keep their data.</p>
-<div class="fragment"><div class="line"><span class="keyword">auto</span> storage = <a class="code hl_function" href="structeverett_1_1multiverse.html#a890188769ba568d8ed7d189e4e256146">everett::multiverse&lt;&gt;::create</a>(<span class="stringliteral">&quot;data&quot;</span>);</div>
+<div class="fragment"><div class="line"><span class="keyword">auto</span> storage = <a class="code hl_struct" href="structeverett_1_1multiverse.html">everett::multiverse&lt;everett::neon_policy&lt;&gt;</a>&gt;::create(<span class="stringliteral">&quot;data&quot;</span>);</div>
 <div class="line"><span class="keyword">auto</span> db = storage.connect(<span class="stringliteral">&quot;earth-616&quot;</span>);</div>
 <div class="line">db.put(<span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;Everett&quot;</span>);</div>
 <div class="line"><span class="keyword">auto</span> saved = db.snapshot();</div>
 <div class="line">db.put(<span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;Persistent snapshots&quot;</span>);</div>
 <div class="line"><span class="comment">// saved.get(&quot;name&quot;) still returns &quot;Everett&quot;.</span></div>
-<div class="ttc" id="astructeverett_1_1multiverse_html_a890188769ba568d8ed7d189e4e256146"><div class="ttname"><a href="structeverett_1_1multiverse.html#a890188769ba568d8ed7d189e4e256146">everett::multiverse::create</a></div><div class="ttdeci">static multiverse create(std::filesystem::path root)</div><div class="ttdef"><b>Definition</b> multiverse.h:128</div></div>
-</div><!-- fragment --><p>Include <code>&lt;<a class="el" href="connection_8h.html" title="Opens durable named typed sessions with mutable commands and immutable saved worlds.">everett/connection.h</a>&gt;</code> and link <code>everett::sqlite</code>. The default stores byte strings with <b>15:1 index sampling</b> and byte-counted front coding, which stores only the changed suffix of each sorted key. Keys and values are <code>std::string</code>; embedded zero bytes work. There are no codec parameters to choose before getting started.</p>
+<div class="ttc" id="astructeverett_1_1multiverse_html"><div class="ttname"><a href="structeverett_1_1multiverse.html">everett::multiverse</a></div><div class="ttdef"><b>Definition</b> multiverse.h:72</div></div>
+</div><!-- fragment --><p>Import <code>everett.neon</code> and <code>everett.sqlite</code>, and link their CMake targets. The example selects ARM NEON; x86 applications can select <code>everett.avx2</code> and <code>avx2_policy&lt;&gt;</code>. Both use the same byte-oriented files. The ordinary policy stores byte strings with <b>15:1 index sampling</b> and byte-counted front coding, which stores only the changed suffix of each sorted key. Keys and values are <code>std::string</code>; embedded zero bytes work. There are no codec parameters to choose before getting started.</p>
 <p>I use the byte path for ordinary tables. The <a class="el" href="byte-string-tables.html">byte table guide</a> explains its framing and measured space and performance costs. Explicit bit policies remain available for applications with bit-oriented keys.</p>
 <p>Version 0.1.0 is experimental; APIs and file formats may change. The <a class="el" href="connecting-to-a-named-session.html">connection guide</a> covers the mutable API and its failure rules. The <a class="el" href="md_docs_2implementation.html">implementation ledger</a> records tested boundaries, including retention and work accounting.</p>
 <p><a class="el" href="index.html#quick-start">Quick start</a> · <a class="el" href="index.html#saved-tables">Saved tables</a> · <a class="el" href="index.html#building">Building</a> · <a class="el" href="detailed-usage.html">Detailed usage</a></p>
 <h1><a class="anchor" id="quick-start"></a>
 Quick Start</h1>
 <p>Here is a complete program:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="connection_8h.html">everett/connection.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><span class="keyword">import</span> everett.neon;</div>
+<div class="line"><span class="keyword">import</span> everett.sqlite;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main() {</div>
-<div class="line">  <span class="keyword">auto</span> storage = <a class="code hl_function" href="structeverett_1_1multiverse.html#a890188769ba568d8ed7d189e4e256146">everett::multiverse&lt;&gt;::create</a>(<span class="stringliteral">&quot;data&quot;</span>);</div>
+<div class="line">  <span class="keyword">auto</span> storage = <a class="code hl_struct" href="structeverett_1_1multiverse.html">everett::multiverse&lt;everett::neon_policy&lt;&gt;</a>&gt;::create(<span class="stringliteral">&quot;data&quot;</span>);</div>
 <div class="line">  <span class="keyword">auto</span> db = storage.connect(<span class="stringliteral">&quot;earth-616&quot;</span>);</div>
 <div class="line">  db.put(<span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;Everett&quot;</span>);</div>
 <div class="line">  <span class="keyword">auto</span> name = db.get(<span class="stringliteral">&quot;name&quot;</span>);</div>
 <div class="line">  <span class="keywordflow">return</span> name != <span class="stringliteral">&quot;Everett&quot;</span>;</div>
 <div class="line">}</div>
-<div class="ttc" id="aconnection_8h_html"><div class="ttname"><a href="connection_8h.html">connection.h</a></div><div class="ttdoc">Opens durable named typed sessions with mutable commands and immutable saved worlds.</div></div>
-</div><!-- fragment --><p><code>create</code> establishes missing directories and flushes their new names. <code>connect</code> opens the latest state of the named session, creating an empty table if needed. Run the program again and it reopens the same table. An existing multiverse can also be opened with <code><a class="el" href="structeverett_1_1multiverse.html">everett::multiverse</a> storage("data")</code>.</p>
+</div><!-- fragment --><p><code>create</code> establishes missing directories and flushes their new names. <code>connect</code> opens the latest state of the named session, creating an empty table if needed. Run the program again and it reopens the same table. An existing multiverse can also be opened with <code><a class="el" href="structeverett_1_1multiverse.html">everett::multiverse</a>&lt;everett::neon_policy&lt;&gt;&gt; storage("data")</code>.</p>
 <p><code>get</code> returns <code>std::optional&lt;std::string&gt;</code>. A missing key and a stored empty string are distinct. <code>put</code> replaces a value; <code>erase</code> removes an existing key. Writes return after their new state is durably published. Readers use immutable snapshots and mmap the table files. Writes also pay for merges and cleanup of deleted or overwritten records in the active table.</p>
 <h1><a class="anchor" id="saved-tables"></a>
 Saved Tables</h1>
@@ -128,7 +130,7 @@ Ranges</h1>
 <div class="line">  <span class="comment">// Use row.key and *row.value.</span></div>
 <div class="line">}</div>
 <div class="line">db.erase_range(<span class="stringliteral">&quot;a&quot;</span>, <span class="stringliteral">&quot;b&quot;</span>);</div>
-</div><!-- fragment --><p>The range keeps its snapshot alive and provides C++20 forward iterators. It also works with range adaptors such as <code>std::views::take</code>. Range deletion publishes one batch of tombstones for the observed rows; earlier snapshots retain them. The <a class="el" href="scanning-a-table.html">range guide</a> covers bounds, streaming, concurrent changes and traversal costs.</p>
+</div><!-- fragment --><p>The range keeps its snapshot alive and provides forward iterators. It also works with range adaptors such as <code>std::views::take</code>. Range deletion publishes one batch of tombstones for the observed rows; earlier snapshots retain them. The <a class="el" href="scanning-a-table.html">range guide</a> covers bounds, streaming, concurrent changes and traversal costs.</p>
 <h1><a class="anchor" id="transactions"></a>
 Transactions</h1>
 <p>Use a transaction to publish several edits together:</p>
@@ -157,14 +159,16 @@ Concurrent Updates</h1>
 </div><!-- fragment --><p>These disjoint changes can arrive in either order and give the same contents and signature. Each contribution checks its affected old values. Custom sorts can compose changes instead of replacing values; see the <a class="el" href="typed-worlds-and-contributions.html">typed update guide</a>.</p>
 <h1><a class="anchor" id="building"></a>
 Building</h1>
-<p>Use CMake 3.20 or later and a C++20 compiler. For the named table API:</p>
-<div class="fragment"><div class="line">set(EVERETT_ENABLE_SQLITE ON CACHE BOOL &quot;Build the persistent catalog&quot;)</div>
-<div class="line">add_subdirectory(path/to/everett)</div>
-<div class="line">target_link_libraries(your_target PRIVATE everett::sqlite)</div>
-</div><!-- fragment --><p>The catalog requires SQLite 3.51.3 or later. An installed package supports:</p>
-<div class="fragment"><div class="line">find_package(everett CONFIG REQUIRED COMPONENTS sqlite)</div>
-<div class="line">target_link_libraries(your_target PRIVATE everett::sqlite)</div>
-</div><!-- fragment --><p>Everett is header-only. The lower-level codecs, indexes and in-memory engines use <code>everett::everett</code> and do not require SQLite. The supported persistent file writer uses POSIX operations on macOS and Linux. See <a href="detailed-usage.html#building-and-testing">building and testing</a> for installation, sanitizers and Doxygen commands.</p>
+<p>Use upstream Clang 23, CMake 4.4 and Ninja. Build and install <a href="https://github.com/ekmett/simd">simd</a> with <code>SIMD_ENABLE_EXCEPTIONS=ON</code>, then use its installation in <code>CMAKE_PREFIX_PATH</code> when building Everett. SQLite 3.51.3 or later is required for named tables.</p>
+<p>For an installed package and the NEON example above:</p>
+<div class="fragment"><div class="line">cmake_minimum_required(VERSION 4.4)</div>
+<div class="line">project(example LANGUAGES CXX)</div>
+<div class="line">find_package(everett CONFIG REQUIRED COMPONENTS sqlite neon)</div>
+<div class="line">add_executable(example example.cc)</div>
+<div class="line">target_link_libraries(example PRIVATE everett::neon everett::sqlite)</div>
+<div class="line">simd_target_profile(example NEON)</div>
+</div><!-- fragment --><p>Put both the Everett and SIMD installation prefixes in <code>CMAKE_PREFIX_PATH</code>. On x86, request the <code>avx2</code> component, link <code>everett::avx2</code>, and select <code>AVX2</code> for a target with AVX2, FMA and BMI2 support. The baseline <code>import everett;</code> and <code>everett::everett</code> target provide a scalar policy; importing a native module does not change that default.</p>
+<p>Everett supplies compiled libraries and module sources. CMake rebuilds module interfaces with the consumer's compiler settings. The lower-level codecs, indexes and in-memory engines do not require SQLite. The persistent file writer uses POSIX operations on macOS and Linux. See the <a class="el" href="md_docs_2modules.html">module guide</a> for toolchain and native-profile details, and <a href="detailed-usage.html#building-and-testing">building and testing</a> for installation, sanitizers and documentation commands.</p>
 <h1><a class="anchor" id="why-a-cola"></a>
 Why a COLA?</h1>
 <p>A cache-oblivious lookahead array, or <b>COLA</b>, spreads a table across sorted runs. Small updates start small; merging combines them into larger runs. Sampling lets a lookup carry its position from one run into the next, so it only searches a small window at each step. Shared prefixes keep string keys compact, and immutable runs make snapshots inexpensive.</p>

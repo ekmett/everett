@@ -83,7 +83,6 @@ $(function() {
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
-<a href="#define-members">Macros</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">fixed_search.h File Reference</div></div>
 </div><!--header-->
@@ -92,6 +91,8 @@ $(function() {
 <p>Searches bounded windows of portable fixed-width keys with scalar or SIMD pivots.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;<a class="el" href="error__detail_8h_source.html">everett/error_detail.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="backend_8h_source.html">everett/backend.h</a>&gt;</code><br />
+<code>#include &lt;simd/integer.h&gt;</code><br />
 <code>#include &lt;algorithm&gt;</code><br />
 <code>#include &lt;array&gt;</code><br />
 <code>#include &lt;bit&gt;</code><br />
@@ -106,7 +107,7 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1fixed__key__view.html">everett::fixed_key_view&lt; Words &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1fixed__key__view.html">everett::fixed_key_view&lt; Words, Arch &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
@@ -115,11 +116,6 @@ Namespaces</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:namespaceeverett_1_1fixed__search__detail" id="r_namespaceeverett_1_1fixed__search__detail"><td class="memItemLeft" align="right" valign="top">namespace &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1fixed__search__detail.html">everett::fixed_search_detail</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
-Macros</h2></td></tr>
-<tr class="memitem:a5d39768b0a5191abc97c85d39fb296fb" id="r_a5d39768b0a5191abc97c85d39fb296fb"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="fixed__search_8h.html#a5d39768b0a5191abc97c85d39fb296fb">EVERETT_FIXED_SEARCH_INLINE</a>&#160;&#160;&#160;inline</td></tr>
-<tr class="separator:a5d39768b0a5191abc97c85d39fb296fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
@@ -131,9 +127,12 @@ Functions</h2></td></tr>
 <tr class="memitem:af963574f6e55814de37c857ea28bd2dd" id="r_af963574f6e55814de37c857ea28bd2dd"><td class="memTemplParams" colspan="2">template&lt;std::size_t Words, bool Upper&gt; </td></tr>
 <tr class="memitem:af963574f6e55814de37c857ea28bd2dd"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1fixed__search__detail.html#af963574f6e55814de37c857ea28bd2dd">everett::fixed_search_detail::precedes</a> (std::byte const *source, std::array&lt; std::uint32_t, Words &gt; const &amp;query) noexcept</td></tr>
 <tr class="separator:af963574f6e55814de37c857ea28bd2dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa24a47c964832e9263a39eba4460c280" id="r_aa24a47c964832e9263a39eba4460c280"><td class="memTemplParams" colspan="2">template&lt;std::size_t Words, bool Upper&gt; </td></tr>
-<tr class="memitem:aa24a47c964832e9263a39eba4460c280"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="fixed__search_8h.html#a5d39768b0a5191abc97c85d39fb296fb">EVERETT_FIXED_SEARCH_INLINE</a> unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1fixed__search__detail.html#aa24a47c964832e9263a39eba4460c280">everett::fixed_search_detail::population</a> (std::byte const *source, unsigned count, std::array&lt; std::uint32_t, Words &gt; const &amp;query) noexcept</td></tr>
-<tr class="separator:aa24a47c964832e9263a39eba4460c280"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9222f23f3d7de6786d4316f3dfbe03eb" id="r_a9222f23f3d7de6786d4316f3dfbe03eb"><td class="memTemplParams" colspan="2">template&lt;bool Upper, simd::architecture Arch&gt; </td></tr>
+<tr class="memitem:a9222f23f3d7de6786d4316f3dfbe03eb"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1fixed__search__detail.html#a9222f23f3d7de6786d4316f3dfbe03eb">everett::fixed_search_detail::precedes_four</a> (std::byte const *source, simd::vec&lt; std::uint32_t, 4, Arch &gt; query) noexcept</td></tr>
+<tr class="separator:a9222f23f3d7de6786d4316f3dfbe03eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a302d1047e1562cb315dc68e984736aa2" id="r_a302d1047e1562cb315dc68e984736aa2"><td class="memTemplParams" colspan="2">template&lt;std::size_t Words, bool Upper, simd::architecture Arch&gt; </td></tr>
+<tr class="memitem:a302d1047e1562cb315dc68e984736aa2"><td class="memTemplItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1fixed__search__detail.html#a302d1047e1562cb315dc68e984736aa2">everett::fixed_search_detail::population</a> (std::byte const *source, unsigned count, std::array&lt; std::uint32_t, Words &gt; const &amp;query) noexcept</td></tr>
+<tr class="separator:a302d1047e1562cb315dc68e984736aa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Searches bounded windows of portable fixed-width keys with scalar or SIMD pivots. </p>
@@ -141,22 +140,7 @@ Functions</h2></td></tr>
 <div class="fragment"><div class="line">SPDX-FileType: SOURCE</div>
 <div class="line">SPDX-FileCopyrightText: 2026 Edward Kmett &lt;ekmett@gmail.com&gt;</div>
 <div class="line">SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0</div>
-</div><!-- fragment --> </div><h2 class="groupheader">Macro Definition Documentation</h2>
-<a id="a5d39768b0a5191abc97c85d39fb296fb" name="a5d39768b0a5191abc97c85d39fb296fb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5d39768b0a5191abc97c85d39fb296fb">&#9670;&#160;</a></span>EVERETT_FIXED_SEARCH_INLINE</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define EVERETT_FIXED_SEARCH_INLINE&#160;&#160;&#160;inline</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
-</div><!-- contents -->
+</div><!-- fragment --> </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8

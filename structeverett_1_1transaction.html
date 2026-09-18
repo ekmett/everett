@@ -124,8 +124,8 @@ Public Types</h2></td></tr>
 <tr class="separator:aa2f631fa7711b865d1f63073ee340b61"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9fce658a5bd72a06717f5dfcaa36f554" id="r_a9fce658a5bd72a06717f5dfcaa36f554"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1transaction.html#a9fce658a5bd72a06717f5dfcaa36f554">ticket</a> = typename <a class="el" href="structeverett_1_1connection.html#ab1c5443f26dd4e14c23fcc4723e3df59">connection_type::ticket</a></td></tr>
 <tr class="separator:a9fce658a5bd72a06717f5dfcaa36f554"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a353b0cb35be1a5e3752b2241d60a3ace" id="r_a353b0cb35be1a5e3752b2241d60a3ace"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1transaction.html#a353b0cb35be1a5e3752b2241d60a3ace">nursery_type</a> = <a class="el" href="structeverett_1_1nursery__map.html">nursery_map</a>&lt; <a class="el" href="structeverett_1_1bit__string.html">bit_string</a>, <a class="el" href="structeverett_1_1transaction_1_1nursery__value.html">nursery_value</a>, <a class="el" href="structeverett_1_1transaction__detail_1_1key__less.html">transaction_detail::key_less</a> &gt;</td></tr>
-<tr class="separator:a353b0cb35be1a5e3752b2241d60a3ace"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa80fd5260393fbddba30be138399b873" id="r_aa80fd5260393fbddba30be138399b873"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1transaction.html#aa80fd5260393fbddba30be138399b873">nursery_type</a> = <a class="el" href="structeverett_1_1nursery__map.html">nursery_map</a>&lt; <a class="el" href="structeverett_1_1bit__string.html">bit_string</a>, <a class="el" href="structeverett_1_1transaction_1_1nursery__value.html">nursery_value</a>, <a class="el" href="structeverett_1_1transaction__detail_1_1key__less.html">transaction_detail::key_less</a>&lt; typename policy_type::architecture &gt; &gt;</td></tr>
+<tr class="separator:aa80fd5260393fbddba30be138399b873"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a61db94a60795b3f740d92c85ab5794" id="r_a2a61db94a60795b3f740d92c85ab5794"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1transaction.html#a2a61db94a60795b3f740d92c85ab5794">scope_type</a> = <a class="el" href="structeverett_1_1private__construction.html">private_construction</a>&lt; <a class="el" href="structeverett_1_1transaction.html#a10c4b52c24ae7982c87ef7b30d4651e9">policy_type</a> &gt;</td></tr>
 <tr class="separator:a2a61db94a60795b3f740d92c85ab5794"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c2c538a59877e6ed0e8611d2ad30b0d" id="r_a7c2c538a59877e6ed0e8611d2ad30b0d"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1transaction.html#a7c2c538a59877e6ed0e8611d2ad30b0d">store_type</a> = typename <a class="el" href="structeverett_1_1connection.html#a00bcdceb6dd49bb062a3f3956441aa7a">connection_type::store_type</a></td></tr>
@@ -187,7 +187,7 @@ Private Attributes</h2></td></tr>
 <tr class="separator:a2bd3e786480f623b3a40f47987f6f0e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9721cc1442f8376507457c6f48150cf6" id="r_a9721cc1442f8376507457c6f48150cf6"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="el" href="structeverett_1_1transaction_1_1stage.html">stage</a> const  &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1transaction.html#a9721cc1442f8376507457c6f48150cf6">stage_</a></td></tr>
 <tr class="separator:a9721cc1442f8376507457c6f48150cf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afa131fb135fc6f43c0c019def4a760e8" id="r_afa131fb135fc6f43c0c019def4a760e8"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structeverett_1_1transaction.html#a353b0cb35be1a5e3752b2241d60a3ace">nursery_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1transaction.html#afa131fb135fc6f43c0c019def4a760e8">nursery_</a> {std::in_place}</td></tr>
+<tr class="memitem:afa131fb135fc6f43c0c019def4a760e8" id="r_afa131fb135fc6f43c0c019def4a760e8"><td class="memItemLeft" align="right" valign="top">std::optional&lt; <a class="el" href="structeverett_1_1transaction.html#aa80fd5260393fbddba30be138399b873">nursery_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1transaction.html#afa131fb135fc6f43c0c019def4a760e8">nursery_</a> {std::in_place}</td></tr>
 <tr class="separator:afa131fb135fc6f43c0c019def4a760e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3364d07c924c16d2e3fa662ee754affb" id="r_a3364d07c924c16d2e3fa662ee754affb"><td class="memItemLeft" align="right" valign="top">std::shared_ptr&lt; <a class="el" href="structeverett_1_1transaction.html#a2a61db94a60795b3f740d92c85ab5794">scope_type</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1transaction.html#a3364d07c924c16d2e3fa662ee754affb">scope_</a></td></tr>
 <tr class="separator:a3364d07c924c16d2e3fa662ee754affb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -251,8 +251,8 @@ template&lt;class Core &gt; </div>
 
 </div>
 </div>
-<a id="a353b0cb35be1a5e3752b2241d60a3ace" name="a353b0cb35be1a5e3752b2241d60a3ace"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a353b0cb35be1a5e3752b2241d60a3ace">&#9670;&#160;</a></span>nursery_type</h2>
+<a id="aa80fd5260393fbddba30be138399b873" name="aa80fd5260393fbddba30be138399b873"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa80fd5260393fbddba30be138399b873">&#9670;&#160;</a></span>nursery_type</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -260,7 +260,7 @@ template&lt;class Core &gt; </div>
 template&lt;class Core &gt; </div>
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="structeverett_1_1transaction.html">everett::transaction</a>&lt; Core &gt;::nursery_type =  <a class="el" href="structeverett_1_1nursery__map.html">nursery_map</a>&lt;<a class="el" href="structeverett_1_1bit__string.html">bit_string</a>, <a class="el" href="structeverett_1_1transaction_1_1nursery__value.html">nursery_value</a>, <a class="el" href="structeverett_1_1transaction__detail_1_1key__less.html">transaction_detail::key_less</a>&gt;</td>
+          <td class="memname">using <a class="el" href="structeverett_1_1transaction.html">everett::transaction</a>&lt; Core &gt;::nursery_type =  <a class="el" href="structeverett_1_1nursery__map.html">nursery_map</a>&lt;<a class="el" href="structeverett_1_1bit__string.html">bit_string</a>, <a class="el" href="structeverett_1_1transaction_1_1nursery__value.html">nursery_value</a>, <a class="el" href="structeverett_1_1transaction__detail_1_1key__less.html">transaction_detail::key_less</a>&lt;typename policy_type::architecture&gt; &gt;</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1059,7 +1059,7 @@ template&lt;class Core &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::optional&lt;<a class="el" href="structeverett_1_1transaction.html#a353b0cb35be1a5e3752b2241d60a3ace">nursery_type</a>&gt; <a class="el" href="structeverett_1_1transaction.html">everett::transaction</a>&lt; Core &gt;::nursery_ {std::in_place}</td>
+          <td class="memname">std::optional&lt;<a class="el" href="structeverett_1_1transaction.html#aa80fd5260393fbddba30be138399b873">nursery_type</a>&gt; <a class="el" href="structeverett_1_1transaction.html">everett::transaction</a>&lt; Core &gt;::nursery_ {std::in_place}</td>
         </tr>
       </table>
   </td>

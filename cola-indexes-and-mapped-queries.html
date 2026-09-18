@@ -106,11 +106,11 @@ Constructing and searching</h1>
 <p><code>cola_query_root&lt;P&gt;::build(main, secondary)</code> includes both level-zero arrays. It builds an empty-native routing parent where needed, then adds main-only parents until the first augmented catalog fits in one group. An existing prepared head can instead use <code>adopt_prepared</code>.</p>
 <p><a class="el" href="building-a-cola-merge.html">`cola_local_merge_job`</a> runs native merging, destination indexing and replacement routing as explicit stages. The old root remains readable until its owner chooses to publish the completed replacement.</p>
 <p>This complete program finds both contributions to one key:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cola__query_8h.html">everett/cola_query.h</a>&gt;</span></div>
-<div class="line"> </div>
-<div class="line"><span class="preprocessor">#include &lt;array&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;array&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;cassert&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span> main() {</div>
 <div class="line">  <span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceeverett.html">everett</a>;</div>
@@ -139,7 +139,6 @@ Constructing and searching</h1>
 <div class="line">  }</div>
 <div class="line">  assert(matches == 2);</div>
 <div class="line">}</div>
-<div class="ttc" id="acola__query_8h_html"><div class="ttname"><a href="cola__query_8h.html">cola_query.h</a></div><div class="ttdoc">Enumerates native matches along a COLA main chain and its terminal secondaries.</div></div>
 <div class="ttc" id="anamespaceeverett_1_1typed__detail_html_aa0bc3228fc77cba75eead4cb1526d630"><div class="ttname"><a href="namespaceeverett_1_1typed__detail.html#aa0bc3228fc77cba75eead4cb1526d630">everett::typed_detail::key</a></div><div class="ttdeci">bit_string key(key_t&lt; S &gt; const &amp;value)</div><div class="ttdef"><b>Definition</b> typed_world.h:89</div></div>
 <div class="ttc" id="anamespaceeverett_html"><div class="ttname"><a href="namespaceeverett.html">everett</a></div><div class="ttdef"><b>Definition</b> active_engine.h:18</div></div>
 <div class="ttc" id="anamespaceeverett_html_a1dca02653d1a6589ff1dffda4078fb96a1f7ba58706f9d405023da32864d059c8"><div class="ttname"><a href="namespaceeverett.html#a1dca02653d1a6589ff1dffda4078fb96a1f7ba58706f9d405023da32864d059c8">everett::cola_target::secondary</a></div><div class="ttdeci">@ secondary</div></div>
@@ -148,8 +147,8 @@ Constructing and searching</h1>
 <div class="ttc" id="astructeverett_1_1cola__index_html"><div class="ttname"><a href="structeverett_1_1cola__index.html">everett::cola_index</a></div><div class="ttdef"><b>Definition</b> cola_index.h:315</div></div>
 <div class="ttc" id="astructeverett_1_1cola__query__root_html"><div class="ttname"><a href="structeverett_1_1cola__query__root.html">everett::cola_query_root</a></div><div class="ttdef"><b>Definition</b> cola_query.h:40</div></div>
 <div class="ttc" id="astructeverett_1_1profile__array_html"><div class="ttname"><a href="structeverett_1_1profile__array.html">everett::profile_array</a></div><div class="ttdef"><b>Definition</b> profile.h:1168</div></div>
-<div class="ttc" id="astructeverett_1_1profile__record_html"><div class="ttname"><a href="structeverett_1_1profile__record.html">everett::profile_record</a></div><div class="ttdef"><b>Definition</b> profile.h:295</div></div>
-<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:53</div></div>
+<div class="ttc" id="astructeverett_1_1profile__record_html"><div class="ttname"><a href="structeverett_1_1profile__record.html">everett::profile_record</a></div><div class="ttdef"><b>Definition</b> profile.h:294</div></div>
+<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:55</div></div>
 </div><!-- fragment --><p>A cursor visit searches one main window and at most one terminal secondary window. It can produce two pending matches. Consume them before asking for more work; each result owns its value and pins the node that identified its source. A secondary result belongs to <code>source-&gt;secondary_target()</code>.</p>
 <p>The cursor enumerates contributions. Its encounter order is not chronological precedence. A store combines them using the history attached to those arrays. Snapshots can share every immutable node while their query cursors advance independently.</p>
 <h1><a class="anchor" id="portable-ix03-files"></a>

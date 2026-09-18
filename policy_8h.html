@@ -92,6 +92,7 @@ $(function() {
 <p>Declares Everett's policy support.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;<a class="el" href="registry_8h_source.html">everett/registry.h</a>&gt;</code><br />
+<code>#include &lt;<a class="el" href="backend_8h_source.html">everett/backend.h</a>&gt;</code><br />
 <code>#include &lt;bit&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
 <code>#include &lt;limits&gt;</code><br />
@@ -110,7 +111,7 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1policy__detail_1_1backspace__traits_3_01golomb_3_01_m_01_4_01_4.html">everett::policy_detail::backspace_traits&lt; golomb&lt; M &gt; &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy&lt; Registry, GroupSize, BackspaceCode, CodecBlockSize &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structeverett_1_1storage__policy.html">everett::storage_policy&lt; Registry, GroupSize, BackspaceCode, CodecBlockSize, Arch &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="namespaces" name="namespaces"></a>
@@ -122,6 +123,9 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
+<tr class="memitem:a47bfcba07d7e0af13ae0dca18c46b034" id="r_a47bfcba07d7e0af13ae0dca18c46b034"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch, class Registry  = unsorted&lt;std::optional&lt;std::string&gt;&gt;, std::uint64_t GroupSize = 15, class BackspaceCode  = exponential_golomb&lt;0&gt;, std::uint64_t CodecBlockSize = GroupSize&gt; </td></tr>
+<tr class="memitem:a47bfcba07d7e0af13ae0dca18c46b034"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a47bfcba07d7e0af13ae0dca18c46b034">everett::backend_policy</a> = <a class="el" href="structeverett_1_1storage__policy.html">storage_policy</a>&lt; Registry, GroupSize, BackspaceCode, CodecBlockSize, Arch &gt;</td></tr>
+<tr class="separator:a47bfcba07d7e0af13ae0dca18c46b034"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2741097bf1c2e73b5749a9039d367e7e" id="r_a2741097bf1c2e73b5749a9039d367e7e"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a2741097bf1c2e73b5749a9039d367e7e">everett::string_registry</a> = <a class="el" href="structeverett_1_1bin.html">bin</a>&lt; <a class="el" href="structeverett_1_1tip.html">tip</a>&lt; <a class="el" href="structeverett_1_1unsorted.html">unsorted</a>&lt; std::optional&lt; std::string &gt; &gt; &gt;, <a class="el" href="structeverett_1_1sort__undefined.html">sort_undefined</a> &gt;</td></tr>
 <tr class="separator:a2741097bf1c2e73b5749a9039d367e7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0024fbb12310b9faed7bb7c71adb37f2" id="r_a0024fbb12310b9faed7bb7c71adb37f2"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a0024fbb12310b9faed7bb7c71adb37f2">everett::string_policy</a> = <a class="el" href="structeverett_1_1storage__policy.html">storage_policy</a>&lt; <a class="el" href="namespaceeverett.html#a2741097bf1c2e73b5749a9039d367e7e">string_registry</a> &gt;</td></tr>

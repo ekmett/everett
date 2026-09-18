@@ -81,8 +81,9 @@ $(function() {
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="incremental-native-writing-and-merging"></a> I can build a native file without first collecting every full key and value in a record vector. <code>profile_native_writer&lt;P&gt;</code> accepts strictly increasing keys, emits ordinary FC and retains the previous key, encoded output and one residual offset per physical block. Values and keys passed to <code>append</code> only need to live through that call.</p>
 <p>After an append succeeds, the writer reuses the unchanged prefix in its private key buffer and copies the changed suffix. It retains capacity for the largest key seen until finalization or destruction. The <a class="el" href="md_bench_2native__prefix.html">construction measurements</a> cover both fixed and variable value widths and verify exact output against batch encoding.</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="native__writer_8h.html">everett/native_writer.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="query_8h.html">everett/query.h</a>&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;memory&gt;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">import</span> everett;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">using </span>P = <a class="code hl_struct" href="structeverett_1_1storage__policy.html">everett::storage_policy&lt;everett::tip&lt;everett::encoded_sort&lt;everett::byte_encoding&lt;&gt;</a>&gt;&gt;&gt;;</div>
 <div class="line"> </div>
@@ -95,8 +96,6 @@ $(function() {
 <div class="line">    <a class="code hl_function" href="structeverett_1_1profile__blob.html#adc96cb5042e86d97183b6dcdbbbfe27d">everett::profile_blob&lt;P&gt;::adopt_native</a>(writer.<a class="code hl_function" href="structeverett_1_1profile__native__writer.html#afb3eb9302cc5da53cbdd83e48a6fd45b">finish</a>()));</div>
 <div class="line">  <span class="keywordflow">return</span> <a class="code hl_function" href="structeverett_1_1query__root.html#aafa6e55deabcad85c5a3a40ebeff9161">everett::query_root&lt;P&gt;::build</a>(pair);</div>
 <div class="line">}</div>
-<div class="ttc" id="anative__writer_8h_html"><div class="ttname"><a href="native__writer_8h.html">native_writer.h</a></div><div class="ttdoc">Builds native front-coded profiles incrementally with explicit value widths.</div></div>
-<div class="ttc" id="aquery_8h_html"><div class="ttname"><a href="query_8h.html">query.h</a></div><div class="ttdoc">Prepares immutable catalog chains and enumerates every matching native segment.</div></div>
 <div class="ttc" id="astructeverett_1_1bit__string_html_a38a3d294ca4e7b058d8d7bad4cd6ede1"><div class="ttname"><a href="structeverett_1_1bit__string.html#a38a3d294ca4e7b058d8d7bad4cd6ede1">everett::bit_string::from_bytes</a></div><div class="ttdeci">static bit_string from_bytes(std::span&lt; std::byte const &gt; source)</div><div class="ttdef"><b>Definition</b> profile.h:188</div></div>
 <div class="ttc" id="astructeverett_1_1bit__string_html_adee15aee9f486dda0ab3cf09cdec9331"><div class="ttname"><a href="structeverett_1_1bit__string.html#adee15aee9f486dda0ab3cf09cdec9331">everett::bit_string::view</a></div><div class="ttdeci">bit_view view() const &amp;</div><div class="ttdef"><b>Definition</b> profile.h:178</div></div>
 <div class="ttc" id="astructeverett_1_1profile__blob_html_adc96cb5042e86d97183b6dcdbbbfe27d"><div class="ttname"><a href="structeverett_1_1profile__blob.html#adc96cb5042e86d97183b6dcdbbbfe27d">everett::profile_blob::adopt_native</a></div><div class="ttdeci">static profile_blob adopt_native(native_array native)</div><div class="ttdef"><b>Definition</b> profile_blob.h:212</div></div>
@@ -105,7 +104,7 @@ $(function() {
 <div class="ttc" id="astructeverett_1_1profile__native__writer_html_afb3eb9302cc5da53cbdd83e48a6fd45b"><div class="ttname"><a href="structeverett_1_1profile__native__writer.html#afb3eb9302cc5da53cbdd83e48a6fd45b">everett::profile_native_writer::finish</a></div><div class="ttdeci">profile_array&lt; P &gt; finish()</div><div class="ttdef"><b>Definition</b> native_writer.h:208</div></div>
 <div class="ttc" id="astructeverett_1_1query__root_html"><div class="ttname"><a href="structeverett_1_1query__root.html">everett::query_root</a></div><div class="ttdef"><b>Definition</b> query.h:51</div></div>
 <div class="ttc" id="astructeverett_1_1query__root_html_aafa6e55deabcad85c5a3a40ebeff9161"><div class="ttname"><a href="structeverett_1_1query__root.html#aafa6e55deabcad85c5a3a40ebeff9161">everett::query_root::build</a></div><div class="ttdeci">static query_root build(pair_type source)</div><div class="ttdef"><b>Definition</b> query.h:228</div></div>
-<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:53</div></div>
+<div class="ttc" id="astructeverett_1_1storage__policy_html"><div class="ttname"><a href="structeverett_1_1storage__policy.html">everett::storage_policy</a></div><div class="ttdef"><b>Definition</b> policy.h:55</div></div>
 </div><!-- fragment --><p><code>adopt_native</code> moves the encoded allocation into a native-only pair and builds its all-zero rank and cut-LCP directories. It does not decode the native keys, rebuild their Elias–Fano directory or change their FC bytes. This operation trusts the array's ordinary-FC and unique-key contract; the native writer establishes both. General profile arrays can also represent repeated keys or explicit restart variants, so arbitrary arrays need their content precondition established before adoption.</p>
 <h1><a class="anchor" id="value-widths-and-completion"></a>
 Value widths and completion</h1>

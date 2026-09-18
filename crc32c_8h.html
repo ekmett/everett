@@ -82,21 +82,17 @@ $(function() {
 <div class="header">
   <div class="summary">
 <a href="#namespaces">Namespaces</a> &#124;
-<a href="#func-members">Functions</a> &#124;
-<a href="#var-members">Variables</a>  </div>
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">crc32c.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Declares Everett's CRC32C support.  
 <a href="#details">More...</a></p>
-<div class="textblock"><code>#include &lt;array&gt;</code><br />
-<code>#include &lt;bit&gt;</code><br />
+<div class="textblock"><code>#include &lt;<a class="el" href="backend_8h_source.html">everett/backend.h</a>&gt;</code><br />
 <code>#include &lt;cstddef&gt;</code><br />
 <code>#include &lt;cstdint&gt;</code><br />
-<code>#include &lt;cstring&gt;</code><br />
 <code>#include &lt;span&gt;</code><br />
-<code>#include &lt;everett/detail/crc32c_portable.inc&gt;</code><br />
 </div>
 <p><a href="crc32c_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -109,22 +105,19 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a5a40c55fef0379128fbb4f14db53e707" id="r_a5a40c55fef0379128fbb4f14db53e707"><td class="memItemLeft" align="right" valign="top">constexpr std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#a5a40c55fef0379128fbb4f14db53e707">everett::crc32c_detail::multiply_polynomial</a> (std::uint32_t a, std::uint32_t b) noexcept</td></tr>
-<tr class="separator:a5a40c55fef0379128fbb4f14db53e707"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8749966915803c2ca84506bb49110097" id="r_a8749966915803c2ca84506bb49110097"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#a8749966915803c2ca84506bb49110097">everett::crc32c_detail::shift</a> (std::uint32_t crc, std::uint64_t bytes) noexcept</td></tr>
-<tr class="separator:a8749966915803c2ca84506bb49110097"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4a46ceaf46514195b2a4f5ea5f01c062" id="r_a4a46ceaf46514195b2a4f5ea5f01c062"><td class="memTemplParams" colspan="2">template&lt;class T &gt; </td></tr>
-<tr class="memitem:a4a46ceaf46514195b2a4f5ea5f01c062"><td class="memTemplItemLeft" align="right" valign="top">T&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#a4a46ceaf46514195b2a4f5ea5f01c062">everett::crc32c_detail::load_little</a> (void const *bytes) noexcept</td></tr>
-<tr class="separator:a4a46ceaf46514195b2a4f5ea5f01c062"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7d1daae945389c42c996574afcfc139f" id="r_a7d1daae945389c42c996574afcfc139f"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a7d1daae945389c42c996574afcfc139f">everett::crc32c_combine</a> (std::uint32_t first, std::uint32_t second, std::uint64_t second_bytes) noexcept</td></tr>
-<tr class="separator:a7d1daae945389c42c996574afcfc139f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1e83ad80494eac7bb571ae6902ec44f4" id="r_a1e83ad80494eac7bb571ae6902ec44f4"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a1e83ad80494eac7bb571ae6902ec44f4">everett::crc32c</a> (std::span&lt; std::byte const &gt; bytes, std::uint32_t previous_crc=0) noexcept</td></tr>
 <tr class="separator:a1e83ad80494eac7bb571ae6902ec44f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
-Variables</h2></td></tr>
-<tr class="memitem:a4c906508ae3819e8d326ac271ff9ca70" id="r_a4c906508ae3819e8d326ac271ff9ca70"><td class="memItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#a4c906508ae3819e8d326ac271ff9ca70">everett::crc32c_detail::byte_powers</a></td></tr>
-<tr class="separator:a4c906508ae3819e8d326ac271ff9ca70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe69d044e6c6ffba59ddb9f6f3cf7c13" id="r_abe69d044e6c6ffba59ddb9f6f3cf7c13"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#abe69d044e6c6ffba59ddb9f6f3cf7c13">everett::crc32c_detail::run</a> (simd::neon, std::span&lt; std::byte const &gt;, std::uint32_t) noexcept</td></tr>
+<tr class="separator:abe69d044e6c6ffba59ddb9f6f3cf7c13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a065dea27682b41b21acc19192b8eb99a" id="r_a065dea27682b41b21acc19192b8eb99a"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#a065dea27682b41b21acc19192b8eb99a">everett::crc32c_detail::run</a> (simd::avx2, std::span&lt; std::byte const &gt;, std::uint32_t) noexcept</td></tr>
+<tr class="separator:a065dea27682b41b21acc19192b8eb99a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adfd96f7a004b610a2e3fe0199ec34cf8" id="r_adfd96f7a004b610a2e3fe0199ec34cf8"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1crc32c__detail.html#adfd96f7a004b610a2e3fe0199ec34cf8">everett::crc32c_detail::run</a> (simd::avx512, std::span&lt; std::byte const &gt;, std::uint32_t) noexcept</td></tr>
+<tr class="separator:adfd96f7a004b610a2e3fe0199ec34cf8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf28b41a4b56fdd1d4501b2421642b1f" id="r_acf28b41a4b56fdd1d4501b2421642b1f"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch&gt; </td></tr>
+<tr class="memitem:acf28b41a4b56fdd1d4501b2421642b1f"><td class="memTemplItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#acf28b41a4b56fdd1d4501b2421642b1f">everett::crc32c</a> (std::span&lt; std::byte const &gt; bytes, std::uint32_t previous_crc=0) noexcept</td></tr>
+<tr class="separator:acf28b41a4b56fdd1d4501b2421642b1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d1daae945389c42c996574afcfc139f" id="r_a7d1daae945389c42c996574afcfc139f"><td class="memItemLeft" align="right" valign="top">std::uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett.html#a7d1daae945389c42c996574afcfc139f">everett::crc32c_combine</a> (std::uint32_t first, std::uint32_t second, std::uint64_t second_bytes) noexcept</td></tr>
+<tr class="separator:a7d1daae945389c42c996574afcfc139f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Declares Everett's CRC32C support. </p>

@@ -120,16 +120,20 @@ External source and boundary regression</h1>
 <p>The <a href="source/optional/select_compare/sux-half-boundary.patch">one-character patch</a> changes <code>&gt;</code> to <code>&gt;=</code>. <code>prepare_sux.py</code> generates a renamed comparator with unchanged license notices, plus a manifest of the source and generated hashes. Renaming the class and rewriting its relative include paths lets both versions coexist. All candidates are exhaustively checked; original Half is expected to fail only the exact boundary reproducer among the correctness fixtures.</p>
 <h1><a class="anchor" id="reproduce-1"></a>
 Reproduce</h1>
+<p>For a new run from the current source, use the <a href="md_docs_2modules.html#build-and-consume">module toolchain and SIMD dependency</a>. The separately fetched Sux source remains pinned:</p>
 <div class="fragment"><div class="line">git clone https://github.com/vigna/sux /tmp/select-sux</div>
 <div class="line">git -C /tmp/select-sux checkout 568903f1b7957ef03620ebad65d6ef68e031fef9</div>
-<div class="line">cmake -S optional/select_compare -B build-select -DCMAKE_BUILD_TYPE=Release \</div>
+<div class="line">cmake -S optional/select_compare -B build-select -G Ninja \</div>
+<div class="line">  -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_PREFIX_PATH=/path/to/simd \</div>
+<div class="line">  -DCMAKE_BUILD_TYPE=Release \</div>
 <div class="line">  -DEVERETT_SUX_ROOT=/tmp/select-sux</div>
 <div class="line">cmake --build build-select -j1</div>
 <div class="line">ctest --test-dir build-select --output-on-failure</div>
 <div class="line">python3 optional/select_compare/collect.py --binary build-select/select_compare \</div>
 <div class="line">  --sux /tmp/select-sux --output /tmp/select-results</div>
 <div class="line">python3 optional/select_compare/analyze.py /tmp/select-results</div>
-</div><!-- fragment --><p>For sanitizer correctness checks, configure a separate build with <code>-DSELECT_SANITIZERS=ON</code>. The collector requires a committed, clean source tree, records source/binary/external hashes, and refuses to overwrite an existing run. It retains generated sequences locally; the report manifest hashes them so a checkout can reproduce them without publishing large generated binary files.</p>
+</div><!-- fragment --><p>Apply the same SDK or toolchain settings used to build SIMD. Retained timings keep their recorded source/toolchain identities; reproducing those observations uses the corresponding source revision and build files.</p>
+<p>For sanitizer correctness checks, configure a separate build with <code>-DSELECT_SANITIZERS=ON</code>. The collector requires a committed, clean source tree, records source/binary/external hashes, and refuses to overwrite an existing run. It retains generated sequences locally; the report manifest hashes them so a checkout can reproduce them without publishing large generated binary files.</p>
 <h1><a class="anchor" id="related-measurements"></a>
 Related measurements</h1>
 <p>The external implementation is <a href="https://github.com/vigna/sux">Vigna's Sux</a>, not an approximation of its algorithm. I have not measured <a href="https://arxiv.org/html/2206.01149v2">Pasta</a> or <a href="https://arxiv.org/html/2405.05214v1">SPIDER</a> here. Their reported overheads use raw bitvectors as a denominator and should not be substituted for total EF space. The <a href="https://arxiv.org/abs/1706.00990">PDEP word-select study</a> distinguishes word-select speed from end-to-end bitvector speed; Everett already has a BMI2 word-select path. This ARM experiment does not measure that path.</p>

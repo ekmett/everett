@@ -94,10 +94,12 @@ Functions</h2></td></tr>
 <tr class="separator:ad51055b9c30db9fc4da3543739cbc968"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a470b669acea5d76692a39c248d9c03" id="r_a8a470b669acea5d76692a39c248d9c03"><td class="memItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a8a470b669acea5d76692a39c248d9c03">words</a> (std::uint64_t bits) noexcept</td></tr>
 <tr class="separator:a8a470b669acea5d76692a39c248d9c03"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a331b44e9550dbddcf74dcec31d69c1f4" id="r_a331b44e9550dbddcf74dcec31d69c1f4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a331b44e9550dbddcf74dcec31d69c1f4">monotone</a> (std::span&lt; std::uint64_t const &gt; source) noexcept</td></tr>
-<tr class="separator:a331b44e9550dbddcf74dcec31d69c1f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a22ded018805d4847697c7d36063494ab" id="r_a22ded018805d4847697c7d36063494ab"><td class="memItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a22ded018805d4847697c7d36063494ab">select_word</a> (std::uint64_t value, unsigned ordinal) noexcept</td></tr>
-<tr class="separator:a22ded018805d4847697c7d36063494ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b33cbc6406a7297aac9fe232f4f7db4" id="r_a0b33cbc6406a7297aac9fe232f4f7db4"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a0b33cbc6406a7297aac9fe232f4f7db4"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a0b33cbc6406a7297aac9fe232f4f7db4">monotone</a> (std::span&lt; std::uint64_t const &gt; source) noexcept</td></tr>
+<tr class="separator:a0b33cbc6406a7297aac9fe232f4f7db4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07c6365208bcaecad4a76841ae86a03b" id="r_a07c6365208bcaecad4a76841ae86a03b"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a07c6365208bcaecad4a76841ae86a03b"><td class="memTemplItemLeft" align="right" valign="top">unsigned&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a07c6365208bcaecad4a76841ae86a03b">select_word</a> (std::uint64_t value, unsigned ordinal) noexcept</td></tr>
+<tr class="separator:a07c6365208bcaecad4a76841ae86a03b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4ccb681fa8f46746fa7b806c428571f0" id="r_a4ccb681fa8f46746fa7b806c428571f0"><td class="memTemplParams" colspan="2">template&lt;unsigned W, std::size_t O, std::size_t I&gt; </td></tr>
 <tr class="memitem:a4ccb681fa8f46746fa7b806c428571f0"><td class="memTemplItemLeft" align="right" valign="top">std::uint64_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a4ccb681fa8f46746fa7b806c428571f0">low_component</a> (std::uint64_t const *source) noexcept</td></tr>
 <tr class="separator:a4ccb681fa8f46746fa7b806c428571f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -107,14 +109,15 @@ Functions</h2></td></tr>
 <tr class="memitem:a49d826f26edd49acd9ae1c91f5415be7" id="r_a49d826f26edd49acd9ae1c91f5415be7"><td class="memTemplParams" colspan="2">template&lt;unsigned W, std::size_t... O&gt; </td></tr>
 <tr class="memitem:a49d826f26edd49acd9ae1c91f5415be7"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a49d826f26edd49acd9ae1c91f5415be7">low_tile</a> (std::uint64_t const *source, std::uint64_t *out, std::index_sequence&lt; O... &gt;) noexcept</td></tr>
 <tr class="separator:a49d826f26edd49acd9ae1c91f5415be7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abea90b06596376b54987e7ccd14fafe7" id="r_abea90b06596376b54987e7ccd14fafe7"><td class="memTemplParams" colspan="2">template&lt;unsigned W&gt; </td></tr>
-<tr class="memitem:abea90b06596376b54987e7ccd14fafe7"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#abea90b06596376b54987e7ccd14fafe7">pack_low_fixed</a> (std::span&lt; std::uint64_t const &gt; source, std::span&lt; std::uint64_t &gt; out) noexcept</td></tr>
-<tr class="separator:abea90b06596376b54987e7ccd14fafe7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acdac77f14b932d45daa34849b0644561" id="r_acdac77f14b932d45daa34849b0644561"><td class="memTemplParams" colspan="2">template&lt;std::size_t... W&gt; </td></tr>
-<tr class="memitem:acdac77f14b932d45daa34849b0644561"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#acdac77f14b932d45daa34849b0644561">low_packers</a> (std::index_sequence&lt; W... &gt;) noexcept</td></tr>
-<tr class="separator:acdac77f14b932d45daa34849b0644561"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7cf3e8575345561d30129481265fc2c1" id="r_a7cf3e8575345561d30129481265fc2c1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a7cf3e8575345561d30129481265fc2c1">pack_low</a> (std::span&lt; std::uint64_t const &gt; source, std::span&lt; std::uint64_t &gt; out, unsigned width)</td></tr>
-<tr class="separator:a7cf3e8575345561d30129481265fc2c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a652df6fe5c8d14ffeed50eb6d22ad454" id="r_a652df6fe5c8d14ffeed50eb6d22ad454"><td class="memTemplParams" colspan="2">template&lt;unsigned W, simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a652df6fe5c8d14ffeed50eb6d22ad454"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a652df6fe5c8d14ffeed50eb6d22ad454">pack_low_fixed</a> (std::span&lt; std::uint64_t const &gt; source, std::span&lt; std::uint64_t &gt; out) noexcept</td></tr>
+<tr class="separator:a652df6fe5c8d14ffeed50eb6d22ad454"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76782aba9b18bd3e1b58b46fa1c93e7f" id="r_a76782aba9b18bd3e1b58b46fa1c93e7f"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch, std::size_t... W&gt; </td></tr>
+<tr class="memitem:a76782aba9b18bd3e1b58b46fa1c93e7f"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a76782aba9b18bd3e1b58b46fa1c93e7f">low_packers</a> (std::index_sequence&lt; W... &gt;) noexcept</td></tr>
+<tr class="separator:a76782aba9b18bd3e1b58b46fa1c93e7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ddfff61b5f66a57882dc76ddceb9bcb" id="r_a6ddfff61b5f66a57882dc76ddceb9bcb"><td class="memTemplParams" colspan="2">template&lt;simd::architecture Arch = simd::scalar&gt; </td></tr>
+<tr class="memitem:a6ddfff61b5f66a57882dc76ddceb9bcb"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#a6ddfff61b5f66a57882dc76ddceb9bcb">pack_low</a> (std::span&lt; std::uint64_t const &gt; source, std::span&lt; std::uint64_t &gt; out, unsigned width)</td></tr>
+<tr class="separator:a6ddfff61b5f66a57882dc76ddceb9bcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af2181c74d2efd13e87c999552d80986f" id="r_af2181c74d2efd13e87c999552d80986f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespaceeverett_1_1elias__fano__detail.html#af2181c74d2efd13e87c999552d80986f">write_high</a> (std::span&lt; std::uint64_t const &gt; source, std::span&lt; std::uint64_t &gt; out, unsigned width) noexcept</td></tr>
 <tr class="separator:af2181c74d2efd13e87c999552d80986f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -183,13 +186,13 @@ template&lt;unsigned W, std::size_t O, std::size_t I&gt; </div>
 
 </div>
 </div>
-<a id="acdac77f14b932d45daa34849b0644561" name="acdac77f14b932d45daa34849b0644561"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acdac77f14b932d45daa34849b0644561">&#9670;&#160;</a></span>low_packers()</h2>
+<a id="a76782aba9b18bd3e1b58b46fa1c93e7f" name="a76782aba9b18bd3e1b58b46fa1c93e7f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a76782aba9b18bd3e1b58b46fa1c93e7f">&#9670;&#160;</a></span>low_packers()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;std::size_t... W&gt; </div>
+template&lt;simd::architecture Arch, std::size_t... W&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -293,11 +296,13 @@ template&lt;unsigned W, std::size_t O, std::size_t... I&gt; </div>
 
 </div>
 </div>
-<a id="a331b44e9550dbddcf74dcec31d69c1f4" name="a331b44e9550dbddcf74dcec31d69c1f4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a331b44e9550dbddcf74dcec31d69c1f4">&#9670;&#160;</a></span>monotone()</h2>
+<a id="a0b33cbc6406a7297aac9fe232f4f7db4" name="a0b33cbc6406a7297aac9fe232f4f7db4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b33cbc6406a7297aac9fe232f4f7db4">&#9670;&#160;</a></span>monotone()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;simd::architecture Arch = simd::scalar&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -355,11 +360,13 @@ template&lt;unsigned W, std::size_t O, std::size_t... I&gt; </div>
 
 </div>
 </div>
-<a id="a7cf3e8575345561d30129481265fc2c1" name="a7cf3e8575345561d30129481265fc2c1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7cf3e8575345561d30129481265fc2c1">&#9670;&#160;</a></span>pack_low()</h2>
+<a id="a6ddfff61b5f66a57882dc76ddceb9bcb" name="a6ddfff61b5f66a57882dc76ddceb9bcb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6ddfff61b5f66a57882dc76ddceb9bcb">&#9670;&#160;</a></span>pack_low()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;simd::architecture Arch = simd::scalar&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -397,13 +404,13 @@ template&lt;unsigned W, std::size_t O, std::size_t... I&gt; </div>
 
 </div>
 </div>
-<a id="abea90b06596376b54987e7ccd14fafe7" name="abea90b06596376b54987e7ccd14fafe7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abea90b06596376b54987e7ccd14fafe7">&#9670;&#160;</a></span>pack_low_fixed()</h2>
+<a id="a652df6fe5c8d14ffeed50eb6d22ad454" name="a652df6fe5c8d14ffeed50eb6d22ad454"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a652df6fe5c8d14ffeed50eb6d22ad454">&#9670;&#160;</a></span>pack_low_fixed()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;unsigned W&gt; </div>
+template&lt;unsigned W, simd::architecture Arch = simd::scalar&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -435,11 +442,13 @@ template&lt;unsigned W&gt; </div>
 
 </div>
 </div>
-<a id="a22ded018805d4847697c7d36063494ab" name="a22ded018805d4847697c7d36063494ab"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a22ded018805d4847697c7d36063494ab">&#9670;&#160;</a></span>select_word()</h2>
+<a id="a07c6365208bcaecad4a76841ae86a03b" name="a07c6365208bcaecad4a76841ae86a03b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a07c6365208bcaecad4a76841ae86a03b">&#9670;&#160;</a></span>select_word()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;simd::architecture Arch = simd::scalar&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
