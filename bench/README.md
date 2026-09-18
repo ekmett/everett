@@ -20,6 +20,12 @@ New measurements of Everett should record their own source hashes and results.
 The [implementation ledger](../docs/implementation.md) links the accepted
 measurements and describes the current library.
 
+For current sources, build the C++26 CMake experiments using the
+[module toolchain](../docs/modules.md#optional-experiments). They select an
+explicit CPU architecture and record the configured compiler. The historical
+Python comparison runners retain the compiler settings for their recorded
+revisions; supply the candidate revision named in the report when replaying one.
+
 The [bounded fixed-key search comparison](fixed_search.md) measures scalar
 and SIMD windows on NEON and AVX2, with protected-page correctness checks and
 conservative automatic choices.
