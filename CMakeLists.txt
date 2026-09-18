@@ -77,6 +77,10 @@ foreach(profile IN LISTS EVERETT_PROFILES)
   everett_module_settings(everett_${name})
   set_target_properties(everett_${name} PROPERTIES EXPORT_NAME ${name})
   target_link_libraries(everett_${name} PUBLIC everett simd::${name})
+  # Native imports need their own SIMD provider in the consumer module map.
+  # Across add_subdirectory, CMake can otherwise choose the baseline synthetic
+  # BMI reached through everett instead of the native provider built here.
+  set_property(TARGET everett_${name} PROPERTY INTERFACE_LINK_LIBRARIES_DIRECT simd::${name})
   simd_target_profile(everett_${name} "${profile}")
   target_sources(everett_${name} PUBLIC FILE_SET cxx_modules TYPE CXX_MODULES
     BASE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/modules" FILES modules/everett.${name}.ccm)
