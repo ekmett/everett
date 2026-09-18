@@ -1,5 +1,5 @@
 {
-  "hostname": "eak-quartus",
+  "hostname": "linux-x86_64",
   "platform": "Linux-6.8.0-100-generic-x86_64-with-glibc2.35",
   "cpu": {
     "processor": "12",

@@ -482,7 +482,7 @@
     {
       "path": "bench/results/rank_compare_quartus_environment.json",
       "original_sha256": "fe4b85a6328373b6a837e7246c237718321eb62d5320f428364760983e721183",
-      "normalized_sha256": "fe4b85a6328373b6a837e7246c237718321eb62d5320f428364760983e721183"
+      "normalized_sha256": "b6079eb06e9c029c1ecd1fcff274f25e05423fd2ab47cb75b132fabfef6ecfe9"
     },
     {
       "path": "bench/results/rank_compare_windows_validation.txt",

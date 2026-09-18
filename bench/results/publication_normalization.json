@@ -5,7 +5,7 @@
     {
       "path": "bench/cola_linux.md",
       "original_sha256": "fc0bf4b33e85fdc18c46ffdf07d71dfb3c770122f14513913030cc34ed299b47",
-      "normalized_sha256": "4329d06a78465f7376237f8c075be8bbfcacbeaac4baa7cd2e962cd5b0dcf3e8"
+      "normalized_sha256": "44b09aa33fd31ee9a3a7a973fd1f9327c058892bd5f8bbfcc49ea53a6d833276"
     },
     {
       "path": "bench/cola_payload.md",
@@ -35,7 +35,7 @@
     {
       "path": "bench/results/artifact_normalization.json",
       "original_sha256": "600066b1e9bd368f88bdd699e450d061193023ed92e707b4dd3eeea4576dc09b",
-      "normalized_sha256": "3acf50538c88a21e300c8418a176fcbf214f5c340fb164166d7d429344c2ad22"
+      "normalized_sha256": "60e9fed3ffa1b05e1e10f1e1553313e73bd360897e3c0adee51763487eca6f02"
     },
     {
       "path": "bench/results/borrowed_prefix_checks.json",

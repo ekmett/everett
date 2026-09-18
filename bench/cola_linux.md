@@ -11,7 +11,7 @@ evidence, not a benchmark.
 Environment and scope
 ---------------------
 
-- Host: eak-quartus, Intel Core i9-12900K.
+- Host: Linux x86-64, Intel Core i9-12900K.
 - Linux 6.8.0-100-generic, x86-64, glibc 2.35.
 - Ubuntu Clang 20.0.0, build `b74e588e1f46`, using the installed libstdc++ 12 headers.
 - C++20, `-O2 -g -Wall -Wextra -Wpedantic -Werror -UNDEBUG`,
