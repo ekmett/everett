@@ -1,5 +1,14 @@
-// SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
-// SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+/**
+ * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Selects a compiled checksum kernel within one execution profile.
+ *
+ * \license
+ * SPDX-FileType: SOURCE
+ * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+ * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+ * \endlicense
+ */
 // Function body compiled separately for each admitted execution profile.
     auto data = reinterpret_cast<char const *>(bytes.data());
     auto size = bytes.size();

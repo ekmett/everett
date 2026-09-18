@@ -1,5 +1,14 @@
-// SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
-// SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+/**
+ * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Contains private generated checksum implementation inputs.
+ *
+ * \license
+ * SPDX-FileType: SOURCE
+ * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+ * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+ * \endlicense
+ */
 #pragma once
 
 // Pinned third-party generated kernels are private compiled implementation inputs.

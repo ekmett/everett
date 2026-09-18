@@ -1,5 +1,12 @@
+# \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Records the configured compiler and execution profile of an experiment.
+#
+# \license
+# SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+# \endlicense
 """Read the actual CMake-selected CPU profile without retaining local paths."""
 import hashlib
 import json

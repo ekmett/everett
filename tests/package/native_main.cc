@@ -1,5 +1,14 @@
-// SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
-// SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+/**
+ * \file
+ * \author Edward Kmett <ekmett@gmail.com>
+ * \brief Checks native type identity across translation units.
+ *
+ * \license
+ * SPDX-FileType: SOURCE
+ * SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+ * SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+ * \endlicense
+ */
 #include <array>
 #include <cstdint>
 

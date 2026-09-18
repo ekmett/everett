@@ -1,5 +1,12 @@
+# \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Configures standalone experiments using the compiled library.
+#
+# \license
+# SPDX-FileType: SOURCE
 # SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+# \endlicense
 
 # Standalone experiments use the same compiled library and toolchain as clients.
 include_guard(GLOBAL)
