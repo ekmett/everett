@@ -416,6 +416,9 @@ def check_markdown_adapter():
         ("    $indented$\n\t$tabbed$\n", "    $indented$\n\t$tabbed$\n", 0),
         (r"Existing \f$x\f$ and \f[y\f]", r"Existing \f$x\f$ and \f[y\f]", 0),
         ("Unmatched $$ and $x", "Unmatched $$ and $x", 0),
+        ('[![A & B](badge.svg)](README.md)\n',
+         '<a href="README.md"><img src="badge.svg" alt="A &amp; B"/></a>\n', 0),
+        ('`[![badge](badge.svg)](README.md)`', '`[![badge](badge.svg)](README.md)`', 0),
     ]
     for original, expected, count in cases:
         converted, formulas = adapt_markdown(original)
@@ -436,7 +439,7 @@ def markdown_inputs(source):
     for name in ("bit_reservoir", "search_compare", "profile_space_compare",
                  "byte_lookup_compare", "byte_gpu_merge"):
         paths.extend(sorted((source / "optional" / name).rglob("*.md")))
-    for name in ("proof/README.md", "THIRD_PARTY.md"):
+    for name in ("proof/README.md", "THIRD_PARTY.md", "CODE_OF_CONDUCT.md"):
         if (source / name).is_file():
             paths.append(source / name)
     paths.extend(sorted((source / "third_party/fast-crc32").glob("*.md")))
@@ -461,7 +464,7 @@ def page_html(page):
     return "index.html" if page.attrib["id"] == "indexpage" else page.attrib["id"] + ".html"
 
 
-def write_page_links(page, replacements, output, name):
+def write_page_links(page, replacements, output, name, attribute="href"):
     if not replacements:
         return
     html_path = output / "html" / page_html(page)
@@ -472,8 +475,8 @@ def write_page_links(page, replacements, output, name):
         if url not in replacements:
             return match.group(0)
         found.add(url)
-        return 'href="' + html_module.escape(replacements[url], quote=True) + '"'
-    rendered = re.sub(r'href="([^"]+)"', replace, rendered)
+        return attribute + '="' + html_module.escape(replacements[url], quote=True) + '"'
+    rendered = re.sub(attribute + r'="([^"]+)"', replace, rendered)
     require(found == set(replacements), f"Markdown link absent from HTML: {name}: {set(replacements) - found}")
     html_path.write_text(rendered, encoding="utf-8")
     xml_path = output / "xml" / (page.attrib["id"] + ".xml")
@@ -651,31 +654,35 @@ def repair_markdown_links(items, source, output):
 def bundle_source_links(items, source, output):
     bundled = set()
     for name, page in markdown_pages(items, source).items():
-        replacements = {}
-        for link in page.findall(".//ulink"):
-            url = link.attrib["url"]
-            parts = urlsplit(url)
-            if parts.scheme or parts.netloc or not parts.path:
-                continue
-            target = (source / name).parent.joinpath(unquote(parts.path)).resolve()
-            require(target.is_relative_to(source), f"Source link leaves the input tree: {name}: {url}")
-            require(target.is_file(), f"Missing linked source file: {name}: {url}")
-            relative = Path("source") / target.relative_to(source)
-            destination = output / "html" / relative
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(target, destination)
-            require(destination.read_bytes() == target.read_bytes(), f"Source copy differs: {target}")
-            rewritten = urlquote(relative.as_posix())
-            if parts.query:
-                rewritten += "?" + parts.query
-            if parts.fragment:
-                rewritten += "#" + parts.fragment
-            replacements[url] = rewritten
-            link.set("url", rewritten)
-            bundled.add(relative)
-        write_page_links(page, replacements, output, name)
+        # Images need the same local, byte-verified copies as source links.
+        # Doxygen leaves their paths relative to the Markdown input, while
+        # generated HTML pages all share one directory.
+        for selector, field, attribute in ((".//ulink", "url", "href"),
+                                           (".//image", "name", "src")):
+            replacements = {}
+            for link in page.findall(selector):
+                url = link.attrib[field]
+                parts = urlsplit(url)
+                if parts.scheme or parts.netloc or not parts.path:
+                    continue
+                target = (source / name).parent.joinpath(unquote(parts.path)).resolve()
+                require(target.is_relative_to(source), f"Source link leaves the input tree: {name}: {url}")
+                require(target.is_file(), f"Missing linked source file: {name}: {url}")
+                relative = Path("source") / target.relative_to(source)
+                destination = output / "html" / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(target, destination)
+                require(destination.read_bytes() == target.read_bytes(), f"Source copy differs: {target}")
+                rewritten = urlquote(relative.as_posix())
+                if parts.query:
+                    rewritten += "?" + parts.query
+                if parts.fragment:
+                    rewritten += "#" + parts.fragment
+                replacements[url] = rewritten
+                link.set(field, rewritten)
+                bundled.add(relative)
+            write_page_links(page, replacements, output, name, attribute)
     return len(bundled)
-
 
 def check_page_link(pages, source_name, target_name, output):
     source, target = pages[source_name], pages[target_name]
@@ -758,6 +765,8 @@ def check_markdown_fixture(executable, output):
     (directory / "docs").mkdir(parents=True, exist_ok=True)
     readme = directory / "README.md"
     readme.write_text("""# Markdown fixture
+
+[![Local badge](assets/badge.svg)](docs/child.md)
 
 Inline $x+1$ and $y_2$.
 
@@ -842,6 +851,8 @@ Cost $x$ {#cost-anchor}
     (directory / "proof/.lake/generated").mkdir(parents=True, exist_ok=True)
     (directory / "proof/README.md").write_text("# Proof notes\n\n[Home](../README.md).\n", encoding="utf-8")
     (directory / "proof/.lake/generated/README.md").write_text("# Not an input\n", encoding="utf-8")
+    (directory / "assets").mkdir(exist_ok=True)
+    (directory / "assets/badge.svg").write_text('<svg xmlns="http://www.w3.org/2000/svg"/>', encoding="utf-8")
     inputs = markdown_inputs(directory)
     require({path.relative_to(directory).as_posix() for path in inputs} ==
             {"README.md", "AGENTS.md", "docs/child.md", "docs/duplicate-title.md",
@@ -851,6 +862,11 @@ Cost $x$ {#cost-anchor}
     items = compounds(generated)
     repair_markdown_links(items, directory, generated)
     items = compounds(generated)
+    require(bundle_source_links(items, directory, generated) == 1, "Fixture image was not bundled")
+    items = compounds(generated)
+    rendered = (generated / "html/index.html").read_text(encoding="utf-8")
+    require('src="source/assets/badge.svg"' in rendered and '![Local badge]' not in rendered,
+            "Linked badge did not render as a bundled image")
     pages = markdown_pages(items, directory)
     require(set(pages) == {"README.md", "AGENTS.md", "docs/child.md", "docs/duplicate-title.md",
              "docs/explicit-title.md", "docs/numeric-title.md", "proof/README.md", "THIRD_PARTY.md"}, "Fixture pages missing")

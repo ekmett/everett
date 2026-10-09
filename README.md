@@ -1,6 +1,28 @@
 Everett: Persistent Storage
 ==========================
 
+<!-- badges:start -->
+[![build](https://img.shields.io/github/actions/workflow/status/ekmett/everett/modules.yml?branch=main&style=flat&label=build&logo=githubactions&logoColor=white)](https://github.com/ekmett/everett/actions/workflows/modules.yml?query=branch%3Amain)
+[![docs build](https://img.shields.io/github/actions/workflow/status/ekmett/everett/docs.yml?branch=main&style=flat&label=docs+build&logo=githubactions&logoColor=white)](https://github.com/ekmett/everett/actions/workflows/docs.yml?query=branch%3Amain)
+[![proofs](https://img.shields.io/github/actions/workflow/status/ekmett/everett/lean.yml?branch=main&style=flat&label=proofs&logo=githubactions&logoColor=white)](https://github.com/ekmett/everett/actions/workflows/lean.yml?query=branch%3Amain)
+[![issues](https://img.shields.io/github/issues/ekmett/everett?style=flat&label=issues&color=007ec6&logo=github&logoColor=white)](https://github.com/ekmett/everett/issues)
+[![commits](https://img.shields.io/github/commit-activity/w/ekmett/everett?style=flat&label=commits&color=007ec6&logo=github&logoColor=white)](https://github.com/ekmett/everett/activity)
+
+[![CMake: 4.4+](https://img.shields.io/static/v1?label=CMake&message=4.4%2B&color=064F8C&style=flat&logo=cmake&logoColor=white)](CMakeLists.txt)
+[![C++: 26](https://img.shields.io/static/v1?label=C%2B%2B&message=26&color=00599C&style=flat&logo=cplusplus&logoColor=white)](README.md)
+[![Clang: 23](https://img.shields.io/static/v1?label=Clang&message=23&color=6f42c1&style=flat&logo=llvm&logoColor=white)](README.md)
+[![Lean: 4.19.0](assets/badges/lean-version.svg)](proof/lean-toolchain)
+[![SQLite: 3.51.3+](https://img.shields.io/static/v1?label=SQLite&message=3.51.3%2B&color=003B57&style=flat&logo=sqlite&logoColor=white)](CMakeLists.txt)
+
+[![OS: Linux · macOS](https://img.shields.io/static/v1?label=OS&message=Linux+%C2%B7+macOS&color=64748b&style=flat)](README.md)
+[![CPU: x86-64 · ARM64](https://img.shields.io/static/v1?label=CPU&message=x86-64+%C2%B7+ARM64&color=64748b&style=flat)](README.md)
+
+[![license: BSD-2-Clause OR Apache-2.0](assets/badges/license.svg)](LICENSE)
+[![Contributor Covenant: 2.0](https://img.shields.io/static/v1?label=Contributor+Covenant&message=2.0&color=007ec6&style=flat&logo=contributorcovenant&logoColor=white)](CODE_OF_CONDUCT.md)
+
+[![docs: read](https://img.shields.io/static/v1?label=docs&message=read&color=007ec6&style=flat)](docs/usage.md)
+<!-- badges:end -->
+
 Everett is a C++26 library for compact string-keyed tables, cheap snapshots and
 independent branches. Connect to a named table, read and write strings, and keep
 an earlier state whenever you need one.

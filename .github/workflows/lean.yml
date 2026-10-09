@@ -1,0 +1,51 @@
+# SPDX-FileCopyrightText: 2026 Edward Kmett <ekmett@gmail.com>
+# SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
+# \file
+# \author Edward Kmett <ekmett@gmail.com>
+# \brief Checks Everett's Lean proofs and model examples.
+
+name: Lean proofs
+
+'on':
+  push:
+    branches: [main]
+    paths:
+      - 'proof/**'
+      - '.github/workflows/lean.yml'
+  pull_request:
+    paths:
+      - 'proof/**'
+      - '.github/workflows/lean.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lean-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proofs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      LEAN_NUM_THREADS: '4'
+    steps:
+      - name: Check out Everett
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check Lean proofs and axiom audit
+        uses: leanprover/lean-action@f061402b660e0c34644504b324e830f2991d4865 # v1
+        with:
+          lake-package-directory: proof
+          auto-config: 'false'
+          build: 'true'
+          build-args: '--wfail'
+          use-mathlib-cache: 'false'
+
+      - name: Run model examples
+        working-directory: proof
+        run: lake env lean --run Main.lean

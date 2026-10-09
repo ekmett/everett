@@ -2,7 +2,7 @@
 ##
 # \file
 # \author Edward Kmett <ekmett@gmail.com>
-# \brief Adapts Markdown dollar math for Everett's Doxygen build.
+# \brief Adapts Markdown math and linked badges for Everett's Doxygen build.
 #
 # \license
 # SPDX-FileType: SOURCE
@@ -10,15 +10,15 @@
 # SPDX-License-Identifier: BSD-2-Clause OR Apache-2.0
 # \endlicense
 
-"""Adapt dollar math in Markdown to Doxygen commands without changing lines.
+"""Adapt Markdown math and linked badges for Doxygen without changing lines.
 
-This is a narrow math adapter, not a Markdown renderer. Fenced/indented code,
-backtick spans, escaped dollars, unmatched delimiters and existing Doxygen math
-are preserved. Inline math requires non-whitespace inside both delimiters and
-cannot end immediately before a digit (so ordinary currency stays literal).
+Fenced/indented code, backtick spans, escaped dollars, unmatched delimiters and
+existing Doxygen math are preserved. Inline math requires non-whitespace inside
+both delimiters and cannot end immediately before a digit (so ordinary currency stays literal).
 """
 
 from pathlib import Path
+from html import escape
 import re
 import sys
 
@@ -60,6 +60,16 @@ def prose_math(source, formulas):
             result.append(run)
             at += len(run)
             continue
+        # Doxygen 1.9.8 loses nested image syntax for links to Markdown
+        # pages and extensionless files. Adapt standalone badge lines to
+        # equivalent HTML, keeping source line numbers and code examples intact.
+        if at == 0 or source[at - 1] == "\n":
+            badge = re.match(r"\[!\[([^]\n]*)\]\(([^)\s]+)\)\]\(([^)\s]+)\)(?=\n|$)", source[at:])
+            if badge:
+                label, image, target = map(escape, badge.groups())
+                result.append(f'<a href="{target}"><img src="{image}" alt="{label}"/></a>')
+                at += badge.end()
+                continue
         existing = next((opening for opening in (r"\f$", r"\f[")
                          if source.startswith(opening, at)), None)
         if existing:

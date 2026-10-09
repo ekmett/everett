@@ -82,7 +82,8 @@ documentation target remains available but the CTest check is not registered.
 
 I publish the checked HTML directly to the `gh-pages` branch. The site is
 [ekmett.github.io/everett](https://ekmett.github.io/everett/). GitHub Pages uses
-that branch's root directory; no Actions workflow generates the documentation.
+that branch's root directory. The documentation workflow builds and checks the
+documentation on pushes and pull requests; publishing the site remains a separate step.
 
 Build `everett_docs`, then copy the contents of
 `build-docs/docs/reference/html/` into a separate `gh-pages` worktree. Keep its
